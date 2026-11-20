@@ -76,7 +76,7 @@ enum class ItemKind(val serialName: String) {
 
 // Constant names match the SDK's: Room stores this one by name in mediastreams.type.
 enum class MediaStreamType { AUDIO, VIDEO, SUBTITLE, EMBEDDED_IMAGE, DATA, LYRIC }
-enum class SubtitleDelivery { ENCODE, EMBED, EXTERNAL, HLS, DROP }
+enum class SubtitleDeliveryMethod { ENCODE, EMBED, EXTERNAL, HLS, DROP }
 enum class VideoRangeType { UNKNOWN, SDR, HDR10, HLG, DOVI, DOVI_WITH_HDR10, DOVI_WITH_HLG,
     DOVI_WITH_SDR, DOVI_WITH_EL, DOVI_WITH_HDR10_PLUS, DOVI_WITH_ELHDR10_PLUS, DOVI_INVALID,
     HDR10_PLUS }
@@ -144,7 +144,9 @@ data class ItemQuery(
 )
 
 interface CatalogPort {
+    suspend fun serverInfo(): ServerInfo
     suspend fun libraries(): List<FindroidCollection>
+    suspend fun userViews(): List<FindroidCollection>
     suspend fun item(id: ItemId): FindroidItem?
     suspend fun movie(id: ItemId): FindroidMovie
     suspend fun show(id: ItemId): FindroidShow
@@ -188,9 +190,18 @@ data class ServerUserData(
 interface UserDataPort {
     suspend fun setFavorite(itemId: ItemId, favorite: Boolean)
     suspend fun setPlayed(itemId: ItemId, played: Boolean)
-    /** For the sync: the server's rows for [itemIds], and writing ours back. */
-    suspend fun userDataOf(itemIds: List<ItemId>): List<ServerUserData>
+}
+
+/** User data on the server for one saved user, who need not be the current one. For the sync. */
+interface UserDataSyncPort {
+    suspend fun userDataOf(itemIds: List<ItemId>): Map<ItemId, ServerUserData>
     suspend fun putUserData(data: ServerUserData)
+    suspend fun reportStopped(itemId: ItemId, positionTicks: Long)
+    suspend fun itemLeftPlaying(): ItemId?
+}
+
+fun interface UserDataSyncPorts {
+    fun forUser(baseUrl: String, accessToken: String?, userId: UserId): UserDataSyncPort
 }
 
 /** Who plays the stream. The adapter turns this into whatever its server needs (a device profile). */
@@ -208,6 +219,8 @@ data class PlaybackRequest(
     val audioStreamIndex: Int? = null,
     /** Bits per second; null is no cap. */
     val maxBitrate: Int? = null,
+    /** Ask for the URL of file sources too (downloads need it). */
+    val includePath: Boolean = false,
 )
 
 data class PlaybackReport(
@@ -221,36 +234,39 @@ data class PlaybackReport(
 interface PlaybackPort {
     /** Sources with finished URLs. `FindroidSource.transcoded` and `.playSessionId` say what the server chose. */
     suspend fun sources(request: PlaybackRequest): List<FindroidSource>
+    suspend fun streamUrl(itemId: ItemId, mediaSourceId: MediaSourceId): String
     suspend fun segments(itemId: ItemId): List<FindroidSegment>
     suspend fun trickplayTile(itemId: ItemId, width: Int, index: Int): ByteArray?
-    fun chapterImageUrl(itemId: ItemId, chapterIndex: Int, tag: String): String
+    fun chapterImageUrl(itemId: ItemId, chapterIndex: Int, tag: String): String?
+    fun seasonBackdropUrl(seasonId: ItemId): String?
     suspend fun reportStart(report: PlaybackReport)
     suspend fun reportProgress(report: PlaybackReport)
     suspend fun reportStopped(report: PlaybackReport)
     suspend fun announceCapabilities()
     /** Null when the server has none; the defaults apply. */
     suspend fun resumeThresholds(): ResumeThresholds?
-    /** For the About and device profile screens: what the adapter would tell the server about this device. */
-    fun describeTarget(target: PlaybackTarget): String
 }
 
 interface ServerSession {
     val baseUrl: String?
     val userId: UserId?
+    val accessToken: String?
     /** Tokens the server refused while they were current. */
     val unauthorized: kotlinx.coroutines.flow.Flow<String>
     /** Emits when the server answers again after requests that could not reach it. */
     val serverReturned: kotlinx.coroutines.flow.Flow<Unit>
+    /** Told how each request of the app goes; the reachability banner follows it. */
+    var requestWatcher: RequestWatcher?
+    val probeTimeoutMs: Long
     fun use(baseUrl: String?, accessToken: String?, userId: UserId?)
+    /** True when the server answered, false when it did not, null when no server is set. */
     suspend fun probe(): Boolean?
-    suspend fun serverInfo(): ServerInfo
+    /** False only when the server says the current token is not valid. */
     suspend fun isTokenValid(): Boolean
     suspend fun autoPlayNextEpisode(): Boolean?
     suspend fun updateDeviceName(name: String)
     /** Keeps the server's session socket open while collected. Completes at once when unsupported. */
     fun keepAlive(): kotlinx.coroutines.flow.Flow<Nothing>
-    /** A session for another saved user, for the sync. */
-    fun forUser(baseUrl: String, accessToken: String, userId: UserId): UserDataPort
 }
 ```
 
@@ -259,17 +275,19 @@ The connector is separate because it works before there is a session:
 ```kotlin
 data class DiscoveredServer(val id: String, val name: String, val address: String)
 
-enum class ServerIssue { OUTDATED_VERSION, UNSUPPORTED_VERSION, NOT_THIS_SERVER_TYPE, SLOW_RESPONSE, NOT_FOUND }
+enum class ServerIssue { OUTDATED_VERSION, UNSUPPORTED_VERSION, NOT_THIS_SERVER_TYPE, SLOW_RESPONSE }
+
+/** No usable server at the address. [issues] is empty when nothing answered. */
 class ServerConnectException(val issues: List<ServerIssue>) : Exception()
 
-data class ResolvedServer(val info: ServerInfo, val address: String, val type: ServerType)
+data class ResolvedServer(val info: ServerInfo, val address: String)
 data class AuthenticatedUser(val id: UserId, val name: String, val serverId: ServerId,
     val accessToken: String, val primaryImageTag: String?)
 data class PublicUser(val id: UserId, val name: String, val primaryImageTag: String?)
 data class QuickConnectState(val code: String, val secret: String, val authenticated: Boolean)
 
 interface ServerConnector {
-    val type: ServerType
+    val capabilities: ServerCapabilities
     fun discover(): kotlinx.coroutines.flow.Flow<DiscoveredServer>
     /** The best address among the candidates for [address], or [ServerConnectException]. */
     suspend fun resolve(address: String): ResolvedServer
@@ -284,15 +302,20 @@ interface ServerConnector {
 }
 ```
 
-Two things stay out of `domain` because they are not pure Kotlin. They are small interfaces in
-`data`, implemented by the adapter:
+With more than one server type installed, each adapter contributes its `MediaServer` and
+`ServerConnector` to a map keyed by `ServerType`. `CurrentMediaServer` delegates to the adapter of
+the server in use, and `ServerConnectors.resolve(address)` tries each connector until one
+recognizes the server.
+
+A few interfaces are not pure Kotlin or are about one screen. They sit next to their consumers
+and are implemented by the adapter:
 
 ```kotlin
 /** The OkHttp client that media is streamed through, so the player shares the API's connections. */
 fun interface MediaHttpClient { fun client(): okhttp3.OkHttpClient }
 
-/** Told how each request of the app goes; the reachability banner follows it. Exists today in data/api. */
-interface RequestWatcher { /* unchanged */ }
+/** The device report the About screen copies: what the adapter would tell the server about this device. */
+fun interface DeviceReportSource { fun buildJson(directPlayDolbyVision: Boolean): String }
 ```
 
 ## 3.4 The repository (`data`)

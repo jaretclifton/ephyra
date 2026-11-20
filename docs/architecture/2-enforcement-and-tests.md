@@ -60,8 +60,10 @@ without a reviewer seeing it in the diff. `main` stays green throughout; "red tu
 the baseline going from 56 lines to none, after which the file and the exception for it are
 deleted.
 
-The "adapter" in R1 and R2 is `data` until phase 3 creates `server/jellyfin`, then that module
-alone.
+The "adapter" in R1 and R2 narrows as the work goes on: the whole `data` module at first; from
+#753 the packages `dev.jdtech.jellyfin.server.jellyfin` and `dev.jdtech.jellyfin.api` inside
+`data` (the other `data` files that still mention the SDK join the baseline then); from #758 the
+`server/jellyfin` module alone.
 
 ### Konsist or ArchUnit
 

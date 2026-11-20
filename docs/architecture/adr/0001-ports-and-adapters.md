@@ -51,18 +51,18 @@ These are the user's to make. Only D4 blocks the start.
 - **D1. Ids.** Keep `UUID` (an Emby adapter would have to map its ids onto UUIDs), or make ids
   opaque (`value class ItemId(val value: String)`, 160 files). Proposed: aliases now, decide when
   the Emby work starts and its ids have been looked at on a real server. Blocks only the last
-  task of phase 7.
+  task of phase 7 (#773).
 - **D2. The name `JellyfinRepository`.** `CLAUDE.md` says the internal names stay on purpose. With
   a second server this one becomes false. Proposed: rename to `MediaRepository` in one mechanical
-  PR at the end of phase 7. Blocks nothing.
+  PR at the end of phase 7 (#774). Blocks nothing.
 - **D3. The device profile.** Keep it Jellyfin's, built inside the adapter from a
   `PlaybackTarget` (proposed), or write a server-neutral profile model now. Blocks one task in
-  phase 3.
+  phase 3 (#752).
 - **D4. Konsist `1.0.0-beta.1`.** It is the release built on the Kotlin version this project
-  uses, and it is a beta. Test-only. Proposed: accept. Blocks the first task.
+  uses, and it is a beta. Test-only. Proposed: accept. Blocks the first task (#735).
 - **D5. Device tests for phase 5.** Every playback PR needs `docs/mpv-checklist.md` on both
   backends, and mpv does not run on an emulator with a host GPU. Who runs it, on which phone?
-  Blocks phase 5.
+  Blocks phase 5 (#764 to #766).
 
 ## Consequences
 

@@ -26,86 +26,93 @@ own. The task issues are listed per phase in
 
 Goal: the rules exist, with their baselines, and CI runs them. Nothing in the app changes.
 
-- The `architecture` module with Konsist, rules R1 to R4 and their baselines.
-- The `domain` module, empty, with rule R5.
-- The unused SDK dependency of `settings` goes: the first line off the module allowlist.
-- Characterization tests for the playback info request, source mapping and the playback reports,
-  at the HTTP boundary.
-- Golden tests for the mappers.
+- #735 The `architecture` module with Konsist, rules R1 to R4 and their baselines.
+- #736 The unused SDK dependency of `settings` goes: the first line off the module allowlist.
+- #737 The `domain` module, empty, with rule R5.
+- #738 Tests that pin the playback info request, the source mapping and the playback reports at
+  the HTTP boundary.
+- #739 Golden tests for the mappers.
 
 ### Phase 1: our own types instead of the SDK's enums
 
 Goal: the SDK's enums and exception types are gone outside `data`. R1 goes from 56 to about 15.
 
-- `ItemKind` for `BaseItemKind`.
-- `MediaStreamType`, `VideoRangeType`, `SubtitleDelivery`.
-- `PersonKind`.
-- `ItemFilter` and `EpisodeField` for `ItemFilter` and `ItemFields`.
-- `java.time.LocalDateTime` for the SDK's `DateTime` alias.
-- `ServerException` for the SDK's exception types.
+- #740 `ItemKind` for `BaseItemKind`.
+- #741 `MediaStreamType`, `VideoRangeType`, `SubtitleDeliveryMethod`, under the same simple names.
+- #742 `PersonKind`.
+- #743 `ItemFilter` and `EpisodeField` for `ItemFilter` and `ItemFields`.
+- #744 `java.time.LocalDateTime` for the SDK's `DateTime` alias.
+- #745 `ServerException` for the SDK's exception types.
 
 Each of these is independent of the others. They touch different lines of some of the same files
 (`JellyfinRepository.kt` most of all), so two running at once will need a rebase, not a redesign.
 
 ### Phase 2: a repository interface with no SDK type, and no wrapper in the UI
 
-Goal: `JellyfinRepository` imports nothing from the SDK; composables and ViewModels stop using
+Goal: `JellyfinRepository` imports nothing from the SDK; composables and the player stop using
 `JellyfinApi`. `app/phone`, `app/tv`, `modes/film` and `player/local` lose their SDK dependency.
 R3 goes from 8 to 4.
 
-- Libraries as `FindroidCollection` instead of `BaseItemDto`.
-- `ServerInfo` and `autoPlayNextEpisode()` instead of `PublicSystemInfo` and `UserConfiguration`.
-- `ServerSession` (read side) for the base URL and the user id.
-- URL building behind the repository (chapter images, the TV season backdrop).
-- The player's track preferences and HTTP client through ports.
-- Removing the dependency line from the four modules.
+- #746 Libraries as `FindroidCollection` instead of `BaseItemDto`.
+- #747 `ServerInfo` and `autoPlayNextEpisode()` instead of `PublicSystemInfo` and
+  `UserConfiguration`.
+- #748 `ServerSession` (read side) for the base URL and the user id.
+- #749 URL building behind the repository (chapter images, the TV season backdrop).
+- #750 The player's track preferences and HTTP client through interfaces.
+- #751 Removing the dependency line from the four modules.
 
-### Phase 3: the Jellyfin adapter module
+### Phase 3: the Jellyfin adapter
 
-Goal: the SDK is behind `server/jellyfin`. `data` has no SDK dependency.
+Goal: everything that uses the SDK is in the adapter's packages, and at the end in the adapter's
+module. `data` has no SDK dependency.
 
-- Device profile: the probing stays, the Jellyfin assembly becomes the adapter's.
-- Mappers take a base URL instead of the repository and leave the model files.
-- Image URLs as `String`.
-- The repository is split in two steps (catalog, then playback and user data) into a
-  `MediaServer` implementation and the Room composition.
-- The models and ports move to `domain`; `JellyfinApi`, the mappers and the `MediaServer`
-  implementation move to `server/jellyfin`.
+- #752 Device profile: the probing stays, the Jellyfin assembly becomes the adapter's; requests
+  name a `PlaybackTarget`.
+- #753 Mappers take a base URL instead of the repository and leave the model files.
+- #754 Image URLs as `String`.
+- #755 The models move to `domain`.
+- #756 The repository is split: catalog reads behind `CatalogPort`.
+- #757 The repository is split: playback and user data behind `PlaybackPort` and `UserDataPort`.
+- #758 The `server/jellyfin` module. **Last of all**: it needs every user of `JellyfinApi`
+  outside the adapter gone, so it waits for phases 4 and 6.
 
-This is the phase with the most moved lines and the least new logic. The characterization and
-golden tests of phase 0 are what make it safe.
+This is the phase with the most moved lines and the least new logic. The tests of #738 and #739
+are what make it safe. Until #758, adapter code lives in `data`, in the package
+`dev.jdtech.jellyfin.server.jellyfin`; the module move is then a move of two packages with no
+import changes.
 
 ### Phase 4: setup, session and sync
 
-Goal: `setup` and `core` have no SDK dependency. R2 reaches 0.
+Goal: `setup` and `core` have no SDK dependency. In R2 only the Hilt providers in `core` that
+construct the adapter remain, until #758 moves them.
 
-- `SetupRepository` with our own types.
-- `ServerAddressesViewModel` through its repository.
-- `ServerConnector`: the SDK code of `SetupRepositoryImpl` moves to the adapter.
-- `SyncWorker` over `UserDataPort`.
-- `ServerSessionKeeper`, reachability and `ApiModule` over `ServerSession`.
+- #759 `SetupRepository` with our own types.
+- #760 `ServerAddressesViewModel` through its repository.
+- #761 `ServerConnector`: the SDK code of `SetupRepositoryImpl` moves to the adapter.
+- #762 `SyncWorker` over a port.
+- #763 `ServerSessionKeeper`, reachability and the session wiring over `ServerSession`.
 
-Phase 4 does not depend on phase 3 being finished, only on its first task that creates the
-adapter module. It can run beside the rest of phase 3.
+Phase 4 needs phases 1 and 2, not phase 3. It can run beside phase 3.
 
 ### Phase 5: playback
 
 Goal: the engine boundary is explicit and the reporting and resolving logic have their own tests.
 
-- `PlayerEngine`: engine construction leaves `PlayerViewModel`; `engine/exo` and `engine/mpv`;
-  rule R6.
-- `PlaybackReporter` out of `PlayerViewModel`.
-- `ResolvePlayback`: the target is decided in the player, not read from a preference in `data`.
+- #764 `PlayerEngine`: engine construction leaves `PlayerViewModel`; `engine/exo` and
+  `engine/mpv`; rule R6.
+- #765 `PlaybackReporter` out of `PlayerViewModel`.
+- #766 `ResolvePlayback`: the target is decided in the player, not read from a preference in
+  `data`.
 
 Every PR here runs `docs/mpv-checklist.md` on both backends. This is the phase where a mistake
 reaches users as a playback bug, and where the test net is thinnest.
 
 ### Phase 6: Cast
 
-Goal: `player/cast` has no SDK dependency. R1 and R3 reach their end state.
+Goal: `player/cast` has no SDK dependency.
 
-- Playback info through `PlaybackPort` with a `CastReceiver` target; tracks from our own models;
-  the Chromecast profiles in the adapter.
+- #767 Playback info through `PlaybackPort` with a `CastReceiver` target; tracks from our own
+  models; the Chromecast profiles in the adapter.
 
 Downloads need no phase of their own: after phases 1 and 4 they have no SDK use left, and the
 queue and the transfer engine are already separate from Jellyfin.
@@ -114,23 +121,26 @@ queue and the transfer engine are already separate from Jellyfin.
 
 Goal: adding Emby is adding a module.
 
-- The lock: the allowlist is one module, the baselines are deleted, the exceptions for them are
-  removed from the rules.
-- `ServerCapabilities` and the UI that follows it.
-- A server type on the `servers` table and a `MediaServer` chosen by it.
-- The `testing` module with `FakeMediaServer` and the contract suites; the Jellyfin adapter
+- #768 The lock: the allowlist is one module, the baselines are deleted, the exceptions for them
+  are removed from the rules.
+- #769 `ServerCapabilities` and the UI that follows it.
+- #770 A server type on the `servers` table and a `MediaServer` chosen by it.
+- #771 The `testing` module with `FakeMediaServer` and the contract suites; the Jellyfin adapter
   passes them.
-- `CLAUDE.md`, the upstream-sync skill and this folder brought up to date.
-- Decision-gated: opaque ids (D1), renaming the repository (D2).
+- #772 `CLAUDE.md`, the upstream-sync skill and this folder brought up to date.
+- Decision-gated: #773 opaque ids (D1), #774 renaming the repository (D2).
 
 ## 4.3 Order
 
 ```
-Phase 0 ─► Phase 1 ─► Phase 2 ─► Phase 3 ─► Phase 6 ─► Phase 7
-                         │           │
-                         │           └─► Phase 4 (after the adapter module exists)
-                         └─► Phase 5 (after phase 2; its last task after phase 3)
+Phase 0 ─► Phase 1 ─► Phase 2 ─┬─► Phase 3 (#752 to #757) ─┬─► Phase 6 ─┬─► #758 ─► Phase 7
+                               ├─► Phase 4 ────────────────┼────────────┘
+                               └─► Phase 5 (#766 after #757)
 ```
+
+- Phase 5 is not on the path to #758 or to phase 7. It can run at any time after phase 2 and is
+  the one phase that needs a device.
+- #769 and #771 of phase 7 only need the ports (#757, #761) and can start before #758.
 
 Inside a phase most tasks can run in parallel; each issue says which.
 

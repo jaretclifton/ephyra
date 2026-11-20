@@ -68,8 +68,10 @@ mappers in `data`. Outside `data` the third type is `InvalidStatusException`, no
     `EpisodeScreen`, `MovieScreen`, `ShowScreen`, `SeasonScreen`, `SeasonWideLayout`,
     `ItemExtras`, `components/PlayDownload`) and `PlayerRoute.itemKind` on TV
     (`app/tv/.../NavigationRoot.kt`). `PlayerViewModel.initializePlayer` turns it back with
-    `BaseItemKind.fromName`;
-  - as its `name` in Room: `pending_downloads.itemKind` holds `"MOVIE"` or `"EPISODE"`.
+    `BaseItemKind.fromName`.
+
+  `pending_downloads.itemKind` in Room looks like the same thing and is not: `DownloaderImpl`
+  writes the literal strings `"MOVIE"` and `"EPISODE"` there.
 - **`MediaStreamType`.** Read from `FindroidMediaStream.type` in `modes/film`
   (`domain/MediaInfo.kt`, `domain/VideoMetadataParser.kt`), TV `ce/presentation/film/SeasonScreen.kt`,
   `core` (`DownloaderImpl.kt`, two preview fixtures), `player/local`
