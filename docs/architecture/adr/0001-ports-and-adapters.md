@@ -68,7 +68,8 @@ These are the user's to make. Only D4 blocks the start.
 
 - Adding Emby becomes a new module that implements five ports and passes the contract suites. It
   also needs the server type on the `servers` table, a decision on ids (D1), and server-scoped
-  lookups of stored rows, since two servers of different types can use the same ids.
+  storage of downloads (#718: the tables are keyed by item id alone), since two servers of
+  different types can easily use the same ids.
 - An agent that works in `server/jellyfin` needs `domain` and nothing else. An agent that works
   in a ViewModel cannot see the SDK.
 - `domain` and the use cases are tested without Android. The adapter is tested against recorded

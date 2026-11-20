@@ -6,8 +6,9 @@ are the design; a task issue may adjust a name, not the direction of a dependenc
 ## 3.1 Modules
 
 ```
-domain             NEW   Pure Kotlin. The models (Findroid*), ids, enums, the ports, and the
-                         rules with no I/O (stopUserData, ResumeThresholds, PlaySessions).
+domain             NEW   Pure Kotlin. The models (Findroid*, SortBy, SortOrder, ItemsPage), ids,
+                         enums, the ports, and the rules with no I/O (stopUserData,
+                         ResumeThresholds, PlaySessions).
 server/jellyfin    NEW   Android library. The only module that declares org.jellyfin.sdk.
                          JellyfinApi, the mappers, the server ports' implementations, the
                          connector, the device profiles, Jellyfin's image URL rules. Its own
@@ -40,7 +41,8 @@ app/phone, app/tv ──► server/jellyfin ──► domain
 
 Rules that follow from it:
 
-- `domain` depends on nothing in this repository.
+- `domain` depends on nothing in this repository. Every module that names a domain type declares
+  `domain` itself: the build uses `implementation` everywhere, so nothing comes through `data`.
 - `server/jellyfin` depends on `domain` and `settings` (for the timeouts in `Constants`), not on
   `data`: an adapter does not know Room.
 - `data` depends on `domain` and `settings`, not on a server module.
@@ -64,6 +66,9 @@ typealias ServerId = String
 typealias MediaSourceId = String
 
 enum class ServerType { JELLYFIN, EMBY }
+
+/** Which player engine plays. Here and not in `player/local`, because a playback request names it. */
+enum class PlayerEngineId(val preferenceValue: String) { EXOPLAYER("exoplayer"), MPV("mpv") }
 
 /** The kinds of item the app handles. [serialName] is what a route or an intent extra carries. */
 enum class ItemKind(val serialName: String) {
@@ -265,6 +270,8 @@ interface ServerSession {
     suspend fun isTokenValid(): Boolean
     suspend fun autoPlayNextEpisode(): Boolean?
     suspend fun updateDeviceName(name: String)
+    /** The tag of the current user's profile picture as the server has it now, or null when they have none. */
+    suspend fun currentUserImageTag(): String?
     /** Keeps the server's session socket open while collected. Completes at once when unsupported. */
     fun keepAlive(): kotlinx.coroutines.flow.Flow<Nothing>
 }
@@ -291,13 +298,14 @@ interface ServerConnector {
     fun discover(): kotlinx.coroutines.flow.Flow<DiscoveredServer>
     /** The best address among the candidates for [address], or [ServerConnectException]. */
     suspend fun resolve(address: String): ResolvedServer
-    suspend fun loginDisclaimer(): String?
-    suspend fun publicUsers(): List<PublicUser>
-    suspend fun login(username: String, password: String): AuthenticatedUser
-    suspend fun quickConnectEnabled(): Boolean
-    suspend fun startQuickConnect(): QuickConnectState
-    suspend fun quickConnectState(secret: String): QuickConnectState
-    suspend fun loginWithQuickConnect(secret: String): AuthenticatedUser
+    // Every call after resolve names the address it is for; a connector holds no "current server".
+    suspend fun loginDisclaimer(address: String): String?
+    suspend fun publicUsers(address: String): List<PublicUser>
+    suspend fun login(address: String, username: String, password: String): AuthenticatedUser
+    suspend fun quickConnectEnabled(address: String): Boolean
+    suspend fun startQuickConnect(address: String): QuickConnectState
+    suspend fun quickConnectState(address: String, secret: String): QuickConnectState
+    suspend fun loginWithQuickConnect(address: String, secret: String): AuthenticatedUser
     suspend fun endSession(baseUrl: String, accessToken: String): Boolean
 }
 ```
@@ -307,8 +315,9 @@ With more than one server type installed, each adapter contributes its `MediaSer
 the server in use, and `ServerConnectors.resolve(address)` tries each connector until one
 recognizes the server.
 
-A few interfaces are not pure Kotlin or are about one screen. They sit next to their consumers
-and are implemented by the adapter:
+Three more interfaces are in `domain` so that the adapter, which may not depend on `data` or `core`,
+can implement them. `MediaHttpClient` is the one place where `domain` names a type of a library
+(OkHttp, plain JVM); `RequestWatcher` moves there from `data/api` unchanged:
 
 ```kotlin
 /** The OkHttp client that media is streamed through, so the player shares the API's connections. */
@@ -350,7 +359,7 @@ call for:
 ```kotlin
 package dev.jdtech.jellyfin.player.local.engine
 
-enum class PlayerEngineId(val preferenceValue: String) { EXOPLAYER("exoplayer"), MPV("mpv") }
+// PlayerEngineId is in domain (3.2).
 
 data class PlayerEngineConfig(
     val httpClient: okhttp3.OkHttpClient,

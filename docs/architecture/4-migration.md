@@ -124,7 +124,8 @@ Goal: adding Emby is adding a module.
 - #768 The lock: the allowlist is one module, the baselines are deleted, the exceptions for them
   are removed from the rules.
 - #769 `ServerCapabilities` and the UI that follows it.
-- #770 A server type on the `servers` table and a `MediaServer` chosen by it.
+- #770 A server type on the `servers` table (existing rows become `jellyfin` in the migration) and
+  a `MediaServer` chosen by it.
 - #771 The `testing` module with `FakeMediaServer` and the contract suites; the Jellyfin adapter
   passes them.
 - #772 `CLAUDE.md`, the upstream-sync skill and this folder brought up to date.
