@@ -31,6 +31,7 @@ it. Where one differs from the code, the code is right.
 | [tv-research/](tv-research/README.md) | How to turn `app/tv` into a first-class Android TV client | Built, #121 |
 | [tablet/](tablet/README.md) | How to make the phone app a first-class tablet client | Built, in v2.2.0 |
 | [mpv-research/](mpv-research/README.md) | How healthy the mpv backend is | Follow-up issues and the mpv checklist, #284 |
+| [architecture/](architecture/README.md) | How to move to ports and adapters, so a second server type and the two player engines sit behind boundaries the build enforces | Planned, #733 |
 
 ## Images
 
