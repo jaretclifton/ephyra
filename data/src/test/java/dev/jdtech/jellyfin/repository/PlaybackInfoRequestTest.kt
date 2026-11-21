@@ -20,7 +20,7 @@ import org.robolectric.annotation.Config
  * playback (getPlaybackSources) and for a download (getMediaSources), so moving the profile
  * decision out of `data` cannot change it unnoticed. Only the fields that carry the decision are
  * compared. The device profile is compared by its shape: under Robolectric MediaCodecList has no
- * decoders, and DeviceProfileBuilderTest covers the assembly from probed codecs.
+ * decoders, and JellyfinDeviceProfilesTest covers the assembly from probed codecs.
  *
  * No current server is set, so neither call reads a download. The server answers with a recorded
  * answer of the test server (`resources/playback/direct-file.json`).

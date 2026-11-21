@@ -18,6 +18,8 @@ import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.PlaybackTarget
+import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.SortBy
@@ -32,7 +34,7 @@ import dev.jdtech.jellyfin.models.toFindroidSeason
 import dev.jdtech.jellyfin.models.toFindroidSegment
 import dev.jdtech.jellyfin.models.toFindroidShow
 import dev.jdtech.jellyfin.models.toFindroidSource
-import dev.jdtech.jellyfin.player.DeviceProfileBuilder
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.server.jellyfin.toSdk
 import dev.jdtech.jellyfin.server.jellyfin.toSdkFilters
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -78,7 +80,7 @@ class JellyfinRepositoryImpl(
     private val jellyfinApi: JellyfinApi,
     private val database: ServerDatabaseDao,
     private val appPreferences: AppPreferences,
-    private val deviceProfileBuilder: DeviceProfileBuilder,
+    private val deviceProfiles: JellyfinDeviceProfiles,
     private val syncRequester: UserDataSyncRequester = UserDataSyncRequester.NONE,
     private val knownServerState: KnownServerState = KnownServerState.NONE,
     private val storedLibraryNames: StoredLibraryNames = StoredLibraryNames.ENGLISH,
@@ -730,8 +732,8 @@ class JellyfinRepositoryImpl(
                         PlaybackInfoDto(
                             userId = currentUserId,
                             deviceProfile =
-                                deviceProfileBuilder.getDownloadProfile(
-                                    transcodeDolbyVision,
+                                deviceProfiles.profileFor(
+                                    PlaybackTarget.Download(transcodeDolbyVision),
                                     bitrateCapped = maxBitrate != null,
                                 ),
                             maxStreamingBitrate = maxBitrate ?: 1_000_000_000,
@@ -780,11 +782,12 @@ class JellyfinRepositoryImpl(
                 return@withContext localSources
             }
 
-            // mpv software-decodes practically everything, so keep it on the permissive
+            // mpv software-decodes practically everything, so it stays on the permissive
             // direct-play profile. ExoPlayer gets the honest, hardware-probed profile so
             // the server transcodes anything it cannot direct-play, such as Dolby Vision
-            // without a DV decoder.
-            val useDirectPlay = appPreferences.getValue(appPreferences.playerBackend) == "mpv"
+            // without a DV decoder (JellyfinDeviceProfiles.profileFor).
+            val target = localPlayerTarget()
+            val useDirectPlay = target.engine == PlayerEngineId.MPV
             // User-selected bitrate cap (player quality selector). 0 = original quality.
             // Files above the cap get a server-side transcode; files below it still
             // direct-play. mpv's plain profile has no transcoding profiles, so a cap
@@ -792,15 +795,7 @@ class JellyfinRepositoryImpl(
             val maxBitrate =
                 appPreferences.getValue(appPreferences.playerMaxBitrate).takeIf { it > 0 }
             val deviceProfile =
-                when {
-                    useDirectPlay && maxBitrate != null ->
-                        deviceProfileBuilder.getDirectPlayTranscodeFallbackProfile()
-                    useDirectPlay -> deviceProfileBuilder.getDirectPlayProfile()
-                    else ->
-                        deviceProfileBuilder.getDeviceProfile(
-                            appPreferences.getValue(appPreferences.playerDirectPlayDolbyVision)
-                        )
-                }
+                deviceProfiles.profileFor(target, bitrateCapped = maxBitrate != null)
             val enableTranscoding = !useDirectPlay || maxBitrate != null
             val sources = mutableListOf<FindroidSource>()
             val playbackInfo =
@@ -834,6 +829,19 @@ class JellyfinRepositoryImpl(
             sources.addAll(localSources)
             sources
         }
+
+    /**
+     * CE (#752): who plays a stream of [getPlaybackSources], from the player preferences. Any
+     * backend value other than mpv's plays on ExoPlayer, as before. #766 moves this to the player.
+     */
+    private fun localPlayerTarget(): PlaybackTarget.LocalPlayer =
+        PlaybackTarget.LocalPlayer(
+            engine =
+                PlayerEngineId.fromPreference(appPreferences.getValue(appPreferences.playerBackend))
+                    ?: PlayerEngineId.EXOPLAYER,
+            directPlayDolbyVision =
+                appPreferences.getValue(appPreferences.playerDirectPlayDolbyVision),
+        )
 
     override suspend fun getSeriesTrackPreferences(seriesId: UUID): List<SeriesTrackPreferenceDto> =
         withContext(Dispatchers.IO) { database.getSeriesTrackPreferences(currentUserId, seriesId) }

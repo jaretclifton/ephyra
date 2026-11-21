@@ -16,7 +16,8 @@ import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
-import dev.jdtech.jellyfin.player.DeviceProfileBuilder
+import dev.jdtech.jellyfin.player.DeviceCodecProbe
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -59,7 +60,13 @@ class StoredItemsByServerTest {
         // The SDK names the device after it; Robolectric has none.
         Settings.Secure.putString(context.contentResolver, Settings.Secure.ANDROID_ID, "test")
         val api = JellyfinApi(context).apply { userId = this@StoredItemsByServerTest.userId }
-        JellyfinRepositoryImpl(context, api, database, preferences, DeviceProfileBuilder(context))
+        JellyfinRepositoryImpl(
+            context,
+            api,
+            database,
+            preferences,
+            JellyfinDeviceProfiles(DeviceCodecProbe(context)),
+        )
     }
 
     @After fun close() = room.close()

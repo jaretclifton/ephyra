@@ -1,6 +1,7 @@
-package dev.jdtech.jellyfin.player
+package dev.jdtech.jellyfin.server.jellyfin
 
 import android.app.Application
+import dev.jdtech.jellyfin.player.DeviceCodecProbe
 import kotlin.test.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,11 +20,13 @@ class DeviceCapabilityReportDisplayTest {
     @Test
     fun `builds the report from the application context`() {
         val context = RuntimeEnvironment.getApplication()
+        val codecs = DeviceCodecProbe(context)
 
         val report =
             DeviceCapabilityReportBuilder.build(
                 context = context,
-                deviceProfileBuilder = DeviceProfileBuilder(context),
+                codecs = codecs,
+                profiles = JellyfinDeviceProfiles(codecs),
                 findroidVersion = "2.4.0",
                 findroidBuildType = "debug",
                 transcodeDolbyVision = false,

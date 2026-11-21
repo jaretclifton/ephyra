@@ -16,12 +16,17 @@
  * directly. The wrapper [DeviceCapabilityReport] keeps everything in one tree
  * and is pretty-printed for paste-into-issue readability.
  */
-package dev.jdtech.jellyfin.player
+package dev.jdtech.jellyfin.server.jellyfin
 
 import android.content.Context
 import android.hardware.display.DisplayManager
 import android.os.Build
 import android.view.Display
+import dev.jdtech.jellyfin.domain.ports.DeviceCodecs
+import dev.jdtech.jellyfin.domain.ports.DeviceReportSource
+import dev.jdtech.jellyfin.models.PlaybackTarget
+import dev.jdtech.jellyfin.models.PlayerEngineId
+import dev.jdtech.jellyfin.player.ProbedCodecs
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -93,8 +98,35 @@ data class ProbedCodecsReport(
 )
 
 /**
- * Builds a [DeviceCapabilityReport] from the device + the supplied profile builder. Kept Hilt-free
- * so callers can construct it with whatever Context / builder / preferences they already have.
+ * The [DeviceReportSource] of the Jellyfin adapter (#752): the report of
+ * [DeviceCapabilityReportBuilder] for this device, as JSON.
+ */
+class JellyfinDeviceReportSource(
+    private val context: Context,
+    private val codecs: DeviceCodecs,
+    private val profiles: JellyfinDeviceProfiles,
+) : DeviceReportSource {
+    override suspend fun buildJson(
+        appVersion: String,
+        buildType: String,
+        transcodeDolbyVision: Boolean,
+        directPlayDolbyVision: Boolean,
+    ): String =
+        DeviceCapabilityReportBuilder.buildJson(
+            context = context,
+            codecs = codecs,
+            profiles = profiles,
+            findroidVersion = appVersion,
+            findroidBuildType = buildType,
+            transcodeDolbyVision = transcodeDolbyVision,
+            directPlayDolbyVision = directPlayDolbyVision,
+        )
+}
+
+/**
+ * Builds a [DeviceCapabilityReport] from the device + the supplied codecs and profiles. Kept
+ * Hilt-free so callers can construct it with whatever Context / codecs / preferences they already
+ * have.
  */
 object DeviceCapabilityReportBuilder {
 
@@ -106,14 +138,15 @@ object DeviceCapabilityReportBuilder {
         // built-in encoder for that type. The Jellyfin SDK ships its own
         // serializer, which we register here so the surrounding @Serializable
         // SDK classes pick it up at runtime. Without this, encodeToString blows
-        // up the first time DeviceProfileBuilder.getDeviceProfile() hands us a
+        // up the first time JellyfinDeviceProfiles.profileFor() hands us a
         // profile with an actual UUID — which is every real device.
         serializersModule = SerializersModule { contextual(UUID::class, UUIDSerializer()) }
     }
 
     fun build(
         context: Context,
-        deviceProfileBuilder: DeviceProfileBuilder,
+        codecs: DeviceCodecs,
+        profiles: JellyfinDeviceProfiles,
         findroidVersion: String,
         findroidBuildType: String,
         transcodeDolbyVision: Boolean,
@@ -121,7 +154,7 @@ object DeviceCapabilityReportBuilder {
         clock: () -> Long = System::currentTimeMillis,
     ): DeviceCapabilityReport {
         val display = currentDisplay(context)
-        val probed = deviceProfileBuilder.probedCodecsSnapshot()
+        val probed = codecs.probedCodecsSnapshot()
         return DeviceCapabilityReport(
             findroidVersion = findroidVersion,
             findroidBuildType = findroidBuildType,
@@ -153,9 +186,21 @@ object DeviceCapabilityReportBuilder {
                             }
                             .toSortedMap(),
                 ),
-            deviceProfile = deviceProfileBuilder.getDeviceProfile(directPlayDolbyVision),
-            directPlayProfile = deviceProfileBuilder.getDirectPlayProfile(),
-            downloadProfile = deviceProfileBuilder.getDownloadProfile(transcodeDolbyVision),
+            deviceProfile =
+                profiles.profileFor(
+                    PlaybackTarget.LocalPlayer(PlayerEngineId.EXOPLAYER, directPlayDolbyVision),
+                    bitrateCapped = false,
+                ),
+            directPlayProfile =
+                profiles.profileFor(
+                    PlaybackTarget.LocalPlayer(PlayerEngineId.MPV, directPlayDolbyVision),
+                    bitrateCapped = false,
+                ),
+            downloadProfile =
+                profiles.profileFor(
+                    PlaybackTarget.Download(transcodeDolbyVision),
+                    bitrateCapped = false,
+                ),
             downloadTranscodeDolbyVision = transcodeDolbyVision,
             directPlayDolbyVision = directPlayDolbyVision,
         )
@@ -171,7 +216,8 @@ object DeviceCapabilityReportBuilder {
      */
     suspend fun buildJson(
         context: Context,
-        deviceProfileBuilder: DeviceProfileBuilder,
+        codecs: DeviceCodecs,
+        profiles: JellyfinDeviceProfiles,
         findroidVersion: String,
         findroidBuildType: String,
         transcodeDolbyVision: Boolean,
@@ -182,7 +228,8 @@ object DeviceCapabilityReportBuilder {
             val report =
                 build(
                     context = context,
-                    deviceProfileBuilder = deviceProfileBuilder,
+                    codecs = codecs,
+                    profiles = profiles,
                     findroidVersion = findroidVersion,
                     findroidBuildType = findroidBuildType,
                     transcodeDolbyVision = transcodeDolbyVision,
