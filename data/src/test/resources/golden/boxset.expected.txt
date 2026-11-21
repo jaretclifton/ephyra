@@ -12,8 +12,8 @@ FindroidBoxSet(
   playbackPositionTicks = 0
   unplayedItemCount = null
   images = FindroidImages(
-    primary = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000005/Images/Primary?tag=boxptag
-    backdrop = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000005/Images/Backdrop/0?tag=boxbd
+    primary = "https://server.test/items/aaaaaaaa-0000-0000-0000-000000000005/Images/Primary?tag=boxptag"
+    backdrop = "https://server.test/items/aaaaaaaa-0000-0000-0000-000000000005/Images/Backdrop/0?tag=boxbd"
     logo = null
     showPrimary = null
     showBackdrop = null

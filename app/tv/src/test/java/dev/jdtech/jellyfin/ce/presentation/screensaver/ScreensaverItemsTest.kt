@@ -1,7 +1,6 @@
 package dev.jdtech.jellyfin.ce.presentation.screensaver
 
 import android.app.Application
-import android.net.Uri
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
@@ -21,11 +20,10 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-// Robolectric for android.net.Uri in FindroidImages.
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class ScreensaverItemsTest {
-    private val withBackdrop = movie("With backdrop", Uri.parse("https://jellyfin.test/b.jpg"))
+    private val withBackdrop = movie("With backdrop", "https://jellyfin.test/b.jpg")
     private val withoutBackdrop = movie("Without backdrop", null)
 
     private val calls = mutableListOf<Pair<String, Array<Any?>>>()
@@ -94,7 +92,7 @@ class ScreensaverItemsTest {
             }
         } as JellyfinRepository
 
-    private fun movie(name: String, backdrop: Uri?) =
+    private fun movie(name: String, backdrop: String?) =
         FindroidMovie(
             id = UUID.nameUUIDFromBytes(name.toByteArray()),
             name = name,

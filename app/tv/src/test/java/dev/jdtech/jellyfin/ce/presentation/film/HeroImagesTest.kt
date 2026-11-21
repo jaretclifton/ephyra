@@ -1,7 +1,6 @@
 package dev.jdtech.jellyfin.ce.presentation.film
 
 import android.app.Application
-import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import coil3.ImageLoader
 import coil3.request.ImageRequest
@@ -27,11 +26,7 @@ class HeroImagesTest {
     private val base = "https://demo.example/items/abc/Images"
     private val movie =
         dummyMovie.copy(
-            images =
-                FindroidImages(
-                    backdrop = Uri.parse("$base/Backdrop/0?tag=b"),
-                    logo = Uri.parse("$base/Logo?tag=l"),
-                )
+            images = FindroidImages(backdrop = "$base/Backdrop/0?tag=b", logo = "$base/Logo?tag=l")
         )
     private val context = ApplicationProvider.getApplicationContext<Application>()
     private val images = HeroImages(context, ImageLoader(context), 1344, 480, 120)
@@ -110,9 +105,9 @@ class HeroImagesTest {
             dummyEpisode.copy(
                 images =
                     FindroidImages(
-                        backdrop = Uri.parse("$base/Backdrop/0?tag=episode"),
-                        showBackdrop = Uri.parse("$base/Backdrop/0?tag=show"),
-                        showLogo = Uri.parse("$base/Logo?tag=show"),
+                        backdrop = "$base/Backdrop/0?tag=episode",
+                        showBackdrop = "$base/Backdrop/0?tag=show",
+                        showLogo = "$base/Logo?tag=show",
                     )
             )
         assertEquals(
@@ -129,7 +124,7 @@ class HeroImagesTest {
             dummyEpisode.copy(
                 images =
                     FindroidImages(
-                        primary = Uri.parse("$server/items/${dummyEpisode.id}/Images/Primary?tag=p")
+                        primary = "$server/items/${dummyEpisode.id}/Images/Primary?tag=p"
                     )
             )
         assertEquals(
@@ -150,7 +145,7 @@ class HeroImagesTest {
     @Test
     fun `an episode with a local picture has no season backdrop`() {
         val local = "file:///data/user/0/nl.midasvo.findroid.ce/files/${dummyEpisode.id}.jpg"
-        val episode = dummyEpisode.copy(images = FindroidImages(primary = Uri.parse(local)))
+        val episode = dummyEpisode.copy(images = FindroidImages(primary = local))
         assertEquals(
             listOf(local),
             heroBackdropUrls(episode, 1344, seasonBackdropUrl = { "https://demo.example/$it" }),
@@ -164,9 +159,7 @@ class HeroImagesTest {
                 images =
                     FindroidImages(
                         primary =
-                            Uri.parse(
-                                "https://demo.example/items/${dummyEpisode.id}/Images/Primary?tag=p"
-                            )
+                            ("https://demo.example/items/${dummyEpisode.id}/Images/Primary?tag=p")
                     )
             )
         assertEquals(
@@ -180,9 +173,7 @@ class HeroImagesTest {
     @Test
     fun `an episode's show backdrop comes first`() {
         val episode =
-            dummyEpisode.copy(
-                images = FindroidImages(showBackdrop = Uri.parse("$base/Backdrop/0?tag=show"))
-            )
+            dummyEpisode.copy(images = FindroidImages(showBackdrop = "$base/Backdrop/0?tag=show"))
         assertEquals(
             listOf("$base/Backdrop/0?tag=show&fillWidth=1920&quality=90"),
             heroBackdropUrls(episode, 1344),

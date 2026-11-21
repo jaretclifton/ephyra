@@ -1,6 +1,5 @@
 package dev.jdtech.jellyfin.ce.presentation.film
 
-import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -9,6 +8,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
@@ -69,8 +69,8 @@ internal class HeroImages(
      * page uses it as its backdrop's placeholder: opened from Home, it shows the hero's image
      * straight away while its own, larger one loads (#257).
      */
-    fun backdropCacheKey(uri: Uri?): MemoryCache.Key? =
-        uri?.toString()?.withImageSize(backdropWidthPx, null)?.let { MemoryCache.Key(it) }
+    fun backdropCacheKey(uri: String?): MemoryCache.Key? =
+        uri?.withImageSize(backdropWidthPx, null)?.let { MemoryCache.Key(it) }
 
     private fun request(url: String, width: Int, height: Int, scale: Scale) =
         ImageRequest.Builder(context)
@@ -161,7 +161,7 @@ internal fun rememberHeroImages(seasonBackdropUrl: (UUID) -> String? = { null })
  * Without a hero copy in the memory cache it loads as before.
  */
 @Composable
-internal fun rememberDetailBackdrop(uri: Uri?): ImageRequest? {
+internal fun rememberDetailBackdrop(uri: String?): ImageRequest? {
     val context = LocalContext.current
     val images = rememberHeroImages()
     val widthPx =
@@ -226,19 +226,22 @@ internal fun heroBackdropUrls(
                 )
             else -> listOf(item.images.backdrop)
         }
-    return uris.filterNotNull().map { it.toString().withImageSize(widthPx, null) }.distinct()
+    return uris.filterNotNull().map { it.withImageSize(widthPx, null) }.distinct()
 }
 
 /**
  * The season's backdrop, from [seasonBackdropUrl], for an episode with a picture on the server. An
  * episode whose picture is a local file (a download) has none.
  */
-private fun seasonBackdrop(episode: FindroidEpisode, seasonBackdropUrl: (UUID) -> String?): Uri? {
-    val scheme = episode.images.primary?.scheme ?: return null
+private fun seasonBackdrop(
+    episode: FindroidEpisode,
+    seasonBackdropUrl: (UUID) -> String?,
+): String? {
+    val scheme = episode.images.primary?.toUri()?.scheme ?: return null
     if (!scheme.equals("http", ignoreCase = true) && !scheme.equals("https", ignoreCase = true)) {
         return null
     }
-    return seasonBackdropUrl(episode.seasonId)?.let(Uri::parse)
+    return seasonBackdropUrl(episode.seasonId)
 }
 
 /**
@@ -251,12 +254,12 @@ internal fun heroBackdropUrl(item: FindroidItem, widthPx: Int): String? {
             is FindroidEpisode -> item.images.showBackdrop ?: item.images.backdrop
             else -> item.images.backdrop
         }
-    return uri?.toString()?.withImageSize(widthPx, null)
+    return uri?.withImageSize(widthPx, null)
 }
 
 internal fun heroLogoUrl(item: FindroidItem, widthPx: Int): String? {
     val uri = if (item is FindroidEpisode) item.images.showLogo else item.images.logo
-    return uri?.toString()?.withImageSize(widthPx, null)
+    return uri?.withImageSize(widthPx, null)
 }
 
 /**
