@@ -155,44 +155,49 @@ class ServerAwayReloadTest {
             assertEquals(2, calls.size)
         }
 
-    // Favorites. Their load hops to Dispatchers.Default, so the tests join the running load
-    // (loadItems hands it back) instead of only advancing the test dispatcher.
+    // Favorites. Their sections are sorted on the test dispatcher too, so runCurrent() finishes a
+    // load and nothing runs on a thread of its own.
 
     @Test
     fun `favorites load again when the server goes and once for the page's own load too`() =
         runTest(dispatcher) {
-            val viewModel = FavoritesViewModel(repository())
+            val viewModel = favorites()
             fromStore = false
             viewModel.onServerAwayChanged(false)
-            viewModel.loadItems().join()
+            viewModel.loadItems()
+            runCurrent()
             assertEquals(1, calls.size)
 
             // Back on the tab after the server went away: the change and the screen's load.
             fromStore = true
             viewModel.onServerAwayChanged(true)
-            viewModel.loadItems().join()
+            viewModel.loadItems()
+            runCurrent()
             assertEquals(2, calls.size)
         }
 
     @Test
     fun `favorites are downloads only after a load while away that succeeded`() =
         runTest(dispatcher) {
-            val viewModel = FavoritesViewModel(repository())
+            val viewModel = favorites()
             fromStore = false
             viewModel.onServerAwayChanged(false)
-            viewModel.loadItems().join()
+            viewModel.loadItems()
+            runCurrent()
             assertFalse(viewModel.state.value.downloadsOnly)
 
             fromStore = true
 
             viewModel.onServerAwayChanged(true)
-            viewModel.loadItems().join()
+            viewModel.loadItems()
+            runCurrent()
             assertTrue(viewModel.state.value.downloadsOnly)
 
             // Back online, the server's list again.
             fromStore = false
             viewModel.onServerAwayChanged(false)
-            viewModel.loadItems().join()
+            viewModel.loadItems()
+            runCurrent()
             assertFalse(viewModel.state.value.downloadsOnly)
         }
 
@@ -200,10 +205,11 @@ class ServerAwayReloadTest {
     fun `away with no favourites downloaded is an empty list, not an error`() =
         runTest(dispatcher) {
             // The repository answers the empty Room list while the server is away.
-            val viewModel = FavoritesViewModel(repository())
+            val viewModel = favorites()
             fromStore = true
             viewModel.onServerAwayChanged(true)
-            viewModel.loadItems().join()
+            viewModel.loadItems()
+            runCurrent()
 
             val state = viewModel.state.value
             assertTrue(state.sections.isEmpty())
@@ -215,16 +221,18 @@ class ServerAwayReloadTest {
     @Test
     fun `a failed reload while away keeps the list from the server for what it is`() =
         runTest(dispatcher) {
-            val viewModel = FavoritesViewModel(repository())
+            val viewModel = favorites()
             fromStore = false
             viewModel.onServerAwayChanged(false)
-            viewModel.loadItems().join()
+            viewModel.loadItems()
+            runCurrent()
 
             // Nothing downloaded: Room has nothing and the server's error comes through.
             fail = true
             fromStore = true
             viewModel.onServerAwayChanged(true)
-            viewModel.loadItems().join()
+            viewModel.loadItems()
+            runCurrent()
 
             assertFalse(viewModel.state.value.downloadsOnly)
             assertTrue(viewModel.state.value.error != null)
@@ -236,13 +244,15 @@ class ServerAwayReloadTest {
             // The reload for the server's return asked before the sync sent the favourite set
             // offline: the server had none yet.
             favoritesAnswers = ArrayDeque(listOf(emptyList(), listOf(dummyMovie)))
-            val viewModel = FavoritesViewModel(repository())
+            val viewModel = favorites()
             fromStore = false
             viewModel.onServerAwayChanged(false)
             viewModel.loadItems()
             runCurrent()
 
-            viewModel.onSynced().join()
+            viewModel.onSynced()
+
+            runCurrent()
 
             assertEquals(listOf("favorites", "favorites"), calls)
             val state = viewModel.state.value
@@ -255,7 +265,7 @@ class ServerAwayReloadTest {
     @Test
     fun `an older favourites load answering after a newer one changes nothing`() =
         runTest(dispatcher) {
-            val viewModel = FavoritesViewModel(repository())
+            val viewModel = favorites()
             fromStore = false
             viewModel.onServerAwayChanged(false)
             // Asked the server before it went away; its answer is slow.
@@ -266,7 +276,8 @@ class ServerAwayReloadTest {
             // The server goes away: the reload from Room answers at once, with nothing.
             fromStore = true
             viewModel.onServerAwayChanged(true)
-            viewModel.loadItems().join()
+            viewModel.loadItems()
+            runCurrent()
             assertTrue(viewModel.state.value.sections.isEmpty())
             assertTrue(viewModel.state.value.downloadsOnly)
 
@@ -370,12 +381,13 @@ class ServerAwayReloadTest {
     @Test
     fun `favourites from Room are downloads only before the outage is flagged`() =
         runTest(dispatcher) {
-            val viewModel = FavoritesViewModel(repository())
+            val viewModel = favorites()
             viewModel.onServerAwayChanged(false)
             // The request failed fast; reachability has not caught up yet.
             fromStore = true
             favoritesAnswers = ArrayDeque(listOf(listOf(dummyMovie)))
-            viewModel.loadItems().join()
+            viewModel.loadItems()
+            runCurrent()
 
             val state = viewModel.state.value
             assertEquals(listOf(dummyMovie.id), state.sections.flatMap { it.items }.map { it.id })
@@ -385,10 +397,11 @@ class ServerAwayReloadTest {
     @Test
     fun `no downloaded favourites from Room say so before the outage is flagged`() =
         runTest(dispatcher) {
-            val viewModel = FavoritesViewModel(repository())
+            val viewModel = favorites()
             viewModel.onServerAwayChanged(false)
             fromStore = true
-            viewModel.loadItems().join()
+            viewModel.loadItems()
+            runCurrent()
 
             val state = viewModel.state.value
             assertTrue(state.sections.isEmpty())
@@ -413,39 +426,108 @@ class ServerAwayReloadTest {
     @Test
     fun `favourites from Room ask once more when the server turns out to answer`() =
         runTest(dispatcher) {
-            val viewModel = FavoritesViewModel(repository())
+            val viewModel = favorites()
             viewModel.onServerAwayChanged(false)
             fromStore = true
-            viewModel.loadItems().join()
-
-            // The probe reached the server: reachability never flips.
-            fromStore = false
-            advanceTimeBy(ServerAwayReload.STORE_RETRY_DELAY_MS + 1)
+            viewModel.loadItems()
             runCurrent()
-            viewModel.loadItems().join()
 
+            assertEquals(listOf("favorites"), calls)
+
+            // The probe reached the server: reachability never flips. Not before the delay...
+            fromStore = false
+            advanceTimeBy(ServerAwayReload.STORE_RETRY_DELAY_MS - 1)
+            runCurrent()
+            assertEquals(listOf("favorites"), calls)
+
+            // ...and then by itself, with nothing else asking.
+            advanceTimeBy(2)
+            runCurrent()
             assertEquals(listOf("favorites", "favorites"), calls)
             assertFalse(viewModel.state.value.downloadsOnly)
+
             advanceTimeBy(10 * ServerAwayReload.STORE_RETRY_DELAY_MS)
+            runCurrent()
             assertEquals(2, calls.size)
         }
 
     @Test
     fun `the one more try is one`() =
         runTest(dispatcher) {
-            val viewModel = FavoritesViewModel(repository())
+            val viewModel = favorites()
             viewModel.onServerAwayChanged(false)
             // Every request fails fast and every probe answers: no loop.
             fromStore = true
-            viewModel.loadItems().join()
-            advanceTimeBy(ServerAwayReload.STORE_RETRY_DELAY_MS + 1)
+            viewModel.loadItems()
             runCurrent()
-            viewModel.loadItems().join()
             advanceTimeBy(10 * ServerAwayReload.STORE_RETRY_DELAY_MS)
             runCurrent()
 
             assertEquals(2, calls.size)
             assertTrue(viewModel.state.value.downloadsOnly)
+        }
+
+    @Test
+    fun `a load in the delay hands the try on, and one retry follows`() =
+        runTest(dispatcher) {
+            val viewModel = favorites()
+            viewModel.onServerAwayChanged(false)
+            fromStore = true
+            viewModel.loadItems()
+            runCurrent()
+
+            // A second load within the delay, from Room as well: the pending retry makes way.
+            advanceTimeBy(ServerAwayReload.STORE_RETRY_DELAY_MS / 2)
+            viewModel.onSynced()
+            runCurrent()
+            assertEquals(2, calls.size)
+
+            // Exactly one automatic retry follows, after the second load's delay, and no more.
+            advanceTimeBy(ServerAwayReload.STORE_RETRY_DELAY_MS - 1)
+            runCurrent()
+            assertEquals(2, calls.size)
+            advanceTimeBy(2)
+            runCurrent()
+            assertEquals(3, calls.size)
+            advanceTimeBy(10 * ServerAwayReload.STORE_RETRY_DELAY_MS)
+            runCurrent()
+            assertEquals(3, calls.size)
+        }
+
+    @Test
+    fun `a media load in the delay hands the try on too`() =
+        runTest(dispatcher) {
+            val viewModel = MediaViewModel(repository())
+            viewModel.onServerAwayChanged(false)
+            fromStore = true
+            viewModel.loadData()
+            runCurrent()
+            advanceTimeBy(ServerAwayReload.STORE_RETRY_DELAY_MS / 2)
+            // The user's Retry, answered from Room again.
+            viewModel.loadData()
+            runCurrent()
+
+            advanceTimeBy(10 * ServerAwayReload.STORE_RETRY_DELAY_MS)
+            runCurrent()
+
+            assertEquals(3, calls.size)
+        }
+
+    @Test
+    fun `a newer search in the delay hands the try on`() =
+        runTest(dispatcher) {
+            val viewModel = SearchViewModel(repository())
+            viewModel.onServerAwayChanged(false)
+            fromStore = true
+            viewModel.onAction(SearchAction.Search("blue"))
+            advanceTimeBy(SearchViewModel.SEARCH_DEBOUNCE_MS + 1)
+            runCurrent()
+            viewModel.onAction(SearchAction.Search("bluey"))
+            advanceTimeBy(10 * ServerAwayReload.STORE_RETRY_DELAY_MS)
+            runCurrent()
+
+            // The first search, the newer one, and the newer one's one retry.
+            assertEquals(listOf("blue", "bluey", "bluey"), calls)
         }
 
     @Test
@@ -491,8 +573,9 @@ class ServerAwayReloadTest {
     fun `a list from the server, as on TV, asks nothing more`() =
         runTest(dispatcher) {
             // TV reports no reachability and has no downloads: the server's answer or its error.
-            val viewModel = FavoritesViewModel(repository())
-            viewModel.loadItems().join()
+            val viewModel = favorites()
+            viewModel.loadItems()
+            runCurrent()
             advanceTimeBy(10 * ServerAwayReload.STORE_RETRY_DELAY_MS)
             runCurrent()
 
@@ -506,9 +589,10 @@ class ServerAwayReloadTest {
     fun `a sync missed in the background makes the next resume load once`() =
         runTest(dispatcher) {
             val dataChanges = DataChangeEvents()
-            val viewModel = FavoritesViewModel(repository(), dataChanges)
+            val viewModel = favorites(dataChanges)
             viewModel.onServerAwayChanged(false)
-            viewModel.loadItems().join()
+            viewModel.loadItems()
+            runCurrent()
             // A plain resume: nothing changed.
             assertFalse(viewModel.shouldReload())
 
@@ -516,7 +600,8 @@ class ServerAwayReloadTest {
             dataChanges.onSynced()
 
             assertTrue(viewModel.shouldReload())
-            viewModel.loadItems().join()
+            viewModel.loadItems()
+            runCurrent()
             assertEquals(2, calls.size)
             assertFalse(viewModel.shouldReload())
         }
@@ -525,17 +610,22 @@ class ServerAwayReloadTest {
     fun `a sync caught on screen leaves the next resume alone`() =
         runTest(dispatcher) {
             val dataChanges = DataChangeEvents()
-            val viewModel = FavoritesViewModel(repository(), dataChanges)
+            val viewModel = favorites(dataChanges)
             viewModel.onServerAwayChanged(false)
-            viewModel.loadItems().join()
+            viewModel.loadItems()
+            runCurrent()
 
             // ReloadAfterSync saw the event and loaded: the resume after it does not load again.
             dataChanges.onSynced()
-            viewModel.onSynced().join()
+            viewModel.onSynced()
+            runCurrent()
 
             assertEquals(2, calls.size)
             assertFalse(viewModel.shouldReload())
         }
+
+    private fun favorites(dataChanges: DataChangeEvents = DataChangeEvents()) =
+        FavoritesViewModel(repository(), dataChanges, dispatcher)
 
     private fun repository(): JellyfinRepository =
         Proxy.newProxyInstance(

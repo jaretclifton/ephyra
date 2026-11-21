@@ -17,6 +17,7 @@ import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.ReloadPolicy
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -28,11 +29,18 @@ import kotlinx.coroutines.withContext
 
 @HiltViewModel
 class FavoritesViewModel
-@Inject
-constructor(
+internal constructor(
     private val repository: JellyfinRepository,
-    dataChanges: DataChangeEvents = DataChangeEvents(),
+    dataChanges: DataChangeEvents,
+    /** CE (#779): where the sections are sorted out; the tests run it on their own dispatcher. */
+    private val sectionsDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
+    @Inject
+    constructor(
+        repository: JellyfinRepository,
+        dataChanges: DataChangeEvents = DataChangeEvents(),
+    ) : this(repository, dataChanges, Dispatchers.Default)
+
     private val _state = MutableStateFlow(CollectionState())
     val state = _state.asStateFlow()
 
@@ -77,6 +85,8 @@ constructor(
 
     private fun start(): Job {
         // CE (#779): a newer load stands in for the one more try after a stored answer.
+        // A pending one gives its try back: only a retry that ran counts.
+        storeRetryJob?.let { if (it.isActive) serverAwayReload.onStoreRetryCancelled() }
         storeRetryJob?.cancel()
         serverAwayReload.begin()
         return load().also { loadJob = it }
@@ -95,7 +105,7 @@ constructor(
 
             val sections = mutableListOf<CollectionSection>()
 
-            withContext(Dispatchers.Default) {
+            withContext(sectionsDispatcher) {
                 CollectionSection(
                         Constants.FAVORITE_TYPE_MOVIES,
                         UiText.StringResource(CoreR.string.movies_label),

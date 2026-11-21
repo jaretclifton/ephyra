@@ -77,7 +77,13 @@ class SearchViewModel @Inject constructor(private val repository: JellyfinReposi
                     // CE (#779): one more try when Room answered before the server was known to be
                     // away; the next keystroke or a change of state cancels it with this job.
                     if (!serverAwayReload.retriesAfterStore(result.fromStore)) break
-                    delay(ServerAwayReload.STORE_RETRY_DELAY_MS)
+                    try {
+                        delay(ServerAwayReload.STORE_RETRY_DELAY_MS)
+                    } catch (e: CancellationException) {
+                        // A newer search took its place before it ran: the try is still to come.
+                        serverAwayReload.onStoreRetryCancelled()
+                        throw e
+                    }
                 }
             } catch (_: CancellationException) {} catch (e: Exception) {
                 Timber.e(e)

@@ -57,6 +57,7 @@ constructor(
         replaced?.cancel()
         val quiet = silent && !(replaced != null && _state.value.isLoading)
         // CE (#779): a newer load stands in for the one more try after a stored answer.
+        storeRetryJob?.let { if (it.isActive) serverAwayReload.onStoreRetryCancelled() }
         storeRetryJob?.cancel()
         serverAwayReload.begin()
         loadJob = viewModelScope.launch {

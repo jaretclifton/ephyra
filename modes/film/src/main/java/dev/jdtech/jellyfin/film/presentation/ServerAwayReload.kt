@@ -46,7 +46,8 @@ class ServerAwayReload {
      * Room answers an unanswered request before the server is known to be away. Mostly the probe
      * that request started then says unreachable, and [onServerAway] reloads; but when the probe
      * reached the server nothing changes, and the stored list would stay as if it were the
-     * server's. One try per state, so a server that keeps failing requests is not asked in a loop.
+     * server's. One try that ran per state, so a server that keeps failing requests is not asked in
+     * a loop.
      */
     fun retriesAfterStore(fromStore: Boolean): Boolean {
         if (!fromStore) {
@@ -56,6 +57,14 @@ class ServerAwayReload {
         if (away == true || storeRetried) return false
         storeRetried = true
         return true
+    }
+
+    /**
+     * CE (#779): the retry granted by [retriesAfterStore] was cancelled before it ran (a newer load
+     * took its place), so the next stored answer may have it. Only a retry that ran uses it up.
+     */
+    fun onStoreRetryCancelled() {
+        storeRetried = false
     }
 
     companion object {
