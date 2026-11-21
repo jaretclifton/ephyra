@@ -34,7 +34,7 @@ and the download queue.
 ## The short version
 
 - The SDK is declared as a dependency by **9 of 10** library and app modules, and imported by
-  **85** production files, **56** of them outside `data`. Another **24** files outside `data` reach
+  **85** production files, **56** of them outside `data`. Another **25** files outside `data` reach
   the SDK through the `JellyfinApi` wrapper without importing an SDK type.
 - Three enums make up most of the leak outside `data`: `BaseItemKind` (23 files),
   `MediaStreamType` (10) and `PersonKind` (4). They are cheap to replace.
@@ -48,5 +48,5 @@ and the download queue.
 - Both engines already implement media3's `Player`. That interface stays the engine port; what is
   missing is a factory boundary and separate packages.
 - Enforcement lands first: an allowlist of modules that may declare the SDK (9 today, 1 at the
-  end) and frozen baselines of the files that import it (56 and 24 today, 0 at the end). Every
+  end) and frozen baselines of the files that import it (56 and 25 today, 0 at the end). Every
   cleanup PR shortens a list.

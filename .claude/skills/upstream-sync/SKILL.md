@@ -115,6 +115,8 @@ Summarise for the user: what came in, how conflicts were resolved, the checks, a
 - **No upstream tags.** Fetch upstream with `--no-tags` (the remote has `tagOpt = --no-tags`).
   Findroid's tags would clash with Ephyra's `vX.Y.Z` as soon as Findroid reaches 2.0.0.
 - `.claude/worktrees/` are scratch copies — ignore them when grepping the tree.
+- A sync that brings an `org.jellyfin.sdk` import into a file outside the adapter is fixed by
+  mapping the type, never by adding the file to a baseline in `architecture/baseline/`.
 - **CE-owned defaults** — keep these on the CE value when a merge touches them; upstream still
   ships the other value, so every sync re-presents it:
   - `AppPreferences.playerMpvAo` = `audiotrack` (upstream: `aaudio`). Reverting it reintroduces

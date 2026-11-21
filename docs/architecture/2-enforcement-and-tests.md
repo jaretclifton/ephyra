@@ -47,7 +47,7 @@ The rules, each with a baseline file of the current violations:
 | Rule | Baseline today | Ends at |
 |---|---|---|
 | R1. No production file outside the adapter mentions `org.jellyfin.sdk` | 56 files outside `data` | 0 |
-| R2. No production file outside the adapter imports `dev.jdtech.jellyfin.api.JellyfinApi` | 24 files | 0 |
+| R2. No production file outside the adapter imports `dev.jdtech.jellyfin.api.JellyfinApi` | 25 files | 0 |
 | R3. Only allowlisted modules declare `libs.jellyfin.core` | 9 modules | 1 |
 | R4. No file outside `data` imports `ServerDatabaseDao` | 22 files | frozen; not part of this migration |
 | R5. `domain` imports nothing from `android.`, `androidx.` (except `androidx.paging`), `org.jellyfin.sdk` | 0 | 0 |

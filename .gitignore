@@ -1,6 +1,8 @@
 # Gradle files
 .gradle/
 build/
+# The Kotlin Gradle plugin's session files (the kotlin-jvm plugin of the architecture module)
+.kotlin/
 
 # Local configuration file (sdk path, etc)
 local.properties
