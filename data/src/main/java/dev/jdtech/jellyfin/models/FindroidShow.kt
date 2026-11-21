@@ -3,8 +3,8 @@ package dev.jdtech.jellyfin.models
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import java.time.DayOfWeek
+import java.time.LocalDateTime
 import java.util.UUID
-import org.jellyfin.sdk.model.DateTime
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.PlayAccess
 
@@ -28,7 +28,7 @@ data class FindroidShow(
     val officialRating: String?,
     val status: String,
     val productionYear: Int?,
-    val endDate: DateTime?,
+    val endDate: LocalDateTime?,
     val trailer: String?,
     // CE (#332): what the item response already carries. Not stored offline, so empty there.
     /** Every remote trailer; [trailer] is the first. */
