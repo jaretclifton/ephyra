@@ -57,7 +57,17 @@ jobs:
     # previous beta already has all of it. The merge commit reads
     # "Merge pull request #N from midasvo/release/vX.Y.Z". The other jobs need this one, so they
     # are skipped with it.
-    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '/release/v')
+    #
+    # A refactoring changes nothing a beta user can see, and the move to ports and adapters (#733)
+    # is about forty of them: a merge of a `refactor/` branch publishes no beta, and neither does a
+    # merge commit whose message has `[skip beta]` (for a tests-only or CI-only pull request). The
+    # code is in the next beta that another pull request publishes, and in its release notes.
+    if: >-
+      github.event_name != 'push' || !(
+        contains(github.event.head_commit.message, '/release/v') ||
+        contains(github.event.head_commit.message, '/refactor/') ||
+        contains(github.event.head_commit.message, '[skip beta]')
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: read
