@@ -42,6 +42,7 @@ import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSeason
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSegment
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidShow
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSource
+import dev.jdtech.jellyfin.server.jellyfin.toResumeThresholds
 import dev.jdtech.jellyfin.server.jellyfin.toSdk
 import dev.jdtech.jellyfin.server.jellyfin.toSdkFilters
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -157,7 +158,7 @@ class JellyfinRepositoryImpl(
         if (resumeThresholds.isFresh(serverId)) return
         try {
             val configuration = jellyfinApi.systemApi.getConfiguration().content
-            resumeThresholds.put(serverId, ResumeThresholds.of(configuration))
+            resumeThresholds.put(serverId, configuration.toResumeThresholds())
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

@@ -1,6 +1,5 @@
 package dev.jdtech.jellyfin.models
 
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import java.util.UUID
 
 data class FindroidSeason(
@@ -23,27 +22,3 @@ data class FindroidSeason(
     override val images: FindroidImages,
     override val chapters: List<FindroidChapter> = emptyList(),
 ) : FindroidItem
-
-suspend fun FindroidSeasonDto.toFindroidSeason(
-    database: ServerDatabaseDao,
-    userId: UUID,
-): FindroidSeason {
-    val userData = database.getUserDataOrCreateNew(id, userId)
-    return FindroidSeason(
-        id = id,
-        name = name,
-        originalTitle = null,
-        overview = overview,
-        played = userData.played,
-        favorite = userData.favorite,
-        canPlay = true,
-        canDownload = false,
-        unplayedItemCount = null,
-        indexNumber = indexNumber,
-        sources = emptyList(),
-        episodes = emptyList(),
-        seriesId = seriesId,
-        seriesName = seriesName,
-        images = toLocalFindroidImages(itemId = id),
-    )
-}

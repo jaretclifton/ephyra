@@ -23,3 +23,7 @@ fun FindroidSegment.toFindroidSegmentsDto(itemId: UUID): FindroidSegmentDto {
         endTicks = endTicks,
     )
 }
+
+fun FindroidSegmentDto.toFindroidSegment(): FindroidSegment {
+    return FindroidSegment(type = type, startTicks = startTicks, endTicks = endTicks)
+}
