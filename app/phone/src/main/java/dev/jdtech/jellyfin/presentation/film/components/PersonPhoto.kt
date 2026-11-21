@@ -1,6 +1,5 @@
 package dev.jdtech.jellyfin.presentation.film.components
 
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -33,7 +32,7 @@ internal const val PersonPhotoPlaceholderTag = "person_photo_placeholder"
  */
 @Composable
 fun PersonPhoto(
-    uri: Uri?,
+    uri: String?,
     contentDescription: String?,
     modifier: Modifier = Modifier,
     iconSize: Dp = 48.dp,

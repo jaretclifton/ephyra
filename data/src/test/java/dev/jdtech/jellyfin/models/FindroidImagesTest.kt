@@ -14,7 +14,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-// Robolectric for android.net.Uri.
+// Robolectric for android.net.Uri, which the mapper builds the URLs with.
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class FindroidImagesTest {
@@ -46,26 +46,17 @@ class FindroidImagesTest {
     fun `episode of a series with backdrop and logo uses the series own tags`() {
         val images = dto(BaseItemKind.EPISODE, listOf("bd", "bd2"), "lg").toFindroidImages(base)
 
-        assertEquals(
-            Uri.parse("$base/items/$seriesId/Images/Backdrop/0?tag=bd"),
-            images.showBackdrop,
-        )
-        assertEquals(Uri.parse("$base/items/$seriesId/Images/Logo?tag=lg"), images.showLogo)
-        assertEquals(
-            Uri.parse("$base/items/$seriesId/Images/Primary?tag=poster"),
-            images.showPrimary,
-        )
+        assertEquals("$base/items/$seriesId/Images/Backdrop/0?tag=bd", images.showBackdrop)
+        assertEquals("$base/items/$seriesId/Images/Logo?tag=lg", images.showLogo)
+        assertEquals("$base/items/$seriesId/Images/Primary?tag=poster", images.showPrimary)
     }
 
     @Test
     fun `season of a series with backdrop and logo uses the series own tags`() {
         val images = dto(BaseItemKind.SEASON, listOf("bd"), "lg").toFindroidImages(base)
 
-        assertEquals(
-            Uri.parse("$base/items/$seriesId/Images/Backdrop/0?tag=bd"),
-            images.showBackdrop,
-        )
-        assertEquals(Uri.parse("$base/items/$seriesId/Images/Logo?tag=lg"), images.showLogo)
+        assertEquals("$base/items/$seriesId/Images/Backdrop/0?tag=bd", images.showBackdrop)
+        assertEquals("$base/items/$seriesId/Images/Logo?tag=lg", images.showLogo)
     }
 
     @Test
@@ -74,11 +65,8 @@ class FindroidImagesTest {
 
         assertNull(images.showBackdrop)
         assertNull(images.showLogo)
-        assertEquals(
-            Uri.parse("$base/items/$seriesId/Images/Primary?tag=poster"),
-            images.showPrimary,
-        )
-        assertEquals(Uri.parse("$base/items/$episodeId/Images/Primary?tag=own"), images.primary)
+        assertEquals("$base/items/$seriesId/Images/Primary?tag=poster", images.showPrimary)
+        assertEquals("$base/items/$episodeId/Images/Primary?tag=own", images.primary)
     }
 
     @Test
@@ -101,11 +89,8 @@ class FindroidImagesTest {
                 )
                 .toFindroidImages(base)
 
-        assertEquals(
-            Uri.parse("$base/items/$otherId/Images/Backdrop/0?tag=bd"),
-            images.showBackdrop,
-        )
-        assertEquals(Uri.parse("$base/items/$otherId/Images/Logo?tag=lg"), images.showLogo)
+        assertEquals("$base/items/$otherId/Images/Backdrop/0?tag=bd", images.showBackdrop)
+        assertEquals("$base/items/$otherId/Images/Logo?tag=lg", images.showLogo)
     }
 
     // #608
@@ -113,7 +98,7 @@ class FindroidImagesTest {
     fun `an episode names its series thumb, a movie its own`() {
         val episode =
             dto(BaseItemKind.EPISODE).copy(seriesThumbImageTag = "th").toFindroidImages(base)
-        assertEquals(Uri.parse("$base/items/$seriesId/Images/Thumb?tag=th"), episode.showThumb)
+        assertEquals("$base/items/$seriesId/Images/Thumb?tag=th", episode.showThumb)
         assertNull(episode.thumb)
 
         val movie =
@@ -123,7 +108,7 @@ class FindroidImagesTest {
                     imageTags = mapOf(ImageType.THUMB to "mt"),
                 )
                 .toFindroidImages(base)
-        assertEquals(Uri.parse("$base/items/$otherId/Images/Thumb?tag=mt"), movie.thumb)
+        assertEquals("$base/items/$otherId/Images/Thumb?tag=mt", movie.thumb)
         assertNull(movie.showThumb)
     }
 
@@ -133,7 +118,7 @@ class FindroidImagesTest {
             dto(BaseItemKind.SEASON)
                 .copy(parentThumbImageTag = "pt", parentThumbItemId = otherId)
                 .toFindroidImages(base)
-        assertEquals(Uri.parse("$base/items/$otherId/Images/Thumb?tag=pt"), images.showThumb)
+        assertEquals("$base/items/$otherId/Images/Thumb?tag=pt", images.showThumb)
     }
 
     @Test
@@ -142,4 +127,40 @@ class FindroidImagesTest {
         assertNull(images.thumb)
         assertNull(images.showThumb)
     }
+
+    // #754: the stored images of a download are the strings the Uri they replaced printed.
+    @Test
+    fun `a downloaded movie's images are the paths the Uri builder gave`() {
+        val images =
+            FindroidMovieDto(
+                    id = episodeId,
+                    serverId = null,
+                    name = "Movie",
+                    originalTitle = null,
+                    overview = "",
+                    runtimeTicks = 0L,
+                    premiereDate = null,
+                    communityRating = null,
+                    officialRating = null,
+                    status = "",
+                    productionYear = null,
+                    endDate = null,
+                    chapters = null,
+                )
+                .toLocalFindroidImages(episodeId)
+
+        assertEquals("/images/$episodeId/primary", images.primary)
+        assertEquals(oldLocalUri("images/$episodeId/primary"), images.primary)
+        assertEquals(oldLocalUri("images/$episodeId/backdrop"), images.backdrop)
+        assertNull(images.logo)
+    }
+
+    @Test
+    fun `a downloaded episode names its show's images by the series id`() {
+        assertEquals(oldLocalUri("images/$seriesId/primary"), localImagePath(seriesId, "primary"))
+        assertEquals(oldLocalUri("images/$seriesId/backdrop"), localImagePath(seriesId, "backdrop"))
+    }
+
+    /** How the local images were built before #754. */
+    private fun oldLocalUri(path: String) = Uri.Builder().appendEncodedPath(path).build().toString()
 }

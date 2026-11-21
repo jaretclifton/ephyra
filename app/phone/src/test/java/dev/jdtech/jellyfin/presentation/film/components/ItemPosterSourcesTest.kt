@@ -1,7 +1,6 @@
 package dev.jdtech.jellyfin.presentation.film.components
 
 import android.app.Application
-import android.net.Uri
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.models.FindroidImages
@@ -18,12 +17,12 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class ItemPosterSourcesTest {
-    private val still = Uri.parse("https://server/still")
-    private val poster = Uri.parse("https://server/poster")
-    private val backdrop = Uri.parse("https://server/backdrop")
-    private val thumb = Uri.parse("https://server/thumb")
-    private val showBackdrop = Uri.parse("https://server/show-backdrop")
-    private val showThumb = Uri.parse("https://server/show-thumb")
+    private val still = "https://server/still"
+    private val poster = "https://server/poster"
+    private val backdrop = "https://server/backdrop"
+    private val thumb = "https://server/thumb"
+    private val showBackdrop = "https://server/show-backdrop"
+    private val showThumb = "https://server/show-thumb"
 
     private val episode =
         dummyEpisode.copy(

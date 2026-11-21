@@ -1,7 +1,6 @@
 package dev.jdtech.jellyfin.ui.components
 
 import android.app.Application
-import android.net.Uri
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.core.presentation.dummy.dummySeason
@@ -17,9 +16,9 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class PosterSourcesTest {
-    private val own = Uri.parse("https://demo.example/items/season/Images/Primary?tag=s")
-    private val show = Uri.parse("https://demo.example/items/show/Images/Primary?tag=p")
-    private val backdrop = Uri.parse("https://demo.example/items/movie/Images/Backdrop/0?tag=b")
+    private val own = "https://demo.example/items/season/Images/Primary?tag=s"
+    private val show = "https://demo.example/items/show/Images/Primary?tag=p"
+    private val backdrop = "https://demo.example/items/movie/Images/Backdrop/0?tag=b"
 
     @Test
     fun `a season without a poster uses the show's`() {
@@ -36,7 +35,7 @@ class PosterSourcesTest {
     @Test
     fun `a season of a show without a poster has nothing to show`() {
         val season = dummySeason.copy(images = FindroidImages())
-        assertEquals(emptyList<Uri>(), posterSources(season, Direction.VERTICAL))
+        assertEquals(emptyList<String>(), posterSources(season, Direction.VERTICAL))
     }
 
     @Test
@@ -67,8 +66,8 @@ class PosterSourcesTest {
     // #608: the Continue Watching and Next Up rows.
     @Test
     fun `a card that prefers the thumb tries title art before the episode's frame`() {
-        val thumb = Uri.parse("https://demo.example/items/show/Images/Thumb?tag=t")
-        val showBackdrop = Uri.parse("https://demo.example/items/show/Images/Backdrop/0?tag=b")
+        val thumb = "https://demo.example/items/show/Images/Thumb?tag=t"
+        val showBackdrop = "https://demo.example/items/show/Images/Backdrop/0?tag=b"
         val episode =
             dummyEpisode.copy(
                 images =
@@ -92,7 +91,7 @@ class PosterSourcesTest {
 
     @Test
     fun `without a thumb the card falls back to the backdrop, then the episode's image`() {
-        val showBackdrop = Uri.parse("https://demo.example/items/show/Images/Backdrop/0?tag=b")
+        val showBackdrop = "https://demo.example/items/show/Images/Backdrop/0?tag=b"
         val episode =
             dummyEpisode.copy(images = FindroidImages(primary = own, showBackdrop = showBackdrop))
         assertEquals(

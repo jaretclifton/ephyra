@@ -98,7 +98,7 @@ class PersonItemTest {
 
     @Test
     fun `a photo that fails to load gives way to the person icon`() {
-        show(person = withPhoto(Uri.fromFile(File("/does/not/exist.jpg"))))
+        show(person = withPhoto(Uri.fromFile(File("/does/not/exist.jpg")).toString()))
 
         rule.waitUntil(timeoutMillis = 5_000) {
             rule
@@ -108,7 +108,7 @@ class PersonItemTest {
         }
     }
 
-    private fun withPhoto(uri: Uri?) =
+    private fun withPhoto(uri: String?) =
         dummyPerson.copy(image = FindroidItemPersonImage(uri = uri, blurHash = null))
 
     private fun show(person: FindroidItemPerson = dummyPerson, enabled: Boolean = true) {

@@ -1,6 +1,5 @@
 package dev.jdtech.jellyfin.ui.components
 
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -115,7 +114,7 @@ internal fun posterSources(
     direction: Direction,
     preferThumb: Boolean = false,
     hideStill: Boolean = false,
-): List<Uri> =
+): List<String> =
     when (direction) {
         Direction.HORIZONTAL ->
             when (item) {

@@ -1,6 +1,6 @@
 package dev.jdtech.jellyfin.ce.watchnext
 
-import android.net.Uri
+import androidx.core.net.toUri
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
@@ -78,8 +78,9 @@ fun FindroidItem.toWatchNextEntry(
  * The launcher downloads the artwork itself, at a card's size. Asking the server for a small copy
  * saves the box from downloading and scaling full-size backdrops.
  */
-private fun Uri.sized(portrait: Boolean): String =
-    buildUpon()
+private fun String.sized(portrait: Boolean): String =
+    toUri()
+        .buildUpon()
         .appendQueryParameter(if (portrait) "fillHeight" else "fillWidth", ARTWORK_SIZE.toString())
         .appendQueryParameter("quality", ARTWORK_QUALITY.toString())
         .build()

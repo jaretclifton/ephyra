@@ -1,9 +1,8 @@
 package dev.jdtech.jellyfin.models
 
-import android.net.Uri
 import java.util.UUID
 
-data class FindroidItemPersonImage(val uri: Uri?, val blurHash: String?)
+data class FindroidItemPersonImage(val uri: String?, val blurHash: String?)
 
 data class FindroidItemPerson(
     val id: UUID,

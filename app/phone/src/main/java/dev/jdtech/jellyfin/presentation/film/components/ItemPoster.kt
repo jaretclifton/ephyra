@@ -1,6 +1,5 @@
 package dev.jdtech.jellyfin.presentation.film.components
 
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.material3.MaterialTheme
@@ -67,7 +66,7 @@ internal fun posterSources(
     direction: Direction,
     preferThumb: Boolean = false,
     hideStill: Boolean = false,
-): List<Uri?> =
+): List<String?> =
     when (direction) {
         Direction.HORIZONTAL ->
             when (item) {

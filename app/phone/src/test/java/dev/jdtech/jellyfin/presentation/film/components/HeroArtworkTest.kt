@@ -1,7 +1,6 @@
 package dev.jdtech.jellyfin.presentation.film.components
 
 import android.app.Application
-import android.net.Uri
 import androidx.compose.ui.unit.dp
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
@@ -23,11 +22,11 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class HeroArtworkTest {
-    private val backdrop = Uri.parse("https://server/backdrop")
-    private val poster = Uri.parse("https://server/poster")
-    private val showBackdrop = Uri.parse("https://server/show-backdrop")
-    private val showPoster = Uri.parse("https://server/show-poster")
-    private val still = Uri.parse("https://server/still")
+    private val backdrop = "https://server/backdrop"
+    private val poster = "https://server/poster"
+    private val showBackdrop = "https://server/show-backdrop"
+    private val showPoster = "https://server/show-poster"
+    private val still = "https://server/still"
 
     @Test
     fun `a movie with a backdrop shows it, then its poster`() {

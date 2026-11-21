@@ -1,6 +1,5 @@
 package dev.jdtech.jellyfin.repository
 
-import android.net.Uri
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.CollectionType
 import dev.jdtech.jellyfin.models.FindroidCollection
@@ -15,6 +14,7 @@ import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
+import dev.jdtech.jellyfin.models.localImagePath
 import dev.jdtech.jellyfin.models.toFindroidEpisode
 import dev.jdtech.jellyfin.models.toFindroidMovie
 import dev.jdtech.jellyfin.models.toFindroidShow
@@ -103,11 +103,11 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
         fun artwork(ids: List<UUID>): FindroidImages {
             val newestFirst = ids.sortedByDescending { downloaded[it] ?: Long.MIN_VALUE }
             val image = STORED_IMAGES.firstNotNullOfOrNull { image ->
-                newestFirst.firstOrNull { storedImage(it, image) }?.let { "images/$it/$image" }
+                newestFirst
+                    .firstOrNull { storedImage(it, image) }
+                    ?.let { localImagePath(it, image) }
             }
-            return FindroidImages(
-                primary = image?.let { Uri.Builder().appendEncodedPath(it).build() }
-            )
+            return FindroidImages(primary = image)
         }
         return buildList {
             if (movies.isNotEmpty()) {
