@@ -29,7 +29,7 @@ import dev.jdtech.jellyfin.core.Constants
 import dev.jdtech.jellyfin.isControlsLocked
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerChapter
 import dev.jdtech.jellyfin.player.core.domain.models.Trickplay
-import dev.jdtech.jellyfin.player.local.mpv.MPVPlayer
+import dev.jdtech.jellyfin.player.local.engine.mpv.MPVPlayer
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import kotlin.math.abs
 import kotlinx.coroutines.Dispatchers

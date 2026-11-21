@@ -53,7 +53,9 @@ import dev.jdtech.jellyfin.player.core.domain.models.Trickplay
 import dev.jdtech.jellyfin.player.local.PlaybackService
 import dev.jdtech.jellyfin.player.local.PlaybackSessionStore
 import dev.jdtech.jellyfin.player.local.R
-import dev.jdtech.jellyfin.player.local.domain.AudioDecoderFallback
+import dev.jdtech.jellyfin.player.local.engine.exo.AudioDecoderFallback
+import dev.jdtech.jellyfin.player.local.engine.exo.SubtitleDelayMediaSource
+import dev.jdtech.jellyfin.player.local.engine.exo.SubtitleOffsetRenderer
 import dev.jdtech.jellyfin.player.local.domain.AutoSyncSubtitleCueParser
 import dev.jdtech.jellyfin.player.local.domain.DebugSegments
 import dev.jdtech.jellyfin.player.local.domain.DisplayRefreshRateManager
@@ -81,7 +83,7 @@ import dev.jdtech.jellyfin.player.local.domain.TrickplayTiles
 import dev.jdtech.jellyfin.player.local.domain.UpNextCountdown
 import dev.jdtech.jellyfin.player.local.domain.UpNextDecision
 import dev.jdtech.jellyfin.player.local.domain.autoPlayNextFollowsServer
-import dev.jdtech.jellyfin.player.local.domain.buildMediaSourceFactory
+import dev.jdtech.jellyfin.player.local.engine.exo.buildMediaSourceFactory
 import dev.jdtech.jellyfin.player.local.domain.getTrackNames
 import dev.jdtech.jellyfin.player.local.domain.isNewEndOfItem
 import dev.jdtech.jellyfin.player.local.domain.matchSeriesTrack
@@ -91,9 +93,9 @@ import dev.jdtech.jellyfin.player.local.domain.resolveAutoPlayNext
 import dev.jdtech.jellyfin.player.local.domain.seriesTrackChoice
 import dev.jdtech.jellyfin.player.local.domain.toTrackPick
 import dev.jdtech.jellyfin.player.local.domain.trackPreferenceKey
-import dev.jdtech.jellyfin.player.local.mpv.MPVPlayer
-import dev.jdtech.jellyfin.player.local.mpv.mpvSubtitleOptionChanges
-import dev.jdtech.jellyfin.player.local.mpv.mpvSubtitleOptions
+import dev.jdtech.jellyfin.player.local.engine.mpv.MPVPlayer
+import dev.jdtech.jellyfin.player.local.engine.mpv.mpvSubtitleOptionChanges
+import dev.jdtech.jellyfin.player.local.engine.mpv.mpvSubtitleOptions
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
