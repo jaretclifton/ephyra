@@ -1,6 +1,5 @@
 package dev.jdtech.jellyfin.models
 
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -38,51 +37,3 @@ data class FindroidEpisode(
     override val chapters: List<FindroidChapter>,
     override val trickplayInfo: Map<String, FindroidTrickplayInfo>?,
 ) : FindroidItem, FindroidSources
-
-suspend fun FindroidEpisodeDto.toFindroidEpisode(
-    database: ServerDatabaseDao,
-    userId: UUID,
-): FindroidEpisode =
-    toFindroidEpisode(database, userId, database.getLocalSourcesForItems(listOf(id)))
-
-/** For lists: [localSources] comes from one [getLocalSourcesForItems] call for all items. */
-suspend fun FindroidEpisodeDto.toFindroidEpisode(
-    database: ServerDatabaseDao,
-    userId: UUID,
-    localSources: Map<UUID, List<FindroidSource>>,
-): FindroidEpisode {
-    val userData = database.getUserDataOrCreateNew(id, userId)
-    val sources = localSources[id].orEmpty()
-    val trickplayInfos = mutableMapOf<String, FindroidTrickplayInfo>()
-    for (source in sources) {
-        database.getTrickplayInfo(source.id)?.toFindroidTrickplayInfo()?.let {
-            trickplayInfos[source.id] = it
-        }
-    }
-    return FindroidEpisode(
-        id = id,
-        name = name,
-        originalTitle = "",
-        overview = overview,
-        indexNumber = indexNumber,
-        indexNumberEnd = indexNumberEnd,
-        parentIndexNumber = parentIndexNumber,
-        sources = sources,
-        played = userData.played,
-        favorite = userData.favorite,
-        canPlay = true,
-        canDownload = false,
-        runtimeTicks = runtimeTicks,
-        playbackPositionTicks = userData.playbackPositionTicks,
-        premiereDate = premiereDate,
-        seriesId = seriesId,
-        seriesName = seriesName,
-        seasonId = seasonId,
-        seasonName = null,
-        communityRating = communityRating,
-        people = emptyList(),
-        images = toLocalFindroidImages(itemId = id),
-        chapters = chapters ?: emptyList(),
-        trickplayInfo = trickplayInfos,
-    )
-}

@@ -33,21 +33,3 @@ data class FindroidMediaStream(
     val isForced: Boolean = false,
     val isDefault: Boolean = false,
 )
-
-fun FindroidMediaStreamDto.toFindroidMediaStream(): FindroidMediaStream {
-    return FindroidMediaStream(
-        title = title,
-        displayTitle = displayTitle,
-        language = language,
-        type = type,
-        codec = codec,
-        profile = profile,
-        isExternal = isExternal,
-        path = path,
-        channelLayout = channelLayout,
-        videoRangeType = VideoRangeType.fromNameOrNull(videoRangeType ?: ""),
-        height = height,
-        width = width,
-        videoDoViTitle = videoDoViTitle,
-    )
-}

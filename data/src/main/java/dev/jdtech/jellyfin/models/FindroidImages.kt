@@ -26,35 +26,3 @@ data class FindroidImages(
  * which is how the screens and the player tell it from a server URL.
  */
 fun localImagePath(itemId: UUID, image: String): String = "/images/$itemId/$image"
-
-fun FindroidMovieDto.toLocalFindroidImages(itemId: UUID): FindroidImages {
-    return FindroidImages(
-        primary = localImagePath(itemId, "primary"),
-        backdrop = localImagePath(itemId, "backdrop"),
-    )
-}
-
-fun FindroidShowDto.toLocalFindroidImages(itemId: UUID): FindroidImages {
-    return FindroidImages(
-        primary = localImagePath(itemId, "primary"),
-        backdrop = localImagePath(itemId, "backdrop"),
-    )
-}
-
-fun FindroidSeasonDto.toLocalFindroidImages(itemId: UUID): FindroidImages {
-    return FindroidImages(
-        primary = localImagePath(itemId, "primary"),
-        backdrop = localImagePath(itemId, "backdrop"),
-        showPrimary = localImagePath(seriesId, "primary"),
-        showBackdrop = localImagePath(seriesId, "backdrop"),
-    )
-}
-
-fun FindroidEpisodeDto.toLocalFindroidImages(itemId: UUID): FindroidImages {
-    return FindroidImages(
-        primary = localImagePath(itemId, "primary"),
-        backdrop = localImagePath(itemId, "backdrop"),
-        showPrimary = localImagePath(seriesId, "primary"),
-        showBackdrop = localImagePath(seriesId, "backdrop"),
-    )
-}

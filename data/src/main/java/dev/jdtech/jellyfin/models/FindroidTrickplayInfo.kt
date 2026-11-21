@@ -9,15 +9,3 @@ data class FindroidTrickplayInfo(
     val interval: Int,
     val bandwidth: Int,
 )
-
-fun FindroidTrickplayInfoDto.toFindroidTrickplayInfo(): FindroidTrickplayInfo {
-    return FindroidTrickplayInfo(
-        width = width,
-        height = height,
-        tileWidth = tileWidth,
-        tileHeight = tileHeight,
-        thumbnailCount = thumbnailCount,
-        interval = interval,
-        bandwidth = bandwidth,
-    )
-}
