@@ -1,119 +1,545 @@
 {
-  "Name": "The Test Episode",
-  "OriginalTitle": "Episode Original",
-  "Id": "aaaaaaaa-0000-0000-0000-000000000002",
+  "Name": "Pilot",
+  "ServerId": "a6ee16b34eb941e0bd5e81a3cef8d2d5",
+  "Id": "4e38ea743dcd92307b5a9b05e5d57312",
+  "Etag": "cdb041431deafe57d79eabe39a12ca46",
+  "DateCreated": "2026-11-11T08:30:00.7036054Z",
+  "CanDelete": false,
   "CanDownload": true,
-  "PremiereDate": "2022-09-30T00:00:00.0000000Z",
-  "CommunityRating": 8.2,
-  "RunTimeTicks": 27000000000,
-  "ProductionYear": 2022,
-  "IndexNumber": 4,
-  "IndexNumberEnd": 5,
-  "ParentIndexNumber": 2,
-  "Type": "Episode",
-  "Overview": "The fourth and fifth episode of the second season.",
-  "PlayAccess": "Full",
-  "ProviderIds": {
-    "Tvdb": "55",
-    "Imdb": "tt0000002"
-  },
-  "ExternalUrls": [],
-  "People": [
+  "Container": "mkv",
+  "SortName": "001 - 0001 - Pilot",
+  "PremiereDate": "2008-01-20T00:00:00.0000000Z",
+  "ExternalUrls": [
     {
-      "Name": "Gil Guest",
-      "Id": "cccccccc-0000-0000-0000-000000000003",
-      "Role": "Himself",
-      "Type": "GuestStar"
+      "Name": "IMDb",
+      "Url": "https://www.imdb.com/title/tt0959621"
+    },
+    {
+      "Name": "TMDB",
+      "Url": "https://www.themoviedb.org/tv/1396/season/1/episode/1"
     }
   ],
-  "UserData": {
-    "PlaybackPositionTicks": 9000000000,
-    "PlayCount": 1,
-    "IsFavorite": false,
-    "LastPlayedDate": "2024-04-02T19:00:00.0000000Z",
-    "Played": false,
-    "Key": "55",
-    "ItemId": "aaaaaaaa-0000-0000-0000-000000000002"
-  },
-  "SeriesName": "The Test Show",
-  "SeriesId": "aaaaaaaa-0000-0000-0000-000000000003",
-  "SeasonId": "aaaaaaaa-0000-0000-0000-000000000004",
-  "SeasonName": "Season 2",
-  "SeriesPrimaryImageTag": "showptag",
-  "ParentBackdropItemId": "aaaaaaaa-0000-0000-0000-000000000003",
-  "ParentBackdropImageTags": [
-    "showbd"
-  ],
-  "ParentLogoItemId": "aaaaaaaa-0000-0000-0000-000000000003",
-  "ParentLogoImageTag": "showlogo",
-  "SeriesThumbImageTag": "showthumb",
-  "ImageTags": {
-    "Primary": "eptag",
-    "Thumb": "epthumb"
-  },
-  "Chapters": [
-    {
-      "StartPositionTicks": 0,
-      "Name": "Chapter 1",
-      "ImageDateModified": "0001-01-01T00:00:00.0000000Z"
-    }
-  ],
-  "LocationType": "FileSystem",
   "MediaSources": [
     {
       "Protocol": "File",
-      "Id": "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0c1",
-      "Path": "/media/tv/The Test Show/S02E04.mkv",
+      "Id": "4e38ea743dcd92307b5a9b05e5d57312",
+      "Path": "/media/shows-meta/Breaking Bad (2008)/Season 01/Breaking Bad (2008) - S01E1.mkv",
       "Type": "Default",
       "Container": "mkv",
-      "Size": 1073741824,
-      "Name": "S02E04",
+      "Size": 6423959,
+      "Name": "Breaking Bad (2008) - S01E1",
       "IsRemote": false,
+      "ETag": "7383e516cba05b4abcf3b36f4763ec68",
+      "RunTimeTicks": 1200230000,
+      "ReadAtNativeFramerate": false,
+      "IgnoreDts": false,
+      "IgnoreIndex": false,
+      "GenPtsInput": false,
       "SupportsTranscoding": true,
       "SupportsDirectStream": true,
       "SupportsDirectPlay": true,
+      "IsInfiniteStream": false,
+      "UseMostCompatibleTranscodingProfile": false,
+      "RequiresOpening": false,
+      "RequiresClosing": false,
+      "RequiresLooping": false,
+      "SupportsProbing": true,
+      "VideoType": "VideoFile",
       "MediaStreams": [
         {
           "Codec": "h264",
-          "Type": "Video",
-          "Index": 0,
-          "Height": 720,
-          "Width": 1280,
+          "TimeBase": "1/1000",
+          "VideoRange": "SDR",
           "VideoRangeType": "SDR",
-          "IsDefault": true,
+          "AudioSpatialFormat": "None",
+          "DisplayTitle": "360p H264 SDR",
+          "NalLengthSize": "4",
           "IsInterlaced": false,
+          "IsAVC": true,
+          "BitRate": 236181,
+          "BitDepth": 8,
+          "RefFrames": 1,
+          "IsDefault": false,
           "IsForced": false,
           "IsHearingImpaired": false,
           "IsOriginal": false,
+          "Height": 360,
+          "Width": 640,
+          "AverageFrameRate": 24,
+          "RealFrameRate": 24,
+          "ReferenceFrameRate": 24,
+          "Profile": "High",
+          "Type": "Video",
+          "AspectRatio": "16:9",
+          "Index": 0,
+          "IsExternal": false,
+          "IsTextSubtitleStream": false,
+          "SupportsExternalStream": false,
+          "PixelFormat": "yuv420p",
+          "Level": 30,
+          "IsAnamorphic": false
+        },
+        {
+          "Codec": "aac",
+          "TimeBase": "1/1000",
+          "VideoRange": "Unknown",
+          "VideoRangeType": "Unknown",
+          "AudioSpatialFormat": "None",
+          "LocalizedDefault": "Default",
+          "LocalizedExternal": "External",
+          "LocalizedOriginal": "Original",
+          "DisplayTitle": "AAC - Mono",
+          "IsInterlaced": false,
+          "ChannelLayout": "mono",
+          "BitRate": 192000,
+          "Channels": 1,
+          "SampleRate": 44100,
+          "IsDefault": false,
+          "IsForced": false,
+          "IsHearingImpaired": false,
+          "IsOriginal": false,
+          "Profile": "LC",
+          "Type": "Audio",
+          "Index": 1,
           "IsExternal": false,
           "IsTextSubtitleStream": false,
           "SupportsExternalStream": false
         }
       ],
-      "ReadAtNativeFramerate": false,
-      "IgnoreDts": false,
-      "IgnoreIndex": false,
-      "GenPtsInput": false,
-      "IsInfiniteStream": false,
-      "RequiresOpening": false,
-      "RequiresClosing": false,
-      "RequiresLooping": false,
-      "SupportsProbing": true,
+      "MediaAttachments": [],
+      "Formats": [],
+      "Bitrate": 428181,
+      "RequiredHttpHeaders": {},
       "TranscodingSubProtocol": "http",
+      "DefaultAudioStreamIndex": 1,
       "HasSegments": false
     }
   ],
-  "Trickplay": {
-    "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0c1": {
-      "320": {
-        "Width": 320,
-        "Height": 180,
-        "TileWidth": 10,
-        "TileHeight": 10,
-        "ThumbnailCount": 270,
-        "Interval": 10000,
-        "Bandwidth": 200000
+  "Path": "/media/shows-meta/Breaking Bad (2008)/Season 01/Breaking Bad (2008) - S01E1.mkv",
+  "EnableMediaSourceDisplay": true,
+  "OfficialRating": "TV-MA",
+  "ChannelId": null,
+  "Overview": "When an unassuming high school chemistry teacher discovers he has a rare form of lung cancer, he decides to team up with a former student and create a top of the line crystal meth in a used RV, to provide for his family once he is gone.",
+  "Taglines": [],
+  "Genres": [
+    "Crime",
+    "Drama",
+    "Thriller"
+  ],
+  "CommunityRating": 8.497,
+  "RunTimeTicks": 1200230000,
+  "PlayAccess": "Full",
+  "ProductionYear": 2008,
+  "IndexNumber": 1,
+  "ParentIndexNumber": 1,
+  "RemoteTrailers": [
+    {
+      "Url": "https://www.youtube.com/watch?v=yAAphfWE3Vs"
+    }
+  ],
+  "ProviderIds": {
+    "Imdb": "tt0959621",
+    "Tmdb": "62085",
+    "TvRage": "637041",
+    "Tvdb": "349232"
+  },
+  "IsFolder": false,
+  "ParentId": "8a277688abfa96c7e4cace0d9435e3a5",
+  "Type": "Episode",
+  "People": [
+    {
+      "Name": "Bryan Cranston",
+      "Id": "2b105a4e9b3e22966ff094ee544581be",
+      "Role": "Walter White",
+      "Type": "Actor",
+      "PrimaryImageTag": "bc6478df8ed86888ec6f396c847f39b2",
+      "ImageBlurHashes": {
+        "Primary": {
+          "bc6478df8ed86888ec6f396c847f39b2": "dI9@SE%M0KIU#%n$OZS5ENR*xCt6E1WC%Ls:M_axxbkD"
+        }
+      }
+    },
+    {
+      "Name": "Aaron Paul",
+      "Id": "066de5f447b7bdef2b6f01339dd5f38b",
+      "Role": "Jesse Pinkman",
+      "Type": "Actor",
+      "PrimaryImageTag": "86c63330492d64781ed635af5bb9dd17",
+      "ImageBlurHashes": {
+        "Primary": {
+          "86c63330492d64781ed635af5bb9dd17": "dVF4l@=|0#9u^QxaNHNGEMNHsms:EMNHofs:EMR*$*s:"
+        }
+      }
+    },
+    {
+      "Name": "Anna Gunn",
+      "Id": "e45fd53ea1ab52c4da78be255a744c38",
+      "Role": "Skyler White",
+      "Type": "Actor",
+      "PrimaryImageTag": "3c3dbb2d2d27b0c908e9ba699696e3b1",
+      "ImageBlurHashes": {
+        "Primary": {
+          "3c3dbb2d2d27b0c908e9ba699696e3b1": "dlN]qb-p?v?b~qRjXnozcFs:r=t7tRf,xat7%gbbRkt6"
+        }
+      }
+    },
+    {
+      "Name": "RJ Mitte",
+      "Id": "35d51118e960a90f9924fe4ca7c8c138",
+      "Role": "Walter White Jr.",
+      "Type": "Actor",
+      "PrimaryImageTag": "ce5af31ec0cd5dc14612c29088ff5277",
+      "ImageBlurHashes": {
+        "Primary": {
+          "ce5af31ec0cd5dc14612c29088ff5277": "dgIha4M|%~%g~qoftRtRJ8xuwcoz.8flxuxu%NWBo0of"
+        }
+      }
+    },
+    {
+      "Name": "Dean Norris",
+      "Id": "0b7c36038d34556440de095e2af58357",
+      "Role": "Hank Schrader",
+      "Type": "Actor",
+      "PrimaryImageTag": "5e02dd2d0d1afa2276bb536c90448474",
+      "ImageBlurHashes": {
+        "Primary": {
+          "5e02dd2d0d1afa2276bb536c90448474": "djH1iKxa0ebb+@s:T0W;Ndoft6WBNyRjn$t7M_R*ogV@"
+        }
+      }
+    },
+    {
+      "Name": "Betsy Brandt",
+      "Id": "e90475c8744d2c60d4d85d580c27734a",
+      "Role": "Marie Schrader",
+      "Type": "Actor",
+      "PrimaryImageTag": "d8994cbb7646665f6e7377d1b79aa547",
+      "ImageBlurHashes": {
+        "Primary": {
+          "d8994cbb7646665f6e7377d1b79aa547": "dZCrs9s:0fRkxtj[Rkay9uWV-VofNHays:j[NGayxaof"
+        }
+      }
+    },
+    {
+      "Name": "Steven Michael Quezada",
+      "Id": "729c0628bee2bb7e96e07f12c8a061b1",
+      "Role": "Steven Gomez",
+      "Type": "GuestStar",
+      "PrimaryImageTag": "e1cc3099f55aaf8246e974c2ea42fd39",
+      "ImageBlurHashes": {
+        "Primary": {
+          "e1cc3099f55aaf8246e974c2ea42fd39": "dICYm?WBE2xZ}@n%Nxt7EMs;V@WBEMbHw^WBM{WB-oof"
+        }
+      }
+    },
+    {
+      "Name": "Aaron Hill",
+      "Id": "582d788e7f843850b614e742ad54596b",
+      "Role": "Jock",
+      "Type": "GuestStar",
+      "PrimaryImageTag": "fbedc3461cee4d31de5900958ec6b406",
+      "ImageBlurHashes": {
+        "Primary": {
+          "fbedc3461cee4d31de5900958ec6b406": "dQD8^2%10fIp^jR*E2xZ57Ip%2%1E1t6-oNGNGxaxtNG"
+        }
+      }
+    },
+    {
+      "Name": "Gregory Chase",
+      "Id": "1d3ae94d8f3a0d99c2a818418011f2b6",
+      "Role": "Dr. Belknap",
+      "Type": "GuestStar",
+      "PrimaryImageTag": "33090f17b3c5adfcd0429f155f607dc9",
+      "ImageBlurHashes": {
+        "Primary": {
+          "33090f17b3c5adfcd0429f155f607dc9": "dpJGyi~WXmELR5RiRjbGXSt7ozoyRPRiNGR*R+WBeojZ"
+        }
+      }
+    },
+    {
+      "Name": "Max Arciniega",
+      "Id": "a2b9b148523bf3c69fc8da0c66a4a605",
+      "Role": "Krazy-8",
+      "Type": "GuestStar",
+      "PrimaryImageTag": "ad608de5fb3cb374e52f909a38db7626",
+      "ImageBlurHashes": {
+        "Primary": {
+          "ad608de5fb3cb374e52f909a38db7626": "dJFYu[i{E+.8~W%2o~%M0LM{?GofT1RlxZofxuxu%Mxu"
+        }
+      }
+    },
+    {
+      "Name": "Marius Stan",
+      "Id": "a980d2034d6ab67753dae9856b9899e5",
+      "Role": "Bogdan Wolynetz",
+      "Type": "GuestStar",
+      "PrimaryImageTag": "1050970ea5431703227d2ac40ee3e890",
+      "ImageBlurHashes": {
+        "Primary": {
+          "1050970ea5431703227d2ac40ee3e890": "dSGH}6Ri5S%L~ARQJUoK9tbIr=RjS2tQs.ozoIkDj[oJ"
+        }
+      }
+    },
+    {
+      "Name": "Carmen Serano",
+      "Id": "a5cfc0b16b714c28cf323b673139993b",
+      "Role": "Carmen Molina",
+      "Type": "GuestStar",
+      "PrimaryImageTag": "be0d9cf2090b016ba7c029f91c0e427c",
+      "ImageBlurHashes": {
+        "Primary": {
+          "be0d9cf2090b016ba7c029f91c0e427c": "dfI|,aXS0f-TEgxGD*D*V[f*-oxuIoRjxat7E2s.kBRk"
+        }
+      }
+    },
+    {
+      "Name": "Roberta Marquez Seret",
+      "Id": "f1bb599f37140f7bc33ee29c949287b6",
+      "Role": "Chad's Girlfriend",
+      "Type": "GuestStar",
+      "ImageBlurHashes": {
+        "Primary": {}
+      }
+    },
+    {
+      "Name": "Evan Bobrick",
+      "Id": "0a2e178059cee101731d68b9c8a37c37",
+      "Role": "Chad",
+      "Type": "GuestStar",
+      "ImageBlurHashes": {
+        "Primary": {}
+      }
+    },
+    {
+      "Name": "Christopher Dempsey",
+      "Id": "3298b18a283fba2cf0c86d08dafeb8c4",
+      "Role": "E.M.T",
+      "Type": "GuestStar",
+      "PrimaryImageTag": "0238f736ec93a632aa7ba9ec8117db74",
+      "ImageBlurHashes": {
+        "Primary": {
+          "0238f736ec93a632aa7ba9ec8117db74": "dOCiK{x^0}NG^kt8EfNG9sRj$*s:9tNFxGxaNHj]s.ae"
+        }
+      }
+    },
+    {
+      "Name": "Allan Pacheco",
+      "Id": "0d38363a82006d5713214740c809be5f",
+      "Role": "Irving",
+      "Type": "GuestStar",
+      "ImageBlurHashes": {
+        "Primary": {}
+      }
+    },
+    {
+      "Name": "Jason Byrd",
+      "Id": "edf366d453d84510cd8d9656c158b8a5",
+      "Role": "Chemistry Student",
+      "Type": "GuestStar",
+      "ImageBlurHashes": {
+        "Primary": {}
+      }
+    },
+    {
+      "Name": "Linda Speciale",
+      "Id": "bbc65e38599e34c91da53e143bbd2744",
+      "Role": "Sexy Neighbor",
+      "Type": "GuestStar",
+      "ImageBlurHashes": {
+        "Primary": {}
+      }
+    },
+    {
+      "Name": "Jesús Ramírez",
+      "Id": "f07c9eb60160a97f6e58d08c4a81efe0",
+      "Role": "Jock's Friend #1",
+      "Type": "GuestStar",
+      "PrimaryImageTag": "6677e1de6d8920c8330edcf8dc380b24",
+      "ImageBlurHashes": {
+        "Primary": {
+          "6677e1de6d8920c8330edcf8dc380b24": "dIBDB7VqKQsmtRRinhof0JWEwHoz%3tSSiWAivt8ShRP"
+        }
+      }
+    },
+    {
+      "Name": "Joshua S. Patton",
+      "Id": "822718a2dd97834ea607f2b969774ee9",
+      "Role": "Jock's Friend #2",
+      "Type": "GuestStar",
+      "ImageBlurHashes": {
+        "Primary": {}
+      }
+    },
+    {
+      "Name": "John Koyama",
+      "Id": "2c52d1b2170b9fb198763074bf9dc267",
+      "Role": "Emilio Koyama",
+      "Type": "GuestStar",
+      "PrimaryImageTag": "c46b3d002b97a5f3069859da828e89a4",
+      "ImageBlurHashes": {
+        "Primary": {
+          "c46b3d002b97a5f3069859da828e89a4": "dGB{Ms9aFyxYV@x[ax-U0#-o-ASh%MV@tQR+R*xtn%az"
+        }
+      }
+    },
+    {
+      "Name": "Vince Gilligan",
+      "Id": "2e027b2e897f62d5f1bda4fb7b04f1dd",
+      "Role": "Director",
+      "Type": "Director",
+      "PrimaryImageTag": "86e78915020ae54285d29a6123c37310",
+      "ImageBlurHashes": {
+        "Primary": {
+          "86e78915020ae54285d29a6123c37310": "dhLqRx%3%#%g~p%3.8xuELt7MxWA-;xbV[WB-;t7xvxu"
+        }
+      }
+    },
+    {
+      "Name": "Vince Gilligan",
+      "Id": "2e027b2e897f62d5f1bda4fb7b04f1dd",
+      "Role": "Writer",
+      "Type": "Writer",
+      "PrimaryImageTag": "86e78915020ae54285d29a6123c37310",
+      "ImageBlurHashes": {
+        "Primary": {
+          "86e78915020ae54285d29a6123c37310": "dhLqRx%3%#%g~p%3.8xuELt7MxWA-;xbV[WB-;t7xvxu"
+        }
       }
     }
-  }
+  ],
+  "Studios": [],
+  "GenreItems": [
+    {
+      "Name": "Crime",
+      "Id": "83a9dab21914792744c8fb23b9925dc6"
+    },
+    {
+      "Name": "Drama",
+      "Id": "090eac6e9de4fe1fbc194e5b96691277"
+    },
+    {
+      "Name": "Thriller",
+      "Id": "4936f5b1a6f84f0b0aa2657368a5b364"
+    }
+  ],
+  "ParentLogoItemId": "332758e9c2da4fb5cf9f7e1efffc9d37",
+  "ParentBackdropItemId": "332758e9c2da4fb5cf9f7e1efffc9d37",
+  "ParentBackdropImageTags": [
+    "0eca0fbcf453d826f816496e2b6a98bf"
+  ],
+  "LocalTrailerCount": 0,
+  "UserData": {
+    "PlaybackPositionTicks": 0,
+    "PlayCount": 1,
+    "IsFavorite": false,
+    "LastPlayedDate": "2026-11-12T21:15:05.3703285Z",
+    "Played": true,
+    "Key": "81189001001",
+    "ItemId": "4e38ea743dcd92307b5a9b05e5d57312"
+  },
+  "SeriesName": "Breaking Bad",
+  "SeriesId": "332758e9c2da4fb5cf9f7e1efffc9d37",
+  "SeasonId": "8a277688abfa96c7e4cace0d9435e3a5",
+  "SpecialFeatureCount": 0,
+  "DisplayPreferencesId": "26dd4a82b00c839c498471cdba80a99c",
+  "Tags": [],
+  "PrimaryImageAspectRatio": 1.7777777777777777,
+  "SeriesPrimaryImageTag": "0eca0fbcf453d826f816496e2b6a98bf",
+  "SeasonName": "Season 1",
+  "MediaStreams": [
+    {
+      "Codec": "h264",
+      "TimeBase": "1/1000",
+      "VideoRange": "SDR",
+      "VideoRangeType": "SDR",
+      "AudioSpatialFormat": "None",
+      "DisplayTitle": "360p H264 SDR",
+      "NalLengthSize": "4",
+      "IsInterlaced": false,
+      "IsAVC": true,
+      "BitRate": 236181,
+      "BitDepth": 8,
+      "RefFrames": 1,
+      "IsDefault": false,
+      "IsForced": false,
+      "IsHearingImpaired": false,
+      "IsOriginal": false,
+      "Height": 360,
+      "Width": 640,
+      "AverageFrameRate": 24,
+      "RealFrameRate": 24,
+      "ReferenceFrameRate": 24,
+      "Profile": "High",
+      "Type": "Video",
+      "AspectRatio": "16:9",
+      "Index": 0,
+      "IsExternal": false,
+      "IsTextSubtitleStream": false,
+      "SupportsExternalStream": false,
+      "PixelFormat": "yuv420p",
+      "Level": 30,
+      "IsAnamorphic": false
+    },
+    {
+      "Codec": "aac",
+      "TimeBase": "1/1000",
+      "VideoRange": "Unknown",
+      "VideoRangeType": "Unknown",
+      "AudioSpatialFormat": "None",
+      "LocalizedDefault": "Default",
+      "LocalizedExternal": "External",
+      "LocalizedOriginal": "Original",
+      "DisplayTitle": "AAC - Mono",
+      "IsInterlaced": false,
+      "ChannelLayout": "mono",
+      "BitRate": 192000,
+      "Channels": 1,
+      "SampleRate": 44100,
+      "IsDefault": false,
+      "IsForced": false,
+      "IsHearingImpaired": false,
+      "IsOriginal": false,
+      "Profile": "LC",
+      "Type": "Audio",
+      "Index": 1,
+      "IsExternal": false,
+      "IsTextSubtitleStream": false,
+      "SupportsExternalStream": false
+    }
+  ],
+  "VideoType": "VideoFile",
+  "ImageTags": {
+    "Primary": "3aebb237c31e89f9664ecaa475dc4236"
+  },
+  "BackdropImageTags": [],
+  "ParentLogoImageTag": "0eca0fbcf453d826f816496e2b6a98bf",
+  "ImageBlurHashes": {
+    "Primary": {
+      "3aebb237c31e89f9664ecaa475dc4236": "W~IrjQoht7oeM{og.TWYbcofRjoz%NjZkCogj]j]xsodaea#f,oL",
+      "0eca0fbcf453d826f816496e2b6a98bf": "dC9j=Fxt02M|_KawD*ohIHaxjEj]9Iai-ooH8_Mz?a%J",
+      "ccb9a18fc47ebe16cb4e0d209f72be4d": "dvIY^8t7R.tS0%M{WBR-%2s.nhWBxasnV@WBNGbbbIWC"
+    },
+    "Logo": {
+      "0eca0fbcf453d826f816496e2b6a98bf": "WGDT6GXQ4njI%Mj[?boz?utQV[M{IUxbR%t7WBWB00xbIBWBR%t7"
+    },
+    "Thumb": {
+      "0eca0fbcf453d826f816496e2b6a98bf": "WLFrnkEnE1-N9i-mx]%2NGt7aeR+02R4%2be%0NG4oROafM}xWNH"
+    },
+    "Backdrop": {
+      "0eca0fbcf453d826f816496e2b6a98bf": "WSF?C5tRs8%fkVnhUH-:%Ls:ofoz9|tQN{WBt6xuIVIpe-WER-Rk"
+    }
+  },
+  "SeriesStudio": "AMC",
+  "ParentThumbItemId": "332758e9c2da4fb5cf9f7e1efffc9d37",
+  "ParentThumbImageTag": "0eca0fbcf453d826f816496e2b6a98bf",
+  "ParentPrimaryImageItemId": "8a277688abfa96c7e4cace0d9435e3a5",
+  "ParentPrimaryImageTag": "ccb9a18fc47ebe16cb4e0d209f72be4d",
+  "Chapters": [],
+  "Trickplay": {},
+  "LocationType": "FileSystem",
+  "MediaType": "Video",
+  "LockedFields": [],
+  "LockData": false,
+  "Width": 640,
+  "Height": 360,
+  "OriginalLanguage": "en"
 }

@@ -1,20 +1,55 @@
 {
-  "Name": "Summer Photos",
-  "Id": "aaaaaaaa-0000-0000-0000-000000000007",
-  "Type": "PhotoAlbum",
-  "Overview": "The overview is not mapped.",
+  "Name": "Garden",
+  "ServerId": "a6ee16b34eb941e0bd5e81a3cef8d2d5",
+  "Id": "4de4d15893839bb7d374aec04586dbe1",
+  "Etag": "998479e8cb9e25c9a1742068193500ca",
+  "DateCreated": "2026-11-14T23:17:04.0009187Z",
+  "DateLastMediaAdded": "0001-01-01T00:00:00.0000000Z",
+  "CanDelete": false,
+  "CanDownload": false,
+  "SortName": "garden",
+  "ExternalUrls": [],
+  "Path": "/media/homevideos/Garden",
+  "EnableMediaSourceDisplay": true,
+  "ChannelId": null,
+  "Taglines": [],
+  "Genres": [],
+  "PlayAccess": "Full",
+  "RemoteTrailers": [],
+  "ProviderIds": {},
   "IsFolder": true,
+  "ParentId": "6393b4683650364abf37736de3ebb6ea",
+  "Type": "PhotoAlbum",
+  "People": [],
+  "Studios": [],
+  "GenreItems": [],
+  "LocalTrailerCount": 0,
   "UserData": {
-    "UnplayedItemCount": 12,
     "PlaybackPositionTicks": 0,
     "PlayCount": 0,
-    "IsFavorite": true,
+    "IsFavorite": false,
     "Played": false,
-    "Key": "7",
-    "ItemId": "aaaaaaaa-0000-0000-0000-000000000007"
+    "Key": "4de4d158-9383-9bb7-d374-aec04586dbe1",
+    "ItemId": "4de4d15893839bb7d374aec04586dbe1"
   },
+  "RecursiveItemCount": 2,
+  "ChildCount": 2,
+  "SpecialFeatureCount": 0,
+  "DisplayPreferencesId": "28812564900ec81dcd34f94c0700b898",
+  "Tags": [],
+  "PrimaryImageAspectRatio": 1.7777777777777777,
   "ImageTags": {
-    "Primary": "folderptag"
+    "Primary": "a02c116adb1c586da21a7bf8fcb59195"
   },
-  "LocationType": "FileSystem"
+  "BackdropImageTags": [],
+  "ImageBlurHashes": {
+    "Primary": {
+      "a02c116adb1c586da21a7bf8fcb59195": "W~K-whx5XM*Zah|=ozSxX4nlWEjIaxWrW-f6WXWEoMnlayafj]k9"
+    }
+  },
+  "Chapters": [],
+  "LocationType": "FileSystem",
+  "MediaType": "Unknown",
+  "LockedFields": [],
+  "LockData": false
 }

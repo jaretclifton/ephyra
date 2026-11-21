@@ -1,5 +1,5 @@
 FindroidCollection(
-  id = aaaaaaaa-0000-0000-0000-000000000006
+  id = f137a2dd-21bb-c1b9-9aa5-c0f6bf02a805
   name = "Movies"
   originalTitle = null
   overview = ""
@@ -13,7 +13,7 @@ FindroidCollection(
   unplayedItemCount = null
   type = Movies
   images = FindroidImages(
-    primary = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000006/Images/Primary?tag=libptag
+    primary = null
     backdrop = null
     logo = null
     showPrimary = null

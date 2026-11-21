@@ -28,6 +28,10 @@ import org.robolectric.annotation.Config
  * models. Each test reads a recorded item from `src/test/resources/golden/<name>.json`, maps it
  * with a fixed base URL, prints the result and compares it with `<name>.expected.txt`.
  *
+ * The JSON files are responses of the test server (`docs/dev-environment.md`), as it sent them but
+ * for the access key in a delivery URL. `boxset.handwritten.json` is written by hand: the server
+ * has no collection. `source*.json` are the first media source of a PlaybackInfo response.
+ *
  * The expected files pin what the mappers do today, also where that looks odd. Changing a mapper on
  * purpose means regenerating them and reading the diff: `./gradlew :data:testDebugUnitTest --tests
  * "*ItemMapperGoldenTest" -Dgolden.update=true`.
@@ -98,7 +102,7 @@ class ItemMapperGoldenTest {
 
     @Test
     fun boxSet() {
-        golden("boxset", item("boxset").toFindroidBoxSet(repository))
+        golden("boxset", item("boxset.handwritten").toFindroidBoxSet(repository))
     }
 
     @Test
@@ -126,11 +130,22 @@ class ItemMapperGoldenTest {
 
     @Test
     fun source() {
-        val info = json.decodeFromString(MediaSourceInfo.serializer(), resource("source.json"))
-        val itemId = UUID.fromString("aaaaaaaa-0000-0000-0000-0000000000a1")
-        val withoutPath = runBlocking { info.toFindroidSource(repository, itemId) }
-        val withPath = runBlocking { info.toFindroidSource(repository, itemId, includePath = true) }
-        golden("source", "includePath = false" to withoutPath, "includePath = true" to withPath)
+        val itemId = UUID.fromString("7cfc27a5-0818-7be5-210c-6df99c9d6102")
+        val parts =
+            listOf("source" to "direct", "source-transcode" to "transcode").flatMap { (file, title)
+                ->
+                val info =
+                    json.decodeFromString(MediaSourceInfo.serializer(), resource("$file.json"))
+                listOf(
+                    "$title, includePath = false" to
+                        runBlocking { info.toFindroidSource(repository, itemId) },
+                    "$title, includePath = true" to
+                        runBlocking {
+                            info.toFindroidSource(repository, itemId, includePath = true)
+                        },
+                )
+            }
+        golden("source", *parts.toTypedArray())
     }
 
     @Test

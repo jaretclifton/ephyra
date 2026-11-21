@@ -1,109 +1,61 @@
 FindroidMovie(
-  id = aaaaaaaa-0000-0000-0000-000000000001
-  name = "The Test Movie"
-  originalTitle = "Le Film de Test"
-  overview = "A test movie that exercises every mapper."
+  id = d10943c9-a35f-58d6-1542-dc562fdabcf2
+  name = "Inception"
+  originalTitle = "Inception"
+  overview = "Cobb, a skilled thief who commits corporate espionage by infiltrating the subconscious of his targets is offered a chance to regain his old life as payment for a task considered to be impossible: \"inception\", the implantation of another person's idea into a target's subconscious."
   sources = [
     - FindroidSource(
-        id = "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a1"
-        name = "The Test Movie (1080p)"
+        id = "d10943c9a35f58d61542dc562fdabcf2"
+        name = "Inception (2010)"
         type = REMOTE
         path = ""
-        size = 4294967296
+        size = 6423959
         mediaStreams = [
           - FindroidMediaStream(
               title = ""
-              displayTitle = "1080p HEVC HDR10"
+              displayTitle = "360p H264 SDR"
               language = ""
               type = VIDEO
-              codec = "hevc"
-              profile = "Main 10"
+              codec = "h264"
+              profile = "High"
               isExternal = false
               path = null
               channelLayout = null
-              videoRangeType = HDR10
-              height = 1080
-              width = 1920
+              videoRangeType = SDR
+              height = 360
+              width = 640
               videoDoViTitle = null
-              bitRate = 7000000
-              frameRate = 23.976
-              bitDepth = 10
+              bitRate = 236181
+              frameRate = 24.0
+              bitDepth = 8
               sampleRate = null
               index = 0
               channels = null
               deliveryMethod = null
               isForced = false
-              isDefault = true
-            )
-          - FindroidMediaStream(
-              title = ""
-              displayTitle = "English - EAC3 - 5.1 - Default"
-              language = "eng"
-              type = AUDIO
-              codec = "eac3"
-              profile = null
-              isExternal = false
-              path = null
-              channelLayout = "5.1"
-              videoRangeType = UNKNOWN
-              height = null
-              width = null
-              videoDoViTitle = null
-              bitRate = 640000
-              frameRate = null
-              bitDepth = null
-              sampleRate = 48000
-              index = 1
-              channels = 6
-              deliveryMethod = null
-              isForced = false
-              isDefault = true
-            )
-          - FindroidMediaStream(
-              title = "Full"
-              displayTitle = "English - Full - SUBRIP"
-              language = "eng"
-              type = SUBTITLE
-              codec = "subrip"
-              profile = null
-              isExternal = false
-              path = null
-              channelLayout = null
-              videoRangeType = UNKNOWN
-              height = null
-              width = null
-              videoDoViTitle = null
-              bitRate = null
-              frameRate = null
-              bitDepth = null
-              sampleRate = null
-              index = 2
-              channels = null
-              deliveryMethod = EMBED
-              isForced = true
               isDefault = false
             )
           - FindroidMediaStream(
               title = ""
-              displayTitle = "Dutch - SRT - External"
-              language = "nld"
-              type = SUBTITLE
-              codec = "srt"
-              profile = null
-              isExternal = true
-              path = "https://server.test/Videos/aaaaaaaa-0000-0000-0000-000000000001/a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a1/Subtitles/3/0/Stream.srt"
-              channelLayout = null
+              displayTitle = "AAC - Mono"
+              language = ""
+              type = AUDIO
+              codec = "aac"
+              profile = "LC"
+              isExternal = false
+              path = null
+              channelLayout = "mono"
               videoRangeType = UNKNOWN
               height = null
               width = null
               videoDoViTitle = null
-              bitRate = null
+              bitRate = 192000
               frameRate = null
               bitDepth = null
-              sampleRate = null
-              index = 3
-              channels = null
-              deliveryMethod = EXTERNAL
+              sampleRate = 44100
+              index = 1
+              channels = 1
+              deliveryMethod = null
               isForced = false
               isDefault = false
             )
@@ -111,48 +63,224 @@ FindroidMovie(
         downloadId = null
         transcoded = false
         container = "mkv"
-        bitrate = 8000000
+        bitrate = 428181
         defaultAudioStreamIndex = 1
-        playSessionId = null
-      )
-    - FindroidSource(
-        id = "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a2"
-        name = "The Test Movie (4K, transcoded)"
-        type = REMOTE
-        path = "https://server.test/videos/aaaaaaaa-0000-0000-0000-000000000001/master.m3u8?MediaSourceId=a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a2&PlaySessionId=fakesession"
-        size = 8589934592
-        mediaStreams = []
-        downloadId = null
-        transcoded = true
-        container = "mp4"
-        bitrate = null
-        defaultAudioStreamIndex = null
         playSessionId = null
       )
   ]
   played = false
-  favorite = true
+  favorite = false
   canPlay = true
   canDownload = true
-  runtimeTicks = 72000000000
-  playbackPositionTicks = 18000000000
-  premiereDate = 2021-05-14T00:00
+  runtimeTicks = 1200230000
+  playbackPositionTicks = 0
+  premiereDate = 2010-07-15T00:00
   people = [
     - FindroidItemPerson(
-        id = cccccccc-0000-0000-0000-000000000001
-        name = "Ada Actor"
+        id = 3b33a9ec-aaa9-4bc0-ed16-f2a04a697613
+        name = "Leonardo DiCaprio"
         type = ACTOR
-        role = "Lead"
+        role = "Dom Cobb"
         image = FindroidItemPersonImage(
-          uri = https://server.test/items/cccccccc-0000-0000-0000-000000000001/Images/Primary?tag=pimg1
-          blurHash = "LKO2?U%2Tw=w]~RBVZRi};RPxuwH"
+          uri = https://server.test/items/3b33a9ec-aaa9-4bc0-ed16-f2a04a697613/Images/Primary?tag=c21ea18847d434d1bc7bc11f9004cdd5
+          blurHash = "dQCP3ExZ0zNb-payNGoLEMR*$*ofEMWB%1ofWXWVoeoL"
         )
       )
     - FindroidItemPerson(
-        id = cccccccc-0000-0000-0000-000000000002
-        name = "Dan Director"
+        id = 9413c8cc-db3d-0fd2-994d-71f6f61adffa
+        name = "Joseph Gordon-Levitt"
+        type = ACTOR
+        role = "Arthur"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/9413c8cc-db3d-0fd2-994d-71f6f61adffa/Images/Primary?tag=9e127a0bcdb640b8e4bd7470d44533b0
+          blurHash = "dVM@J;?H.T_4~Vax?bxu58R*R4Ri?vxu%2%M-;WBt6ae"
+        )
+      )
+    - FindroidItemPerson(
+        id = 371e5de1-7ab7-18a5-4d63-a56168ba4c48
+        name = "Ken Watanabe"
+        type = ACTOR
+        role = "Saito"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/371e5de1-7ab7-18a5-4d63-a56168ba4c48/Images/Primary?tag=df018181febde6f5fa22e9116ab84f6c
+          blurHash = "dUJH5W?G*0.8?atR-:%29^tRn%t8x^x]%M-:ozofxZxt"
+        )
+      )
+    - FindroidItemPerson(
+        id = 19537749-e5c6-499a-a1bf-fe621556fda8
+        name = "Tom Hardy"
+        type = ACTOR
+        role = "Eames"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/19537749-e5c6-499a-a1bf-fe621556fda8/Images/Primary?tag=6dd2b31081898822c07b262d7675b09a
+          blurHash = "djI;-U^+?vtS~Ws:x[j]NdM{RPoKx]t7s:xtxuRjs:of"
+        )
+      )
+    - FindroidItemPerson(
+        id = 7fc1af8b-5ead-7164-347b-98fbdf86f0de
+        name = "Elliot Page"
+        type = ACTOR
+        role = "Ariadne"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/7fc1af8b-5ead-7164-347b-98fbdf86f0de/Images/Primary?tag=9465d419fb03a7f8211977cdb993871b
+          blurHash = "dRF#,cxG0Ks,w]t6%gWV9aofxDWBE1R*oft7M{WBxuoe"
+        )
+      )
+    - FindroidItemPerson(
+        id = 73b7992b-0f47-1090-5897-05c101a44a9a
+        name = "Dileep Rao"
+        type = ACTOR
+        role = "Yusuf"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/73b7992b-0f47-1090-5897-05c101a44a9a/Images/Primary?tag=d08546c7d4603b505a741208044d7e87
+          blurHash = "dbJ[3UIq_N?b~Vof%g%Mo~RjRiof.8kDt7t6%2xu%Lxt"
+        )
+      )
+    - FindroidItemPerson(
+        id = 0d8cb6c3-fc75-7f68-c88d-27635cab70ae
+        name = "Cillian Murphy"
+        type = ACTOR
+        role = "Robert Fischer, Jr."
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/0d8cb6c3-fc75-7f68-c88d-27635cab70ae/Images/Primary?tag=068d136843793d5733d0335a648788bc
+          blurHash = "diE_:dsp0eX8IAj[xvWBOsW;wcs.R+j]ofa|Rjj[t7fQ"
+        )
+      )
+    - FindroidItemPerson(
+        id = 0b356b79-69ec-abca-2c06-cb84bfd47c03
+        name = "Tom Berenger"
+        type = ACTOR
+        role = "Peter Browning"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/0b356b79-69ec-abca-2c06-cb84bfd47c03/Images/Primary?tag=06b8d27bf55d83cd36312fdcd61e717b
+          blurHash = "dRD8nLt70yo0?HxaIoNGN^ofsoWBI:WVsoWBI:WVsoae"
+        )
+      )
+    - FindroidItemPerson(
+        id = 0af27ab6-1cb0-2572-98ba-8e2e4b5dfe61
+        name = "Marion Cotillard"
+        type = ACTOR
+        role = "Mal Cobb"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/0af27ab6-1cb0-2572-98ba-8e2e4b5dfe61/Images/Primary?tag=007d4434c156955efae9784eb6a3e452
+          blurHash = "dVHx4*4:0g^*R:-:ozIpkXof-VR+NHt7xae.NHj[oda}"
+        )
+      )
+    - FindroidItemPerson(
+        id = c2a47489-9e7e-b5c0-79b6-40e0aa780d4b
+        name = "Pete Postlethwaite"
+        type = ACTOR
+        role = "Maurice Fischer"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/c2a47489-9e7e-b5c0-79b6-40e0aa780d4b/Images/Primary?tag=8f59ea62a29fb0690f95ff7136375c54
+          blurHash = "d]Mt5P?b.S%g~WV@ShWpXSWBenkCkqt7nijtx]bHWBe."
+        )
+      )
+    - FindroidItemPerson(
+        id = a98ca466-f733-5654-5e05-e1a4df1da170
+        name = "Michael Caine"
+        type = ACTOR
+        role = "Stephen Miles"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/a98ca466-f733-5654-5e05-e1a4df1da170/Images/Primary?tag=3a7ada7a564dbb6830642709a09a4ca0
+          blurHash = "dUF#tC?H0e4.~8xYNfR-ElR+wHxDNaWBWBa#NFRkoLoJ"
+        )
+      )
+    - FindroidItemPerson(
+        id = 6160d53d-27ff-ef38-22b1-8658eb69db17
+        name = "Lukas Haas"
+        type = ACTOR
+        role = "Nash"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/6160d53d-27ff-ef38-22b1-8658eb69db17/Images/Primary?tag=b323d16a27303a76d7666a9aa97acf6e
+          blurHash = "dSB{1AoL0#bH$*j@WBj[EMWqxZjtI;j[xGR+NbfPs:oL"
+        )
+      )
+    - FindroidItemPerson(
+        id = 9b99db46-728e-0b1e-340c-aecc3a139296
+        name = "Talulah Riley"
+        type = ACTOR
+        role = "Blonde"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/9b99db46-728e-0b1e-340c-aecc3a139296/Images/Primary?tag=f9598129fa05dfa8a9f1074d0bc1fef6
+          blurHash = "dKJsnC?G0|xsJCNINft7AaW;xHWXIoWCt8ofENs:s;s:"
+        )
+      )
+    - FindroidItemPerson(
+        id = f53cfa1c-64d6-addd-dfa0-a5d4bdfecb2c
+        name = "Tohoru Masamune"
+        type = ACTOR
+        role = "Japanese Security Guard"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/f53cfa1c-64d6-addd-dfa0-a5d4bdfecb2c/Images/Primary?tag=6ab765daf391e9e3d78dd292fe9ea819
+          blurHash = "dOGH6j^O115TOFI;NaoJ0~Eg-Aw^t7nO-UazI=NHxas."
+        )
+      )
+    - FindroidItemPerson(
+        id = 5493f16b-e78c-60ac-615c-8a6b19aa6996
+        name = "Taylor Geare"
+        type = ACTOR
+        role = "Phillipa (5 years)"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/5493f16b-e78c-60ac-615c-8a6b19aa6996/Images/Primary?tag=3c97d77c709f7b1dec0b6645220b9424
+          blurHash = "dRHwx[kY0g%1J8=_of9Zt6Io%1%29aNa%L%ME1jYs:R+"
+        )
+      )
+    - FindroidItemPerson(
+        id = c54ae5d3-43a1-8f16-1ccf-0e0cceca7987
+        name = "Christopher Nolan"
         type = DIRECTOR
-        role = ""
+        role = "Director"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/c54ae5d3-43a1-8f16-1ccf-0e0cceca7987/Images/Primary?tag=0b770239d66bcefb4ccce5d3bf239410
+          blurHash = "dqL|cN?G.7tk~VjF%MoyOYM|IBs:%ftQofxa-:WBj]oL"
+        )
+      )
+    - FindroidItemPerson(
+        id = c54ae5d3-43a1-8f16-1ccf-0e0cceca7987
+        name = "Christopher Nolan"
+        type = WRITER
+        role = "Writer"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/c54ae5d3-43a1-8f16-1ccf-0e0cceca7987/Images/Primary?tag=0b770239d66bcefb4ccce5d3bf239410
+          blurHash = "dqL|cN?G.7tk~VjF%MoyOYM|IBs:%ftQofxa-:WBj]oL"
+        )
+      )
+    - FindroidItemPerson(
+        id = c54ae5d3-43a1-8f16-1ccf-0e0cceca7987
+        name = "Christopher Nolan"
+        type = PRODUCER
+        role = "Producer"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/c54ae5d3-43a1-8f16-1ccf-0e0cceca7987/Images/Primary?tag=0b770239d66bcefb4ccce5d3bf239410
+          blurHash = "dqL|cN?G.7tk~VjF%MoyOYM|IBs:%ftQofxa-:WBj]oL"
+        )
+      )
+    - FindroidItemPerson(
+        id = 32d7a71e-12db-c056-ba3a-385bdd6f0f75
+        name = "Emma Thomas"
+        type = PRODUCER
+        role = "Producer"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/32d7a71e-12db-c056-ba3a-385bdd6f0f75/Images/Primary?tag=0a4b508db81fdb062e0ae0e6be323270
+          blurHash = "dYG+Bxt7ActS_Nt7%#tRyEogsmt7%gj[j[t8kqj[xuof"
+        )
+      )
+    - FindroidItemPerson(
+        id = 1d841885-98e8-564f-49c9-ad1fdf0eb1c8
+        name = "Kanjiro Sakura"
+        type = PRODUCER
+        role = "Producer"
+        image = FindroidItemPersonImage(
+          uri = null
+          blurHash = null
+        )
+      )
+    - FindroidItemPerson(
+        id = cf422527-72ac-f8ba-98ca-96cbe77a5315
+        name = "Yoshikuni Taki"
+        type = PRODUCER
+        role = "Producer"
         image = FindroidItemPersonImage(
           uri = null
           blurHash = null
@@ -161,76 +289,110 @@ FindroidMovie(
   ]
   genres = [
     - "Action"
-    - "Drama"
+    - "Science Fiction"
+    - "Crime"
   ]
-  communityRating = 7.6
+  communityRating = 8.373
   officialRating = "PG-13"
-  status = "Released"
-  productionYear = 2021
-  endDate = 2022-01-01T00:00
-  trailer = "https://www.youtube.com/watch?v=aaaaaaaaaaa"
+  status = "Ended"
+  productionYear = 2010
+  endDate = null
+  trailer = "https://www.youtube.com/watch?v=cdx31ak4KbQ"
   unplayedItemCount = null
-  lastPlayedDate = 2024-03-01T20:15:30
+  lastPlayedDate = null
   trailers = [
     - FindroidTrailer(
-        name = "Official Trailer"
-        url = "https://www.youtube.com/watch?v=aaaaaaaaaaa"
+        name = "35mm Theatrical Trailer #3"
+        url = "https://www.youtube.com/watch?v=cdx31ak4KbQ"
       )
     - FindroidTrailer(
-        name = null
-        url = "https://www.youtube.com/watch?v=bbbbbbbbbbb"
+        name = "Official New UK Trailer"
+        url = "https://www.youtube.com/watch?v=JE9z-gy4De4"
+      )
+    - FindroidTrailer(
+        name = "Official Trailer"
+        url = "https://www.youtube.com/watch?v=Jvurpf91omw"
+      )
+    - FindroidTrailer(
+        name = "TV Spot #9"
+        url = "https://www.youtube.com/watch?v=HO5v3RhO8ek"
+      )
+    - FindroidTrailer(
+        name = "TV Spot #8"
+        url = "https://www.youtube.com/watch?v=CJXn7hNtblE"
+      )
+    - FindroidTrailer(
+        name = "TV Spot #7"
+        url = "https://www.youtube.com/watch?v=niw40pVKctc"
+      )
+    - FindroidTrailer(
+        name = "TV Spot #6"
+        url = "https://www.youtube.com/watch?v=8XjKtoTFuLo"
+      )
+    - FindroidTrailer(
+        name = "TV Spot #5"
+        url = "https://www.youtube.com/watch?v=8jRd8qRcaLI"
+      )
+    - FindroidTrailer(
+        name = "TV Spot #4"
+        url = "https://www.youtube.com/watch?v=sn8JQgjSr7k"
+      )
+    - FindroidTrailer(
+        name = "IMAX® TV Spot"
+        url = "https://www.youtube.com/watch?v=uwyJfuM-ViA"
+      )
+    - FindroidTrailer(
+        name = "TV Spot #3"
+        url = "https://www.youtube.com/watch?v=RDgRNxSm53o"
+      )
+    - FindroidTrailer(
+        name = "TV Spot #2"
+        url = "https://www.youtube.com/watch?v=J4BnDN7A-pk"
+      )
+    - FindroidTrailer(
+        name = "TV Spot #1"
+        url = "https://www.youtube.com/watch?v=7aED7XBmbyQ"
+      )
+    - FindroidTrailer(
+        name = "TV Spot"
+        url = "https://www.youtube.com/watch?v=cG_i7xnkMu8"
+      )
+    - FindroidTrailer(
+        name = "Official UK Teaser Trailer"
+        url = "https://www.youtube.com/watch?v=hstBN0Qkqhc"
       )
   ]
-  tagline = "Everything is a test."
-  criticRating = 87.0
+  tagline = "Your mind is the scene of the crime."
+  criticRating = 86.0
   studios = [
-    - "Test Pictures"
+    - "Warner Bros. Pictures"
+    - "Legendary Pictures"
+    - "Syncopy"
   ]
   externalLinks = [
     - FindroidExternalLink(
         name = "IMDb"
-        url = "https://www.imdb.com/title/tt0000001"
+        url = "https://www.imdb.com/title/tt1375666"
       )
     - FindroidExternalLink(
-        name = "TheMovieDb"
-        url = "https://www.themoviedb.org/movie/1001"
+        name = "TMDB"
+        url = "https://www.themoviedb.org/movie/27205"
       )
   ]
-  playCount = 3
-  is3D = true
-  localTrailerCount = 2
-  specialFeatureCount = 3
+  playCount = 0
+  is3D = false
+  localTrailerCount = 0
+  specialFeatureCount = 0
   images = FindroidImages(
-    primary = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000001/Images/Primary?tag=ptag
-    backdrop = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000001/Images/Backdrop/0?tag=btag0
-    logo = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000001/Images/Logo?tag=ltag
+    primary = https://server.test/items/d10943c9-a35f-58d6-1542-dc562fdabcf2/Images/Primary?tag=8475cfb09a2ebb59ef5fc5c7ded42769
+    backdrop = https://server.test/items/d10943c9-a35f-58d6-1542-dc562fdabcf2/Images/Backdrop/0?tag=8475cfb09a2ebb59ef5fc5c7ded42769
+    logo = https://server.test/items/d10943c9-a35f-58d6-1542-dc562fdabcf2/Images/Logo?tag=8475cfb09a2ebb59ef5fc5c7ded42769
     showPrimary = null
     showBackdrop = null
     showLogo = null
-    thumb = null
+    thumb = https://server.test/items/d10943c9-a35f-58d6-1542-dc562fdabcf2/Images/Thumb?tag=8475cfb09a2ebb59ef5fc5c7ded42769
     showThumb = null
   )
-  chapters = [
-    - FindroidChapter(
-        startPosition = 0
-        name = "Opening"
-        imageTag = "ch0"
-      )
-    - FindroidChapter(
-        startPosition = 600000
-        name = "Middle"
-        imageTag = null
-      )
-  ]
-  trickplayInfo = {
-    "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a1": FindroidTrickplayInfo(
-      width = 640
-      height = 360
-      tileWidth = 5
-      tileHeight = 5
-      thumbnailCount = 720
-      interval = 10000
-      bandwidth = 900000
-    )
-  }
+  chapters = []
+  trickplayInfo = {}
 )

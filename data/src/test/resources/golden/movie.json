@@ -1,289 +1,607 @@
 {
-  "Name": "The Test Movie",
-  "OriginalTitle": "Le Film de Test",
-  "ServerId": "00000000000000000000000000000001",
-  "Id": "aaaaaaaa-0000-0000-0000-000000000001",
+  "Name": "Inception",
+  "OriginalTitle": "Inception",
+  "ServerId": "a6ee16b34eb941e0bd5e81a3cef8d2d5",
+  "Id": "d10943c9a35f58d61542dc562fdabcf2",
+  "Etag": "d174d0abf68e0e6ff1b75e4790c0d614",
+  "DateCreated": "2026-11-11T08:30:00.6563556Z",
   "CanDelete": false,
   "CanDownload": true,
-  "HasSubtitles": true,
   "Container": "mkv",
-  "PremiereDate": "2021-05-14T00:00:00.0000000Z",
-  "CriticRating": 87,
-  "OfficialRating": "PG-13",
-  "CommunityRating": 7.6,
-  "RunTimeTicks": 72000000000,
-  "ProductionYear": 2021,
-  "IsFolder": false,
-  "Type": "Movie",
-  "Overview": "A test movie that exercises every mapper.",
-  "Taglines": [
-    "",
-    "  Everything is a test.  "
-  ],
-  "Genres": [
-    "Action",
-    "Drama"
-  ],
-  "PlayAccess": "Full",
-  "RemoteTrailers": [
-    {
-      "Url": "https://www.youtube.com/watch?v=aaaaaaaaaaa",
-      "Name": "Official Trailer"
-    },
-    {
-      "Url": "https://www.youtube.com/watch?v=aaaaaaaaaaa",
-      "Name": "Duplicate"
-    },
-    {
-      "Url": "https://www.youtube.com/watch?v=bbbbbbbbbbb"
-    },
-    {
-      "Url": "",
-      "Name": "Empty"
-    }
-  ],
-  "ProviderIds": {
-    "Imdb": "tt0000001",
-    "Tmdb": "1001"
-  },
+  "SortName": "inception",
+  "PremiereDate": "2010-07-15T00:00:00.0000000Z",
   "ExternalUrls": [
     {
       "Name": "IMDb",
-      "Url": "https://www.imdb.com/title/tt0000001"
+      "Url": "https://www.imdb.com/title/tt1375666"
     },
     {
-      "Name": "TheMovieDb",
-      "Url": "https://www.themoviedb.org/movie/1001"
-    },
-    {
-      "Name": "Ftp",
-      "Url": "ftp://example.test/not-a-web-url"
+      "Name": "TMDB",
+      "Url": "https://www.themoviedb.org/movie/27205"
     }
   ],
-  "Video3DFormat": "HalfSideBySide",
-  "Studios": [
-    {
-      "Name": "Test Pictures",
-      "Id": "bbbbbbbb-0000-0000-0000-000000000001"
-    },
-    {
-      "Name": "Test Pictures",
-      "Id": "bbbbbbbb-0000-0000-0000-000000000002"
-    },
-    {
-      "Name": "",
-      "Id": "bbbbbbbb-0000-0000-0000-000000000003"
-    }
-  ],
-  "People": [
-    {
-      "Name": "Ada Actor",
-      "Id": "cccccccc-0000-0000-0000-000000000001",
-      "Role": "Lead",
-      "Type": "Actor",
-      "PrimaryImageTag": "pimg1",
-      "ImageBlurHashes": {
-        "Primary": {
-          "pimg1": "LKO2?U%2Tw=w]~RBVZRi};RPxuwH"
-        }
-      }
-    },
-    {
-      "Name": "Dan Director",
-      "Id": "cccccccc-0000-0000-0000-000000000002",
-      "Type": "Director"
-    }
-  ],
-  "LocalTrailerCount": 2,
-  "SpecialFeatureCount": 3,
-  "UserData": {
-    "PlaybackPositionTicks": 18000000000,
-    "PlayCount": 3,
-    "IsFavorite": true,
-    "LastPlayedDate": "2024-03-01T20:15:30.0000000Z",
-    "Played": false,
-    "Key": "1001",
-    "ItemId": "aaaaaaaa-0000-0000-0000-000000000001"
-  },
-  "Status": "Released",
-  "EndDate": "2022-01-01T00:00:00.0000000Z",
-  "ImageTags": {
-    "Primary": "ptag",
-    "Logo": "ltag"
-  },
-  "BackdropImageTags": [
-    "btag0",
-    "btag1"
-  ],
-  "Chapters": [
-    {
-      "StartPositionTicks": 0,
-      "Name": "Opening",
-      "ImageTag": "ch0",
-      "ImageDateModified": "0001-01-01T00:00:00.0000000Z"
-    },
-    {
-      "StartPositionTicks": 6000000000,
-      "Name": "Middle",
-      "ImageDateModified": "0001-01-01T00:00:00.0000000Z"
-    }
-  ],
-  "LocationType": "FileSystem",
-  "MediaType": "Video",
   "MediaSources": [
     {
       "Protocol": "File",
-      "Id": "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a1",
-      "Path": "/media/movies/The Test Movie/The Test Movie.mkv",
+      "Id": "d10943c9a35f58d61542dc562fdabcf2",
+      "Path": "/media/movies-meta/Inception (2010)/Inception (2010).mkv",
       "Type": "Default",
       "Container": "mkv",
-      "Size": 4294967296,
-      "Name": "The Test Movie (1080p)",
+      "Size": 6423959,
+      "Name": "Inception (2010)",
       "IsRemote": false,
-      "RunTimeTicks": 72000000000,
+      "ETag": "25974f0cf675facae412b72dc6046ef7",
+      "RunTimeTicks": 1200230000,
+      "ReadAtNativeFramerate": false,
+      "IgnoreDts": false,
+      "IgnoreIndex": false,
+      "GenPtsInput": false,
       "SupportsTranscoding": true,
       "SupportsDirectStream": true,
       "SupportsDirectPlay": true,
-      "Bitrate": 8000000,
-      "DefaultAudioStreamIndex": 1,
+      "IsInfiniteStream": false,
+      "UseMostCompatibleTranscodingProfile": false,
+      "RequiresOpening": false,
+      "RequiresClosing": false,
+      "RequiresLooping": false,
+      "SupportsProbing": true,
+      "VideoType": "VideoFile",
       "MediaStreams": [
         {
-          "Codec": "hevc",
-          "Profile": "Main 10",
-          "VideoRange": "HDR",
-          "VideoRangeType": "HDR10",
-          "DisplayTitle": "1080p HEVC HDR10",
-          "BitRate": 7000000,
-          "BitDepth": 10,
-          "AverageFrameRate": 23.976,
-          "RealFrameRate": 24,
-          "Height": 1080,
-          "Width": 1920,
-          "Type": "Video",
-          "Index": 0,
-          "IsDefault": true,
+          "Codec": "h264",
+          "TimeBase": "1/1000",
+          "VideoRange": "SDR",
+          "VideoRangeType": "SDR",
+          "AudioSpatialFormat": "None",
+          "DisplayTitle": "360p H264 SDR",
+          "NalLengthSize": "4",
           "IsInterlaced": false,
+          "IsAVC": true,
+          "BitRate": 236181,
+          "BitDepth": 8,
+          "RefFrames": 1,
+          "IsDefault": false,
           "IsForced": false,
           "IsHearingImpaired": false,
           "IsOriginal": false,
+          "Height": 360,
+          "Width": 640,
+          "AverageFrameRate": 24,
+          "RealFrameRate": 24,
+          "ReferenceFrameRate": 24,
+          "Profile": "High",
+          "Type": "Video",
+          "AspectRatio": "16:9",
+          "Index": 0,
           "IsExternal": false,
           "IsTextSubtitleStream": false,
-          "SupportsExternalStream": false
+          "SupportsExternalStream": false,
+          "PixelFormat": "yuv420p",
+          "Level": 30,
+          "IsAnamorphic": false
         },
         {
-          "Codec": "eac3",
-          "Language": "eng",
-          "ChannelLayout": "5.1",
-          "DisplayTitle": "English - EAC3 - 5.1 - Default",
-          "SampleRate": 48000,
-          "Channels": 6,
-          "BitRate": 640000,
+          "Codec": "aac",
+          "TimeBase": "1/1000",
+          "VideoRange": "Unknown",
+          "VideoRangeType": "Unknown",
+          "AudioSpatialFormat": "None",
+          "LocalizedDefault": "Default",
+          "LocalizedExternal": "External",
+          "LocalizedOriginal": "Original",
+          "DisplayTitle": "AAC - Mono",
+          "IsInterlaced": false,
+          "ChannelLayout": "mono",
+          "BitRate": 192000,
+          "Channels": 1,
+          "SampleRate": 44100,
+          "IsDefault": false,
+          "IsForced": false,
+          "IsHearingImpaired": false,
+          "IsOriginal": false,
+          "Profile": "LC",
           "Type": "Audio",
           "Index": 1,
-          "IsDefault": true,
-          "IsInterlaced": false,
-          "IsForced": false,
-          "IsHearingImpaired": false,
-          "IsOriginal": false,
           "IsExternal": false,
           "IsTextSubtitleStream": false,
           "SupportsExternalStream": false
-        },
-        {
-          "Codec": "subrip",
-          "Language": "eng",
-          "Title": "Full",
-          "DisplayTitle": "English - Full - SUBRIP",
-          "Type": "Subtitle",
-          "Index": 2,
-          "IsForced": true,
-          "DeliveryMethod": "Embed",
-          "IsInterlaced": false,
-          "IsHearingImpaired": false,
-          "IsOriginal": false,
-          "IsExternal": false,
-          "IsTextSubtitleStream": true,
-          "SupportsExternalStream": true,
-          "IsDefault": false
-        },
-        {
-          "Codec": "srt",
-          "Language": "nld",
-          "DisplayTitle": "Dutch - SRT - External",
-          "Type": "Subtitle",
-          "Index": 3,
-          "IsExternal": true,
-          "DeliveryMethod": "External",
-          "DeliveryUrl": "/Videos/aaaaaaaa-0000-0000-0000-000000000001/a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a1/Subtitles/3/0/Stream.srt",
-          "Path": "/media/movies/The Test Movie/The Test Movie.nl.srt",
-          "IsInterlaced": false,
-          "IsForced": false,
-          "IsHearingImpaired": false,
-          "IsOriginal": false,
-          "IsTextSubtitleStream": true,
-          "SupportsExternalStream": true,
-          "IsDefault": false
         }
       ],
-      "ReadAtNativeFramerate": false,
-      "IgnoreDts": false,
-      "IgnoreIndex": false,
-      "GenPtsInput": false,
-      "IsInfiniteStream": false,
-      "RequiresOpening": false,
-      "RequiresClosing": false,
-      "RequiresLooping": false,
-      "SupportsProbing": true,
+      "MediaAttachments": [],
+      "Formats": [],
+      "Bitrate": 428181,
+      "RequiredHttpHeaders": {},
       "TranscodingSubProtocol": "http",
-      "HasSegments": false
-    },
-    {
-      "Protocol": "File",
-      "Id": "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a2",
-      "Path": "/media/movies/The Test Movie/The Test Movie - 4K.mkv",
-      "Type": "Default",
-      "Container": "mp4",
-      "Size": 8589934592,
-      "Name": "The Test Movie (4K, transcoded)",
-      "IsRemote": false,
-      "SupportsTranscoding": true,
-      "SupportsDirectStream": false,
-      "SupportsDirectPlay": false,
-      "TranscodingUrl": "/videos/aaaaaaaa-0000-0000-0000-000000000001/master.m3u8?MediaSourceId=a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a2&PlaySessionId=fakesession",
-      "MediaStreams": [],
-      "ReadAtNativeFramerate": false,
-      "IgnoreDts": false,
-      "IgnoreIndex": false,
-      "GenPtsInput": false,
-      "IsInfiniteStream": false,
-      "RequiresOpening": false,
-      "RequiresClosing": false,
-      "RequiresLooping": false,
-      "SupportsProbing": true,
-      "TranscodingSubProtocol": "http",
+      "DefaultAudioStreamIndex": 1,
       "HasSegments": false
     }
   ],
-  "Trickplay": {
-    "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a1": {
-      "320": {
-        "Width": 320,
-        "Height": 180,
-        "TileWidth": 10,
-        "TileHeight": 10,
-        "ThumbnailCount": 720,
-        "Interval": 10000,
-        "Bandwidth": 250000
-      },
-      "640": {
-        "Width": 640,
-        "Height": 360,
-        "TileWidth": 5,
-        "TileHeight": 5,
-        "ThumbnailCount": 720,
-        "Interval": 10000,
-        "Bandwidth": 900000
+  "CriticRating": 86,
+  "ProductionLocations": [
+    "United Kingdom",
+    "United States of America"
+  ],
+  "Path": "/media/movies-meta/Inception (2010)/Inception (2010).mkv",
+  "EnableMediaSourceDisplay": true,
+  "OfficialRating": "PG-13",
+  "ChannelId": null,
+  "Overview": "Cobb, a skilled thief who commits corporate espionage by infiltrating the subconscious of his targets is offered a chance to regain his old life as payment for a task considered to be impossible: \"inception\", the implantation of another person's idea into a target's subconscious.",
+  "Taglines": [
+    "Your mind is the scene of the crime."
+  ],
+  "Genres": [
+    "Action",
+    "Science Fiction",
+    "Crime"
+  ],
+  "CommunityRating": 8.373,
+  "RunTimeTicks": 1200230000,
+  "PlayAccess": "Full",
+  "ProductionYear": 2010,
+  "RemoteTrailers": [
+    {
+      "Url": "https://www.youtube.com/watch?v=cdx31ak4KbQ",
+      "Name": "35mm Theatrical Trailer #3"
+    },
+    {
+      "Url": "https://www.youtube.com/watch?v=JE9z-gy4De4",
+      "Name": "Official New UK Trailer"
+    },
+    {
+      "Url": "https://www.youtube.com/watch?v=Jvurpf91omw",
+      "Name": "Official Trailer"
+    },
+    {
+      "Url": "https://www.youtube.com/watch?v=HO5v3RhO8ek",
+      "Name": "TV Spot #9"
+    },
+    {
+      "Url": "https://www.youtube.com/watch?v=CJXn7hNtblE",
+      "Name": "TV Spot #8"
+    },
+    {
+      "Url": "https://www.youtube.com/watch?v=niw40pVKctc",
+      "Name": "TV Spot #7"
+    },
+    {
+      "Url": "https://www.youtube.com/watch?v=8XjKtoTFuLo",
+      "Name": "TV Spot #6"
+    },
+    {
+      "Url": "https://www.youtube.com/watch?v=8jRd8qRcaLI",
+      "Name": "TV Spot #5"
+    },
+    {
+      "Url": "https://www.youtube.com/watch?v=sn8JQgjSr7k",
+      "Name": "TV Spot #4"
+    },
+    {
+      "Url": "https://www.youtube.com/watch?v=uwyJfuM-ViA",
+      "Name": "IMAX® TV Spot"
+    },
+    {
+      "Url": "https://www.youtube.com/watch?v=RDgRNxSm53o",
+      "Name": "TV Spot #3"
+    },
+    {
+      "Url": "https://www.youtube.com/watch?v=J4BnDN7A-pk",
+      "Name": "TV Spot #2"
+    },
+    {
+      "Url": "https://www.youtube.com/watch?v=7aED7XBmbyQ",
+      "Name": "TV Spot #1"
+    },
+    {
+      "Url": "https://www.youtube.com/watch?v=cG_i7xnkMu8",
+      "Name": "TV Spot"
+    },
+    {
+      "Url": "https://www.youtube.com/watch?v=hstBN0Qkqhc",
+      "Name": "Official UK Teaser Trailer"
+    }
+  ],
+  "ProviderIds": {
+    "Imdb": "tt1375666",
+    "Tmdb": "27205"
+  },
+  "IsFolder": false,
+  "ParentId": "4cd76733d0650aec2cb764a0244b0459",
+  "Type": "Movie",
+  "People": [
+    {
+      "Name": "Leonardo DiCaprio",
+      "Id": "3b33a9ecaaa94bc0ed16f2a04a697613",
+      "Role": "Dom Cobb",
+      "Type": "Actor",
+      "PrimaryImageTag": "c21ea18847d434d1bc7bc11f9004cdd5",
+      "ImageBlurHashes": {
+        "Primary": {
+          "c21ea18847d434d1bc7bc11f9004cdd5": "dQCP3ExZ0zNb-payNGoLEMR*$*ofEMWB%1ofWXWVoeoL"
+        }
+      }
+    },
+    {
+      "Name": "Joseph Gordon-Levitt",
+      "Id": "9413c8ccdb3d0fd2994d71f6f61adffa",
+      "Role": "Arthur",
+      "Type": "Actor",
+      "PrimaryImageTag": "9e127a0bcdb640b8e4bd7470d44533b0",
+      "ImageBlurHashes": {
+        "Primary": {
+          "9e127a0bcdb640b8e4bd7470d44533b0": "dVM@J;?H.T_4~Vax?bxu58R*R4Ri?vxu%2%M-;WBt6ae"
+        }
+      }
+    },
+    {
+      "Name": "Ken Watanabe",
+      "Id": "371e5de17ab718a54d63a56168ba4c48",
+      "Role": "Saito",
+      "Type": "Actor",
+      "PrimaryImageTag": "df018181febde6f5fa22e9116ab84f6c",
+      "ImageBlurHashes": {
+        "Primary": {
+          "df018181febde6f5fa22e9116ab84f6c": "dUJH5W?G*0.8?atR-:%29^tRn%t8x^x]%M-:ozofxZxt"
+        }
+      }
+    },
+    {
+      "Name": "Tom Hardy",
+      "Id": "19537749e5c6499aa1bffe621556fda8",
+      "Role": "Eames",
+      "Type": "Actor",
+      "PrimaryImageTag": "6dd2b31081898822c07b262d7675b09a",
+      "ImageBlurHashes": {
+        "Primary": {
+          "6dd2b31081898822c07b262d7675b09a": "djI;-U^+?vtS~Ws:x[j]NdM{RPoKx]t7s:xtxuRjs:of"
+        }
+      }
+    },
+    {
+      "Name": "Elliot Page",
+      "Id": "7fc1af8b5ead7164347b98fbdf86f0de",
+      "Role": "Ariadne",
+      "Type": "Actor",
+      "PrimaryImageTag": "9465d419fb03a7f8211977cdb993871b",
+      "ImageBlurHashes": {
+        "Primary": {
+          "9465d419fb03a7f8211977cdb993871b": "dRF#,cxG0Ks,w]t6%gWV9aofxDWBE1R*oft7M{WBxuoe"
+        }
+      }
+    },
+    {
+      "Name": "Dileep Rao",
+      "Id": "73b7992b0f471090589705c101a44a9a",
+      "Role": "Yusuf",
+      "Type": "Actor",
+      "PrimaryImageTag": "d08546c7d4603b505a741208044d7e87",
+      "ImageBlurHashes": {
+        "Primary": {
+          "d08546c7d4603b505a741208044d7e87": "dbJ[3UIq_N?b~Vof%g%Mo~RjRiof.8kDt7t6%2xu%Lxt"
+        }
+      }
+    },
+    {
+      "Name": "Cillian Murphy",
+      "Id": "0d8cb6c3fc757f68c88d27635cab70ae",
+      "Role": "Robert Fischer, Jr.",
+      "Type": "Actor",
+      "PrimaryImageTag": "068d136843793d5733d0335a648788bc",
+      "ImageBlurHashes": {
+        "Primary": {
+          "068d136843793d5733d0335a648788bc": "diE_:dsp0eX8IAj[xvWBOsW;wcs.R+j]ofa|Rjj[t7fQ"
+        }
+      }
+    },
+    {
+      "Name": "Tom Berenger",
+      "Id": "0b356b7969ecabca2c06cb84bfd47c03",
+      "Role": "Peter Browning",
+      "Type": "Actor",
+      "PrimaryImageTag": "06b8d27bf55d83cd36312fdcd61e717b",
+      "ImageBlurHashes": {
+        "Primary": {
+          "06b8d27bf55d83cd36312fdcd61e717b": "dRD8nLt70yo0?HxaIoNGN^ofsoWBI:WVsoWBI:WVsoae"
+        }
+      }
+    },
+    {
+      "Name": "Marion Cotillard",
+      "Id": "0af27ab61cb0257298ba8e2e4b5dfe61",
+      "Role": "Mal Cobb",
+      "Type": "Actor",
+      "PrimaryImageTag": "007d4434c156955efae9784eb6a3e452",
+      "ImageBlurHashes": {
+        "Primary": {
+          "007d4434c156955efae9784eb6a3e452": "dVHx4*4:0g^*R:-:ozIpkXof-VR+NHt7xae.NHj[oda}"
+        }
+      }
+    },
+    {
+      "Name": "Pete Postlethwaite",
+      "Id": "c2a474899e7eb5c079b640e0aa780d4b",
+      "Role": "Maurice Fischer",
+      "Type": "Actor",
+      "PrimaryImageTag": "8f59ea62a29fb0690f95ff7136375c54",
+      "ImageBlurHashes": {
+        "Primary": {
+          "8f59ea62a29fb0690f95ff7136375c54": "d]Mt5P?b.S%g~WV@ShWpXSWBenkCkqt7nijtx]bHWBe."
+        }
+      }
+    },
+    {
+      "Name": "Michael Caine",
+      "Id": "a98ca466f73356545e05e1a4df1da170",
+      "Role": "Stephen Miles",
+      "Type": "Actor",
+      "PrimaryImageTag": "3a7ada7a564dbb6830642709a09a4ca0",
+      "ImageBlurHashes": {
+        "Primary": {
+          "3a7ada7a564dbb6830642709a09a4ca0": "dUF#tC?H0e4.~8xYNfR-ElR+wHxDNaWBWBa#NFRkoLoJ"
+        }
+      }
+    },
+    {
+      "Name": "Lukas Haas",
+      "Id": "6160d53d27ffef3822b18658eb69db17",
+      "Role": "Nash",
+      "Type": "Actor",
+      "PrimaryImageTag": "b323d16a27303a76d7666a9aa97acf6e",
+      "ImageBlurHashes": {
+        "Primary": {
+          "b323d16a27303a76d7666a9aa97acf6e": "dSB{1AoL0#bH$*j@WBj[EMWqxZjtI;j[xGR+NbfPs:oL"
+        }
+      }
+    },
+    {
+      "Name": "Talulah Riley",
+      "Id": "9b99db46728e0b1e340caecc3a139296",
+      "Role": "Blonde",
+      "Type": "Actor",
+      "PrimaryImageTag": "f9598129fa05dfa8a9f1074d0bc1fef6",
+      "ImageBlurHashes": {
+        "Primary": {
+          "f9598129fa05dfa8a9f1074d0bc1fef6": "dKJsnC?G0|xsJCNINft7AaW;xHWXIoWCt8ofENs:s;s:"
+        }
+      }
+    },
+    {
+      "Name": "Tohoru Masamune",
+      "Id": "f53cfa1c64d6addddfa0a5d4bdfecb2c",
+      "Role": "Japanese Security Guard",
+      "Type": "Actor",
+      "PrimaryImageTag": "6ab765daf391e9e3d78dd292fe9ea819",
+      "ImageBlurHashes": {
+        "Primary": {
+          "6ab765daf391e9e3d78dd292fe9ea819": "dOGH6j^O115TOFI;NaoJ0~Eg-Aw^t7nO-UazI=NHxas."
+        }
+      }
+    },
+    {
+      "Name": "Taylor Geare",
+      "Id": "5493f16be78c60ac615c8a6b19aa6996",
+      "Role": "Phillipa (5 years)",
+      "Type": "Actor",
+      "PrimaryImageTag": "3c97d77c709f7b1dec0b6645220b9424",
+      "ImageBlurHashes": {
+        "Primary": {
+          "3c97d77c709f7b1dec0b6645220b9424": "dRHwx[kY0g%1J8=_of9Zt6Io%1%29aNa%L%ME1jYs:R+"
+        }
+      }
+    },
+    {
+      "Name": "Christopher Nolan",
+      "Id": "c54ae5d343a18f161ccf0e0cceca7987",
+      "Role": "Director",
+      "Type": "Director",
+      "PrimaryImageTag": "0b770239d66bcefb4ccce5d3bf239410",
+      "ImageBlurHashes": {
+        "Primary": {
+          "0b770239d66bcefb4ccce5d3bf239410": "dqL|cN?G.7tk~VjF%MoyOYM|IBs:%ftQofxa-:WBj]oL"
+        }
+      }
+    },
+    {
+      "Name": "Christopher Nolan",
+      "Id": "c54ae5d343a18f161ccf0e0cceca7987",
+      "Role": "Writer",
+      "Type": "Writer",
+      "PrimaryImageTag": "0b770239d66bcefb4ccce5d3bf239410",
+      "ImageBlurHashes": {
+        "Primary": {
+          "0b770239d66bcefb4ccce5d3bf239410": "dqL|cN?G.7tk~VjF%MoyOYM|IBs:%ftQofxa-:WBj]oL"
+        }
+      }
+    },
+    {
+      "Name": "Christopher Nolan",
+      "Id": "c54ae5d343a18f161ccf0e0cceca7987",
+      "Role": "Producer",
+      "Type": "Producer",
+      "PrimaryImageTag": "0b770239d66bcefb4ccce5d3bf239410",
+      "ImageBlurHashes": {
+        "Primary": {
+          "0b770239d66bcefb4ccce5d3bf239410": "dqL|cN?G.7tk~VjF%MoyOYM|IBs:%ftQofxa-:WBj]oL"
+        }
+      }
+    },
+    {
+      "Name": "Emma Thomas",
+      "Id": "32d7a71e12dbc056ba3a385bdd6f0f75",
+      "Role": "Producer",
+      "Type": "Producer",
+      "PrimaryImageTag": "0a4b508db81fdb062e0ae0e6be323270",
+      "ImageBlurHashes": {
+        "Primary": {
+          "0a4b508db81fdb062e0ae0e6be323270": "dYG+Bxt7ActS_Nt7%#tRyEogsmt7%gj[j[t8kqj[xuof"
+        }
+      }
+    },
+    {
+      "Name": "Kanjiro Sakura",
+      "Id": "1d84188598e8564f49c9ad1fdf0eb1c8",
+      "Role": "Producer",
+      "Type": "Producer",
+      "ImageBlurHashes": {
+        "Primary": {}
+      }
+    },
+    {
+      "Name": "Yoshikuni Taki",
+      "Id": "cf42252772acf8ba98ca96cbe77a5315",
+      "Role": "Producer",
+      "Type": "Producer",
+      "ImageBlurHashes": {
+        "Primary": {}
       }
     }
-  }
+  ],
+  "Studios": [
+    {
+      "Name": "Warner Bros. Pictures",
+      "Id": "3fc63208ae63fa64a67db18e32c13476"
+    },
+    {
+      "Name": "Legendary Pictures",
+      "Id": "5f83e77e3f465e528750d05c6d9cdb0c"
+    },
+    {
+      "Name": "Syncopy",
+      "Id": "6eb8b2434ebd14671ddcefffc3ab06f2"
+    }
+  ],
+  "GenreItems": [
+    {
+      "Name": "Action",
+      "Id": "ce06903d834d2c3417e0889dd4049f3b"
+    },
+    {
+      "Name": "Science Fiction",
+      "Id": "0430d514c35e1f158fa93f1eeb8361ea"
+    },
+    {
+      "Name": "Crime",
+      "Id": "83a9dab21914792744c8fb23b9925dc6"
+    }
+  ],
+  "LocalTrailerCount": 0,
+  "UserData": {
+    "PlaybackPositionTicks": 0,
+    "PlayCount": 0,
+    "IsFavorite": false,
+    "Played": false,
+    "Key": "27205",
+    "ItemId": "d10943c9a35f58d61542dc562fdabcf2"
+  },
+  "SpecialFeatureCount": 0,
+  "DisplayPreferencesId": "dbf7709c41faaa746463d67978eb863d",
+  "Tags": [
+    "mission",
+    "dreams",
+    "kidnapping",
+    "spy",
+    "allegory",
+    "intellectual",
+    "manipulation",
+    "heist",
+    "memory",
+    "dream world",
+    "subconscious",
+    "incredulous",
+    "high concept",
+    "dream"
+  ],
+  "PrimaryImageAspectRatio": 0.6666666666666666,
+  "MediaStreams": [
+    {
+      "Codec": "h264",
+      "TimeBase": "1/1000",
+      "VideoRange": "SDR",
+      "VideoRangeType": "SDR",
+      "AudioSpatialFormat": "None",
+      "DisplayTitle": "360p H264 SDR",
+      "NalLengthSize": "4",
+      "IsInterlaced": false,
+      "IsAVC": true,
+      "BitRate": 236181,
+      "BitDepth": 8,
+      "RefFrames": 1,
+      "IsDefault": false,
+      "IsForced": false,
+      "IsHearingImpaired": false,
+      "IsOriginal": false,
+      "Height": 360,
+      "Width": 640,
+      "AverageFrameRate": 24,
+      "RealFrameRate": 24,
+      "ReferenceFrameRate": 24,
+      "Profile": "High",
+      "Type": "Video",
+      "AspectRatio": "16:9",
+      "Index": 0,
+      "IsExternal": false,
+      "IsTextSubtitleStream": false,
+      "SupportsExternalStream": false,
+      "PixelFormat": "yuv420p",
+      "Level": 30,
+      "IsAnamorphic": false
+    },
+    {
+      "Codec": "aac",
+      "TimeBase": "1/1000",
+      "VideoRange": "Unknown",
+      "VideoRangeType": "Unknown",
+      "AudioSpatialFormat": "None",
+      "LocalizedDefault": "Default",
+      "LocalizedExternal": "External",
+      "LocalizedOriginal": "Original",
+      "DisplayTitle": "AAC - Mono",
+      "IsInterlaced": false,
+      "ChannelLayout": "mono",
+      "BitRate": 192000,
+      "Channels": 1,
+      "SampleRate": 44100,
+      "IsDefault": false,
+      "IsForced": false,
+      "IsHearingImpaired": false,
+      "IsOriginal": false,
+      "Profile": "LC",
+      "Type": "Audio",
+      "Index": 1,
+      "IsExternal": false,
+      "IsTextSubtitleStream": false,
+      "SupportsExternalStream": false
+    }
+  ],
+  "VideoType": "VideoFile",
+  "ImageTags": {
+    "Logo": "8475cfb09a2ebb59ef5fc5c7ded42769",
+    "Primary": "8475cfb09a2ebb59ef5fc5c7ded42769",
+    "Thumb": "8475cfb09a2ebb59ef5fc5c7ded42769"
+  },
+  "BackdropImageTags": [
+    "8475cfb09a2ebb59ef5fc5c7ded42769"
+  ],
+  "ImageBlurHashes": {
+    "Backdrop": {
+      "8475cfb09a2ebb59ef5fc5c7ded42769": "WHB|yyIv%LS6Myxu_K8{-;M{RQxtsk4o%LNFWBt6?cIW%La$Rjxt"
+    },
+    "Logo": {
+      "8475cfb09a2ebb59ef5fc5c7ded42769": "HFKq]+wx$PNuwy,swxJka||wWpJRwy$PN[SMsUjt"
+    },
+    "Primary": {
+      "8475cfb09a2ebb59ef5fc5c7ded42769": "dMAn4blA9Yj]:%NuNus9hyM{pIs:;gWUJToL,:axNdae"
+    },
+    "Thumb": {
+      "8475cfb09a2ebb59ef5fc5c7ded42769": "WLBXTUt-9ERPt7Io_NtRITsmWWR*XTogt7ogNIjspJo#%2NHRkjZ"
+    }
+  },
+  "Chapters": [],
+  "Trickplay": {},
+  "LocationType": "FileSystem",
+  "MediaType": "Video",
+  "LockedFields": [],
+  "LockData": false,
+  "Width": 640,
+  "Height": 360,
+  "OriginalLanguage": "en"
 }

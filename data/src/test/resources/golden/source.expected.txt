@@ -1,45 +1,21 @@
-== includePath = false
+== direct, includePath = false
 FindroidSource(
-  id = "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0d1"
-  name = "Source Test"
+  id = "7cfc27a508187be5210c6df99c9d6102"
+  name = "Tracks Movie (2022)"
   type = REMOTE
   path = ""
-  size = 2147483648
+  size = 34360993
   mediaStreams = [
     - FindroidMediaStream(
         title = ""
-        displayTitle = "1080p H264 SDR"
-        language = ""
-        type = VIDEO
-        codec = "h264"
-        profile = "High"
-        isExternal = false
-        path = null
-        channelLayout = null
-        videoRangeType = SDR
-        height = 1080
-        width = 1920
-        videoDoViTitle = null
-        bitRate = 4500000
-        frameRate = 25.0
-        bitDepth = 8
-        sampleRate = null
-        index = 0
-        channels = null
-        deliveryMethod = null
-        isForced = false
-        isDefault = true
-      )
-    - FindroidMediaStream(
-        title = "Commentary"
-        displayTitle = null
-        language = "fra"
-        type = AUDIO
-        codec = "dts"
+        displayTitle = "German - SUBRIP - External"
+        language = "deu"
+        type = SUBTITLE
+        codec = "subrip"
         profile = null
         isExternal = true
-        path = "https://server.test/audio/track.dts"
-        channelLayout = "stereo"
+        path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/7cfc27a508187be5210c6df99c9d6102/Subtitles/0/0/Stream.subrip?ApiKey=REDACTED"
+        channelLayout = null
         videoRangeType = UNKNOWN
         height = null
         width = null
@@ -47,64 +23,208 @@ FindroidSource(
         bitRate = null
         frameRate = null
         bitDepth = null
-        sampleRate = 44100
+        sampleRate = null
+        index = 0
+        channels = null
+        deliveryMethod = EXTERNAL
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "French - SUBRIP - External"
+        language = "fra"
+        type = SUBTITLE
+        codec = "subrip"
+        profile = null
+        isExternal = true
+        path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/7cfc27a508187be5210c6df99c9d6102/Subtitles/1/0/Stream.subrip?ApiKey=REDACTED"
+        channelLayout = null
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = null
+        frameRate = null
+        bitDepth = null
+        sampleRate = null
+        index = 1
+        channels = null
+        deliveryMethod = EXTERNAL
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "Dutch - Forced - SUBRIP - External"
+        language = "nld"
+        type = SUBTITLE
+        codec = "subrip"
+        profile = null
+        isExternal = true
+        path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/7cfc27a508187be5210c6df99c9d6102/Subtitles/2/0/Stream.subrip?ApiKey=REDACTED"
+        channelLayout = null
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = null
+        frameRate = null
+        bitDepth = null
+        sampleRate = null
         index = 2
-        channels = 2
+        channels = null
+        deliveryMethod = EXTERNAL
+        isForced = true
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "360p H264 SDR"
+        language = ""
+        type = VIDEO
+        codec = "h264"
+        profile = "Constrained Baseline"
+        isExternal = false
+        path = null
+        channelLayout = null
+        videoRangeType = SDR
+        height = 360
+        width = 640
+        videoDoViTitle = null
+        bitRate = 1650293
+        frameRate = 24.0
+        bitDepth = 8
+        sampleRate = null
+        index = 3
+        channels = null
         deliveryMethod = null
         isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = "English Stereo"
+        displayTitle = "English Stereo - AAC - Mono"
+        language = "eng"
+        type = AUDIO
+        codec = "aac"
+        profile = "LC"
+        isExternal = false
+        path = null
+        channelLayout = "mono"
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = 192000
+        frameRate = null
+        bitDepth = null
+        sampleRate = 44100
+        index = 4
+        channels = 1
+        deliveryMethod = null
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = "Dutch 5.1"
+        displayTitle = "Dutch 5.1 - Dolby Digital"
+        language = "nld"
+        type = AUDIO
+        codec = "ac3"
+        profile = null
+        isExternal = false
+        path = null
+        channelLayout = "5.1"
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = 448000
+        frameRate = null
+        bitDepth = null
+        sampleRate = 44100
+        index = 5
+        channels = 6
+        deliveryMethod = null
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "English - SUBRIP"
+        language = "eng"
+        type = SUBTITLE
+        codec = "subrip"
+        profile = null
+        isExternal = false
+        path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/7cfc27a508187be5210c6df99c9d6102/Subtitles/6/0/Stream.subrip?ApiKey=REDACTED"
+        channelLayout = null
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = null
+        frameRate = null
+        bitDepth = null
+        sampleRate = null
+        index = 6
+        channels = null
+        deliveryMethod = EXTERNAL
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "Dutch - Forced - SUBRIP"
+        language = "nld"
+        type = SUBTITLE
+        codec = "subrip"
+        profile = null
+        isExternal = false
+        path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/7cfc27a508187be5210c6df99c9d6102/Subtitles/7/0/Stream.subrip?ApiKey=REDACTED"
+        channelLayout = null
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = null
+        frameRate = null
+        bitDepth = null
+        sampleRate = null
+        index = 7
+        channels = null
+        deliveryMethod = EXTERNAL
+        isForced = true
         isDefault = false
       )
   ]
   downloadId = null
   transcoded = false
   container = "mkv"
-  bitrate = 5000000
-  defaultAudioStreamIndex = 2
+  bitrate = 2290293
+  defaultAudioStreamIndex = 4
   playSessionId = null
 )
 
-== includePath = true
+== direct, includePath = true
 FindroidSource(
-  id = "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0d1"
-  name = "Source Test"
+  id = "7cfc27a508187be5210c6df99c9d6102"
+  name = "Tracks Movie (2022)"
   type = REMOTE
-  path = "https://server.test/Videos/aaaaaaaa-0000-0000-0000-0000000000a1/stream?mediaSourceId=a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0d1"
-  size = 2147483648
+  path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/stream?mediaSourceId=7cfc27a508187be5210c6df99c9d6102"
+  size = 34360993
   mediaStreams = [
     - FindroidMediaStream(
         title = ""
-        displayTitle = "1080p H264 SDR"
-        language = ""
-        type = VIDEO
-        codec = "h264"
-        profile = "High"
-        isExternal = false
-        path = null
-        channelLayout = null
-        videoRangeType = SDR
-        height = 1080
-        width = 1920
-        videoDoViTitle = null
-        bitRate = 4500000
-        frameRate = 25.0
-        bitDepth = 8
-        sampleRate = null
-        index = 0
-        channels = null
-        deliveryMethod = null
-        isForced = false
-        isDefault = true
-      )
-    - FindroidMediaStream(
-        title = "Commentary"
-        displayTitle = null
-        language = "fra"
-        type = AUDIO
-        codec = "dts"
+        displayTitle = "German - SUBRIP - External"
+        language = "deu"
+        type = SUBTITLE
+        codec = "subrip"
         profile = null
         isExternal = true
-        path = "https://server.test/audio/track.dts"
-        channelLayout = "stereo"
+        path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/7cfc27a508187be5210c6df99c9d6102/Subtitles/0/0/Stream.subrip?ApiKey=REDACTED"
+        channelLayout = null
         videoRangeType = UNKNOWN
         height = null
         width = null
@@ -112,18 +232,604 @@ FindroidSource(
         bitRate = null
         frameRate = null
         bitDepth = null
-        sampleRate = 44100
+        sampleRate = null
+        index = 0
+        channels = null
+        deliveryMethod = EXTERNAL
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "French - SUBRIP - External"
+        language = "fra"
+        type = SUBTITLE
+        codec = "subrip"
+        profile = null
+        isExternal = true
+        path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/7cfc27a508187be5210c6df99c9d6102/Subtitles/1/0/Stream.subrip?ApiKey=REDACTED"
+        channelLayout = null
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = null
+        frameRate = null
+        bitDepth = null
+        sampleRate = null
+        index = 1
+        channels = null
+        deliveryMethod = EXTERNAL
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "Dutch - Forced - SUBRIP - External"
+        language = "nld"
+        type = SUBTITLE
+        codec = "subrip"
+        profile = null
+        isExternal = true
+        path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/7cfc27a508187be5210c6df99c9d6102/Subtitles/2/0/Stream.subrip?ApiKey=REDACTED"
+        channelLayout = null
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = null
+        frameRate = null
+        bitDepth = null
+        sampleRate = null
         index = 2
-        channels = 2
+        channels = null
+        deliveryMethod = EXTERNAL
+        isForced = true
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "360p H264 SDR"
+        language = ""
+        type = VIDEO
+        codec = "h264"
+        profile = "Constrained Baseline"
+        isExternal = false
+        path = null
+        channelLayout = null
+        videoRangeType = SDR
+        height = 360
+        width = 640
+        videoDoViTitle = null
+        bitRate = 1650293
+        frameRate = 24.0
+        bitDepth = 8
+        sampleRate = null
+        index = 3
+        channels = null
         deliveryMethod = null
         isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = "English Stereo"
+        displayTitle = "English Stereo - AAC - Mono"
+        language = "eng"
+        type = AUDIO
+        codec = "aac"
+        profile = "LC"
+        isExternal = false
+        path = null
+        channelLayout = "mono"
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = 192000
+        frameRate = null
+        bitDepth = null
+        sampleRate = 44100
+        index = 4
+        channels = 1
+        deliveryMethod = null
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = "Dutch 5.1"
+        displayTitle = "Dutch 5.1 - Dolby Digital"
+        language = "nld"
+        type = AUDIO
+        codec = "ac3"
+        profile = null
+        isExternal = false
+        path = null
+        channelLayout = "5.1"
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = 448000
+        frameRate = null
+        bitDepth = null
+        sampleRate = 44100
+        index = 5
+        channels = 6
+        deliveryMethod = null
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "English - SUBRIP"
+        language = "eng"
+        type = SUBTITLE
+        codec = "subrip"
+        profile = null
+        isExternal = false
+        path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/7cfc27a508187be5210c6df99c9d6102/Subtitles/6/0/Stream.subrip?ApiKey=REDACTED"
+        channelLayout = null
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = null
+        frameRate = null
+        bitDepth = null
+        sampleRate = null
+        index = 6
+        channels = null
+        deliveryMethod = EXTERNAL
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "Dutch - Forced - SUBRIP"
+        language = "nld"
+        type = SUBTITLE
+        codec = "subrip"
+        profile = null
+        isExternal = false
+        path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/7cfc27a508187be5210c6df99c9d6102/Subtitles/7/0/Stream.subrip?ApiKey=REDACTED"
+        channelLayout = null
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = null
+        frameRate = null
+        bitDepth = null
+        sampleRate = null
+        index = 7
+        channels = null
+        deliveryMethod = EXTERNAL
+        isForced = true
         isDefault = false
       )
   ]
   downloadId = null
   transcoded = false
   container = "mkv"
-  bitrate = 5000000
-  defaultAudioStreamIndex = 2
+  bitrate = 2290293
+  defaultAudioStreamIndex = 4
+  playSessionId = null
+)
+
+== transcode, includePath = false
+FindroidSource(
+  id = "7cfc27a508187be5210c6df99c9d6102"
+  name = "Tracks Movie (2022)"
+  type = REMOTE
+  path = "https://server.test/videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/master.m3u8?DeviceId=ephyra-golden-recorder-739&MediaSourceId=7cfc27a508187be5210c6df99c9d6102&VideoCodec=h264&AudioCodec=aac&AudioStreamIndex=4&VideoBitrate=172000&AudioBitrate=128000&MaxFramerate=24&SegmentContainer=ts&MinSegments=1&PlaySessionId=c96dd9e2c9c344a2aec79fb2123a971d&ApiKey=REDACTED&TranscodingMaxAudioChannels=6&RequireAvc=false&EnableAudioVbrEncoding=true&Tag=f3c63449aceb38772b7e8b2c8516426e&h264-level=30&h264-videobitdepth=8&h264-profile=constrainedbaseline&TranscodeReasons=AudioCodecNotSupported,ContainerBitrateExceedsLimit"
+  size = 34360993
+  mediaStreams = [
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "German - SUBRIP - External"
+        language = "deu"
+        type = SUBTITLE
+        codec = "subrip"
+        profile = null
+        isExternal = true
+        path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/7cfc27a508187be5210c6df99c9d6102/Subtitles/0/0/Stream.subrip?ApiKey=REDACTED"
+        channelLayout = null
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = null
+        frameRate = null
+        bitDepth = null
+        sampleRate = null
+        index = 0
+        channels = null
+        deliveryMethod = EXTERNAL
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "French - SUBRIP - External"
+        language = "fra"
+        type = SUBTITLE
+        codec = "subrip"
+        profile = null
+        isExternal = true
+        path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/7cfc27a508187be5210c6df99c9d6102/Subtitles/1/0/Stream.subrip?ApiKey=REDACTED"
+        channelLayout = null
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = null
+        frameRate = null
+        bitDepth = null
+        sampleRate = null
+        index = 1
+        channels = null
+        deliveryMethod = EXTERNAL
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "Dutch - Forced - SUBRIP - External"
+        language = "nld"
+        type = SUBTITLE
+        codec = "subrip"
+        profile = null
+        isExternal = true
+        path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/7cfc27a508187be5210c6df99c9d6102/Subtitles/2/0/Stream.subrip?ApiKey=REDACTED"
+        channelLayout = null
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = null
+        frameRate = null
+        bitDepth = null
+        sampleRate = null
+        index = 2
+        channels = null
+        deliveryMethod = EXTERNAL
+        isForced = true
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "360p H264 SDR"
+        language = ""
+        type = VIDEO
+        codec = "h264"
+        profile = "Constrained Baseline"
+        isExternal = false
+        path = null
+        channelLayout = null
+        videoRangeType = SDR
+        height = 360
+        width = 640
+        videoDoViTitle = null
+        bitRate = 1650293
+        frameRate = 24.0
+        bitDepth = 8
+        sampleRate = null
+        index = 3
+        channels = null
+        deliveryMethod = null
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = "English Stereo"
+        displayTitle = "English Stereo - AAC - Mono"
+        language = "eng"
+        type = AUDIO
+        codec = "aac"
+        profile = "LC"
+        isExternal = false
+        path = null
+        channelLayout = "mono"
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = 192000
+        frameRate = null
+        bitDepth = null
+        sampleRate = 44100
+        index = 4
+        channels = 1
+        deliveryMethod = null
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = "Dutch 5.1"
+        displayTitle = "Dutch 5.1 - Dolby Digital"
+        language = "nld"
+        type = AUDIO
+        codec = "ac3"
+        profile = null
+        isExternal = false
+        path = null
+        channelLayout = "5.1"
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = 448000
+        frameRate = null
+        bitDepth = null
+        sampleRate = 44100
+        index = 5
+        channels = 6
+        deliveryMethod = null
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "English - SUBRIP"
+        language = "eng"
+        type = SUBTITLE
+        codec = "subrip"
+        profile = null
+        isExternal = false
+        path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/7cfc27a508187be5210c6df99c9d6102/Subtitles/6/0/Stream.subrip?ApiKey=REDACTED"
+        channelLayout = null
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = null
+        frameRate = null
+        bitDepth = null
+        sampleRate = null
+        index = 6
+        channels = null
+        deliveryMethod = EXTERNAL
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "Dutch - Forced - SUBRIP"
+        language = "nld"
+        type = SUBTITLE
+        codec = "subrip"
+        profile = null
+        isExternal = false
+        path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/7cfc27a508187be5210c6df99c9d6102/Subtitles/7/0/Stream.subrip?ApiKey=REDACTED"
+        channelLayout = null
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = null
+        frameRate = null
+        bitDepth = null
+        sampleRate = null
+        index = 7
+        channels = null
+        deliveryMethod = EXTERNAL
+        isForced = true
+        isDefault = false
+      )
+  ]
+  downloadId = null
+  transcoded = true
+  container = "mkv"
+  bitrate = 2290293
+  defaultAudioStreamIndex = 4
+  playSessionId = null
+)
+
+== transcode, includePath = true
+FindroidSource(
+  id = "7cfc27a508187be5210c6df99c9d6102"
+  name = "Tracks Movie (2022)"
+  type = REMOTE
+  path = "https://server.test/videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/master.m3u8?DeviceId=ephyra-golden-recorder-739&MediaSourceId=7cfc27a508187be5210c6df99c9d6102&VideoCodec=h264&AudioCodec=aac&AudioStreamIndex=4&VideoBitrate=172000&AudioBitrate=128000&MaxFramerate=24&SegmentContainer=ts&MinSegments=1&PlaySessionId=c96dd9e2c9c344a2aec79fb2123a971d&ApiKey=REDACTED&TranscodingMaxAudioChannels=6&RequireAvc=false&EnableAudioVbrEncoding=true&Tag=f3c63449aceb38772b7e8b2c8516426e&h264-level=30&h264-videobitdepth=8&h264-profile=constrainedbaseline&TranscodeReasons=AudioCodecNotSupported,ContainerBitrateExceedsLimit"
+  size = 34360993
+  mediaStreams = [
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "German - SUBRIP - External"
+        language = "deu"
+        type = SUBTITLE
+        codec = "subrip"
+        profile = null
+        isExternal = true
+        path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/7cfc27a508187be5210c6df99c9d6102/Subtitles/0/0/Stream.subrip?ApiKey=REDACTED"
+        channelLayout = null
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = null
+        frameRate = null
+        bitDepth = null
+        sampleRate = null
+        index = 0
+        channels = null
+        deliveryMethod = EXTERNAL
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "French - SUBRIP - External"
+        language = "fra"
+        type = SUBTITLE
+        codec = "subrip"
+        profile = null
+        isExternal = true
+        path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/7cfc27a508187be5210c6df99c9d6102/Subtitles/1/0/Stream.subrip?ApiKey=REDACTED"
+        channelLayout = null
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = null
+        frameRate = null
+        bitDepth = null
+        sampleRate = null
+        index = 1
+        channels = null
+        deliveryMethod = EXTERNAL
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "Dutch - Forced - SUBRIP - External"
+        language = "nld"
+        type = SUBTITLE
+        codec = "subrip"
+        profile = null
+        isExternal = true
+        path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/7cfc27a508187be5210c6df99c9d6102/Subtitles/2/0/Stream.subrip?ApiKey=REDACTED"
+        channelLayout = null
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = null
+        frameRate = null
+        bitDepth = null
+        sampleRate = null
+        index = 2
+        channels = null
+        deliveryMethod = EXTERNAL
+        isForced = true
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "360p H264 SDR"
+        language = ""
+        type = VIDEO
+        codec = "h264"
+        profile = "Constrained Baseline"
+        isExternal = false
+        path = null
+        channelLayout = null
+        videoRangeType = SDR
+        height = 360
+        width = 640
+        videoDoViTitle = null
+        bitRate = 1650293
+        frameRate = 24.0
+        bitDepth = 8
+        sampleRate = null
+        index = 3
+        channels = null
+        deliveryMethod = null
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = "English Stereo"
+        displayTitle = "English Stereo - AAC - Mono"
+        language = "eng"
+        type = AUDIO
+        codec = "aac"
+        profile = "LC"
+        isExternal = false
+        path = null
+        channelLayout = "mono"
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = 192000
+        frameRate = null
+        bitDepth = null
+        sampleRate = 44100
+        index = 4
+        channels = 1
+        deliveryMethod = null
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = "Dutch 5.1"
+        displayTitle = "Dutch 5.1 - Dolby Digital"
+        language = "nld"
+        type = AUDIO
+        codec = "ac3"
+        profile = null
+        isExternal = false
+        path = null
+        channelLayout = "5.1"
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = 448000
+        frameRate = null
+        bitDepth = null
+        sampleRate = 44100
+        index = 5
+        channels = 6
+        deliveryMethod = null
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "English - SUBRIP"
+        language = "eng"
+        type = SUBTITLE
+        codec = "subrip"
+        profile = null
+        isExternal = false
+        path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/7cfc27a508187be5210c6df99c9d6102/Subtitles/6/0/Stream.subrip?ApiKey=REDACTED"
+        channelLayout = null
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = null
+        frameRate = null
+        bitDepth = null
+        sampleRate = null
+        index = 6
+        channels = null
+        deliveryMethod = EXTERNAL
+        isForced = false
+        isDefault = false
+      )
+    - FindroidMediaStream(
+        title = ""
+        displayTitle = "Dutch - Forced - SUBRIP"
+        language = "nld"
+        type = SUBTITLE
+        codec = "subrip"
+        profile = null
+        isExternal = false
+        path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/7cfc27a508187be5210c6df99c9d6102/Subtitles/7/0/Stream.subrip?ApiKey=REDACTED"
+        channelLayout = null
+        videoRangeType = UNKNOWN
+        height = null
+        width = null
+        videoDoViTitle = null
+        bitRate = null
+        frameRate = null
+        bitDepth = null
+        sampleRate = null
+        index = 7
+        channels = null
+        deliveryMethod = EXTERNAL
+        isForced = true
+        isDefault = false
+      )
+  ]
+  downloadId = null
+  transcoded = true
+  container = "mkv"
+  bitrate = 2290293
+  defaultAudioStreamIndex = 4
   playSessionId = null
 )

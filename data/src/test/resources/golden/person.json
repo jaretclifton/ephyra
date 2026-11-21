@@ -1,14 +1,78 @@
 {
-  "Name": "Ada Actor",
-  "Id": "cccccccc-0000-0000-0000-000000000001",
-  "Type": "Person",
-  "Overview": "An actor who exists only in tests.",
-  "ImageTags": {
-    "Primary": "adaptag",
-    "Logo": "adalogo"
-  },
-  "BackdropImageTags": [
-    "adabd"
+  "Name": "Aaron Paul",
+  "ServerId": "a6ee16b34eb941e0bd5e81a3cef8d2d5",
+  "Id": "066de5f447b7bdef2b6f01339dd5f38b",
+  "Etag": "7e209f8facfd073c05bd08718130f698",
+  "DateCreated": "2026-11-11T08:30:08.1116034Z",
+  "CanDelete": false,
+  "CanDownload": false,
+  "SortName": "Aaron Paul",
+  "PremiereDate": "1979-08-27T00:00:00.0000000Z",
+  "ExternalUrls": [
+    {
+      "Name": "IMDb",
+      "Url": "https://www.imdb.com/name/nm0666739"
+    },
+    {
+      "Name": "TMDB",
+      "Url": "https://www.themoviedb.org/person/84497"
+    }
   ],
-  "LocationType": "FileSystem"
+  "ProductionLocations": [
+    "Emmett, Idaho, USA"
+  ],
+  "Path": "/config/metadata/People/A/Aaron Paul",
+  "EnableMediaSourceDisplay": true,
+  "ChannelId": null,
+  "Overview": "Aaron Paul Sturtevant (born August 27, 1979) is an American actor. He is best known for his critically acclaimed role as Jesse Pinkman in the hit AMC series Breaking Bad (2008–13). For his portrayal of Jesse Pinkman, he won the Primetime Emmy Award for Outstanding Supporting Actor in a Drama Series in 2010 and 2012, making him one of five actors to win this award more than once. He also won the Saturn Award for Best Supporting Actor on Television in 2010, 2012, and 2014, making him the only actor to win this award three times.",
+  "Taglines": [],
+  "Genres": [],
+  "PlayAccess": "Full",
+  "RemoteTrailers": [],
+  "ProviderIds": {
+    "Tmdb": "84497",
+    "Imdb": "nm0666739"
+  },
+  "ParentId": null,
+  "Type": "Person",
+  "People": [],
+  "Studios": [],
+  "GenreItems": [],
+  "LocalTrailerCount": 0,
+  "UserData": {
+    "PlaybackPositionTicks": 0,
+    "PlayCount": 0,
+    "IsFavorite": false,
+    "Played": false,
+    "Key": "Person-Aaron Paul",
+    "ItemId": "066de5f447b7bdef2b6f01339dd5f38b"
+  },
+  "ChildCount": 21,
+  "SpecialFeatureCount": 0,
+  "DisplayPreferencesId": "b607178b0ac2f604a458d3d2363fdc83",
+  "Tags": [],
+  "PrimaryImageAspectRatio": 0.6666666666666666,
+  "ImageTags": {
+    "Primary": "103f92f104eabbd4794b8512d7d7ce88"
+  },
+  "BackdropImageTags": [],
+  "ImageBlurHashes": {
+    "Primary": {
+      "103f92f104eabbd4794b8512d7d7ce88": "dVF4l@=|0#9u^QxaNHNGEMNHsms:EMNHofs:EMR*$*s:"
+    }
+  },
+  "Chapters": [],
+  "LocationType": "FileSystem",
+  "MediaType": "Unknown",
+  "LockedFields": [],
+  "TrailerCount": 0,
+  "MovieCount": 0,
+  "SeriesCount": 1,
+  "ProgramCount": 0,
+  "EpisodeCount": 20,
+  "SongCount": 0,
+  "AlbumCount": 0,
+  "ArtistCount": 0,
+  "MusicVideoCount": 0,
+  "LockData": false
 }
