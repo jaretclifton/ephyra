@@ -1,8 +1,8 @@
 package dev.jdtech.jellyfin.models
 
 import android.app.Application
-import dev.jdtech.jellyfin.repository.JellyfinRepository
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.server.jellyfin.mappers.MapperContext
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidItem
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -21,18 +21,12 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class VideoLibraryItemTest {
-    private val repository =
-        Proxy.newProxyInstance(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
-        ) { _, method, _ ->
-            if (method.name == "getBaseUrl") "https://jf.example"
-            else throw NotImplementedError(method.name)
-        } as JellyfinRepository
+    private val context =
+        MapperContext("https://jf.example") { _, _ -> throw NotImplementedError("streamUrl") }
 
     private fun map(type: BaseItemKind, canDownload: Boolean = true): FindroidItem? = runBlocking {
         BaseItemDto(id = UUID.randomUUID(), type = type, name = "Item", canDownload = canDownload)
-            .toFindroidItem(repository, emptyMap())
+            .toFindroidItem(context, emptyMap())
     }
 
     @Test

@@ -64,7 +64,6 @@ class UsersFocusRestoreTest {
                                     else -> Unit
                                 }
                             },
-                            baseUrl = "",
                         )
                     }
                 }

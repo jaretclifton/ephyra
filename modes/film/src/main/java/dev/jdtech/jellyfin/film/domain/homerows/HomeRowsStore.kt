@@ -1,14 +1,13 @@
 package dev.jdtech.jellyfin.film.domain.homerows
 
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.CollectionType
+import dev.jdtech.jellyfin.models.FindroidCollection
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.settings.domain.models.Preference
 import java.util.UUID
 import javax.inject.Inject
-import org.jellyfin.sdk.model.api.BaseItemDto
 
 /** CE (#142): whose Home layout it is. Each user on each server has their own. */
 data class HomeRowsProfile(val serverId: String, val userId: UUID) {
@@ -51,7 +50,4 @@ constructor(private val appPreferences: AppPreferences, private val database: Se
 }
 
 /** The libraries that can have a Latest row on Home. */
-suspend fun JellyfinRepository.homeLibraries(): List<BaseItemDto> =
-    getUserViews().filter { view ->
-        CollectionType.fromString(view.collectionType?.serialName) in CollectionType.supported
-    }
+suspend fun JellyfinRepository.homeLibraries(): List<FindroidCollection> = getUserViews()

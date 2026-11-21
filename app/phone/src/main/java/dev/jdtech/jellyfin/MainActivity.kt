@@ -16,8 +16,10 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadPumpService
+import dev.jdtech.jellyfin.core.presentation.session.LocalServerSession
 import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
 import dev.jdtech.jellyfin.core.presentation.spoiler.Spoilers
+import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.utils.KeyboardShortcuts
 import dev.jdtech.jellyfin.presentation.utils.LocalNotificationPermissionRequest
@@ -41,6 +43,8 @@ class MainActivity : AppCompatActivity() {
     @Inject lateinit var playbackEvents: PlaybackEvents
 
     @Inject lateinit var dataChangeEvents: DataChangeEvents
+
+    @Inject lateinit var serverSession: ServerSession
 
     // CE (#372): registered here rather than in the download quality dialog, which closes on the
     // tap that asks. The download has already started; once allowed, its notification is posted
@@ -80,6 +84,7 @@ class MainActivity : AppCompatActivity() {
                         LocalSpoilers provides Spoilers(state.hideSpoilers),
                         LocalSideBackdrop provides state.sideBackdrop,
                         LocalServerStatus provides serverStatus,
+                        LocalServerSession provides serverSession,
                         LocalPlaybackStopped provides stopped,
                         LocalNotificationPermissionRequest provides ::requestNotificationPermission,
                     ) {

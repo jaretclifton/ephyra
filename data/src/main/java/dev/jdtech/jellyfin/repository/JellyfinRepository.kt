@@ -19,12 +19,12 @@ import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
-import org.jellyfin.sdk.model.api.BaseItemDto
 
 interface JellyfinRepository {
     suspend fun getServerInfo(): ServerInfo
 
-    suspend fun getUserViews(): List<BaseItemDto>
+    /** The libraries the current user sees, in the server's order, of the supported types only. */
+    suspend fun getUserViews(): List<FindroidCollection>
 
     /** Stores the current user's profile picture tag, as the server has it now. */
     suspend fun refreshCurrentUserImage()

@@ -38,7 +38,6 @@ import dev.jdtech.jellyfin.presentation.theme.spacings
 @Composable
 fun UserItem(
     user: User,
-    baseUrl: String?,
     modifier: Modifier = Modifier,
     current: Boolean = false,
     subtitle: String? = null,
@@ -64,7 +63,7 @@ fun UserItem(
                     .padding(MaterialTheme.spacings.small),
         ) {
             Box {
-                UserAvatar(user = user, baseUrl = baseUrl, size = 96.dp, current = current)
+                UserAvatar(user = user, size = 96.dp, current = current)
                 if (onRemoveClick != null) {
                     IconButton(
                         onClick = onRemoveClick,
@@ -109,7 +108,6 @@ private fun UserItemPreview() {
     FindroidTheme {
         UserItem(
             user = dummyUser,
-            baseUrl = null,
             current = true,
             modifier = Modifier.width(128.dp),
             onRemoveClick = {},

@@ -54,7 +54,6 @@ import java.util.UUID
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileBottomSheet(
-    baseUrl: String?,
     onSwitchServer: () -> Unit,
     onPublicUserClick: (username: String) -> Unit,
     onAddUser: () -> Unit,
@@ -76,7 +75,6 @@ fun ProfileBottomSheet(
 
     ProfileBottomSheetLayout(
         state = state,
-        baseUrl = baseUrl,
         onSwitchServer = onSwitchServer,
         onPublicUserClick = onPublicUserClick,
         onAddUser = onAddUser,
@@ -94,7 +92,6 @@ fun ProfileBottomSheet(
 @Composable
 internal fun ProfileBottomSheetLayout(
     state: UsersState,
-    baseUrl: String?,
     onSwitchServer: () -> Unit,
     onPublicUserClick: (String) -> Unit,
     onAddUser: () -> Unit,
@@ -121,7 +118,7 @@ internal fun ProfileBottomSheetLayout(
             verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacings.small),
         ) {
             if (currentUser != null) {
-                UserAvatar(user = currentUser, baseUrl = baseUrl, size = 96.dp, current = true)
+                UserAvatar(user = currentUser, size = 96.dp, current = true)
                 Text(
                     text = currentUser.name,
                     style = MaterialTheme.typography.titleLarge,
@@ -156,11 +153,7 @@ internal fun ProfileBottomSheetLayout(
                     horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacings.medium),
                 ) {
                     items(items = otherUsers, key = { "u-" + it.id }) { user ->
-                        ProfileSheetUser(
-                            user = user,
-                            baseUrl = baseUrl,
-                            onClick = { onUserClick(user.id) },
-                        )
+                        ProfileSheetUser(user = user, onClick = { onUserClick(user.id) })
                     }
                     if (otherUsers.isNotEmpty() && state.publicUsers.isNotEmpty()) {
                         item(key = "divider") { VerticalDivider(modifier = Modifier.height(48.dp)) }
@@ -168,7 +161,6 @@ internal fun ProfileBottomSheetLayout(
                     items(items = state.publicUsers, key = { "p-" + it.id }) { user ->
                         ProfileSheetUser(
                             user = user,
-                            baseUrl = baseUrl,
                             subtitle = stringResource(SetupR.string.ce_users_sign_in),
                             onClick = { onPublicUserClick(user.name) },
                         )
@@ -187,12 +179,7 @@ internal fun ProfileBottomSheetLayout(
 }
 
 @Composable
-private fun ProfileSheetUser(
-    user: User,
-    baseUrl: String?,
-    onClick: () -> Unit,
-    subtitle: String? = null,
-) {
+private fun ProfileSheetUser(user: User, onClick: () -> Unit, subtitle: String? = null) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier =
@@ -201,7 +188,7 @@ private fun ProfileSheetUser(
                 .clickable(onClick = onClick)
                 .padding(vertical = MaterialTheme.spacings.extraSmall),
     ) {
-        UserAvatar(user = user, baseUrl = baseUrl, size = 48.dp)
+        UserAvatar(user = user, size = 48.dp)
         Text(
             text = user.name,
             style = MaterialTheme.typography.bodyMedium,
@@ -236,7 +223,6 @@ private fun ProfileBottomSheetPreview() {
                     serverName = "Jellyfin",
                     currentUserId = dummyUser.id,
                 ),
-            baseUrl = null,
             onSwitchServer = {},
             onPublicUserClick = {},
             onAddUser = {},
