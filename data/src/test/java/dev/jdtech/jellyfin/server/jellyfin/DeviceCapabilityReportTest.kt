@@ -1,4 +1,4 @@
-package dev.jdtech.jellyfin.player
+package dev.jdtech.jellyfin.server.jellyfin
 
 import java.util.UUID
 import kotlin.test.assertEquals

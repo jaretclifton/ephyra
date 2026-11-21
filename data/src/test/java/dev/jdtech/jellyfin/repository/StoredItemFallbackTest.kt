@@ -14,7 +14,8 @@ import dev.jdtech.jellyfin.models.FindroidShowDto
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
-import dev.jdtech.jellyfin.player.DeviceProfileBuilder
+import dev.jdtech.jellyfin.player.DeviceCodecProbe
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.lang.reflect.Proxy
 import java.util.UUID
@@ -155,7 +156,7 @@ class StoredItemFallbackTest {
             AppPreferences(context.getSharedPreferences("test", Context.MODE_PRIVATE)).apply {
                 setValue(currentServer, "server")
             },
-            DeviceProfileBuilder(context),
+            JellyfinDeviceProfiles(DeviceCodecProbe(context)),
         )
     }
 

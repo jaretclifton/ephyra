@@ -10,8 +10,8 @@ import dev.jdtech.jellyfin.about.AboutInfoReader
 import dev.jdtech.jellyfin.about.AboutServer
 import dev.jdtech.jellyfin.core.AppVariant
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.player.DeviceCapabilityReportBuilder
-import dev.jdtech.jellyfin.player.DeviceProfileBuilder
+import dev.jdtech.jellyfin.domain.ports.DeviceCodecs
+import dev.jdtech.jellyfin.domain.ports.DeviceReportSource
 import dev.jdtech.jellyfin.player.ProbedCodecs
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -32,12 +32,13 @@ import timber.log.Timber
  * Backs the About screen's "Export device profile" action, and (CE #211) the install, server and
  * device info the TV About screen shows.
  *
- * Lives in `core` because both the device-profile builder (in `data`) and `AppPreferences` (in
- * `settings`) need to be assembled, and `core` is the lowest module that depends on both. The
- * AboutScreen itself stays in `app/phone` and consumes this VM via `hiltViewModel()`.
+ * Lives in `core` because both the device report (the [DeviceReportSource] of the server adapter in
+ * `data`) and `AppPreferences` (in `settings`) need to be assembled, and `core` is the lowest
+ * module that depends on both. The AboutScreen itself stays in `app/phone` and consumes this VM via
+ * `hiltViewModel()`.
  *
  * Report assembly + JSON encoding runs on [kotlinx.coroutines.Dispatchers.Default] (see
- * [DeviceCapabilityReportBuilder.buildJson]) so the UI thread is never blocked while a few KB of
+ * [DeviceReportSource.buildJson]) so the UI thread is never blocked while a few KB of
  * `kotlinx.serialization` output is produced. The resulting payload is delivered to the UI as a
  * one-shot event.
  */
@@ -46,7 +47,8 @@ class AboutViewModel
 @Inject
 constructor(
     @ApplicationContext private val context: Context,
-    private val deviceProfileBuilder: DeviceProfileBuilder,
+    private val codecs: DeviceCodecs,
+    private val deviceReport: DeviceReportSource,
     private val appPreferences: AppPreferences,
     private val database: ServerDatabaseDao,
     // A Provider, so the repository is only made when the info loads.
@@ -76,13 +78,8 @@ constructor(
     private fun loadInfo() {
         if (_state.value.info != null) return
         viewModelScope.launch {
-            val info =
-                withContext(Dispatchers.Default) {
-                    AboutInfoReader.read(context, deviceProfileBuilder)
-                }
-            _state.update {
-                it.copy(info = info, codecs = deviceProfileBuilder.probedCodecsSnapshot())
-            }
+            val info = withContext(Dispatchers.Default) { AboutInfoReader.read(context, codecs) }
+            _state.update { it.copy(info = info, codecs = codecs.probedCodecsSnapshot()) }
 
             val serverId = appPreferences.getValue(appPreferences.currentServer) ?: return@launch
             val data = database.getServerWithAddressAndUser(serverId) ?: return@launch
@@ -123,11 +120,9 @@ constructor(
             _state.value = _state.value.copy(isExporting = true)
             try {
                 val json =
-                    DeviceCapabilityReportBuilder.buildJson(
-                        context = context,
-                        deviceProfileBuilder = deviceProfileBuilder,
-                        findroidVersion = findroidVersion,
-                        findroidBuildType = findroidBuildType,
+                    deviceReport.buildJson(
+                        appVersion = findroidVersion,
+                        buildType = findroidBuildType,
                         transcodeDolbyVision =
                             appPreferences.getValue(appPreferences.downloadTranscodeDolbyVision),
                         directPlayDolbyVision =

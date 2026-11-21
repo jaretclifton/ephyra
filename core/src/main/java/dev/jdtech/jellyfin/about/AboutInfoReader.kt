@@ -5,17 +5,17 @@ import android.hardware.display.DisplayManager
 import android.os.Build
 import android.os.Process
 import android.view.Display
-import dev.jdtech.jellyfin.player.DeviceProfileBuilder
+import dev.jdtech.jellyfin.domain.ports.DeviceCodecs
 import timber.log.Timber
 
 /** CE (#211): reads [AboutInfo] from the package manager, the display and the codec probe. */
 object AboutInfoReader {
 
-    fun read(context: Context, deviceProfileBuilder: DeviceProfileBuilder): AboutInfo {
+    fun read(context: Context, codecs: DeviceCodecs): AboutInfo {
         val packageManager = context.packageManager
         val packageInfo = packageManager.getPackageInfo(context.packageName, 0)
         val is64Bit = Process.is64Bit()
-        val probed = deviceProfileBuilder.probedCodecsSnapshot()
+        val probed = codecs.probedCodecsSnapshot()
         return AboutInfo(
             versionName = packageInfo.versionName.orEmpty(),
             versionCode = packageInfo.longVersionCode,
