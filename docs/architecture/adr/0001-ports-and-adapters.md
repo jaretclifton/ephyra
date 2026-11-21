@@ -46,7 +46,7 @@ The signatures are in [3-target.md](../3-target.md), the phases in
 
 ## Open decisions
 
-These are the user's to make. Only D4 blocks the start.
+These are the user's to make. D4 was the only one that blocked the start, and it is decided.
 
 - **D1. Ids.** Keep `UUID` (an Emby adapter would have to map its ids onto UUIDs), or make ids
   opaque (`value class ItemId(val value: String)`, 160 files). Proposed: aliases now, decide when
@@ -59,7 +59,7 @@ These are the user's to make. Only D4 blocks the start.
   `PlaybackTarget` (proposed), or write a server-neutral profile model now. Blocks one task in
   phase 3 (#752).
 - **D4. Konsist `1.0.0-beta.1`.** It is the release built on the Kotlin version this project
-  uses, and it is a beta. Test-only. Proposed: accept. Blocks the first task (#735).
+  uses, and it is a beta. Test-only. **Accepted (2026-11-21).** The first task (#735) can start.
 - **D5. Device tests for phase 5.** Every playback PR needs `docs/mpv-checklist.md` on both
   backends, and mpv does not run on an emulator with a host GPU. Who runs it, on which phone?
   Blocks phase 5 (#764 to #766).
