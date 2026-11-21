@@ -63,8 +63,20 @@ object ProjectTree {
     val versionCatalog: File
         get() = root.resolve("gradle/libs.versions.toml")
 
-    /** Whether the file at [path] belongs to the `data` module, the Jellyfin adapter for now. */
+    /** Whether the file at [path] belongs to the `data` module. */
     fun inDataModule(path: String): Boolean = path.startsWith("data/")
+
+    /**
+     * Whether the file at [path] is in the Jellyfin adapter: the packages
+     * `dev.jdtech.jellyfin.server.jellyfin` and `dev.jdtech.jellyfin.api` of the `data` module
+     * (#753), in any source set.
+     */
+    fun inJellyfinAdapter(path: String): Boolean =
+        inDataModule(path) &&
+            ADAPTER_PACKAGES.any { pkg -> "/java/$pkg/" in path || "/kotlin/$pkg/" in path }
+
+    private val ADAPTER_PACKAGES =
+        listOf("dev/jdtech/jellyfin/server/jellyfin", "dev/jdtech/jellyfin/api")
 
     fun relativePath(file: File): String =
         file.absoluteFile.normalize().relativeTo(root).path.replace('\\', '/')

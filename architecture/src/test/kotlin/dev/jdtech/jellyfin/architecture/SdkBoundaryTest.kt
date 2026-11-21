@@ -6,8 +6,10 @@ import kotlin.test.assertTrue
 
 /**
  * Only the Jellyfin adapter may see the Jellyfin SDK
- * (docs/architecture/2-enforcement-and-tests.md, #733). The adapter is the `data` module for now.
- * Each rule has a baseline of today's violations that may only shrink.
+ * (docs/architecture/2-enforcement-and-tests.md, #733). For R1 and R2 the adapter is the packages
+ * `dev.jdtech.jellyfin.server.jellyfin` and `dev.jdtech.jellyfin.api` of the `data` module (#753);
+ * the Java check and R4 still allow the whole module. Each rule has a baseline of today's
+ * violations that may only shrink.
  *
  * Test sources of every module are out of scope.
  */
@@ -51,7 +53,7 @@ class SdkBoundaryTest {
         val violations =
             ProjectTree.productionKotlinFiles
                 .filter { (path, file) ->
-                    !ProjectTree.inDataModule(path) && SDK_PACKAGE in file.readText()
+                    !ProjectTree.inJellyfinAdapter(path) && SDK_PACKAGE in file.readText()
                 }
                 .keys
         baseline.assertExactly(
@@ -74,7 +76,7 @@ class SdkBoundaryTest {
     fun `R2 no production file outside the adapter imports JellyfinApi`() {
         val baseline = Baseline("jellyfin-api-imports.txt")
         baseline.assertExactly(
-            filesImporting(JELLYFIN_API),
+            filesImporting(JELLYFIN_API, allowed = ProjectTree::inJellyfinAdapter),
             unlisted = {
                 "$it imports $JELLYFIN_API outside the Jellyfin adapter. Use a port instead " +
                     "(docs/architecture/3-target.md); do not add the file to ${baseline.path}."
@@ -120,7 +122,7 @@ class SdkBoundaryTest {
     fun `R4 no production file outside data imports ServerDatabaseDao`() {
         val baseline = Baseline("dao-imports.txt")
         baseline.assertExactly(
-            filesImporting(SERVER_DAO),
+            filesImporting(SERVER_DAO, allowed = ProjectTree::inDataModule),
             unlisted = {
                 "$it imports $SERVER_DAO outside the data module. Go through a repository " +
                     "instead; do not add the file to ${baseline.path}."
@@ -132,8 +134,11 @@ class SdkBoundaryTest {
         )
     }
 
-    /** Files that import [name] by its name or through a wildcard import of its package. */
-    private fun filesImporting(name: String): Set<String> =
+    /**
+     * Files that import [name] by its name or through a wildcard import of its package, but for
+     * those where it is [allowed].
+     */
+    private fun filesImporting(name: String, allowed: (String) -> Boolean): Set<String> =
         konsistScope.files
             .filter { file ->
                 file.imports.any {
@@ -143,7 +148,7 @@ class SdkBoundaryTest {
                 }
             }
             .map { ProjectTree.relativePath(java.io.File(it.path)) }
-            .filterNot(ProjectTree::inDataModule)
+            .filterNot(allowed)
             .toSet()
 
     companion object {

@@ -1,28 +1,9 @@
 package dev.jdtech.jellyfin.models
 
 import android.net.Uri
-import dev.jdtech.jellyfin.repository.JellyfinRepository
-import dev.jdtech.jellyfin.server.jellyfin.toModel
 import java.util.UUID
-import org.jellyfin.sdk.model.api.BaseItemPerson
-import org.jellyfin.sdk.model.api.ImageType
 
 data class FindroidItemPersonImage(val uri: Uri?, val blurHash: String?)
-
-fun BaseItemPerson.toFindroidImage(repository: JellyfinRepository): FindroidItemPersonImage {
-    val baseUrl = Uri.parse(repository.getBaseUrl())
-    return FindroidItemPersonImage(
-        uri =
-            primaryImageTag?.let { tag ->
-                baseUrl
-                    .buildUpon()
-                    .appendEncodedPath("items/$id/Images/${ImageType.PRIMARY}")
-                    .appendQueryParameter("tag", tag)
-                    .build()
-            },
-        blurHash = imageBlurHashes?.get(ImageType.PRIMARY)?.get(primaryImageTag),
-    )
-}
 
 data class FindroidItemPerson(
     val id: UUID,
@@ -31,16 +12,6 @@ data class FindroidItemPerson(
     val role: String,
     val image: FindroidItemPersonImage,
 )
-
-fun BaseItemPerson.toFindroidPerson(repository: JellyfinRepository): FindroidItemPerson {
-    return FindroidItemPerson(
-        id = id,
-        name = name.orEmpty(),
-        type = type.toModel(),
-        role = role.orEmpty(),
-        image = toFindroidImage(repository),
-    )
-}
 
 /**
  * Jellyfin 12+ returns one entry per role for the same person

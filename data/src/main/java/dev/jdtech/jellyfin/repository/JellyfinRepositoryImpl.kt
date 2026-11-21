@@ -23,16 +23,23 @@ import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
-import dev.jdtech.jellyfin.models.toFindroidCollection
 import dev.jdtech.jellyfin.models.toFindroidEpisode
-import dev.jdtech.jellyfin.models.toFindroidItem
 import dev.jdtech.jellyfin.models.toFindroidMovie
-import dev.jdtech.jellyfin.models.toFindroidPerson
 import dev.jdtech.jellyfin.models.toFindroidSeason
 import dev.jdtech.jellyfin.models.toFindroidSegment
 import dev.jdtech.jellyfin.models.toFindroidShow
 import dev.jdtech.jellyfin.models.toFindroidSource
 import dev.jdtech.jellyfin.player.DeviceProfileBuilder
+import dev.jdtech.jellyfin.server.jellyfin.mappers.MapperContext
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidCollection
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidEpisode
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidItem
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidMovie
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidPerson
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSeason
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSegment
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidShow
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSource
 import dev.jdtech.jellyfin.server.jellyfin.toSdk
 import dev.jdtech.jellyfin.server.jellyfin.toSdkFilters
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -177,7 +184,7 @@ class JellyfinRepositoryImpl(
     override suspend fun getUserViews(): List<FindroidCollection> =
         withContext(Dispatchers.IO) {
             jellyfinApi.userViewApi.getUserViews(currentUserId).content.items.mapNotNull {
-                it.toFindroidCollection(this@JellyfinRepositoryImpl)
+                it.toFindroidCollection(getBaseUrl())
             }
         }
 
@@ -194,10 +201,7 @@ class JellyfinRepositoryImpl(
                 jellyfinApi.libraryApi
                     .getItem(itemId, currentUserId)
                     .content
-                    .toFindroidEpisode(
-                        this@JellyfinRepositoryImpl,
-                        localSourcesFor(listOf(itemId)),
-                    )!!
+                    .toFindroidEpisode(mapperContext(), localSourcesFor(listOf(itemId)))!!
             }
         }
 
@@ -210,7 +214,7 @@ class JellyfinRepositoryImpl(
                 jellyfinApi.libraryApi
                     .getItem(itemId, currentUserId)
                     .content
-                    .toFindroidMovie(this@JellyfinRepositoryImpl, localSourcesFor(listOf(itemId)))
+                    .toFindroidMovie(mapperContext(), localSourcesFor(listOf(itemId)))
             }
         }
 
@@ -223,7 +227,7 @@ class JellyfinRepositoryImpl(
                 jellyfinApi.libraryApi
                     .getItem(itemId, currentUserId)
                     .content
-                    .toFindroidShow(this@JellyfinRepositoryImpl)
+                    .toFindroidShow(getBaseUrl())
             }
         }
 
@@ -236,7 +240,7 @@ class JellyfinRepositoryImpl(
                 jellyfinApi.libraryApi
                     .getItem(itemId, currentUserId)
                     .content
-                    .toFindroidSeason(this@JellyfinRepositoryImpl)
+                    .toFindroidSeason(getBaseUrl())
             }
         }
 
@@ -250,7 +254,7 @@ class JellyfinRepositoryImpl(
             }
             serverOrStoredItems(stored) {
                 jellyfinApi.libraryApi.getItems(currentUserId).content.items.mapNotNull {
-                    it.toFindroidCollection(this@JellyfinRepositoryImpl)
+                    it.toFindroidCollection(getBaseUrl())
                 }
             }
         }
@@ -261,7 +265,7 @@ class JellyfinRepositoryImpl(
                 jellyfinApi.libraryApi
                     .getItem(itemId = itemId, userId = currentUserId)
                     .content
-                    .toFindroidItem(this@JellyfinRepositoryImpl)
+                    .toFindroidItem(mapperContext(), emptyMap())
             }
         }
 
@@ -473,7 +477,7 @@ class JellyfinRepositoryImpl(
             jellyfinApi.libraryApi
                 .getItem(personId, currentUserId)
                 .content
-                .toFindroidPerson(this@JellyfinRepositoryImpl)
+                .toFindroidPerson(getBaseUrl())
         }
 
     override suspend fun getPersonItems(
@@ -638,7 +642,7 @@ class JellyfinRepositoryImpl(
         withContext(Dispatchers.IO) {
             if (!offline) {
                 jellyfinApi.showApi.getSeasons(seriesId, currentUserId).content.items.map {
-                    it.toFindroidSeason(this@JellyfinRepositoryImpl)
+                    it.toFindroidSeason(getBaseUrl())
                 }
             } else {
                 // CE (#718): the current server's stored seasons only.
@@ -670,7 +674,7 @@ class JellyfinRepositoryImpl(
                 )
                 .content
                 .items
-                .mapNotNull { it.toFindroidEpisode(this@JellyfinRepositoryImpl) }
+                .mapNotNull { it.toFindroidEpisode(mapperContext(), emptyMap()) }
         }
 
     override suspend fun getEpisodes(
@@ -696,9 +700,7 @@ class JellyfinRepositoryImpl(
                     .items
                     .let { items ->
                         val local = localSourcesFor(items.map { it.id })
-                        items.mapNotNull {
-                            it.toFindroidEpisode(this@JellyfinRepositoryImpl, local)
-                        }
+                        items.mapNotNull { it.toFindroidEpisode(mapperContext(), local) }
                     }
             } else {
                 // CE (#718): the current server's stored episodes only.
@@ -745,7 +747,7 @@ class JellyfinRepositoryImpl(
                     )
                     .content
                     .mediaSources
-                    .map { it.toFindroidSource(this@JellyfinRepositoryImpl, itemId, includePath) }
+                    .map { it.toFindroidSource(mapperContext(), itemId, includePath) }
             )
             // CE (#718): the current server's download of the item, not another server's.
             currentServerId()?.let { serverId ->
@@ -826,8 +828,7 @@ class JellyfinRepositoryImpl(
             val playSessionId = playbackInfo.playSessionId?.takeIf { it.isNotBlank() }
             sources.addAll(
                 playbackInfo.mediaSources.map {
-                    val source =
-                        it.toFindroidSource(this@JellyfinRepositoryImpl, itemId, includePath = true)
+                    val source = it.toFindroidSource(mapperContext(), itemId, includePath = true)
                     if (source.transcoded) source.copy(playSessionId = playSessionId) else source
                 }
             )
@@ -942,7 +943,7 @@ class JellyfinRepositoryImpl(
             }
             (trailersAsync.await() + featuresAsync.await())
                 .distinctBy { it.id }
-                .map { it.toFindroidMovie(this@JellyfinRepositoryImpl, emptyMap()) }
+                .map { it.toFindroidMovie(mapperContext(), emptyMap()) }
         }
 
     override suspend fun getItemCollections(itemId: UUID): List<FindroidItem> =
@@ -1154,6 +1155,16 @@ class JellyfinRepositoryImpl(
 
     override fun getBaseUrl() = jellyfinApi.api.baseUrl.orEmpty()
 
+    /**
+     * What the mappers need from the current server. Built at each mapping, never kept: the base
+     * URL changes when the user switches server.
+     */
+    private fun mapperContext() =
+        MapperContext(
+            baseUrl = getBaseUrl(),
+            streamUrl = { id, source -> getStreamUrl(id, source) },
+        )
+
     override fun chapterImageUrl(itemId: UUID, chapterIndex: Int, tag: String) =
         chapterImageUrl(getBaseUrl(), itemId, chapterIndex, tag)
 
@@ -1237,7 +1248,7 @@ class JellyfinRepositoryImpl(
                 filter { it.type == BaseItemKind.MOVIE || it.type == BaseItemKind.EPISODE }
                     .map { it.id }
             )
-        return mapNotNull { it.toFindroidItem(this@JellyfinRepositoryImpl, local) }
+        return mapNotNull { it.toFindroidItem(mapperContext(), local) }
     }
 
     private companion object {

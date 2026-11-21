@@ -1,12 +1,8 @@
 package dev.jdtech.jellyfin.models
 
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.repository.JellyfinRepository
 import java.time.LocalDateTime
 import java.util.UUID
-import org.jellyfin.sdk.model.api.BaseItemDto
-import org.jellyfin.sdk.model.api.BaseItemKind
-import org.jellyfin.sdk.model.api.PlayAccess
 
 data class FindroidMovie(
     override val id: UUID,
@@ -50,72 +46,6 @@ data class FindroidMovie(
     override val chapters: List<FindroidChapter>,
     override val trickplayInfo: Map<String, FindroidTrickplayInfo>?,
 ) : FindroidItem, FindroidSources
-
-suspend fun BaseItemDto.toFindroidMovie(
-    jellyfinRepository: JellyfinRepository,
-    serverDatabase: ServerDatabaseDao? = null,
-): FindroidMovie =
-    toFindroidMovie(
-        jellyfinRepository,
-        serverDatabase?.getLocalSourcesForItems(listOf(id)).orEmpty(),
-    )
-
-/** For lists: [localSources] comes from one [getLocalSourcesForItems] call for all items. */
-suspend fun BaseItemDto.toFindroidMovie(
-    jellyfinRepository: JellyfinRepository,
-    localSources: Map<UUID, List<FindroidSource>>,
-): FindroidMovie {
-    val sources = mutableListOf<FindroidSource>()
-    sources.addAll(mediaSources?.map { it.toFindroidSource(jellyfinRepository, id) } ?: emptyList())
-    sources.addAll(localSources[id].orEmpty())
-    return FindroidMovie(
-        id = id,
-        name = name.orEmpty(),
-        originalTitle = originalTitle,
-        overview = overview.orEmpty(),
-        sources = sources,
-        played = userData?.played == true,
-        favorite = userData?.isFavorite == true,
-        canPlay = playAccess != PlayAccess.NONE,
-        // CE (#671): the download store keeps movies and episodes only, and a home video or a
-        // music video stored as a movie would be listed with the downloaded movies.
-        canDownload = canDownload == true && type == BaseItemKind.MOVIE,
-        runtimeTicks = runTimeTicks ?: 0,
-        playbackPositionTicks = userData?.playbackPositionTicks ?: 0,
-        premiereDate = premiereDate,
-        communityRating = communityRating,
-        genres = genres ?: emptyList(),
-        people = people?.map { it.toFindroidPerson(jellyfinRepository) } ?: emptyList(),
-        officialRating = officialRating,
-        status = status ?: "Ended",
-        productionYear = productionYear,
-        endDate = endDate,
-        trailer = remoteTrailers?.getOrNull(0)?.url,
-        lastPlayedDate = userData?.lastPlayedDate,
-        trailers = remoteTrailers.toFindroidTrailers(),
-        tagline = taglines.firstTagline(),
-        criticRating = criticRating,
-        studios = studioNames(),
-        externalLinks = toExternalLinks(),
-        playCount = userData?.playCount ?: 0,
-        is3D = video3dFormat != null,
-        localTrailerCount = localTrailerCount ?: 0,
-        specialFeatureCount = specialFeatureCount,
-        images = toFindroidImages(jellyfinRepository),
-        chapters = toFindroidChapters(),
-        trickplayInfo =
-            trickplay
-                ?.mapNotNull { (width, info) ->
-                    info
-                        ?.keys
-                        ?.maxOrNull()
-                        ?.let { info[it] }
-                        ?.toFindroidTrickplayInfo()
-                        ?.let { width to it }
-                }
-                ?.toMap(),
-    )
-}
 
 suspend fun FindroidMovieDto.toFindroidMovie(
     database: ServerDatabaseDao,
