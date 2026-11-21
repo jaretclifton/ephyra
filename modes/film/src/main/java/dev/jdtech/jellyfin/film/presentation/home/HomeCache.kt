@@ -1,7 +1,6 @@
 package dev.jdtech.jellyfin.film.presentation.home
 
 import android.content.Context
-import android.net.Uri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.jdtech.jellyfin.film.R as FilmR
 import dev.jdtech.jellyfin.models.CollectionType
@@ -275,17 +274,17 @@ class HomeCache @Inject constructor(@ApplicationContext context: Context) {
 
     private fun images(images: FindroidImages) =
         JSONObject()
-            .put("primary", images.primary?.toString() ?: JSONObject.NULL)
-            .put("backdrop", images.backdrop?.toString() ?: JSONObject.NULL)
-            .put("logo", images.logo?.toString() ?: JSONObject.NULL)
-            .put("showPrimary", images.showPrimary?.toString() ?: JSONObject.NULL)
-            .put("showBackdrop", images.showBackdrop?.toString() ?: JSONObject.NULL)
-            .put("showLogo", images.showLogo?.toString() ?: JSONObject.NULL)
-            .put("thumb", images.thumb?.toString() ?: JSONObject.NULL)
-            .put("showThumb", images.showThumb?.toString() ?: JSONObject.NULL)
+            .put("primary", images.primary ?: JSONObject.NULL)
+            .put("backdrop", images.backdrop ?: JSONObject.NULL)
+            .put("logo", images.logo ?: JSONObject.NULL)
+            .put("showPrimary", images.showPrimary ?: JSONObject.NULL)
+            .put("showBackdrop", images.showBackdrop ?: JSONObject.NULL)
+            .put("showLogo", images.showLogo ?: JSONObject.NULL)
+            .put("thumb", images.thumb ?: JSONObject.NULL)
+            .put("showThumb", images.showThumb ?: JSONObject.NULL)
 
     private fun images(obj: JSONObject): FindroidImages {
-        fun uri(key: String) = if (obj.isNull(key)) null else Uri.parse(obj.getString(key))
+        fun uri(key: String): String? = if (obj.isNull(key)) null else obj.getString(key)
         return FindroidImages(
             primary = uri("primary"),
             backdrop = uri("backdrop"),

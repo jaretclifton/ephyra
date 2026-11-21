@@ -11,7 +11,8 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidMovieDto
 import dev.jdtech.jellyfin.models.FindroidShowDto
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
-import dev.jdtech.jellyfin.player.DeviceProfileBuilder
+import dev.jdtech.jellyfin.player.DeviceCodecProbe
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -58,7 +59,7 @@ class PendingUserDataSyncTest {
             api,
             database,
             AppPreferences(context.getSharedPreferences("test", Context.MODE_PRIVATE)),
-            DeviceProfileBuilder(context),
+            JellyfinDeviceProfiles(DeviceCodecProbe(context)),
             UserDataSyncRequester { syncRequests++ },
         )
     }

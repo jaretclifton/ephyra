@@ -1,7 +1,5 @@
 package dev.jdtech.jellyfin.presentation.film.components
 
-import android.content.Context
-import android.net.Uri
 import android.os.Build
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -56,7 +54,7 @@ enum class ArtworkPlacement {
 }
 
 /** One image the artwork can show; a [standIn] is a poster, blurred into a backdrop. */
-@Immutable data class ArtworkSource(val uri: Uri, val standIn: Boolean = false)
+@Immutable data class ArtworkSource(val uri: String, val standIn: Boolean = false)
 
 /**
  * The images to try for [item] at [placement], best first: the backdrop, a season's show backdrop,
@@ -103,7 +101,7 @@ fun artworkSources(
             item is FindroidSeason -> listOf(images.primary, images.showPrimary)
             else -> listOf(images.primary)
         }
-    val seen = mutableSetOf<Uri>()
+    val seen = mutableSetOf<String>()
     return backdrops.filterNotNull().filter(seen::add).map { ArtworkSource(it) } +
         standIns.filterNotNull().filter(seen::add).map { ArtworkSource(it, standIn = true) }
 }
@@ -151,7 +149,7 @@ fun rememberArtworkState(
                     )
                 }
                 .orEmpty()
-                .map { it.copy(uri = it.uri.resolveIn(context)) }
+                .map { it.copy(uri = it.uri.resolveIn(context).toString()) }
         )
     }
 }
@@ -186,9 +184,3 @@ fun ArtworkBackdrop(
         alignment = alignment,
     )
 }
-
-/** Downloaded images are stored as paths relative to the files directory. */
-private fun Uri.resolveIn(context: Context): Uri =
-    if (scheme == null) {
-        Uri.Builder().appendEncodedPath("${context.filesDir}").appendEncodedPath(path).build()
-    } else this

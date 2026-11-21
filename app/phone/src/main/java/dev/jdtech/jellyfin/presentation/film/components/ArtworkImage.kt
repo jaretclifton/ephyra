@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.net.toUri
 import coil3.compose.AsyncImage
 
 /**
@@ -18,7 +19,7 @@ import coil3.compose.AsyncImage
  */
 @Composable
 fun ArtworkImage(
-    sources: List<Uri?>,
+    sources: List<String?>,
     contentDescription: String?,
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Crop,
@@ -37,8 +38,13 @@ fun ArtworkImage(
     )
 }
 
-/** Downloaded images are stored as paths relative to the files directory. */
-private fun Uri.resolveIn(context: Context): Uri =
-    if (scheme == null) {
-        Uri.Builder().appendEncodedPath("${context.filesDir}").appendEncodedPath(path).build()
-    } else this
+/**
+ * The image to load for an image URL of `FindroidImages`. Downloaded images are stored as paths
+ * relative to the files directory, without a scheme.
+ */
+internal fun String.resolveIn(context: Context): Uri {
+    val uri = toUri()
+    return if (uri.scheme == null) {
+        Uri.Builder().appendEncodedPath("${context.filesDir}").appendEncodedPath(uri.path).build()
+    } else uri
+}

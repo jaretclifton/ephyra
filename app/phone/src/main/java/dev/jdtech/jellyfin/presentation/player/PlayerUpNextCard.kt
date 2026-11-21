@@ -117,7 +117,7 @@ private fun UpNextCardContent(state: UpNextState, onPlayNow: () -> Unit, onCance
                         .background(MaterialTheme.colorScheme.surfaceContainerHighest)
             ) {
                 ArtworkImage(
-                    sources = listOf(state.imageUri),
+                    sources = listOf(state.imageUri?.toString()),
                     contentDescription = null,
                     modifier = Modifier.fillMaxWidth().fillMaxHeight(),
                 )

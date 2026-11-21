@@ -4,8 +4,10 @@ import androidx.annotation.VisibleForTesting
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.models.DiscoveredServer
 import dev.jdtech.jellyfin.models.ExceptionUiText
 import dev.jdtech.jellyfin.models.ExceptionUiTexts
+import dev.jdtech.jellyfin.models.QuickConnectState
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.ServerWithAddresses
@@ -20,6 +22,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.jellyfin.sdk.discovery.RecommendedServerInfo
 import org.jellyfin.sdk.discovery.RecommendedServerInfoScore
@@ -36,8 +39,8 @@ class SetupRepositoryImpl(
     private val database: ServerDatabaseDao,
     private val appPreferences: AppPreferences,
 ) : SetupRepository {
-    override fun discoverServers(): Flow<ServerDiscoveryInfo> {
-        return jellyfinApi.jellyfin.discovery.discoverLocalServers()
+    override fun discoverServers(): Flow<DiscoveredServer> {
+        return jellyfinApi.jellyfin.discovery.discoverLocalServers().map { it.toDiscoveredServer() }
     }
 
     override suspend fun getServers(): List<ServerWithAddresses> {
@@ -76,12 +79,14 @@ class SetupRepositoryImpl(
             jellyfinApi.authenticationApi.getQuickConnectEnabled().content
         }
 
-    override suspend fun initiateQuickConnect(): QuickConnectResult =
-        withContext(Dispatchers.IO) { jellyfinApi.authenticationApi.initiateQuickConnect().content }
-
-    override suspend fun getQuickConnectState(secret: String): QuickConnectResult =
+    override suspend fun initiateQuickConnect(): QuickConnectState =
         withContext(Dispatchers.IO) {
-            jellyfinApi.authenticationApi.getQuickConnectState(secret).content
+            jellyfinApi.authenticationApi.initiateQuickConnect().content.toQuickConnectState()
+        }
+
+    override suspend fun getQuickConnectState(secret: String): QuickConnectState =
+        withContext(Dispatchers.IO) {
+            jellyfinApi.authenticationApi.getQuickConnectState(secret).content.toQuickConnectState()
         }
 
     override suspend fun setCurrentServer(serverId: String) {
@@ -367,3 +372,9 @@ class SetupRepositoryImpl(
         jellyfinApi.apply { api.update(baseUrl = address.address) }
     }
 }
+
+internal fun ServerDiscoveryInfo.toDiscoveredServer() =
+    DiscoveredServer(id = id, name = name, address = address)
+
+internal fun QuickConnectResult.toQuickConnectState() =
+    QuickConnectState(code = code, secret = secret, authenticated = authenticated)

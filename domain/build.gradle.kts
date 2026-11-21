@@ -7,6 +7,9 @@ java { toolchain { languageVersion = Versions.JAVA } }
 
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
+    // For the MediaHttpClient port alone. It returns an OkHttpClient, hence `api`: a module that
+    // uses the port compiles without declaring OkHttp. A plain JVM library, so R5 allows it.
+    api(libs.okhttp)
 
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)

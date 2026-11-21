@@ -1,12 +1,12 @@
 package dev.jdtech.jellyfin.setup.presentation
 
+import dev.jdtech.jellyfin.models.QuickConnectState
 import dev.jdtech.jellyfin.setup.domain.FakeLocalNetworkAccess
 import dev.jdtech.jellyfin.setup.domain.ServerLocalNetworkBlock
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.presentation.login.LoginAction
 import dev.jdtech.jellyfin.setup.presentation.login.LoginViewModel
 import java.lang.reflect.Proxy
-import java.time.LocalDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlinx.coroutines.Dispatchers
@@ -18,7 +18,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import org.jellyfin.sdk.model.api.QuickConnectResult
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -97,16 +96,7 @@ class LoginQuickConnectTest {
         }
 
     private fun result(code: String) =
-        QuickConnectResult(
-            authenticated = false,
-            secret = "secret-$code",
-            code = code,
-            deviceId = "device",
-            deviceName = "device",
-            appName = "Ephyra",
-            appVersion = "test",
-            dateAdded = LocalDateTime.now(),
-        )
+        QuickConnectState(code = code, secret = "secret-$code", authenticated = false)
 
     private fun fakeRepository(): SetupRepository =
         Proxy.newProxyInstance(

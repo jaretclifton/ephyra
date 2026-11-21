@@ -21,7 +21,8 @@ import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
-import dev.jdtech.jellyfin.player.DeviceProfileBuilder
+import dev.jdtech.jellyfin.player.DeviceCodecProbe
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.File
 import java.net.ServerSocket
@@ -94,7 +95,7 @@ class StoredListsFallbackTest {
             api,
             database,
             preferences,
-            DeviceProfileBuilder(context),
+            JellyfinDeviceProfiles(DeviceCodecProbe(context)),
             knownServerState = knownServerState,
         )
     }
@@ -373,9 +374,7 @@ class StoredListsFallbackTest {
     }
 
     private suspend fun artwork() =
-        repository.getLibraries().items.associate {
-            it.id to it.images.primary?.path?.removePrefix("/")
-        }
+        repository.getLibraries().items.associate { it.id to it.images.primary }
 
     @Test
     fun `a stored library shows the artwork of its newest download that has some`() = runBlocking {
@@ -394,15 +393,15 @@ class StoredListsFallbackTest {
         storeImage(showId, "primary")
         assertEquals(
             mapOf(
-                StoredLibraries.MOVIES to "images/${id(1)}/backdrop",
-                StoredLibraries.SHOWS to "images/$showId/primary",
+                StoredLibraries.MOVIES to "/images/${id(1)}/backdrop",
+                StoredLibraries.SHOWS to "/images/$showId/primary",
             ),
             artwork(),
         )
 
         // A backdrop of the newest: that one.
         storeImage(id(2), "backdrop")
-        assertEquals("images/${id(2)}/backdrop", artwork()[StoredLibraries.MOVIES])
+        assertEquals("/images/${id(2)}/backdrop", artwork()[StoredLibraries.MOVIES])
     }
 
     @Test

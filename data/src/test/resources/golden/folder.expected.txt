@@ -12,7 +12,7 @@ FindroidFolder(
   playbackPositionTicks = 0
   unplayedItemCount = null
   images = FindroidImages(
-    primary = https://server.test/items/4de4d158-9383-9bb7-d374-aec04586dbe1/Images/Primary?tag=a02c116adb1c586da21a7bf8fcb59195
+    primary = "https://server.test/items/4de4d158-9383-9bb7-d374-aec04586dbe1/Images/Primary?tag=a02c116adb1c586da21a7bf8fcb59195"
     backdrop = null
     logo = null
     showPrimary = null

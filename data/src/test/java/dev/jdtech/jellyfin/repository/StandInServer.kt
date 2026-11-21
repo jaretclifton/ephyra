@@ -4,7 +4,8 @@ import android.content.Context
 import android.provider.Settings
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.player.DeviceProfileBuilder
+import dev.jdtech.jellyfin.player.DeviceCodecProbe
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.Closeable
 import java.io.InputStream
@@ -149,6 +150,6 @@ internal fun StandInServer.repository(
         api,
         database,
         preferences,
-        DeviceProfileBuilder(context),
+        JellyfinDeviceProfiles(DeviceCodecProbe(context)),
     )
 }

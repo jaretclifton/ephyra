@@ -38,8 +38,7 @@ import androidx.media3.exoplayer.text.TextOutput
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaSession
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.jdtech.jellyfin.api.JellyfinApi
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.domain.ports.MediaHttpClient
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidSegment
 import dev.jdtech.jellyfin.models.FindroidSegmentType
@@ -148,8 +147,7 @@ constructor(
     private val savedStateHandle: SavedStateHandle,
     private val playbackEvents: PlaybackEvents,
     private val sessionStore: PlaybackSessionStore,
-    private val database: ServerDatabaseDao,
-    private val jellyfinApi: JellyfinApi,
+    private val mediaHttpClient: MediaHttpClient,
     private val appVariant: AppVariant,
 ) : ViewModel(), Player.Listener {
     val player: Player
@@ -607,7 +605,8 @@ constructor(
     private suspend fun fetchSubtitleTextSafely(url: String): String =
         suspendCancellableCoroutine { continuation ->
             val client =
-                jellyfinApi.httpClient
+                mediaHttpClient
+                    .client()
                     .newBuilder()
                     .followRedirects(false)
                     .followSslRedirects(false)
@@ -777,7 +776,7 @@ constructor(
                         .setHandleAudioBecomingNoisy(true)
                         .setMediaSourceFactory(
                             SubtitleDelayMediaSource.Factory(
-                                buildMediaSourceFactory(application, jellyfinApi.httpClient),
+                                buildMediaSourceFactory(application, mediaHttpClient.client()),
                                 ::subtitleDelayUsFor,
                             )
                         )
@@ -810,7 +809,7 @@ constructor(
                         )
                         .setSubtitleOptions(appPreferences.mpvSubtitleOptions())
                         // CE (#711): the subtitle files go over the API's client, as on ExoPlayer.
-                        .setSubtitleHttpClient(jellyfinApi.httpClient)
+                        .setSubtitleHttpClient(mediaHttpClient.client())
                         .build()
                 }
 
@@ -2125,7 +2124,7 @@ constructor(
             }
             return
         }
-        val userId = jellyfinApi.userId ?: return
+        val userId = signedInUserId() ?: return
         val preference =
             if (index == -1) {
                 SeriesTrackPreferenceDto(userId, seriesId, trackType, disabled = true)
@@ -2146,11 +2145,11 @@ constructor(
             seriesId to
                 viewModelScope.async(Dispatchers.IO) {
                     try {
-                        database.insertSeriesTrackPreference(preference)
+                        repository.saveSeriesTrackPreference(preference)
                     } catch (e: Exception) {
                         Timber.e(e)
                     }
-                    readSeriesTrackPreferences(userId, seriesId)
+                    readSeriesTrackPreferences(seriesId)
                 }
     }
 
@@ -2271,19 +2270,27 @@ constructor(
      */
     private fun seriesTrackPreferences(seriesId: UUID): Deferred<List<SeriesTrackPreferenceDto>>? {
         trackPreferences?.let { (id, preferences) -> if (id == seriesId) return preferences }
-        val userId = jellyfinApi.userId ?: return null
+        if (signedInUserId() == null) return null
         val preferences =
-            viewModelScope.async(Dispatchers.IO) { readSeriesTrackPreferences(userId, seriesId) }
+            viewModelScope.async(Dispatchers.IO) { readSeriesTrackPreferences(seriesId) }
         trackPreferences = seriesId to preferences
         return preferences
     }
 
-    private suspend fun readSeriesTrackPreferences(
-        userId: UUID,
-        seriesId: UUID,
-    ): List<SeriesTrackPreferenceDto> =
+    /**
+     * The signed-in user, or null without one: the repository throws then, and the player keeps no
+     * track choice.
+     */
+    private fun signedInUserId(): UUID? =
         try {
-            database.getSeriesTrackPreferences(userId, seriesId)
+            repository.getUserId()
+        } catch (_: IllegalStateException) {
+            null
+        }
+
+    private suspend fun readSeriesTrackPreferences(seriesId: UUID): List<SeriesTrackPreferenceDto> =
+        try {
+            repository.getSeriesTrackPreferences(seriesId)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

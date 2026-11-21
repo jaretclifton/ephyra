@@ -47,7 +47,7 @@ import org.robolectric.annotation.Config
  * purpose means regenerating them and reading the diff: `./gradlew :data:testDebugUnitTest --tests
  * "*ItemMapperGoldenTest" -Dgolden.update=true`.
  */
-// Robolectric for android.net.Uri, which FindroidImages holds.
+// Robolectric for android.net.Uri, which the mappers build the image URLs with.
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class ItemMapperGoldenTest {

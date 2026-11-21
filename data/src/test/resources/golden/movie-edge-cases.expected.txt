@@ -144,7 +144,7 @@ FindroidMovie(
         type = ACTOR
         role = "Lead"
         image = FindroidItemPersonImage(
-          uri = https://server.test/items/cccccccc-0000-0000-0000-000000000001/Images/Primary?tag=pimg1
+          uri = "https://server.test/items/cccccccc-0000-0000-0000-000000000001/Images/Primary?tag=pimg1"
           blurHash = "LKO2?U%2Tw=w]~RBVZRi};RPxuwH"
         )
       )
@@ -201,9 +201,9 @@ FindroidMovie(
   localTrailerCount = 2
   specialFeatureCount = 3
   images = FindroidImages(
-    primary = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000001/Images/Primary?tag=ptag
-    backdrop = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000001/Images/Backdrop/0?tag=btag0
-    logo = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000001/Images/Logo?tag=ltag
+    primary = "https://server.test/items/aaaaaaaa-0000-0000-0000-000000000001/Images/Primary?tag=ptag"
+    backdrop = "https://server.test/items/aaaaaaaa-0000-0000-0000-000000000001/Images/Backdrop/0?tag=btag0"
+    logo = "https://server.test/items/aaaaaaaa-0000-0000-0000-000000000001/Images/Logo?tag=ltag"
     showPrimary = null
     showBackdrop = null
     showLogo = null

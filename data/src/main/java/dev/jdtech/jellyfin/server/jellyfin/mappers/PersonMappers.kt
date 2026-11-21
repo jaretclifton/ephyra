@@ -29,6 +29,7 @@ internal fun BaseItemPerson.toFindroidImage(baseUrl: String): FindroidItemPerson
                     .appendEncodedPath("items/$id/Images/${ImageType.PRIMARY}")
                     .appendQueryParameter("tag", tag)
                     .build()
+                    .toString()
             },
         blurHash = imageBlurHashes?.get(ImageType.PRIMARY)?.get(primaryImageTag),
     )

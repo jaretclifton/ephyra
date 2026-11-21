@@ -14,6 +14,7 @@ internal fun BaseItemDto.toFindroidImages(baseUrl: String): FindroidImages {
                 .appendEncodedPath("items/$id/Images/${ImageType.PRIMARY}")
                 .appendQueryParameter("tag", tag)
                 .build()
+                .toString()
         }
     val backdrop =
         backdropImageTags?.firstOrNull()?.let { tag ->
@@ -22,6 +23,7 @@ internal fun BaseItemDto.toFindroidImages(baseUrl: String): FindroidImages {
                 .appendEncodedPath("items/$id/Images/${ImageType.BACKDROP}/0")
                 .appendQueryParameter("tag", tag)
                 .build()
+                .toString()
         }
     val logo =
         imageTags?.get(ImageType.LOGO)?.let { tag ->
@@ -30,6 +32,7 @@ internal fun BaseItemDto.toFindroidImages(baseUrl: String): FindroidImages {
                 .appendEncodedPath("items/$id/Images/${ImageType.LOGO}")
                 .appendQueryParameter("tag", tag)
                 .build()
+                .toString()
         }
     val showPrimary = seriesPrimaryImageTag?.let { tag ->
         baseUri
@@ -37,6 +40,7 @@ internal fun BaseItemDto.toFindroidImages(baseUrl: String): FindroidImages {
             .appendEncodedPath("items/$seriesId/Images/${ImageType.PRIMARY}")
             .appendQueryParameter("tag", tag)
             .build()
+            .toString()
     }
     // The series' own backdrop and logo. The parent item id names the owner of the image (the
     // series unless the server inherited it from further up). No tag means the series has none,
@@ -50,6 +54,7 @@ internal fun BaseItemDto.toFindroidImages(baseUrl: String): FindroidImages {
                 )
                 .appendQueryParameter("tag", tag)
                 .build()
+                .toString()
         }
     val showLogo = parentLogoImageTag?.let { tag ->
         baseUri
@@ -57,6 +62,7 @@ internal fun BaseItemDto.toFindroidImages(baseUrl: String): FindroidImages {
             .appendEncodedPath("items/${parentLogoItemId ?: seriesId}/Images/${ImageType.LOGO}")
             .appendQueryParameter("tag", tag)
             .build()
+            .toString()
     }
     val thumb =
         imageTags?.get(ImageType.THUMB)?.let { tag ->
@@ -65,6 +71,7 @@ internal fun BaseItemDto.toFindroidImages(baseUrl: String): FindroidImages {
                 .appendEncodedPath("items/$id/Images/${ImageType.THUMB}")
                 .appendQueryParameter("tag", tag)
                 .build()
+                .toString()
         }
     // The series' thumb. The server names it for an episode; for anything else below a series it
     // is the parent's, which is only sent when the item has no thumb of its own.
@@ -77,6 +84,7 @@ internal fun BaseItemDto.toFindroidImages(baseUrl: String): FindroidImages {
                     .appendEncodedPath("items/$seriesId/Images/${ImageType.THUMB}")
                     .appendQueryParameter("tag", tag)
                     .build()
+                    .toString()
             }
             ?: parentThumbImageTag?.let { tag ->
                 baseUri
@@ -86,6 +94,7 @@ internal fun BaseItemDto.toFindroidImages(baseUrl: String): FindroidImages {
                     )
                     .appendQueryParameter("tag", tag)
                     .build()
+                    .toString()
             }
 
     return FindroidImages(
