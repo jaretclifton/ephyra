@@ -44,9 +44,9 @@ update: downloads, logins and resume positions stay as they are.
 - Downloads: the Offline Mode setting is removed. Downloads open and play whenever the server
   doesn't answer, with every tab and the search still there. If you had the setting on, the app
   starts as usual and your downloads are where they were (#281).
-- Backups and device transfers no longer carry the access tokens, the MDBList key or the
-  downloads, whose index was never copied with them. After a transfer to a new device you log
-  in again (#731).
+- Device transfers (setting up a new phone from the old one) no longer carry the access tokens,
+  the MDBList key, the settings or the downloads, as cloud backups already didn't. On the new
+  device the app starts fresh: you log in and choose your settings again (#731).
 
 ### Fixed
 - Player (mpv): a stream that stalls is caught and restarted instead of buffering forever, and
@@ -76,7 +76,7 @@ update: downloads, logins and resume positions stay as they are.
 
 ### Maintenance
 - libmpv 1.3.0 (Ephyra's own build): mpv 0.42.0, FFmpeg 9.1, dav1d 1.5.5.
-- The unit tests run on every pull request.
+- The unit tests run in CI on pull requests that change code.
 
 ## [v2.7.0] — 2026-11-14
 
