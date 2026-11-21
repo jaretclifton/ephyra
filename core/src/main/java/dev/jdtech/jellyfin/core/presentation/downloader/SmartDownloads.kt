@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.core.presentation.downloader
 
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.models.EpisodeField
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
@@ -21,7 +22,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.jellyfin.sdk.model.api.ItemFields
 import timber.log.Timber
 
 /**
@@ -121,7 +121,7 @@ constructor(
                 repository.getEpisodes(
                     seriesId,
                     season.id,
-                    fields = listOf(ItemFields.CAN_DOWNLOAD),
+                    fields = setOf(EpisodeField.CAN_DOWNLOAD),
                 )
             }
 

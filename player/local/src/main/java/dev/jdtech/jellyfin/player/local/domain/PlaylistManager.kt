@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.player.local.domain
 
 import androidx.core.net.toUri
 import androidx.media3.common.C
+import dev.jdtech.jellyfin.models.EpisodeField
 import dev.jdtech.jellyfin.models.FindroidChapter
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItem
@@ -24,7 +25,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jellyfin.sdk.model.api.BaseItemKind
-import org.jellyfin.sdk.model.api.ItemFields
 import timber.log.Timber
 
 class PlaylistManager @Inject internal constructor(private val repository: JellyfinRepository) {
@@ -72,7 +72,7 @@ class PlaylistManager @Inject internal constructor(private val repository: Jelly
             .getEpisodes(
                 seriesId = seriesId,
                 seasonId = seasonId,
-                fields = listOf(ItemFields.CHAPTERS, ItemFields.TRICKPLAY),
+                fields = setOf(EpisodeField.CHAPTERS, EpisodeField.TRICKPLAY),
             )
             .filter { !it.missing }
 
@@ -376,7 +376,7 @@ class PlaylistManager @Inject internal constructor(private val repository: Jelly
                             .getEpisodes(
                                 seriesId = seriesId,
                                 seasonId = season.id,
-                                fields = listOf(ItemFields.CHAPTERS, ItemFields.TRICKPLAY),
+                                fields = setOf(EpisodeField.CHAPTERS, EpisodeField.TRICKPLAY),
                             )
                             .filter { !it.missing }
                             .ifEmpty { null }

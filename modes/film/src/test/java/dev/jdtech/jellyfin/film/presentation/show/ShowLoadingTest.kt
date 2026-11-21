@@ -5,6 +5,7 @@ import android.content.ContextWrapper
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.models.EpisodeField
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidSeason
@@ -27,7 +28,6 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeout
-import org.jellyfin.sdk.model.api.ItemFields
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -43,7 +43,7 @@ class ShowLoadingTest {
     private val season2 = UUID.fromString("22222222-2222-2222-2222-222222222222")
     private val calls = mutableListOf<String>()
     private val episodeSeasonIds = mutableListOf<UUID?>()
-    private val episodeFields = mutableListOf<List<ItemFields>?>()
+    private val episodeFields = mutableListOf<Set<EpisodeField>?>()
 
     /** What the server allows per season (#373). */
     private var season1CanDownload = true
@@ -112,7 +112,7 @@ class ShowLoadingTest {
         withTimeout(5_000) { viewModel.state.first { it.seasonDownloadInfo.isNotEmpty() } }
 
         assertEquals(1, episodeFields.size)
-        assertTrue(episodeFields.single().orEmpty().contains(ItemFields.CAN_DOWNLOAD))
+        assertTrue(episodeFields.single().orEmpty().contains(EpisodeField.CAN_DOWNLOAD))
     }
 
     @Test
@@ -221,7 +221,7 @@ class ShowLoadingTest {
                     @Suppress("UNCHECKED_CAST")
                     synchronized(calls) {
                         episodeSeasonIds.add(args!![1] as UUID?)
-                        episodeFields.add(args[2] as List<ItemFields>?)
+                        episodeFields.add(args[2] as Set<EpisodeField>?)
                     }
                     if (episodesFail) throw IllegalStateException("No connection")
                     List(3) { episode(season1, season1CanDownload) } +
