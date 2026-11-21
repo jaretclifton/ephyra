@@ -17,7 +17,6 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.repository.ItemsPage
-import dev.jdtech.jellyfin.server.jellyfin.mappers.MapperContext
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidCollection
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidEpisode
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidItem
@@ -27,13 +26,8 @@ import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSeason
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidShow
 import java.time.LocalDateTime
 import java.util.UUID
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
 import org.jellyfin.sdk.api.client.extensions.audioApi
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.BaseItemKind
@@ -43,7 +37,6 @@ import org.jellyfin.sdk.model.api.ItemFilter as SdkItemFilter
 import org.jellyfin.sdk.model.api.ItemSortBy
 import org.jellyfin.sdk.model.api.MediaType
 import org.jellyfin.sdk.model.api.SortOrder as SdkSortOrder
-import timber.log.Timber
 
 /**
  * [CatalogPort] over the Jellyfin SDK (#756). No Room: movies and episodes carry only the server's
@@ -52,46 +45,11 @@ import timber.log.Timber
  */
 class JellyfinCatalog(private val api: JellyfinApi) : CatalogPort {
     private val currentUserId: UUID
-        get() =
-            api.userId
-                ?: throw IllegalStateException(
-                    "No authenticated user. userId is null — session may have expired."
-                )
+        get() = api.currentUserId
 
-    private fun baseUrl() = api.api.baseUrl.orEmpty()
+    private fun baseUrl() = api.baseUrl()
 
-    /**
-     * What the mappers need from the current server. Built at each mapping, never kept: the base
-     * URL changes when the user switches server.
-     */
-    private fun mapperContext() =
-        MapperContext(
-            baseUrl = baseUrl(),
-            streamUrl = { id, source ->
-                try {
-                    api.videoApi.getVideoStreamUrl(id, static = true, mediaSourceId = source)
-                } catch (e: Exception) {
-                    Timber.e(e)
-                    ""
-                }
-            },
-        )
-
-    /**
-     * On the IO dispatcher, with the SDK's failures translated. The block runs in a scope of its
-     * own, so a failing child (search, extras) reaches the translation instead of failing the
-     * dispatcher's scope with the SDK's exception.
-     */
-    private suspend fun <T> call(block: suspend CoroutineScope.() -> T): T =
-        withContext(Dispatchers.IO) {
-            try {
-                coroutineScope(block)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                throw e.asServerException() ?: e
-            }
-        }
+    private fun mapperContext() = api.mapperContext()
 
     override suspend fun serverInfo(): ServerInfo = call {
         val info = api.systemApi.getPublicSystemInfo().content

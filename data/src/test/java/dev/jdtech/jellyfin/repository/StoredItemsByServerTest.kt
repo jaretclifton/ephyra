@@ -17,8 +17,8 @@ import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
 import dev.jdtech.jellyfin.player.DeviceCodecProbe
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinCatalog
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -63,11 +63,9 @@ class StoredItemsByServerTest {
         val api = JellyfinApi(context).apply { userId = this@StoredItemsByServerTest.userId }
         JellyfinRepositoryImpl(
             context,
-            api,
-            JellyfinCatalog(api),
+            JellyfinMediaServer(api, JellyfinDeviceProfiles(DeviceCodecProbe(context))),
             database,
             preferences,
-            JellyfinDeviceProfiles(DeviceCodecProbe(context)),
         )
     }
 

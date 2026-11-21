@@ -8,8 +8,8 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.player.DeviceCodecProbe
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinCatalog
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.lang.reflect.Proxy
 import java.util.UUID
@@ -80,11 +80,9 @@ class UnfinishedDownloadPlaybackTest {
             val repository =
                 JellyfinRepositoryImpl(
                     context,
-                    api(),
-                    JellyfinCatalog(api()),
+                    JellyfinMediaServer(api(), JellyfinDeviceProfiles(DeviceCodecProbe(context))),
                     database,
                     preferences(),
-                    JellyfinDeviceProfiles(DeviceCodecProbe(context)),
                 )
 
             val result = runCatching { repository.getPlaybackSources(episodeId, null) }

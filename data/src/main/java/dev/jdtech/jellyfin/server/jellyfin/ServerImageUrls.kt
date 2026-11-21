@@ -1,4 +1,4 @@
-package dev.jdtech.jellyfin.repository
+package dev.jdtech.jellyfin.server.jellyfin
 
 import java.util.UUID
 

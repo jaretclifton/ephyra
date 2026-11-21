@@ -2,21 +2,20 @@ package dev.jdtech.jellyfin.repository
 
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
-import org.jellyfin.sdk.model.api.PlayMethod
 
 /**
  * The play session the server opened for each item it transcodes. The stop report names it, which
  * is what makes the server end the transcode: without it ffmpeg runs on until the server's own
  * timer ends it, a minute after the last segment was fetched.
  */
-internal class PlaySessions {
+class PlaySessions {
     private val sessions = ConcurrentHashMap<UUID, String>()
 
     /**
-     * Records the session of the stream that plays [itemId] now (see
-     * [JellyfinRepository.setPlaySession]). A source that plays directly has no transcode to end,
-     * so its session is not kept. A new stream for the same item (a quality switch) replaces the
-     * session: the stream it replaces is left to the server's timer, the SDK has no call to end it.
+     * Records the session of the stream that plays [itemId] now (see the repository's
+     * `setPlaySession`). A source that plays directly has no transcode to end, so its session is
+     * not kept. A new stream for the same item (a quality switch) replaces the session: the stream
+     * it replaces is left to the server's timer, the server has no call to end it.
      */
     fun onPlaybackInfo(itemId: UUID, playSessionId: String?, transcodes: Boolean) {
         val session = playSessionId?.takeIf { transcodes && it.isNotBlank() }
@@ -30,8 +29,8 @@ internal class PlaySessions {
     fun sessionOf(itemId: UUID): String? = sessions[itemId]
 
     /**
-     * CE (#599): the play method and play session for a start or progress report of [itemId].
-     * [transcoded] is whether the stream playing is the server's transcode.
+     * CE (#599): what a start or progress report of [itemId] says it plays. [transcoded] is whether
+     * the stream playing is the server's transcode.
      *
      * The server never offers a direct stream (a remux): a source it cannot direct-play gets a
      * transcoding URL, remux or not, and its dashboard tells a remux from the transcode's own
@@ -42,10 +41,13 @@ internal class PlaySessions {
      */
     fun playReport(itemId: UUID, transcoded: Boolean): PlayReport {
         val session = sessionOf(itemId)
-        return if (transcoded && session != null) PlayReport(PlayMethod.TRANSCODE, session)
-        else PlayReport(PlayMethod.DIRECT_PLAY, null)
+        return if (transcoded && session != null) PlayReport(transcoded = true, session)
+        else PlayReport(transcoded = false, null)
     }
 }
 
-/** The play method of a start or progress report, and the play session it names. */
-internal data class PlayReport(val playMethod: PlayMethod, val playSessionId: String?)
+/**
+ * What a start or progress report says (#757): [transcoded] is Transcode with [playSessionId], else
+ * DirectPlay without a session. The server adapter turns it into its play method.
+ */
+data class PlayReport(val transcoded: Boolean, val playSessionId: String?)

@@ -66,4 +66,10 @@ internal class FakeServerSession(
     }
 
     override fun userImageUrl(userId: UserId, tag: String): String? = null
+
+    override suspend fun updateDeviceName(name: String) = Unit
+
+    override suspend fun autoPlayNextEpisode(): Boolean? = null
+
+    override suspend fun currentUserImageTag(): String? = null
 }

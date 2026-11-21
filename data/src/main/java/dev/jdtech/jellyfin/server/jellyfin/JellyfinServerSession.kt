@@ -8,6 +8,7 @@ import dev.jdtech.jellyfin.models.UserId
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import org.jellyfin.sdk.api.sockets.subscribe
+import org.jellyfin.sdk.model.api.DeviceOptionsDto
 import org.jellyfin.sdk.model.api.PlaystateMessage
 import timber.log.Timber
 
@@ -72,6 +73,25 @@ class JellyfinServerSession(private val api: JellyfinApi) : ServerSession {
     override fun userImageUrl(userId: UserId, tag: String): String? {
         val base = baseUrl?.trimEnd('/') ?: return null
         return "$base/Users/$userId/Images/Primary?tag=$tag"
+    }
+
+    /** Nothing is sent when the client has no device id. */
+    override suspend fun updateDeviceName(name: String) {
+        call {
+            api.jellyfin.deviceInfo?.id?.let { id ->
+                api.deviceApi.updateDeviceOptions(id, DeviceOptionsDto(0, customName = name))
+            }
+        }
+    }
+
+    override suspend fun autoPlayNextEpisode(): Boolean? = call {
+        val configuration = api.userApi.getCurrentUser().content.configuration
+        if (configuration == null) Timber.w("The server gave no user configuration")
+        configuration?.enableNextEpisodeAutoPlay
+    }
+
+    override suspend fun currentUserImageTag(): String? = call {
+        api.userApi.getCurrentUser().content.primaryImageTag
     }
 
     private companion object {
