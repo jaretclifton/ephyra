@@ -25,7 +25,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.isTraversalGroup
@@ -35,7 +34,6 @@ import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyHomeSection
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyHomeSuggestions
@@ -90,7 +88,6 @@ fun HomeScreen(
 
     HomeScreenLayout(
         state = state,
-        baseUrl = JellyfinApi.getInstance(LocalContext.current).api.baseUrl,
         onAddUser = onAddUser,
         onPublicUserClick = onPublicUserClick,
         onUserSwitched = {
@@ -117,7 +114,6 @@ fun HomeScreen(
 internal fun HomeScreenLayout(
     state: HomeState,
     onAction: (HomeAction) -> Unit,
-    baseUrl: String? = null,
     onAddUser: () -> Unit = {},
     onPublicUserClick: (String) -> Unit = {},
     onUserSwitched: () -> Unit = {},
@@ -294,7 +290,6 @@ internal fun HomeScreenLayout(
         onSearchClick = { onAction(HomeAction.OnSearchClick) },
         onUserClick = { showProfileBottomSheet = true },
         user = state.user,
-        baseUrl = baseUrl,
         // CE (#775): in place of the banner the user put away; the error page says it already.
         serverIndicator = showsServerIndicator(hasContent = !state.isEmpty) && !showErrorState,
         modifier = Modifier.padding(start = paddingStart, top = paddingTop, end = paddingEnd),
@@ -302,7 +297,6 @@ internal fun HomeScreenLayout(
 
     if (showProfileBottomSheet) {
         ProfileBottomSheet(
-            baseUrl = baseUrl,
             onSwitchServer = {
                 showProfileBottomSheet = false
                 showServerSelectionBottomSheet = true

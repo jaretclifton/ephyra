@@ -29,14 +29,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyUser
 import dev.jdtech.jellyfin.models.User
@@ -75,7 +73,6 @@ fun UsersScreen(
 
     UsersScreenLayout(
         state = state,
-        baseUrl = JellyfinApi.getInstance(LocalContext.current).api.baseUrl,
         showBack = showBack,
         onAction = { action ->
             when (action) {
@@ -93,7 +90,6 @@ fun UsersScreen(
 @Composable
 private fun UsersScreenLayout(
     state: UsersState,
-    baseUrl: String? = null,
     showBack: Boolean = true,
     onAction: (UsersAction) -> Unit,
 ) {
@@ -146,7 +142,6 @@ private fun UsersScreenLayout(
                     items(state.users, key = { "u-" + it.id }) { user ->
                         UserItem(
                             user = user,
-                            baseUrl = baseUrl,
                             current = user.id == state.currentUserId,
                             onClick = { onAction(UsersAction.OnUserClick(userId = user.id)) },
                             onLongClick = {
@@ -174,7 +169,6 @@ private fun UsersScreenLayout(
                         items(state.publicUsers, key = { "p-" + it.id }) { user ->
                             UserItem(
                                 user = user,
-                                baseUrl = baseUrl,
                                 subtitle = stringResource(SetupR.string.ce_users_sign_in),
                                 onClick = {
                                     onAction(UsersAction.OnPublicUserClick(username = user.name))

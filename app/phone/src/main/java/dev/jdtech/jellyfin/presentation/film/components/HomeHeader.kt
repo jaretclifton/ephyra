@@ -47,7 +47,6 @@ fun HomeHeader(
     onUserClick: () -> Unit,
     modifier: Modifier = Modifier,
     user: User? = null,
-    baseUrl: String? = null,
     serverIndicator: Boolean = false,
 ) {
     Row(
@@ -140,7 +139,7 @@ fun HomeHeader(
                         label = "header-avatar",
                     ) { shown ->
                         if (shown != null) {
-                            UserAvatar(user = shown, baseUrl = baseUrl, size = 32.dp)
+                            UserAvatar(user = shown, size = 32.dp)
                         } else {
                             Icon(
                                 painter = painterResource(CoreR.drawable.ic_user),

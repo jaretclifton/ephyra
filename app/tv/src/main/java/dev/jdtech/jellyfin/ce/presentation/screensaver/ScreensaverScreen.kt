@@ -40,13 +40,13 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.size.Precision
 import coil3.size.Scale
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.ce.presentation.film.heroBackdropUrl
 import dev.jdtech.jellyfin.ce.presentation.film.heroLogoUrl
 import dev.jdtech.jellyfin.ce.ui.tvSafeAreaPadding
 import dev.jdtech.jellyfin.core.presentation.ephyra.SPECK_LOOP_MILLIS
 import dev.jdtech.jellyfin.core.presentation.ephyra.drawSpecks
 import dev.jdtech.jellyfin.core.presentation.ephyra.reducedMotion
+import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -56,7 +56,7 @@ import kotlinx.coroutines.isActive
 
 @Composable
 fun ScreensaverScreen(
-    jellyfinApi: JellyfinApi,
+    serverSession: ServerSession,
     repository: JellyfinRepository,
     appPreferences: AppPreferences,
     modifier: Modifier = Modifier,
@@ -92,7 +92,7 @@ fun ScreensaverScreen(
     var items by remember { mutableStateOf<List<FindroidItem>>(emptyList()) }
     var currentIndex by remember { mutableIntStateOf(0) }
 
-    val userId = jellyfinApi.userId
+    val userId = serverSession.userId
 
     // Load items when screensaver starts or source changes
     LaunchedEffect(userId, source) {

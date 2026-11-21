@@ -60,7 +60,6 @@ val UserItemAvatarSize = 144.dp
 fun UserItem(
     user: User,
     modifier: Modifier = Modifier,
-    baseUrl: String? = null,
     current: Boolean = false,
     caption: String? = null,
     onClick: (User) -> Unit = {},
@@ -114,12 +113,7 @@ fun UserItem(
                         },
             ) {
                 // The lock badge is drawn below, outside the circle, like the current badge.
-                UserAvatar(
-                    user = user,
-                    baseUrl = baseUrl,
-                    size = UserItemAvatarSize,
-                    showLock = false,
-                )
+                UserAvatar(user = user, size = UserItemAvatarSize, showLock = false)
             }
             // CE (#299): a profile with a PIN.
             if (user.hasPin) {

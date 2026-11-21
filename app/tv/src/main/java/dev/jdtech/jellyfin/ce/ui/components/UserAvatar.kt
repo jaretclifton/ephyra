@@ -7,15 +7,17 @@ import androidx.compose.ui.unit.Dp
 import androidx.tv.material3.MaterialTheme
 import dev.jdtech.jellyfin.core.presentation.ephyra.AvatarColors
 import dev.jdtech.jellyfin.core.presentation.ephyra.EphyraAvatar
+import dev.jdtech.jellyfin.core.presentation.session.LocalServerSession
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.hasPin
-import dev.jdtech.jellyfin.models.primaryImageUrl
 
-/** A user's avatar in the TV theme. [baseUrl] is the server the user belongs to. */
+/**
+ * A user's avatar in the TV theme. The picture comes from the server of [LocalServerSession], the
+ * one the user belongs to.
+ */
 @Composable
 fun UserAvatar(
     user: User,
-    baseUrl: String?,
     size: Dp,
     modifier: Modifier = Modifier,
     current: Boolean = false,
@@ -43,9 +45,10 @@ fun UserAvatar(
                 lockContent = onHighest,
             )
         }
+    val session = LocalServerSession.current
     EphyraAvatar(
         name = user.name,
-        imageUrl = user.primaryImageUrl(baseUrl),
+        imageUrl = user.primaryImageTag?.let { session.userImageUrl(user.id, it) },
         seed = user.id,
         size = size,
         colors = colors,

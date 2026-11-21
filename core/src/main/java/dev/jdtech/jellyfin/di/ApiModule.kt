@@ -8,6 +8,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.domain.ports.ServerSession
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinServerSession
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Singleton
 import kotlinx.coroutines.runBlocking
@@ -53,4 +55,10 @@ object ApiModule {
 
         return jellyfinApi
     }
+
+    /** #748: the base URL and the user id for code outside the adapter. */
+    @Singleton
+    @Provides
+    fun provideServerSession(jellyfinApi: JellyfinApi): ServerSession =
+        JellyfinServerSession(jellyfinApi)
 }
