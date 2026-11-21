@@ -2,7 +2,6 @@ app/phone/src/main/java/dev/jdtech/jellyfin/presentation/cast/CastMiniPlayer.kt
 app/phone/src/main/java/dev/jdtech/jellyfin/presentation/cast/CastPlayback.kt
 app/phone/src/main/java/dev/jdtech/jellyfin/presentation/cast/CastPlayer.kt
 app/phone/src/main/java/dev/jdtech/jellyfin/presentation/cast/CastPreviews.kt
-app/phone/src/main/java/dev/jdtech/jellyfin/presentation/components/ErrorDialog.kt
 app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/EpisodeScreen.kt
 app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/ItemExtras.kt
 app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/MovieScreen.kt
@@ -24,7 +23,6 @@ core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/People.kt
 core/src/main/java/dev/jdtech/jellyfin/core/session/ServerSessionKeeper.kt
 core/src/main/java/dev/jdtech/jellyfin/utils/CoreExtensions.kt
 core/src/main/java/dev/jdtech/jellyfin/utils/DownloaderImpl.kt
-core/src/main/java/dev/jdtech/jellyfin/utils/LoadErrorText.kt
 core/src/main/java/dev/jdtech/jellyfin/work/SyncWorker.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/domain/MediaInfo.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/domain/VideoMetadataParser.kt
@@ -52,5 +50,3 @@ player/local/src/main/java/dev/jdtech/jellyfin/player/local/presentation/PlayerV
 setup/src/main/java/dev/jdtech/jellyfin/setup/data/SetupRepositoryImpl.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/domain/SetupRepository.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/addresses/ServerAddressesViewModel.kt
-setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/login/LoginViewModel.kt
-setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/login/QuickConnectError.kt

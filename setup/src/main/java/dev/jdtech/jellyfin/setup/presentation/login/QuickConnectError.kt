@@ -1,9 +1,10 @@
 package dev.jdtech.jellyfin.setup.presentation.login
 
+import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.server.jellyfin.asServerException
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.utils.LoadErrorText
-import org.jellyfin.sdk.api.client.exception.InvalidStatusException
 
 /** The Quick Connect call that failed. */
 enum class QuickConnectStep {
@@ -48,8 +49,4 @@ private fun isCodeExpired(error: Throwable, step: QuickConnectStep): Boolean =
     }
 
 private fun Throwable.httpStatus(): Int? =
-    generateSequence(this) { it.cause.takeIf { cause -> cause !== it } }
-        .take(16)
-        .filterIsInstance<InvalidStatusException>()
-        .firstOrNull()
-        ?.status
+    (asServerException() as? ServerException.HttpStatus)?.status

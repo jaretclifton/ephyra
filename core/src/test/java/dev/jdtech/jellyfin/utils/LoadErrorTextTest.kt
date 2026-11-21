@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.utils
 
 import dev.jdtech.jellyfin.core.R as CoreR
+import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.UiText
 import java.net.ConnectException
 import java.net.UnknownHostException
@@ -17,23 +18,47 @@ class LoadErrorTextTest {
 
     @Test
     fun `a server error names its status`() {
-        val text = LoadErrorText.reason(InvalidStatusException(503, null)).resource()
+        val text = LoadErrorText.reason(ServerException.HttpStatus(503)).resource()
 
         assertEquals(CoreR.string.ce_error_server_status, text.resId)
         assertEquals(listOf<Any>(503), text.args.toList())
-        assertFalse(LoadErrorText.isConnectionError(InvalidStatusException(503, null)))
+        assertFalse(LoadErrorText.isConnectionError(ServerException.HttpStatus(503)))
     }
 
     @Test
     fun `a 401 is a server error too`() {
-        val text = LoadErrorText.reason(InvalidStatusException(401, null)).resource()
+        val text = LoadErrorText.reason(ServerException.HttpStatus(401)).resource()
 
         assertEquals(CoreR.string.ce_error_server_status, text.resId)
         assertEquals(listOf<Any>(401), text.args.toList())
     }
 
     @Test
+    fun `a status wins over a timeout that wraps it`() {
+        // The SDK's own types, as the Jellyfin adapter still throws them (#745).
+        val error = TimeoutException("Connection failed", InvalidStatusException(502, null))
+
+        val text = LoadErrorText.reason(error).resource()
+
+        assertEquals(CoreR.string.ce_error_server_status, text.resId)
+        assertEquals(listOf<Any>(502), text.args.toList())
+        assertFalse(LoadErrorText.isConnectionError(error))
+    }
+
+    @Test
+    fun `an unreachable server says it can't be reached`() {
+        val error = ServerException.Unreachable()
+
+        assertEquals(
+            CoreR.string.download_error_server_unreachable,
+            LoadErrorText.reason(error).resource().resId,
+        )
+        assertTrue(LoadErrorText.isConnectionError(ServerException.Tls()))
+    }
+
+    @Test
     fun `a refused connection says the server can't be reached`() {
+        // The SDK's own timeout, as the Jellyfin adapter still throws it (#745).
         val error =
             TimeoutException(
                 "Connection failed",

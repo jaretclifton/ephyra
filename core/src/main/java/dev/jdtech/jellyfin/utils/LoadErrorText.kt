@@ -1,14 +1,13 @@
 package dev.jdtech.jellyfin.utils
 
 import dev.jdtech.jellyfin.core.R as CoreR
+import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.server.jellyfin.asServerException
 import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import javax.net.ssl.SSLException
-import org.jellyfin.sdk.api.client.exception.InvalidStatusException
-import org.jellyfin.sdk.api.client.exception.SecureConnectionException
-import org.jellyfin.sdk.api.client.exception.TimeoutException
 
 /**
  * CE (#377): what a screen that failed to load tells the user. Never the exception's own text: it
@@ -17,7 +16,8 @@ import org.jellyfin.sdk.api.client.exception.TimeoutException
 object LoadErrorText {
     /** The reason in plain words. */
     fun reason(error: Throwable): UiText {
-        val status = error.causes().filterIsInstance<InvalidStatusException>().firstOrNull()
+        // A status anywhere in the chain wins, also over a timeout that wraps it.
+        val status = error.asServerException() as? ServerException.HttpStatus
         return when {
             status != null ->
                 UiText.StringResource(CoreR.string.ce_error_server_status, status.status)
@@ -29,14 +29,20 @@ object LoadErrorText {
 
     /** Whether the server could not be reached at all, so checking the connection may help. */
     fun isConnectionError(error: Throwable): Boolean =
-        error.causes().any {
-            it is TimeoutException ||
-                it is SecureConnectionException ||
-                it is SocketException ||
-                it is SocketTimeoutException ||
-                it is UnknownHostException ||
-                it is SSLException
-        } && error.causes().none { it is InvalidStatusException }
+        when (error.asServerException()) {
+            // The server answered.
+            is ServerException.HttpStatus -> false
+            is ServerException.Timeout,
+            is ServerException.Tls,
+            is ServerException.Unreachable -> true
+            null ->
+                error.causes().any {
+                    it is SocketException ||
+                        it is SocketTimeoutException ||
+                        it is UnknownHostException ||
+                        it is SSLException
+                }
+        }
 
     /** The full trace for a bug report, with anything that looks like a token blanked out. */
     fun shareText(error: Throwable): String = redact(error.stackTraceToString())
