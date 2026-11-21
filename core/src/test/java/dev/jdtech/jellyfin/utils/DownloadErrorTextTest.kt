@@ -1,12 +1,12 @@
 package dev.jdtech.jellyfin.utils
 
 import dev.jdtech.jellyfin.core.R as CoreR
+import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.UiText
 import java.io.IOException
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import kotlin.test.assertEquals
-import org.jellyfin.sdk.api.client.exception.TimeoutException
 import org.junit.jupiter.api.Test
 
 /** CE (#530): a download that cannot start because the server is out of reach says so. */
@@ -14,8 +14,8 @@ class DownloadErrorTextTest {
     private fun resId(error: Throwable) = (downloadErrorText(error) as UiText.StringResource).resId
 
     @Test
-    fun `a connection the Jellyfin SDK wrapped says the server can't be reached`() {
-        val error = TimeoutException("Connection failed", ConnectException("Failed to connect"))
+    fun `a connection wrapped in a server timeout says the server can't be reached`() {
+        val error = ServerException.Timeout(ConnectException("Failed to connect"))
 
         assertEquals(CoreR.string.download_error_server_unreachable, resId(error))
     }

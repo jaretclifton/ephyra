@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.setup.presentation
 import android.app.Application
 import android.content.Context
 import dev.jdtech.jellyfin.core.R as CoreR
+import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.domain.FakeLocalNetworkAccess
@@ -17,7 +18,6 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import org.jellyfin.sdk.api.client.exception.InvalidStatusException
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -80,7 +80,7 @@ class AddServerUnexpectedErrorTest {
 
     @Test
     fun `a server error gives its status`() = runTest {
-        failure = InvalidStatusException(502, null)
+        failure = ServerException.HttpStatus(502)
         val viewModel = AddServerViewModel(repository, appPreferences, FakeLocalNetworkAccess())
 
         viewModel.onAction(AddServerAction.OnConnectClick("10.0.2.2:8096"))

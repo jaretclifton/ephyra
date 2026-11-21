@@ -10,6 +10,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.core.R
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.models.ServerException
+import dev.jdtech.jellyfin.server.jellyfin.asServerException
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -20,7 +22,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jellyfin.sdk.api.client.exception.InvalidStatusException
 import org.jellyfin.sdk.api.sockets.subscribe
 import org.jellyfin.sdk.model.api.PlaystateMessage
 import timber.log.Timber
@@ -103,13 +104,11 @@ constructor(
         try {
             jellyfinApi.userApi.getCurrentUser()
             false
-        } catch (e: InvalidStatusException) {
-            e.status == 401
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            // Offline or a server error: nothing says the token is gone.
-            false
+            // Only a 401 says the token is gone. Offline or a server error: nothing does.
+            (e.asServerException() as? ServerException.HttpStatus)?.status == 401
         }
 
     private suspend fun signOut(token: String) {

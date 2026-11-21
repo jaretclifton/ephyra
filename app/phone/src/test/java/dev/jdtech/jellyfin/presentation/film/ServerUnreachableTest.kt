@@ -45,6 +45,7 @@ import dev.jdtech.jellyfin.film.presentation.search.SearchState
 import dev.jdtech.jellyfin.models.CollectionSection
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidTrailer
+import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.presentation.film.components.ErrorState
 import dev.jdtech.jellyfin.presentation.film.components.ItemButtonsBar
@@ -57,7 +58,6 @@ import java.net.ConnectException
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.flowOf
-import org.jellyfin.sdk.api.client.exception.InvalidStatusException
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -188,7 +188,7 @@ class ServerUnreachableTest {
     fun anAnswerWithAServerErrorKeepsTheRedCard() {
         // HTTP 500 came from somewhere: that is an error to show, not "can't reach".
         status = unreachable()
-        setHome(loaded.copy(error = InvalidStatusException(500, null)))
+        setHome(loaded.copy(error = ServerException.HttpStatus(500)))
 
         rule.onNodeWithText(string(CoreR.string.error_loading_data)).assertIsDisplayed()
         assertAbsent(unreachableText)
@@ -229,7 +229,7 @@ class ServerUnreachableTest {
         assertEquals(1, retries)
 
         // The reload failed for another reason: that error shows, and nothing retries again.
-        homeState = loaded.copy(error = InvalidStatusException(500, null))
+        homeState = loaded.copy(error = ServerException.HttpStatus(500))
         settle()
         rule.onNodeWithText(string(CoreR.string.error_loading_data)).assertIsDisplayed()
         assertEquals(1, retries)
@@ -403,7 +403,7 @@ class ServerUnreachableTest {
     @Test
     fun anErrorTheServerSentKeepsTheUsualPageWhileTheBannerIsUp() {
         status = unreachable()
-        error = InvalidStatusException(500, null)
+        error = ServerException.HttpStatus(500)
         setErrorState()
 
         rule.onNodeWithText(string(CoreR.string.error_loading_data)).assertIsDisplayed()
@@ -587,7 +587,7 @@ class ServerUnreachableTest {
     @Test
     fun theRedCardForAnotherErrorHasNoCloseButton() {
         status = dismissible()
-        setHome(loaded.copy(error = InvalidStatusException(500, null)))
+        setHome(loaded.copy(error = ServerException.HttpStatus(500)))
 
         rule.onNodeWithText(string(CoreR.string.error_loading_data)).assertIsDisplayed()
         rule.onAllNodes(hasContentDescription(closeText)).assertCountEquals(0)
