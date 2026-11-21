@@ -61,7 +61,6 @@ import dev.jdtech.jellyfin.presentation.utils.GridCellsAdaptiveWithMinColumns
 import dev.jdtech.jellyfin.presentation.utils.Layout
 import dev.jdtech.jellyfin.presentation.utils.currentWidthClass
 import dev.jdtech.jellyfin.presentation.utils.rememberSafePadding
-import dev.jdtech.jellyfin.presentation.utils.showsDownloadsOnly
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -243,7 +242,6 @@ fun FilmSearchBar(
         onExpandedChange = { onExpand(it) },
         modifier = modifier.padding(start = searchBarPaddingStart, end = searchBarPaddingEnd),
     ) {
-        val downloadsOnly = showsDownloadsOnly()
         Box(modifier = Modifier.fillMaxSize()) {
             LazyVerticalGrid(
                 columns =
@@ -262,9 +260,9 @@ fun FilmSearchBar(
                 horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacings.default),
                 verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacings.default),
             ) {
-                // CE (#775): the results come from the downloads while the server is away. Not
-                // over the error page.
-                if (downloadsOnly && query.isNotBlank() && state.error == null) {
+                // CE (#775): results of a search made while the server was away come from the
+                // downloads. Not over the error page.
+                if (state.downloadsOnly && query.isNotBlank() && state.error == null) {
                     item(key = "downloads_only", span = { GridItemSpan(maxLineSpan) }) {
                         DownloadsOnlyLine()
                     }

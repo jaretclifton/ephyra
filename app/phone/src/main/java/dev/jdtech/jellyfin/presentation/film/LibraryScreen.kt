@@ -72,9 +72,9 @@ import dev.jdtech.jellyfin.presentation.utils.GridCellsAdaptiveWithMinColumns
 import dev.jdtech.jellyfin.presentation.utils.Layout
 import dev.jdtech.jellyfin.presentation.utils.currentWidthClass
 import dev.jdtech.jellyfin.presentation.utils.plus
-import dev.jdtech.jellyfin.presentation.utils.showsDownloadsOnly
 import dev.jdtech.jellyfin.presentation.utils.showsServerIndicator
 import dev.jdtech.jellyfin.presentation.utils.topAndSideInsets
+import dev.jdtech.jellyfin.repository.StoredLibraries
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -108,15 +108,21 @@ fun LibraryScreen(
             }
             viewModel.onAction(action)
         },
+        downloadsOnly = StoredLibraries.isStored(libraryId),
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LibraryScreenLayout(
+internal fun LibraryScreenLayout(
     libraryName: String,
     state: LibraryState,
     onAction: (LibraryAction) -> Unit,
+    /**
+     * CE (#775): one of the stored libraries, which hold the downloads, also once the server is
+     * back (a real library open when the server goes away keeps its server items).
+     */
+    downloadsOnly: Boolean = false,
 ) {
     val contentPadding = PaddingValues(all = MaterialTheme.spacings.default)
 
@@ -129,9 +135,8 @@ private fun LibraryScreenLayout(
     val gridState = rememberLazyGridState()
 
     // CE (#775): not over a failed first load, which has nothing to show.
-    val downloadsOnly =
-        showsDownloadsOnly() &&
-            !(items.itemCount == 0 && items.loadState.refresh is LoadState.Error)
+    val showDownloadsOnly =
+        downloadsOnly && !(items.itemCount == 0 && items.loadState.refresh is LoadState.Error)
 
     Scaffold(
         modifier =
@@ -144,7 +149,7 @@ private fun LibraryScreenLayout(
                     // CE (#775): as on Favorites, under the title.
                     Column {
                         Text(libraryName)
-                        if (downloadsOnly) DownloadsOnlyLine()
+                        if (showDownloadsOnly) DownloadsOnlyLine()
                     }
                 },
                 navigationIcon = {

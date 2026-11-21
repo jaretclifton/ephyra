@@ -62,12 +62,6 @@ fun showsServerBanner(): Boolean = isServerAway() && !LocalServerStatus.current.
 fun showsServerIndicator(): Boolean = isServerAway() && LocalServerStatus.current.bannerDismissed
 
 /**
- * CE (#775): whether the lists that fall back to the downloads (Favorites, Media, a library,
- * search) say so. Whenever the server is away, whatever keeps it away.
- */
-@Composable fun showsDownloadsOnly(): Boolean = LocalServerStatus.current.unreachable
-
-/**
  * Whether [error] is the server being unreachable, as the banner already says: a connection error
  * while the server is away. Also with the banner put away (#775): the error is still explained.
  */

@@ -6,4 +6,9 @@ data class CollectionState(
     val sections: List<CollectionSection> = emptyList(),
     val isLoading: Boolean = true,
     val error: Exception? = null,
+    /**
+     * CE (#775): [sections] came from a load made while the server was away, which succeeded: the
+     * downloaded favourites only.
+     */
+    val downloadsOnly: Boolean = false,
 )

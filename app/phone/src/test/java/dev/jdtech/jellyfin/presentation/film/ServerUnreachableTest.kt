@@ -24,8 +24,10 @@ import androidx.compose.ui.test.performCustomAccessibilityActionWithLabel
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.test.swipeRight
+import androidx.paging.PagingData
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloaderState
+import dev.jdtech.jellyfin.core.presentation.dummy.dummyCollections
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyHomeSection
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyServer
@@ -35,16 +37,24 @@ import dev.jdtech.jellyfin.film.presentation.collection.CollectionAction
 import dev.jdtech.jellyfin.film.presentation.collection.CollectionState
 import dev.jdtech.jellyfin.film.presentation.home.HomeAction
 import dev.jdtech.jellyfin.film.presentation.home.HomeState
+import dev.jdtech.jellyfin.film.presentation.library.LibraryState
+import dev.jdtech.jellyfin.film.presentation.media.MediaState
+import dev.jdtech.jellyfin.film.presentation.search.SearchState
+import dev.jdtech.jellyfin.models.CollectionSection
+import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidTrailer
+import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.presentation.film.components.ErrorState
 import dev.jdtech.jellyfin.presentation.film.components.ItemButtonsBar
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.utils.LocalServerStatus
 import dev.jdtech.jellyfin.presentation.utils.ServerStatusUi
+import dev.jdtech.jellyfin.repository.StoredLibraries
 import dev.jdtech.jellyfin.setup.R as SetupR
 import java.net.ConnectException
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlinx.coroutines.flow.flowOf
 import org.jellyfin.sdk.api.client.exception.InvalidStatusException
 import org.junit.Rule
 import org.junit.Test
@@ -558,12 +568,9 @@ class ServerUnreachableTest {
     }
 
     @Test
-    fun favoritesSayTheyAreTheDownloadsOnlyWhileTheServerIsAway() {
-        setFavorites(CollectionState(isLoading = false))
-        assertAbsent(downloadsOnlyText)
-
+    fun favoritesLoadedWhileAwaySayTheyAreTheDownloadsOnly() {
         status = dismissible()
-        settle()
+        setFavorites(CollectionState(isLoading = false, downloadsOnly = true))
         rule.onNodeWithText(downloadsOnlyText).assertIsDisplayed()
 
         // Also with the banner put away, next to the icon that brings it back.
@@ -571,6 +578,102 @@ class ServerUnreachableTest {
         settle()
         rule.onNodeWithText(downloadsOnlyText).assertIsDisplayed()
         rule.onNodeWithContentDescription(indicatorText).assertIsDisplayed()
+    }
+
+    @Test
+    fun favoritesFromTheServerSayNothingWhileItIsAway() {
+        // Loaded while the server answered; the reload for the outage has not come back yet.
+        status = unreachable()
+        setFavorites(favorites(downloadsOnly = false))
+
+        rule.onNodeWithText(unreachableText).assertIsDisplayed()
+        assertAbsent(downloadsOnlyText)
+    }
+
+    @Test
+    fun aStaleFavoritesListWithAnErrorSaysNothing() {
+        // Nothing downloaded: the reload failed and the full list from before stays.
+        status = unreachable()
+        setFavorites(favorites(downloadsOnly = false).copy(error = ConnectException("Failed")))
+
+        rule.onNodeWithText("Favorite movie").assertIsDisplayed()
+        assertAbsent(downloadsOnlyText)
+    }
+
+    private fun favorites(downloadsOnly: Boolean) =
+        CollectionState(
+            sections =
+                listOf(
+                    CollectionSection(
+                        id = 0,
+                        name = UiText.StringResource(CoreR.string.movies_label),
+                        items = listOf(dummyMovie.copy(name = "Favorite movie")),
+                    )
+                ),
+            isLoading = false,
+            downloadsOnly = downloadsOnly,
+        )
+
+    // Media and a library: the stored libraries are the downloads, whatever the server does
+
+    private val storedLibraries =
+        listOf(
+            dummyCollections[0].copy(id = StoredLibraries.MOVIES),
+            dummyCollections[1].copy(id = StoredLibraries.SHOWS),
+        )
+
+    private fun setMedia(state: MediaState) = setContent {
+        MediaScreenLayout(
+            state = state,
+            searchState = SearchState(),
+            searchExpanded = false,
+            onSearchExpand = {},
+            onAction = {},
+            onSearchAction = {},
+        )
+    }
+
+    @Test
+    fun mediaWithTheStoredLibrariesSaysDownloadsOnly() {
+        status = unreachable()
+        setMedia(MediaState(libraries = storedLibraries))
+
+        rule.onNodeWithText(downloadsOnlyText).assertIsDisplayed()
+    }
+
+    @Test
+    fun mediaWithTheRealLibrariesSaysNothingWhileTheServerIsAway() {
+        // Loaded online; the quiet reload failed because nothing is downloaded.
+        status = unreachable()
+        setMedia(MediaState(libraries = dummyCollections))
+
+        rule.onNodeWithText(unreachableText).assertIsDisplayed()
+        assertAbsent(downloadsOnlyText)
+    }
+
+    private fun setLibrary(downloadsOnly: Boolean) = setContent {
+        LibraryScreenLayout(
+            libraryName = "Movies",
+            state = LibraryState(items = flowOf(PagingData.from(listOf<FindroidItem>(dummyMovie)))),
+            onAction = {},
+            downloadsOnly = downloadsOnly,
+        )
+    }
+
+    @Test
+    fun aRealLibrarySaysNothingWhileTheServerIsAway() {
+        // Its pages from the server stay in memory.
+        status = unreachable()
+        setLibrary(downloadsOnly = false)
+
+        assertAbsent(downloadsOnlyText)
+    }
+
+    @Test
+    fun aStoredLibrarySaysDownloadsOnlyAlsoWithTheServerBack() {
+        setLibrary(downloadsOnly = true)
+
+        rule.onNodeWithText(downloadsOnlyText).assertIsDisplayed()
     }
 
     @Test

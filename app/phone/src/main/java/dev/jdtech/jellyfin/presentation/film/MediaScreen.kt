@@ -54,9 +54,9 @@ import dev.jdtech.jellyfin.presentation.utils.Layout
 import dev.jdtech.jellyfin.presentation.utils.LocalServerStatus
 import dev.jdtech.jellyfin.presentation.utils.ReloadWhenServerAwayChanges
 import dev.jdtech.jellyfin.presentation.utils.rememberSafePadding
-import dev.jdtech.jellyfin.presentation.utils.showsDownloadsOnly
 import dev.jdtech.jellyfin.presentation.utils.showsServerIndicator
 import dev.jdtech.jellyfin.presentation.utils.useDockedSearch
+import dev.jdtech.jellyfin.repository.StoredLibraries
 
 @Composable
 fun MediaScreen(
@@ -112,7 +112,7 @@ fun MediaScreen(
 }
 
 @Composable
-private fun MediaScreenLayout(
+internal fun MediaScreenLayout(
     state: MediaState,
     searchState: SearchState,
     searchExpanded: Boolean,
@@ -143,7 +143,12 @@ private fun MediaScreenLayout(
         )
 
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
-    val downloadsOnly = showsDownloadsOnly()
+    // CE (#775): what is on screen decides, not the server's state: the real libraries can stay
+    // after the server went away (nothing downloaded), and the stored ones are downloads only.
+    val downloadsOnly =
+        remember(state.libraries) {
+            state.libraries.isNotEmpty() && state.libraries.all { StoredLibraries.isStored(it.id) }
+        }
 
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     val minColumnSize =
@@ -185,7 +190,7 @@ private fun MediaScreenLayout(
             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacings.default),
             verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacings.default),
         ) {
-            // CE (#775): with the server away the libraries are the downloads (Movies, Shows).
+            // CE (#775): the stored libraries (Movies, Shows) hold the downloads.
             if (downloadsOnly) {
                 item(key = "downloads_only", span = { GridItemSpan(maxLineSpan) }) {
                     DownloadsOnlyLine(modifier = Modifier.animateItem())

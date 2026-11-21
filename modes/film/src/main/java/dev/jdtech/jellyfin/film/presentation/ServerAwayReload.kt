@@ -15,10 +15,14 @@ class ServerAwayReload {
     private var loadedFor: Boolean? = null
     private var loaded = false
 
-    /** Marks the start of a load, with the state the screen last reported. */
-    fun begin() {
+    /**
+     * Marks the start of a load, with the state the screen last reported. Returns whether that was
+     * the server being away: a load that then succeeds holds the downloads only.
+     */
+    fun begin(): Boolean {
         loadedFor = away
         loaded = true
+        return away == true
     }
 
     /** Whether a load that is still running was started with the state of now. */

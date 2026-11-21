@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test
 class ServerAwayReloadTest {
     private val dispatcher = StandardTestDispatcher()
     private val calls = mutableListOf<String>()
+    private var fail = false
 
     @BeforeEach
     fun setUp() {
@@ -121,25 +122,72 @@ class ServerAwayReloadTest {
             assertEquals(2, calls.size)
         }
 
-    // Favorites
+    // Favorites. Their load hops to Dispatchers.Default, so the tests join the running load
+    // (loadItems hands it back) instead of only advancing the test dispatcher.
 
     @Test
     fun `favorites load again when the server goes and once for the page's own load too`() =
         runTest(dispatcher) {
             val viewModel = FavoritesViewModel(repository())
             viewModel.onServerAwayChanged(false)
-            viewModel.loadItems()
-            advanceUntilIdle()
+            viewModel.loadItems().join()
             assertEquals(1, calls.size)
 
             // Back on the tab after the server went away: the change and the screen's load.
             viewModel.onServerAwayChanged(true)
-            viewModel.loadItems()
-            advanceUntilIdle()
+            viewModel.loadItems().join()
             assertEquals(2, calls.size)
         }
 
+    @Test
+    fun `favorites are downloads only after a load while away that succeeded`() =
+        runTest(dispatcher) {
+            val viewModel = FavoritesViewModel(repository())
+            viewModel.onServerAwayChanged(false)
+            viewModel.loadItems().join()
+            assertFalse(viewModel.state.value.downloadsOnly)
+
+            viewModel.onServerAwayChanged(true)
+            viewModel.loadItems().join()
+            assertTrue(viewModel.state.value.downloadsOnly)
+
+            // Back online, the server's list again.
+            viewModel.onServerAwayChanged(false)
+            viewModel.loadItems().join()
+            assertFalse(viewModel.state.value.downloadsOnly)
+        }
+
+    @Test
+    fun `a failed reload while away keeps the list from the server for what it is`() =
+        runTest(dispatcher) {
+            val viewModel = FavoritesViewModel(repository())
+            viewModel.onServerAwayChanged(false)
+            viewModel.loadItems().join()
+
+            // Nothing downloaded: Room has nothing and the server's error comes through.
+            fail = true
+            viewModel.onServerAwayChanged(true)
+            viewModel.loadItems().join()
+
+            assertFalse(viewModel.state.value.downloadsOnly)
+            assertTrue(viewModel.state.value.error != null)
+        }
+
     // Search
+
+    @Test
+    fun `results of a search made while away are downloads only`() =
+        runTest(dispatcher) {
+            val viewModel = SearchViewModel(repository())
+            viewModel.onServerAwayChanged(false)
+            viewModel.onAction(SearchAction.Search("bluey"))
+            advanceUntilIdle()
+            assertFalse(viewModel.state.value.downloadsOnly)
+
+            viewModel.onServerAwayChanged(true)
+            advanceUntilIdle()
+            assertTrue(viewModel.state.value.downloadsOnly)
+        }
 
     @Test
     fun `an open search asks again when the server goes and comes back`() =
@@ -182,6 +230,7 @@ class ServerAwayReloadTest {
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
+            if (fail) throw java.net.ConnectException("Failed to connect")
             when (method.name) {
                 "getLibraries" -> {
                     calls += "libraries"
