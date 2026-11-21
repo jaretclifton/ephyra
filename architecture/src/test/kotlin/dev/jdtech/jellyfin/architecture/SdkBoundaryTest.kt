@@ -6,10 +6,10 @@ import kotlin.test.assertTrue
 
 /**
  * Only the Jellyfin adapter may see the Jellyfin SDK
- * (docs/architecture/2-enforcement-and-tests.md, #733). For R1 and R2 the adapter is the packages
+ * (docs/architecture/2-enforcement-and-tests.md, #733). The adapter is the packages
  * `dev.jdtech.jellyfin.server.jellyfin` and `dev.jdtech.jellyfin.api` of the `data` module (#753);
- * the Java check and R4 still allow the whole module. Each rule has a baseline of today's
- * violations that may only shrink.
+ * R4, about Room rather than the SDK, still allows the whole module. Each rule has a baseline of
+ * today's violations that may only shrink.
  *
  * Test sources of every module are out of scope.
  */
@@ -35,7 +35,7 @@ class SdkBoundaryTest {
      */
     @Test
     fun `no production Java file outside the adapter`() {
-        val java = ProjectTree.productionJavaFiles.keys.filterNot(ProjectTree::inDataModule)
+        val java = ProjectTree.productionJavaFiles.keys.filterNot(ProjectTree::inJellyfinAdapter)
         assertTrue(
             java.isEmpty(),
             java.joinToString("\n") {
