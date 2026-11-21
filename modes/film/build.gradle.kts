@@ -35,7 +35,6 @@ dependencies {
     implementation(libs.androidx.paging)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-    implementation(libs.jellyfin.core)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
