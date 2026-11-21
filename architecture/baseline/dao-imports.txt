@@ -18,4 +18,3 @@ modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/home/HomeViewMode
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/show/ShowViewModel.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/data/SetupRepositoryImpl.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/data/di/SetupDataModule.kt
-setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/addresses/ServerAddressesViewModel.kt
