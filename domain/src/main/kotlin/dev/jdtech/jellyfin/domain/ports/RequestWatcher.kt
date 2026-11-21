@@ -1,4 +1,4 @@
-package dev.jdtech.jellyfin.api
+package dev.jdtech.jellyfin.domain.ports
 
 /**
  * CE (#281): how the app's requests to the server go, for whoever keeps track of whether the server

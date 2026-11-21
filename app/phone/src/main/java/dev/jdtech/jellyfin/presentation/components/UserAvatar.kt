@@ -12,12 +12,12 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyUser
 import dev.jdtech.jellyfin.core.presentation.ephyra.AvatarColors
 import dev.jdtech.jellyfin.core.presentation.ephyra.EphyraAvatar
 import dev.jdtech.jellyfin.core.presentation.session.LocalServerSession
+import dev.jdtech.jellyfin.core.presentation.session.NoServerSession
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.hasPin
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
-import kotlinx.coroutines.flow.emptyFlow
 
 /**
  * A user's avatar in the phone theme. The picture comes from the server of [LocalServerSession],
@@ -79,10 +79,8 @@ private fun UserAvatarCurrentPreview() {
 @Composable
 private fun UserAvatarPicturePreview() {
     val session =
-        object : ServerSession {
+        object : ServerSession by NoServerSession {
             override val baseUrl = "https://demo.example"
-            override val userId: UserId? = null
-            override val serverReturned = emptyFlow<Unit>()
 
             override fun userImageUrl(userId: UserId, tag: String) =
                 "$baseUrl/Users/$userId/Images/Primary?tag=$tag"

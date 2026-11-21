@@ -118,7 +118,7 @@ internal class JellyfinUserDataSync(
  * [ServerException.HttpStatus], anything else that is not one already as
  * [ServerException.Unreachable].
  */
-private inline fun <T> serverCall(block: () -> T): T =
+internal inline fun <T> serverCall(block: () -> T): T =
     try {
         block()
     } catch (e: CancellationException) {

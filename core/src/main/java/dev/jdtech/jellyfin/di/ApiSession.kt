@@ -1,7 +1,8 @@
 package dev.jdtech.jellyfin.di
 
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.domain.ports.ServerSession
+import dev.jdtech.jellyfin.domain.ports.SessionRestorer
 import dev.jdtech.jellyfin.models.ServerWithAddressAndUser
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.util.UUID
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
 /**
@@ -34,15 +36,43 @@ internal fun ServerWithAddressAndUser?.toApiSession(serverId: String): ApiSessio
     return ApiSession(serverId, address.address, user?.accessToken, user?.id)
 }
 
-internal fun JellyfinApi.applySession(session: ApiSession) {
-    api.update(baseUrl = session.baseUrl, accessToken = session.accessToken)
-    userId = session.userId
+internal fun ServerSession.applySession(session: ApiSession) {
+    use(baseUrl = session.baseUrl, accessToken = session.accessToken, userId = session.userId)
 }
 
-internal fun JellyfinApi.holds(session: ApiSession): Boolean =
-    api.baseUrl == session.baseUrl &&
-        api.accessToken == session.accessToken &&
-        userId == session.userId
+internal fun ServerSession.holds(session: ApiSession): Boolean =
+    baseUrl == session.baseUrl && accessToken == session.accessToken && userId == session.userId
+
+/**
+ * #763: what the Hilt provider of the client did itself before. CE (#250): the session comes from
+ * the copy in preferences, which are already in memory, so whichever thread first asks for the
+ * client (often Main, through HomeViewModel) does not wait for Room to open. Then
+ * [mirrorApiSession] keeps that copy up to date.
+ */
+internal class SavedSessionRestorer(
+    private val appPreferences: AppPreferences,
+    private val database: ServerDatabaseDao,
+) : SessionRestorer {
+    override fun restore(session: ServerSession) {
+        val serverId = appPreferences.getValue(appPreferences.currentServer)
+        val saved = appPreferences.savedApiSession()
+        val initial =
+            when {
+                serverId == null -> null
+                saved?.serverId == serverId -> saved
+                // No copy for this server yet: the first start after updating to a version that
+                // keeps one, or the app was stopped between a server switch and the copy. Read Room
+                // once, as every start used to.
+                else ->
+                    runBlocking {
+                        database.getServerWithAddressAndUser(serverId).toApiSession(serverId)
+                    }
+            }
+        initial?.let { session.applySession(it) }
+
+        mirrorApiSession(session, appPreferences, database, initial)
+    }
+}
 
 /** The copy of the session kept in preferences, read without touching Room. */
 internal fun AppPreferences.savedApiSession(): ApiSession? {
@@ -75,7 +105,7 @@ internal fun AppPreferences.saveApiSession(session: ApiSession?) {
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun mirrorApiSession(
-    jellyfinApi: JellyfinApi,
+    serverSession: ServerSession,
     appPreferences: AppPreferences,
     database: ServerDatabaseDao,
     initial: ApiSession?,
@@ -102,9 +132,9 @@ internal fun mirrorApiSession(
                         initial != null &&
                             session != null &&
                             session != initial &&
-                            jellyfinApi.holds(initial)
+                            serverSession.holds(initial)
                     ) {
-                        jellyfinApi.applySession(session)
+                        serverSession.applySession(session)
                     }
                 }
                 appPreferences.saveApiSession(session)

@@ -26,6 +26,13 @@ class SdkErrorsTest {
     }
 
     @Test
+    fun `a 401, also wrapped, becomes HttpStatus 401`() {
+        // #763: moved from core's SyncWorkerDecisionsTest, which no longer sees the SDK.
+        val wrapped = RuntimeException("wrap", InvalidStatusException(401, null))
+        assertEquals(401, assertIs<ServerException.HttpStatus>(wrapped.asServerException()).status)
+    }
+
+    @Test
     fun `a timeout becomes Timeout`() {
         val sdk = TimeoutException("Connection failed", ConnectException("Failed to connect"))
         assertSame(sdk, assertIs<ServerException.Timeout>(sdk.asServerException()).cause)

@@ -8,7 +8,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dev.jdtech.jellyfin.api.JellyfinApi
+import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.repository.KnownServerState
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
@@ -30,16 +30,16 @@ import timber.log.Timber
  * is off or being away from home all leave the internet up. The screens show a banner with a way to
  * Downloads while [state] is unreachable; nothing is blocked and no screen waits for it.
  *
- * [start] hooks up the signs: the app's own requests ([JellyfinApi.requestWatcher]), the app coming
- * to the foreground, and the default network changing. Without [start] (Android TV, which has no
- * downloads to point at) the state stays unknown and nothing is probed.
+ * [start] hooks up the signs: the app's own requests ([ServerSession.requestWatcher]), the app
+ * coming to the foreground, and the default network changing. Without [start] (Android TV, which
+ * has no downloads to point at) the state stays unknown and nothing is probed.
  */
 @Singleton
 class ServerReachability
 @Inject
 constructor(
     @ApplicationContext private val context: Context,
-    private val jellyfinApi: JellyfinApi,
+    private val serverSession: ServerSession,
     private val appPreferences: AppPreferences,
 ) : KnownServerState {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -48,10 +48,10 @@ constructor(
     private val monitor =
         ServerReachabilityMonitor(
             scope = scope,
-            probe = { jellyfinApi.probeServer() },
+            probe = { serverSession.probe() },
             hasNetwork = ::hasNetwork,
             now = SystemClock::elapsedRealtime,
-            probeTimeoutMs = JellyfinApi.PROBE_TIMEOUT_MS,
+            probeTimeoutMs = serverSession.probeTimeoutMs,
         )
 
     val state: StateFlow<ServerReachabilityState> = monitor.state
@@ -77,7 +77,7 @@ constructor(
         if (started) return
         started = true
 
-        jellyfinApi.requestWatcher = monitor
+        serverSession.requestWatcher = monitor
 
         scope.launch { state.collect { Timber.d("Server reachability: %s", it) } }
 
