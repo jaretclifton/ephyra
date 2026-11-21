@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.setup.presentation
 
 import dev.jdtech.jellyfin.core.R as CoreR
+import dev.jdtech.jellyfin.models.QuickConnectState
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.setup.R as SetupR
@@ -19,7 +20,6 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import org.jellyfin.sdk.model.api.QuickConnectResult
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -45,7 +45,7 @@ class LoginConnectionErrorTest {
         object : SetupRepository by unused {
             override suspend fun login(username: String, password: String) = throw failure
 
-            override suspend fun initiateQuickConnect(): QuickConnectResult = throw failure
+            override suspend fun initiateQuickConnect(): QuickConnectState = throw failure
         }
 
     /** A connection that timed out. */

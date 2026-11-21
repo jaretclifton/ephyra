@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.setup.presentation
 
 import dev.jdtech.jellyfin.core.R as CoreR
+import dev.jdtech.jellyfin.models.QuickConnectState
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.setup.R as SetupR
@@ -10,7 +11,6 @@ import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.presentation.login.LoginAction
 import dev.jdtech.jellyfin.setup.presentation.login.LoginViewModel
 import java.lang.reflect.Proxy
-import java.time.LocalDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -24,7 +24,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import org.jellyfin.sdk.model.api.QuickConnectResult
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -53,16 +52,7 @@ class LoginQuickConnectErrorTest {
     }
 
     private fun result() =
-        QuickConnectResult(
-            authenticated = approved,
-            secret = "secret",
-            code = "123456",
-            deviceId = "device",
-            deviceName = "device",
-            appName = "Ephyra",
-            appVersion = "test",
-            dateAdded = LocalDateTime.now(),
-        )
+        QuickConnectState(code = "123456", secret = "secret", authenticated = approved)
 
     private val repository =
         Proxy.newProxyInstance(
