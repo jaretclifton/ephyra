@@ -18,4 +18,7 @@ android {
     }
 }
 
-dependencies { implementation(libs.timber) }
+dependencies {
+    implementation(projects.domain)
+    implementation(libs.timber)
+}

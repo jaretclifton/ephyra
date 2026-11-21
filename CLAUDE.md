@@ -47,6 +47,7 @@ CI on a pull request runs `ktfmtCheck` (when Kotlin files or `gradle/libs.versio
 app/phone        — Phone UI: screens, navigation, Compose layouts
 app/tv           — TV UI: separate screen implementations for Android TV
 core             — Shared DI modules, DownloaderViewModel, MainViewModel, common Composables
+domain           — pure Kotlin: the app's own models and the ports. No Android, no SDK
 data             — JellyfinRepository interface + Room database + online/offline implementations
 modes/film       — Feature ViewModels and State/Action classes for home, library, search, episode, movie, show, season
 player/core      — Player models shared by the player and its callers (PlayerItem, Track, Trickplay)

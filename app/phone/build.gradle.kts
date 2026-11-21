@@ -177,6 +177,7 @@ dependencies {
     implementation(libs.androidx.profileinstaller)
     implementation(projects.core)
     implementation(projects.data)
+    implementation(projects.domain)
     implementation(projects.player.core)
     implementation(projects.player.cast)
     implementation(projects.player.local)
