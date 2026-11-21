@@ -52,6 +52,24 @@ private const val SOURCE_OF_SERVER =
     "(sources.itemId IN (SELECT id FROM movies WHERE serverId = :serverId) " +
         "OR sources.itemId IN (SELECT id FROM episodes WHERE serverId = :serverId))"
 
+/*
+ * CE (#775): rows with a finished download, what FindroidItem.isDownloaded() means: a LOCAL source
+ * whose file is complete (a `.download` file is still being written, #454). The downloader stores
+ * the rows before the file, so an unfinished or abandoned download has rows too. A show counts with
+ * an episode of :serverId that is downloaded.
+ */
+private const val MOVIE_DOWNLOADED =
+    "EXISTS (SELECT 1 FROM sources WHERE sources.itemId = movies.id " +
+        "AND sources.type = 'LOCAL' AND sources.path NOT LIKE '%.download')"
+
+private const val EPISODE_DOWNLOADED =
+    "EXISTS (SELECT 1 FROM sources WHERE sources.itemId = episodes.id " +
+        "AND sources.type = 'LOCAL' AND sources.path NOT LIKE '%.download')"
+
+private const val SHOW_DOWNLOADED =
+    "EXISTS (SELECT 1 FROM episodes WHERE episodes.seriesId = shows.id " +
+        "AND episodes.serverId = :serverId AND $EPISODE_DOWNLOADED)"
+
 @Dao
 interface ServerDatabaseDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertServer(server: Server)
@@ -620,22 +638,36 @@ interface ServerDatabaseDao {
     )
 
     // CE (#775): the lists Room answers while the server is away, see StoredLists. Only the rows of
-    // :serverId (#718) and the user data of :userId.
+    // :serverId (#718) and the user data of :userId, and only what has a finished download.
 
     @Query(
-        "SELECT * FROM movies WHERE serverId = :serverId AND id IN " +
+        "SELECT * FROM movies WHERE serverId = :serverId AND $MOVIE_DOWNLOADED ORDER BY name ASC"
+    )
+    suspend fun getDownloadedMoviesOfServer(serverId: String): List<FindroidMovieDto>
+
+    @Query("SELECT * FROM shows WHERE $SHOW_DOWNLOADED ORDER BY name ASC")
+    suspend fun getDownloadedShowsOfServer(serverId: String): List<FindroidShowDto>
+
+    @Query("SELECT COUNT(*) FROM movies WHERE serverId = :serverId AND $MOVIE_DOWNLOADED")
+    suspend fun countDownloadedMoviesOfServer(serverId: String): Int
+
+    @Query("SELECT COUNT(*) FROM shows WHERE $SHOW_DOWNLOADED")
+    suspend fun countDownloadedShowsOfServer(serverId: String): Int
+
+    @Query(
+        "SELECT * FROM movies WHERE serverId = :serverId AND $MOVIE_DOWNLOADED AND id IN " +
             "(SELECT itemId FROM userdata WHERE userId = :userId AND favorite = 1) ORDER BY name ASC"
     )
     suspend fun getFavoriteMoviesOfServer(serverId: String, userId: UUID): List<FindroidMovieDto>
 
     @Query(
-        "SELECT * FROM shows WHERE $SHOW_OF_SERVER AND id IN " +
+        "SELECT * FROM shows WHERE $SHOW_DOWNLOADED AND id IN " +
             "(SELECT itemId FROM userdata WHERE userId = :userId AND favorite = 1) ORDER BY name ASC"
     )
     suspend fun getFavoriteShowsOfServer(serverId: String, userId: UUID): List<FindroidShowDto>
 
     @Query(
-        "SELECT * FROM episodes WHERE serverId = :serverId AND id IN " +
+        "SELECT * FROM episodes WHERE serverId = :serverId AND $EPISODE_DOWNLOADED AND id IN " +
             "(SELECT itemId FROM userdata WHERE userId = :userId AND favorite = 1) " +
             "ORDER BY seriesName ASC, parentIndexNumber ASC, indexNumber ASC"
     )
@@ -646,19 +678,20 @@ interface ServerDatabaseDao {
 
     /** [pattern] is a LIKE pattern with `\` as its escape character. */
     @Query(
-        "SELECT * FROM movies WHERE serverId = :serverId AND name LIKE :pattern ESCAPE '\\' " +
-            "ORDER BY name ASC"
+        "SELECT * FROM movies WHERE serverId = :serverId AND $MOVIE_DOWNLOADED " +
+            "AND name LIKE :pattern ESCAPE '\\' ORDER BY name ASC"
     )
     suspend fun searchMoviesOfServer(serverId: String, pattern: String): List<FindroidMovieDto>
 
     @Query(
-        "SELECT * FROM shows WHERE $SHOW_OF_SERVER AND name LIKE :pattern ESCAPE '\\' " +
+        "SELECT * FROM shows WHERE $SHOW_DOWNLOADED AND name LIKE :pattern ESCAPE '\\' " +
             "ORDER BY name ASC"
     )
     suspend fun searchShowsOfServer(serverId: String, pattern: String): List<FindroidShowDto>
 
     @Query(
-        "SELECT * FROM episodes WHERE serverId = :serverId AND name LIKE :pattern ESCAPE '\\' " +
+        "SELECT * FROM episodes WHERE serverId = :serverId AND $EPISODE_DOWNLOADED " +
+            "AND name LIKE :pattern ESCAPE '\\' " +
             "ORDER BY seriesName ASC, parentIndexNumber ASC, indexNumber ASC"
     )
     suspend fun searchEpisodesOfServer(serverId: String, pattern: String): List<FindroidEpisodeDto>

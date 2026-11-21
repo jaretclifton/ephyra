@@ -47,8 +47,8 @@ fun interface StoredLibraryNames {
 /**
  * CE (#775): the lists Room answers while the server is away: downloaded favourites, search results
  * and [StoredLibraries]. Only the rows of the given server and the user data of the given user
- * (#718). The lists are what is downloaded, so they are sorted and filtered in memory, on the rows
- * before they are mapped.
+ * (#718), and only what has a finished download: something that can play. The lists are what is
+ * downloaded, so they are sorted and filtered in memory, on the rows before they are mapped.
  */
 internal class StoredLists(private val database: ServerDatabaseDao) {
     suspend fun favorites(serverId: String, userId: UUID): List<Any> =
@@ -81,10 +81,10 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
     /** Each of [StoredLibraries] that holds something. */
     suspend fun libraries(serverId: String, names: StoredLibraryNames): List<FindroidCollection> =
         buildList {
-            if (database.countMoviesByServerId(serverId) > 0) {
+            if (database.countDownloadedMoviesOfServer(serverId) > 0) {
                 add(library(StoredLibraries.MOVIES, CollectionType.Movies, names))
             }
-            if (database.countShowsByServerId(serverId) > 0) {
+            if (database.countDownloadedShowsOfServer(serverId) > 0) {
                 add(library(StoredLibraries.SHOWS, CollectionType.TvShows, names))
             }
         }
@@ -171,11 +171,11 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
         val userData = database.getUserDataOfUser(userId).associateBy { it.itemId }
         val entries =
             if (libraryId == StoredLibraries.MOVIES) {
-                database.getMoviesByServerId(serverId).map {
+                database.getDownloadedMoviesOfServer(serverId).map {
                     Entry(it, it.id, it.name, it.communityRating, it.premiereDate, userData[it.id])
                 }
             } else {
-                database.getShowsByServerId(serverId).map {
+                database.getDownloadedShowsOfServer(serverId).map {
                     Entry(
                         it,
                         it.id,

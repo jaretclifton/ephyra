@@ -99,6 +99,7 @@ class StoredListsFallbackTest {
         rating: Float? = null,
         premiere: LocalDateTime? = null,
         downloadedAt: Long? = null,
+        download: Download = Download.FINISHED,
     ) {
         database.insertMovie(
             FindroidMovieDto(
@@ -117,12 +118,31 @@ class StoredListsFallbackTest {
                 chapters = null,
             )
         )
-        database.insertSource(source(id, downloadedAt))
+        storeSource(id, downloadedAt, download)
+    }
+
+    /** What the downloader leaves behind: rows first, then the source, then the finished file. */
+    enum class Download {
+        FINISHED,
+        WRITING,
+        NO_SOURCE,
+    }
+
+    private suspend fun storeSource(itemId: UUID, downloadedAt: Long?, download: Download) {
+        when (download) {
+            Download.FINISHED -> database.insertSource(source(itemId, downloadedAt))
+            Download.WRITING ->
+                database.insertSource(
+                    source(itemId, null).copy(path = "/storage/downloads/$itemId.mkv.download")
+                )
+            Download.NO_SOURCE -> Unit
+        }
     }
 
     private suspend fun storeEpisode(
         serverId: String = SERVER_A,
         name: String = "Obstacle Course",
+        download: Download = Download.FINISHED,
     ) {
         database.insertShow(
             FindroidShowDto(
@@ -167,7 +187,7 @@ class StoredListsFallbackTest {
                 chapters = null,
             )
         )
-        database.insertSource(source(episodeId, null))
+        storeSource(episodeId, null, download)
     }
 
     private suspend fun userData(
@@ -406,6 +426,48 @@ class StoredListsFallbackTest {
                 .load(refresh)
         assertTrue(plain is PagingSource.LoadResult.Page, "$plain")
         assertEquals(listOf("Bingo", "Bandit"), plain.data.map { it.name })
+    }
+
+    @Test
+    fun `an unfinished movie is left out of every stored list`() = runBlocking {
+        storeMovie(id(1), "Bluey Done")
+        storeMovie(id(2), "Bluey Writing", download = Download.WRITING)
+        storeMovie(id(3), "Bluey Abandoned", download = Download.NO_SOURCE)
+        for (movie in listOf(id(1), id(2), id(3))) userData(movie, favorite = true)
+
+        assertEquals(listOf(id(1)), repository.getFavoriteItems().map { it.id })
+        assertEquals(listOf(id(1)), repository.getSearchItems("bluey", null).map { it.id })
+        assertEquals(listOf(id(1)), page(StoredLibraries.MOVIES).items.map { it.id })
+        assertEquals(1, repository.getItemCount(parentId = StoredLibraries.MOVIES))
+    }
+
+    @Test
+    fun `a show whose only episode is unfinished is left out, and so is its library`() =
+        runBlocking {
+            storeMovie(id(1), "Movie")
+            storeEpisode(name = "Bluey's Birthday", download = Download.WRITING)
+            userData(showId, favorite = true)
+            userData(episodeId, favorite = true)
+
+            assertEquals(listOf(StoredLibraries.MOVIES), repository.getLibraries().map { it.id })
+            assertEquals(emptyList(), page(StoredLibraries.SHOWS).items.map { it.id })
+            assertEquals(0, repository.getItemCount(parentId = StoredLibraries.SHOWS))
+            assertTrue(fails { repository.getFavoriteItems() }, "no finished favourite")
+            assertTrue(
+                fails { repository.getSearchItems("bluey", listOf(BaseItemKind.SERIES)) },
+                "no finished show",
+            )
+            assertTrue(
+                fails { repository.getSearchItems("bluey", listOf(BaseItemKind.EPISODE)) },
+                "no finished episode",
+            )
+        }
+
+    @Test
+    fun `a library with only unfinished downloads does not appear`() = runBlocking {
+        storeMovie(id(1), "Writing", download = Download.WRITING)
+        storeMovie(id(2), "Abandoned", download = Download.NO_SOURCE)
+        assertTrue(fails { repository.getLibraries() })
     }
 
     @Test
