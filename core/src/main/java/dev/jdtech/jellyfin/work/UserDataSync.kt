@@ -7,9 +7,9 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.core.reachability.ServerReachability
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.repository.UserDataSyncRequester
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -47,7 +47,7 @@ class UserDataSync
 constructor(
     private val workManager: Provider<WorkManager>,
     private val database: ServerDatabaseDao,
-    private val jellyfinApi: JellyfinApi,
+    private val serverSession: ServerSession,
     private val serverReachability: ServerReachability,
 ) : UserDataSyncRequester {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -63,7 +63,9 @@ constructor(
         if (started) return
         started = true
 
-        scope.launch { jellyfinApi.serverReturned.collect { restartIfWaiting("server answered") } }
+        scope.launch {
+            serverSession.serverReturned.collect { restartIfWaiting("server answered") }
+        }
 
         // CE (#281): the foreground and the network are watched in one place. It probes the server
         // on those signs, so the sync starts over when the server is there, not on the sign alone.

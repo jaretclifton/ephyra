@@ -3,8 +3,6 @@ core/src/main/java/dev/jdtech/jellyfin/core/session/ServerSessionKeeper.kt
 core/src/main/java/dev/jdtech/jellyfin/di/ApiModule.kt
 core/src/main/java/dev/jdtech/jellyfin/di/ApiSession.kt
 core/src/main/java/dev/jdtech/jellyfin/di/RepositoryModule.kt
-core/src/main/java/dev/jdtech/jellyfin/work/SyncWorker.kt
-core/src/main/java/dev/jdtech/jellyfin/work/UserDataSync.kt
 data/src/main/java/dev/jdtech/jellyfin/repository/JellyfinRepositoryImpl.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/ServerAwayReload.kt
 player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/CastPlayerControllerImpl.kt

@@ -1,5 +1,7 @@
 package dev.jdtech.jellyfin.work
 
+import dev.jdtech.jellyfin.domain.ports.ServerUserData
+import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -15,7 +17,11 @@ class UserDataRefreshTest {
     @Test
     fun `the server's values are stored, with its last played date`() {
         val item =
-            serverUserData(positionTicks = 1_270_000_000L, favorite = true, lastPlayed = 5_000L)
+            serverUserData(
+                positionTicks = 1_270_000_000L,
+                favorite = true,
+                lastPlayed = LocalDateTime.of(2026, 11, 12, 19, 2, 51),
+            )
 
         assertEquals(
             listOf(item),
@@ -60,7 +66,7 @@ class UserDataRefreshTest {
     private fun serverUserData(
         positionTicks: Long,
         favorite: Boolean = false,
-        lastPlayed: Long? = null,
+        lastPlayed: LocalDateTime? = null,
     ) =
         ServerUserData(
             itemId = UUID.randomUUID(),

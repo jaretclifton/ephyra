@@ -1,5 +1,6 @@
 package dev.jdtech.jellyfin.work
 
+import dev.jdtech.jellyfin.domain.ports.ServerUserData
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -8,14 +9,14 @@ import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import org.jellyfin.sdk.model.api.BaseItemDto
-import org.jellyfin.sdk.model.api.BaseItemKind
-import org.jellyfin.sdk.model.api.UserItemDataDto
 import org.junit.jupiter.api.Test
 
 /**
  * CE (#633): the sync sends a row's LastPlayedDate only when it is newer than the server's, so a
  * device that watched the item later keeps it at the top of Continue Watching.
+ *
+ * #762: how the server's items become [ServerUserData] is tested with the adapter, in
+ * `JellyfinUserDataSyncMappingTest` of `data`.
  */
 class LastPlayedDateSyncTest {
 
@@ -67,39 +68,27 @@ class LastPlayedDateSyncTest {
     }
 
     @Test
-    fun `the server's user data is read by item, with its last played date`() {
+    fun `the server's last played date is read in the device's zone`() {
         // The SDK hands dates over in the device's zone; in a zone that is not UTC, a conversion
         // that ignored it would be hours off.
         val default = TimeZone.getDefault()
         TimeZone.setDefault(TimeZone.getTimeZone("America/Los_Angeles"))
         try {
-            readsServerUserData()
+            readsServerDate()
         } finally {
             TimeZone.setDefault(default)
         }
     }
 
-    private fun readsServerUserData() {
+    private fun readsServerDate() {
         // 2026-11-13 03:02:51 UTC, as the SDK hands it over in Los Angeles.
         val played = LocalDateTime.of(2026, 11, 12, 19, 2, 51)
-        val withDate = item(lastPlayed = played, positionTicks = 1_270_000_000L, favorite = true)
-        val withoutDate = item(lastPlayed = null)
-        val withoutUserData = BaseItemDto(id = UUID.randomUUID(), type = BaseItemKind.EPISODE)
 
-        val read = serverUserDataOf(listOf(withDate, withoutDate, withoutUserData))
-
-        assertEquals(setOf(withDate.id, withoutDate.id), read.keys)
         assertEquals(
-            ServerUserData(
-                itemId = withDate.id,
-                played = false,
-                favorite = true,
-                playbackPositionTicks = 1_270_000_000L,
-                lastPlayedDate = Instant.parse("2026-11-13T03:02:51Z").toEpochMilli(),
-            ),
-            read[withDate.id],
+            Instant.parse("2026-11-13T03:02:51Z").toEpochMilli(),
+            serverUserData(lastPlayed = played).lastPlayedMillis(),
         )
-        assertEquals(null, read[withoutDate.id]!!.lastPlayedDate)
+        assertEquals(null, serverUserData(lastPlayed = null).lastPlayedMillis())
     }
 
     @Test
@@ -114,25 +103,12 @@ class LastPlayedDateSyncTest {
         assertEquals(local, localDateTimeOf(millis, zone))
     }
 
-    private fun item(
-        lastPlayed: LocalDateTime?,
-        positionTicks: Long = 0L,
-        favorite: Boolean = false,
-    ): BaseItemDto {
-        val id = UUID.randomUUID()
-        return BaseItemDto(
-            id = id,
-            type = BaseItemKind.EPISODE,
-            userData =
-                UserItemDataDto(
-                    playbackPositionTicks = positionTicks,
-                    playCount = 0,
-                    isFavorite = favorite,
-                    played = false,
-                    key = "",
-                    itemId = id,
-                    lastPlayedDate = lastPlayed,
-                ),
+    private fun serverUserData(lastPlayed: LocalDateTime?) =
+        ServerUserData(
+            itemId = UUID.randomUUID(),
+            played = false,
+            favorite = true,
+            playbackPositionTicks = 1_270_000_000L,
+            lastPlayedDate = lastPlayed,
         )
-    }
 }

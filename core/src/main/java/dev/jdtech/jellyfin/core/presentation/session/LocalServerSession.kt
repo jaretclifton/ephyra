@@ -3,6 +3,8 @@ package dev.jdtech.jellyfin.core.presentation.session
 import androidx.compose.runtime.staticCompositionLocalOf
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.models.UserId
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 /**
  * #748: the server session for composables, provided once in each `MainActivity`. Read its values
@@ -17,6 +19,7 @@ val LocalServerSession = staticCompositionLocalOf<ServerSession> { NoServerSessi
 object NoServerSession : ServerSession {
     override val baseUrl: String? = null
     override val userId: UserId? = null
+    override val serverReturned: Flow<Unit> = emptyFlow()
 
     override fun userImageUrl(userId: UserId, tag: String): String? = null
 }
