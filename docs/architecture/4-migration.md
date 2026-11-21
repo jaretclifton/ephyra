@@ -136,12 +136,13 @@ Goal: adding Emby is adding a module.
 ```
 Phase 0 ─► Phase 1 ─► Phase 2 ─┬─► Phase 3 (#752 to #757) ─┬─► Phase 6 ─┬─► #758 ─► Phase 7
                                ├─► Phase 4 ────────────────┼────────────┘
-                               └─► Phase 5 (#766 after #757)
+                               └─► Phase 5 (#764, then #765, then #766 after #757)
 ```
 
 - Phase 5 is not on the path to #758 or to phase 7. It can run at any time after phase 2 and is
   the one phase that needs a device.
-- #769 and #771 of phase 7 only need the ports (#757, #761) and can start before #758.
+- #769 of phase 7 only needs the ports (#757, #761) and can start before #758; #771 follows it,
+  #770 follows it and #758.
 
 Inside a phase most tasks can run in parallel; each issue says which.
 

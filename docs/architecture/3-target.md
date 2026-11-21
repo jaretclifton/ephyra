@@ -82,10 +82,10 @@ enum class ItemKind(val serialName: String) {
 // Constant names match the SDK's: Room stores this one by name in mediastreams.type.
 enum class MediaStreamType { AUDIO, VIDEO, SUBTITLE, EMBEDDED_IMAGE, DATA, LYRIC }
 enum class SubtitleDeliveryMethod { ENCODE, EMBED, EXTERNAL, HLS, DROP }
-enum class VideoRangeType { UNKNOWN, SDR, HDR10, HLG, DOVI, DOVI_WITH_HDR10, DOVI_WITH_HLG,
-    DOVI_WITH_SDR, DOVI_WITH_EL, DOVI_WITH_HDR10_PLUS, DOVI_WITH_ELHDR10_PLUS, DOVI_INVALID,
-    HDR10_PLUS }
-enum class PersonKind { ACTOR, DIRECTOR, WRITER, PRODUCER, GUEST_STAR, COMPOSER, OTHER }
+// serialName is what the SDK matches on; fromNameOrNull keeps doing that (see #776 for what that means for downloads).
+enum class VideoRangeType(val serialName: String) { UNKNOWN("Unknown"), SDR("SDR"), HDR10("HDR10"), /* … all 13 … */ HDR10_PLUS("HDR10Plus") }
+// All 26 constants of the SDK, by name: people are grouped by id and kind, so kinds must not collapse.
+enum class PersonKind { UNKNOWN, ACTOR, DIRECTOR, COMPOSER, WRITER, GUEST_STAR, PRODUCER, /* … */ NARRATOR }
 enum class ItemFilter { IS_UNPLAYED }
 enum class EpisodeField { OVERVIEW, CAN_DOWNLOAD, CHAPTERS, TRICKPLAY }
 
@@ -161,18 +161,19 @@ interface CatalogPort {
     suspend fun itemCount(query: ItemQuery, nameLessThan: String? = null): Int
     suspend fun randomItemsWithBackdrop(kinds: List<ItemKind>, limit: Int): List<FindroidItem>
     suspend fun person(id: ItemId): FindroidPerson
-    suspend fun personItems(personIds: List<ItemId>, kinds: List<ItemKind>?, limit: Int?): List<FindroidItem>
+    suspend fun personItems(personIds: List<ItemId>, kinds: List<ItemKind>?, recursive: Boolean, limit: Int?): List<FindroidItem>
     suspend fun favorites(): List<FindroidItem>
     suspend fun search(query: String, kinds: List<ItemKind>? = null): List<FindroidItem>
     suspend fun suggestions(): List<FindroidItem>
     suspend fun resumeItems(): List<FindroidItem>
     suspend fun latest(parentId: ItemId, kinds: List<ItemKind>?): List<FindroidItem>
     suspend fun seasons(seriesId: ItemId): List<FindroidSeason>
-    suspend fun nextUp(seriesId: ItemId? = null): List<FindroidEpisode>
+    /** [dateCutoff] comes from a preference; the repository computes it. */
+    suspend fun nextUp(seriesId: ItemId?, dateCutoff: java.time.LocalDateTime?): List<FindroidEpisode>
     suspend fun episodes(
         seriesId: ItemId,
         seasonId: ItemId?,
-        include: Set<EpisodeField> = emptySet(),
+        fields: Set<EpisodeField>?,
         startItemId: ItemId? = null,
         limit: Int? = null,
     ): List<FindroidEpisode>
@@ -272,6 +273,8 @@ interface ServerSession {
     suspend fun updateDeviceName(name: String)
     /** The tag of the current user's profile picture as the server has it now, or null when they have none. */
     suspend fun currentUserImageTag(): String?
+    /** The URL of a profile picture of a user, or null when no server is set. */
+    fun userImageUrl(userId: UserId, tag: String): String?
     /** Keeps the server's session socket open while collected. Completes at once when unsupported. */
     fun keepAlive(): kotlinx.coroutines.flow.Flow<Nothing>
 }
@@ -282,7 +285,10 @@ The connector is separate because it works before there is a session:
 ```kotlin
 data class DiscoveredServer(val id: String, val name: String, val address: String)
 
-enum class ServerIssue { OUTDATED_VERSION, UNSUPPORTED_VERSION, NOT_THIS_SERVER_TYPE, SLOW_RESPONSE }
+/** [detail] is what the message shows: a version, a product name, a response time. */
+data class ServerIssue(val kind: Kind, val detail: String? = null) {
+    enum class Kind { OUTDATED_VERSION, UNSUPPORTED_VERSION, NOT_THIS_SERVER_TYPE, SLOW_RESPONSE, NO_ID, UNKNOWN }
+}
 
 /** No usable server at the address. [issues] is empty when nothing answered. */
 class ServerConnectException(val issues: List<ServerIssue>) : Exception()
@@ -315,16 +321,27 @@ With more than one server type installed, each adapter contributes its `MediaSer
 the server in use, and `ServerConnectors.resolve(address)` tries each connector until one
 recognizes the server.
 
-Three more interfaces are in `domain` so that the adapter, which may not depend on `data` or `core`,
+More interfaces are in `domain` so that the adapter, which may not depend on `data` or `core`,
 can implement them. `MediaHttpClient` is the one place where `domain` names a type of a library
-(OkHttp, plain JVM); `RequestWatcher` moves there from `data/api` unchanged:
+(OkHttp, plain JVM). `RequestWatcher` moves there from `data/api`, into `domain.ports`:
 
 ```kotlin
 /** The OkHttp client that media is streamed through, so the player shares the API's connections. */
 fun interface MediaHttpClient { fun client(): okhttp3.OkHttpClient }
 
 /** The device report the About screen copies: what the adapter would tell the server about this device. */
-fun interface DeviceReportSource { fun buildJson(directPlayDolbyVision: Boolean): String }
+fun interface DeviceReportSource {
+    suspend fun buildJson(appVersion: String, buildType: String, transcodeDolbyVision: Boolean, directPlayDolbyVision: Boolean): String
+}
+
+/** What this device can decode. The Android probing stays in `data`; the adapter builds its profile from this. */
+interface DeviceCodecs {
+    fun probedCodecsSnapshot(): ProbedCodecs
+    fun displaySupportsDolbyVision(): Boolean
+}
+
+/** Puts the saved server, user and token on a new session before anything uses it. Implemented in `core`, which knows Room. */
+fun interface SessionRestorer { fun restore(session: ServerSession) }
 ```
 
 ## 3.4 The repository (`data`)
@@ -334,6 +351,7 @@ keeps its name until decision D2. Its one implementation composes a `MediaServer
 
 ```kotlin
 class JellyfinRepositoryImpl(          // no SDK import
+    private val context: Context,          // for the trickplay files of downloads
     private val server: MediaServer,
     private val database: ServerDatabaseDao,
     private val appPreferences: AppPreferences,
@@ -341,7 +359,7 @@ class JellyfinRepositoryImpl(          // no SDK import
 ) : JellyfinRepository {
     override suspend fun getMovie(itemId: ItemId): FindroidMovie =
         serverOrStored(stored = storedMovie(itemId)) {
-            server.catalog.movie(itemId).withLocalSources(localSourcesFor(itemId))
+            server.catalog.movie(itemId).withLocalSources(localSourcesFor(itemId))   // remote sources first, then local
         }
     // …
 }
@@ -375,6 +393,8 @@ interface EnginePlayer {
     /** Re-applies settings the engine drops when an item loads. */
     fun onItemReady() {}
     fun setZoomMode(enabled: Boolean) {}
+    /** True when the engine handled the error itself (ExoPlayer falling back to another decoder). */
+    fun onPlayerError(error: androidx.media3.common.PlaybackException): Boolean = false
     fun release()
 }
 
