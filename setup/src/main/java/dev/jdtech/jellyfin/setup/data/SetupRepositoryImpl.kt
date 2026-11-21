@@ -15,6 +15,7 @@ import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.R as SetupR
+import dev.jdtech.jellyfin.setup.domain.AddressRejected
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
@@ -370,6 +371,42 @@ class SetupRepositoryImpl(
         server.currentServerAddressId = address.id
         database.updateServer(server)
         jellyfinApi.apply { api.update(baseUrl = address.address) }
+    }
+
+    override suspend fun addAddress(serverId: String, address: String): ServerAddress {
+        // Normalise the input the same way addServer does, so a bare host or a missing scheme
+        // resolves to a usable address. Discovery does not touch the client's base URL, and it
+        // runs unwatched: this server is not the one in use, so its answers (or silence) must not
+        // reach the reachability banner or the return detector.
+        val discovery = jellyfinApi.unwatchedDiscovery
+        val candidates = discovery.getAddressCandidates(address)
+        val recommended = discovery.getRecommendedServers(candidates, RecommendedServerInfoScore.OK)
+
+        // Only accept an address that actually points at the server being edited.
+        val match =
+            recommended.firstOrNull { it.systemInfo.getOrNull()?.id == serverId }
+                ?: throw AddressRejected(AddressRejected.Reason.NOT_FOUND)
+
+        val existing = database.getServerWithAddresses(serverId).addresses
+        if (existing.any { it.address == match.address }) {
+            throw AddressRejected(AddressRejected.Reason.ALREADY_SAVED)
+        }
+
+        val serverAddress = ServerAddress(UUID.randomUUID(), serverId, match.address)
+        database.insertServerAddress(serverAddress)
+        return serverAddress
+    }
+
+    override suspend fun getAddresses(serverId: String): List<ServerAddress> {
+        return database.getServerWithAddresses(serverId).addresses
+    }
+
+    override suspend fun getCurrentAddress(serverId: String): ServerAddress? {
+        return database.getServerCurrentAddress(serverId)
+    }
+
+    override suspend fun deleteAddress(addressId: UUID) {
+        database.deleteServerAddress(addressId)
     }
 }
 

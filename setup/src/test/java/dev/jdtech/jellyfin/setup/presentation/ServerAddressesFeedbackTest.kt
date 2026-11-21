@@ -1,15 +1,19 @@
 package dev.jdtech.jellyfin.setup.presentation
 
 import android.app.Application
+import android.content.Context
 import android.provider.Settings
 import com.sun.net.httpserver.HttpServer
+import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.R as SetupR
+import dev.jdtech.jellyfin.setup.data.SetupRepositoryImpl
 import dev.jdtech.jellyfin.setup.domain.FakeLocalNetworkAccess
 import dev.jdtech.jellyfin.setup.presentation.addresses.ServerAddressesAction
 import dev.jdtech.jellyfin.setup.presentation.addresses.ServerAddressesViewModel
@@ -54,7 +58,7 @@ class ServerAddressesFeedbackTest {
     /** Thrown by getServerWithAddresses once set. */
     @Volatile private var failure: RuntimeException? = null
 
-    // The ViewModel calls only these; suspend functions that do not suspend can return directly.
+    // The repository calls only these; suspend functions that do not suspend can return directly.
     private val database =
         Proxy.newProxyInstance(
             ServerDatabaseDao::class.java.classLoader,
@@ -89,7 +93,13 @@ class ServerAddressesFeedbackTest {
         val application = RuntimeEnvironment.getApplication()
         // The SDK names the device after it; Robolectric has none.
         Settings.Secure.putString(application.contentResolver, Settings.Secure.ANDROID_ID, "test")
-        viewModel = ServerAddressesViewModel(application, database, localNetworkAccess)
+        val repository =
+            SetupRepositoryImpl(
+                JellyfinApi(application),
+                database,
+                AppPreferences(application.getSharedPreferences("test", Context.MODE_PRIVATE)),
+            )
+        viewModel = ServerAddressesViewModel(repository, localNetworkAccess)
         viewModel.loadAddresses(serverId)
     }
 

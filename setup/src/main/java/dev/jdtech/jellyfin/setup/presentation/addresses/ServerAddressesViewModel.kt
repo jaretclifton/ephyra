@@ -1,15 +1,13 @@
 package dev.jdtech.jellyfin.setup.presentation.addresses
 
-import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.jdtech.jellyfin.api.JellyfinApi
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.setup.R as SetupR
+import dev.jdtech.jellyfin.setup.domain.AddressRejected
 import dev.jdtech.jellyfin.setup.domain.LocalNetworkAccess
+import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.domain.blocks
 import dev.jdtech.jellyfin.utils.LoadErrorText
 import java.util.UUID
@@ -18,15 +16,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import org.jellyfin.sdk.discovery.RecommendedServerInfoScore
 import timber.log.Timber
 
 @HiltViewModel
 class ServerAddressesViewModel
 @Inject
 constructor(
-    val application: Application,
-    private val database: ServerDatabaseDao,
+    private val repository: SetupRepository,
     private val localNetworkAccess: LocalNetworkAccess,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ServerAddressesState())
@@ -38,8 +34,7 @@ constructor(
         currentServerId = serverId
         viewModelScope.launch {
             try {
-                val serverWithAddresses = database.getServerWithAddresses(serverId)
-                _state.emit(ServerAddressesState(addresses = serverWithAddresses.addresses))
+                _state.emit(ServerAddressesState(addresses = repository.getAddresses(serverId)))
             } catch (e: Exception) {
                 Timber.e(e)
             }
@@ -49,13 +44,13 @@ constructor(
     fun deleteAddress(addressId: UUID) {
         viewModelScope.launch(Dispatchers.IO) {
             _state.emit(_state.value.copy(error = null))
-            val currentAddress = database.getServerCurrentAddress(currentServerId)
+            val currentAddress = repository.getCurrentAddress(currentServerId)
             if (addressId == currentAddress?.id) {
                 // CE (#390): say why instead of dropping the removal without a word.
                 setError(SetupR.string.ce_server_address_in_use)
                 return@launch
             }
-            database.deleteServerAddress(addressId)
+            repository.deleteAddress(addressId)
             loadAddresses(currentServerId)
         }
     }
@@ -64,45 +59,24 @@ constructor(
         viewModelScope.launch(Dispatchers.IO) {
             _state.emit(_state.value.copy(error = null))
             try {
-                val jellyfinApi = JellyfinApi(application.applicationContext)
-
-                // Normalise the input the same way SetupRepositoryImpl.addServer does, so a bare
-                // host or a missing scheme resolves to a usable address instead of failing.
-                val candidates = jellyfinApi.jellyfin.discovery.getAddressCandidates(address)
-                val recommended =
-                    jellyfinApi.jellyfin.discovery.getRecommendedServers(
-                        candidates,
-                        RecommendedServerInfoScore.OK,
-                    )
-
-                // Only accept an address that actually points at the server we're editing.
-                val match = recommended.firstOrNull {
-                    it.systemInfo.getOrNull()?.id == currentServerId
-                }
-                if (match == null) {
-                    // CE (#376): an address on the local network, while access to it is denied,
-                    // names the permission.
-                    setError(
-                        if (localNetworkAccess.blocks(address)) {
-                            SetupR.string.ce_add_server_error_local_network
-                        } else {
-                            SetupR.string.add_server_error_not_found
-                        }
-                    )
-                    return@launch
-                }
-
-                // Dedupe against the addresses already stored for this server.
-                val existingAddresses = database.getServerWithAddresses(currentServerId).addresses
-                if (existingAddresses.any { it.address == match.address }) {
-                    // CE (#390): the dialog has closed, so say why nothing was added.
-                    setError(SetupR.string.ce_server_address_already_added)
-                    return@launch
-                }
-
-                val serverAddress = ServerAddress(UUID.randomUUID(), currentServerId, match.address)
-                database.insertServerAddress(serverAddress)
+                repository.addAddress(currentServerId, address)
                 loadAddresses(currentServerId)
+            } catch (e: AddressRejected) {
+                when (e.reason) {
+                    AddressRejected.Reason.NOT_FOUND ->
+                        // CE (#376): an address on the local network, while access to it is
+                        // denied, names the permission.
+                        setError(
+                            if (localNetworkAccess.blocks(address)) {
+                                SetupR.string.ce_add_server_error_local_network
+                            } else {
+                                SetupR.string.add_server_error_not_found
+                            }
+                        )
+                    // CE (#390): the dialog has closed, so say why nothing was added.
+                    AddressRejected.Reason.ALREADY_SAVED ->
+                        setError(SetupR.string.ce_server_address_already_added)
+                }
             } catch (e: Exception) {
                 Timber.e(e)
                 // CE (#606): plain words, never the exception's own text (#377).
