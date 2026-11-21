@@ -53,6 +53,7 @@ class LoadErrorTextTest {
             CoreR.string.download_error_server_unreachable,
             LoadErrorText.reason(error).resource().resId,
         )
+        assertTrue(LoadErrorText.isConnectionError(error))
         assertTrue(LoadErrorText.isConnectionError(ServerException.Tls()))
     }
 
