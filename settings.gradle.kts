@@ -15,6 +15,7 @@ include(":settings")
 include(":baselineprofile")
 include(":baselineprofile-tv")
 include(":architecture")
+include(":domain")
 
 pluginManagement {
     repositories {

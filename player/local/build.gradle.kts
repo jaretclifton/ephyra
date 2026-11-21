@@ -23,6 +23,7 @@ android {
 dependencies {
     implementation(projects.player.core)
     implementation(projects.data)
+    implementation(projects.domain)
     implementation(projects.settings)
     implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.androidx.lifecycle.viewmodel)

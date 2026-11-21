@@ -170,6 +170,7 @@ dependencies {
     implementation(libs.androidx.profileinstaller)
     implementation(projects.core)
     implementation(projects.data)
+    implementation(projects.domain)
     implementation(projects.setup)
     implementation(projects.modes.film)
     implementation(projects.player.core)
