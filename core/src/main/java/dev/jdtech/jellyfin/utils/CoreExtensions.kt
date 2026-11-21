@@ -9,12 +9,12 @@ import dev.jdtech.jellyfin.models.CollectionType
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.View
 import java.nio.charset.StandardCharsets
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jellyfin.sdk.model.DateTime
 import org.jellyfin.sdk.model.api.BaseItemDto
 
 fun BaseItemDto.toView(items: List<FindroidItem>): View {
@@ -42,7 +42,7 @@ fun ByteArray.toBase64Str(): String {
     return Base64.encodeToString(this, Base64.URL_SAFE or Base64.NO_WRAP)
 }
 
-fun DateTime.format(locale: Locale = Locale.getDefault()): String {
+fun LocalDateTime.format(locale: Locale = Locale.getDefault()): String {
     return DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
         .withLocale(locale)
         .format(this.toLocalDate())

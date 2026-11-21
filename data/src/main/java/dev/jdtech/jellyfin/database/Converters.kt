@@ -2,10 +2,10 @@ package dev.jdtech.jellyfin.database
 
 import androidx.room3.ColumnTypeConverter
 import dev.jdtech.jellyfin.models.FindroidChapter
+import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.UUID
 import kotlinx.serialization.json.Json
-import org.jellyfin.sdk.model.DateTime
 
 class Converters {
     @ColumnTypeConverter
@@ -19,13 +19,13 @@ class Converters {
     }
 
     @ColumnTypeConverter
-    fun fromDateTimeToLong(value: DateTime?): Long? {
+    fun fromDateTimeToLong(value: LocalDateTime?): Long? {
         return value?.toEpochSecond(ZoneOffset.UTC)
     }
 
     @ColumnTypeConverter
-    fun fromLongToDatetime(value: Long?): DateTime? {
-        return value?.let { DateTime.ofEpochSecond(it, 0, ZoneOffset.UTC) }
+    fun fromLongToDatetime(value: Long?): LocalDateTime? {
+        return value?.let { LocalDateTime.ofEpochSecond(it, 0, ZoneOffset.UTC) }
     }
 
     @ColumnTypeConverter

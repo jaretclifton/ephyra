@@ -1,15 +1,15 @@
 package dev.jdtech.jellyfin.utils
 
+import java.time.LocalDateTime
 import java.util.Locale
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import org.jellyfin.sdk.model.DateTime
 import org.junit.jupiter.api.Test
 
 class CoreExtensionsTest {
     @Test
     fun `format formats date following provided locale`() {
-        val dateTime = DateTime.of(1961, 1, 25, 0, 0)
+        val dateTime = LocalDateTime.of(1961, 1, 25, 0, 0)
         val formattedUs = dateTime.format(Locale.US)
         val formattedNl = dateTime.format(Locale.forLanguageTag("nl-NL"))
 
@@ -20,7 +20,7 @@ class CoreExtensionsTest {
     /** #414: a two-digit year made The Great Train Robbery (1903) read as 2003. */
     @Test
     fun `format keeps the four-digit year`() {
-        val dateTime = DateTime.of(1903, 12, 7, 0, 0)
+        val dateTime = LocalDateTime.of(1903, 12, 7, 0, 0)
 
         assertEquals("Dec 7, 1903", dateTime.format(Locale.US))
         for (tag in listOf("en-US", "nl", "de", "ja", "ar", "es-419")) {

@@ -2,8 +2,8 @@ package dev.jdtech.jellyfin.models
 
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.repository.JellyfinRepository
+import java.time.LocalDateTime
 import java.util.UUID
-import org.jellyfin.sdk.model.DateTime
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.LocationType
 import org.jellyfin.sdk.model.api.PlayAccess
@@ -23,7 +23,7 @@ data class FindroidEpisode(
     override val canDownload: Boolean,
     override val runtimeTicks: Long,
     override val playbackPositionTicks: Long,
-    val premiereDate: DateTime?,
+    val premiereDate: LocalDateTime?,
     val seriesId: UUID,
     val seriesName: String,
     val seasonId: UUID,
@@ -33,7 +33,7 @@ data class FindroidEpisode(
     override val unplayedItemCount: Int? = null,
     val missing: Boolean = false,
     /** When the server last saw this episode played; null if never, or when read offline. */
-    val lastPlayedDate: DateTime? = null,
+    val lastPlayedDate: LocalDateTime? = null,
     // CE (#332): from the item response, not stored offline.
     val externalLinks: List<FindroidExternalLink> = emptyList(),
     /** How often the server saw this episode played to the end. */
