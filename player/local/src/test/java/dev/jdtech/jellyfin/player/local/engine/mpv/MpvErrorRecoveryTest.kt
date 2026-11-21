@@ -156,7 +156,8 @@ class MpvErrorRecoveryTest {
         // the error state, and NetworkRecovery never waited for the network on mpv. Gradle runs
         // unit tests from the module directory.
         val source =
-            File("src/main/java/dev/jdtech/jellyfin/player/local/engine/mpv/MPVPlayer.kt").readText()
+            File("src/main/java/dev/jdtech/jellyfin/player/local/engine/mpv/MPVPlayer.kt")
+                .readText()
         val commands =
             Regex("""permanentAvailableCommands: Commands =[\s\S]*?\.build\(\)""").find(source)
         assertTrue(commands != null, message = "permanentAvailableCommands not found")

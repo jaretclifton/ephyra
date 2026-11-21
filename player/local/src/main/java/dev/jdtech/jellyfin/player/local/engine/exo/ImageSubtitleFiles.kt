@@ -21,10 +21,10 @@ import androidx.media3.extractor.text.CuesWithTiming
 import androidx.media3.extractor.text.DefaultSubtitleParserFactory
 import androidx.media3.extractor.text.SubtitleParser
 import androidx.media3.extractor.text.pgs.PgsParser
+import dev.jdtech.jellyfin.player.local.domain.IMAGE_SUBTITLE_TYPES
 import java.io.ByteArrayOutputStream
 import java.io.EOFException
 import java.io.IOException
-import dev.jdtech.jellyfin.player.local.domain.IMAGE_SUBTITLE_TYPES
 import timber.log.Timber
 
 /**

@@ -27,16 +27,20 @@ class PlayerInvariantsTest {
         // refresh rate" setting defaults to off) removed the surface frame rate hint, so 120Hz
         // panels stayed at 120Hz for the whole playback. ExoPlayer's default, ONLY_IF_SEAMLESS,
         // is what upstream Findroid runs with and what lets the OS drop to 48Hz for 24fps.
-        val viewModel = source("presentation/PlayerViewModel.kt")
+        // #764: ExoEngine builds the player, PlayerViewModel holds it.
+        for (path in listOf("engine/exo/ExoEngine.kt", "presentation/PlayerViewModel.kt")) {
+            val name = path.substringAfterLast('/').removeSuffix(".kt")
+            val code = source(path)
 
-        assertFalse(
-            viewModel.contains("setVideoChangeFrameRateStrategy"),
-            message = "PlayerViewModel must not call setVideoChangeFrameRateStrategy (#338)",
-        )
-        assertFalse(
-            viewModel.contains("VIDEO_CHANGE_FRAME_RATE_STRATEGY_OFF"),
-            message = "PlayerViewModel must not use VIDEO_CHANGE_FRAME_RATE_STRATEGY_OFF (#338)",
-        )
+            assertFalse(
+                code.contains("setVideoChangeFrameRateStrategy"),
+                message = "$name must not call setVideoChangeFrameRateStrategy (#338)",
+            )
+            assertFalse(
+                code.contains("VIDEO_CHANGE_FRAME_RATE_STRATEGY_OFF"),
+                message = "$name must not use VIDEO_CHANGE_FRAME_RATE_STRATEGY_OFF (#338)",
+            )
+        }
     }
 
     @Test
