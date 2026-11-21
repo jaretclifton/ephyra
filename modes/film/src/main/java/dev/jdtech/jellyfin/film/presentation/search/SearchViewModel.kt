@@ -60,13 +60,31 @@ class SearchViewModel @Inject constructor(private val repository: JellyfinReposi
                 // Inside the job, so the next keystroke's cancel also drops this request.
                 delay(SEARCH_DEBOUNCE_MS)
 
-                val away = serverAwayReload.begin()
-                _state.emit(_state.value.copy(loading = true))
-                val items = repository.getSearchItems(query, itemKinds)
+                while (true) {
+                    serverAwayReload.begin()
+                    _state.emit(_state.value.copy(loading = true))
+                    val result = repository.getSearchItems(query, itemKinds)
 
-                _state.emit(
-                    SearchState(query = query, items = items, loading = false, downloadsOnly = away)
-                )
+                    // CE (#779): downloads only when Room answered.
+                    _state.emit(
+                        SearchState(
+                            query = query,
+                            items = result.items,
+                            loading = false,
+                            downloadsOnly = result.fromStore,
+                        )
+                    )
+                    // CE (#779): one more try when Room answered before the server was known to be
+                    // away; the next keystroke or a change of state cancels it with this job.
+                    if (!serverAwayReload.retriesAfterStore(result.fromStore)) break
+                    try {
+                        delay(ServerAwayReload.STORE_RETRY_DELAY_MS)
+                    } catch (e: CancellationException) {
+                        // A newer search took its place before it ran: the try is still to come.
+                        serverAwayReload.onStoreRetryCancelled()
+                        throw e
+                    }
+                }
             } catch (_: CancellationException) {} catch (e: Exception) {
                 Timber.e(e)
                 _state.emit(_state.value.copy(query = query, loading = false, error = e))
