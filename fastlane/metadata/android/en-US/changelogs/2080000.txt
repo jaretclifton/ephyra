@@ -1,0 +1,8 @@
+Downloads show by themselves when the server is away, and unwatched episodes can stay spoiler-free.
+
+- Offline Mode is gone: Favorites, Media and search show your downloads when the server can't be reached.
+- Hide spoilers: blurs stills and hides titles of unwatched episodes.
+- Intro and credits are marked on the seek bar.
+- A-Z scroller in the library.
+- Home Videos and Music Videos libraries.
+- Fixes for stalled streams and slow subtitles.
