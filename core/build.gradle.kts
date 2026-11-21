@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.slf4j.api)
     implementation(libs.slf4j.android)
 
+    testImplementation(libs.androidx.work.testing)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)

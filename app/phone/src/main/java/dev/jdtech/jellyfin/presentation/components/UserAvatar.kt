@@ -17,6 +17,7 @@ import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.hasPin
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
+import kotlinx.coroutines.flow.emptyFlow
 
 /**
  * A user's avatar in the phone theme. The picture comes from the server of [LocalServerSession],
@@ -81,6 +82,7 @@ private fun UserAvatarPicturePreview() {
         object : ServerSession {
             override val baseUrl = "https://demo.example"
             override val userId: UserId? = null
+            override val serverReturned = emptyFlow<Unit>()
 
             override fun userImageUrl(userId: UserId, tag: String) =
                 "$baseUrl/Users/$userId/Images/Primary?tag=$tag"

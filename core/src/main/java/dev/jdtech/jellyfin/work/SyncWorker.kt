@@ -6,9 +6,11 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.core.presentation.downloader.SmartDownloads
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.domain.ports.ServerUserData
+import dev.jdtech.jellyfin.domain.ports.UserDataSyncPort
+import dev.jdtech.jellyfin.domain.ports.UserDataSyncPorts
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.repository.DataChangeEvents
@@ -21,13 +23,6 @@ import java.util.UUID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jellyfin.sdk.api.client.ApiClient
-import org.jellyfin.sdk.api.client.extensions.libraryApi
-import org.jellyfin.sdk.api.client.extensions.sessionApi
-import org.jellyfin.sdk.api.client.extensions.userDataApi
-import org.jellyfin.sdk.model.api.BaseItemDto
-import org.jellyfin.sdk.model.api.PlaybackStopInfo
-import org.jellyfin.sdk.model.api.UpdateUserItemDataDto
 import timber.log.Timber
 
 @HiltWorker
@@ -37,7 +32,7 @@ constructor(
     @Assisted context: Context,
     @Assisted workerParams: WorkerParameters,
     val database: ServerDatabaseDao,
-    private val jellyfinApi: JellyfinApi,
+    private val userDataSyncPorts: UserDataSyncPorts,
     private val smartDownloads: SmartDownloads,
     private val playbackEvents: PlaybackEvents,
     private val dataChanges: DataChangeEvents,
@@ -69,15 +64,16 @@ constructor(
                         )
                     if (pending.isEmpty() && !refresh) continue
 
-                    val api = apiFor(serverAddress.address, user.accessToken, user.id)
+                    val port =
+                        userDataSyncPorts.forUser(serverAddress.address, user.accessToken, user.id)
                     var ok = true
                     if (pending.isNotEmpty()) {
-                        val outcome = syncUserData(api, user.id, pending)
+                        val outcome = syncUserData(port, user.id, pending)
                         if (!outcome.allOk) ok = false
                         if (outcome.sent > 0 || outcome.tookServer > 0) changed = true
                     }
                     // CE (#635): after sending, so the server's values include what was just sent.
-                    if (ok && refresh && refreshFromServer(api, server.id, user.id) > 0) {
+                    if (ok && refresh && refreshFromServer(port, server.id, user.id) > 0) {
                         changed = true
                     }
                     // A write that failed while this run was sending keeps its row marked, and
@@ -110,59 +106,6 @@ constructor(
     }
 
     /**
-     * The app's own client when it is signed in as [userId] at [baseUrl], otherwise a client for
-     * that user from the same Jellyfin instance. The app's client is never pointed at another user,
-     * because the screens use it at the same time.
-     */
-    private fun apiFor(baseUrl: String, accessToken: String?, userId: UUID): ApiClient {
-        val current = jellyfinApi.api
-        if (
-            jellyfinApi.userId == userId &&
-                current.baseUrl == baseUrl &&
-                current.accessToken == accessToken
-        ) {
-            return current
-        }
-        return jellyfinApi.jellyfin.createApi(
-            baseUrl = baseUrl,
-            accessToken = accessToken,
-            httpClientOptions = current.httpClientOptions,
-        )
-    }
-
-    /**
-     * The item this device's session is playing according to the server, for the app's own client
-     * only: another user's client has no session of its own to end.
-     */
-    private suspend fun itemLeftPlaying(api: ApiClient, userId: UUID): UUID? {
-        if (api !== jellyfinApi.api) return null
-        return api.sessionApi
-            .getSessions(deviceId = api.deviceInfo.id)
-            .content
-            .firstOrNull { it.userId == userId }
-            ?.nowPlayingItem
-            ?.id
-    }
-
-    /**
-     * CE (#633): the server's user data of [itemIds], one request per [USER_DATA_BATCH_SIZE] items.
-     * Items the server does not return (deleted there) are missing from the map.
-     */
-    private suspend fun fetchServerUserData(
-        api: ApiClient,
-        userId: UUID,
-        itemIds: List<UUID>,
-    ): Map<UUID, ServerUserData> =
-        itemIds.chunked(USER_DATA_BATCH_SIZE).fold(emptyMap()) { found, batch ->
-            val items =
-                api.libraryApi
-                    .getItems(userId = userId, ids = batch, enableUserData = true)
-                    .content
-                    .items
-            found + serverUserDataOf(items)
-        }
-
-    /**
      * CE (#635): logs [message] with [e]'s stack trace, as a warning when [warn]. A refused login
      * ([isRefusedLogin]) is one line instead: a user signed out on the server, or whose login
      * expired, gets one on every run for as long as it stays on this device, and the trace tells
@@ -185,18 +128,22 @@ constructor(
     /**
      * CE (#635): copies the server's user data into the rows of [userId]'s downloads from
      * [serverId], so a download resumes offline where it was left on any device (web, TV), not
-     * where it was when it was downloaded. Uses [fetchServerUserData] (#633).
+     * where it was when it was downloaded. Uses [UserDataSyncPort.userDataOf] (#633).
      *
      * Rows waiting to be sent are never touched, see [ServerDatabaseDao.refreshUserDataFromServer].
      * A failure only leaves the rows as they were, so it does not make the sync retry. Returns how
      * many rows changed.
      */
-    private suspend fun refreshFromServer(api: ApiClient, serverId: String, userId: UUID): Int {
+    private suspend fun refreshFromServer(
+        port: UserDataSyncPort,
+        serverId: String,
+        userId: UUID,
+    ): Int {
         val itemIds = database.getSyncedUserDataItemIds(serverId, userId)
         if (itemIds.isEmpty()) return 0
         var changed = 0
         try {
-            val onServer = fetchServerUserData(api, userId, itemIds)
+            val onServer = port.userDataOf(itemIds)
             for (userData in serverUserDataToStore(onServer, playbackEvents.playingItemId.value)) {
                 changed +=
                     database.refreshUserDataFromServer(
@@ -205,7 +152,7 @@ constructor(
                         played = userData.played,
                         favorite = userData.favorite,
                         playbackPositionTicks = userData.playbackPositionTicks,
-                        lastPlayedDate = userData.lastPlayedDate,
+                        lastPlayedDate = userData.lastPlayedMillis(),
                     )
             }
             Timber.d("Refreshed the user data of ${itemIds.size} downloads, $changed changed")
@@ -230,7 +177,7 @@ constructor(
      * server's progress.
      */
     private suspend fun keepServerProgress(
-        api: ApiClient,
+        port: UserDataSyncPort,
         userId: UUID,
         row: FindroidUserDataDto,
         server: ServerUserData,
@@ -238,20 +185,10 @@ constructor(
     ): Boolean {
         Timber.d("Item ${row.itemId} was played later elsewhere, keeping the server's progress")
         if (endsStaleSession(row.itemId, leftPlaying, playbackEvents.playingItemId.value)) {
-            api.sessionApi.reportPlaybackStopped(
-                PlaybackStopInfo(
-                    itemId = row.itemId,
-                    positionTicks = server.playbackPositionTicks,
-                    failed = false,
-                )
-            )
+            port.reportStopped(row.itemId, server.playbackPositionTicks)
         }
         if (row.favorite != server.favorite) {
-            api.userDataApi.updateItemUserData(
-                itemId = row.itemId,
-                userId = userId,
-                data = UpdateUserItemDataDto(isFavorite = row.favorite),
-            )
+            port.setFavorite(row.itemId, row.favorite)
         }
         val took =
             database.takeServerProgress(
@@ -259,7 +196,7 @@ constructor(
                 itemId = row.itemId,
                 played = server.played,
                 playbackPositionTicks = server.playbackPositionTicks,
-                lastPlayedDate = server.lastPlayedDate,
+                lastPlayedDate = server.lastPlayedMillis(),
                 sentPlayed = row.played,
                 sentFavorite = row.favorite,
                 sentPlaybackPositionTicks = row.playbackPositionTicks,
@@ -270,7 +207,7 @@ constructor(
     }
 
     private suspend fun syncUserData(
-        api: ApiClient,
+        port: UserDataSyncPort,
         userId: UUID,
         items: List<FindroidUserDataDto>,
     ): SyncOutcome {
@@ -278,7 +215,7 @@ constructor(
         // through. Asked first, so an unreachable server ends the run after one request.
         val leftPlaying =
             try {
-                itemLeftPlaying(api, userId)
+                port.itemLeftPlaying()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -297,7 +234,7 @@ constructor(
         // rather than sending dates that may be older than the server's.
         val onServer =
             try {
-                fetchServerUserData(api, userId, items.map { it.itemId })
+                port.userDataOf(items.map { it.itemId })
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -312,9 +249,12 @@ constructor(
             try {
                 val server = onServer[userData.itemId]
                 if (
-                    server != null && serverIsNewer(userData.lastPlayedDate, server.lastPlayedDate)
+                    server != null &&
+                        serverIsNewer(userData.lastPlayedDate, server.lastPlayedMillis())
                 ) {
-                    if (keepServerProgress(api, userId, userData, server, leftPlaying)) tookServer++
+                    if (keepServerProgress(port, userId, userData, server, leftPlaying)) {
+                        tookServer++
+                    }
                     continue
                 }
 
@@ -328,35 +268,22 @@ constructor(
                     // End it with the real position, or the server's idle check ends it minutes
                     // later with the last position it heard, over what is written below (#584).
                     Timber.d("Ending the server's playback session of ${userData.itemId}")
-                    api.sessionApi.reportPlaybackStopped(
-                        PlaybackStopInfo(
-                            itemId = userData.itemId,
-                            positionTicks = userData.playbackPositionTicks,
-                            failed = false,
-                        )
-                    )
+                    port.reportStopped(userData.itemId, userData.playbackPositionTicks)
                 }
 
-                api.userDataApi.updateItemUserData(
-                    itemId = userData.itemId,
-                    userId = userId,
-                    data =
-                        UpdateUserItemDataDto(
-                            playbackPositionTicks = userData.playbackPositionTicks,
-                            isFavorite = userData.favorite,
-                            played = userData.played,
-                            // CE (#633): moves the item up in Continue Watching on every device.
-                            // Null leaves the server's date as it is.
-                            lastPlayedDate =
-                                userData.lastPlayedDate
-                                    ?.takeIf {
-                                        isNewerThanServer(
-                                            it,
-                                            onServer[userData.itemId]?.lastPlayedDate,
-                                        )
-                                    }
-                                    ?.let(::localDateTimeOf),
-                        ),
+                port.putUserData(
+                    ServerUserData(
+                        itemId = userData.itemId,
+                        played = userData.played,
+                        favorite = userData.favorite,
+                        playbackPositionTicks = userData.playbackPositionTicks,
+                        // CE (#633): moves the item up in Continue Watching on every device. Null
+                        // leaves the server's date as it is.
+                        lastPlayedDate =
+                            userData.lastPlayedDate
+                                ?.takeIf { isNewerThanServer(it, server?.lastPlayedMillis()) }
+                                ?.let(::localDateTimeOf),
+                    )
                 )
                 sent++
 
@@ -404,32 +331,14 @@ constructor(
 }
 
 /**
- * CE (#633): the server's user data of one item, as the sync compares it with the local row and
- * (#635) as the refresh stores it in the row of a download.
+ * CE (#633): the server's last played date in epoch milliseconds, as the database keeps it and the
+ * sync compares it; null when the server has none. #762: the port carries the server's local
+ * date-time, the conversion stays here.
  */
-internal data class ServerUserData(
-    val itemId: UUID,
-    val played: Boolean,
-    val favorite: Boolean,
-    val playbackPositionTicks: Long,
-    /** Epoch milliseconds, null when the server has none. */
-    val lastPlayedDate: Long?,
-)
-
-/** CE (#633): the user data of [items] by item id; items without user data are left out. */
-internal fun serverUserDataOf(items: List<BaseItemDto>): Map<UUID, ServerUserData> =
-    items
-        .mapNotNull { item ->
-            val userData = item.userData ?: return@mapNotNull null
-            ServerUserData(
-                itemId = item.id,
-                played = userData.played,
-                favorite = userData.isFavorite,
-                playbackPositionTicks = userData.playbackPositionTicks,
-                lastPlayedDate = userData.lastPlayedDate?.let { epochMillisOf(it) },
-            )
-        }
-        .associateBy { it.itemId }
+internal fun ServerUserData.lastPlayedMillis(zone: ZoneId = ZoneId.systemDefault()): Long? =
+    lastPlayedDate?.let {
+        epochMillisOf(it, zone)
+    }
 
 /**
  * CE (#633): whether a local last-played time [local] is newer than the server's [server], both in
@@ -448,8 +357,8 @@ internal fun serverIsNewer(local: Long?, server: Long?): Boolean =
     isNewerThanServer(local = server, server = local)
 
 /**
- * CE (#633): the SDK reads and writes dates as local date-times of this device's time zone, and the
- * database keeps epoch milliseconds, which do not depend on it.
+ * CE (#633): the port, as the SDK under it, reads and writes dates as local date-times of this
+ * device's time zone, and the database keeps epoch milliseconds, which do not depend on it.
  */
 internal fun localDateTimeOf(
     epochMillis: Long,
@@ -520,9 +429,6 @@ internal fun needsAnotherRun(
     sent: List<FindroidUserDataDto>,
     stillMarked: List<FindroidUserDataDto>,
 ): Boolean = stillMarked.any { it !in sent }
-
-/** CE (#633): items per request when reading the server's user data, to keep the URL short. */
-private const val USER_DATA_BATCH_SIZE = 100
 
 private const val HTTP_UNAUTHORIZED = 401
 private const val HTTP_NOT_FOUND = 404

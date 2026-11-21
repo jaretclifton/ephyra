@@ -9,7 +9,9 @@ import dagger.hilt.components.SingletonComponent
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.ServerSession
+import dev.jdtech.jellyfin.domain.ports.UserDataSyncPorts
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinServerSession
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinUserDataSyncPorts
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Singleton
 import kotlinx.coroutines.runBlocking
@@ -61,4 +63,10 @@ object ApiModule {
     @Provides
     fun provideServerSession(jellyfinApi: JellyfinApi): ServerSession =
         JellyfinServerSession(jellyfinApi)
+
+    /** #762: the server's user data for any saved user, for the sync. */
+    @Singleton
+    @Provides
+    fun provideUserDataSyncPorts(jellyfinApi: JellyfinApi): UserDataSyncPorts =
+        JellyfinUserDataSyncPorts(jellyfinApi)
 }
