@@ -1,12 +1,18 @@
 // The app's own models and the ports (#737, docs/architecture/3-target.md). Pure Kotlin: no
 // Android, no Jellyfin SDK, no Room, no media3. Rule R5 in the architecture module keeps it that
 // way.
-plugins { alias(libs.plugins.kotlin.jvm) }
+plugins {
+    alias(libs.plugins.kotlin.jvm)
+    // For FindroidChapter (see below).
+    alias(libs.plugins.kotlin.serialization)
+}
 
 java { toolchain { languageVersion = Versions.JAVA } }
 
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
+    // FindroidChapter is @Serializable: the Room converters in data store the chapters as JSON.
+    implementation(libs.kotlinx.serialization.json)
     // For the MediaHttpClient port alone. It returns an OkHttpClient, hence `api`: a module that
     // uses the port compiles without declaring OkHttp. A plain JVM library, so R5 allows it.
     api(libs.okhttp)

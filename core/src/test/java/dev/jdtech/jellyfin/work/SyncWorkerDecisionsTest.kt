@@ -97,11 +97,10 @@ class SyncWorkerDecisionsTest {
     }
 
     @Test
-    fun `the SDK's own 401 is a refused login too`() {
-        // #745: the SDK throws its own type. #762: the port translates it, and one that is not
-        // translated still reads as a 401.
-        assertTrue(
-            isRefusedLogin(org.jellyfin.sdk.api.client.exception.InvalidStatusException(401, null))
-        )
+    fun `a wrapped 401 is a refused login too`() {
+        // #745: the SDK throws its own type. #762: the port translates it. #763: core no longer
+        // sees the SDK; that the SDK's 401 reads as HttpStatus(401), also wrapped, is
+        // SdkErrorsTest.
+        assertTrue(isRefusedLogin(RuntimeException("wrap", ServerException.HttpStatus(401))))
     }
 }

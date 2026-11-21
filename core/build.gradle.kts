@@ -30,6 +30,9 @@ android {
     productFlavors { register("libre") }
 
     buildFeatures { compose = true }
+
+    // CE-owned (#763): ServerSessionKeeperTest reads the sign-out toast, a string resource.
+    testOptions { unitTests { isIncludeAndroidResources = true } }
 }
 
 dependencies {
@@ -55,7 +58,6 @@ dependencies {
     implementation(libs.coil.network.cache.control)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-    implementation(libs.jellyfin.core)
     implementation(libs.androidx.media3.ui)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.material)

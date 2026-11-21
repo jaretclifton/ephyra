@@ -8,8 +8,6 @@ import java.net.UnknownHostException
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import org.jellyfin.sdk.api.client.exception.InvalidStatusException
-import org.jellyfin.sdk.api.client.exception.TimeoutException
 import org.junit.jupiter.api.Test
 
 /** CE (#377): a failed load is explained in plain words, and Share never sends a token. */
@@ -35,8 +33,8 @@ class LoadErrorTextTest {
 
     @Test
     fun `a status wins over a timeout that wraps it`() {
-        // The SDK's own types, as the Jellyfin adapter still throws them (#745).
-        val error = TimeoutException("Connection failed", InvalidStatusException(502, null))
+        // #763: the SDK's own types are translated to these in data (SdkErrorsTest).
+        val error = ServerException.Timeout(ServerException.HttpStatus(502))
 
         val text = LoadErrorText.reason(error).resource()
 
@@ -59,11 +57,10 @@ class LoadErrorTextTest {
 
     @Test
     fun `a refused connection says the server can't be reached`() {
-        // The SDK's own timeout, as the Jellyfin adapter still throws it (#745).
+        // #763: the SDK's own timeout is translated to this in data (SdkErrorsTest).
         val error =
-            TimeoutException(
-                "Connection failed",
-                ConnectException("Failed to connect to demo.jellyfin.org/203.0.113.7:443"),
+            ServerException.Timeout(
+                ConnectException("Failed to connect to demo.jellyfin.org/203.0.113.7:443")
             )
 
         val text = LoadErrorText.reason(error).resource()

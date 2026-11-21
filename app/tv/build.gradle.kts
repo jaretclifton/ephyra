@@ -204,7 +204,6 @@ dependencies {
     implementation(libs.coil.svg)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-    implementation(libs.jellyfin.core)
     ksp(libs.kotlin.metadata.jvm)
     implementation(libs.media3.ffmpeg.decoder)
     implementation(libs.kotlinx.coroutines.android)

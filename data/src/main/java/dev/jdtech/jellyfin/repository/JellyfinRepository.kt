@@ -313,6 +313,3 @@ interface JellyfinRepository {
 
 /** CE (#332): how many items a "More like this" row shows. */
 const val SIMILAR_ITEMS_LIMIT = 12
-
-/** One page of items. [totalRecordCount] is null unless the caller asked for it. */
-data class ItemsPage(val items: List<FindroidItem>, val totalRecordCount: Int? = null)
