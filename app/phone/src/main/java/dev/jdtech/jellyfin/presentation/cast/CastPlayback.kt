@@ -1,8 +1,8 @@
 package dev.jdtech.jellyfin.presentation.cast
 
 import androidx.compose.runtime.staticCompositionLocalOf
+import dev.jdtech.jellyfin.models.ItemKind
 import java.util.UUID
-import org.jellyfin.sdk.model.api.BaseItemKind
 
 /**
  * CE (#626): where a Play button sends its item while a Cast receiver is connected. The screens ask
@@ -17,7 +17,7 @@ fun interface CastPlayback {
      */
     fun play(
         itemId: UUID,
-        itemKind: BaseItemKind,
+        itemKind: ItemKind,
         startFromBeginning: Boolean,
         mediaSourceId: String?,
         shuffle: Boolean,

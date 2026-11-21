@@ -18,6 +18,7 @@ import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
 import dev.jdtech.jellyfin.models.ItemFilter
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.player.DeviceProfileBuilder
@@ -30,7 +31,6 @@ import kotlin.concurrent.thread
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
-import org.jellyfin.sdk.model.api.BaseItemKind
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -592,11 +592,11 @@ class StoredListsFallbackTest {
             // No finished favourite: none downloaded, which Favorites says (#775).
             assertEquals(emptyList(), repository.getFavoriteItems().items.map { it.id })
             assertTrue(
-                fails { repository.getSearchItems("bluey", listOf(BaseItemKind.SERIES)).items },
+                fails { repository.getSearchItems("bluey", listOf(ItemKind.SERIES)).items },
                 "no finished show",
             )
             assertTrue(
-                fails { repository.getSearchItems("bluey", listOf(BaseItemKind.EPISODE)).items },
+                fails { repository.getSearchItems("bluey", listOf(ItemKind.EPISODE)).items },
                 "no finished episode",
             )
         }
@@ -628,11 +628,11 @@ class StoredListsFallbackTest {
         )
         assertEquals(
             listOf(episodeId),
-            repository.getSearchItems("bluey", listOf(BaseItemKind.EPISODE)).items.map { it.id },
+            repository.getSearchItems("bluey", listOf(ItemKind.EPISODE)).items.map { it.id },
         )
         assertEquals(
             listOf(id(1)),
-            repository.getSearchItems("BLUEY", listOf(BaseItemKind.MOVIE)).items.map { it.id },
+            repository.getSearchItems("BLUEY", listOf(ItemKind.MOVIE)).items.map { it.id },
         )
         // LIKE's wildcards are taken literally.
         assertTrue(fails { repository.getSearchItems("%", null).items })

@@ -5,8 +5,8 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.compose.ui.platform.UriHandler
 import dev.jdtech.jellyfin.PlayerActivity
+import dev.jdtech.jellyfin.models.ItemKind
 import java.util.UUID
-import org.jellyfin.sdk.model.api.BaseItemKind
 
 /**
  * CE (#332): plays a local trailer or special feature in the app's own player. The player loads an
@@ -15,7 +15,7 @@ import org.jellyfin.sdk.model.api.BaseItemKind
 internal fun playExtra(context: Context, extraId: UUID) {
     val intent = Intent(context, PlayerActivity::class.java)
     intent.putExtra("itemId", extraId.toString())
-    intent.putExtra("itemKind", BaseItemKind.MOVIE.serialName)
+    intent.putExtra("itemKind", ItemKind.MOVIE.serialName)
     context.startActivity(intent)
 }
 

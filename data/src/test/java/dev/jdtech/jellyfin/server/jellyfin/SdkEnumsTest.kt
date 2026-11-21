@@ -2,11 +2,14 @@ package dev.jdtech.jellyfin.server.jellyfin
 
 import dev.jdtech.jellyfin.models.EpisodeField
 import dev.jdtech.jellyfin.models.ItemFilter
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.PersonKind
 import dev.jdtech.jellyfin.models.SubtitleDeliveryMethod
 import dev.jdtech.jellyfin.models.VideoRangeType
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import org.jellyfin.sdk.model.api.BaseItemKind
 import org.jellyfin.sdk.model.api.MediaStreamType as SdkMediaStreamType
 import org.jellyfin.sdk.model.api.SubtitleDeliveryMethod as SdkSubtitleDeliveryMethod
 import org.jellyfin.sdk.model.api.VideoRangeType as SdkVideoRangeType
@@ -78,6 +81,32 @@ class SdkEnumsTest {
             assertEquals(it.name, VideoRangeType.fromNameOrNull(it.serialName)?.name)
         }
         assertEquals(null, VideoRangeType.fromNameOrNull(""))
+    }
+
+    // The item kinds' serial names are in intents and TV routes: they must stay the SDK's.
+    @Test
+    fun `every item kind has the serialName of its SDK kind`() {
+        for (kind in ItemKind.entries - ItemKind.UNKNOWN) {
+            assertEquals(kind.serialName, kind.toSdk().serialName)
+        }
+    }
+
+    @Test
+    fun `every item kind round-trips through the SDK kind`() {
+        for (kind in ItemKind.entries - ItemKind.UNKNOWN) {
+            assertEquals(kind, kind.toSdk().toItemKind())
+        }
+    }
+
+    @Test
+    fun `UNKNOWN has no SDK kind`() {
+        assertFailsWith<IllegalArgumentException> { ItemKind.UNKNOWN.toSdk() }
+    }
+
+    @Test
+    fun `an SDK item kind the app does not list is UNKNOWN`() {
+        assertEquals(ItemKind.UNKNOWN, BaseItemKind.AUDIO.toItemKind())
+        assertEquals(ItemKind.UNKNOWN, BaseItemKind.PERSON.toItemKind())
     }
 
     @Test

@@ -56,6 +56,7 @@ import dev.jdtech.jellyfin.film.presentation.season.SeasonState
 import dev.jdtech.jellyfin.film.presentation.season.SeasonViewModel
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.isDownloaded
 import dev.jdtech.jellyfin.presentation.cast.LocalCastPlayback
 import dev.jdtech.jellyfin.presentation.film.components.ArtworkPlacement
@@ -84,7 +85,6 @@ import dev.jdtech.jellyfin.presentation.utils.useSeasonListDetail
 import dev.jdtech.jellyfin.utils.ObserveAsEvents
 import dev.jdtech.jellyfin.utils.copyOnLongClick
 import java.util.UUID
-import org.jellyfin.sdk.model.api.BaseItemKind
 
 @Composable
 fun SeasonScreen(
@@ -148,24 +148,20 @@ fun SeasonScreen(
         when (action) {
             is SeasonAction.Play -> {
                 // CE (#626): on the Cast receiver when one is connected.
-                if (
-                    !castPlayback.play(seasonId, BaseItemKind.SEASON, false, null, shuffle = false)
-                ) {
+                if (!castPlayback.play(seasonId, ItemKind.SEASON, false, null, shuffle = false)) {
                     val intent = Intent(context, PlayerActivity::class.java)
                     intent.putExtra("itemId", seasonId.toString())
-                    intent.putExtra("itemKind", BaseItemKind.SEASON.serialName)
+                    intent.putExtra("itemKind", ItemKind.SEASON.serialName)
                     context.startActivity(intent)
                 }
             }
             // CE (#638): this season's episodes in random order.
             is SeasonAction.Shuffle -> {
                 // On the Cast receiver when one is connected, as Play does (#626).
-                if (
-                    !castPlayback.play(seasonId, BaseItemKind.SEASON, false, null, shuffle = true)
-                ) {
+                if (!castPlayback.play(seasonId, ItemKind.SEASON, false, null, shuffle = true)) {
                     val intent = Intent(context, PlayerActivity::class.java)
                     intent.putExtra("itemId", seasonId.toString())
-                    intent.putExtra("itemKind", BaseItemKind.SEASON.serialName)
+                    intent.putExtra("itemKind", ItemKind.SEASON.serialName)
                     intent.putExtra("shuffle", true)
                     context.startActivity(intent)
                 }

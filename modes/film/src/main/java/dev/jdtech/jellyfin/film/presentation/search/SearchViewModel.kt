@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.film.presentation.ServerAwayReload
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -12,7 +13,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import org.jellyfin.sdk.model.api.BaseItemKind
 import timber.log.Timber
 
 @HiltViewModel
@@ -23,13 +23,13 @@ class SearchViewModel @Inject constructor(private val repository: JellyfinReposi
 
     private var currentJob: Job? = null
 
-    private var itemKinds: List<BaseItemKind>? = null
+    private var itemKinds: List<ItemKind>? = null
 
     /**
      * CE: searches [itemKinds] instead of the repository default (movies and shows), for screens
      * that group results per kind (TV).
      */
-    fun setup(itemKinds: List<BaseItemKind>) {
+    fun setup(itemKinds: List<ItemKind>) {
         this.itemKinds = itemKinds
     }
 

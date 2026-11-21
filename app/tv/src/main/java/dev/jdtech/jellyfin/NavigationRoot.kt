@@ -39,6 +39,7 @@ import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidSeason
 import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.navigation.navigateOrReuse
 import dev.jdtech.jellyfin.navigation.resumedAction
 import dev.jdtech.jellyfin.presentation.settings.SettingsScreen
@@ -52,7 +53,6 @@ import dev.jdtech.jellyfin.presentation.setup.welcome.WelcomeScreen
 import dev.jdtech.jellyfin.setup.presentation.permission.PermissionAction
 import dev.jdtech.jellyfin.setup.presentation.permission.PermissionViewModel
 import java.util.UUID
-import org.jellyfin.sdk.model.api.BaseItemKind
 
 @Composable
 fun NavigationRoot(
@@ -178,7 +178,7 @@ private fun episodePlayerAction(
         navigate(
             PlayerRoute(
                 itemId = itemId.toString(),
-                itemKind = BaseItemKind.EPISODE.serialName,
+                itemKind = ItemKind.EPISODE.serialName,
                 mediaSourceId = mediaSourceId,
                 startFromBeginning = startFromBeginning,
             )
@@ -202,12 +202,12 @@ private fun watchNextRoutes(link: WatchNextLink): List<NavKey> =
         WatchNextItemType.MOVIE ->
             listOf(
                 MovieRoute(link.itemId),
-                PlayerRoute(itemId = link.itemId, itemKind = BaseItemKind.MOVIE.serialName),
+                PlayerRoute(itemId = link.itemId, itemKind = ItemKind.MOVIE.serialName),
             )
         WatchNextItemType.EPISODE ->
             listOf(
                 EpisodeRoute(episodeId = link.itemId),
-                PlayerRoute(itemId = link.itemId, itemKind = BaseItemKind.EPISODE.serialName),
+                PlayerRoute(itemId = link.itemId, itemKind = ItemKind.EPISODE.serialName),
             )
     }
 
@@ -364,7 +364,7 @@ private fun EntryProviderScope<NavKey>.tvEntries(
                     navigate(
                         PlayerRoute(
                             itemId = itemId.toString(),
-                            itemKind = BaseItemKind.MOVIE.serialName,
+                            itemKind = ItemKind.MOVIE.serialName,
                             mediaSourceId = mediaSourceId,
                             // CE (#412): Restart on the movie page.
                             startFromBeginning = startFromBeginning,
@@ -399,7 +399,7 @@ private fun EntryProviderScope<NavKey>.tvEntries(
                     navigate(
                         PlayerRoute(
                             itemId = extraId.toString(),
-                            itemKind = BaseItemKind.MOVIE.serialName,
+                            itemKind = ItemKind.MOVIE.serialName,
                         )
                     )
                 },
@@ -408,7 +408,7 @@ private fun EntryProviderScope<NavKey>.tvEntries(
                     navigate(
                         PlayerRoute(
                             itemId = itemId.toString(),
-                            itemKind = BaseItemKind.SERIES.serialName,
+                            itemKind = ItemKind.SERIES.serialName,
                             shuffle = shuffle,
                         )
                     )
