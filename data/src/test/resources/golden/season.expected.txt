@@ -1,0 +1,29 @@
+FindroidSeason(
+  id = 8a277688-abfa-96c7-e4ca-ce0d9435e3a5
+  name = "Season 1"
+  seriesId = 332758e9-c2da-4fb5-cf9f-7e1efffc9d37
+  seriesName = "Breaking Bad"
+  originalTitle = null
+  overview = "High school chemistry teacher Walter White's life is suddenly transformed by a dire medical diagnosis. Street-savvy former student Jesse Pinkman \"teaches\" Walter a new trade."
+  sources = []
+  indexNumber = 1
+  episodes = []
+  played = false
+  favorite = false
+  canPlay = true
+  canDownload = false
+  runtimeTicks = 0
+  playbackPositionTicks = 0
+  unplayedItemCount = 6
+  images = FindroidImages(
+    primary = https://server.test/items/8a277688-abfa-96c7-e4ca-ce0d9435e3a5/Images/Primary?tag=ccb9a18fc47ebe16cb4e0d209f72be4d
+    backdrop = null
+    logo = null
+    showPrimary = https://server.test/items/332758e9-c2da-4fb5-cf9f-7e1efffc9d37/Images/Primary?tag=0eca0fbcf453d826f816496e2b6a98bf
+    showBackdrop = https://server.test/items/332758e9-c2da-4fb5-cf9f-7e1efffc9d37/Images/Backdrop/0?tag=0eca0fbcf453d826f816496e2b6a98bf
+    showLogo = https://server.test/items/332758e9-c2da-4fb5-cf9f-7e1efffc9d37/Images/Logo?tag=0eca0fbcf453d826f816496e2b6a98bf
+    thumb = null
+    showThumb = https://server.test/items/332758e9-c2da-4fb5-cf9f-7e1efffc9d37/Images/Thumb?tag=0eca0fbcf453d826f816496e2b6a98bf
+  )
+  chapters = []
+)

@@ -37,6 +37,12 @@ android {
 
 room3 { schemaDirectory("$projectDir/schemas") }
 
+// CE (#739): `-Dgolden.update=true` on the Gradle command line reaches the test JVM, so
+// ItemMapperGoldenTest can write its expected files instead of comparing with them.
+tasks.withType<Test>().configureEach {
+    systemProperty("golden.update", System.getProperty("golden.update") ?: "")
+}
+
 dependencies {
     implementation(projects.settings)
     implementation(libs.androidx.paging)

@@ -1,0 +1,177 @@
+{
+  "Name": "Season 1",
+  "ServerId": "a6ee16b34eb941e0bd5e81a3cef8d2d5",
+  "Id": "8a277688abfa96c7e4cace0d9435e3a5",
+  "Etag": "862a70162f1be678582b169f2bd0085d",
+  "DateCreated": "2026-11-11T08:30:03.8799828Z",
+  "DateLastMediaAdded": "0001-01-01T00:00:00.0000000Z",
+  "CanDelete": false,
+  "CanDownload": false,
+  "SortName": "0001",
+  "PremiereDate": "2008-01-20T00:00:00.0000000Z",
+  "ExternalUrls": [
+    {
+      "Name": "IMDb",
+      "Url": "https://www.imdb.com/title/tt0903747/episodes/?season=1"
+    },
+    {
+      "Name": "TMDB",
+      "Url": "https://www.themoviedb.org/tv/1396/season/1"
+    }
+  ],
+  "Path": "/media/shows-meta/Breaking Bad (2008)/Season 01",
+  "EnableMediaSourceDisplay": true,
+  "ChannelId": null,
+  "Overview": "High school chemistry teacher Walter White's life is suddenly transformed by a dire medical diagnosis. Street-savvy former student Jesse Pinkman \"teaches\" Walter a new trade.",
+  "Taglines": [],
+  "Genres": [],
+  "PlayAccess": "Full",
+  "ProductionYear": 2008,
+  "IndexNumber": 1,
+  "RemoteTrailers": [],
+  "ProviderIds": {
+    "Tmdb": "3572",
+    "Tvdb": "30272"
+  },
+  "IsFolder": true,
+  "ParentId": "332758e9c2da4fb5cf9f7e1efffc9d37",
+  "Type": "Season",
+  "People": [
+    {
+      "Name": "Bryan Cranston",
+      "Id": "2b105a4e9b3e22966ff094ee544581be",
+      "Role": "Walter White",
+      "Type": "Actor",
+      "PrimaryImageTag": "bc6478df8ed86888ec6f396c847f39b2",
+      "ImageBlurHashes": {
+        "Primary": {
+          "bc6478df8ed86888ec6f396c847f39b2": "dI9@SE%M0KIU#%n$OZS5ENR*xCt6E1WC%Ls:M_axxbkD"
+        }
+      }
+    },
+    {
+      "Name": "Aaron Paul",
+      "Id": "066de5f447b7bdef2b6f01339dd5f38b",
+      "Role": "Jesse Pinkman",
+      "Type": "Actor",
+      "PrimaryImageTag": "86c63330492d64781ed635af5bb9dd17",
+      "ImageBlurHashes": {
+        "Primary": {
+          "86c63330492d64781ed635af5bb9dd17": "dVF4l@=|0#9u^QxaNHNGEMNHsms:EMNHofs:EMR*$*s:"
+        }
+      }
+    },
+    {
+      "Name": "Anna Gunn",
+      "Id": "e45fd53ea1ab52c4da78be255a744c38",
+      "Role": "Skyler White",
+      "Type": "Actor",
+      "PrimaryImageTag": "3c3dbb2d2d27b0c908e9ba699696e3b1",
+      "ImageBlurHashes": {
+        "Primary": {
+          "3c3dbb2d2d27b0c908e9ba699696e3b1": "dlN]qb-p?v?b~qRjXnozcFs:r=t7tRf,xat7%gbbRkt6"
+        }
+      }
+    },
+    {
+      "Name": "RJ Mitte",
+      "Id": "35d51118e960a90f9924fe4ca7c8c138",
+      "Role": "Walter White Jr.",
+      "Type": "Actor",
+      "PrimaryImageTag": "ce5af31ec0cd5dc14612c29088ff5277",
+      "ImageBlurHashes": {
+        "Primary": {
+          "ce5af31ec0cd5dc14612c29088ff5277": "dgIha4M|%~%g~qoftRtRJ8xuwcoz.8flxuxu%NWBo0of"
+        }
+      }
+    },
+    {
+      "Name": "Dean Norris",
+      "Id": "0b7c36038d34556440de095e2af58357",
+      "Role": "Hank Schrader",
+      "Type": "Actor",
+      "PrimaryImageTag": "5e02dd2d0d1afa2276bb536c90448474",
+      "ImageBlurHashes": {
+        "Primary": {
+          "5e02dd2d0d1afa2276bb536c90448474": "djH1iKxa0ebb+@s:T0W;Ndoft6WBNyRjn$t7M_R*ogV@"
+        }
+      }
+    },
+    {
+      "Name": "Betsy Brandt",
+      "Id": "e90475c8744d2c60d4d85d580c27734a",
+      "Role": "Marie Schrader",
+      "Type": "Actor",
+      "PrimaryImageTag": "d8994cbb7646665f6e7377d1b79aa547",
+      "ImageBlurHashes": {
+        "Primary": {
+          "d8994cbb7646665f6e7377d1b79aa547": "dZCrs9s:0fRkxtj[Rkay9uWV-VofNHays:j[NGayxaof"
+        }
+      }
+    },
+    {
+      "Name": "Karen Moore",
+      "Id": "dd3238dc276972e6e55ebf625c6975ae",
+      "Role": "Producer",
+      "Type": "Producer",
+      "ImageBlurHashes": {
+        "Primary": {}
+      }
+    }
+  ],
+  "Studios": [],
+  "GenreItems": [],
+  "ParentLogoItemId": "332758e9c2da4fb5cf9f7e1efffc9d37",
+  "ParentBackdropItemId": "332758e9c2da4fb5cf9f7e1efffc9d37",
+  "ParentBackdropImageTags": [
+    "0eca0fbcf453d826f816496e2b6a98bf"
+  ],
+  "LocalTrailerCount": 0,
+  "UserData": {
+    "PlayedPercentage": 14.285714285714285,
+    "UnplayedItemCount": 6,
+    "PlaybackPositionTicks": 0,
+    "PlayCount": 0,
+    "IsFavorite": false,
+    "Played": false,
+    "Key": "81189001",
+    "ItemId": "8a277688abfa96c7e4cace0d9435e3a5"
+  },
+  "RecursiveItemCount": 7,
+  "ChildCount": 7,
+  "SeriesName": "Breaking Bad",
+  "SeriesId": "332758e9c2da4fb5cf9f7e1efffc9d37",
+  "SpecialFeatureCount": 0,
+  "DisplayPreferencesId": "dfd065f5787fb957a750d76dcf835aad",
+  "Tags": [],
+  "PrimaryImageAspectRatio": 0.6666666666666666,
+  "SeriesPrimaryImageTag": "0eca0fbcf453d826f816496e2b6a98bf",
+  "ImageTags": {
+    "Primary": "ccb9a18fc47ebe16cb4e0d209f72be4d"
+  },
+  "BackdropImageTags": [],
+  "ParentLogoImageTag": "0eca0fbcf453d826f816496e2b6a98bf",
+  "ImageBlurHashes": {
+    "Primary": {
+      "ccb9a18fc47ebe16cb4e0d209f72be4d": "dvIY^8t7R.tS0%M{WBR-%2s.nhWBxasnV@WBNGbbbIWC",
+      "0eca0fbcf453d826f816496e2b6a98bf": "dC9j=Fxt02M|_KawD*ohIHaxjEj]9Iai-ooH8_Mz?a%J"
+    },
+    "Logo": {
+      "0eca0fbcf453d826f816496e2b6a98bf": "WGDT6GXQ4njI%Mj[?boz?utQV[M{IUxbR%t7WBWB00xbIBWBR%t7"
+    },
+    "Thumb": {
+      "0eca0fbcf453d826f816496e2b6a98bf": "WLFrnkEnE1-N9i-mx]%2NGt7aeR+02R4%2be%0NG4oROafM}xWNH"
+    },
+    "Backdrop": {
+      "0eca0fbcf453d826f816496e2b6a98bf": "WSF?C5tRs8%fkVnhUH-:%Ls:ofoz9|tQN{WBt6xuIVIpe-WER-Rk"
+    }
+  },
+  "SeriesStudio": "AMC",
+  "ParentThumbItemId": "332758e9c2da4fb5cf9f7e1efffc9d37",
+  "ParentThumbImageTag": "0eca0fbcf453d826f816496e2b6a98bf",
+  "Chapters": [],
+  "LocationType": "FileSystem",
+  "MediaType": "Unknown",
+  "LockedFields": [],
+  "LockData": false
+}

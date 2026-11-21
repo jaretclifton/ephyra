@@ -1,0 +1,109 @@
+FindroidMovie(
+  id = e1efa999-9944-2ea3-7876-ddc6c8a83a2c
+  name = "Beach"
+  originalTitle = null
+  overview = ""
+  sources = [
+    - FindroidSource(
+        id = "e1efa99999442ea37876ddc6c8a83a2c"
+        name = "Beach"
+        type = REMOTE
+        path = ""
+        size = 1600714
+        mediaStreams = [
+          - FindroidMediaStream(
+              title = ""
+              displayTitle = "360p H264 SDR"
+              language = ""
+              type = VIDEO
+              codec = "h264"
+              profile = "High"
+              isExternal = false
+              path = null
+              channelLayout = null
+              videoRangeType = SDR
+              height = 360
+              width = 640
+              videoDoViTitle = null
+              bitRate = 234530
+              frameRate = 24.0
+              bitDepth = 8
+              sampleRate = null
+              index = 0
+              channels = null
+              deliveryMethod = null
+              isForced = false
+              isDefault = false
+            )
+          - FindroidMediaStream(
+              title = ""
+              displayTitle = "AAC - Mono"
+              language = ""
+              type = AUDIO
+              codec = "aac"
+              profile = "LC"
+              isExternal = false
+              path = null
+              channelLayout = "mono"
+              videoRangeType = UNKNOWN
+              height = null
+              width = null
+              videoDoViTitle = null
+              bitRate = 192000
+              frameRate = null
+              bitDepth = null
+              sampleRate = 44100
+              index = 1
+              channels = 1
+              deliveryMethod = null
+              isForced = false
+              isDefault = false
+            )
+        ]
+        downloadId = null
+        transcoded = false
+        container = "mkv"
+        bitrate = 426530
+        defaultAudioStreamIndex = 1
+        playSessionId = null
+      )
+  ]
+  played = false
+  favorite = false
+  canPlay = true
+  canDownload = false
+  runtimeTicks = 300230000
+  playbackPositionTicks = 0
+  premiereDate = null
+  people = []
+  genres = []
+  communityRating = null
+  officialRating = null
+  status = "Ended"
+  productionYear = null
+  endDate = null
+  trailer = null
+  unplayedItemCount = null
+  lastPlayedDate = null
+  trailers = []
+  tagline = null
+  criticRating = null
+  studios = []
+  externalLinks = []
+  playCount = 0
+  is3D = false
+  localTrailerCount = 0
+  specialFeatureCount = 0
+  images = FindroidImages(
+    primary = https://server.test/items/e1efa999-9944-2ea3-7876-ddc6c8a83a2c/Images/Primary?tag=4d10c0a1b128a2fb05549708b08e2238
+    backdrop = null
+    logo = null
+    showPrimary = null
+    showBackdrop = null
+    showLogo = null
+    thumb = null
+    showThumb = null
+  )
+  chapters = []
+  trickplayInfo = {}
+)

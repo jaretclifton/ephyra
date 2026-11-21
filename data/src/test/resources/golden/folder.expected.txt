@@ -1,0 +1,25 @@
+FindroidFolder(
+  id = 4de4d158-9383-9bb7-d374-aec04586dbe1
+  name = "Garden"
+  originalTitle = null
+  overview = ""
+  played = false
+  favorite = false
+  canPlay = false
+  canDownload = false
+  sources = []
+  runtimeTicks = 0
+  playbackPositionTicks = 0
+  unplayedItemCount = null
+  images = FindroidImages(
+    primary = https://server.test/items/4de4d158-9383-9bb7-d374-aec04586dbe1/Images/Primary?tag=a02c116adb1c586da21a7bf8fcb59195
+    backdrop = null
+    logo = null
+    showPrimary = null
+    showBackdrop = null
+    showLogo = null
+    thumb = null
+    showThumb = null
+  )
+  chapters = []
+)

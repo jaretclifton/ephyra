@@ -1,0 +1,391 @@
+{
+  "Name": "Breaking Bad",
+  "OriginalTitle": "Breaking Bad",
+  "ServerId": "a6ee16b34eb941e0bd5e81a3cef8d2d5",
+  "Id": "332758e9c2da4fb5cf9f7e1efffc9d37",
+  "Etag": "cf02f7a0a7c61515182d2b155acfd094",
+  "DateCreated": "2026-11-11T08:30:03.8143816Z",
+  "DateLastMediaAdded": "2026-11-11T08:30:00.7840745Z",
+  "CanDelete": false,
+  "CanDownload": false,
+  "SortName": "breaking bad",
+  "PremiereDate": "2008-01-20T00:00:00.0000000Z",
+  "ExternalUrls": [
+    {
+      "Name": "IMDb",
+      "Url": "https://www.imdb.com/title/tt0903747"
+    },
+    {
+      "Name": "TMDB",
+      "Url": "https://www.themoviedb.org/tv/1396"
+    }
+  ],
+  "CriticRating": 96,
+  "Path": "/media/shows-meta/Breaking Bad (2008)",
+  "EnableMediaSourceDisplay": true,
+  "OfficialRating": "TV-MA",
+  "ChannelId": null,
+  "Overview": "Walter White, a New Mexico chemistry teacher, is diagnosed with Stage III cancer and given a prognosis of only two years left to live. He becomes filled with a sense of fearlessness and an unrelenting desire to secure his family's financial future at any cost as he enters the dangerous world of drugs and crime.",
+  "Taglines": [],
+  "Genres": [
+    "Drama",
+    "Crime"
+  ],
+  "CommunityRating": 8.959,
+  "CumulativeRunTimeTicks": 0,
+  "RunTimeTicks": 0,
+  "PlayAccess": "Full",
+  "ProductionYear": 2008,
+  "RemoteTrailers": [
+    {
+      "Url": "https://www.youtube.com/watch?v=VFkjBy2b50Q",
+      "Name": "Breaking Bad - Full Series Trailer"
+    }
+  ],
+  "ProviderIds": {
+    "Imdb": "tt0903747",
+    "Tmdb": "1396",
+    "TvRage": "18164",
+    "Tvdb": "81189"
+  },
+  "IsFolder": true,
+  "ParentId": "044507980231202f073287ce736b2fe6",
+  "Type": "Series",
+  "People": [
+    {
+      "Name": "Bryan Cranston",
+      "Id": "2b105a4e9b3e22966ff094ee544581be",
+      "Role": "Walter White",
+      "Type": "Actor",
+      "PrimaryImageTag": "bc6478df8ed86888ec6f396c847f39b2",
+      "ImageBlurHashes": {
+        "Primary": {
+          "bc6478df8ed86888ec6f396c847f39b2": "dI9@SE%M0KIU#%n$OZS5ENR*xCt6E1WC%Ls:M_axxbkD"
+        }
+      }
+    },
+    {
+      "Name": "Aaron Paul",
+      "Id": "066de5f447b7bdef2b6f01339dd5f38b",
+      "Role": "Jesse Pinkman",
+      "Type": "Actor",
+      "PrimaryImageTag": "86c63330492d64781ed635af5bb9dd17",
+      "ImageBlurHashes": {
+        "Primary": {
+          "86c63330492d64781ed635af5bb9dd17": "dVF4l@=|0#9u^QxaNHNGEMNHsms:EMNHofs:EMR*$*s:"
+        }
+      }
+    },
+    {
+      "Name": "Anna Gunn",
+      "Id": "e45fd53ea1ab52c4da78be255a744c38",
+      "Role": "Skyler White",
+      "Type": "Actor",
+      "PrimaryImageTag": "3c3dbb2d2d27b0c908e9ba699696e3b1",
+      "ImageBlurHashes": {
+        "Primary": {
+          "3c3dbb2d2d27b0c908e9ba699696e3b1": "dlN]qb-p?v?b~qRjXnozcFs:r=t7tRf,xat7%gbbRkt6"
+        }
+      }
+    },
+    {
+      "Name": "RJ Mitte",
+      "Id": "35d51118e960a90f9924fe4ca7c8c138",
+      "Role": "Walter White Jr.",
+      "Type": "Actor",
+      "PrimaryImageTag": "ce5af31ec0cd5dc14612c29088ff5277",
+      "ImageBlurHashes": {
+        "Primary": {
+          "ce5af31ec0cd5dc14612c29088ff5277": "dgIha4M|%~%g~qoftRtRJ8xuwcoz.8flxuxu%NWBo0of"
+        }
+      }
+    },
+    {
+      "Name": "Dean Norris",
+      "Id": "0b7c36038d34556440de095e2af58357",
+      "Role": "Hank Schrader",
+      "Type": "Actor",
+      "PrimaryImageTag": "5e02dd2d0d1afa2276bb536c90448474",
+      "ImageBlurHashes": {
+        "Primary": {
+          "5e02dd2d0d1afa2276bb536c90448474": "djH1iKxa0ebb+@s:T0W;Ndoft6WBNyRjn$t7M_R*ogV@"
+        }
+      }
+    },
+    {
+      "Name": "Betsy Brandt",
+      "Id": "e90475c8744d2c60d4d85d580c27734a",
+      "Role": "Marie Schrader",
+      "Type": "Actor",
+      "PrimaryImageTag": "d8994cbb7646665f6e7377d1b79aa547",
+      "ImageBlurHashes": {
+        "Primary": {
+          "d8994cbb7646665f6e7377d1b79aa547": "dZCrs9s:0fRkxtj[Rkay9uWV-VofNHays:j[NGayxaof"
+        }
+      }
+    },
+    {
+      "Name": "Giancarlo Esposito",
+      "Id": "51ac62e86a00b3eedbd9f50b07221ebb",
+      "Role": "Gustavo Fring",
+      "Type": "Actor",
+      "PrimaryImageTag": "ba2a1e1914769e4666616f5864b7c38a",
+      "ImageBlurHashes": {
+        "Primary": {
+          "ba2a1e1914769e4666616f5864b7c38a": "dHB3Qg9t9t~C-UbbNbn$EhxGn$NbE2xt%2IoIot7$*Io"
+        }
+      }
+    },
+    {
+      "Name": "Bob Odenkirk",
+      "Id": "33cec6f5d2b2e4e404c78ec138ca2f96",
+      "Role": "Saul Goodman",
+      "Type": "Actor",
+      "PrimaryImageTag": "75a935dd6edb5a1b1d95e69b041d0de0",
+      "ImageBlurHashes": {
+        "Primary": {
+          "75a935dd6edb5a1b1d95e69b041d0de0": "dUCF#DWC0ft7%1oeNHRkE2oe%2R*Ipayt7s:RkWVs:oL"
+        }
+      }
+    },
+    {
+      "Name": "Steven Michael Quezada",
+      "Id": "729c0628bee2bb7e96e07f12c8a061b1",
+      "Role": "Steven Gomez",
+      "Type": "Actor",
+      "PrimaryImageTag": "e1cc3099f55aaf8246e974c2ea42fd39",
+      "ImageBlurHashes": {
+        "Primary": {
+          "e1cc3099f55aaf8246e974c2ea42fd39": "dICYm?WBE2xZ}@n%Nxt7EMs;V@WBEMbHw^WBM{WB-oof"
+        }
+      }
+    },
+    {
+      "Name": "Jonathan Banks",
+      "Id": "cdb16c341e0c26099cafb219a740d91c",
+      "Role": "Mike Ehrmantraut",
+      "Type": "Actor",
+      "PrimaryImageTag": "af40d6eaa6c1e8ce80c86f82a926e8cd",
+      "ImageBlurHashes": {
+        "Primary": {
+          "af40d6eaa6c1e8ce80c86f82a926e8cd": "d+Kmz:xa0LWBZ$oetlWWbvWCRjWVSha}V[WBM{jstQof"
+        }
+      }
+    },
+    {
+      "Name": "Aaron Hill",
+      "Id": "582d788e7f843850b614e742ad54596b",
+      "Role": "Jock",
+      "Type": "Actor",
+      "PrimaryImageTag": "fbedc3461cee4d31de5900958ec6b406",
+      "ImageBlurHashes": {
+        "Primary": {
+          "fbedc3461cee4d31de5900958ec6b406": "dQD8^2%10fIp^jR*E2xZ57Ip%2%1E1t6-oNGNGxaxtNG"
+        }
+      }
+    },
+    {
+      "Name": "Harry Groener",
+      "Id": "0458fc68dc8295240a6d0429871fe301",
+      "Role": "Dr. Chavez",
+      "Type": "Actor",
+      "PrimaryImageTag": "4f9f2671d695354469bcfd1a467a8f91",
+      "ImageBlurHashes": {
+        "Primary": {
+          "4f9f2671d695354469bcfd1a467a8f91": "dNDuxs-U0eNI-R%MX8IokXNGRis;NGRkWCWBRkWVaybI"
+        }
+      }
+    },
+    {
+      "Name": "Gregory Chase",
+      "Id": "1d3ae94d8f3a0d99c2a818418011f2b6",
+      "Role": "Dr. Belknap",
+      "Type": "Actor",
+      "PrimaryImageTag": "33090f17b3c5adfcd0429f155f607dc9",
+      "ImageBlurHashes": {
+        "Primary": {
+          "33090f17b3c5adfcd0429f155f607dc9": "dpJGyi~WXmELR5RiRjbGXSt7ozoyRPRiNGR*R+WBeojZ"
+        }
+      }
+    },
+    {
+      "Name": "Kyle Bornheimer",
+      "Id": "6e0b3161cad5540db5743df6a238bf8e",
+      "Role": "Ken Wins",
+      "Type": "Actor",
+      "PrimaryImageTag": "704c8cb0170d37a0a33e3795b399d909",
+      "ImageBlurHashes": {
+        "Primary": {
+          "704c8cb0170d37a0a33e3795b399d909": "dOKTPg~WG]%#^+og-;%10~M{niNHyXtR?bxux]jZ-ooz"
+        }
+      }
+    },
+    {
+      "Name": "Max Arciniega",
+      "Id": "a2b9b148523bf3c69fc8da0c66a4a605",
+      "Role": "Krazy-8",
+      "Type": "Actor",
+      "PrimaryImageTag": "ad608de5fb3cb374e52f909a38db7626",
+      "ImageBlurHashes": {
+        "Primary": {
+          "ad608de5fb3cb374e52f909a38db7626": "dJFYu[i{E+.8~W%2o~%M0LM{?GofT1RlxZofxuxu%Mxu"
+        }
+      }
+    },
+    {
+      "Name": "Diane Mercer",
+      "Id": "91be4d481709c27473ccedbbf0be0175",
+      "Role": "Producer",
+      "Type": "Producer",
+      "PrimaryImageTag": "489f780f1e0006c8e304f521a359674b",
+      "ImageBlurHashes": {
+        "Primary": {
+          "489f780f1e0006c8e304f521a359674b": "dJB.o%-p0zE1-VxaNGNG0#Rk-Us;I:R*s:t7RjWBoeof"
+        }
+      }
+    },
+    {
+      "Name": "Bryan Cranston",
+      "Id": "2b105a4e9b3e22966ff094ee544581be",
+      "Role": "Producer",
+      "Type": "Producer",
+      "PrimaryImageTag": "bc6478df8ed86888ec6f396c847f39b2",
+      "ImageBlurHashes": {
+        "Primary": {
+          "bc6478df8ed86888ec6f396c847f39b2": "dI9@SE%M0KIU#%n$OZS5ENR*xCt6E1WC%Ls:M_axxbkD"
+        }
+      }
+    },
+    {
+      "Name": "Stewart Lyons",
+      "Id": "f34d59dbf8a3be52ef65b8384e1807e0",
+      "Role": "Producer",
+      "Type": "Producer",
+      "PrimaryImageTag": "68a82d8ccf11ac6a46a0e5565ec1a50a",
+      "ImageBlurHashes": {
+        "Primary": {
+          "68a82d8ccf11ac6a46a0e5565ec1a50a": "dA9ZG@=y5l9^}@xZI;I;9]Na$N$i5lNa$j$%I;R*xas:"
+        }
+      }
+    },
+    {
+      "Name": "Vince Gilligan",
+      "Id": "2e027b2e897f62d5f1bda4fb7b04f1dd",
+      "Role": "",
+      "Type": "Creator",
+      "PrimaryImageTag": "86e78915020ae54285d29a6123c37310",
+      "ImageBlurHashes": {
+        "Primary": {
+          "86e78915020ae54285d29a6123c37310": "dhLqRx%3%#%g~p%3.8xuELt7MxWA-;xbV[WB-;t7xvxu"
+        }
+      }
+    }
+  ],
+  "Studios": [
+    {
+      "Name": "AMC",
+      "Id": "072771d94e42aaf0e27a71f474a6482f"
+    },
+    {
+      "Name": "Sony Pictures Television",
+      "Id": "4a0482808d7623ba454eafb859e08b33"
+    },
+    {
+      "Name": "High Bridge Productions",
+      "Id": "4118172db3451904f3869b7d18fef235"
+    },
+    {
+      "Name": "Gran Via Productions",
+      "Id": "ecc5cb17bfaf15f36add0198b15757f5"
+    }
+  ],
+  "GenreItems": [
+    {
+      "Name": "Drama",
+      "Id": "090eac6e9de4fe1fbc194e5b96691277"
+    },
+    {
+      "Name": "Crime",
+      "Id": "83a9dab21914792744c8fb23b9925dc6"
+    }
+  ],
+  "LocalTrailerCount": 0,
+  "UserData": {
+    "PlayedPercentage": 5,
+    "UnplayedItemCount": 19,
+    "PlaybackPositionTicks": 0,
+    "PlayCount": 0,
+    "IsFavorite": false,
+    "Played": false,
+    "Key": "81189",
+    "ItemId": "332758e9c2da4fb5cf9f7e1efffc9d37"
+  },
+  "RecursiveItemCount": 20,
+  "ChildCount": 2,
+  "SpecialFeatureCount": 0,
+  "DisplayPreferencesId": "f63033ff6886ecc7083a696cbeced1b0",
+  "Status": "Ended",
+  "AirDays": [],
+  "Tags": [
+    "new mexico",
+    "drug dealer",
+    "narcissism",
+    "psychopath",
+    "terminal illness",
+    "outlaw",
+    "dark comedy",
+    "cancer",
+    "tragedy",
+    "drugs",
+    "criminal",
+    "meth lab",
+    "drug lord",
+    "high school teacher",
+    "dea agent",
+    "neo-western",
+    "albuquerque, new mexico",
+    "criminal lawyer",
+    "fall from grace",
+    "cartel",
+    "mexican cartel",
+    "male egos",
+    "crystal meth",
+    "dark",
+    "methamphetamine",
+    "thriller",
+    "celebratory",
+    "violent",
+    "tortured genius",
+    "наркота"
+  ],
+  "PrimaryImageAspectRatio": 0.6666666666666666,
+  "ImageTags": {
+    "Primary": "0eca0fbcf453d826f816496e2b6a98bf",
+    "Logo": "0eca0fbcf453d826f816496e2b6a98bf",
+    "Thumb": "0eca0fbcf453d826f816496e2b6a98bf"
+  },
+  "BackdropImageTags": [
+    "0eca0fbcf453d826f816496e2b6a98bf"
+  ],
+  "ImageBlurHashes": {
+    "Backdrop": {
+      "0eca0fbcf453d826f816496e2b6a98bf": "WSF?C5tRs8%fkVnhUH-:%Ls:ofoz9|tQN{WBt6xuIVIpe-WER-Rk"
+    },
+    "Primary": {
+      "0eca0fbcf453d826f816496e2b6a98bf": "dC9j=Fxt02M|_KawD*ohIHaxjEj]9Iai-ooH8_Mz?a%J"
+    },
+    "Logo": {
+      "0eca0fbcf453d826f816496e2b6a98bf": "WGDT6GXQ4njI%Mj[?boz?utQV[M{IUxbR%t7WBWB00xbIBWBR%t7"
+    },
+    "Thumb": {
+      "0eca0fbcf453d826f816496e2b6a98bf": "WLFrnkEnE1-N9i-mx]%2NGt7aeR+02R4%2be%0NG4oROafM}xWNH"
+    }
+  },
+  "Chapters": [],
+  "LocationType": "FileSystem",
+  "MediaType": "Unknown",
+  "EndDate": "2013-09-29T00:00:00.0000000Z",
+  "LockedFields": [],
+  "LockData": false,
+  "OriginalLanguage": "en"
+}

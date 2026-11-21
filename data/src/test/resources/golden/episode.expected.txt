@@ -1,0 +1,344 @@
+FindroidEpisode(
+  id = 4e38ea74-3dcd-9230-7b5a-9b05e5d57312
+  name = "Pilot"
+  originalTitle = null
+  overview = "When an unassuming high school chemistry teacher discovers he has a rare form of lung cancer, he decides to team up with a former student and create a top of the line crystal meth in a used RV, to provide for his family once he is gone."
+  indexNumber = 1
+  indexNumberEnd = null
+  parentIndexNumber = 1
+  sources = [
+    - FindroidSource(
+        id = "4e38ea743dcd92307b5a9b05e5d57312"
+        name = "Breaking Bad (2008) - S01E1"
+        type = REMOTE
+        path = ""
+        size = 6423959
+        mediaStreams = [
+          - FindroidMediaStream(
+              title = ""
+              displayTitle = "360p H264 SDR"
+              language = ""
+              type = VIDEO
+              codec = "h264"
+              profile = "High"
+              isExternal = false
+              path = null
+              channelLayout = null
+              videoRangeType = SDR
+              height = 360
+              width = 640
+              videoDoViTitle = null
+              bitRate = 236181
+              frameRate = 24.0
+              bitDepth = 8
+              sampleRate = null
+              index = 0
+              channels = null
+              deliveryMethod = null
+              isForced = false
+              isDefault = false
+            )
+          - FindroidMediaStream(
+              title = ""
+              displayTitle = "AAC - Mono"
+              language = ""
+              type = AUDIO
+              codec = "aac"
+              profile = "LC"
+              isExternal = false
+              path = null
+              channelLayout = "mono"
+              videoRangeType = UNKNOWN
+              height = null
+              width = null
+              videoDoViTitle = null
+              bitRate = 192000
+              frameRate = null
+              bitDepth = null
+              sampleRate = 44100
+              index = 1
+              channels = 1
+              deliveryMethod = null
+              isForced = false
+              isDefault = false
+            )
+        ]
+        downloadId = null
+        transcoded = false
+        container = "mkv"
+        bitrate = 428181
+        defaultAudioStreamIndex = 1
+        playSessionId = null
+      )
+  ]
+  played = true
+  favorite = false
+  canPlay = true
+  canDownload = true
+  runtimeTicks = 1200230000
+  playbackPositionTicks = 0
+  premiereDate = 2008-01-20T00:00
+  seriesId = 332758e9-c2da-4fb5-cf9f-7e1efffc9d37
+  seriesName = "Breaking Bad"
+  seasonId = 8a277688-abfa-96c7-e4ca-ce0d9435e3a5
+  seasonName = "Season 1"
+  communityRating = 8.497
+  people = [
+    - FindroidItemPerson(
+        id = 2b105a4e-9b3e-2296-6ff0-94ee544581be
+        name = "Bryan Cranston"
+        type = ACTOR
+        role = "Walter White"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/2b105a4e-9b3e-2296-6ff0-94ee544581be/Images/Primary?tag=bc6478df8ed86888ec6f396c847f39b2
+          blurHash = "dI9@SE%M0KIU#%n$OZS5ENR*xCt6E1WC%Ls:M_axxbkD"
+        )
+      )
+    - FindroidItemPerson(
+        id = 066de5f4-47b7-bdef-2b6f-01339dd5f38b
+        name = "Aaron Paul"
+        type = ACTOR
+        role = "Jesse Pinkman"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/066de5f4-47b7-bdef-2b6f-01339dd5f38b/Images/Primary?tag=86c63330492d64781ed635af5bb9dd17
+          blurHash = "dVF4l@=|0#9u^QxaNHNGEMNHsms:EMNHofs:EMR*$*s:"
+        )
+      )
+    - FindroidItemPerson(
+        id = e45fd53e-a1ab-52c4-da78-be255a744c38
+        name = "Anna Gunn"
+        type = ACTOR
+        role = "Skyler White"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/e45fd53e-a1ab-52c4-da78-be255a744c38/Images/Primary?tag=3c3dbb2d2d27b0c908e9ba699696e3b1
+          blurHash = "dlN]qb-p?v?b~qRjXnozcFs:r=t7tRf,xat7%gbbRkt6"
+        )
+      )
+    - FindroidItemPerson(
+        id = 35d51118-e960-a90f-9924-fe4ca7c8c138
+        name = "RJ Mitte"
+        type = ACTOR
+        role = "Walter White Jr."
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/35d51118-e960-a90f-9924-fe4ca7c8c138/Images/Primary?tag=ce5af31ec0cd5dc14612c29088ff5277
+          blurHash = "dgIha4M|%~%g~qoftRtRJ8xuwcoz.8flxuxu%NWBo0of"
+        )
+      )
+    - FindroidItemPerson(
+        id = 0b7c3603-8d34-5564-40de-095e2af58357
+        name = "Dean Norris"
+        type = ACTOR
+        role = "Hank Schrader"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/0b7c3603-8d34-5564-40de-095e2af58357/Images/Primary?tag=5e02dd2d0d1afa2276bb536c90448474
+          blurHash = "djH1iKxa0ebb+@s:T0W;Ndoft6WBNyRjn$t7M_R*ogV@"
+        )
+      )
+    - FindroidItemPerson(
+        id = e90475c8-744d-2c60-d4d8-5d580c27734a
+        name = "Betsy Brandt"
+        type = ACTOR
+        role = "Marie Schrader"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/e90475c8-744d-2c60-d4d8-5d580c27734a/Images/Primary?tag=d8994cbb7646665f6e7377d1b79aa547
+          blurHash = "dZCrs9s:0fRkxtj[Rkay9uWV-VofNHays:j[NGayxaof"
+        )
+      )
+    - FindroidItemPerson(
+        id = 729c0628-bee2-bb7e-96e0-7f12c8a061b1
+        name = "Steven Michael Quezada"
+        type = GUEST_STAR
+        role = "Steven Gomez"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/729c0628-bee2-bb7e-96e0-7f12c8a061b1/Images/Primary?tag=e1cc3099f55aaf8246e974c2ea42fd39
+          blurHash = "dICYm?WBE2xZ}@n%Nxt7EMs;V@WBEMbHw^WBM{WB-oof"
+        )
+      )
+    - FindroidItemPerson(
+        id = 582d788e-7f84-3850-b614-e742ad54596b
+        name = "Aaron Hill"
+        type = GUEST_STAR
+        role = "Jock"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/582d788e-7f84-3850-b614-e742ad54596b/Images/Primary?tag=fbedc3461cee4d31de5900958ec6b406
+          blurHash = "dQD8^2%10fIp^jR*E2xZ57Ip%2%1E1t6-oNGNGxaxtNG"
+        )
+      )
+    - FindroidItemPerson(
+        id = 1d3ae94d-8f3a-0d99-c2a8-18418011f2b6
+        name = "Gregory Chase"
+        type = GUEST_STAR
+        role = "Dr. Belknap"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/1d3ae94d-8f3a-0d99-c2a8-18418011f2b6/Images/Primary?tag=33090f17b3c5adfcd0429f155f607dc9
+          blurHash = "dpJGyi~WXmELR5RiRjbGXSt7ozoyRPRiNGR*R+WBeojZ"
+        )
+      )
+    - FindroidItemPerson(
+        id = a2b9b148-523b-f3c6-9fc8-da0c66a4a605
+        name = "Max Arciniega"
+        type = GUEST_STAR
+        role = "Krazy-8"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/a2b9b148-523b-f3c6-9fc8-da0c66a4a605/Images/Primary?tag=ad608de5fb3cb374e52f909a38db7626
+          blurHash = "dJFYu[i{E+.8~W%2o~%M0LM{?GofT1RlxZofxuxu%Mxu"
+        )
+      )
+    - FindroidItemPerson(
+        id = a980d203-4d6a-b677-53da-e9856b9899e5
+        name = "Marius Stan"
+        type = GUEST_STAR
+        role = "Bogdan Wolynetz"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/a980d203-4d6a-b677-53da-e9856b9899e5/Images/Primary?tag=1050970ea5431703227d2ac40ee3e890
+          blurHash = "dSGH}6Ri5S%L~ARQJUoK9tbIr=RjS2tQs.ozoIkDj[oJ"
+        )
+      )
+    - FindroidItemPerson(
+        id = a5cfc0b1-6b71-4c28-cf32-3b673139993b
+        name = "Carmen Serano"
+        type = GUEST_STAR
+        role = "Carmen Molina"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/a5cfc0b1-6b71-4c28-cf32-3b673139993b/Images/Primary?tag=be0d9cf2090b016ba7c029f91c0e427c
+          blurHash = "dfI|,aXS0f-TEgxGD*D*V[f*-oxuIoRjxat7E2s.kBRk"
+        )
+      )
+    - FindroidItemPerson(
+        id = f1bb599f-3714-0f7b-c33e-e29c949287b6
+        name = "Roberta Marquez Seret"
+        type = GUEST_STAR
+        role = "Chad's Girlfriend"
+        image = FindroidItemPersonImage(
+          uri = null
+          blurHash = null
+        )
+      )
+    - FindroidItemPerson(
+        id = 0a2e1780-59ce-e101-731d-68b9c8a37c37
+        name = "Evan Bobrick"
+        type = GUEST_STAR
+        role = "Chad"
+        image = FindroidItemPersonImage(
+          uri = null
+          blurHash = null
+        )
+      )
+    - FindroidItemPerson(
+        id = 3298b18a-283f-ba2c-f0c8-6d08dafeb8c4
+        name = "Christopher Dempsey"
+        type = GUEST_STAR
+        role = "E.M.T"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/3298b18a-283f-ba2c-f0c8-6d08dafeb8c4/Images/Primary?tag=0238f736ec93a632aa7ba9ec8117db74
+          blurHash = "dOCiK{x^0}NG^kt8EfNG9sRj$*s:9tNFxGxaNHj]s.ae"
+        )
+      )
+    - FindroidItemPerson(
+        id = 0d38363a-8200-6d57-1321-4740c809be5f
+        name = "Allan Pacheco"
+        type = GUEST_STAR
+        role = "Irving"
+        image = FindroidItemPersonImage(
+          uri = null
+          blurHash = null
+        )
+      )
+    - FindroidItemPerson(
+        id = edf366d4-53d8-4510-cd8d-9656c158b8a5
+        name = "Jason Byrd"
+        type = GUEST_STAR
+        role = "Chemistry Student"
+        image = FindroidItemPersonImage(
+          uri = null
+          blurHash = null
+        )
+      )
+    - FindroidItemPerson(
+        id = bbc65e38-599e-34c9-1da5-3e143bbd2744
+        name = "Linda Speciale"
+        type = GUEST_STAR
+        role = "Sexy Neighbor"
+        image = FindroidItemPersonImage(
+          uri = null
+          blurHash = null
+        )
+      )
+    - FindroidItemPerson(
+        id = f07c9eb6-0160-a97f-6e58-d08c4a81efe0
+        name = "Jesús Ramírez"
+        type = GUEST_STAR
+        role = "Jock's Friend #1"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/f07c9eb6-0160-a97f-6e58-d08c4a81efe0/Images/Primary?tag=6677e1de6d8920c8330edcf8dc380b24
+          blurHash = "dIBDB7VqKQsmtRRinhof0JWEwHoz%3tSSiWAivt8ShRP"
+        )
+      )
+    - FindroidItemPerson(
+        id = 822718a2-dd97-834e-a607-f2b969774ee9
+        name = "Joshua S. Patton"
+        type = GUEST_STAR
+        role = "Jock's Friend #2"
+        image = FindroidItemPersonImage(
+          uri = null
+          blurHash = null
+        )
+      )
+    - FindroidItemPerson(
+        id = 2c52d1b2-170b-9fb1-9876-3074bf9dc267
+        name = "John Koyama"
+        type = GUEST_STAR
+        role = "Emilio Koyama"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/2c52d1b2-170b-9fb1-9876-3074bf9dc267/Images/Primary?tag=c46b3d002b97a5f3069859da828e89a4
+          blurHash = "dGB{Ms9aFyxYV@x[ax-U0#-o-ASh%MV@tQR+R*xtn%az"
+        )
+      )
+    - FindroidItemPerson(
+        id = 2e027b2e-897f-62d5-f1bd-a4fb7b04f1dd
+        name = "Vince Gilligan"
+        type = DIRECTOR
+        role = "Director"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/2e027b2e-897f-62d5-f1bd-a4fb7b04f1dd/Images/Primary?tag=86e78915020ae54285d29a6123c37310
+          blurHash = "dhLqRx%3%#%g~p%3.8xuELt7MxWA-;xbV[WB-;t7xvxu"
+        )
+      )
+    - FindroidItemPerson(
+        id = 2e027b2e-897f-62d5-f1bd-a4fb7b04f1dd
+        name = "Vince Gilligan"
+        type = WRITER
+        role = "Writer"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/2e027b2e-897f-62d5-f1bd-a4fb7b04f1dd/Images/Primary?tag=86e78915020ae54285d29a6123c37310
+          blurHash = "dhLqRx%3%#%g~p%3.8xuELt7MxWA-;xbV[WB-;t7xvxu"
+        )
+      )
+  ]
+  unplayedItemCount = null
+  missing = false
+  lastPlayedDate = 2026-11-12T21:15:05.370328500
+  externalLinks = [
+    - FindroidExternalLink(
+        name = "IMDb"
+        url = "https://www.imdb.com/title/tt0959621"
+      )
+    - FindroidExternalLink(
+        name = "TMDB"
+        url = "https://www.themoviedb.org/tv/1396/season/1/episode/1"
+      )
+  ]
+  playCount = 1
+  images = FindroidImages(
+    primary = https://server.test/items/4e38ea74-3dcd-9230-7b5a-9b05e5d57312/Images/Primary?tag=3aebb237c31e89f9664ecaa475dc4236
+    backdrop = null
+    logo = null
+    showPrimary = https://server.test/items/332758e9-c2da-4fb5-cf9f-7e1efffc9d37/Images/Primary?tag=0eca0fbcf453d826f816496e2b6a98bf
+    showBackdrop = https://server.test/items/332758e9-c2da-4fb5-cf9f-7e1efffc9d37/Images/Backdrop/0?tag=0eca0fbcf453d826f816496e2b6a98bf
+    showLogo = https://server.test/items/332758e9-c2da-4fb5-cf9f-7e1efffc9d37/Images/Logo?tag=0eca0fbcf453d826f816496e2b6a98bf
+    thumb = null
+    showThumb = https://server.test/items/332758e9-c2da-4fb5-cf9f-7e1efffc9d37/Images/Thumb?tag=0eca0fbcf453d826f816496e2b6a98bf
+  )
+  chapters = []
+  trickplayInfo = {}
+)

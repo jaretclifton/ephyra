@@ -1,0 +1,289 @@
+{
+  "Name": "The Test Movie",
+  "OriginalTitle": "Le Film de Test",
+  "ServerId": "00000000000000000000000000000001",
+  "Id": "aaaaaaaa-0000-0000-0000-000000000001",
+  "CanDelete": false,
+  "CanDownload": true,
+  "HasSubtitles": true,
+  "Container": "mkv",
+  "PremiereDate": "2021-05-14T00:00:00.0000000Z",
+  "CriticRating": 87,
+  "OfficialRating": "PG-13",
+  "CommunityRating": 7.6,
+  "RunTimeTicks": 72000000000,
+  "ProductionYear": 2021,
+  "IsFolder": false,
+  "Type": "Movie",
+  "Overview": "A test movie that exercises every mapper.",
+  "Taglines": [
+    "",
+    "  Everything is a test.  "
+  ],
+  "Genres": [
+    "Action",
+    "Drama"
+  ],
+  "PlayAccess": "Full",
+  "RemoteTrailers": [
+    {
+      "Url": "https://www.youtube.com/watch?v=aaaaaaaaaaa",
+      "Name": "Official Trailer"
+    },
+    {
+      "Url": "https://www.youtube.com/watch?v=aaaaaaaaaaa",
+      "Name": "Duplicate"
+    },
+    {
+      "Url": "https://www.youtube.com/watch?v=bbbbbbbbbbb"
+    },
+    {
+      "Url": "",
+      "Name": "Empty"
+    }
+  ],
+  "ProviderIds": {
+    "Imdb": "tt0000001",
+    "Tmdb": "1001"
+  },
+  "ExternalUrls": [
+    {
+      "Name": "IMDb",
+      "Url": "https://www.imdb.com/title/tt0000001"
+    },
+    {
+      "Name": "TheMovieDb",
+      "Url": "https://www.themoviedb.org/movie/1001"
+    },
+    {
+      "Name": "Ftp",
+      "Url": "ftp://example.test/not-a-web-url"
+    }
+  ],
+  "Video3DFormat": "HalfSideBySide",
+  "Studios": [
+    {
+      "Name": "Test Pictures",
+      "Id": "bbbbbbbb-0000-0000-0000-000000000001"
+    },
+    {
+      "Name": "Test Pictures",
+      "Id": "bbbbbbbb-0000-0000-0000-000000000002"
+    },
+    {
+      "Name": "",
+      "Id": "bbbbbbbb-0000-0000-0000-000000000003"
+    }
+  ],
+  "People": [
+    {
+      "Name": "Ada Actor",
+      "Id": "cccccccc-0000-0000-0000-000000000001",
+      "Role": "Lead",
+      "Type": "Actor",
+      "PrimaryImageTag": "pimg1",
+      "ImageBlurHashes": {
+        "Primary": {
+          "pimg1": "LKO2?U%2Tw=w]~RBVZRi};RPxuwH"
+        }
+      }
+    },
+    {
+      "Name": "Dan Director",
+      "Id": "cccccccc-0000-0000-0000-000000000002",
+      "Type": "Director"
+    }
+  ],
+  "LocalTrailerCount": 2,
+  "SpecialFeatureCount": 3,
+  "UserData": {
+    "PlaybackPositionTicks": 18000000000,
+    "PlayCount": 3,
+    "IsFavorite": true,
+    "LastPlayedDate": "2024-03-01T20:15:30.0000000Z",
+    "Played": false,
+    "Key": "1001",
+    "ItemId": "aaaaaaaa-0000-0000-0000-000000000001"
+  },
+  "Status": "Released",
+  "EndDate": "2022-01-01T00:00:00.0000000Z",
+  "ImageTags": {
+    "Primary": "ptag",
+    "Logo": "ltag"
+  },
+  "BackdropImageTags": [
+    "btag0",
+    "btag1"
+  ],
+  "Chapters": [
+    {
+      "StartPositionTicks": 0,
+      "Name": "Opening",
+      "ImageTag": "ch0",
+      "ImageDateModified": "0001-01-01T00:00:00.0000000Z"
+    },
+    {
+      "StartPositionTicks": 6000000000,
+      "Name": "Middle",
+      "ImageDateModified": "0001-01-01T00:00:00.0000000Z"
+    }
+  ],
+  "LocationType": "FileSystem",
+  "MediaType": "Video",
+  "MediaSources": [
+    {
+      "Protocol": "File",
+      "Id": "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a1",
+      "Path": "/media/movies/The Test Movie/The Test Movie.mkv",
+      "Type": "Default",
+      "Container": "mkv",
+      "Size": 4294967296,
+      "Name": "The Test Movie (1080p)",
+      "IsRemote": false,
+      "RunTimeTicks": 72000000000,
+      "SupportsTranscoding": true,
+      "SupportsDirectStream": true,
+      "SupportsDirectPlay": true,
+      "Bitrate": 8000000,
+      "DefaultAudioStreamIndex": 1,
+      "MediaStreams": [
+        {
+          "Codec": "hevc",
+          "Profile": "Main 10",
+          "VideoRange": "HDR",
+          "VideoRangeType": "HDR10",
+          "DisplayTitle": "1080p HEVC HDR10",
+          "BitRate": 7000000,
+          "BitDepth": 10,
+          "AverageFrameRate": 23.976,
+          "RealFrameRate": 24,
+          "Height": 1080,
+          "Width": 1920,
+          "Type": "Video",
+          "Index": 0,
+          "IsDefault": true,
+          "IsInterlaced": false,
+          "IsForced": false,
+          "IsHearingImpaired": false,
+          "IsOriginal": false,
+          "IsExternal": false,
+          "IsTextSubtitleStream": false,
+          "SupportsExternalStream": false
+        },
+        {
+          "Codec": "eac3",
+          "Language": "eng",
+          "ChannelLayout": "5.1",
+          "DisplayTitle": "English - EAC3 - 5.1 - Default",
+          "SampleRate": 48000,
+          "Channels": 6,
+          "BitRate": 640000,
+          "Type": "Audio",
+          "Index": 1,
+          "IsDefault": true,
+          "IsInterlaced": false,
+          "IsForced": false,
+          "IsHearingImpaired": false,
+          "IsOriginal": false,
+          "IsExternal": false,
+          "IsTextSubtitleStream": false,
+          "SupportsExternalStream": false
+        },
+        {
+          "Codec": "subrip",
+          "Language": "eng",
+          "Title": "Full",
+          "DisplayTitle": "English - Full - SUBRIP",
+          "Type": "Subtitle",
+          "Index": 2,
+          "IsForced": true,
+          "DeliveryMethod": "Embed",
+          "IsInterlaced": false,
+          "IsHearingImpaired": false,
+          "IsOriginal": false,
+          "IsExternal": false,
+          "IsTextSubtitleStream": true,
+          "SupportsExternalStream": true,
+          "IsDefault": false
+        },
+        {
+          "Codec": "srt",
+          "Language": "nld",
+          "DisplayTitle": "Dutch - SRT - External",
+          "Type": "Subtitle",
+          "Index": 3,
+          "IsExternal": true,
+          "DeliveryMethod": "External",
+          "DeliveryUrl": "/Videos/aaaaaaaa-0000-0000-0000-000000000001/a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a1/Subtitles/3/0/Stream.srt",
+          "Path": "/media/movies/The Test Movie/The Test Movie.nl.srt",
+          "IsInterlaced": false,
+          "IsForced": false,
+          "IsHearingImpaired": false,
+          "IsOriginal": false,
+          "IsTextSubtitleStream": true,
+          "SupportsExternalStream": true,
+          "IsDefault": false
+        }
+      ],
+      "ReadAtNativeFramerate": false,
+      "IgnoreDts": false,
+      "IgnoreIndex": false,
+      "GenPtsInput": false,
+      "IsInfiniteStream": false,
+      "RequiresOpening": false,
+      "RequiresClosing": false,
+      "RequiresLooping": false,
+      "SupportsProbing": true,
+      "TranscodingSubProtocol": "http",
+      "HasSegments": false
+    },
+    {
+      "Protocol": "File",
+      "Id": "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a2",
+      "Path": "/media/movies/The Test Movie/The Test Movie - 4K.mkv",
+      "Type": "Default",
+      "Container": "mp4",
+      "Size": 8589934592,
+      "Name": "The Test Movie (4K, transcoded)",
+      "IsRemote": false,
+      "SupportsTranscoding": true,
+      "SupportsDirectStream": false,
+      "SupportsDirectPlay": false,
+      "TranscodingUrl": "/videos/aaaaaaaa-0000-0000-0000-000000000001/master.m3u8?MediaSourceId=a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a2&PlaySessionId=fakesession",
+      "MediaStreams": [],
+      "ReadAtNativeFramerate": false,
+      "IgnoreDts": false,
+      "IgnoreIndex": false,
+      "GenPtsInput": false,
+      "IsInfiniteStream": false,
+      "RequiresOpening": false,
+      "RequiresClosing": false,
+      "RequiresLooping": false,
+      "SupportsProbing": true,
+      "TranscodingSubProtocol": "http",
+      "HasSegments": false
+    }
+  ],
+  "Trickplay": {
+    "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a1": {
+      "320": {
+        "Width": 320,
+        "Height": 180,
+        "TileWidth": 10,
+        "TileHeight": 10,
+        "ThumbnailCount": 720,
+        "Interval": 10000,
+        "Bandwidth": 250000
+      },
+      "640": {
+        "Width": 640,
+        "Height": 360,
+        "TileWidth": 5,
+        "TileHeight": 5,
+        "ThumbnailCount": 720,
+        "Interval": 10000,
+        "Bandwidth": 900000
+      }
+    }
+  }
+}
