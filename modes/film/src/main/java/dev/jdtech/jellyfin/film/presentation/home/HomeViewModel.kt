@@ -191,7 +191,7 @@ constructor(
      */
     private suspend fun refreshServerName(server: Server) {
         logFailure("server name") {
-            val renamed = server.renamedTo(repository.getPublicSystemInfo()) ?: return@logFailure
+            val renamed = server.renamedTo(repository.getServerInfo()) ?: return@logFailure
             database.updateServer(renamed)
             _state.update { if (it.server?.id == renamed.id) it.copy(server = renamed) else it }
         }

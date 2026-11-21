@@ -429,7 +429,7 @@ constructor(
         val server =
             if (autoPlayNextFollowsServer(pref)) {
                 try {
-                    repository.getUserConfiguration()?.enableNextEpisodeAutoPlay
+                    repository.autoPlayNextEpisode()
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {

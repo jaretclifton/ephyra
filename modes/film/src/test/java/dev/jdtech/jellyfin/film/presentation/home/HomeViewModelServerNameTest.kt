@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.film.presentation.home
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Server
+import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.IOException
@@ -18,7 +19,6 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeout
-import org.jellyfin.sdk.model.api.PublicSystemInfo
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test
 class HomeViewModelServerNameTest {
     private val stored = Server(id = SERVER_ID, name = "Old name", null, null)
     private val updated = mutableListOf<Server>()
-    private var systemInfo: () -> PublicSystemInfo = { info(SERVER_ID, "New name") }
+    private var systemInfo: () -> ServerInfo = { info(SERVER_ID, "New name") }
 
     @BeforeEach
     fun setUp() {
@@ -46,7 +46,8 @@ class HomeViewModelServerNameTest {
         assertEquals("New name", stored.renamedTo(info(SERVER_ID, "New name"))?.name)
         assertNull(stored.renamedTo(info(SERVER_ID, "Old name")))
         assertNull(stored.renamedTo(info(SERVER_ID, " ")))
-        assertNull(stored.renamedTo(info(SERVER_ID, null)))
+        assertNull(stored.renamedTo(info(SERVER_ID, "")))
+        assertNull(stored.renamedTo(info("", "New name")))
         assertNull(stored.renamedTo(info("another-server", "New name")))
     }
 
@@ -85,7 +86,7 @@ class HomeViewModelServerNameTest {
         }
     }
 
-    private fun info(id: String?, name: String?) = PublicSystemInfo(id = id, serverName = name)
+    private fun info(id: String, name: String) = ServerInfo(id, name, null, null)
 
     private fun repository(): JellyfinRepository =
         Proxy.newProxyInstance(
@@ -93,7 +94,7 @@ class HomeViewModelServerNameTest {
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, _ ->
             when (method.name) {
-                "getPublicSystemInfo" -> systemInfo()
+                "getServerInfo" -> systemInfo()
                 "refreshCurrentUserImage" -> Unit
                 "getSuggestions",
                 "getResumeItems",
