@@ -1,6 +1,5 @@
 package dev.jdtech.jellyfin.models
 
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import java.time.DayOfWeek
 import java.time.LocalDateTime
 import java.util.UUID
@@ -44,33 +43,3 @@ data class FindroidShow(
     override val images: FindroidImages,
     override val chapters: List<FindroidChapter> = emptyList(),
 ) : FindroidItem
-
-suspend fun FindroidShowDto.toFindroidShow(
-    database: ServerDatabaseDao,
-    userId: UUID,
-): FindroidShow {
-    val userData = database.getUserDataOrCreateNew(id, userId)
-    return FindroidShow(
-        id = id,
-        name = name,
-        originalTitle = originalTitle,
-        overview = overview,
-        played = userData.played,
-        favorite = userData.favorite,
-        canPlay = true,
-        canDownload = false,
-        unplayedItemCount = null,
-        sources = emptyList(),
-        seasons = emptyList(),
-        genres = genres ?: emptyList(),
-        people = emptyList(),
-        runtimeTicks = runtimeTicks,
-        communityRating = communityRating,
-        officialRating = officialRating,
-        status = status,
-        productionYear = productionYear,
-        endDate = endDate,
-        trailer = null,
-        images = toLocalFindroidImages(itemId = id),
-    )
-}

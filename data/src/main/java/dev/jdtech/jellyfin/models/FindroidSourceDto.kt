@@ -4,6 +4,8 @@ import androidx.room3.ColumnInfo
 import androidx.room3.Entity
 import androidx.room3.Index
 import androidx.room3.PrimaryKey
+import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import java.io.File
 import java.util.UUID
 
 @Entity(tableName = "sources", indices = [Index("itemId")])
@@ -39,3 +41,60 @@ fun FindroidSource.toFindroidSourceDto(itemId: UUID, path: String): FindroidSour
         path = path,
     )
 }
+
+suspend fun FindroidSourceDto.toFindroidSource(
+    serverDatabaseDao: ServerDatabaseDao
+): FindroidSource = toFindroidSource(serverDatabaseDao.getMediaStreamsBySourceId(id))
+
+/** Maps with already-fetched [streams], so a list of sources costs no query per source. */
+fun FindroidSourceDto.toFindroidSource(streams: List<FindroidMediaStreamDto>): FindroidSource {
+    return FindroidSource(
+        id = id,
+        name = name,
+        type = type,
+        path = path,
+        size = File(path).length(),
+        mediaStreams = streams.map { it.toFindroidMediaStream() },
+        downloadId = downloadId,
+    )
+}
+
+/**
+ * The downloaded (local) sources of every item in [itemIds], keyed by item id, in two queries
+ * however long the list is (none when it is empty). Items without a download are absent.
+ */
+suspend fun ServerDatabaseDao.getLocalSourcesForItems(
+    itemIds: Collection<UUID>
+): Map<UUID, List<FindroidSource>> =
+    localSourcesForItems(itemIds) { ids -> getSourcesForItems(ids) }
+
+/**
+ * CE (#718): [getLocalSourcesForItems], only the downloads stored for [serverId]: another server's
+ * download of the same item id is not this server's item downloaded.
+ */
+suspend fun ServerDatabaseDao.getLocalSourcesForItems(
+    itemIds: Collection<UUID>,
+    serverId: String,
+): Map<UUID, List<FindroidSource>> =
+    localSourcesForItems(itemIds) { ids -> getSourcesForItemsOfServer(ids, serverId) }
+
+private suspend fun ServerDatabaseDao.localSourcesForItems(
+    itemIds: Collection<UUID>,
+    read: suspend (List<UUID>) -> List<FindroidSourceDto>,
+): Map<UUID, List<FindroidSource>> {
+    if (itemIds.isEmpty()) return emptyMap()
+    val dtos = itemIds.distinct().chunked(SQL_CHUNK).flatMap { read(it) }
+    if (dtos.isEmpty()) return emptyMap()
+    val streams =
+        dtos
+            .map { it.id }
+            .chunked(SQL_CHUNK)
+            .flatMap { getMediaStreamsForSources(it) }
+            .groupBy { it.sourceId }
+    return dtos
+        .groupBy { it.itemId }
+        .mapValues { (_, sources) -> sources.map { it.toFindroidSource(streams[it.id].orEmpty()) } }
+}
+
+// Stays under SQLite's historical limit of 999 bound variables per statement.
+private const val SQL_CHUNK = 500

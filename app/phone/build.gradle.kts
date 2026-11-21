@@ -219,7 +219,6 @@ dependencies {
     implementation(libs.coil.svg)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-    implementation(libs.jellyfin.core)
     ksp(libs.kotlin.metadata.jvm)
     compileOnly(libs.libmpv)
     implementation(libs.material)
