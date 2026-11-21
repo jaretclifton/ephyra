@@ -66,7 +66,6 @@ import androidx.tv.material3.NavigationDrawerItemBorder
 import androidx.tv.material3.NavigationDrawerItemDefaults
 import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.ce.presentation.film.FavoritesScreen
 import dev.jdtech.jellyfin.ce.presentation.film.HomeScreen
 import dev.jdtech.jellyfin.ce.presentation.film.LibraryScreen
@@ -80,6 +79,7 @@ import dev.jdtech.jellyfin.ce.ui.tvSafeAreaPadding
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.ephyra.EphyraMotion
 import dev.jdtech.jellyfin.core.presentation.ephyra.reducedMotion
+import dev.jdtech.jellyfin.core.presentation.session.LocalServerSession
 import dev.jdtech.jellyfin.film.presentation.media.MediaViewModel
 import dev.jdtech.jellyfin.models.CollectionType
 import dev.jdtech.jellyfin.models.FindroidCollection
@@ -120,13 +120,13 @@ fun MainScreen(
     val mediaState by mediaViewModel.state.collectAsState()
 
     // Runs on every return to this screen (#257); see [loadsOnReturn] for what loads.
-    val context = LocalContext.current
+    val session = LocalServerSession.current
     LaunchedEffect(true) {
         val loadedUser = (mainViewModel.uiState.value as? MainViewModel.UiState.Normal)?.user?.id
         val loads =
             loadsOnReturn(
-                sameUser =
-                    loadedUser != null && loadedUser == JellyfinApi.getInstance(context).userId,
+                // The current user now, not when the screen was first shown.
+                sameUser = loadedUser != null && loadedUser == session.userId,
                 librariesLoadedAtNanos = mediaViewModel.librariesLoadedAtNanos,
                 hasLibraries = mediaViewModel.state.value.libraries.isNotEmpty(),
                 nowNanos = System.nanoTime(),
@@ -295,10 +295,6 @@ fun MainScreenLayout(
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
-    val baseUrl =
-        remember(context) {
-            runCatching { JellyfinApi.getInstance(context).api.baseUrl }.getOrNull()
-        }
     val coroutineScope = rememberCoroutineScope()
     var activeDestinationKey by rememberSaveable { mutableStateOf(DESTINATION_HOME) }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -453,7 +449,6 @@ fun MainScreenLayout(
                             if (shown != null) {
                                 UserAvatar(
                                     user = shown,
-                                    baseUrl = baseUrl,
                                     size = 32.dp,
                                     modifier =
                                         Modifier.requiredSize(32.dp).testTag("drawer_icon_profile"),

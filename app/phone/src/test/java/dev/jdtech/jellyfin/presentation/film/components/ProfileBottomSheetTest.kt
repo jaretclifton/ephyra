@@ -43,7 +43,6 @@ class ProfileBottomSheetTest {
                             serverName = "Jellyfin",
                             currentUserId = dummyUser.id,
                         ),
-                    baseUrl = null,
                     onSwitchServer = {},
                     onPublicUserClick = {},
                     onAddUser = {},

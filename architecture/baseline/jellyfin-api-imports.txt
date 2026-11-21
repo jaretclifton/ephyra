@@ -1,13 +1,3 @@
-app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/HomeScreen.kt
-app/phone/src/main/java/dev/jdtech/jellyfin/presentation/setup/pin/ProfilePinGateScreen.kt
-app/phone/src/main/java/dev/jdtech/jellyfin/presentation/setup/users/UsersScreen.kt
-app/tv/src/main/java/dev/jdtech/jellyfin/MainActivity.kt
-app/tv/src/main/java/dev/jdtech/jellyfin/ce/presentation/main/MainScreen.kt
-app/tv/src/main/java/dev/jdtech/jellyfin/ce/presentation/pin/TvProfilePinGateScreen.kt
-app/tv/src/main/java/dev/jdtech/jellyfin/ce/presentation/screensaver/ScreensaverScreen.kt
-app/tv/src/main/java/dev/jdtech/jellyfin/ce/presentation/screensaver/ScreensaverService.kt
-app/tv/src/main/java/dev/jdtech/jellyfin/ce/watchnext/WatchNextSync.kt
-app/tv/src/main/java/dev/jdtech/jellyfin/presentation/setup/users/UsersScreen.kt
 core/src/main/java/dev/jdtech/jellyfin/core/reachability/ServerReachability.kt
 core/src/main/java/dev/jdtech/jellyfin/core/session/ServerSessionKeeper.kt
 core/src/main/java/dev/jdtech/jellyfin/di/ApiModule.kt
@@ -21,5 +11,4 @@ player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/CastSessionMana
 player/local/src/main/java/dev/jdtech/jellyfin/player/local/presentation/PlayerViewModel.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/data/SetupRepositoryImpl.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/data/di/SetupDataModule.kt
-setup/src/main/java/dev/jdtech/jellyfin/setup/di/PermissionModule.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/addresses/ServerAddressesViewModel.kt

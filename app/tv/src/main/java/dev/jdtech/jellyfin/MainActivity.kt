@@ -13,14 +13,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.ce.ui.focus.DirectionKeyClock
 import dev.jdtech.jellyfin.ce.watchnext.WatchNextLink
 import dev.jdtech.jellyfin.ce.watchnext.WatchNextSync
 import dev.jdtech.jellyfin.core.presentation.localnetwork.LocalLocalNetworkBlock
 import dev.jdtech.jellyfin.core.presentation.localnetwork.LocalNetworkBlock
+import dev.jdtech.jellyfin.core.presentation.session.LocalServerSession
 import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
 import dev.jdtech.jellyfin.core.presentation.spoiler.Spoilers
+import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.setup.presentation.localnetwork.LocalNetworkBlockViewModel
 import dev.jdtech.jellyfin.viewmodels.MainViewModel
@@ -31,7 +32,7 @@ class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
     private val localNetworkBlockViewModel: LocalNetworkBlockViewModel by viewModels()
 
-    @Inject lateinit var jellyfinApi: JellyfinApi
+    @Inject lateinit var serverSession: ServerSession
 
     @Inject lateinit var watchNextSync: WatchNextSync
 
@@ -64,6 +65,7 @@ class MainActivity : ComponentActivity() {
                     CompositionLocalProvider(
                         LocalLocalNetworkBlock provides block,
                         LocalSpoilers provides Spoilers(state.hideSpoilers),
+                        LocalServerSession provides serverSession,
                     ) {
                         NavigationRoot(
                             hasServers = state.hasServers,
@@ -105,5 +107,5 @@ class MainActivity : ComponentActivity() {
 
     /** A link for another user than the current one opens the app without playing it. */
     private fun readWatchNextLink(intent: Intent?): WatchNextLink? =
-        WatchNextLink.fromIntent(intent)?.takeIf { it.userId == jellyfinApi.userId?.toString() }
+        WatchNextLink.fromIntent(intent)?.takeIf { it.userId == serverSession.userId?.toString() }
 }

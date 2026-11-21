@@ -26,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -38,7 +37,6 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.OutlinedButton
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.ce.presentation.pin.TvSwitchPinDialog
 import dev.jdtech.jellyfin.ce.ui.focus.ephyraButtonBorder
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyUser
@@ -62,8 +60,6 @@ fun UsersScreen(
     onPublicUserClick: (String) -> Unit,
     viewModel: UsersViewModel = hiltViewModel(),
 ) {
-    val context = LocalContext.current
-    val api = JellyfinApi.getInstance(context)
     val state by viewModel.state.collectAsState()
 
     LaunchedEffect(true) { viewModel.loadUsers() }
@@ -85,16 +81,11 @@ fun UsersScreen(
             }
             viewModel.onAction(action)
         },
-        baseUrl = api.api.baseUrl ?: "",
     )
 }
 
 @Composable
-internal fun UsersScreenLayout(
-    state: UsersState,
-    onAction: (UsersAction) -> Unit,
-    baseUrl: String,
-) {
+internal fun UsersScreenLayout(state: UsersState, onAction: (UsersAction) -> Unit) {
     val userRequesters = remember { mutableMapOf<UUID, FocusRequester>() }
     val addRequester = remember { FocusRequester() }
     // CE (#541): the element that opened another screen, focused again on the way back.
@@ -158,7 +149,6 @@ internal fun UsersScreenLayout(
                     items(state.users, key = { it.id }) { user ->
                         UserItem(
                             user = user,
-                            baseUrl = baseUrl,
                             current = user.id == state.currentUserId,
                             onClick = { onAction(UsersAction.OnUserClick(user.id)) },
                             onLongClick = { removing = user },
@@ -172,7 +162,6 @@ internal fun UsersScreenLayout(
                     items(state.publicUsers, key = { "public-${it.id}" }) { user ->
                         UserItem(
                             user = user,
-                            baseUrl = baseUrl,
                             caption = stringResource(SetupR.string.ce_users_sign_in),
                             onClick = {
                                 opener = OPENER_PUBLIC + user.id // CE (#541)
@@ -326,7 +315,6 @@ private fun UsersScreenLayoutPreview() {
                     currentUserId = previewUsers.first().id,
                 ),
             onAction = {},
-            baseUrl = "https://demo.jellyfin.org/stable",
         )
     }
 }
@@ -334,11 +322,5 @@ private fun UsersScreenLayoutPreview() {
 @Preview(device = "id:tv_1080p")
 @Composable
 private fun UsersScreenLayoutPreviewNoUsers() {
-    FindroidTheme {
-        UsersScreenLayout(
-            state = UsersState(serverName = "Demo"),
-            onAction = {},
-            baseUrl = "https://demo.jellyfin.org/stable",
-        )
-    }
+    FindroidTheme { UsersScreenLayout(state = UsersState(serverName = "Demo"), onAction = {}) }
 }

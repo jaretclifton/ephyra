@@ -15,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -26,7 +25,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.OutlinedButton
 import androidx.tv.material3.Text
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.ce.ui.TvSafeArea
 import dev.jdtech.jellyfin.ce.ui.components.UserAvatar
 import dev.jdtech.jellyfin.ce.ui.focus.ephyraButtonBorder
@@ -48,17 +46,15 @@ import dev.jdtech.jellyfin.setup.presentation.pin.ProfilePinGateViewModel
 @Composable
 fun TvProfilePinGateScreen(viewModel: ProfilePinGateViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val baseUrl = JellyfinApi.getInstance(LocalContext.current).api.baseUrl
 
     BackHandler { viewModel.onAction(ProfilePinGateAction.OnCancel) }
 
-    TvProfilePinGateLayout(state = state, baseUrl = baseUrl, onAction = viewModel::onAction)
+    TvProfilePinGateLayout(state = state, onAction = viewModel::onAction)
 }
 
 @Composable
 private fun TvProfilePinGateLayout(
     state: ProfilePinGateState,
-    baseUrl: String?,
     onAction: (ProfilePinGateAction) -> Unit,
 ) {
     val user = state.user ?: return
@@ -77,7 +73,7 @@ private fun TvProfilePinGateLayout(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.widthIn(max = 420.dp),
             ) {
-                UserAvatar(user = user, baseUrl = baseUrl, size = 128.dp, showLock = false)
+                UserAvatar(user = user, size = 128.dp, showLock = false)
                 Spacer(modifier = Modifier.height(MaterialTheme.spacings.medium))
                 Text(
                     text = stringResource(SetupR.string.ce_profile_pin_enter, user.name),
@@ -119,7 +115,6 @@ private fun TvProfilePinGateLayoutPreview() {
                     user = dummyUser,
                     prompt = PinPrompt(dummyUser.id, dummyUser.name, PinError.WRONG, 1),
                 ),
-            baseUrl = null,
             onAction = {},
         )
     }

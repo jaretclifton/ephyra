@@ -20,7 +20,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -28,7 +27,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyUser
 import dev.jdtech.jellyfin.models.ProfileLockType
 import dev.jdtech.jellyfin.models.User
@@ -52,17 +50,15 @@ import dev.jdtech.jellyfin.setup.presentation.pin.ProfilePinGateViewModel
 @Composable
 fun ProfilePinGateScreen(viewModel: ProfilePinGateViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val baseUrl = JellyfinApi.getInstance(LocalContext.current).api.baseUrl
 
     BackHandler { viewModel.onAction(ProfilePinGateAction.OnCancel) }
 
-    ProfilePinGateLayout(state = state, baseUrl = baseUrl, onAction = viewModel::onAction)
+    ProfilePinGateLayout(state = state, onAction = viewModel::onAction)
 }
 
 @Composable
 private fun ProfilePinGateLayout(
     state: ProfilePinGateState,
-    baseUrl: String?,
     onAction: (ProfilePinGateAction) -> Unit,
 ) {
     val user = state.user ?: return
@@ -85,13 +81,7 @@ private fun ProfilePinGateLayout(
                         .padding(horizontal = 24.dp, vertical = MaterialTheme.spacings.medium)
                         .testTag("ce_pin_gate"),
             ) {
-                PinGateContent(
-                    user = user,
-                    prompt = prompt,
-                    pin = pin,
-                    baseUrl = baseUrl,
-                    onAction = onAction,
-                )
+                PinGateContent(user = user, prompt = prompt, pin = pin, onAction = onAction)
             }
         }
     }
@@ -102,7 +92,6 @@ private fun PinGateContent(
     user: User,
     prompt: PinPrompt,
     pin: MutableState<String>,
-    baseUrl: String?,
     onAction: (ProfilePinGateAction) -> Unit,
 ) {
     Column(
@@ -111,7 +100,7 @@ private fun PinGateContent(
         modifier = Modifier.widthIn(max = 400.dp).fillMaxWidth(),
     ) {
         val pattern = prompt.lockType == ProfileLockType.PATTERN
-        UserAvatar(user = user, baseUrl = baseUrl, size = 96.dp, showLock = false)
+        UserAvatar(user = user, size = 96.dp, showLock = false)
         Text(
             text =
                 stringResource(
@@ -173,7 +162,6 @@ private fun ProfilePatternGateLayoutPreview() {
                     prompt =
                         PinPrompt(dummyUser.id, dummyUser.name, lockType = ProfileLockType.PATTERN),
                 ),
-            baseUrl = null,
             onAction = {},
         )
     }
@@ -189,7 +177,6 @@ private fun ProfilePinGateLayoutPreview() {
                     user = dummyUser,
                     prompt = PinPrompt(dummyUser.id, dummyUser.name, PinError.WRONG, 1),
                 ),
-            baseUrl = null,
             onAction = {},
         )
     }

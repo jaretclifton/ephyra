@@ -13,7 +13,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import dev.jdtech.jellyfin.api.JellyfinApi
+import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -86,7 +86,7 @@ constructor(
     @Assisted context: Context,
     @Assisted workerParams: WorkerParameters,
     private val appPreferences: AppPreferences,
-    private val jellyfinApi: JellyfinApi,
+    private val serverSession: ServerSession,
     private val repositoryProvider: Provider<JellyfinRepository>,
     private val publisher: WatchNextPublisher,
     private val store: WatchNextStore,
@@ -96,7 +96,7 @@ constructor(
     override suspend fun doWork(): Result = syncLock.withLock { sync() }
 
     private suspend fun sync(): Result {
-        val userId = jellyfinApi.userId?.toString()
+        val userId = serverSession.userId?.toString()
         if (!appPreferences.getValue(appPreferences.tvWatchNext) || userId == null) {
             publisher.clear()
             store.clear()

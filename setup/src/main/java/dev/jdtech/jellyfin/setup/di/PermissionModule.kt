@@ -6,7 +6,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import dev.jdtech.jellyfin.api.JellyfinApi
+import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.settings.domain.models.PermissionDefinitions
 import dev.jdtech.jellyfin.setup.domain.LocalNetworkAccess
@@ -40,7 +40,7 @@ object PermissionModule {
     @Singleton
     fun provideServerLocalNetworkBlock(
         access: LocalNetworkAccess,
-        jellyfinApi: JellyfinApi,
+        serverSession: ServerSession,
     ): ServerLocalNetworkBlock =
-        ServerLocalNetworkBlock(access = access, serverAddress = { jellyfinApi.api.baseUrl })
+        ServerLocalNetworkBlock(access = access, serverAddress = { serverSession.baseUrl })
 }
