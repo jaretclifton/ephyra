@@ -137,6 +137,8 @@ Goal: adding Emby is adding a module.
 Phase 0 ─► Phase 1 ─► Phase 2 ─┬─► Phase 3 (#752 to #757) ─┬─► Phase 6 ─┬─► #758 ─► Phase 7
                                ├─► Phase 4 ────────────────┼────────────┘
                                └─► Phase 5 (#764, then #765, then #766 after #757)
+
+Exception: #769 and #771 of phase 7 do not wait for #758 (see below).
 ```
 
 - Phase 5 is not on the path to #758 or to phase 7. It can run at any time after phase 2 and is

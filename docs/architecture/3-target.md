@@ -83,9 +83,22 @@ enum class ItemKind(val serialName: String) {
 enum class MediaStreamType { AUDIO, VIDEO, SUBTITLE, EMBEDDED_IMAGE, DATA, LYRIC }
 enum class SubtitleDeliveryMethod { ENCODE, EMBED, EXTERNAL, HLS, DROP }
 // serialName is what the SDK matches on; fromNameOrNull keeps doing that (see #776 for what that means for downloads).
-enum class VideoRangeType(val serialName: String) { UNKNOWN("Unknown"), SDR("SDR"), HDR10("HDR10"), /* … all 13 … */ HDR10_PLUS("HDR10Plus") }
-// All 26 constants of the SDK, by name: people are grouped by id and kind, so kinds must not collapse.
-enum class PersonKind { UNKNOWN, ACTOR, DIRECTOR, COMPOSER, WRITER, GUEST_STAR, PRODUCER, /* … */ NARRATOR }
+// The 13 constants and serial names of SDK 1.9.4.
+enum class VideoRangeType(val serialName: String) {
+    UNKNOWN("Unknown"), SDR("SDR"), HDR10("HDR10"), HLG("HLG"), DOVI("DOVI"),
+    DOVI_WITH_HDR10("DOVIWithHDR10"), DOVI_WITH_HLG("DOVIWithHLG"), DOVI_WITH_SDR("DOVIWithSDR"),
+    DOVI_WITH_EL("DOVIWithEL"), DOVI_WITH_HDR10_PLUS("DOVIWithHDR10Plus"),
+    DOVI_WITH_ELHDR10_PLUS("DOVIWithELHDR10Plus"), DOVI_INVALID("DOVIInvalid"), HDR10_PLUS("HDR10Plus");
+
+    companion object { fun fromNameOrNull(serialName: String): VideoRangeType? }
+}
+// All 26 constants of SDK 1.9.4, by name: people are grouped by id and kind, so kinds must not collapse.
+// Nothing stores or matches a serial name of this one, so it has none.
+enum class PersonKind {
+    UNKNOWN, ACTOR, DIRECTOR, COMPOSER, WRITER, GUEST_STAR, PRODUCER, CONDUCTOR, LYRICIST, ARRANGER,
+    ENGINEER, MIXER, REMIXER, CREATOR, ARTIST, ALBUM_ARTIST, AUTHOR, ILLUSTRATOR, PENCILLER, INKER,
+    COLORIST, LETTERER, COVER_ARTIST, EDITOR, TRANSLATOR, NARRATOR
+}
 enum class ItemFilter { IS_UNPLAYED }
 enum class EpisodeField { OVERVIEW, CAN_DOWNLOAD, CHAPTERS, TRICKPLAY }
 
@@ -334,13 +347,22 @@ fun interface DeviceReportSource {
     suspend fun buildJson(appVersion: String, buildType: String, transcodeDolbyVision: Boolean, directPlayDolbyVision: Boolean): String
 }
 
-/** What this device can decode. The Android probing stays in `data`; the adapter builds its profile from this. */
+/**
+ * What this device can decode. The Android probing (`MediaCodecList`, the display) stays in `data`;
+ * the adapter builds its profile from this. `ProbedCodecs` and `DolbyVisionLimit` are plain data
+ * classes and move to `domain` with this port, in their package `dev.jdtech.jellyfin.player`.
+ */
 interface DeviceCodecs {
     fun probedCodecsSnapshot(): ProbedCodecs
     fun displaySupportsDolbyVision(): Boolean
 }
 
-/** Puts the saved server, user and token on a new session before anything uses it. Implemented in `core`, which knows Room. */
+/**
+ * Puts the saved server, user and token on a new session before anything uses it. Implemented in
+ * `core`, which knows Room. Not suspending on purpose: it is called from the Hilt provider of the
+ * session, which cannot suspend, and returns only when the session is set. As today (#250) it reads
+ * the copy in preferences, which is in memory, and blocks on Room only when that copy is missing.
+ */
 fun interface SessionRestorer { fun restore(session: ServerSession) }
 ```
 
@@ -393,7 +415,11 @@ interface EnginePlayer {
     /** Re-applies settings the engine drops when an item loads. */
     fun onItemReady() {}
     fun setZoomMode(enabled: Boolean) {}
-    /** True when the engine handled the error itself (ExoPlayer falling back to another decoder). */
+    /**
+     * True when preparing the player again can recover from the error (ExoPlayer has ruled out the
+     * audio decoder that failed). The caller then calls `player.prepare()` and stops handling the
+     * error; the engine does not retry itself. False for everything else.
+     */
     fun onPlayerError(error: androidx.media3.common.PlaybackException): Boolean = false
     fun release()
 }
