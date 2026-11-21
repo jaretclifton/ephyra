@@ -16,6 +16,7 @@ import dev.jdtech.jellyfin.models.CollectionSection
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
+import dev.jdtech.jellyfin.presentation.utils.ReloadWhenServerAwayChanges
 
 @Composable
 fun FavoritesScreen(
@@ -24,6 +25,9 @@ fun FavoritesScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
+    // CE (#775): the downloaded favourites while the server is away, all of them once it is back.
+    // Before the load below, so a return to the tab after a change loads once, not twice.
+    ReloadWhenServerAwayChanges(viewModel::onServerAwayChanged)
     LaunchedEffect(true) { viewModel.loadItems() }
 
     CollectionScreenLayout(

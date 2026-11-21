@@ -136,6 +136,8 @@
     <string name="ce_track_sdh">SDH</string>
     <string name="ce_track_number">轨道 %1$d</string>
     <string name="ce_server_unreachable_downloads">已下载的内容仍可播放。</string>
+    <string name="ce_server_banner_show">无法连接服务器。显示详情</string>
+    <string name="ce_downloads_only">仅显示已下载的内容</string>
     <string name="ce_download_choice_title">要下载哪些剧集？</string>
     <string name="ce_download_choice_message">其中一些剧集你已经看过了。</string>
     <string name="ce_download_choice_unwatched">仅未观看 (%1$d)</string>

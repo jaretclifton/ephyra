@@ -136,6 +136,8 @@
     <string name="ce_track_sdh">SDH</string>
     <string name="ce_track_number">Trek %1$d</string>
     <string name="ce_server_unreachable_downloads">Endirmələrinizi yenə də oynada bilərsiniz.</string>
+    <string name="ce_server_banner_show">Serverə qoşulmaq mümkün deyil. Təfərrüatları göstər</string>
+    <string name="ce_downloads_only">Yalnız endirmələr göstərilir</string>
     <string name="ce_download_choice_title">Hansı epizodlar endirilsin?</string>
     <string name="ce_download_choice_message">Bu epizodların bəzilərinə artıq baxmısınız.</string>
     <string name="ce_download_choice_unwatched">Yalnız baxılmamışlar (%1$d)</string>

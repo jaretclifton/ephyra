@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +39,7 @@ import dev.jdtech.jellyfin.film.presentation.search.SearchViewModel
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.presentation.components.ErrorDialog
 import dev.jdtech.jellyfin.presentation.film.components.Direction
+import dev.jdtech.jellyfin.presentation.film.components.DownloadsOnlyLine
 import dev.jdtech.jellyfin.presentation.film.components.ErrorCardInitialHeight
 import dev.jdtech.jellyfin.presentation.film.components.FilmSearchBar
 import dev.jdtech.jellyfin.presentation.film.components.ItemCard
@@ -49,7 +51,11 @@ import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.presentation.utils.GridCellsAdaptiveWithMinColumns
 import dev.jdtech.jellyfin.presentation.utils.KeyboardShortcuts
 import dev.jdtech.jellyfin.presentation.utils.Layout
+import dev.jdtech.jellyfin.presentation.utils.LocalServerStatus
+import dev.jdtech.jellyfin.presentation.utils.ReloadWhenServerAwayChanges
 import dev.jdtech.jellyfin.presentation.utils.rememberSafePadding
+import dev.jdtech.jellyfin.presentation.utils.showsDownloadsOnly
+import dev.jdtech.jellyfin.presentation.utils.showsServerIndicator
 import dev.jdtech.jellyfin.presentation.utils.useDockedSearch
 
 @Composable
@@ -63,8 +69,18 @@ fun MediaScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val searchState by searchViewModel.state.collectAsStateWithLifecycle()
 
+    // CE (#775): with the server away the libraries and the search are the downloads, so both load
+    // again when it goes and when it comes back.
+    val serverAway = LocalServerStatus.current.unreachable
+    ReloadWhenServerAwayChanges { away ->
+        viewModel.onServerAwayChanged(away)
+        searchViewModel.onServerAwayChanged(away)
+    }
+
     // Reloads only when stale or dirty (#251), and keeps the list on screen while it does.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        // CE (#775): told first, so a resume after a change loads once, not twice.
+        viewModel.onServerAwayChanged(serverAway)
         if (viewModel.shouldReload()) viewModel.loadData(silent = state.libraries.isNotEmpty())
     }
 
@@ -127,6 +143,7 @@ private fun MediaScreenLayout(
         )
 
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
+    val downloadsOnly = showsDownloadsOnly()
 
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     val minColumnSize =
@@ -153,6 +170,7 @@ private fun MediaScreenLayout(
             paddingStart = paddingStart,
             paddingEnd = paddingEnd,
             docked = useDockedSearch(),
+            serverIndicator = showsServerIndicator(),
         )
         LazyVerticalGrid(
             columns = GridCellsAdaptiveWithMinColumns(minSize = minColumnSize, minColumns = 2),
@@ -167,6 +185,12 @@ private fun MediaScreenLayout(
             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacings.default),
             verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacings.default),
         ) {
+            // CE (#775): with the server away the libraries are the downloads (Movies, Shows).
+            if (downloadsOnly) {
+                item(key = "downloads_only", span = { GridItemSpan(maxLineSpan) }) {
+                    DownloadsOnlyLine(modifier = Modifier.animateItem())
+                }
+            }
             items(state.libraries, key = { it.id }) { library ->
                 ItemCard(
                     item = library,

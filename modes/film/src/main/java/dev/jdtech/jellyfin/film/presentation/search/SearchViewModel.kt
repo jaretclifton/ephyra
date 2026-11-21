@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.film.presentation.search
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.jdtech.jellyfin.film.presentation.ServerAwayReload
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -32,7 +33,22 @@ class SearchViewModel @Inject constructor(private val repository: JellyfinReposi
         this.itemKinds = itemKinds
     }
 
+    /** The query typed last, which [onServerAwayChanged] searches again. */
+    private var lastQuery = ""
+
+    private val serverAwayReload = ServerAwayReload()
+
+    /**
+     * CE (#775): the server went away or came back. With the server away the search looks in the
+     * downloads, so an open search asks again. The error page's own retry on the server's return
+     * lands in the same debounce, so the two send one request.
+     */
+    fun onServerAwayChanged(away: Boolean) {
+        if (serverAwayReload.onServerAway(away) && lastQuery.isNotBlank()) search(lastQuery)
+    }
+
     private fun search(query: String) {
+        lastQuery = query
         currentJob?.cancel()
         currentJob = viewModelScope.launch {
             try {
@@ -44,6 +60,7 @@ class SearchViewModel @Inject constructor(private val repository: JellyfinReposi
                 // Inside the job, so the next keystroke's cancel also drops this request.
                 delay(SEARCH_DEBOUNCE_MS)
 
+                serverAwayReload.begin()
                 _state.emit(_state.value.copy(loading = true))
                 val items = repository.getSearchItems(query, itemKinds)
 

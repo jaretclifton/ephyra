@@ -34,12 +34,16 @@ import dev.jdtech.jellyfin.models.CollectionSection
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.presentation.film.components.CollectionGrid
+import dev.jdtech.jellyfin.presentation.film.components.DownloadsOnlyLine
 import dev.jdtech.jellyfin.presentation.film.components.EmptyState
 import dev.jdtech.jellyfin.presentation.film.components.LoadingOrError
+import dev.jdtech.jellyfin.presentation.film.components.ServerOffIndicator
 import dev.jdtech.jellyfin.presentation.film.components.ServerOrErrorCard
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
+import dev.jdtech.jellyfin.presentation.utils.showsDownloadsOnly
 import dev.jdtech.jellyfin.presentation.utils.showsServerBanner
+import dev.jdtech.jellyfin.presentation.utils.showsServerIndicator
 import dev.jdtech.jellyfin.presentation.utils.topAndSideInsets
 import java.util.UUID
 
@@ -78,10 +82,18 @@ fun CollectionScreenLayout(
     emptyTitle: String = stringResource(CoreR.string.collection_no_media),
     emptyBody: String? = null,
     showNavigationIcon: Boolean = true,
-    /** CE (#281): a top-level screen (Favorites) shows the unreachable banner above its items. */
+    /**
+     * CE (#281): a top-level screen (Favorites) shows the unreachable banner above its items. CE
+     * (#775): and, while the server is away, that its list holds the downloads only.
+     */
     serverBanner: Boolean = false,
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    // CE (#281): what is on screen stays (the items, or "no favourites" from before the server
+    // went away), with the unreachable banner above it. A failed load with nothing to show is the
+    // error page, which says the same.
+    val failedEmpty = state.sections.isEmpty() && state.error != null
+    val downloadsOnly = serverBanner && showsDownloadsOnly() && !failedEmpty
 
     Scaffold(
         modifier =
@@ -90,7 +102,14 @@ fun CollectionScreenLayout(
                 .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = { Text(collectionName) },
+                title = {
+                    // CE (#775): under the title, so it holds for the whole list and the empty
+                    // page alike.
+                    Column {
+                        Text(collectionName)
+                        if (downloadsOnly) DownloadsOnlyLine()
+                    }
+                },
                 navigationIcon = {
                     if (showNavigationIcon) {
                         IconButton(onClick = { onAction(CollectionAction.OnBackClick) }) {
@@ -101,16 +120,18 @@ fun CollectionScreenLayout(
                         }
                     }
                 },
+                actions = {
+                    // CE (#775): the banner put away; not over the error page, which says it.
+                    if (serverBanner && showsServerIndicator() && !failedEmpty) {
+                        ServerOffIndicator()
+                    }
+                },
                 windowInsets = topAndSideInsets,
                 scrollBehavior = scrollBehavior,
             )
         },
         contentWindowInsets = topAndSideInsets,
     ) { innerPadding ->
-        // CE (#281): what is on screen stays (the items, or "no favourites" from before the server
-        // went away), with the unreachable banner above it. A failed load with nothing to show
-        // is the error page, which says the same.
-        val failedEmpty = state.sections.isEmpty() && state.error != null
         if (serverBanner && showsServerBanner() && !failedEmpty) {
             Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
                 ServerOrErrorCard(
