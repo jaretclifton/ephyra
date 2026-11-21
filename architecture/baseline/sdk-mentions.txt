@@ -9,7 +9,6 @@ app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/MovieScreen.kt
 app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/SeasonScreen.kt
 app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/SeasonWideLayout.kt
 app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/ShowScreen.kt
-app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/components/InfoText.kt
 app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/components/MediaInfoSheet.kt
 app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/components/PlayDownload.kt
 app/tv/src/main/java/dev/jdtech/jellyfin/NavigationRoot.kt
@@ -20,7 +19,6 @@ app/tv/src/main/java/dev/jdtech/jellyfin/presentation/film/HomeScreen.kt
 core/src/main/java/dev/jdtech/jellyfin/core/presentation/downloader/SmartDownloads.kt
 core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/Episodes.kt
 core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/Movies.kt
-core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/People.kt
 core/src/main/java/dev/jdtech/jellyfin/core/session/ServerSessionKeeper.kt
 core/src/main/java/dev/jdtech/jellyfin/utils/CoreExtensions.kt
 core/src/main/java/dev/jdtech/jellyfin/utils/DownloaderImpl.kt
@@ -29,11 +27,9 @@ core/src/main/java/dev/jdtech/jellyfin/work/SyncWorker.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/domain/MediaInfo.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/domain/VideoMetadataParser.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/domain/homerows/HomeRowsStore.kt
-modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/episode/EpisodeViewModel.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/home/HomeViewModel.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/home/ServerName.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/library/LibraryViewModel.kt
-modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/movie/MovieViewModel.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/person/PersonViewModel.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/search/SearchViewModel.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/season/SeasonViewModel.kt
