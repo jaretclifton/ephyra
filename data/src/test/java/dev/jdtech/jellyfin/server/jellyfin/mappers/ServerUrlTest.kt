@@ -1,7 +1,5 @@
-package dev.jdtech.jellyfin.models
+package dev.jdtech.jellyfin.server.jellyfin.mappers
 
-import dev.jdtech.jellyfin.repository.JellyfinRepository
-import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -25,13 +23,8 @@ import org.junit.jupiter.api.Test
 class ServerUrlTest {
     private val itemId = UUID.fromString("11111111-1111-1111-1111-111111111111")
 
-    private fun repository(base: String) =
-        Proxy.newProxyInstance(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
-        ) { _, method, _ ->
-            if (method.name == "getBaseUrl") base else throw NotImplementedError(method.name)
-        } as JellyfinRepository
+    private fun context(base: String) =
+        MapperContext(base) { _, _ -> throw NotImplementedError("streamUrl") }
 
     private fun subtitle(deliveryUrl: String?) =
         MediaStream(
@@ -78,14 +71,14 @@ class ServerUrlTest {
 
     private fun transcodePath(base: String) = runBlocking {
         source("/videos/$itemId/master.m3u8?VideoCodec=h264")
-            .toFindroidSource(repository(base), itemId)
+            .toFindroidSource(context(base), itemId)
             .path
     }
 
     private fun subtitlePath(
         base: String,
         deliveryUrl: String? = "/Videos/$itemId/source/Subtitles/2/0/Stream.srt",
-    ) = subtitle(deliveryUrl).toFindroidMediaStream(repository(base)).path
+    ) = subtitle(deliveryUrl).toFindroidMediaStream(base).path
 
     @Test
     fun `serverUrl joins with one slash whatever the two sides bring`() {
@@ -152,7 +145,7 @@ class ServerUrlTest {
                     "/videos/$itemId/stream.mp4",
                     listOf(subtitle("/Videos/$itemId/source/Subtitles/2/0/Stream.srt")),
                 )
-                .toFindroidSource(repository("https://host/jellyfin/"), itemId)
+                .toFindroidSource(context("https://host/jellyfin/"), itemId)
         }
 
         assertEquals("https://host/jellyfin/videos/$itemId/stream.mp4", mapped.path)

@@ -1,12 +1,8 @@
 package dev.jdtech.jellyfin.models
 
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.repository.JellyfinRepository
 import java.time.LocalDateTime
 import java.util.UUID
-import org.jellyfin.sdk.model.api.BaseItemDto
-import org.jellyfin.sdk.model.api.LocationType
-import org.jellyfin.sdk.model.api.PlayAccess
 
 data class FindroidEpisode(
     override val id: UUID,
@@ -42,66 +38,6 @@ data class FindroidEpisode(
     override val chapters: List<FindroidChapter>,
     override val trickplayInfo: Map<String, FindroidTrickplayInfo>?,
 ) : FindroidItem, FindroidSources
-
-suspend fun BaseItemDto.toFindroidEpisode(
-    jellyfinRepository: JellyfinRepository,
-    database: ServerDatabaseDao? = null,
-): FindroidEpisode? =
-    toFindroidEpisode(jellyfinRepository, database?.getLocalSourcesForItems(listOf(id)).orEmpty())
-
-/** For lists: [localSources] comes from one [getLocalSourcesForItems] call for all items. */
-suspend fun BaseItemDto.toFindroidEpisode(
-    jellyfinRepository: JellyfinRepository,
-    localSources: Map<UUID, List<FindroidSource>>,
-): FindroidEpisode? {
-    val sources = mutableListOf<FindroidSource>()
-    sources.addAll(mediaSources?.map { it.toFindroidSource(jellyfinRepository, id) } ?: emptyList())
-    sources.addAll(localSources[id].orEmpty())
-    return try {
-        FindroidEpisode(
-            id = id,
-            name = name.orEmpty(),
-            originalTitle = originalTitle,
-            overview = overview.orEmpty(),
-            indexNumber = indexNumber ?: 0,
-            indexNumberEnd = indexNumberEnd,
-            parentIndexNumber = parentIndexNumber ?: 0,
-            sources = sources,
-            played = userData?.played == true,
-            favorite = userData?.isFavorite == true,
-            canPlay = playAccess != PlayAccess.NONE,
-            canDownload = canDownload == true,
-            runtimeTicks = runTimeTicks ?: 0,
-            playbackPositionTicks = userData?.playbackPositionTicks ?: 0L,
-            premiereDate = premiereDate,
-            seriesId = seriesId!!,
-            seriesName = seriesName.orEmpty(),
-            seasonId = seasonId!!,
-            seasonName = seasonName,
-            communityRating = communityRating,
-            people = people?.map { it.toFindroidPerson(jellyfinRepository) } ?: emptyList(),
-            missing = locationType == LocationType.VIRTUAL,
-            lastPlayedDate = userData?.lastPlayedDate,
-            externalLinks = toExternalLinks(),
-            playCount = userData?.playCount ?: 0,
-            images = toFindroidImages(jellyfinRepository),
-            chapters = toFindroidChapters(),
-            trickplayInfo =
-                trickplay
-                    ?.mapNotNull { (width, info) ->
-                        info
-                            ?.keys
-                            ?.maxOrNull()
-                            ?.let { info[it] }
-                            ?.toFindroidTrickplayInfo()
-                            ?.let { width to it }
-                    }
-                    ?.toMap(),
-        )
-    } catch (_: NullPointerException) {
-        null
-    }
-}
 
 suspend fun FindroidEpisodeDto.toFindroidEpisode(
     database: ServerDatabaseDao,

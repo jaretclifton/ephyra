@@ -1,9 +1,5 @@
 package dev.jdtech.jellyfin.models
 
-import dev.jdtech.jellyfin.repository.JellyfinRepository
-import dev.jdtech.jellyfin.server.jellyfin.toModel
-import org.jellyfin.sdk.model.api.MediaStream
-
 data class FindroidMediaStream(
     val title: String,
     val displayTitle: String?,
@@ -37,35 +33,6 @@ data class FindroidMediaStream(
     val isForced: Boolean = false,
     val isDefault: Boolean = false,
 )
-
-fun MediaStream.toFindroidMediaStream(jellyfinRepository: JellyfinRepository): FindroidMediaStream {
-    return FindroidMediaStream(
-        title = title.orEmpty(),
-        displayTitle = displayTitle,
-        language = language.orEmpty(),
-        type = type.toModel(),
-        codec = codec.orEmpty(),
-        profile = profile,
-        isExternal = isExternal,
-        path = deliveryUrl?.let { serverUrl(jellyfinRepository.getBaseUrl(), it) },
-        channelLayout = channelLayout,
-        videoRangeType = videoRangeType?.toModel(),
-        height = height,
-        width = width,
-        videoDoViTitle = videoDoViTitle,
-        bitRate = bitRate,
-        // The average is what the server puts in the display title; the "real" rate is the
-        // stream's time base and can be far off for variable frame rate video.
-        frameRate = averageFrameRate ?: realFrameRate,
-        bitDepth = bitDepth,
-        sampleRate = sampleRate,
-        index = index,
-        channels = channels,
-        deliveryMethod = deliveryMethod?.toModel(),
-        isForced = isForced,
-        isDefault = isDefault,
-    )
-}
 
 fun FindroidMediaStreamDto.toFindroidMediaStream(): FindroidMediaStream {
     return FindroidMediaStream(

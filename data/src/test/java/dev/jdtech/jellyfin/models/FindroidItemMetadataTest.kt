@@ -1,8 +1,11 @@
 package dev.jdtech.jellyfin.models
 
 import android.app.Application
-import dev.jdtech.jellyfin.repository.JellyfinRepository
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.server.jellyfin.mappers.MapperContext
+import dev.jdtech.jellyfin.server.jellyfin.mappers.externalLinks
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidEpisode
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidMovie
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidShow
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDateTime
@@ -34,14 +37,9 @@ import org.robolectric.annotation.Config
 class FindroidItemMetadataTest {
     private val id = UUID.fromString("11111111-1111-1111-1111-111111111111")
 
-    private val repository =
-        Proxy.newProxyInstance(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
-        ) { _, method, _ ->
-            if (method.name == "getBaseUrl") "https://jf.example"
-            else throw NotImplementedError(method.name)
-        } as JellyfinRepository
+    private val baseUrl = "https://jf.example"
+
+    private val context = MapperContext(baseUrl) { _, _ -> throw NotImplementedError("streamUrl") }
 
     @Test
     fun `movie maps critic rating, tagline, studios, links, trailers, play count and 3D`() {
@@ -68,7 +66,7 @@ class FindroidItemMetadataTest {
                 specialFeatureCount = 4,
             )
 
-        val movie = runBlocking { dto.toFindroidMovie(repository, emptyMap()) }
+        val movie = runBlocking { dto.toFindroidMovie(context, emptyMap()) }
 
         assertEquals(91f, movie.criticRating)
         assertEquals("In space no one can hear you scream.", movie.tagline)
@@ -94,7 +92,7 @@ class FindroidItemMetadataTest {
     @Test
     fun `a bare movie leaves every new field empty`() {
         val movie = runBlocking {
-            BaseItemDto(id = id, type = BaseItemKind.MOVIE).toFindroidMovie(repository, emptyMap())
+            BaseItemDto(id = id, type = BaseItemKind.MOVIE).toFindroidMovie(context, emptyMap())
         }
 
         assertNull(movie.criticRating)
@@ -120,7 +118,7 @@ class FindroidItemMetadataTest {
                     airTime = " 21:00 ",
                     criticRating = 88f,
                 )
-                .toFindroidShow(repository)
+                .toFindroidShow(baseUrl)
 
         assertEquals(listOf("HBO"), show.studios)
         assertEquals(listOf(DayOfWeek.THURSDAY), show.airDays)
@@ -140,7 +138,7 @@ class FindroidItemMetadataTest {
                     providerIds = mapOf("Imdb" to "tt0959621"),
                     userData = userData(playCount = 1),
                 )
-                .toFindroidEpisode(repository, emptyMap())!!
+                .toFindroidEpisode(context, emptyMap())!!
         }
 
         assertEquals(
@@ -201,7 +199,7 @@ class FindroidItemMetadataTest {
     fun `air schedule only for running shows`() {
         fun show(status: String, days: List<DayOfWeek>, time: String?) =
             BaseItemDto(id = id, type = BaseItemKind.SERIES)
-                .toFindroidShow(repository)
+                .toFindroidShow(baseUrl)
                 .copy(status = status, airDays = days, airTime = time)
 
         assertNull(
@@ -241,11 +239,10 @@ class FindroidItemMetadataTest {
                         type = BaseItemKind.MOVIE,
                         userData = userData(playCount = 1).copy(lastPlayedDate = played),
                     )
-                    .toFindroidMovie(repository, emptyMap())
+                    .toFindroidMovie(context, emptyMap())
             }
             val never = runBlocking {
-                BaseItemDto(id = id, type = BaseItemKind.MOVIE)
-                    .toFindroidMovie(repository, emptyMap())
+                BaseItemDto(id = id, type = BaseItemKind.MOVIE).toFindroidMovie(context, emptyMap())
             }
 
             assertEquals(
