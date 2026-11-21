@@ -13,6 +13,71 @@ following the Findroid version they were based on.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [v2.8.0] — 2026-11-21
+
+Offline Mode is gone as a setting: when the server can't be reached, the app shows what you have
+downloaded by itself, now also in Favorites, Media and search, and goes back to the server when
+it answers. Episodes you haven't seen can be kept free of spoilers, the seek bar shows where the
+intro and the credits are, and the library has an A–Z scroller. Nothing needs doing after the
+update: downloads, logins and resume positions stay as they are.
+
+### Added
+- Hide spoilers (Settings, off by default): an unwatched episode's still is blurred, its title
+  becomes "Episode 5" and its overview is hidden. Press and hold to reveal one episode. On phone,
+  tablet and Android TV, including the launcher's Watch Next row (#618).
+- Player: intro, recap, outro, preview and commercial segments are drawn on the seek bar, on
+  phone, Android TV and Cast, with a switch in the settings (#681).
+- Library: an A–Z fast scroller on phone and tablet. Drag the thumb on the edge to jump anywhere;
+  when sorting by name a bubble shows the letter.
+- Library: Home Videos and Music Videos libraries show on Home, in Media and in the TV drawer,
+  and their videos play with resume (#671).
+- Downloads: while the server is away, Favorites, Media and search show your downloads, under a
+  "Showing downloads only" line. Media shows a Movies and a TV Shows library of what is
+  downloaded, with artwork from the downloads (#775, #781).
+- The banner that says the server can't be reached can be put away with a swipe or its close
+  button. A small icon in the header brings it back, and it returns by itself after the server
+  has answered and gone again (#775).
+- Tablet: an option to show the item page backdrop at 16:9 in landscape (#622).
+- Android TV: when a Home row changes, its cards slide into place instead of jumping (#688).
+
+### Changed
+- Downloads: the Offline Mode setting is removed. Downloads open and play whenever the server
+  doesn't answer, with every tab and the search still there. If you had the setting on, the app
+  starts as usual and your downloads are where they were (#281).
+- Device transfers (setting up a new phone from the old one) no longer carry the access tokens,
+  the MDBList key, the settings or the downloads, as cloud backups already didn't. On the new
+  device the app starts fresh: you log in and choose your settings again (#731).
+
+### Fixed
+- Player (mpv): a stream that stalls is caught and restarted instead of buffering forever, and
+  the app no longer freezes while mpv waits on the network (#460).
+- Player: playback no longer waits, and subtitles no longer go missing, while the server is
+  still extracting a subtitle file. On mpv only the subtitle you use is fetched, and subtitles
+  that are switched off stay off (#711).
+- Player: image subtitles (PGS, VobSub) are offered while the server transcodes, and are not
+  burned into mpv's quality-capped stream by default (#612, #613).
+- Player: with a subtitle delay, the line that is due right after a seek or a track switch is
+  shown (#650).
+- Player: quick changes of quality or audio track no longer leave an older choice playing, drop
+  the next episode from the queue or jump to the first episode on mpv, and the server is told
+  which stream really plays (#721, #723, #726, #728).
+- Player: the next episode is queued however fast you move through the queue, and the next
+  season is added once (#657).
+- Downloads: a second server with the same library no longer shows, plays or deletes the first
+  server's downloads (#718).
+- Downloads: every skip segment of a download is kept, and segments of deleted downloads are
+  cleaned up (#693).
+- Downloads: a watched mark, favourite or position set on a download is no longer lost when the
+  app is closed while the server doesn't answer (#281).
+- Favorites: a favourite set while the server was away shows after the sync, also when the sync
+  finished in the background (#775, #782).
+- Phone: top bar buttons stay clear of the navigation bar in landscape with 3-button navigation
+  (#700).
+
+### Maintenance
+- libmpv 1.3.0 (Ephyra's own build): mpv 0.42.0, FFmpeg 9.1, dav1d 1.5.5.
+- The unit tests run in CI on pull requests that change code.
+
 ## [v2.7.0] — 2026-11-14
 
 The Android TV app now runs on Android 9, which brings it to Fire OS 7 sticks. The server hears
@@ -1071,6 +1136,7 @@ Initial CE fork off findroid `1.0.2`. These rapid early iterations established t
 `nl.midasvo.findroid.ce` application ID, downloads and SD-card storage improvements, and ongoing
 tracking of upstream. See the git history between the corresponding tags for commit-level detail.
 
+[v2.8.0]: https://github.com/midasvo/ephyra/releases/tag/v2.8.0
 [v2.7.0]: https://github.com/midasvo/ephyra/releases/tag/v2.7.0
 [v2.6.0]: https://github.com/midasvo/ephyra/releases/tag/v2.6.0
 [v2.5.0]: https://github.com/midasvo/ephyra/releases/tag/v2.5.0

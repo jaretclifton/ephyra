@@ -121,8 +121,8 @@ regular expression** `^Beta`, and **Filter APKs by regular expression**
   downloads.
 - Downloads screen with progress per episode and per show, a storage breakdown, multi-select and undo.
 - Smart Downloads (opt-in): keeps the next episodes of what you're watching, removes them once watched.
-- No offline mode to switch on: downloads open and play when the server can't be reached, and a
-  banner on the other screens leads to them.
+- No offline mode to switch on: downloads open and play when the server can't be reached, and
+  Favorites, Media and search then show what is downloaded.
 - In step with the server: what you watch offline is sent when you're back and moves up in Continue
   Watching, and progress made on your other devices reaches your downloads.
 
@@ -136,7 +136,8 @@ regular expression** `^Beta`, and **Filter APKs by regular expression**
 - Subtitle sync during playback: move subtitles earlier or later, or line one up with what is said.
 - Version picker before playing, quality switch during playback.
 - Audio and subtitle choice remembered per series and per user, on ExoPlayer, mpv and downloads.
-- Plays on into the next season. Shuffle a show or a season. Chapter list. Skip, ask or ignore per media segment type.
+- Plays on into the next season. Shuffle a show or a season. Chapter list. Skip, ask or ignore per media segment type,
+  with the segments marked on the seek bar.
   "Still watching?" prompt after a run of autoplayed episodes.
 - "Up next" card with a countdown at the end of an episode. Sleep timer.
 - Background audio with lock screen controls (opt-in, Settings → Player → Background playback).
@@ -162,7 +163,10 @@ regular expression** `^Beta`, and **Filter APKs by regular expression**
 
 - Favorites tab.
 - Home rows you choose and reorder (Settings → Interface → Home rows).
-- Hide-watched filter, kept across libraries.
+- Hide-watched filter, kept across libraries. A–Z fast scroller in a library.
+- Hide spoilers (opt-in): blurs the still and hides the title and overview of episodes you
+  haven't watched.
+- Home Videos and Music Videos libraries.
 - When the server doesn't answer, a banner says so and leads to your downloads, which open and
   play without it. It goes by itself when the server is back.
 - Error screens with Retry, and real empty states.
@@ -215,6 +219,7 @@ split-screen half and a desktop window each get what fits:
   mouse support.
 - Foldables: in tabletop posture the video sits above the fold and the controls below it.
 - Downloads in two columns, settings and forms at a readable width.
+- Option to show the item page backdrop at 16:9 in landscape.
 
 Design and test sizes: [docs/tablet/](docs/tablet/).
 
