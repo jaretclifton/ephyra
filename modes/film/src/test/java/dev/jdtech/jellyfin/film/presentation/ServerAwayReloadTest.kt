@@ -6,6 +6,7 @@ import dev.jdtech.jellyfin.film.presentation.favorites.FavoritesViewModel
 import dev.jdtech.jellyfin.film.presentation.media.MediaViewModel
 import dev.jdtech.jellyfin.film.presentation.search.SearchAction
 import dev.jdtech.jellyfin.film.presentation.search.SearchViewModel
+import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.ItemsResult
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.StoredLibraries
@@ -497,6 +498,43 @@ class ServerAwayReloadTest {
 
             assertEquals(1, calls.size)
             assertFalse(viewModel.state.value.downloadsOnly)
+        }
+
+    // A sync that finished while Favorites was not collecting (#782)
+
+    @Test
+    fun `a sync missed in the background makes the next resume load once`() =
+        runTest(dispatcher) {
+            val dataChanges = DataChangeEvents()
+            val viewModel = FavoritesViewModel(repository(), dataChanges)
+            viewModel.onServerAwayChanged(false)
+            viewModel.loadItems().join()
+            // A plain resume: nothing changed.
+            assertFalse(viewModel.shouldReload())
+
+            // The sync sent the favourite set offline; nobody collected its event.
+            dataChanges.onSynced()
+
+            assertTrue(viewModel.shouldReload())
+            viewModel.loadItems().join()
+            assertEquals(2, calls.size)
+            assertFalse(viewModel.shouldReload())
+        }
+
+    @Test
+    fun `a sync caught on screen leaves the next resume alone`() =
+        runTest(dispatcher) {
+            val dataChanges = DataChangeEvents()
+            val viewModel = FavoritesViewModel(repository(), dataChanges)
+            viewModel.onServerAwayChanged(false)
+            viewModel.loadItems().join()
+
+            // ReloadAfterSync saw the event and loaded: the resume after it does not load again.
+            dataChanges.onSynced()
+            viewModel.onSynced().join()
+
+            assertEquals(2, calls.size)
+            assertFalse(viewModel.shouldReload())
         }
 
     private fun repository(): JellyfinRepository =

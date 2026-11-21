@@ -12,7 +12,9 @@ import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.ReloadPolicy
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -25,14 +27,27 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @HiltViewModel
-class FavoritesViewModel @Inject constructor(private val repository: JellyfinRepository) :
-    ViewModel() {
+class FavoritesViewModel
+@Inject
+constructor(
+    private val repository: JellyfinRepository,
+    dataChanges: DataChangeEvents = DataChangeEvents(),
+) : ViewModel() {
     private val _state = MutableStateFlow(CollectionState())
     val state = _state.asStateFlow()
 
     private val serverAwayReload = ServerAwayReload()
     private var loadJob: Job? = null
     private var storeRetryJob: Job? = null
+
+    /**
+     * CE (#782): a sync that finished while the screen was not collecting (the app in the
+     * background) has still made the list out of date: the screen loads on resume when this says.
+     */
+    private val reloadPolicy = ReloadPolicy(dataChanges)
+
+    /** Whether coming back to Favorites needs a load, see [ReloadPolicy]. */
+    fun shouldReload(): Boolean = reloadPolicy.shouldReload()
 
     /**
      * CE (#775): the server went away or came back. With the server away the favourites are the
@@ -68,6 +83,7 @@ class FavoritesViewModel @Inject constructor(private val repository: JellyfinRep
     }
 
     private fun load(): Job = viewModelScope.launch {
+        val token = reloadPolicy.begin()
         // With content on screen the refresh happens quietly (#251).
         val hasContent = _state.value.sections.isNotEmpty()
         _state.emit(_state.value.copy(isLoading = !hasContent, error = null))
@@ -114,6 +130,7 @@ class FavoritesViewModel @Inject constructor(private val repository: JellyfinRep
 
             // CE (#775): a failed load keeps the list on screen, and with it what it was. CE
             // (#779): downloads only when Room answered, also before the server is known away.
+            reloadPolicy.complete(token)
             _state.emit(
                 _state.value.copy(
                     isLoading = false,
