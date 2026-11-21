@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.core.R as CoreR
+import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.server.jellyfin.asServerException
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.domain.ServerLocalNetworkBlock
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
@@ -19,7 +21,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.jellyfin.sdk.api.client.exception.InvalidStatusException
 import timber.log.Timber
 
 @HiltViewModel
@@ -79,7 +80,10 @@ constructor(
                 eventsChannel.send(LoginEvent.Success)
             } catch (e: Exception) {
                 val message =
-                    if (e is InvalidStatusException && e.status == 401) {
+                    if (
+                        e !is CancellationException &&
+                            (e.asServerException() as? ServerException.HttpStatus)?.status == 401
+                    ) {
                         UiText.StringResource(SetupR.string.login_error_wrong_username_password)
                     } else {
                         connectionErrorText(e) ?: UiText.StringResource(CoreR.string.unknown_error)

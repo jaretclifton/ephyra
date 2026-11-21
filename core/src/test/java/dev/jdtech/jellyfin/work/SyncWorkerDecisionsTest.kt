@@ -1,11 +1,11 @@
 package dev.jdtech.jellyfin.work
 
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
+import dev.jdtech.jellyfin.models.ServerException
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import org.jellyfin.sdk.api.client.exception.InvalidStatusException
 import org.junit.jupiter.api.Test
 
 /** CE (#552): when the user data sync retries, and when it lets a row be. */
@@ -89,9 +89,18 @@ class SyncWorkerDecisionsTest {
     @Test
     fun `only a 401 is a refused login`() {
         // CE (#635): logged as one line instead of a stack trace on every run.
-        assertTrue(isRefusedLogin(InvalidStatusException(401, null)))
-        assertFalse(isRefusedLogin(InvalidStatusException(500, null)))
-        assertFalse(isRefusedLogin(InvalidStatusException(404, null)))
+        assertTrue(isRefusedLogin(ServerException.HttpStatus(401)))
+        assertFalse(isRefusedLogin(ServerException.HttpStatus(500)))
+        assertFalse(isRefusedLogin(ServerException.HttpStatus(404)))
         assertFalse(isRefusedLogin(java.io.IOException("no route to host")))
+        assertFalse(isRefusedLogin(ServerException.Timeout()))
+    }
+
+    @Test
+    fun `the SDK's own 401 is a refused login too`() {
+        // #745: the sync still calls the SDK, which throws its own type.
+        assertTrue(
+            isRefusedLogin(org.jellyfin.sdk.api.client.exception.InvalidStatusException(401, null))
+        )
     }
 }
