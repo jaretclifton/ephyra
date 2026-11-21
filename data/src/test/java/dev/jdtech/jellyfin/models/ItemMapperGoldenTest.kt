@@ -29,8 +29,9 @@ import org.robolectric.annotation.Config
  * with a fixed base URL, prints the result and compares it with `<name>.expected.txt`.
  *
  * The JSON files are responses of the test server (`docs/dev-environment.md`), as it sent them but
- * for the access key in a delivery URL. `boxset.handwritten.json` is written by hand: the server
- * has no collection. `source*.json` are the first media source of a PlaybackInfo response.
+ * for the access key in a delivery URL. The `*.handwritten.json` files are written by hand:
+ * `boxset` because the server has no collection, `movie-edge-cases` for the branches no recorded
+ * item reaches. `source*.json` are the first media source of a PlaybackInfo response.
  *
  * The expected files pin what the mappers do today, also where that looks odd. Changing a mapper on
  * purpose means regenerating them and reading the diff: `./gradlew :data:testDebugUnitTest --tests
@@ -75,6 +76,18 @@ class ItemMapperGoldenTest {
     fun movie() {
         val mapped = runBlocking { item("movie").toFindroidMovie(repository) }
         golden("movie", mapped)
+    }
+
+    /**
+     * The branches no recorded item reaches: duplicate and blank trailers and studios, a 3D flag, a
+     * link that is no web URL, two trickplay widths, named chapters, a transcoded second source.
+     */
+    @Test
+    fun movieEdgeCases() {
+        val mapped = runBlocking {
+            item("movie-edge-cases.handwritten").toFindroidMovie(repository)
+        }
+        golden("movie-edge-cases", mapped)
     }
 
     @Test
