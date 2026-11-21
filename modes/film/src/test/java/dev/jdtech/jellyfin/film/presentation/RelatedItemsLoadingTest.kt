@@ -44,6 +44,8 @@ class RelatedItemsLoadingTest {
     private val failing = mutableSetOf<String>()
     /** Boolean preferences the user turned off; every other preference has its default. */
     private val switchedOff = mutableSetOf<String>()
+    /** What getMovie answers from now on, in place of the movie the view model was made with. */
+    @Volatile private var answer: FindroidMovie? = null
 
     private val extra = movie(UUID.randomUUID(), "Behind the scenes")
     private val similar = movie(UUID.randomUUID(), "Similar")
@@ -241,13 +243,15 @@ class RelatedItemsLoadingTest {
         viewModel.loadRelated(itemId)
         withTimeout(5_000) { viewModel.state.first { it.related.similar.isNotEmpty() } }
 
+        // The reload's answer can be told apart, so the test waits until the reload has shown it,
+        // past its hop to Dispatchers.Default and back: a load still on its way back to Main when
+        // tearDown resets it fails a later runTest (#809).
+        answer = movie(itemId, "Movie, reloaded")
         calls.clear()
         viewModel.loadMovie(itemId)
-        withTimeout(5_000) {
-            viewModel.state.first { "getMovie" in synchronized(calls) { calls.toList() } }
-        }
+        withTimeout(5_000) { viewModel.state.first { it.movie?.name == "Movie, reloaded" } }
 
-        assertEquals(listOf("getMovie"), calls)
+        assertEquals(listOf("getMovie"), synchronized(calls) { calls.toList() })
     }
 
     private fun movieViewModel(movie: FindroidMovie) =
@@ -280,7 +284,7 @@ class RelatedItemsLoadingTest {
             synchronized(calls) { calls.add(method.name) }
             if (method.name in failing) throw IOException("${method.name} failed")
             when (method.name) {
-                "getMovie" -> movie
+                "getMovie" -> answer ?: movie
                 "getShow" -> show()
                 "getNextUp",
                 "getSeasons",
