@@ -1,0 +1,89 @@
+FindroidShow(
+  id = aaaaaaaa-0000-0000-0000-000000000003
+  name = "The Test Show"
+  originalTitle = "Show Original"
+  overview = "A test show."
+  sources = []
+  seasons = []
+  played = false
+  favorite = true
+  canPlay = true
+  canDownload = false
+  playbackPositionTicks = 0
+  unplayedItemCount = 7
+  genres = [
+    - "Comedy"
+  ]
+  people = [
+    - FindroidItemPerson(
+        id = cccccccc-0000-0000-0000-000000000001
+        name = "Ada Actor"
+        type = ACTOR
+        role = "Host"
+        image = FindroidItemPersonImage(
+          uri = null
+          blurHash = null
+        )
+      )
+    - FindroidItemPerson(
+        id = cccccccc-0000-0000-0000-000000000001
+        name = "Ada Actor"
+        type = ACTOR
+        role = "Guest"
+        image = FindroidItemPersonImage(
+          uri = null
+          blurHash = null
+        )
+      )
+  ]
+  runtimeTicks = 27000000000
+  communityRating = 8.9
+  officialRating = "TV-14"
+  status = "Continuing"
+  productionYear = 2020
+  endDate = null
+  trailer = "https://www.youtube.com/watch?v=ccccccccccc"
+  trailers = [
+    - FindroidTrailer(
+        name = "Teaser"
+        url = "https://www.youtube.com/watch?v=ccccccccccc"
+      )
+  ]
+  tagline = "Tune in."
+  criticRating = 91.0
+  studios = [
+    - "Test Network"
+  ]
+  externalLinks = [
+    - FindroidExternalLink(
+        name = "IMDb"
+        url = "https://www.imdb.com/title/tt0000003"
+      )
+    - FindroidExternalLink(
+        name = "TheMovieDb"
+        url = "https://www.themoviedb.org/tv/2002"
+      )
+    - FindroidExternalLink(
+        name = "TheTVDB"
+        url = "https://thetvdb.com/?tab=series&id=3003"
+      )
+  ]
+  airDays = [
+    - THURSDAY
+    - MONDAY
+  ]
+  airTime = "21:00"
+  localTrailerCount = 0
+  specialFeatureCount = null
+  images = FindroidImages(
+    primary = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000003/Images/Primary?tag=showptag
+    backdrop = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000003/Images/Backdrop/0?tag=showbd
+    logo = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000003/Images/Logo?tag=showlogo
+    showPrimary = null
+    showBackdrop = null
+    showLogo = null
+    thumb = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000003/Images/Thumb?tag=showthumb
+    showThumb = null
+  )
+  chapters = []
+)

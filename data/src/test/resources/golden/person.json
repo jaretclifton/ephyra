@@ -1,0 +1,14 @@
+{
+  "Name": "Ada Actor",
+  "Id": "cccccccc-0000-0000-0000-000000000001",
+  "Type": "Person",
+  "Overview": "An actor who exists only in tests.",
+  "ImageTags": {
+    "Primary": "adaptag",
+    "Logo": "adalogo"
+  },
+  "BackdropImageTags": [
+    "adabd"
+  ],
+  "LocationType": "FileSystem"
+}

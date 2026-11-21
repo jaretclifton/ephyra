@@ -1,0 +1,15 @@
+FindroidPerson(
+  id = cccccccc-0000-0000-0000-000000000001
+  name = "Ada Actor"
+  overview = "An actor who exists only in tests."
+  images = FindroidImages(
+    primary = https://server.test/items/cccccccc-0000-0000-0000-000000000001/Images/Primary?tag=adaptag
+    backdrop = https://server.test/items/cccccccc-0000-0000-0000-000000000001/Images/Backdrop/0?tag=adabd
+    logo = https://server.test/items/cccccccc-0000-0000-0000-000000000001/Images/Logo?tag=adalogo
+    showPrimary = null
+    showBackdrop = null
+    showLogo = null
+    thumb = null
+    showThumb = null
+  )
+)

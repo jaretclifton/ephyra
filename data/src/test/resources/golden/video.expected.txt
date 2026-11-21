@@ -1,0 +1,60 @@
+FindroidMovie(
+  id = aaaaaaaa-0000-0000-0000-000000000009
+  name = "Holiday Clip"
+  originalTitle = null
+  overview = "A home video opens as a movie."
+  sources = [
+    - FindroidSource(
+        id = "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0b1"
+        name = "Holiday Clip"
+        type = REMOTE
+        path = "https://cdn.example.test/clip.mp4"
+        size = 1048576
+        mediaStreams = []
+        downloadId = null
+        transcoded = false
+        container = "mp4"
+        bitrate = null
+        defaultAudioStreamIndex = null
+        playSessionId = null
+      )
+  ]
+  played = true
+  favorite = false
+  canPlay = true
+  canDownload = false
+  runtimeTicks = 6000000000
+  playbackPositionTicks = 0
+  premiereDate = null
+  people = []
+  genres = []
+  communityRating = null
+  officialRating = null
+  status = "Ended"
+  productionYear = null
+  endDate = null
+  trailer = null
+  unplayedItemCount = null
+  lastPlayedDate = null
+  trailers = []
+  tagline = null
+  criticRating = null
+  studios = []
+  externalLinks = []
+  playCount = 0
+  is3D = false
+  localTrailerCount = 0
+  specialFeatureCount = null
+  images = FindroidImages(
+    primary = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000009/Images/Primary?tag=vtag
+    backdrop = null
+    logo = null
+    showPrimary = null
+    showBackdrop = null
+    showLogo = null
+    thumb = null
+    showThumb = null
+  )
+  chapters = []
+  trickplayInfo = null
+)

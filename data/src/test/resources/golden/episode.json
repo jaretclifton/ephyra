@@ -1,0 +1,119 @@
+{
+  "Name": "The Test Episode",
+  "OriginalTitle": "Episode Original",
+  "Id": "aaaaaaaa-0000-0000-0000-000000000002",
+  "CanDownload": true,
+  "PremiereDate": "2022-09-30T00:00:00.0000000Z",
+  "CommunityRating": 8.2,
+  "RunTimeTicks": 27000000000,
+  "ProductionYear": 2022,
+  "IndexNumber": 4,
+  "IndexNumberEnd": 5,
+  "ParentIndexNumber": 2,
+  "Type": "Episode",
+  "Overview": "The fourth and fifth episode of the second season.",
+  "PlayAccess": "Full",
+  "ProviderIds": {
+    "Tvdb": "55",
+    "Imdb": "tt0000002"
+  },
+  "ExternalUrls": [],
+  "People": [
+    {
+      "Name": "Gil Guest",
+      "Id": "cccccccc-0000-0000-0000-000000000003",
+      "Role": "Himself",
+      "Type": "GuestStar"
+    }
+  ],
+  "UserData": {
+    "PlaybackPositionTicks": 9000000000,
+    "PlayCount": 1,
+    "IsFavorite": false,
+    "LastPlayedDate": "2024-04-02T19:00:00.0000000Z",
+    "Played": false,
+    "Key": "55",
+    "ItemId": "aaaaaaaa-0000-0000-0000-000000000002"
+  },
+  "SeriesName": "The Test Show",
+  "SeriesId": "aaaaaaaa-0000-0000-0000-000000000003",
+  "SeasonId": "aaaaaaaa-0000-0000-0000-000000000004",
+  "SeasonName": "Season 2",
+  "SeriesPrimaryImageTag": "showptag",
+  "ParentBackdropItemId": "aaaaaaaa-0000-0000-0000-000000000003",
+  "ParentBackdropImageTags": [
+    "showbd"
+  ],
+  "ParentLogoItemId": "aaaaaaaa-0000-0000-0000-000000000003",
+  "ParentLogoImageTag": "showlogo",
+  "SeriesThumbImageTag": "showthumb",
+  "ImageTags": {
+    "Primary": "eptag",
+    "Thumb": "epthumb"
+  },
+  "Chapters": [
+    {
+      "StartPositionTicks": 0,
+      "Name": "Chapter 1",
+      "ImageDateModified": "0001-01-01T00:00:00.0000000Z"
+    }
+  ],
+  "LocationType": "FileSystem",
+  "MediaSources": [
+    {
+      "Protocol": "File",
+      "Id": "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0c1",
+      "Path": "/media/tv/The Test Show/S02E04.mkv",
+      "Type": "Default",
+      "Container": "mkv",
+      "Size": 1073741824,
+      "Name": "S02E04",
+      "IsRemote": false,
+      "SupportsTranscoding": true,
+      "SupportsDirectStream": true,
+      "SupportsDirectPlay": true,
+      "MediaStreams": [
+        {
+          "Codec": "h264",
+          "Type": "Video",
+          "Index": 0,
+          "Height": 720,
+          "Width": 1280,
+          "VideoRangeType": "SDR",
+          "IsDefault": true,
+          "IsInterlaced": false,
+          "IsForced": false,
+          "IsHearingImpaired": false,
+          "IsOriginal": false,
+          "IsExternal": false,
+          "IsTextSubtitleStream": false,
+          "SupportsExternalStream": false
+        }
+      ],
+      "ReadAtNativeFramerate": false,
+      "IgnoreDts": false,
+      "IgnoreIndex": false,
+      "GenPtsInput": false,
+      "IsInfiniteStream": false,
+      "RequiresOpening": false,
+      "RequiresClosing": false,
+      "RequiresLooping": false,
+      "SupportsProbing": true,
+      "TranscodingSubProtocol": "http",
+      "HasSegments": false
+    }
+  ],
+  "Trickplay": {
+    "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0c1": {
+      "320": {
+        "Width": 320,
+        "Height": 180,
+        "TileWidth": 10,
+        "TileHeight": 10,
+        "ThumbnailCount": 270,
+        "Interval": 10000,
+        "Bandwidth": 200000
+      }
+    }
+  }
+}

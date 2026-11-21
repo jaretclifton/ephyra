@@ -1,0 +1,16 @@
+{
+  "Name": "The Test Collection",
+  "Id": "aaaaaaaa-0000-0000-0000-000000000005",
+  "Type": "BoxSet",
+  "Overview": "The overview is not mapped.",
+  "CanDownload": true,
+  "PlayAccess": "Full",
+  "IsFolder": true,
+  "ImageTags": {
+    "Primary": "boxptag"
+  },
+  "BackdropImageTags": [
+    "boxbd"
+  ],
+  "LocationType": "FileSystem"
+}

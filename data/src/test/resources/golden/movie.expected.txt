@@ -1,0 +1,236 @@
+FindroidMovie(
+  id = aaaaaaaa-0000-0000-0000-000000000001
+  name = "The Test Movie"
+  originalTitle = "Le Film de Test"
+  overview = "A test movie that exercises every mapper."
+  sources = [
+    - FindroidSource(
+        id = "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a1"
+        name = "The Test Movie (1080p)"
+        type = REMOTE
+        path = ""
+        size = 4294967296
+        mediaStreams = [
+          - FindroidMediaStream(
+              title = ""
+              displayTitle = "1080p HEVC HDR10"
+              language = ""
+              type = VIDEO
+              codec = "hevc"
+              profile = "Main 10"
+              isExternal = false
+              path = null
+              channelLayout = null
+              videoRangeType = HDR10
+              height = 1080
+              width = 1920
+              videoDoViTitle = null
+              bitRate = 7000000
+              frameRate = 23.976
+              bitDepth = 10
+              sampleRate = null
+              index = 0
+              channels = null
+              deliveryMethod = null
+              isForced = false
+              isDefault = true
+            )
+          - FindroidMediaStream(
+              title = ""
+              displayTitle = "English - EAC3 - 5.1 - Default"
+              language = "eng"
+              type = AUDIO
+              codec = "eac3"
+              profile = null
+              isExternal = false
+              path = null
+              channelLayout = "5.1"
+              videoRangeType = UNKNOWN
+              height = null
+              width = null
+              videoDoViTitle = null
+              bitRate = 640000
+              frameRate = null
+              bitDepth = null
+              sampleRate = 48000
+              index = 1
+              channels = 6
+              deliveryMethod = null
+              isForced = false
+              isDefault = true
+            )
+          - FindroidMediaStream(
+              title = "Full"
+              displayTitle = "English - Full - SUBRIP"
+              language = "eng"
+              type = SUBTITLE
+              codec = "subrip"
+              profile = null
+              isExternal = false
+              path = null
+              channelLayout = null
+              videoRangeType = UNKNOWN
+              height = null
+              width = null
+              videoDoViTitle = null
+              bitRate = null
+              frameRate = null
+              bitDepth = null
+              sampleRate = null
+              index = 2
+              channels = null
+              deliveryMethod = EMBED
+              isForced = true
+              isDefault = false
+            )
+          - FindroidMediaStream(
+              title = ""
+              displayTitle = "Dutch - SRT - External"
+              language = "nld"
+              type = SUBTITLE
+              codec = "srt"
+              profile = null
+              isExternal = true
+              path = "https://server.test/Videos/aaaaaaaa-0000-0000-0000-000000000001/a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a1/Subtitles/3/0/Stream.srt"
+              channelLayout = null
+              videoRangeType = UNKNOWN
+              height = null
+              width = null
+              videoDoViTitle = null
+              bitRate = null
+              frameRate = null
+              bitDepth = null
+              sampleRate = null
+              index = 3
+              channels = null
+              deliveryMethod = EXTERNAL
+              isForced = false
+              isDefault = false
+            )
+        ]
+        downloadId = null
+        transcoded = false
+        container = "mkv"
+        bitrate = 8000000
+        defaultAudioStreamIndex = 1
+        playSessionId = null
+      )
+    - FindroidSource(
+        id = "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a2"
+        name = "The Test Movie (4K, transcoded)"
+        type = REMOTE
+        path = "https://server.test/videos/aaaaaaaa-0000-0000-0000-000000000001/master.m3u8?MediaSourceId=a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a2&PlaySessionId=fakesession"
+        size = 8589934592
+        mediaStreams = []
+        downloadId = null
+        transcoded = true
+        container = "mp4"
+        bitrate = null
+        defaultAudioStreamIndex = null
+        playSessionId = null
+      )
+  ]
+  played = false
+  favorite = true
+  canPlay = true
+  canDownload = true
+  runtimeTicks = 72000000000
+  playbackPositionTicks = 18000000000
+  premiereDate = 2021-05-14T00:00
+  people = [
+    - FindroidItemPerson(
+        id = cccccccc-0000-0000-0000-000000000001
+        name = "Ada Actor"
+        type = ACTOR
+        role = "Lead"
+        image = FindroidItemPersonImage(
+          uri = https://server.test/items/cccccccc-0000-0000-0000-000000000001/Images/Primary?tag=pimg1
+          blurHash = "LKO2?U%2Tw=w]~RBVZRi};RPxuwH"
+        )
+      )
+    - FindroidItemPerson(
+        id = cccccccc-0000-0000-0000-000000000002
+        name = "Dan Director"
+        type = DIRECTOR
+        role = ""
+        image = FindroidItemPersonImage(
+          uri = null
+          blurHash = null
+        )
+      )
+  ]
+  genres = [
+    - "Action"
+    - "Drama"
+  ]
+  communityRating = 7.6
+  officialRating = "PG-13"
+  status = "Released"
+  productionYear = 2021
+  endDate = 2022-01-01T00:00
+  trailer = "https://www.youtube.com/watch?v=aaaaaaaaaaa"
+  unplayedItemCount = null
+  lastPlayedDate = 2024-03-01T20:15:30
+  trailers = [
+    - FindroidTrailer(
+        name = "Official Trailer"
+        url = "https://www.youtube.com/watch?v=aaaaaaaaaaa"
+      )
+    - FindroidTrailer(
+        name = null
+        url = "https://www.youtube.com/watch?v=bbbbbbbbbbb"
+      )
+  ]
+  tagline = "Everything is a test."
+  criticRating = 87.0
+  studios = [
+    - "Test Pictures"
+  ]
+  externalLinks = [
+    - FindroidExternalLink(
+        name = "IMDb"
+        url = "https://www.imdb.com/title/tt0000001"
+      )
+    - FindroidExternalLink(
+        name = "TheMovieDb"
+        url = "https://www.themoviedb.org/movie/1001"
+      )
+  ]
+  playCount = 3
+  is3D = true
+  localTrailerCount = 2
+  specialFeatureCount = 3
+  images = FindroidImages(
+    primary = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000001/Images/Primary?tag=ptag
+    backdrop = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000001/Images/Backdrop/0?tag=btag0
+    logo = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000001/Images/Logo?tag=ltag
+    showPrimary = null
+    showBackdrop = null
+    showLogo = null
+    thumb = null
+    showThumb = null
+  )
+  chapters = [
+    - FindroidChapter(
+        startPosition = 0
+        name = "Opening"
+        imageTag = "ch0"
+      )
+    - FindroidChapter(
+        startPosition = 600000
+        name = "Middle"
+        imageTag = null
+      )
+  ]
+  trickplayInfo = {
+    "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a1": FindroidTrickplayInfo(
+      width = 640
+      height = 360
+      tileWidth = 5
+      tileHeight = 5
+      thumbnailCount = 720
+      interval = 10000
+      bandwidth = 900000
+    )
+  }
+)

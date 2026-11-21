@@ -1,0 +1,32 @@
+{
+  "Name": "Season 2",
+  "OriginalTitle": "Season Original",
+  "Id": "aaaaaaaa-0000-0000-0000-000000000004",
+  "CanDownload": true,
+  "Type": "Season",
+  "Overview": "The second season.",
+  "IndexNumber": 2,
+  "PlayAccess": "Full",
+  "UserData": {
+    "UnplayedItemCount": 3,
+    "PlaybackPositionTicks": 0,
+    "PlayCount": 0,
+    "IsFavorite": false,
+    "Played": true,
+    "Key": "S2",
+    "ItemId": "aaaaaaaa-0000-0000-0000-000000000004"
+  },
+  "SeriesName": "The Test Show",
+  "SeriesId": "aaaaaaaa-0000-0000-0000-000000000003",
+  "SeriesPrimaryImageTag": "showptag",
+  "ParentBackdropItemId": "aaaaaaaa-0000-0000-0000-000000000003",
+  "ParentBackdropImageTags": [
+    "showbd"
+  ],
+  "ParentThumbItemId": "aaaaaaaa-0000-0000-0000-000000000003",
+  "ParentThumbImageTag": "showthumb",
+  "ImageTags": {
+    "Primary": "seasonptag"
+  },
+  "LocationType": "FileSystem"
+}

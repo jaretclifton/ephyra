@@ -1,0 +1,112 @@
+FindroidEpisode(
+  id = aaaaaaaa-0000-0000-0000-000000000002
+  name = "The Test Episode"
+  originalTitle = "Episode Original"
+  overview = "The fourth and fifth episode of the second season."
+  indexNumber = 4
+  indexNumberEnd = 5
+  parentIndexNumber = 2
+  sources = [
+    - FindroidSource(
+        id = "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0c1"
+        name = "S02E04"
+        type = REMOTE
+        path = ""
+        size = 1073741824
+        mediaStreams = [
+          - FindroidMediaStream(
+              title = ""
+              displayTitle = null
+              language = ""
+              type = VIDEO
+              codec = "h264"
+              profile = null
+              isExternal = false
+              path = null
+              channelLayout = null
+              videoRangeType = SDR
+              height = 720
+              width = 1280
+              videoDoViTitle = null
+              bitRate = null
+              frameRate = null
+              bitDepth = null
+              sampleRate = null
+              index = 0
+              channels = null
+              deliveryMethod = null
+              isForced = false
+              isDefault = true
+            )
+        ]
+        downloadId = null
+        transcoded = false
+        container = "mkv"
+        bitrate = null
+        defaultAudioStreamIndex = null
+        playSessionId = null
+      )
+  ]
+  played = false
+  favorite = false
+  canPlay = true
+  canDownload = true
+  runtimeTicks = 27000000000
+  playbackPositionTicks = 9000000000
+  premiereDate = 2022-09-30T00:00
+  seriesId = aaaaaaaa-0000-0000-0000-000000000003
+  seriesName = "The Test Show"
+  seasonId = aaaaaaaa-0000-0000-0000-000000000004
+  seasonName = "Season 2"
+  communityRating = 8.2
+  people = [
+    - FindroidItemPerson(
+        id = cccccccc-0000-0000-0000-000000000003
+        name = "Gil Guest"
+        type = GUEST_STAR
+        role = "Himself"
+        image = FindroidItemPersonImage(
+          uri = null
+          blurHash = null
+        )
+      )
+  ]
+  unplayedItemCount = null
+  missing = false
+  lastPlayedDate = 2024-04-02T19:00
+  externalLinks = [
+    - FindroidExternalLink(
+        name = "IMDb"
+        url = "https://www.imdb.com/title/tt0000002"
+      )
+  ]
+  playCount = 1
+  images = FindroidImages(
+    primary = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000002/Images/Primary?tag=eptag
+    backdrop = null
+    logo = null
+    showPrimary = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000003/Images/Primary?tag=showptag
+    showBackdrop = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000003/Images/Backdrop/0?tag=showbd
+    showLogo = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000003/Images/Logo?tag=showlogo
+    thumb = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000002/Images/Thumb?tag=epthumb
+    showThumb = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000003/Images/Thumb?tag=showthumb
+  )
+  chapters = [
+    - FindroidChapter(
+        startPosition = 0
+        name = "Chapter 1"
+        imageTag = null
+      )
+  ]
+  trickplayInfo = {
+    "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0c1": FindroidTrickplayInfo(
+      width = 320
+      height = 180
+      tileWidth = 10
+      tileHeight = 10
+      thumbnailCount = 270
+      interval = 10000
+      bandwidth = 200000
+    )
+  }
+)

@@ -1,0 +1,11 @@
+{
+  "Name": "Movies",
+  "Id": "aaaaaaaa-0000-0000-0000-000000000006",
+  "Type": "CollectionFolder",
+  "CollectionType": "movies",
+  "IsFolder": true,
+  "ImageTags": {
+    "Primary": "libptag"
+  },
+  "LocationType": "FileSystem"
+}

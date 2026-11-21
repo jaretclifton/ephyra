@@ -1,0 +1,79 @@
+{
+  "Name": "The Test Show",
+  "OriginalTitle": "Show Original",
+  "Id": "aaaaaaaa-0000-0000-0000-000000000003",
+  "CanDownload": false,
+  "PremiereDate": "2020-01-09T00:00:00.0000000Z",
+  "OfficialRating": "TV-14",
+  "CriticRating": 91,
+  "CommunityRating": 8.9,
+  "RunTimeTicks": 27000000000,
+  "ProductionYear": 2020,
+  "Type": "Series",
+  "Overview": "A test show.",
+  "Taglines": [
+    "Tune in."
+  ],
+  "Genres": [
+    "Comedy"
+  ],
+  "PlayAccess": "Full",
+  "RemoteTrailers": [
+    {
+      "Url": "https://www.youtube.com/watch?v=ccccccccccc",
+      "Name": "Teaser"
+    }
+  ],
+  "ProviderIds": {
+    "Imdb": "tt0000003",
+    "Tmdb": "2002",
+    "Tvdb": "3003"
+  },
+  "ExternalUrls": [],
+  "Studios": [
+    {
+      "Name": "Test Network",
+      "Id": "bbbbbbbb-0000-0000-0000-000000000004"
+    }
+  ],
+  "People": [
+    {
+      "Name": "Ada Actor",
+      "Id": "cccccccc-0000-0000-0000-000000000001",
+      "Role": "Host",
+      "Type": "Actor"
+    },
+    {
+      "Name": "Ada Actor",
+      "Id": "cccccccc-0000-0000-0000-000000000001",
+      "Role": "Guest",
+      "Type": "Actor"
+    }
+  ],
+  "LocalTrailerCount": 0,
+  "UserData": {
+    "UnplayedItemCount": 7,
+    "PlaybackPositionTicks": 0,
+    "PlayCount": 0,
+    "IsFavorite": true,
+    "Played": false,
+    "Key": "3003",
+    "ItemId": "aaaaaaaa-0000-0000-0000-000000000003"
+  },
+  "Status": "Continuing",
+  "AirTime": " 21:00 ",
+  "AirDays": [
+    "Thursday",
+    "Monday",
+    "Thursday"
+  ],
+  "ImageTags": {
+    "Primary": "showptag",
+    "Logo": "showlogo",
+    "Thumb": "showthumb"
+  },
+  "BackdropImageTags": [
+    "showbd"
+  ],
+  "LocationType": "FileSystem"
+}

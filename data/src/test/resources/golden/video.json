@@ -1,0 +1,48 @@
+{
+  "Name": "Holiday Clip",
+  "Id": "aaaaaaaa-0000-0000-0000-000000000009",
+  "CanDownload": true,
+  "RunTimeTicks": 6000000000,
+  "Type": "Video",
+  "Overview": "A home video opens as a movie.",
+  "PlayAccess": "Full",
+  "UserData": {
+    "PlaybackPositionTicks": 0,
+    "PlayCount": 0,
+    "IsFavorite": false,
+    "Played": true,
+    "Key": "9",
+    "ItemId": "aaaaaaaa-0000-0000-0000-000000000009"
+  },
+  "ImageTags": {
+    "Primary": "vtag"
+  },
+  "LocationType": "FileSystem",
+  "MediaSources": [
+    {
+      "Protocol": "Http",
+      "Id": "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0b1",
+      "Path": "https://cdn.example.test/clip.mp4",
+      "Type": "Default",
+      "Container": "mp4",
+      "Size": 1048576,
+      "Name": "Holiday Clip",
+      "IsRemote": true,
+      "SupportsTranscoding": true,
+      "SupportsDirectStream": true,
+      "SupportsDirectPlay": true,
+      "MediaStreams": [],
+      "ReadAtNativeFramerate": false,
+      "IgnoreDts": false,
+      "IgnoreIndex": false,
+      "GenPtsInput": false,
+      "IsInfiniteStream": false,
+      "RequiresOpening": false,
+      "RequiresClosing": false,
+      "RequiresLooping": false,
+      "SupportsProbing": true,
+      "TranscodingSubProtocol": "http",
+      "HasSegments": false
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+FindroidCollection(
+  id = aaaaaaaa-0000-0000-0000-000000000006
+  name = "Movies"
+  originalTitle = null
+  overview = ""
+  played = false
+  favorite = false
+  canPlay = false
+  canDownload = false
+  sources = []
+  runtimeTicks = 0
+  playbackPositionTicks = 0
+  unplayedItemCount = null
+  type = Movies
+  images = FindroidImages(
+    primary = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000006/Images/Primary?tag=libptag
+    backdrop = null
+    logo = null
+    showPrimary = null
+    showBackdrop = null
+    showLogo = null
+    thumb = null
+    showThumb = null
+  )
+  chapters = []
+)

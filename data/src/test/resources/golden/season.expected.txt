@@ -1,0 +1,29 @@
+FindroidSeason(
+  id = aaaaaaaa-0000-0000-0000-000000000004
+  name = "Season 2"
+  seriesId = aaaaaaaa-0000-0000-0000-000000000003
+  seriesName = "The Test Show"
+  originalTitle = "Season Original"
+  overview = "The second season."
+  sources = []
+  indexNumber = 2
+  episodes = []
+  played = true
+  favorite = false
+  canPlay = true
+  canDownload = true
+  runtimeTicks = 0
+  playbackPositionTicks = 0
+  unplayedItemCount = 3
+  images = FindroidImages(
+    primary = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000004/Images/Primary?tag=seasonptag
+    backdrop = null
+    logo = null
+    showPrimary = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000003/Images/Primary?tag=showptag
+    showBackdrop = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000003/Images/Backdrop/0?tag=showbd
+    showLogo = null
+    thumb = null
+    showThumb = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000003/Images/Thumb?tag=showthumb
+  )
+  chapters = []
+)

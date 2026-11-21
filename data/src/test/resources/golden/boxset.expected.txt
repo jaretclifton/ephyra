@@ -1,0 +1,25 @@
+FindroidBoxSet(
+  id = aaaaaaaa-0000-0000-0000-000000000005
+  name = "The Test Collection"
+  originalTitle = null
+  overview = ""
+  played = false
+  favorite = false
+  canPlay = false
+  canDownload = false
+  sources = []
+  runtimeTicks = 0
+  playbackPositionTicks = 0
+  unplayedItemCount = null
+  images = FindroidImages(
+    primary = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000005/Images/Primary?tag=boxptag
+    backdrop = https://server.test/items/aaaaaaaa-0000-0000-0000-000000000005/Images/Backdrop/0?tag=boxbd
+    logo = null
+    showPrimary = null
+    showBackdrop = null
+    showLogo = null
+    thumb = null
+    showThumb = null
+  )
+  chapters = []
+)
