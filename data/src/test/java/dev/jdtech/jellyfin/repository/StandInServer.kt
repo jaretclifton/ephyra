@@ -9,6 +9,7 @@ import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.Closeable
 import java.io.InputStream
 import java.lang.reflect.Proxy
+import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.URLDecoder
 import java.util.Collections
@@ -39,7 +40,8 @@ internal class StandInServer(private val answer: (Request) -> String? = { null }
         fun json(): JsonObject = Json.parseToJsonElement(body).jsonObject
     }
 
-    private val socket = ServerSocket(0)
+    // Loopback only: the repository is the one client, on 127.0.0.1.
+    private val socket = ServerSocket(0, 50, InetAddress.getLoopbackAddress())
     val requests: MutableList<Request> = Collections.synchronizedList(mutableListOf())
 
     val baseUrl: String

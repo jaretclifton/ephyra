@@ -33,7 +33,8 @@ import org.robolectric.annotation.Config
 @Config(sdk = [34], application = Application::class)
 class PlaybackReportRequestTest {
     private val itemId = UUID.fromString("8f086228-6a92-020d-0cb7-35d734765afe")
-    private var answer = TRANSCODE
+    // Set on the test thread, read on the server thread.
+    @Volatile private var answer = TRANSCODE
     private val server = StandInServer { request ->
         if (request.path.endsWith("/PlaybackInfo")) StandInServer.resource(answer) else null
     }
