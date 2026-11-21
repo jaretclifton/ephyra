@@ -1,5 +1,6 @@
 package dev.jdtech.jellyfin.film.presentation
 
+import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.film.presentation.favorites.FavoritesViewModel
 import dev.jdtech.jellyfin.film.presentation.media.MediaViewModel
 import dev.jdtech.jellyfin.film.presentation.search.SearchAction
@@ -14,6 +15,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
@@ -29,6 +31,7 @@ class ServerAwayReloadTest {
     private val dispatcher = StandardTestDispatcher()
     private val calls = mutableListOf<String>()
     private var fail = false
+    private var favoritesAnswers = ArrayDeque<List<Any>>()
 
     @BeforeEach
     fun setUp() {
@@ -173,6 +176,25 @@ class ServerAwayReloadTest {
             assertTrue(viewModel.state.value.error != null)
         }
 
+    @Test
+    fun `the sync's end loads the favourites again, in place of a load still running`() =
+        runTest(dispatcher) {
+            // The reload for the server's return asked before the sync sent the favourite set
+            // offline: the server had none yet.
+            favoritesAnswers = ArrayDeque(listOf(emptyList(), listOf(dummyMovie)))
+            val viewModel = FavoritesViewModel(repository())
+            viewModel.onServerAwayChanged(false)
+            viewModel.loadItems()
+            runCurrent()
+
+            viewModel.onSynced().join()
+
+            assertEquals(listOf("favorites", "favorites"), calls)
+            val state = viewModel.state.value
+            assertEquals(listOf(dummyMovie.id), state.sections.flatMap { it.items }.map { it.id })
+            assertEquals(null, state.error)
+        }
+
     // Search
 
     @Test
@@ -238,7 +260,7 @@ class ServerAwayReloadTest {
                 }
                 "getFavoriteItems" -> {
                     calls += "favorites"
-                    emptyList<Any>()
+                    favoritesAnswers.removeFirstOrNull() ?: emptyList<Any>()
                 }
                 "getSearchItems" -> {
                     calls += args!![0] as String
