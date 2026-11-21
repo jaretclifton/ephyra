@@ -17,6 +17,7 @@ import dev.jdtech.jellyfin.models.FindroidSegment
 import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.ItemFilter
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.SortBy
@@ -285,7 +286,7 @@ class JellyfinRepositoryImpl(
 
     override suspend fun getItems(
         parentId: UUID?,
-        includeTypes: List<BaseItemKind>?,
+        includeTypes: List<ItemKind>?,
         recursive: Boolean,
         sortBy: SortBy,
         sortOrder: SortOrder,
@@ -308,7 +309,7 @@ class JellyfinRepositoryImpl(
 
     override suspend fun getItemsPage(
         parentId: UUID?,
-        includeTypes: List<BaseItemKind>?,
+        includeTypes: List<ItemKind>?,
         recursive: Boolean,
         sortBy: SortBy,
         sortOrder: SortOrder,
@@ -335,7 +336,7 @@ class JellyfinRepositoryImpl(
                     .getItems(
                         currentUserId,
                         parentId = parentId,
-                        includeItemTypes = includeTypes,
+                        includeItemTypes = includeTypes?.toSdk(),
                         recursive = recursive,
                         sortBy = listOf(ItemSortBy.fromName(sortBy.sortString)),
                         sortOrder = listOf(ItemSortOrder.fromName(sortOrder.sortString)),
@@ -380,14 +381,14 @@ class JellyfinRepositoryImpl(
     }
 
     override suspend fun getRandomItemsWithBackdrop(
-        includeTypes: List<BaseItemKind>,
+        includeTypes: List<ItemKind>,
         limit: Int,
     ): List<FindroidItem> =
         withContext(Dispatchers.IO) {
             jellyfinApi.libraryApi
                 .getItems(
                     currentUserId,
-                    includeItemTypes = includeTypes,
+                    includeItemTypes = includeTypes.toSdk(),
                     recursive = true,
                     sortBy = listOf(ItemSortBy.RANDOM),
                     imageTypes = listOf(ImageType.BACKDROP),
@@ -400,7 +401,7 @@ class JellyfinRepositoryImpl(
 
     override suspend fun getItemsPaging(
         parentId: UUID?,
-        includeTypes: List<BaseItemKind>?,
+        includeTypes: List<ItemKind>?,
         recursive: Boolean,
         sortBy: SortBy,
         sortOrder: SortOrder,
@@ -431,7 +432,7 @@ class JellyfinRepositoryImpl(
 
     override suspend fun getItemCount(
         parentId: UUID?,
-        includeTypes: List<BaseItemKind>?,
+        includeTypes: List<ItemKind>?,
         recursive: Boolean,
         filters: Set<ItemFilter>,
         nameLessThan: String?,
@@ -452,7 +453,7 @@ class JellyfinRepositoryImpl(
                 .getItems(
                     currentUserId,
                     parentId = parentId,
-                    includeItemTypes = includeTypes,
+                    includeItemTypes = includeTypes?.toSdk(),
                     recursive = recursive,
                     filters = filters.toSdkFilters(),
                     nameLessThan = nameLessThan,
@@ -475,7 +476,7 @@ class JellyfinRepositoryImpl(
 
     override suspend fun getPersonItems(
         personIds: List<UUID>,
-        includeTypes: List<BaseItemKind>?,
+        includeTypes: List<ItemKind>?,
         recursive: Boolean,
         limit: Int?,
     ): List<FindroidItem> =
@@ -484,7 +485,7 @@ class JellyfinRepositoryImpl(
                 .getItems(
                     currentUserId,
                     personIds = personIds,
-                    includeItemTypes = includeTypes,
+                    includeItemTypes = includeTypes?.toSdk(),
                     recursive = recursive,
                     limit = limit,
                     enableTotalRecordCount = false,
@@ -522,7 +523,7 @@ class JellyfinRepositoryImpl(
 
     override suspend fun getSearchItems(
         query: String,
-        itemKinds: List<BaseItemKind>?,
+        itemKinds: List<ItemKind>?,
     ): ItemsResult<FindroidItem> =
         withContext(Dispatchers.IO) {
             // CE (#775): without the server, the downloads by name.
@@ -540,11 +541,7 @@ class JellyfinRepositoryImpl(
                     .orEmpty()
             serverOrStoredItems(storedItems(serverId, stored)) {
                 if (itemKinds == null) {
-                    searchItems(
-                        query,
-                        listOf(BaseItemKind.MOVIE, BaseItemKind.SERIES),
-                        SEARCH_LIMIT,
-                    )
+                    searchItems(query, listOf(ItemKind.MOVIE, ItemKind.SERIES), SEARCH_LIMIT)
                 } else {
                     coroutineScope {
                         itemKinds
@@ -560,14 +557,14 @@ class JellyfinRepositoryImpl(
 
     private suspend fun searchItems(
         query: String,
-        itemKinds: List<BaseItemKind>,
+        itemKinds: List<ItemKind>,
         limit: Int,
     ): List<FindroidItem> =
         jellyfinApi.libraryApi
             .getItems(
                 currentUserId,
                 searchTerm = query,
-                includeItemTypes = itemKinds,
+                includeItemTypes = itemKinds.toSdk(),
                 recursive = true,
                 limit = limit,
                 enableTotalRecordCount = false,
@@ -618,14 +615,14 @@ class JellyfinRepositoryImpl(
 
     override suspend fun getLatestMedia(
         parentId: UUID,
-        includeItemTypes: List<BaseItemKind>?,
+        includeItemTypes: List<ItemKind>?,
     ): List<FindroidItem> =
         withContext(Dispatchers.IO) {
             jellyfinApi.libraryApi
                 .getLatestMedia(
                     currentUserId,
                     parentId = parentId,
-                    includeItemTypes = includeItemTypes,
+                    includeItemTypes = includeItemTypes?.toSdk(),
                     fields = listOf(ItemFields.OVERVIEW),
                     limit = 16,
                     imageTypeLimit = 1,

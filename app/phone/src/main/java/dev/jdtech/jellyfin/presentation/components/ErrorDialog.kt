@@ -11,11 +11,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.localnetwork.localNetworkBlockFor
+import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.utils.localNetworkDeniedText
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.utils.LoadErrorText
-import org.jellyfin.sdk.api.client.exception.InvalidStatusException
 
 /**
  * Why a screen failed to load, in plain words (#377). The stack trace stays out of sight: Share
@@ -94,7 +94,7 @@ fun ErrorDialog(exception: Throwable, onDismissRequest: () -> Unit, onRetry: (()
 private fun ErrorDialogPreview() {
     FindroidTheme {
         ErrorDialog(
-            exception = InvalidStatusException(503, null),
+            exception = ServerException.HttpStatus(503),
             onDismissRequest = {},
             onRetry = {},
         )

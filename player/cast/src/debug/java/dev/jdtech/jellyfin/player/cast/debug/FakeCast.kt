@@ -5,6 +5,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.player.cast.CastPlayerController
 import dev.jdtech.jellyfin.player.cast.CastSessionManager
 import dev.jdtech.jellyfin.player.cast.di.CastStandIn
@@ -33,7 +34,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.jellyfin.sdk.model.api.BaseItemKind
 import timber.log.Timber
 
 /**
@@ -243,7 +243,7 @@ internal class FakeCastPlayerController(
         load {
             manager.getInitialItem(
                 itemId = itemId,
-                itemKind = BaseItemKind.fromName(itemKind),
+                itemKind = ItemKind.fromName(itemKind),
                 mediaSourceId = mediaSourceId,
                 startFromBeginning = startFromBeginning,
                 shuffle = shuffle,

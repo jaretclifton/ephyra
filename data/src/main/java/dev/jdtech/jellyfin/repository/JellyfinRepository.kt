@@ -12,6 +12,7 @@ import dev.jdtech.jellyfin.models.FindroidSegment
 import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.ItemFilter
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.SortBy
@@ -19,7 +20,6 @@ import dev.jdtech.jellyfin.models.SortOrder
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import org.jellyfin.sdk.model.api.BaseItemDto
-import org.jellyfin.sdk.model.api.BaseItemKind
 
 interface JellyfinRepository {
     suspend fun getServerInfo(): ServerInfo
@@ -44,7 +44,7 @@ interface JellyfinRepository {
 
     suspend fun getItems(
         parentId: UUID? = null,
-        includeTypes: List<BaseItemKind>? = null,
+        includeTypes: List<ItemKind>? = null,
         recursive: Boolean = false,
         sortBy: SortBy = SortBy.defaultValue,
         sortOrder: SortOrder = SortOrder.ASCENDING,
@@ -61,7 +61,7 @@ interface JellyfinRepository {
      */
     suspend fun getItemsPage(
         parentId: UUID? = null,
-        includeTypes: List<BaseItemKind>? = null,
+        includeTypes: List<ItemKind>? = null,
         recursive: Boolean = false,
         sortBy: SortBy = SortBy.defaultValue,
         sortOrder: SortOrder = SortOrder.ASCENDING,
@@ -76,7 +76,7 @@ interface JellyfinRepository {
      * have a backdrop. Online the server picks them; the default (offline) shuffles local items.
      */
     suspend fun getRandomItemsWithBackdrop(
-        includeTypes: List<BaseItemKind>,
+        includeTypes: List<ItemKind>,
         limit: Int,
     ): List<FindroidItem> =
         getItems(includeTypes = includeTypes, recursive = true)
@@ -86,7 +86,7 @@ interface JellyfinRepository {
 
     suspend fun getItemsPaging(
         parentId: UUID? = null,
-        includeTypes: List<BaseItemKind>? = null,
+        includeTypes: List<ItemKind>? = null,
         recursive: Boolean = false,
         sortBy: SortBy = SortBy.defaultValue,
         sortOrder: SortOrder = SortOrder.ASCENDING,
@@ -99,7 +99,7 @@ interface JellyfinRepository {
      */
     suspend fun getItemCount(
         parentId: UUID? = null,
-        includeTypes: List<BaseItemKind>? = null,
+        includeTypes: List<ItemKind>? = null,
         recursive: Boolean = false,
         filters: Set<ItemFilter> = emptySet(),
         nameLessThan: String? = null,
@@ -109,7 +109,7 @@ interface JellyfinRepository {
 
     suspend fun getPersonItems(
         personIds: List<UUID>,
-        includeTypes: List<BaseItemKind>? = null,
+        includeTypes: List<ItemKind>? = null,
         recursive: Boolean = true,
         limit: Int? = null,
     ): List<FindroidItem>
@@ -124,7 +124,7 @@ interface JellyfinRepository {
      */
     suspend fun getSearchItems(
         query: String,
-        itemKinds: List<BaseItemKind>? = null,
+        itemKinds: List<ItemKind>? = null,
     ): ItemsResult<FindroidItem>
 
     suspend fun getSuggestions(): List<FindroidItem>
@@ -134,7 +134,7 @@ interface JellyfinRepository {
     /** [includeItemTypes] null leaves the choice to the server. */
     suspend fun getLatestMedia(
         parentId: UUID,
-        includeItemTypes: List<BaseItemKind>? = null,
+        includeItemTypes: List<ItemKind>? = null,
     ): List<FindroidItem>
 
     suspend fun getSeasons(seriesId: UUID, offline: Boolean = false): List<FindroidSeason>

@@ -6,6 +6,7 @@ import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidSeason
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import java.lang.reflect.Proxy
 import java.util.UUID
@@ -16,7 +17,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
-import org.jellyfin.sdk.model.api.BaseItemKind
 import org.junit.jupiter.api.Test
 
 class PlaylistManagerShuffleTest {
@@ -40,11 +40,7 @@ class PlaylistManagerShuffleTest {
 
         val manager = PlaylistManager(fakeRepository(showMap))
         val initialItem = runBlocking {
-            manager.getInitialItem(
-                itemId = seriesId,
-                itemKind = BaseItemKind.SERIES,
-                shuffle = true,
-            )
+            manager.getInitialItem(itemId = seriesId, itemKind = ItemKind.SERIES, shuffle = true)
         }
 
         assertNotNull(initialItem)
@@ -65,11 +61,7 @@ class PlaylistManagerShuffleTest {
 
         val manager = PlaylistManager(fakeRepository(showMap))
         val initialItem = runBlocking {
-            manager.getInitialItem(
-                itemId = seriesId,
-                itemKind = BaseItemKind.SERIES,
-                shuffle = true,
-            )
+            manager.getInitialItem(itemId = seriesId, itemKind = ItemKind.SERIES, shuffle = true)
         }
 
         assertNotNull(initialItem)
@@ -89,7 +81,7 @@ class PlaylistManagerShuffleTest {
             val first =
                 manager.getInitialItem(
                     itemId = seriesId,
-                    itemKind = BaseItemKind.SERIES,
+                    itemKind = ItemKind.SERIES,
                     shuffle = true,
                 )!!
             manager.setCurrentMediaItemIndex(first.itemId)
@@ -110,11 +102,7 @@ class PlaylistManagerShuffleTest {
         val manager = PlaylistManager(fakeRepository(showMap))
 
         runBlocking {
-            manager.getInitialItem(
-                itemId = seriesId,
-                itemKind = BaseItemKind.SERIES,
-                shuffle = true,
-            )
+            manager.getInitialItem(itemId = seriesId, itemKind = ItemKind.SERIES, shuffle = true)
             val later = manager.upcomingItems().last()
 
             val jumped = manager.jumpTo(later.id)!!
@@ -133,7 +121,7 @@ class PlaylistManagerShuffleTest {
             val first =
                 manager.getInitialItem(
                     itemId = seriesId,
-                    itemKind = BaseItemKind.SERIES,
+                    itemKind = ItemKind.SERIES,
                     shuffle = true,
                 )!!
             manager.setCurrentMediaItemIndex(first.itemId)
@@ -154,11 +142,7 @@ class PlaylistManagerShuffleTest {
 
         val manager = PlaylistManager(fakeRepository(showMap))
         val initialItem = runBlocking {
-            manager.getInitialItem(
-                itemId = seriesId,
-                itemKind = BaseItemKind.SERIES,
-                shuffle = true,
-            )
+            manager.getInitialItem(itemId = seriesId, itemKind = ItemKind.SERIES, shuffle = true)
         }
 
         assertNotNull(initialItem)
@@ -175,11 +159,7 @@ class PlaylistManagerShuffleTest {
 
         val manager = PlaylistManager(fakeRepository(showMap)).apply { random = Random(638) }
         val initialItem = runBlocking {
-            manager.getInitialItem(
-                itemId = season1.id,
-                itemKind = BaseItemKind.SEASON,
-                shuffle = true,
-            )
+            manager.getInitialItem(itemId = season1.id, itemKind = ItemKind.SEASON, shuffle = true)
         }
 
         assertNotNull(initialItem)
@@ -198,7 +178,7 @@ class PlaylistManagerShuffleTest {
         val manager = PlaylistManager(fakeRepository(mapOf(season1 to inSeason)))
 
         val initialItem = runBlocking {
-            manager.getInitialItem(itemId = season1.id, itemKind = BaseItemKind.SEASON)
+            manager.getInitialItem(itemId = season1.id, itemKind = ItemKind.SEASON)
         }
 
         val queued = listOf(initialItem!!.itemId) + manager.upcomingItems().map { it.id }

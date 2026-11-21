@@ -37,12 +37,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.jdtech.jellyfin.core.R as CoreR
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.player.cast.models.CastPlaybackStatus
 import dev.jdtech.jellyfin.player.cast.presentation.CastNowPlaying
 import dev.jdtech.jellyfin.player.cast.presentation.CastUiState
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
-import org.jellyfin.sdk.model.api.BaseItemKind
 
 const val CAST_MINI_PLAYER_TAG = "cast_mini_player"
 
@@ -284,7 +284,7 @@ internal fun CastTitleLines(playing: CastNowPlaying, modifier: Modifier = Modifi
 /** The item's picture at [height]: 16:9 for an episode, a poster for a film. */
 @Composable
 internal fun CastThumbnail(playing: CastNowPlaying, height: Dp, modifier: Modifier = Modifier) {
-    val ratio = if (playing.kind == BaseItemKind.MOVIE) 2f / 3f else 16f / 9f
+    val ratio = if (playing.kind == ItemKind.MOVIE) 2f / 3f else 16f / 9f
     AsyncImage(
         model = playing.artwork,
         contentDescription = null,

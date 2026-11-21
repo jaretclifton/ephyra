@@ -24,19 +24,19 @@ import dev.jdtech.jellyfin.film.presentation.home.HomeViewModel
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.presentation.film.components.HomeCarousel
 import dev.jdtech.jellyfin.presentation.film.components.HomeSection
 import dev.jdtech.jellyfin.presentation.film.components.HomeView
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import java.util.UUID
-import org.jellyfin.sdk.model.api.BaseItemKind
 
 @Composable
 fun HomeScreen(
     navigateToMovie: (itemId: UUID) -> Unit,
     navigateToShow: (itemId: UUID) -> Unit,
-    navigateToPlayer: (itemId: UUID, itemKind: BaseItemKind) -> Unit,
+    navigateToPlayer: (itemId: UUID, itemKind: ItemKind) -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
     isLoading: (Boolean) -> Unit,
 ) {
@@ -55,7 +55,7 @@ fun HomeScreen(
                         is FindroidMovie -> navigateToMovie(action.item.id)
                         is FindroidShow -> navigateToShow(action.item.id)
                         is FindroidEpisode -> {
-                            navigateToPlayer(action.item.id, BaseItemKind.EPISODE)
+                            navigateToPlayer(action.item.id, ItemKind.EPISODE)
                         }
                     }
                 }

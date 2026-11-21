@@ -5,6 +5,7 @@ import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidSeason
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import java.lang.reflect.Proxy
@@ -18,7 +19,6 @@ import kotlin.test.assertEquals
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
-import org.jellyfin.sdk.model.api.BaseItemKind
 import org.junit.jupiter.api.Test
 
 /**
@@ -136,7 +136,7 @@ class NeighbourLoaderTest {
 
     @Test
     fun `the neighbours of an item are its own, not the current item's`() = runBlocking {
-        manager.getInitialItem(e3, BaseItemKind.EPISODE)
+        manager.getInitialItem(e3, ItemKind.EPISODE)
         manager.setCurrentMediaItemIndex(e1)
 
         assertEquals(e2, manager.getPreviousPlayerItem(e3)?.itemId)
@@ -147,7 +147,7 @@ class NeighbourLoaderTest {
     fun `in a shuffled series a late next item goes after the item it was fetched for`() =
         runBlocking {
             manager.random = Random(657)
-            val first = manager.getInitialItem(seriesId, BaseItemKind.SERIES, shuffle = true)!!
+            val first = manager.getInitialItem(seriesId, ItemKind.SERIES, shuffle = true)!!
             val order = listOf(first.itemId) + manager.upcomingItems().map { it.id }
             val playlist = FakePlaylist(first.itemId)
             manager.setCurrentMediaItemIndex(first.itemId)
@@ -170,7 +170,7 @@ class NeighbourLoaderTest {
     fun `two overlapping lookups at the season's last episode append the next season once`() =
         runBlocking {
             seasons = listOf(season(seasonId, 1), season(season2Id, 2))
-            manager.getInitialItem(e6, BaseItemKind.EPISODE)
+            manager.getInitialItem(e6, ItemKind.EPISODE)
             manager.loadQueue()
 
             // The first lookup waits on the server for the seasons; the user leaves e6 and comes
@@ -190,7 +190,7 @@ class NeighbourLoaderTest {
 
     /** e3 playing, with e2 and e4 queued around it. */
     private suspend fun startAtThirdEpisode(): FakePlaylist {
-        manager.getInitialItem(e3, BaseItemKind.EPISODE)
+        manager.getInitialItem(e3, ItemKind.EPISODE)
         val playlist = FakePlaylist(e3)
         manager.setCurrentMediaItemIndex(e3)
         loader.load(e3, playlist)

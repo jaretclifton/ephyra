@@ -20,6 +20,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidMovie
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.player.cast.devices.Chromecast
 import dev.jdtech.jellyfin.player.cast.devices.ChromecastH265
 import dev.jdtech.jellyfin.player.cast.models.CastConnectionState
@@ -55,7 +56,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import org.jellyfin.sdk.model.api.BaseItemKind
 import org.jellyfin.sdk.model.api.MediaSourceInfo
 import org.jellyfin.sdk.model.api.PlaybackInfoDto
 import org.jellyfin.sdk.model.api.PlaybackInfoResponse
@@ -536,8 +536,8 @@ constructor(
             try {
                 val kind =
                     when (repository.getItem(itemId)) {
-                        is FindroidMovie -> BaseItemKind.MOVIE
-                        is FindroidEpisode -> BaseItemKind.EPISODE
+                        is FindroidMovie -> ItemKind.MOVIE
+                        is FindroidEpisode -> ItemKind.EPISODE
                         else -> return@launch
                     }
                 val manager = playlistManagers.get()
@@ -763,7 +763,7 @@ constructor(
                 item =
                     manager.getInitialItem(
                         itemId = itemId,
-                        itemKind = BaseItemKind.fromName(itemKind),
+                        itemKind = ItemKind.fromName(itemKind),
                         mediaSourceId = mediaSourceId,
                         startFromBeginning = startFromBeginning,
                         shuffle = shuffle,

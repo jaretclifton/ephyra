@@ -1,7 +1,5 @@
 package dev.jdtech.jellyfin.models
 
-import org.jellyfin.sdk.model.api.BaseItemKind
-
 enum class CollectionType(val type: String) {
     Movies("movies"),
     TvShows("tvshows"),
@@ -21,11 +19,11 @@ enum class CollectionType(val type: String) {
      * picks. A Home Videos & Photos library would otherwise fill the row with photos, which the app
      * drops, and leave its videos out.
      */
-    val latestItemTypes: List<BaseItemKind>?
+    val latestItemTypes: List<ItemKind>?
         get() =
             when (this) {
-                HomeVideos -> listOf(BaseItemKind.VIDEO)
-                MusicVideos -> listOf(BaseItemKind.MUSIC_VIDEO)
+                HomeVideos -> listOf(ItemKind.VIDEO)
+                MusicVideos -> listOf(ItemKind.MUSIC_VIDEO)
                 else -> null
             }
 

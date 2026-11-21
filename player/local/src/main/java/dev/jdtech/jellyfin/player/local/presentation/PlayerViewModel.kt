@@ -43,6 +43,7 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidSegment
 import dev.jdtech.jellyfin.models.FindroidSegmentType
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.MediaSegmentAction
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerChapter
@@ -131,7 +132,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import org.jellyfin.sdk.model.api.BaseItemKind
 import timber.log.Timber
 
 /** How long the OS gets to follow the surface frame rate hint before the second log line. */
@@ -887,7 +887,7 @@ constructor(
                 try {
                     playlistManager.getInitialItem(
                         itemId = itemId,
-                        itemKind = BaseItemKind.fromName(itemKind),
+                        itemKind = ItemKind.fromName(itemKind),
                         mediaSourceId = mediaSourceId,
                         startFromBeginning = startFromBeginning,
                         shuffle = shuffle,
@@ -1017,7 +1017,7 @@ constructor(
             if (!jumpToQueued(itemId)) {
                 initializePlayer(
                     itemId = itemId,
-                    itemKind = BaseItemKind.EPISODE.serialName,
+                    itemKind = ItemKind.EPISODE.serialName,
                     startFromBeginning = true,
                 )
             }

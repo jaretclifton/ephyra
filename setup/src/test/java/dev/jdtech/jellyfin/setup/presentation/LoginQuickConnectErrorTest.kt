@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.setup.presentation
 
 import dev.jdtech.jellyfin.core.R as CoreR
+import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.domain.FakeLocalNetworkAccess
@@ -23,7 +24,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import org.jellyfin.sdk.api.client.exception.InvalidStatusException
 import org.jellyfin.sdk.model.api.QuickConnectResult
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -99,7 +99,7 @@ class LoginQuickConnectErrorTest {
             assertEquals("123456", viewModel.state.value.quickConnectCode)
 
             // Ten minutes later the server no longer knows the code.
-            failures["getQuickConnectState"] = InvalidStatusException(404, null)
+            failures["getQuickConnectState"] = ServerException.HttpStatus(404)
             advanceTimeBy(5_001L)
             runCurrent()
 
@@ -111,7 +111,7 @@ class LoginQuickConnectErrorTest {
     fun `a code refused at login says that it expired`() =
         runTest(scheduler) {
             approved = true
-            failures["loginWithSecret"] = InvalidStatusException(401, null)
+            failures["loginWithSecret"] = ServerException.HttpStatus(401)
             val viewModel = viewModel()
             viewModel.onAction(LoginAction.OnQuickConnectClick)
             runCurrent()
@@ -127,7 +127,7 @@ class LoginQuickConnectErrorTest {
             runCurrent()
             assertTrue(viewModel.state.value.quickConnectEnabled)
 
-            failures["initiateQuickConnect"] = InvalidStatusException(401, null)
+            failures["initiateQuickConnect"] = ServerException.HttpStatus(401)
             viewModel.onAction(LoginAction.OnQuickConnectClick)
             runCurrent()
 
@@ -143,7 +143,7 @@ class LoginQuickConnectErrorTest {
             viewModel.onAction(LoginAction.OnQuickConnectClick)
             runCurrent()
 
-            failures["getQuickConnectState"] = InvalidStatusException(403, null)
+            failures["getQuickConnectState"] = ServerException.HttpStatus(403)
             advanceTimeBy(5_001L)
             runCurrent()
 
@@ -154,7 +154,7 @@ class LoginQuickConnectErrorTest {
     @Test
     fun `another server error gives its status`() =
         runTest(scheduler) {
-            failures["initiateQuickConnect"] = InvalidStatusException(500, null)
+            failures["initiateQuickConnect"] = ServerException.HttpStatus(500)
             val viewModel = viewModel()
             viewModel.loadQuickConnectEnabled()
             viewModel.onAction(LoginAction.OnQuickConnectClick)
@@ -188,7 +188,7 @@ class LoginQuickConnectErrorTest {
     @Test
     fun `a new code clears the error of the attempt before`() =
         runTest(scheduler) {
-            failures["initiateQuickConnect"] = InvalidStatusException(500, null)
+            failures["initiateQuickConnect"] = ServerException.HttpStatus(500)
             val viewModel = viewModel()
             viewModel.onAction(LoginAction.OnQuickConnectClick)
             runCurrent()

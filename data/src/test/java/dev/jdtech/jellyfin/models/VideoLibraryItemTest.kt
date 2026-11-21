@@ -45,8 +45,8 @@ class VideoLibraryItemTest {
 
     @Test
     fun `only the new library types narrow their Latest row`() {
-        assertEquals(listOf(BaseItemKind.VIDEO), CollectionType.HomeVideos.latestItemTypes)
-        assertEquals(listOf(BaseItemKind.MUSIC_VIDEO), CollectionType.MusicVideos.latestItemTypes)
+        assertEquals(listOf(ItemKind.VIDEO), CollectionType.HomeVideos.latestItemTypes)
+        assertEquals(listOf(ItemKind.MUSIC_VIDEO), CollectionType.MusicVideos.latestItemTypes)
         assertNull(CollectionType.Movies.latestItemTypes)
         assertNull(CollectionType.TvShows.latestItemTypes)
         assertNull(CollectionType.Mixed.latestItemTypes)

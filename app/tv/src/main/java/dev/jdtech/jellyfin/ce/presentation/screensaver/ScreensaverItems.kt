@@ -1,16 +1,16 @@
 package dev.jdtech.jellyfin.ce.presentation.screensaver
 
 import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import kotlinx.coroutines.CancellationException
-import org.jellyfin.sdk.model.api.BaseItemKind
 import timber.log.Timber
 
 internal const val SCREENSAVER_SOURCE_RECENTLY_ADDED = "recently_added"
 
-private val screensaverKinds = listOf(BaseItemKind.MOVIE, BaseItemKind.SERIES)
+private val screensaverKinds = listOf(ItemKind.MOVIE, ItemKind.SERIES)
 private const val SCREENSAVER_LIMIT = 100
 
 /**

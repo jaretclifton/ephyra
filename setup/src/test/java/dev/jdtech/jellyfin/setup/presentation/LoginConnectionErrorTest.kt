@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.setup.presentation
 
 import dev.jdtech.jellyfin.core.R as CoreR
+import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.domain.FakeLocalNetworkAccess
@@ -18,8 +19,6 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import org.jellyfin.sdk.api.client.exception.InvalidStatusException
-import org.jellyfin.sdk.api.client.exception.TimeoutException
 import org.jellyfin.sdk.model.api.QuickConnectResult
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -49,9 +48,8 @@ class LoginConnectionErrorTest {
             override suspend fun initiateQuickConnect(): QuickConnectResult = throw failure
         }
 
-    /** What the SDK throws when the connection times out. */
-    private val unreachable =
-        TimeoutException("Connection timed out", SocketTimeoutException("failed to connect"))
+    /** A connection that timed out. */
+    private val unreachable = ServerException.Timeout(SocketTimeoutException("failed to connect"))
 
     private fun viewModel(denied: Boolean, address: String = "http://10.0.2.2:8096") =
         LoginViewModel(
@@ -110,11 +108,11 @@ class LoginConnectionErrorTest {
     fun `a wrong password and other failures keep their text`() = runTest {
         val viewModel = viewModel(denied = true)
 
-        failure = InvalidStatusException(401, null)
+        failure = ServerException.HttpStatus(401)
         viewModel.onAction(LoginAction.OnLoginClick("demo", "wrong"))
         assertEquals(SetupR.string.login_error_wrong_username_password, viewModel.errorResource())
 
-        failure = InvalidStatusException(500, null)
+        failure = ServerException.HttpStatus(500)
         viewModel.onAction(LoginAction.OnLoginClick("demo", ""))
         assertEquals(CoreR.string.unknown_error, viewModel.errorResource())
     }

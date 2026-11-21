@@ -87,6 +87,7 @@ import dev.jdtech.jellyfin.film.presentation.season.SeasonAction
 import dev.jdtech.jellyfin.film.presentation.season.SeasonState
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidSeason
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.isDownloaded
 import dev.jdtech.jellyfin.presentation.cast.LocalCastPlayback
 import dev.jdtech.jellyfin.presentation.film.components.ArtworkPlacement
@@ -119,7 +120,6 @@ import java.util.UUID
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
-import org.jellyfin.sdk.model.api.BaseItemKind
 
 /** The list pane takes 40 % of the window, at least 360 dp and at most 480 dp (4-design.md §7). */
 private fun listPaneWidth(windowWidth: Dp): Dp = (windowWidth * 0.4f).coerceIn(360.dp, 480.dp)
@@ -810,7 +810,7 @@ private fun SeasonEpisodeDetailPane(
                     if (
                         !castPlayback.play(
                             episodeId,
-                            BaseItemKind.EPISODE,
+                            ItemKind.EPISODE,
                             action.startFromBeginning,
                             action.mediaSourceId,
                             shuffle = false,
@@ -818,7 +818,7 @@ private fun SeasonEpisodeDetailPane(
                     ) {
                         val intent = Intent(context, PlayerActivity::class.java)
                         intent.putExtra("itemId", episodeId.toString())
-                        intent.putExtra("itemKind", BaseItemKind.EPISODE.serialName)
+                        intent.putExtra("itemKind", ItemKind.EPISODE.serialName)
                         intent.putExtra("startFromBeginning", action.startFromBeginning)
                         intent.putExtra("mediaSourceId", action.mediaSourceId)
                         context.startActivity(intent)

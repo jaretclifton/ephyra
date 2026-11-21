@@ -54,6 +54,7 @@ import dev.jdtech.jellyfin.film.presentation.show.ShowState
 import dev.jdtech.jellyfin.film.presentation.show.ShowViewModel
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.presentation.cast.LocalCastPlayback
 import dev.jdtech.jellyfin.presentation.film.components.ActorsRow
 import dev.jdtech.jellyfin.presentation.film.components.AirScheduleText
@@ -87,7 +88,6 @@ import dev.jdtech.jellyfin.utils.ObserveAsEvents
 import dev.jdtech.jellyfin.utils.copyOnLongClick
 import dev.jdtech.jellyfin.utils.getShowDateString
 import java.util.UUID
-import org.jellyfin.sdk.model.api.BaseItemKind
 
 @Composable
 fun ShowScreen(
@@ -164,30 +164,20 @@ fun ShowScreen(
             when (action) {
                 is ShowAction.Play -> {
                     // CE (#626): on the Cast receiver when one is connected.
-                    if (
-                        !castPlayback.play(
-                            showId,
-                            BaseItemKind.SERIES,
-                            false,
-                            null,
-                            shuffle = false,
-                        )
-                    ) {
+                    if (!castPlayback.play(showId, ItemKind.SERIES, false, null, shuffle = false)) {
                         val intent = Intent(context, PlayerActivity::class.java)
                         intent.putExtra("itemId", showId.toString())
-                        intent.putExtra("itemKind", BaseItemKind.SERIES.serialName)
+                        intent.putExtra("itemKind", ItemKind.SERIES.serialName)
                         context.startActivity(intent)
                     }
                 }
                 // CE (#638): every season's episodes, Specials left out, in random order.
                 is ShowAction.Shuffle -> {
                     // On the Cast receiver when one is connected, as Play does (#626).
-                    if (
-                        !castPlayback.play(showId, BaseItemKind.SERIES, false, null, shuffle = true)
-                    ) {
+                    if (!castPlayback.play(showId, ItemKind.SERIES, false, null, shuffle = true)) {
                         val intent = Intent(context, PlayerActivity::class.java)
                         intent.putExtra("itemId", showId.toString())
-                        intent.putExtra("itemKind", BaseItemKind.SERIES.serialName)
+                        intent.putExtra("itemKind", ItemKind.SERIES.serialName)
                         intent.putExtra("shuffle", true)
                         context.startActivity(intent)
                     }
