@@ -4,12 +4,12 @@ import dev.jdtech.jellyfin.models.DisplayProfile
 import dev.jdtech.jellyfin.models.FindroidMediaStream
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.SpatialAudio
+import dev.jdtech.jellyfin.models.VideoRangeType
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
-import org.jellyfin.sdk.model.api.MediaStreamType
-import org.jellyfin.sdk.model.api.VideoRangeType
 import org.junit.jupiter.api.Test
 
 class VideoMetadataParserTest {

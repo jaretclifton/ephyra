@@ -1,16 +1,9 @@
 app/phone/src/main/java/dev/jdtech/jellyfin/presentation/components/ErrorDialog.kt
-app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/components/MediaInfoSheet.kt
-app/tv/src/main/java/dev/jdtech/jellyfin/ce/presentation/film/SeasonScreen.kt
 core/src/main/java/dev/jdtech/jellyfin/core/presentation/downloader/SmartDownloads.kt
-core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/Episodes.kt
-core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/Movies.kt
 core/src/main/java/dev/jdtech/jellyfin/core/session/ServerSessionKeeper.kt
 core/src/main/java/dev/jdtech/jellyfin/utils/CoreExtensions.kt
-core/src/main/java/dev/jdtech/jellyfin/utils/DownloaderImpl.kt
 core/src/main/java/dev/jdtech/jellyfin/utils/LoadErrorText.kt
 core/src/main/java/dev/jdtech/jellyfin/work/SyncWorker.kt
-modes/film/src/main/java/dev/jdtech/jellyfin/film/domain/MediaInfo.kt
-modes/film/src/main/java/dev/jdtech/jellyfin/film/domain/VideoMetadataParser.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/domain/homerows/HomeRowsStore.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/home/HomeViewModel.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/home/ServerName.kt
@@ -23,8 +16,6 @@ player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/CastTracks.kt
 player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/devices/Chromecast.kt
 player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/devices/ChromecastH265.kt
 player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/PlaylistManager.kt
-player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/SeriesTrackPreference.kt
-player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/SubtitleFiles.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/data/SetupRepositoryImpl.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/domain/SetupRepository.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/addresses/ServerAddressesViewModel.kt

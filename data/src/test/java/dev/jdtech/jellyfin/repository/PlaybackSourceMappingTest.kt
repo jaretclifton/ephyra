@@ -3,14 +3,14 @@ package dev.jdtech.jellyfin.repository
 import android.app.Application
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.MediaStreamType
+import dev.jdtech.jellyfin.models.SubtitleDeliveryMethod
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
-import org.jellyfin.sdk.model.api.MediaStreamType
-import org.jellyfin.sdk.model.api.SubtitleDeliveryMethod
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith

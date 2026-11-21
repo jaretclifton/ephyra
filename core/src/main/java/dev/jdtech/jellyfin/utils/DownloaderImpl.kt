@@ -18,6 +18,7 @@ import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSources
 import dev.jdtech.jellyfin.models.FindroidTrickplayInfo
+import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.toFindroidEpisode
 import dev.jdtech.jellyfin.models.toFindroidEpisodeDto
@@ -59,7 +60,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import org.jellyfin.sdk.model.api.MediaStreamType
 import timber.log.Timber
 
 /**

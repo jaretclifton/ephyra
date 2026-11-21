@@ -24,9 +24,9 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyVideoMetadata
 import dev.jdtech.jellyfin.models.FindroidMediaStream
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import kotlin.test.assertEquals
-import org.jellyfin.sdk.model.api.MediaStreamType
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
