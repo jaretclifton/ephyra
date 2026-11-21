@@ -9,9 +9,11 @@ import dagger.hilt.components.SingletonComponent
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.MediaHttpClient
+import dev.jdtech.jellyfin.domain.ports.ServerConnector
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.domain.ports.SessionRestorer
 import dev.jdtech.jellyfin.domain.ports.UserDataSyncPorts
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinServerConnector
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinServerSession
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinUserDataSyncPorts
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -53,6 +55,12 @@ object ApiModule {
     @Provides
     fun provideServerSession(jellyfinApi: JellyfinApi): ServerSession =
         JellyfinServerSession(jellyfinApi)
+
+    /** #761: finding a server and logging in, for the onboarding screens. */
+    @Singleton
+    @Provides
+    fun provideServerConnector(jellyfinApi: JellyfinApi): ServerConnector =
+        JellyfinServerConnector(jellyfinApi)
 
     /** #762: the server's user data for any saved user, for the sync. */
     @Singleton

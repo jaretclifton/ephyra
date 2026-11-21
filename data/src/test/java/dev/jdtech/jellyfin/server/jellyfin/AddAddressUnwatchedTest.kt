@@ -1,24 +1,16 @@
-package dev.jdtech.jellyfin.setup.data
+package dev.jdtech.jellyfin.server.jellyfin
 
 import android.app.Application
 import android.content.Context
 import android.provider.Settings
 import com.sun.net.httpserver.HttpServer
 import dev.jdtech.jellyfin.api.JellyfinApi
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.RequestWatcher
-import dev.jdtech.jellyfin.models.Server
-import dev.jdtech.jellyfin.models.ServerAddress
-import dev.jdtech.jellyfin.models.ServerWithAddresses
-import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import dev.jdtech.jellyfin.setup.domain.AddressRejected
-import java.lang.reflect.Proxy
 import java.net.InetSocketAddress
-import java.util.UUID
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -29,31 +21,14 @@ import org.robolectric.annotation.Config
 /**
  * CE (#760): checking an address for a saved server is not a request to the server in use. Its
  * answers and failures must not reach the request watcher (the reachability banner) and the base
- * URL of the client in use stays as it is.
+ * URL of the client in use stays as it is. #761: the check moved from the setup repository to
+ * [JellyfinServerConnector.findAddress], which `SetupRepositoryImpl.addAddress` calls.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class AddAddressUnwatchedTest {
     private val serverId = "server"
-    private val existing = ServerAddress(UUID.randomUUID(), serverId, "http://10.0.2.2:8096")
-
-    private val database =
-        Proxy.newProxyInstance(
-            ServerDatabaseDao::class.java.classLoader,
-            arrayOf(ServerDatabaseDao::class.java),
-        ) { _, method, _ ->
-            when (method.name) {
-                "getServerWithAddresses" ->
-                    ServerWithAddresses(
-                        server = Server(serverId, "Ephyra Test", existing.id, null),
-                        addresses = listOf(existing),
-                        user = null,
-                    )
-                "insertServerAddress" -> Unit
-                "toString" -> "FakeServerDatabaseDao"
-                else -> throw UnsupportedOperationException(method.name)
-            }
-        } as ServerDatabaseDao
+    private val inUse = "http://10.0.2.2:8096"
 
     private class CountingWatcher : RequestWatcher {
         val calls = AtomicInteger()
@@ -82,13 +57,8 @@ class AddAddressUnwatchedTest {
         val jellyfinApi = JellyfinApi(context)
         val watcher = CountingWatcher()
         jellyfinApi.requestWatcher = watcher
-        jellyfinApi.api.update(baseUrl = existing.address)
-        val repository =
-            SetupRepositoryImpl(
-                jellyfinApi,
-                database,
-                AppPreferences(context.getSharedPreferences("test", Context.MODE_PRIVATE)),
-            )
+        jellyfinApi.api.update(baseUrl = inUse)
+        val connector = JellyfinServerConnector(jellyfinApi)
 
         val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
         server.createContext("/System/Info/Public") { exchange ->
@@ -103,15 +73,16 @@ class AddAddressUnwatchedTest {
         server.executor = executor
         server.start()
         try {
-            val added = repository.addAddress(serverId, "http://127.0.0.1:${server.address.port}")
-            assertEquals("http://127.0.0.1:${server.address.port}", added.address)
+            val stubAddress = "http://127.0.0.1:${server.address.port}"
+            // The SDK normalises the input: the trailing slash goes.
+            assertEquals(stubAddress, connector.findAddress("$stubAddress/", serverId))
+            // Another server's id is not a match.
+            assertNull(connector.findAddress(stubAddress, "another server"))
             // A second address that nobody answers: failures must stay unseen as well.
-            assertFailsWith<AddressRejected> {
-                repository.addAddress(serverId, "http://127.0.0.1:9")
-            }
+            assertNull(connector.findAddress("http://127.0.0.1:9", serverId))
 
             assertEquals(0, watcher.calls.get())
-            assertEquals(existing.address, jellyfinApi.api.baseUrl)
+            assertEquals(inUse, jellyfinApi.api.baseUrl)
         } finally {
             server.stop(0)
             executor.shutdownNow()

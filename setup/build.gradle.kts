@@ -34,11 +34,10 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-    implementation(libs.jellyfin.core)
     implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
-    // CE (#425): the repository tests build a real JellyfinApi, which needs a Context.
+    // CE (#425): the repository and ViewModel tests need a Context for the preferences.
     testImplementation(libs.robolectric)
 }
