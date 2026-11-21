@@ -1,7 +1,7 @@
 package dev.jdtech.jellyfin.film.presentation.season
 
+import dev.jdtech.jellyfin.models.EpisodeField
 import kotlin.test.assertTrue
-import org.jellyfin.sdk.model.api.ItemFields
 import org.junit.jupiter.api.Test
 
 /**
@@ -10,22 +10,22 @@ import org.junit.jupiter.api.Test
  * `SeasonScreen` gates the header download button on `episodes.any { it.canDownload }`, but the
  * Jellyfin server only populates `BaseItemDto.CanDownload` on `GET /Shows/{id}/Episodes` when
  * `CanDownload` is explicitly requested in `fields` (see `DtoService` server-side). If
- * [seasonEpisodeFields] drops [ItemFields.CAN_DOWNLOAD], every episode reports `canDownload =
+ * [seasonEpisodeFields] drops [EpisodeField.CAN_DOWNLOAD], every episode reports `canDownload =
  * false` and the button never appears.
  */
 class SeasonEpisodeFieldsTest {
 
     @Test
     fun `season episode request includes Overview`() {
-        assertTrue(seasonEpisodeFields.contains(ItemFields.OVERVIEW))
+        assertTrue(seasonEpisodeFields.contains(EpisodeField.OVERVIEW))
     }
 
     @Test
     fun `season episode request includes CanDownload`() {
         assertTrue(
-            seasonEpisodeFields.contains(ItemFields.CAN_DOWNLOAD),
+            seasonEpisodeFields.contains(EpisodeField.CAN_DOWNLOAD),
             message =
-                "loadSeason must request ItemFields.CAN_DOWNLOAD, otherwise SeasonScreen can never show the season download button",
+                "loadSeason must request EpisodeField.CAN_DOWNLOAD, otherwise SeasonScreen can never show the season download button",
         )
     }
 }

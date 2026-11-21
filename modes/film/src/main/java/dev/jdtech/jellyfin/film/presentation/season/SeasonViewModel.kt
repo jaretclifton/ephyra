@@ -11,6 +11,7 @@ import dev.jdtech.jellyfin.film.presentation.EpisodeDownloadPrompts
 import dev.jdtech.jellyfin.film.presentation.downloads.downloadDeletionScope
 import dev.jdtech.jellyfin.film.presentation.inFlightIds
 import dev.jdtech.jellyfin.film.presentation.selectEpisodesToDownload
+import dev.jdtech.jellyfin.models.EpisodeField
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.isDownloaded
@@ -35,10 +36,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.jellyfin.sdk.model.api.ItemFields
 import timber.log.Timber
 
-internal val seasonEpisodeFields = listOf(ItemFields.OVERVIEW, ItemFields.CAN_DOWNLOAD)
+internal val seasonEpisodeFields = setOf(EpisodeField.OVERVIEW, EpisodeField.CAN_DOWNLOAD)
 
 @HiltViewModel
 class SeasonViewModel

@@ -1,5 +1,7 @@
 package dev.jdtech.jellyfin.server.jellyfin
 
+import dev.jdtech.jellyfin.models.EpisodeField
+import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.PersonKind
@@ -105,5 +107,20 @@ class SdkEnumsTest {
     fun `an SDK item kind the app does not list is UNKNOWN`() {
         assertEquals(ItemKind.UNKNOWN, BaseItemKind.AUDIO.toItemKind())
         assertEquals(ItemKind.UNKNOWN, BaseItemKind.PERSON.toItemKind())
+    }
+
+    @Test
+    fun `every episode field and item filter converts to the SDK constant of the same name`() {
+        EpisodeField.entries.forEach { assertEquals(it.name, it.toSdk().name) }
+        ItemFilter.entries.forEach { assertEquals(it.name, it.toSdk().name) }
+    }
+
+    @Test
+    fun `no filters are sent as no parameter`() {
+        assertEquals(null, emptySet<ItemFilter>().toSdkFilters())
+        assertEquals(
+            listOf(org.jellyfin.sdk.model.api.ItemFilter.IS_UNPLAYED),
+            setOf(ItemFilter.IS_UNPLAYED).toSdkFilters(),
+        )
     }
 }

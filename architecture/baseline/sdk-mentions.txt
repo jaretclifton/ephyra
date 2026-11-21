@@ -1,5 +1,4 @@
 app/phone/src/main/java/dev/jdtech/jellyfin/presentation/components/ErrorDialog.kt
-core/src/main/java/dev/jdtech/jellyfin/core/presentation/downloader/SmartDownloads.kt
 core/src/main/java/dev/jdtech/jellyfin/core/session/ServerSessionKeeper.kt
 core/src/main/java/dev/jdtech/jellyfin/utils/CoreExtensions.kt
 core/src/main/java/dev/jdtech/jellyfin/utils/LoadErrorText.kt
@@ -7,15 +6,11 @@ core/src/main/java/dev/jdtech/jellyfin/work/SyncWorker.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/domain/homerows/HomeRowsStore.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/home/HomeViewModel.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/home/ServerName.kt
-modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/library/LibraryViewModel.kt
-modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/season/SeasonViewModel.kt
-modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/show/ShowViewModel.kt
 player/cast/src/main/java/dev/jdtech/jellyfin/player/cast/models/CastModels.kt
 player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/CastPlayerControllerImpl.kt
 player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/CastTracks.kt
 player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/devices/Chromecast.kt
 player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/devices/ChromecastH265.kt
-player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/PlaylistManager.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/data/SetupRepositoryImpl.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/domain/SetupRepository.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/addresses/ServerAddressesViewModel.kt

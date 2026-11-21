@@ -1,11 +1,15 @@
 package dev.jdtech.jellyfin.server.jellyfin
 
+import dev.jdtech.jellyfin.models.EpisodeField
+import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.PersonKind
 import dev.jdtech.jellyfin.models.SubtitleDeliveryMethod
 import dev.jdtech.jellyfin.models.VideoRangeType
 import org.jellyfin.sdk.model.api.BaseItemKind
+import org.jellyfin.sdk.model.api.ItemFields
+import org.jellyfin.sdk.model.api.ItemFilter as SdkItemFilter
 import org.jellyfin.sdk.model.api.MediaStreamType as SdkMediaStreamType
 import org.jellyfin.sdk.model.api.SubtitleDeliveryMethod as SdkSubtitleDeliveryMethod
 import org.jellyfin.sdk.model.api.VideoRangeType as SdkVideoRangeType
@@ -58,3 +62,22 @@ internal fun BaseItemKind.toItemKind(): ItemKind =
         BaseItemKind.COLLECTION_FOLDER -> ItemKind.COLLECTION_FOLDER
         else -> ItemKind.UNKNOWN
     }
+
+// The other way: what the app asks the server for.
+
+fun ItemFilter.toSdk(): SdkItemFilter =
+    when (this) {
+        ItemFilter.IS_UNPLAYED -> SdkItemFilter.IS_UNPLAYED
+    }
+
+fun EpisodeField.toSdk(): ItemFields =
+    when (this) {
+        EpisodeField.OVERVIEW -> ItemFields.OVERVIEW
+        EpisodeField.CAN_DOWNLOAD -> ItemFields.CAN_DOWNLOAD
+        EpisodeField.CHAPTERS -> ItemFields.CHAPTERS
+        EpisodeField.TRICKPLAY -> ItemFields.TRICKPLAY
+    }
+
+/** No filters is sent as no parameter, as before. */
+fun Set<ItemFilter>.toSdkFilters(): List<SdkItemFilter>? =
+    takeIf { it.isNotEmpty() }?.map { it.toSdk() }

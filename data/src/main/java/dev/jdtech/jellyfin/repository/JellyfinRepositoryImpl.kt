@@ -6,6 +6,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.models.EpisodeField
 import dev.jdtech.jellyfin.models.FindroidCollection
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItem
@@ -15,6 +16,7 @@ import dev.jdtech.jellyfin.models.FindroidSeason
 import dev.jdtech.jellyfin.models.FindroidSegment
 import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
 import dev.jdtech.jellyfin.models.SortBy
@@ -31,6 +33,7 @@ import dev.jdtech.jellyfin.models.toFindroidShow
 import dev.jdtech.jellyfin.models.toFindroidSource
 import dev.jdtech.jellyfin.player.DeviceProfileBuilder
 import dev.jdtech.jellyfin.server.jellyfin.toSdk
+import dev.jdtech.jellyfin.server.jellyfin.toSdkFilters
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.File
 import java.time.LocalDateTime
@@ -57,7 +60,7 @@ import org.jellyfin.sdk.model.api.DeviceOptionsDto
 import org.jellyfin.sdk.model.api.GeneralCommandType
 import org.jellyfin.sdk.model.api.ImageType
 import org.jellyfin.sdk.model.api.ItemFields
-import org.jellyfin.sdk.model.api.ItemFilter
+import org.jellyfin.sdk.model.api.ItemFilter as SdkItemFilter
 import org.jellyfin.sdk.model.api.ItemSortBy
 import org.jellyfin.sdk.model.api.MediaType
 import org.jellyfin.sdk.model.api.PlaybackInfoDto
@@ -280,7 +283,7 @@ class JellyfinRepositoryImpl(
         recursive: Boolean,
         sortBy: SortBy,
         sortOrder: SortOrder,
-        filters: List<ItemFilter>?,
+        filters: Set<ItemFilter>,
         startIndex: Int?,
         limit: Int?,
     ): List<FindroidItem> =
@@ -303,7 +306,7 @@ class JellyfinRepositoryImpl(
         recursive: Boolean,
         sortBy: SortBy,
         sortOrder: SortOrder,
-        filters: List<ItemFilter>?,
+        filters: Set<ItemFilter>,
         startIndex: Int?,
         limit: Int?,
         includeTotal: Boolean,
@@ -330,7 +333,7 @@ class JellyfinRepositoryImpl(
                         recursive = recursive,
                         sortBy = listOf(ItemSortBy.fromName(sortBy.sortString)),
                         sortOrder = listOf(ItemSortOrder.fromName(sortOrder.sortString)),
-                        filters = filters,
+                        filters = filters.toSdkFilters(),
                         startIndex = startIndex,
                         limit = limit,
                         // Cards read the primary image and the first backdrop. The server counts
@@ -354,7 +357,7 @@ class JellyfinRepositoryImpl(
         libraryId: UUID,
         sortBy: SortBy,
         sortOrder: SortOrder,
-        filters: List<ItemFilter>?,
+        filters: Set<ItemFilter>,
         startIndex: Int?,
         limit: Int?,
         includeTotal: Boolean,
@@ -395,7 +398,7 @@ class JellyfinRepositoryImpl(
         recursive: Boolean,
         sortBy: SortBy,
         sortOrder: SortOrder,
-        filters: List<ItemFilter>?,
+        filters: Set<ItemFilter>,
     ): Flow<PagingData<FindroidItem>> {
         return Pager(
                 config =
@@ -424,7 +427,7 @@ class JellyfinRepositoryImpl(
         parentId: UUID?,
         includeTypes: List<ItemKind>?,
         recursive: Boolean,
-        filters: List<ItemFilter>?,
+        filters: Set<ItemFilter>,
         nameLessThan: String?,
     ): Int =
         withContext(Dispatchers.IO) {
@@ -445,7 +448,7 @@ class JellyfinRepositoryImpl(
                     parentId = parentId,
                     includeItemTypes = includeTypes?.toSdk(),
                     recursive = recursive,
-                    filters = filters,
+                    filters = filters.toSdkFilters(),
                     nameLessThan = nameLessThan,
                     limit = 0,
                     enableTotalRecordCount = true,
@@ -499,7 +502,7 @@ class JellyfinRepositoryImpl(
                 jellyfinApi.libraryApi
                     .getItems(
                         currentUserId,
-                        filters = listOf(ItemFilter.IS_FAVORITE),
+                        filters = listOf(SdkItemFilter.IS_FAVORITE),
                         includeItemTypes =
                             listOf(BaseItemKind.MOVIE, BaseItemKind.SERIES, BaseItemKind.EPISODE),
                         recursive = true,
@@ -664,7 +667,7 @@ class JellyfinRepositoryImpl(
     override suspend fun getEpisodes(
         seriesId: UUID,
         seasonId: UUID?,
-        fields: List<ItemFields>?,
+        fields: Set<EpisodeField>?,
         startItemId: UUID?,
         limit: Int?,
         offline: Boolean,
@@ -676,7 +679,7 @@ class JellyfinRepositoryImpl(
                         seriesId,
                         currentUserId,
                         seasonId = seasonId,
-                        fields = fields,
+                        fields = fields?.map { it.toSdk() },
                         startItemId = startItemId,
                         limit = limit,
                     )
