@@ -191,6 +191,12 @@ interface JellyfinRepository {
     /** CE (#580): the tracks the user last picked by hand in [seriesId], one per track type. */
     suspend fun getSeriesTrackPreferences(seriesId: UUID): List<SeriesTrackPreferenceDto>
 
+    /**
+     * Remembers [preference] as the current user's choice for its series and track type, replacing
+     * the one before. The current user is written whatever [preference] says (#750).
+     */
+    suspend fun saveSeriesTrackPreference(preference: SeriesTrackPreferenceDto)
+
     suspend fun getStreamUrl(itemId: UUID, mediaSourceId: String): String
 
     suspend fun getSegments(itemId: UUID): List<FindroidSegment>

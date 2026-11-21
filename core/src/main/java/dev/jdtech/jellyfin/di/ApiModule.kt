@@ -8,6 +8,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.domain.ports.MediaHttpClient
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Singleton
 import kotlinx.coroutines.runBlocking
@@ -52,5 +53,11 @@ object ApiModule {
         mirrorApiSession(jellyfinApi, appPreferences, database, initial)
 
         return jellyfinApi
+    }
+
+    /** The API's own client, so the player shares its connection pool (#296, #750). */
+    @Provides
+    fun provideMediaHttpClient(jellyfinApi: JellyfinApi): MediaHttpClient = MediaHttpClient {
+        jellyfinApi.httpClient
     }
 }

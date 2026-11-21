@@ -832,6 +832,11 @@ class JellyfinRepositoryImpl(
     override suspend fun getSeriesTrackPreferences(seriesId: UUID): List<SeriesTrackPreferenceDto> =
         withContext(Dispatchers.IO) { database.getSeriesTrackPreferences(currentUserId, seriesId) }
 
+    override suspend fun saveSeriesTrackPreference(preference: SeriesTrackPreferenceDto) =
+        withContext(Dispatchers.IO) {
+            database.insertSeriesTrackPreference(preference.copy(userId = currentUserId))
+        }
+
     override suspend fun getStreamUrl(itemId: UUID, mediaSourceId: String): String =
         withContext(Dispatchers.IO) {
             try {
