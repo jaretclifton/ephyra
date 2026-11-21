@@ -194,7 +194,7 @@ class ItemMapperGoldenTest {
     private fun golden(name: String, value: Any?) = compare(name, print(value) + "\n")
 
     private fun compare(name: String, actual: String) {
-        if (System.getProperty("golden.update").orEmpty().isNotEmpty()) {
+        if (System.getProperty("golden.update") == "true") {
             val dir = File(System.getProperty("user.dir"), "src/test/resources/golden")
             dir.mkdirs()
             File(dir, "$name.expected.txt").writeText(actual)
