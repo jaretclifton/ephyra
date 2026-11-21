@@ -43,14 +43,8 @@ constructor(
         viewModelScope.launch {
             val discoveredServers = mutableListOf<DiscoveredServer>()
             val serversDiscovery = repository.discoverServers()
-            serversDiscovery.collect { serverDiscoveryInfo ->
-                discoveredServers.add(
-                    DiscoveredServer(
-                        serverDiscoveryInfo.id,
-                        serverDiscoveryInfo.name,
-                        serverDiscoveryInfo.address,
-                    )
-                )
+            serversDiscovery.collect { discoveredServer ->
+                discoveredServers.add(discoveredServer)
                 _state.emit(_state.value.copy(discoveredServers = discoveredServers))
             }
         }

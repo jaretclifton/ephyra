@@ -1,15 +1,15 @@
 package dev.jdtech.jellyfin.setup.domain
 
+import dev.jdtech.jellyfin.models.DiscoveredServer
+import dev.jdtech.jellyfin.models.QuickConnectState
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.User
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
-import org.jellyfin.sdk.model.api.QuickConnectResult
-import org.jellyfin.sdk.model.api.ServerDiscoveryInfo
 
 interface SetupRepository {
-    fun discoverServers(): Flow<ServerDiscoveryInfo>
+    fun discoverServers(): Flow<DiscoveredServer>
 
     suspend fun getServers(): List<ServerWithAddresses>
 
@@ -19,9 +19,9 @@ interface SetupRepository {
 
     suspend fun getIsQuickConnectEnabled(): Boolean
 
-    suspend fun initiateQuickConnect(): QuickConnectResult
+    suspend fun initiateQuickConnect(): QuickConnectState
 
-    suspend fun getQuickConnectState(secret: String): QuickConnectResult
+    suspend fun getQuickConnectState(secret: String): QuickConnectState
 
     suspend fun setCurrentServer(serverId: String)
 

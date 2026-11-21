@@ -10,5 +10,4 @@ player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/CastTracks.kt
 player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/devices/Chromecast.kt
 player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/devices/ChromecastH265.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/data/SetupRepositoryImpl.kt
-setup/src/main/java/dev/jdtech/jellyfin/setup/domain/SetupRepository.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/addresses/ServerAddressesViewModel.kt

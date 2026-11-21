@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.setup.presentation
 
 import android.app.Application
 import android.content.Context
+import dev.jdtech.jellyfin.models.DiscoveredServer
 import dev.jdtech.jellyfin.models.ExceptionUiText
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -23,7 +24,6 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import org.jellyfin.sdk.model.api.ServerDiscoveryInfo
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -53,7 +53,7 @@ class AddServerLocalNetworkTest {
 
     private val repository =
         object : SetupRepository by unused {
-            override fun discoverServers(): Flow<ServerDiscoveryInfo> {
+            override fun discoverServers(): Flow<DiscoveredServer> {
                 discoveries++
                 return emptyFlow()
             }
