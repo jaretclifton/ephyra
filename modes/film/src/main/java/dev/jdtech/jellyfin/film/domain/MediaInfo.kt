@@ -2,9 +2,9 @@ package dev.jdtech.jellyfin.film.domain
 
 import dev.jdtech.jellyfin.models.FindroidMediaStream
 import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.MediaStreamType
 import java.text.NumberFormat
 import java.util.Locale
-import org.jellyfin.sdk.model.api.MediaStreamType
 
 /**
  * CE (#510): what the media info sheet shows for one version of a movie or episode. Built from the

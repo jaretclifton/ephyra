@@ -4,14 +4,14 @@ import dev.jdtech.jellyfin.models.AudioChannel
 import dev.jdtech.jellyfin.models.AudioCodec
 import dev.jdtech.jellyfin.models.DisplayProfile
 import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.Resolution
 import dev.jdtech.jellyfin.models.SpatialAudio
 import dev.jdtech.jellyfin.models.VideoCodec
 import dev.jdtech.jellyfin.models.VideoMetadata
+import dev.jdtech.jellyfin.models.VideoRangeType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jellyfin.sdk.model.api.MediaStreamType
-import org.jellyfin.sdk.model.api.VideoRangeType
 
 object VideoMetadataParser {
     suspend fun parse(source: FindroidSource): VideoMetadata {
@@ -34,7 +34,7 @@ object VideoMetadataParser {
 
                         /**
                          * Match audio profile from
-                         * [org.jellyfin.sdk.model.api.MediaStream.channelLayout]
+                         * [dev.jdtech.jellyfin.models.FindroidMediaStream.channelLayout]
                          */
                         audioChannels.add(
                             when (stream.channelLayout) {
@@ -46,15 +46,15 @@ object VideoMetadataParser {
                         )
 
                         /**
-                         * Match [org.jellyfin.sdk.model.api.MediaStream.displayTitle] for Dolby
-                         * Atmos
+                         * Match [dev.jdtech.jellyfin.models.FindroidMediaStream.displayTitle] for
+                         * Dolby Atmos
                          */
                         stream.displayTitle?.apply { isAtmosAudio.add(contains("ATMOS", true)) }
 
                         /**
-                         * CE: spatial audio from [org.jellyfin.sdk.model.api.MediaStream.profile],
-                         * falling back to the display title (older offline downloads have no stored
-                         * profile)
+                         * CE: spatial audio from
+                         * [dev.jdtech.jellyfin.models.FindroidMediaStream.profile], falling back to
+                         * the display title (older offline downloads have no stored profile)
                          */
                         val profile = stream.profile.orEmpty()
                         val title = stream.displayTitle.orEmpty()
@@ -66,7 +66,10 @@ object VideoMetadataParser {
                             else -> null
                         }?.let { spatialAudio.add(it) }
 
-                        /** Match audio codec from [org.jellyfin.sdk.model.api.MediaStream.codec] */
+                        /**
+                         * Match audio codec from
+                         * [dev.jdtech.jellyfin.models.FindroidMediaStream.codec]
+                         */
                         audioCodecs.add(
                             when (stream.codec.lowercase()) {
                                 AudioCodec.FLAC.toString() -> AudioCodec.FLAC
@@ -89,7 +92,7 @@ object VideoMetadataParser {
 
                             /**
                              * Match dynamic range from
-                             * [org.jellyfin.sdk.model.api.MediaStream.videoRangeType]
+                             * [dev.jdtech.jellyfin.models.FindroidMediaStream.videoRangeType]
                              */
                             when (videoRangeType) {
                                 VideoRangeType.SDR -> listOf(DisplayProfile.SDR)
@@ -110,9 +113,9 @@ object VideoMetadataParser {
                             }.let { displayProfiles.addAll(it) }
 
                             /**
-                             * Force stream [org.jellyfin.sdk.model.api.MediaStream.height] and
-                             * [org.jellyfin.sdk.model.api.MediaStream.width] as not null since we
-                             * are inside [MediaStreamType.VIDEO] block
+                             * Force stream [dev.jdtech.jellyfin.models.FindroidMediaStream.height]
+                             * and [dev.jdtech.jellyfin.models.FindroidMediaStream.width] as not
+                             * null since we are inside [MediaStreamType.VIDEO] block
                              */
                             resolution.add(
                                 when {
