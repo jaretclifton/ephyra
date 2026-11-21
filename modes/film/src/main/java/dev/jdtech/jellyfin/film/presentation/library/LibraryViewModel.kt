@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.models.CollectionType
+import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.repository.JellyfinRepository
@@ -22,7 +23,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jellyfin.sdk.model.api.BaseItemKind
-import org.jellyfin.sdk.model.api.ItemFilter
 import timber.log.Timber
 
 @HiltViewModel
@@ -111,7 +111,7 @@ constructor(
 
             initSorting()
 
-            val filters = if (filterWatched) listOf(ItemFilter.IS_UNPLAYED) else null
+            val filters = if (filterWatched) setOf(ItemFilter.IS_UNPLAYED) else emptySet()
             if (indexed) resetLetterIndex()
             // Captured now: a late first page of a superseded grid must not index the new sort.
             val indexKey = letterIndexKey()
@@ -185,7 +185,7 @@ constructor(
         total: Int,
         itemType: List<BaseItemKind>?,
         recursive: Boolean,
-        filters: List<ItemFilter>?,
+        filters: Set<ItemFilter>,
     ) {
         // A late first page of a name-sorted grid the user has already left (#672).
         if (sortBy != SortBy.NAME) return

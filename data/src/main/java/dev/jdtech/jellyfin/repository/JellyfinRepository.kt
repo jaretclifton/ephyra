@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.repository
 
 import androidx.paging.PagingData
+import dev.jdtech.jellyfin.models.EpisodeField
 import dev.jdtech.jellyfin.models.FindroidCollection
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItem
@@ -10,6 +11,7 @@ import dev.jdtech.jellyfin.models.FindroidSeason
 import dev.jdtech.jellyfin.models.FindroidSegment
 import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
@@ -17,8 +19,6 @@ import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.BaseItemKind
-import org.jellyfin.sdk.model.api.ItemFields
-import org.jellyfin.sdk.model.api.ItemFilter
 import org.jellyfin.sdk.model.api.PublicSystemInfo
 import org.jellyfin.sdk.model.api.UserConfiguration
 
@@ -49,7 +49,7 @@ interface JellyfinRepository {
         recursive: Boolean = false,
         sortBy: SortBy = SortBy.defaultValue,
         sortOrder: SortOrder = SortOrder.ASCENDING,
-        filters: List<ItemFilter>? = null,
+        filters: Set<ItemFilter> = emptySet(),
         startIndex: Int? = null,
         limit: Int? = null,
     ): List<FindroidItem>
@@ -66,7 +66,7 @@ interface JellyfinRepository {
         recursive: Boolean = false,
         sortBy: SortBy = SortBy.defaultValue,
         sortOrder: SortOrder = SortOrder.ASCENDING,
-        filters: List<ItemFilter>? = null,
+        filters: Set<ItemFilter> = emptySet(),
         startIndex: Int? = null,
         limit: Int? = null,
         includeTotal: Boolean = false,
@@ -91,7 +91,7 @@ interface JellyfinRepository {
         recursive: Boolean = false,
         sortBy: SortBy = SortBy.defaultValue,
         sortOrder: SortOrder = SortOrder.ASCENDING,
-        filters: List<ItemFilter>? = null,
+        filters: Set<ItemFilter> = emptySet(),
     ): Flow<PagingData<FindroidItem>>
 
     /**
@@ -102,7 +102,7 @@ interface JellyfinRepository {
         parentId: UUID? = null,
         includeTypes: List<BaseItemKind>? = null,
         recursive: Boolean = false,
-        filters: List<ItemFilter>? = null,
+        filters: Set<ItemFilter> = emptySet(),
         nameLessThan: String? = null,
     ): Int
 
@@ -146,7 +146,7 @@ interface JellyfinRepository {
     suspend fun getEpisodes(
         seriesId: UUID,
         seasonId: UUID?,
-        fields: List<ItemFields>? = null,
+        fields: Set<EpisodeField>? = null,
         startItemId: UUID? = null,
         limit: Int? = null,
         offline: Boolean = false,

@@ -17,6 +17,7 @@ import dev.jdtech.jellyfin.models.FindroidShowDto
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
+import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.player.DeviceProfileBuilder
@@ -30,7 +31,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.jellyfin.sdk.model.api.BaseItemKind
-import org.jellyfin.sdk.model.api.ItemFilter
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -239,7 +239,7 @@ class StoredListsFallbackTest {
         library: UUID,
         sortBy: SortBy = SortBy.NAME,
         sortOrder: SortOrder = SortOrder.ASCENDING,
-        filters: List<ItemFilter>? = null,
+        filters: Set<ItemFilter> = emptySet(),
         startIndex: Int? = null,
         limit: Int? = null,
     ) =
@@ -485,14 +485,14 @@ class StoredListsFallbackTest {
         userData(id(1), played = true)
         userData(id(3), user = otherUserId, played = true)
 
-        val unplayed = page(StoredLibraries.MOVIES, filters = listOf(ItemFilter.IS_UNPLAYED))
+        val unplayed = page(StoredLibraries.MOVIES, filters = setOf(ItemFilter.IS_UNPLAYED))
         assertEquals(listOf("Seen by someone else", "Unseen"), unplayed.items.map { it.name })
         assertEquals(2, unplayed.totalRecordCount)
         assertEquals(
             2,
             repository.getItemCount(
                 parentId = StoredLibraries.MOVIES,
-                filters = listOf(ItemFilter.IS_UNPLAYED),
+                filters = setOf(ItemFilter.IS_UNPLAYED),
             ),
         )
     }
@@ -555,7 +555,7 @@ class StoredListsFallbackTest {
                     false,
                     SortBy.NAME,
                     SortOrder.DESCENDING,
-                    null,
+                    emptySet(),
                 )
                 .load(refresh)
         assertTrue(plain is PagingSource.LoadResult.Page, "$plain")

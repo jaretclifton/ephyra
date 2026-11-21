@@ -17,7 +17,6 @@ app/tv/src/main/java/dev/jdtech/jellyfin/ce/presentation/film/SearchScreen.kt
 app/tv/src/main/java/dev/jdtech/jellyfin/ce/presentation/film/SeasonScreen.kt
 app/tv/src/main/java/dev/jdtech/jellyfin/ce/presentation/screensaver/ScreensaverItems.kt
 app/tv/src/main/java/dev/jdtech/jellyfin/presentation/film/HomeScreen.kt
-core/src/main/java/dev/jdtech/jellyfin/core/presentation/downloader/SmartDownloads.kt
 core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/Episodes.kt
 core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/Movies.kt
 core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/People.kt
@@ -36,7 +35,6 @@ modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/library/LibraryVi
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/movie/MovieViewModel.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/person/PersonViewModel.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/search/SearchViewModel.kt
-modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/season/SeasonViewModel.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/show/ShowViewModel.kt
 player/cast/src/debug/java/dev/jdtech/jellyfin/player/cast/debug/FakeCast.kt
 player/cast/src/main/java/dev/jdtech/jellyfin/player/cast/models/CastModels.kt

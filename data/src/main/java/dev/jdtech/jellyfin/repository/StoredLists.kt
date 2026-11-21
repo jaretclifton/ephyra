@@ -10,6 +10,7 @@ import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovieDto
 import dev.jdtech.jellyfin.models.FindroidShowDto
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
+import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
@@ -20,7 +21,6 @@ import java.time.LocalDateTime
 import java.util.Locale
 import java.util.UUID
 import org.jellyfin.sdk.model.api.BaseItemKind
-import org.jellyfin.sdk.model.api.ItemFilter
 
 /**
  * CE (#775): the two libraries the Media tab shows while the server is away, holding the downloaded
@@ -137,7 +137,7 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
         libraryId: UUID,
         sortBy: SortBy,
         sortOrder: SortOrder,
-        filters: List<ItemFilter>?,
+        filters: Set<ItemFilter>,
     ): List<Any> =
         sorted(entries(serverId, userId, libraryId, filters), serverId, userId, sortBy)
             .let { if (sortOrder == SortOrder.DESCENDING) it.asReversed() else it }
@@ -148,7 +148,7 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
         serverId: String,
         userId: UUID,
         libraryId: UUID,
-        filters: List<ItemFilter>?,
+        filters: Set<ItemFilter>,
         nameLessThan: String?,
     ): Int {
         val entries = entries(serverId, userId, libraryId, filters)
@@ -195,7 +195,7 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
         serverId: String,
         userId: UUID,
         libraryId: UUID,
-        filters: List<ItemFilter>?,
+        filters: Set<ItemFilter>,
     ): List<Entry> {
         val userData = database.getUserDataOfUser(userId).associateBy { it.itemId }
         val entries =
@@ -215,17 +215,13 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
                     )
                 }
             }
-        if (filters.isNullOrEmpty()) return entries
+        if (filters.isEmpty()) return entries
         return entries.filter { entry -> filters.all { entry.userData.matches(it) } }
     }
 
     private fun FindroidUserDataDto?.matches(filter: ItemFilter): Boolean =
         when (filter) {
-            ItemFilter.IS_PLAYED -> this?.played == true
             ItemFilter.IS_UNPLAYED -> this?.played != true
-            ItemFilter.IS_FAVORITE -> this?.favorite == true
-            ItemFilter.IS_RESUMABLE -> (this?.playbackPositionTicks ?: 0L) > 0L
-            else -> true
         }
 
     /** Ascending; a missing value comes first, as on the server. Ties go by name. */

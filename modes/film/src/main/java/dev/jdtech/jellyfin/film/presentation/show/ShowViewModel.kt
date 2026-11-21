@@ -15,6 +15,7 @@ import dev.jdtech.jellyfin.film.presentation.keeping
 import dev.jdtech.jellyfin.film.presentation.launchRelatedItems
 import dev.jdtech.jellyfin.film.presentation.selectEpisodesToDownload
 import dev.jdtech.jellyfin.film.presentation.shownIn
+import dev.jdtech.jellyfin.models.EpisodeField
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItemPerson
 import dev.jdtech.jellyfin.models.FindroidShow
@@ -43,7 +44,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jellyfin.sdk.model.api.ItemFields
 import org.jellyfin.sdk.model.api.PersonKind
 import timber.log.Timber
 
@@ -51,7 +51,7 @@ import timber.log.Timber
  * The fields the show page asks for with the series' episodes: the server only fills in
  * `CanDownload` when asked (see `SeasonEpisodeFieldsTest`), and without it nothing would download.
  */
-internal val showEpisodeFields = listOf(ItemFields.CAN_DOWNLOAD)
+internal val showEpisodeFields = setOf(EpisodeField.CAN_DOWNLOAD)
 
 @HiltViewModel
 class ShowViewModel
