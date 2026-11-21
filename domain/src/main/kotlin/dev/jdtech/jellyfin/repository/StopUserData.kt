@@ -3,8 +3,10 @@ package dev.jdtech.jellyfin.repository
 /**
  * The local user data a playback stop writes: the resume position, and the played flag, which stays
  * as it was when [played] is null.
+ *
+ * Public because the repository in `data` writes it, across the module boundary (#755).
  */
-internal data class StopUserData(val positionTicks: Long, val played: Boolean?)
+data class StopUserData(val positionTicks: Long, val played: Boolean?)
 
 private const val TICKS_PER_SECOND = 10_000_000L
 
@@ -21,8 +23,10 @@ private const val TICKS_PER_SECOND = 10_000_000L
  *
  * `null` writes nothing: the item was left before its duration was known (#461), so the local
  * position, played flag and sync flag stay as they were.
+ *
+ * Public because the repository in `data` calls it, across the module boundary (#755).
  */
-internal fun stopUserData(
+fun stopUserData(
     positionTicks: Long,
     playedPercentage: Int?,
     runtimeTicks: Long? = null,
