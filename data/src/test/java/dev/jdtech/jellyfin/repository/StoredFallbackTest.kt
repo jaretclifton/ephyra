@@ -1,6 +1,10 @@
 package dev.jdtech.jellyfin.repository
 
 import java.io.IOException
+import java.net.ConnectException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
+import javax.net.ssl.SSLHandshakeException
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -9,7 +13,12 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.SerializationException
+import org.jellyfin.sdk.api.client.exception.ApiClientException
+import org.jellyfin.sdk.api.client.exception.InvalidContentException
 import org.jellyfin.sdk.api.client.exception.InvalidStatusException
+import org.jellyfin.sdk.api.client.exception.SecureConnectionException
+import org.jellyfin.sdk.api.client.exception.TimeoutException
 import org.junit.jupiter.api.Test
 
 /** CE (#281): the server's answer when it comes, Room's copy when it doesn't. */
@@ -88,6 +97,39 @@ class StoredFallbackTest {
                 fail("expected the server's $status")
             } catch (e: InvalidStatusException) {
                 assertEquals(status, e.status)
+            }
+        }
+        assertTrue(!storedBuilt)
+    }
+
+    // What the SDK's OkHttp client throws, see isUnanswered.
+    @Test
+    fun `a list falls back on a connection failure or a timeout of the client`() = runTest {
+        for (failure in
+            listOf(
+                TimeoutException("refused", ConnectException("Connection refused")),
+                TimeoutException("unknown host", UnknownHostException("jellyfin.home")),
+                TimeoutException("timeout", SocketTimeoutException("timeout")),
+                SecureConnectionException("tls", SSLHandshakeException("handshake")),
+                ApiClientException("reset", IOException("Connection reset")),
+            )) {
+            assertEquals("room", serverOrStoredWhenUnanswered(stored) { throw failure }, "$failure")
+        }
+    }
+
+    @Test
+    fun `a body that could not be read or a mapping failure surfaces`() = runTest {
+        for (failure in
+            listOf(
+                InvalidContentException("bad body", SerializationException("missing field")),
+                IllegalStateException("mapping failed"),
+                NullPointerException(),
+            )) {
+            try {
+                serverOrStoredWhenUnanswered(stored) { throw failure }
+                fail("expected $failure to surface")
+            } catch (e: Exception) {
+                assertEquals(failure, e)
             }
         }
         assertTrue(!storedBuilt)
