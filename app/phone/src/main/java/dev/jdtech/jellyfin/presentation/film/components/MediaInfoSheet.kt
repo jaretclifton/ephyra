@@ -52,10 +52,10 @@ import dev.jdtech.jellyfin.film.domain.toMediaInfo
 import dev.jdtech.jellyfin.models.FindroidMediaStream
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import java.util.Locale
-import org.jellyfin.sdk.model.api.MediaStreamType
 
 const val MEDIA_INFO_SHEET_TAG = "media_info_sheet"
 const val MEDIA_INFO_FILE_TAG = "media_info_file"

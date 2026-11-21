@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.models.FindroidItemPerson
+import dev.jdtech.jellyfin.models.PersonKind
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.utils.copyOnLongClick
@@ -134,7 +135,7 @@ private fun InfoTextPreview() {
         FindroidItemPerson(
             id = java.util.UUID.randomUUID(),
             name = name,
-            type = org.jellyfin.sdk.model.api.PersonKind.DIRECTOR,
+            type = PersonKind.DIRECTOR,
             role = "",
             image = dev.jdtech.jellyfin.models.FindroidItemPersonImage(null, null),
         )

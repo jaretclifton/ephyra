@@ -1,10 +1,8 @@
 package dev.jdtech.jellyfin.models
 
 import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.server.jellyfin.toModel
 import org.jellyfin.sdk.model.api.MediaStream
-import org.jellyfin.sdk.model.api.MediaStreamType
-import org.jellyfin.sdk.model.api.SubtitleDeliveryMethod
-import org.jellyfin.sdk.model.api.VideoRangeType
 
 data class FindroidMediaStream(
     val title: String,
@@ -45,13 +43,13 @@ fun MediaStream.toFindroidMediaStream(jellyfinRepository: JellyfinRepository): F
         title = title.orEmpty(),
         displayTitle = displayTitle,
         language = language.orEmpty(),
-        type = type,
+        type = type.toModel(),
         codec = codec.orEmpty(),
         profile = profile,
         isExternal = isExternal,
         path = deliveryUrl?.let { serverUrl(jellyfinRepository.getBaseUrl(), it) },
         channelLayout = channelLayout,
-        videoRangeType = videoRangeType,
+        videoRangeType = videoRangeType?.toModel(),
         height = height,
         width = width,
         videoDoViTitle = videoDoViTitle,
@@ -63,7 +61,7 @@ fun MediaStream.toFindroidMediaStream(jellyfinRepository: JellyfinRepository): F
         sampleRate = sampleRate,
         index = index,
         channels = channels,
-        deliveryMethod = deliveryMethod,
+        deliveryMethod = deliveryMethod?.toModel(),
         isForced = isForced,
         isDefault = isDefault,
     )

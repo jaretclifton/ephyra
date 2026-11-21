@@ -4,8 +4,8 @@ import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidItemPerson
 import dev.jdtech.jellyfin.models.FindroidItemPersonImage
 import dev.jdtech.jellyfin.models.FindroidPerson
+import dev.jdtech.jellyfin.models.PersonKind
 import java.util.UUID
-import org.jellyfin.sdk.model.api.PersonKind
 
 val dummyPerson =
     FindroidItemPerson(

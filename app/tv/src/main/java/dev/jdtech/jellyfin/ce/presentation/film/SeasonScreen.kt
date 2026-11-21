@@ -93,6 +93,7 @@ import dev.jdtech.jellyfin.film.presentation.season.SeasonViewModel
 import dev.jdtech.jellyfin.models.DisplayProfile
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidSeason
+import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.VideoMetadata
 import dev.jdtech.jellyfin.models.getVersions
 import dev.jdtech.jellyfin.presentation.film.components.VersionDialog
@@ -105,7 +106,6 @@ import java.util.Locale
 import java.util.UUID
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
-import org.jellyfin.sdk.model.api.MediaStreamType
 
 /**
  * CE replacement of the upstream TV season page (ADR 0001, #130).
