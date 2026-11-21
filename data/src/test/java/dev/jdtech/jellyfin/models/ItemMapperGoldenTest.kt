@@ -1,10 +1,20 @@
 package dev.jdtech.jellyfin.models
 
 import android.app.Application
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.server.jellyfin.mappers.MapperContext
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidBoxSet
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidCollection
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidEpisode
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidFolder
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidItem
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidMovie
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidPerson
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSeason
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSegment
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidShow
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSource
 import java.io.File
 import java.lang.reflect.Modifier
-import java.lang.reflect.Proxy
 import java.util.TimeZone
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -55,26 +65,17 @@ class ItemMapperGoldenTest {
         coerceInputValues = true
     }
 
-    private val repository =
-        Proxy.newProxyInstance(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
-        ) { _, method, args ->
-            when (method.name) {
-                "getBaseUrl" -> BASE_URL
-                // A suspend function: the arguments are the item id, the source id and the
-                // continuation.
-                "getStreamUrl" -> "$BASE_URL/Videos/${args!![0]}/stream?mediaSourceId=${args[1]}"
-                else -> throw NotImplementedError(method.name)
-            }
-        } as JellyfinRepository
+    private val context =
+        MapperContext(BASE_URL) { itemId, mediaSourceId ->
+            "$BASE_URL/Videos/$itemId/stream?mediaSourceId=$mediaSourceId"
+        }
 
     private fun item(name: String): BaseItemDto =
         json.decodeFromString(BaseItemDto.serializer(), resource("$name.json"))
 
     @Test
     fun movie() {
-        val mapped = runBlocking { item("movie").toFindroidMovie(repository) }
+        val mapped = runBlocking { item("movie").toFindroidMovie(context, emptyMap()) }
         golden("movie", mapped)
     }
 
@@ -85,58 +86,58 @@ class ItemMapperGoldenTest {
     @Test
     fun movieEdgeCases() {
         val mapped = runBlocking {
-            item("movie-edge-cases.handwritten").toFindroidMovie(repository)
+            item("movie-edge-cases.handwritten").toFindroidMovie(context, emptyMap())
         }
         golden("movie-edge-cases", mapped)
     }
 
     @Test
     fun movieThroughToFindroidItem() {
-        val viaItem = runBlocking { item("movie").toFindroidItem(repository) }
-        val direct = runBlocking { item("movie").toFindroidMovie(repository) }
+        val viaItem = runBlocking { item("movie").toFindroidItem(context, emptyMap()) }
+        val direct = runBlocking { item("movie").toFindroidMovie(context, emptyMap()) }
         assertEquals(direct, viaItem)
     }
 
     @Test
     fun episode() {
-        val mapped = runBlocking { item("episode").toFindroidEpisode(repository) }
+        val mapped = runBlocking { item("episode").toFindroidEpisode(context, emptyMap()) }
         golden("episode", assertNotNull(mapped))
     }
 
     @Test
     fun show() {
-        golden("show", item("show").toFindroidShow(repository))
+        golden("show", item("show").toFindroidShow(BASE_URL))
     }
 
     @Test
     fun season() {
-        golden("season", item("season").toFindroidSeason(repository))
+        golden("season", item("season").toFindroidSeason(BASE_URL))
     }
 
     @Test
     fun boxSet() {
-        golden("boxset", item("boxset.handwritten").toFindroidBoxSet(repository))
+        golden("boxset", item("boxset.handwritten").toFindroidBoxSet(BASE_URL))
     }
 
     @Test
     fun collection() {
-        golden("collection", assertNotNull(item("collection").toFindroidCollection(repository)))
+        golden("collection", assertNotNull(item("collection").toFindroidCollection(BASE_URL)))
     }
 
     @Test
     fun folder() {
-        golden("folder", item("folder").toFindroidFolder(repository))
+        golden("folder", item("folder").toFindroidFolder(BASE_URL))
     }
 
     @Test
     fun person() {
-        golden("person", item("person").toFindroidPerson(repository))
+        golden("person", item("person").toFindroidPerson(BASE_URL))
     }
 
     /** A home video maps as a movie (#671). */
     @Test
     fun video() {
-        val mapped = runBlocking { item("video").toFindroidItem(repository) }
+        val mapped = runBlocking { item("video").toFindroidItem(context, emptyMap()) }
         assertEquals(FindroidMovie::class, assertNotNull(mapped)::class)
         golden("video", mapped)
     }
@@ -151,11 +152,9 @@ class ItemMapperGoldenTest {
                     json.decodeFromString(MediaSourceInfo.serializer(), resource("$file.json"))
                 listOf(
                     "$title, includePath = false" to
-                        runBlocking { info.toFindroidSource(repository, itemId) },
+                        runBlocking { info.toFindroidSource(context, itemId) },
                     "$title, includePath = true" to
-                        runBlocking {
-                            info.toFindroidSource(repository, itemId, includePath = true)
-                        },
+                        runBlocking { info.toFindroidSource(context, itemId, includePath = true) },
                 )
             }
         golden("source", *parts.toTypedArray())
@@ -165,7 +164,7 @@ class ItemMapperGoldenTest {
     fun kindsTheAppDoesNotShow() {
         // The kind picks the mapper; a kind without one is dropped.
         val audio = item("person").copy(type = BaseItemKind.AUDIO)
-        assertEquals(null, runBlocking { audio.toFindroidItem(repository) })
+        assertEquals(null, runBlocking { audio.toFindroidItem(context, emptyMap()) })
     }
 
     @Test

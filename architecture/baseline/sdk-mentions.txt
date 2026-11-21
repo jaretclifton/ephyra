@@ -1,5 +1,11 @@
 core/src/main/java/dev/jdtech/jellyfin/core/session/ServerSessionKeeper.kt
 core/src/main/java/dev/jdtech/jellyfin/work/SyncWorker.kt
+data/src/main/java/dev/jdtech/jellyfin/player/DeviceCapabilityReport.kt
+data/src/main/java/dev/jdtech/jellyfin/player/DeviceProfileBuilder.kt
+data/src/main/java/dev/jdtech/jellyfin/repository/JellyfinRepositoryImpl.kt
+data/src/main/java/dev/jdtech/jellyfin/repository/PlaySessions.kt
+data/src/main/java/dev/jdtech/jellyfin/repository/ResumeThresholds.kt
+data/src/main/java/dev/jdtech/jellyfin/repository/StoredFallback.kt
 player/cast/src/main/java/dev/jdtech/jellyfin/player/cast/models/CastModels.kt
 player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/CastPlayerControllerImpl.kt
 player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/CastTracks.kt
