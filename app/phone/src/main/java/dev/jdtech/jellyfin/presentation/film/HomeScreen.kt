@@ -67,6 +67,7 @@ import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.presentation.utils.ReloadOnResume
 import dev.jdtech.jellyfin.presentation.utils.rememberSafePadding
+import dev.jdtech.jellyfin.presentation.utils.showsServerIndicator
 import kotlinx.coroutines.launch
 
 @Composable
@@ -291,6 +292,8 @@ internal fun HomeScreenLayout(
         onUserClick = { showProfileBottomSheet = true },
         user = state.user,
         baseUrl = baseUrl,
+        // CE (#775): in place of the banner the user put away; the error page says it already.
+        serverIndicator = showsServerIndicator() && !showErrorState,
         modifier = Modifier.padding(start = paddingStart, top = paddingTop, end = paddingEnd),
     )
 

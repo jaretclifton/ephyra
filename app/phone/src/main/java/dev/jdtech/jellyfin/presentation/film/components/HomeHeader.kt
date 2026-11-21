@@ -48,6 +48,7 @@ fun HomeHeader(
     modifier: Modifier = Modifier,
     user: User? = null,
     baseUrl: String? = null,
+    serverIndicator: Boolean = false,
 ) {
     Row(
         modifier = modifier.fillMaxWidth().height(56.dp),
@@ -81,7 +82,14 @@ fun HomeHeader(
 
         Spacer(Modifier.width(MaterialTheme.spacings.medium))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacings.medium)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacings.medium),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // CE (#775): the unreachable banner put away. Bare, not a filled circle like the
+            // buttons beside it: it is a state, not one more thing to do.
+            if (serverIndicator) ServerOffIndicator()
+
             Surface(
                 onClick = onSearchClick,
                 modifier = Modifier.fillMaxHeight().aspectRatio(1f),
@@ -154,6 +162,20 @@ private fun HomeHeaderPreview() {
             onServerClick = {},
             onSearchClick = {},
             onUserClick = {},
+        )
+    }
+}
+
+@Composable
+@Preview(showBackground = true)
+private fun HomeHeaderServerOffPreview() {
+    FindroidTheme {
+        HomeHeader(
+            serverName = "Jellyfin",
+            onServerClick = {},
+            onSearchClick = {},
+            onUserClick = {},
+            serverIndicator = true,
         )
     }
 }

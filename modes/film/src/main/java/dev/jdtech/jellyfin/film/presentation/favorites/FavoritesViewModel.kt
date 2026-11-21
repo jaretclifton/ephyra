@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.core.Constants
 import dev.jdtech.jellyfin.core.R as CoreR
+import dev.jdtech.jellyfin.film.presentation.ServerAwayReload
 import dev.jdtech.jellyfin.film.presentation.collection.CollectionState
 import dev.jdtech.jellyfin.models.CollectionSection
 import dev.jdtech.jellyfin.models.FindroidEpisode
@@ -26,7 +27,25 @@ class FavoritesViewModel @Inject constructor(private val repository: JellyfinRep
     private val _state = MutableStateFlow(CollectionState())
     val state = _state.asStateFlow()
 
-    fun loadItems(): Job = viewModelScope.launch {
+    private val serverAwayReload = ServerAwayReload()
+    private var loadJob: Job? = null
+
+    /**
+     * CE (#775): the server went away or came back. With the server away the favourites are the
+     * downloaded ones, so the list loads again.
+     */
+    fun onServerAwayChanged(away: Boolean) {
+        if (serverAwayReload.onServerAway(away)) loadItems()
+    }
+
+    fun loadItems(): Job {
+        // CE (#775): the same load twice at once, for the server's return and the error page.
+        loadJob?.let { if (it.isActive && serverAwayReload.runningIsCurrent()) return it }
+        serverAwayReload.begin()
+        return load().also { loadJob = it }
+    }
+
+    private fun load(): Job = viewModelScope.launch {
         // With content on screen the refresh happens quietly (#251).
         val hasContent = _state.value.sections.isNotEmpty()
         _state.emit(_state.value.copy(isLoading = !hasContent, error = null))

@@ -141,6 +141,8 @@
     <string name="ce_track_sdh">SDH</string>
     <string name="ce_track_number">Rada %1$d</string>
     <string name="ce_server_unreachable_downloads">Allalaaditud sisu saab endiselt esitada.</string>
+    <string name="ce_server_banner_show">Serveriga ei saa ühendust. Näita üksikasju</string>
+    <string name="ce_downloads_only">Kuvatakse ainult allalaaditud sisu</string>
     <string name="ce_download_choice_title">Milliseid osi alla laadida?</string>
     <string name="ce_download_choice_message">Oled mõnda neist osadest juba vaadanud.</string>
     <string name="ce_download_choice_unwatched">Ainult vaatamata (%1$d)</string>

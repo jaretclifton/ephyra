@@ -141,6 +141,8 @@
     <string name="ce_track_sdh">SDH</string>
     <string name="ce_track_number">Pista %1$d</string>
     <string name="ce_server_unreachable_downloads">Les teves baixades encara es poden reproduir.</string>
+    <string name="ce_server_banner_show">No es pot connectar amb el servidor. Mostra els detalls</string>
+    <string name="ce_downloads_only">Només es mostren les baixades</string>
     <string name="ce_download_choice_title">Quins episodis vols baixar?</string>
     <string name="ce_download_choice_message">Ja has vist alguns d\'aquests episodis.</string>
     <string name="ce_download_choice_unwatched">Només els no vistos (%1$d)</string>
