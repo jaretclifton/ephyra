@@ -375,13 +375,12 @@ class SetupRepositoryImpl(
 
     override suspend fun addAddress(serverId: String, address: String): ServerAddress {
         // Normalise the input the same way addServer does, so a bare host or a missing scheme
-        // resolves to a usable address. Discovery does not touch the client's base URL.
-        val candidates = jellyfinApi.jellyfin.discovery.getAddressCandidates(address)
-        val recommended =
-            jellyfinApi.jellyfin.discovery.getRecommendedServers(
-                candidates,
-                RecommendedServerInfoScore.OK,
-            )
+        // resolves to a usable address. Discovery does not touch the client's base URL, and it
+        // runs unwatched: this server is not the one in use, so its answers (or silence) must not
+        // reach the reachability banner or the return detector.
+        val discovery = jellyfinApi.unwatchedDiscovery
+        val candidates = discovery.getAddressCandidates(address)
+        val recommended = discovery.getRecommendedServers(candidates, RecommendedServerInfoScore.OK)
 
         // Only accept an address that actually points at the server being edited.
         val match =

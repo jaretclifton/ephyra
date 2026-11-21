@@ -56,7 +56,7 @@ import timber.log.Timber
  * @constructor Creates a new [JellyfinApi] instance
  */
 class JellyfinApi(
-    androidContext: Context,
+    private val androidContext: Context,
     requestTimeout: Long = Constants.NETWORK_DEFAULT_REQUEST_TIMEOUT,
     connectTimeout: Long = Constants.NETWORK_DEFAULT_CONNECT_TIMEOUT,
     socketTimeout: Long = Constants.NETWORK_DEFAULT_SOCKET_TIMEOUT,
@@ -152,7 +152,7 @@ class JellyfinApi(
     val httpClient: OkHttpClient
         get() = okHttpFactory.base
 
-    val jellyfin = createJellyfin {
+    private fun buildJellyfin(factory: OkHttpFactory) = createJellyfin {
         clientInfo =
             ClientInfo(
                 name =
@@ -168,9 +168,18 @@ class JellyfinApi(
             )
         context = androidContext
         deviceInfo = buildDeviceInfo(androidContext)
-        apiClientFactory = okHttpFactory
-        socketConnectionFactory = okHttpFactory
+        apiClientFactory = factory
+        socketConnectionFactory = factory
     }
+
+    val jellyfin = buildJellyfin(okHttpFactory)
+
+    /**
+     * CE (#760): address discovery for a server that is not the one in use. It runs on a client
+     * without the response watcher, so checking an address says nothing about the server in use:
+     * not to the reachability banner, not to the return detector. It never touches [api].
+     */
+    val unwatchedDiscovery by lazy { buildJellyfin(OkHttpFactory()).discovery }
     val api =
         jellyfin.createApi(
             httpClientOptions =
