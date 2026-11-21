@@ -10,6 +10,6 @@ import dev.jdtech.jellyfin.models.ServerInfo
  */
 fun Server.renamedTo(info: ServerInfo): Server? {
     val name = info.name
-    if (info.id != id || name.isBlank() || name == this.name) return null
+    if (info.id.isBlank() || info.id != id || name.isBlank() || name == this.name) return null
     return copy(name = name)
 }

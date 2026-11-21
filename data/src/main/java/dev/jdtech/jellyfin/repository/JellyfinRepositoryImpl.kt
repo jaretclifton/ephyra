@@ -1175,7 +1175,9 @@ class JellyfinRepositoryImpl(
 
     override suspend fun autoPlayNextEpisode(): Boolean? =
         withContext(Dispatchers.IO) {
-            jellyfinApi.userApi.getCurrentUser().content.configuration?.enableNextEpisodeAutoPlay
+            val configuration = jellyfinApi.userApi.getCurrentUser().content.configuration
+            if (configuration == null) Timber.w("The server gave no user configuration")
+            configuration?.enableNextEpisodeAutoPlay
         }
 
     override suspend fun getDownloads(): List<FindroidItem> =
