@@ -5,7 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Intent
 import android.content.res.Resources
 import android.util.Base64
-import dev.jdtech.jellyfin.models.CollectionType
+import dev.jdtech.jellyfin.models.FindroidCollection
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.View
 import java.nio.charset.StandardCharsets
@@ -15,15 +15,9 @@ import java.time.format.FormatStyle
 import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jellyfin.sdk.model.api.BaseItemDto
 
-fun BaseItemDto.toView(items: List<FindroidItem>): View {
-    return View(
-        id = id,
-        name = name ?: "",
-        items = items,
-        type = CollectionType.fromString(collectionType?.serialName),
-    )
+fun FindroidCollection.toView(items: List<FindroidItem>): View {
+    return View(id = id, name = name, items = items, type = type)
 }
 
 fun Resources.dip(px: Int) = (px * displayMetrics.density).toInt()

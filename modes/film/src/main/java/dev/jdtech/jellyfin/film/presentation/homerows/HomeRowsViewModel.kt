@@ -51,7 +51,7 @@ constructor(
             try {
                 profile = store.currentProfile()
                 val libraries = repository.homeLibraries()
-                libraryNames = libraries.associate { it.id to it.name.orEmpty() }
+                libraryNames = libraries.associate { it.id to it.name }
                 val rows =
                     HomeRows.resolve(store.read(profile), libraries.map { it.id }, store.legacy())
                 _state.update { it.copy(rows = rows.map(::entry), isLoading = false) }

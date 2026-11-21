@@ -12,7 +12,7 @@ import dev.jdtech.jellyfin.film.domain.homerows.HomeRowsProfile
 import dev.jdtech.jellyfin.film.domain.homerows.HomeRowsStore
 import dev.jdtech.jellyfin.film.domain.homerows.LegacyHomeSwitches
 import dev.jdtech.jellyfin.film.domain.homerows.homeLibraries
-import dev.jdtech.jellyfin.models.CollectionType
+import dev.jdtech.jellyfin.models.FindroidCollection
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.HomeItem
 import dev.jdtech.jellyfin.models.HomeSection
@@ -35,7 +35,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.jellyfin.sdk.model.api.BaseItemDto
 import timber.log.Timber
 
 @HiltViewModel
@@ -64,7 +63,7 @@ constructor(
 
     private val reloadPolicy = ReloadPolicy(dataChanges)
     private var loadJob: Job? = null
-    private var cachedLibraries: List<BaseItemDto>? = null
+    private var cachedLibraries: List<FindroidCollection>? = null
     private var cachedLibrariesKey: Pair<String?, UUID?>? = null
     private var cacheChecked = false
 
@@ -366,7 +365,7 @@ constructor(
      * libraries, so the slowest library holds back none of the others (#251).
      */
     private suspend fun loadLatest(
-        libraries: List<BaseItemDto>,
+        libraries: List<FindroidCollection>,
         stored: List<HomeRowConfig>?,
         legacy: LegacyHomeSwitches,
     ) {
@@ -404,11 +403,7 @@ constructor(
                     async {
                         val result =
                             logFailure("library ${view.id}") {
-                                repository.getLatestMedia(
-                                    view.id,
-                                    CollectionType.fromString(view.collectionType?.serialName)
-                                        .latestItemTypes,
-                                )
+                                repository.getLatestMedia(view.id, view.type.latestItemTypes)
                             }
                         synchronized(results) {
                             results[i] = result
