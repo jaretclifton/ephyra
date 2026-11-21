@@ -8,7 +8,8 @@ import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
-import dev.jdtech.jellyfin.player.DeviceProfileBuilder
+import dev.jdtech.jellyfin.player.DeviceCodecProbe
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -51,7 +52,13 @@ class SeriesTrackPreferenceTest {
     }
 
     private val repository: JellyfinRepository by lazy {
-        JellyfinRepositoryImpl(context, api, database, preferences, DeviceProfileBuilder(context))
+        JellyfinRepositoryImpl(
+            context,
+            api,
+            database,
+            preferences,
+            JellyfinDeviceProfiles(DeviceCodecProbe(context)),
+        )
     }
 
     @After fun close() = room.close()
