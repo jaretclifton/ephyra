@@ -271,7 +271,7 @@ class StoredListsFallbackTest {
     }
 
     @Test
-    fun `without stored favourites an unanswered server gives none`() = runBlocking {
+    fun `with a downloaded non-favourite an unanswered server gives no favourites`() = runBlocking {
         // The screen says that none of the favourites are downloaded, not that loading failed.
         storeMovie(id(1), "Not a favourite")
         userData(id(1))
@@ -279,16 +279,32 @@ class StoredListsFallbackTest {
     }
 
     @Test
-    fun `without stored favourites a server known to be away gives none`() = runBlocking {
-        knownServerState.unreachable = true
+    fun `with a downloaded non-favourite a server known to be away gives no favourites`() =
+        runBlocking {
+            storeMovie(id(1), "Not a favourite")
+            knownServerState.unreachable = true
 
-        assertEquals(emptyList<Any>(), repository.getFavoriteItems())
-        assertEquals(1, knownServerState.skipped)
+            assertEquals(emptyList<Any>(), repository.getFavoriteItems())
+            assertEquals(1, knownServerState.skipped)
+        }
+
+    @Test
+    fun `with nothing downloaded the server's error surfaces for favourites`() = runBlocking {
+        // TV, or a phone without downloads: the error page, as before.
+        assertTrue(fails { repository.getFavoriteItems() })
+
+        knownServerState.unreachable = true
+        assertTrue(fails { repository.getFavoriteItems() })
+        // Only an unfinished download: nothing to play, so the same.
+        storeMovie(id(1), "Writing", download = Download.WRITING)
+        assertTrue(fails { repository.getFavoriteItems() })
+        assertEquals(0, knownServerState.skipped)
     }
 
     @Test
     fun `without stored favourites an answered error still surfaces`() = runBlocking {
         // The server is there and says no: that is an error to show.
+        storeMovie(id(1), "Not a favourite")
         serverUrl = answering("HTTP/1.1 500 Internal Server Error")
         assertTrue(fails { repository.getFavoriteItems() })
     }

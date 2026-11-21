@@ -467,11 +467,15 @@ class JellyfinRepositoryImpl(
 
     override suspend fun getFavoriteItems(): List<FindroidItem> =
         withContext(Dispatchers.IO) {
-            // CE (#775): without the server, the downloaded favourites, also when there are none:
-            // the screen says that none are downloaded.
+            // CE (#775): without the server, the downloaded favourites, also when there are none
+            // but something else is downloaded: the screen says that none are downloaded. With
+            // nothing downloaded at all (TV, a phone without downloads) the server's error comes
+            // through, as before.
             val serverId = currentServerId()
             val stored = serverId?.let { storedLists.favorites(it, currentUserId) }.orEmpty()
-            serverOrStoredItems(storedItems(serverId, stored, emptyIsAnAnswer = true)) {
+            val noneIsAnAnswer =
+                serverId != null && stored.isEmpty() && storedLists.hasDownloads(serverId)
+            serverOrStoredItems(storedItems(serverId, stored, emptyIsAnAnswer = noneIsAnAnswer)) {
                 jellyfinApi.libraryApi
                     .getItems(
                         currentUserId,
