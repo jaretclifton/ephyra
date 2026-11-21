@@ -5,8 +5,8 @@ import android.content.Context
 import android.provider.Settings
 import com.sun.net.httpserver.HttpServer
 import dev.jdtech.jellyfin.api.JellyfinApi
-import dev.jdtech.jellyfin.api.RequestWatcher
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.domain.ports.RequestWatcher
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.ServerWithAddresses
