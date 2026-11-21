@@ -23,6 +23,7 @@ import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.ServerWithAddressAndUser
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.ServerWithAddressesAndUsers
+import dev.jdtech.jellyfin.models.StoredItemDate
 import dev.jdtech.jellyfin.models.User
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
@@ -617,6 +618,72 @@ interface ServerDatabaseDao {
         playbackPositionTicks: Long,
         lastPlayedDate: Long?,
     )
+
+    // CE (#775): the lists Room answers while the server is away, see StoredLists. Only the rows of
+    // :serverId (#718) and the user data of :userId.
+
+    @Query(
+        "SELECT * FROM movies WHERE serverId = :serverId AND id IN " +
+            "(SELECT itemId FROM userdata WHERE userId = :userId AND favorite = 1) ORDER BY name ASC"
+    )
+    suspend fun getFavoriteMoviesOfServer(serverId: String, userId: UUID): List<FindroidMovieDto>
+
+    @Query(
+        "SELECT * FROM shows WHERE $SHOW_OF_SERVER AND id IN " +
+            "(SELECT itemId FROM userdata WHERE userId = :userId AND favorite = 1) ORDER BY name ASC"
+    )
+    suspend fun getFavoriteShowsOfServer(serverId: String, userId: UUID): List<FindroidShowDto>
+
+    @Query(
+        "SELECT * FROM episodes WHERE serverId = :serverId AND id IN " +
+            "(SELECT itemId FROM userdata WHERE userId = :userId AND favorite = 1) " +
+            "ORDER BY seriesName ASC, parentIndexNumber ASC, indexNumber ASC"
+    )
+    suspend fun getFavoriteEpisodesOfServer(
+        serverId: String,
+        userId: UUID,
+    ): List<FindroidEpisodeDto>
+
+    /** [pattern] is a LIKE pattern with `\` as its escape character. */
+    @Query(
+        "SELECT * FROM movies WHERE serverId = :serverId AND name LIKE :pattern ESCAPE '\\' " +
+            "ORDER BY name ASC"
+    )
+    suspend fun searchMoviesOfServer(serverId: String, pattern: String): List<FindroidMovieDto>
+
+    @Query(
+        "SELECT * FROM shows WHERE $SHOW_OF_SERVER AND name LIKE :pattern ESCAPE '\\' " +
+            "ORDER BY name ASC"
+    )
+    suspend fun searchShowsOfServer(serverId: String, pattern: String): List<FindroidShowDto>
+
+    @Query(
+        "SELECT * FROM episodes WHERE serverId = :serverId AND name LIKE :pattern ESCAPE '\\' " +
+            "ORDER BY seriesName ASC, parentIndexNumber ASC, indexNumber ASC"
+    )
+    suspend fun searchEpisodesOfServer(serverId: String, pattern: String): List<FindroidEpisodeDto>
+
+    @Query("SELECT * FROM userdata WHERE userId = :userId")
+    suspend fun getUserDataOfUser(userId: UUID): List<FindroidUserDataDto>
+
+    /** When each movie and show of [serverId] was downloaded: a show's latest episode. */
+    @Query(
+        "SELECT movies.id AS itemId, MAX(sources.downloadedAt) AS date FROM movies " +
+            "JOIN sources ON sources.itemId = movies.id WHERE movies.serverId = :serverId " +
+            "GROUP BY movies.id UNION ALL " +
+            "SELECT episodes.seriesId AS itemId, MAX(sources.downloadedAt) AS date FROM episodes " +
+            "JOIN sources ON sources.itemId = episodes.id WHERE episodes.serverId = :serverId " +
+            "GROUP BY episodes.seriesId"
+    )
+    suspend fun getDownloadDatesOfServer(serverId: String): List<StoredItemDate>
+
+    /** When [userId] last played an episode of each show of [serverId]. */
+    @Query(
+        "SELECT episodes.seriesId AS itemId, MAX(userdata.lastPlayedDate) AS date FROM episodes " +
+            "JOIN userdata ON userdata.itemId = episodes.id AND userdata.userId = :userId " +
+            "WHERE episodes.serverId = :serverId GROUP BY episodes.seriesId"
+    )
+    suspend fun getShowPlayedDatesOfServer(serverId: String, userId: UUID): List<StoredItemDate>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTrickplayInfo(trickplayInfoDto: FindroidTrickplayInfoDto)

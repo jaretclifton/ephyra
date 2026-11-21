@@ -6,7 +6,10 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
+import org.jellyfin.sdk.api.client.exception.InvalidStatusException
 import org.junit.jupiter.api.Test
 
 /** CE (#281): the server's answer when it comes, Room's copy when it doesn't. */
@@ -52,6 +55,48 @@ class StoredFallbackTest {
     fun `an empty stored list means Room has nothing`() = runBlocking {
         try {
             serverOrStoredList<String>(emptyList()) { throw IOException("unreachable") }
+            fail("expected the server's error")
+        } catch (e: IOException) {
+            assertEquals("unreachable", e.message)
+        }
+    }
+
+    @Test
+    fun `a list waits for a slow server instead of giving the shorter stored one`() = runTest {
+        val result =
+            serverOrStoredWhenUnanswered(stored) {
+                delay(STORED_FALLBACK_TIMEOUT_MS * 10)
+                "server"
+            }
+        assertEquals("server", result)
+        assertTrue(!storedBuilt)
+    }
+
+    @Test
+    fun `a list a server leaves unanswered comes from Room`() = runTest {
+        assertEquals(
+            "room",
+            serverOrStoredWhenUnanswered(stored) { throw IOException("unreachable") },
+        )
+    }
+
+    @Test
+    fun `an error the server answered with surfaces instead of the stored list`() = runTest {
+        for (status in listOf(401, 500, 503)) {
+            try {
+                serverOrStoredWhenUnanswered(stored) { throw InvalidStatusException(status, null) }
+                fail("expected the server's $status")
+            } catch (e: InvalidStatusException) {
+                assertEquals(status, e.status)
+            }
+        }
+        assertTrue(!storedBuilt)
+    }
+
+    @Test
+    fun `without a stored list a request left unanswered still fails`() = runTest {
+        try {
+            serverOrStoredWhenUnanswered<String>(stored = null) { throw IOException("unreachable") }
             fail("expected the server's error")
         } catch (e: IOException) {
             assertEquals("unreachable", e.message)
