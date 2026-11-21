@@ -21,6 +21,7 @@ import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.player.DeviceProfileBuilder
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import java.io.File
 import java.net.ServerSocket
 import java.time.LocalDateTime
 import java.util.UUID
@@ -361,6 +362,58 @@ class StoredListsFallbackTest {
         val libraries = repository.getLibraries().items
         assertEquals(listOf(StoredLibraries.MOVIES, StoredLibraries.SHOWS), libraries.map { it.id })
         assertEquals(listOf("Movies", "TV Shows"), libraries.map { it.name })
+    }
+
+    /** An image as ImagesDownloaderWorker saves it with a download. */
+    private fun storeImage(itemId: UUID, image: String) {
+        File(context.filesDir, "images/$itemId/$image").apply {
+            parentFile?.mkdirs()
+            writeBytes(byteArrayOf(1))
+        }
+    }
+
+    private suspend fun artwork() =
+        repository.getLibraries().items.associate {
+            it.id to it.images.primary?.path?.removePrefix("/")
+        }
+
+    @Test
+    fun `a stored library shows the artwork of its newest download that has some`() = runBlocking {
+        storeMovie(id(1), "Older", downloadedAt = 1_000L)
+        storeMovie(id(2), "Newer", downloadedAt = 2_000L)
+        storeEpisode()
+        // Nothing stored with the downloads: the blank card, as before.
+        assertEquals(
+            mapOf(StoredLibraries.MOVIES to null, StoredLibraries.SHOWS to null),
+            artwork(),
+        )
+
+        // Only the older one has a backdrop: that one. The show has only its poster.
+        storeImage(id(1), "backdrop")
+        storeImage(id(2), "primary")
+        storeImage(showId, "primary")
+        assertEquals(
+            mapOf(
+                StoredLibraries.MOVIES to "images/${id(1)}/backdrop",
+                StoredLibraries.SHOWS to "images/$showId/primary",
+            ),
+            artwork(),
+        )
+
+        // A backdrop of the newest: that one.
+        storeImage(id(2), "backdrop")
+        assertEquals("images/${id(2)}/backdrop", artwork()[StoredLibraries.MOVIES])
+    }
+
+    @Test
+    fun `an empty image file is no artwork`() = runBlocking {
+        storeMovie(id(1), "Movie", downloadedAt = 1_000L)
+        File(context.filesDir, "images/${id(1)}/backdrop").apply {
+            parentFile?.mkdirs()
+            writeBytes(byteArrayOf())
+        }
+
+        assertEquals(null, artwork()[StoredLibraries.MOVIES])
     }
 
     @Test

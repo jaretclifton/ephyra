@@ -112,6 +112,10 @@ class JellyfinRepositoryImpl(
         return ItemsResult(items, fromStore)
     }
 
+    /** CE (#781): whether a download saved [image] of [itemId] (ImagesDownloaderWorker). */
+    private fun hasStoredImage(itemId: UUID, image: String): Boolean =
+        File(context.filesDir, "images/$itemId/$image").length() > 0
+
     /**
      * CE (#775): maps stored rows only when they are needed; null when there are none, so the
      * server's error comes through. With [emptyIsAnAnswer] no stored rows is an answer too: the
@@ -225,9 +229,12 @@ class JellyfinRepositoryImpl(
     override suspend fun getLibraries(): ItemsResult<FindroidCollection> =
         withContext(Dispatchers.IO) {
             // CE (#775): without the server, a Movies and a Shows library of what is downloaded.
-            val stored =
-                currentServerId()?.let { storedLists.libraries(it, storedLibraryNames) }.orEmpty()
-            serverOrStoredItems(stored.takeIf { it.isNotEmpty() }?.let { suspend { it } }) {
+            // CE (#781): built only when Room answers, as they look for their artwork.
+            val serverId = currentServerId()?.takeIf { storedLists.hasDownloads(it) }
+            val stored = serverId?.let { id ->
+                suspend { storedLists.libraries(id, storedLibraryNames, ::hasStoredImage) }
+            }
+            serverOrStoredItems(stored) {
                 jellyfinApi.libraryApi.getItems(currentUserId).content.items.mapNotNull {
                     it.toFindroidCollection(this@JellyfinRepositoryImpl)
                 }
