@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.presentation.cast
 
 import dev.jdtech.jellyfin.models.FindroidSegment
 import dev.jdtech.jellyfin.models.FindroidSegmentType
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.player.cast.models.CastAvailability
 import dev.jdtech.jellyfin.player.cast.models.CastConnectionState
 import dev.jdtech.jellyfin.player.cast.models.CastPlaybackStatus
@@ -13,7 +14,6 @@ import dev.jdtech.jellyfin.player.cast.presentation.CastUiState
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerChapter
 import dev.jdtech.jellyfin.player.core.domain.models.Track
 import java.util.UUID
-import org.jellyfin.sdk.model.api.BaseItemKind
 
 /** States for the Cast surfaces' previews: one per thing a surface can say. */
 internal object CastPreviews {
@@ -23,7 +23,7 @@ internal object CastPreviews {
     private val episode =
         CastNowPlaying(
             itemId = UUID(0, 1),
-            kind = BaseItemKind.EPISODE,
+            kind = ItemKind.EPISODE,
             title = "The Man From Mars",
             seriesName = "Pioneer One",
             episodeCode = "S01E02",

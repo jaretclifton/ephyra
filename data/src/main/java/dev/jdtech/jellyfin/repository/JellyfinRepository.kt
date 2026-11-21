@@ -12,18 +12,17 @@ import dev.jdtech.jellyfin.models.FindroidSegment
 import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.ItemFilter
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
+import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import org.jellyfin.sdk.model.api.BaseItemDto
-import org.jellyfin.sdk.model.api.BaseItemKind
-import org.jellyfin.sdk.model.api.PublicSystemInfo
-import org.jellyfin.sdk.model.api.UserConfiguration
 
 interface JellyfinRepository {
-    suspend fun getPublicSystemInfo(): PublicSystemInfo
+    suspend fun getServerInfo(): ServerInfo
 
     suspend fun getUserViews(): List<BaseItemDto>
 
@@ -45,7 +44,7 @@ interface JellyfinRepository {
 
     suspend fun getItems(
         parentId: UUID? = null,
-        includeTypes: List<BaseItemKind>? = null,
+        includeTypes: List<ItemKind>? = null,
         recursive: Boolean = false,
         sortBy: SortBy = SortBy.defaultValue,
         sortOrder: SortOrder = SortOrder.ASCENDING,
@@ -62,7 +61,7 @@ interface JellyfinRepository {
      */
     suspend fun getItemsPage(
         parentId: UUID? = null,
-        includeTypes: List<BaseItemKind>? = null,
+        includeTypes: List<ItemKind>? = null,
         recursive: Boolean = false,
         sortBy: SortBy = SortBy.defaultValue,
         sortOrder: SortOrder = SortOrder.ASCENDING,
@@ -77,7 +76,7 @@ interface JellyfinRepository {
      * have a backdrop. Online the server picks them; the default (offline) shuffles local items.
      */
     suspend fun getRandomItemsWithBackdrop(
-        includeTypes: List<BaseItemKind>,
+        includeTypes: List<ItemKind>,
         limit: Int,
     ): List<FindroidItem> =
         getItems(includeTypes = includeTypes, recursive = true)
@@ -87,7 +86,7 @@ interface JellyfinRepository {
 
     suspend fun getItemsPaging(
         parentId: UUID? = null,
-        includeTypes: List<BaseItemKind>? = null,
+        includeTypes: List<ItemKind>? = null,
         recursive: Boolean = false,
         sortBy: SortBy = SortBy.defaultValue,
         sortOrder: SortOrder = SortOrder.ASCENDING,
@@ -100,7 +99,7 @@ interface JellyfinRepository {
      */
     suspend fun getItemCount(
         parentId: UUID? = null,
-        includeTypes: List<BaseItemKind>? = null,
+        includeTypes: List<ItemKind>? = null,
         recursive: Boolean = false,
         filters: Set<ItemFilter> = emptySet(),
         nameLessThan: String? = null,
@@ -110,7 +109,7 @@ interface JellyfinRepository {
 
     suspend fun getPersonItems(
         personIds: List<UUID>,
-        includeTypes: List<BaseItemKind>? = null,
+        includeTypes: List<ItemKind>? = null,
         recursive: Boolean = true,
         limit: Int? = null,
     ): List<FindroidItem>
@@ -125,7 +124,7 @@ interface JellyfinRepository {
      */
     suspend fun getSearchItems(
         query: String,
-        itemKinds: List<BaseItemKind>? = null,
+        itemKinds: List<ItemKind>? = null,
     ): ItemsResult<FindroidItem>
 
     suspend fun getSuggestions(): List<FindroidItem>
@@ -135,7 +134,7 @@ interface JellyfinRepository {
     /** [includeItemTypes] null leaves the choice to the server. */
     suspend fun getLatestMedia(
         parentId: UUID,
-        includeItemTypes: List<BaseItemKind>? = null,
+        includeItemTypes: List<ItemKind>? = null,
     ): List<FindroidItem>
 
     suspend fun getSeasons(seriesId: UUID, offline: Boolean = false): List<FindroidSeason>
@@ -290,9 +289,22 @@ interface JellyfinRepository {
 
     fun getBaseUrl(): String
 
+    /** The URL of the thumbnail the server extracted for a chapter. Null when no server is set. */
+    fun chapterImageUrl(itemId: UUID, chapterIndex: Int, tag: String): String?
+
+    /**
+     * The backdrop of [seasonId], whether or not the season has one of its own; the server answers
+     * 404 when it has none. Null when no server is set.
+     */
+    fun seasonBackdropUrl(seasonId: UUID): String?
+
     suspend fun updateDeviceName(name: String)
 
-    suspend fun getUserConfiguration(): UserConfiguration?
+    /**
+     * The user's server-side "play next episode automatically" setting, or null when the server has
+     * none.
+     */
+    suspend fun autoPlayNextEpisode(): Boolean?
 
     suspend fun getDownloads(): List<FindroidItem>
 

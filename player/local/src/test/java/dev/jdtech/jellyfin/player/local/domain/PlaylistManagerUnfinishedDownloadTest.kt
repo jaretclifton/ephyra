@@ -4,6 +4,7 @@ import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import java.lang.reflect.Proxy
 import java.util.UUID
@@ -11,7 +12,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.fail
 import kotlinx.coroutines.runBlocking
-import org.jellyfin.sdk.model.api.BaseItemKind
 import org.junit.jupiter.api.Test
 
 /** An unfinished download's partial file is never what plays (#454). */
@@ -22,7 +22,7 @@ class PlaylistManagerUnfinishedDownloadTest {
     fun `an unfinished download gives way to the server source`() {
         val manager = PlaylistManager(fakeRepository(listOf(partial(), remote())))
 
-        val item = runBlocking { manager.getInitialItem(episode.id, BaseItemKind.EPISODE) }
+        val item = runBlocking { manager.getInitialItem(episode.id, ItemKind.EPISODE) }
 
         assertEquals(REMOTE_PATH, item?.mediaSourceUri)
     }
@@ -32,7 +32,7 @@ class PlaylistManagerUnfinishedDownloadTest {
         val manager = PlaylistManager(fakeRepository(listOf(partial())))
 
         try {
-            val item = runBlocking { manager.getInitialItem(episode.id, BaseItemKind.EPISODE) }
+            val item = runBlocking { manager.getInitialItem(episode.id, ItemKind.EPISODE) }
             fail("Expected no playable source, got ${item?.mediaSourceUri}")
         } catch (e: NoSuchElementException) {
             // PlayerViewModel toasts the message when there is one; the player's own error

@@ -64,12 +64,12 @@ import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.ui.components.Direction
 import dev.jdtech.jellyfin.ui.components.ItemCard
 import java.util.UUID
-import org.jellyfin.sdk.model.api.BaseItemKind
 
 /**
  * CE search screen (G4), a drawer destination (ADR 0002). Results update while typing and come in
@@ -108,11 +108,11 @@ fun SearchScreen(
 }
 
 /** The result rows, in screen order. */
-private enum class SearchGroup(val kind: BaseItemKind, @StringRes val title: Int) {
-    MOVIES(BaseItemKind.MOVIE, CoreR.string.movies_label),
-    SHOWS(BaseItemKind.SERIES, CoreR.string.shows_label),
-    EPISODES(BaseItemKind.EPISODE, CoreR.string.episodes_label),
-    COLLECTIONS(BaseItemKind.BOX_SET, CoreR.string.collections_label);
+private enum class SearchGroup(val kind: ItemKind, @StringRes val title: Int) {
+    MOVIES(ItemKind.MOVIE, CoreR.string.movies_label),
+    SHOWS(ItemKind.SERIES, CoreR.string.shows_label),
+    EPISODES(ItemKind.EPISODE, CoreR.string.episodes_label),
+    COLLECTIONS(ItemKind.BOX_SET, CoreR.string.collections_label);
 
     fun matches(item: FindroidItem): Boolean =
         when (this) {
@@ -332,7 +332,7 @@ private fun Key.isOk() = this == Key.DirectionCenter || this == Key.Enter || thi
 
 internal const val SEARCH_FIELD_TAG = "ce_search_field"
 
-internal fun searchRowTag(kind: BaseItemKind) = "ce_search_row_${kind.serialName}"
+internal fun searchRowTag(kind: ItemKind) = "ce_search_row_${kind.serialName}"
 
 internal fun searchCardTag(id: UUID) = "ce_search_card_$id"
 

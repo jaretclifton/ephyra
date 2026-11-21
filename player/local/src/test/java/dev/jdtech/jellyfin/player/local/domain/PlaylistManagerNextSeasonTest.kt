@@ -5,13 +5,13 @@ import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidSeason
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlinx.coroutines.runBlocking
-import org.jellyfin.sdk.model.api.BaseItemKind
 import org.junit.jupiter.api.Test
 
 /** Unit tests for how [PlaylistManager] continues into the next season. */
@@ -125,7 +125,7 @@ class PlaylistManagerNextSeasonTest {
         show: Map<FindroidSeason, List<FindroidEpisode>>,
     ): PlaylistManager {
         val manager = PlaylistManager(fakeRepository(show))
-        runBlocking { manager.getInitialItem(start.id, BaseItemKind.EPISODE) }
+        runBlocking { manager.getInitialItem(start.id, ItemKind.EPISODE) }
         return manager
     }
 

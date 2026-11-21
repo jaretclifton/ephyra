@@ -9,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.jdtech.jellyfin.models.FindroidSegment
 import dev.jdtech.jellyfin.models.FindroidSegmentType
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.player.cast.CastPlayerController
 import dev.jdtech.jellyfin.player.cast.CastSessionManager
 import dev.jdtech.jellyfin.player.cast.models.CastAvailability
@@ -38,13 +39,12 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.jellyfin.sdk.model.api.BaseItemKind
 import timber.log.Timber
 
 /** What the receiver plays, or played last, as the Cast surfaces show it. */
 data class CastNowPlaying(
     val itemId: UUID,
-    val kind: BaseItemKind,
+    val kind: ItemKind,
     /** The film's or the episode's own name. */
     val title: String,
     val seriesName: String? = null,
@@ -122,7 +122,7 @@ constructor(
 
     private class PlayRequest(
         val itemId: UUID,
-        val kind: BaseItemKind,
+        val kind: ItemKind,
         val mediaSourceId: String?,
         val shuffle: Boolean = false,
     )
@@ -325,7 +325,7 @@ constructor(
             }
         return CastNowPlaying(
             itemId = itemId,
-            kind = if (seriesName != null) BaseItemKind.EPISODE else BaseItemKind.MOVIE,
+            kind = if (seriesName != null) ItemKind.EPISODE else ItemKind.MOVIE,
             title = name,
             seriesName = seriesName,
             episodeCode = code,
@@ -337,11 +337,10 @@ constructor(
 
     /** The chapters with the URL of their thumbnail, where the server made one. */
     private fun List<PlayerChapter>.withImages(itemId: UUID): List<PlayerChapter> {
-        val base = repository.getBaseUrl().trimEnd('/')
-        if (base.isEmpty()) return this
         return mapIndexed { index, chapter ->
             val tag = chapter.imageTag ?: return@mapIndexed chapter
-            chapter.copy(imageUri = "$base/Items/$itemId/Images/Chapter/$index?tag=$tag")
+            val url = repository.chapterImageUrl(itemId, index, tag) ?: return@mapIndexed chapter
+            chapter.copy(imageUri = url)
         }
     }
 
@@ -416,7 +415,7 @@ constructor(
      */
     fun playItem(
         itemId: UUID,
-        kind: BaseItemKind,
+        kind: ItemKind,
         startFromBeginning: Boolean,
         mediaSourceId: String?,
         shuffle: Boolean = false,
@@ -425,7 +424,7 @@ constructor(
 
     private fun play(
         itemId: UUID,
-        kind: BaseItemKind,
+        kind: ItemKind,
         startFromBeginning: Boolean,
         mediaSourceId: String?,
         known: CastNowPlaying?,

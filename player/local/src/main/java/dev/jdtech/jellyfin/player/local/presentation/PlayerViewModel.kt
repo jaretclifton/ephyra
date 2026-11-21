@@ -42,6 +42,7 @@ import dev.jdtech.jellyfin.domain.ports.MediaHttpClient
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidSegment
 import dev.jdtech.jellyfin.models.FindroidSegmentType
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.MediaSegmentAction
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerChapter
@@ -130,7 +131,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import org.jellyfin.sdk.model.api.BaseItemKind
 import timber.log.Timber
 
 /** How long the OS gets to follow the surface frame rate hint before the second log line. */
@@ -427,7 +427,7 @@ constructor(
         val server =
             if (autoPlayNextFollowsServer(pref)) {
                 try {
-                    repository.getUserConfiguration()?.enableNextEpisodeAutoPlay
+                    repository.autoPlayNextEpisode()
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
@@ -886,7 +886,7 @@ constructor(
                 try {
                     playlistManager.getInitialItem(
                         itemId = itemId,
-                        itemKind = BaseItemKind.fromName(itemKind),
+                        itemKind = ItemKind.fromName(itemKind),
                         mediaSourceId = mediaSourceId,
                         startFromBeginning = startFromBeginning,
                         shuffle = shuffle,
@@ -1016,7 +1016,7 @@ constructor(
             if (!jumpToQueued(itemId)) {
                 initializePlayer(
                     itemId = itemId,
-                    itemKind = BaseItemKind.EPISODE.serialName,
+                    itemKind = ItemKind.EPISODE.serialName,
                     startFromBeginning = true,
                 )
             }
@@ -2698,9 +2698,7 @@ constructor(
         val itemId = state.currentItemId ?: return null
         val chapter = state.currentChapters.getOrNull(chapterIndex) ?: return null
         val tag = chapter.imageTag ?: return null
-        val base = repository.getBaseUrl().trimEnd('/')
-        if (base.isEmpty()) return null
-        return "$base/Items/$itemId/Images/Chapter/$chapterIndex?tag=$tag"
+        return repository.chapterImageUrl(itemId, chapterIndex, tag)
     }
 
     /**

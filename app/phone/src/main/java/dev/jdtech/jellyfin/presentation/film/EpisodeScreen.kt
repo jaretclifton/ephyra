@@ -54,6 +54,7 @@ import dev.jdtech.jellyfin.film.presentation.episode.EpisodeAction
 import dev.jdtech.jellyfin.film.presentation.episode.EpisodeState
 import dev.jdtech.jellyfin.film.presentation.episode.EpisodeViewModel
 import dev.jdtech.jellyfin.models.FindroidEpisode
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.presentation.cast.LocalCastPlayback
 import dev.jdtech.jellyfin.presentation.film.components.ActorsRow
 import dev.jdtech.jellyfin.presentation.film.components.ArtworkPlacement
@@ -81,7 +82,6 @@ import dev.jdtech.jellyfin.utils.ObserveAsEvents
 import dev.jdtech.jellyfin.utils.copyOnLongClick
 import dev.jdtech.jellyfin.utils.format
 import java.util.UUID
-import org.jellyfin.sdk.model.api.BaseItemKind
 
 @Composable
 fun EpisodeScreen(
@@ -161,7 +161,7 @@ fun EpisodeScreen(
                     if (
                         !castPlayback.play(
                             episodeId,
-                            BaseItemKind.EPISODE,
+                            ItemKind.EPISODE,
                             action.startFromBeginning,
                             action.mediaSourceId,
                             shuffle = false,
@@ -169,7 +169,7 @@ fun EpisodeScreen(
                     ) {
                         val intent = Intent(context, PlayerActivity::class.java)
                         intent.putExtra("itemId", episodeId.toString())
-                        intent.putExtra("itemKind", BaseItemKind.EPISODE.serialName)
+                        intent.putExtra("itemKind", ItemKind.EPISODE.serialName)
                         intent.putExtra("startFromBeginning", action.startFromBeginning)
                         intent.putExtra("mediaSourceId", action.mediaSourceId)
                         context.startActivity(intent)

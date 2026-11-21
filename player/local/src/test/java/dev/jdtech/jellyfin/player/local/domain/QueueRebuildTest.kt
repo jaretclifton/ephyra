@@ -4,6 +4,7 @@ import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import java.lang.reflect.Proxy
@@ -17,7 +18,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
-import org.jellyfin.sdk.model.api.BaseItemKind
 import org.junit.jupiter.api.Test
 
 /**
@@ -111,7 +111,7 @@ class QueueRebuildTest {
 
     /** The player opened at [id], before its neighbours are queued. */
     private suspend fun open(id: UUID): FakePlaylist {
-        val first = manager.getInitialItem(id, BaseItemKind.EPISODE)!!
+        val first = manager.getInitialItem(id, ItemKind.EPISODE)!!
         manager.setCurrentMediaItemIndex(id)
         return FakePlaylist(first)
     }

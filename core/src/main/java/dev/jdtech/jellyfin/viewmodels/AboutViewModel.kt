@@ -99,7 +99,7 @@ constructor(
             }
             val version =
                 try {
-                    repository.get().getPublicSystemInfo().version
+                    repository.get().getServerInfo().version
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
