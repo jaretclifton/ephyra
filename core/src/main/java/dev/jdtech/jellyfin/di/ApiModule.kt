@@ -8,6 +8,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.domain.ports.MediaHttpClient
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinServerSession
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -61,4 +62,10 @@ object ApiModule {
     @Provides
     fun provideServerSession(jellyfinApi: JellyfinApi): ServerSession =
         JellyfinServerSession(jellyfinApi)
+
+    /** The API's own client, so the player shares its connection pool (#296, #750). */
+    @Provides
+    fun provideMediaHttpClient(jellyfinApi: JellyfinApi): MediaHttpClient = MediaHttpClient {
+        jellyfinApi.httpClient
+    }
 }

@@ -24,8 +24,8 @@ private const val HTTP_READ_TIMEOUT_MS = 60_000L
 /**
  * Gives a transcode longer than Media3's default 8 s to return its first bytes.
  *
- * CE (#296): media goes over [apiClient] (the Jellyfin API's OkHttp client, see
- * `JellyfinApi.httpClient`) with its own timeouts. `newBuilder()` keeps the connection pool, so the
+ * CE (#296): media goes over [apiClient] (the Jellyfin API's OkHttp client, from the
+ * `MediaHttpClient` port) with its own timeouts. `newBuilder()` keeps the connection pool, so the
  * first media request reuses the connection the PlaybackInfo call just used instead of opening one.
  *
  * CE (#613): an image subtitle loaded as a file of its own is read by [ImageSubtitleParserFactory].

@@ -9,7 +9,6 @@ data/src/main/java/dev/jdtech/jellyfin/repository/JellyfinRepositoryImpl.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/ServerAwayReload.kt
 player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/CastPlayerControllerImpl.kt
 player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/CastSessionManagerImpl.kt
-player/local/src/main/java/dev/jdtech/jellyfin/player/local/presentation/PlayerViewModel.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/data/SetupRepositoryImpl.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/data/di/SetupDataModule.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/addresses/ServerAddressesViewModel.kt
