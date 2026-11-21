@@ -20,6 +20,28 @@ class SdkBoundaryTest {
         val parsed = konsistScope.files.size
         assertTrue(parsed >= MIN_PRODUCTION_FILES, "Konsist parsed only $parsed files")
         assertTrue(ProjectTree.moduleBuildFiles.size >= 10, "Module build files not found")
+        assertTrue("." in ProjectTree.moduleBuildFiles, "The root build file not found")
+        assertTrue(
+            sdkDependencyMarkers.size >= 2,
+            "No SDK library found in ${ProjectTree.versionCatalog}",
+        )
+    }
+
+    /**
+     * R1, R2 and R4 read Kotlin files only. There is no production Java file outside the adapter;
+     * this keeps it that way rather than letting one pass the rules unread.
+     */
+    @Test
+    fun `no production Java file outside the adapter`() {
+        val java = ProjectTree.productionJavaFiles.keys.filterNot(ProjectTree::inDataModule)
+        assertTrue(
+            java.isEmpty(),
+            java.joinToString("\n") {
+                "$it is a production Java file outside the Jellyfin adapter, which the " +
+                    "architecture rules do not read. Write it in Kotlin, or extend " +
+                    "SdkBoundaryTest to read Java first."
+            },
+        )
     }
 
     /** R1. A text check: a type can be used by its full name without an import (`InfoText.kt`). */
@@ -64,24 +86,31 @@ class SdkBoundaryTest {
         )
     }
 
-    /** R3. A module without the dependency cannot compile against an SDK type at all. */
+    /**
+     * R3. A module without the dependency cannot compile against an SDK type at all. A build file
+     * declares it through any catalog alias of an SDK library or the Maven group itself; the root
+     * build file (`.`) is read too, since it can add the dependency to every module.
+     */
     @Test
     fun `R3 only listed modules declare the SDK dependency`() {
         val baseline = Baseline("sdk-modules.txt")
         val violations =
             ProjectTree.moduleBuildFiles
-                .filter { (_, file) -> SDK_DEPENDENCY in file.readText() }
+                .filter { (_, file) ->
+                    val text = file.readText()
+                    sdkDependencyMarkers.any { it in text }
+                }
                 .keys
         baseline.assertExactly(
             violations,
             unlisted = {
-                "$it/build.gradle.kts declares $SDK_DEPENDENCY. Only the Jellyfin adapter may " +
+                "$it/build.gradle.kts declares the SDK ($SDK). Only the Jellyfin adapter may " +
                     "depend on the SDK (docs/architecture/3-target.md); do not add the module " +
                     "to ${baseline.path}."
             },
             stale = {
-                "$it is in the baseline but its build file no longer declares " +
-                    "$SDK_DEPENDENCY: delete its line from ${baseline.path}."
+                "$it is in the baseline but its build file no longer declares the SDK: delete " +
+                    "its line from ${baseline.path}."
             },
         )
     }
@@ -103,9 +132,16 @@ class SdkBoundaryTest {
         )
     }
 
+    /** Files that import [name] by its name or through a wildcard import of its package. */
     private fun filesImporting(name: String): Set<String> =
         konsistScope.files
-            .filter { file -> file.imports.any { it.name == name } }
+            .filter { file ->
+                file.imports.any {
+                    it.name == name ||
+                        (it.isWildcard &&
+                            it.name.removeSuffix(".*") == name.substringBeforeLast('.'))
+                }
+            }
             .map { ProjectTree.relativePath(java.io.File(it.path)) }
             .filterNot(ProjectTree::inDataModule)
             .toSet()
@@ -114,9 +150,24 @@ class SdkBoundaryTest {
         /** Built from parts, so this module never shows up in a search of the tree for it. */
         private const val SDK = "org.jellyfin" + ".sdk"
         private const val SDK_PACKAGE = "$SDK."
-        private const val SDK_DEPENDENCY = "libs.jellyfin" + ".core"
         private const val JELLYFIN_API = "dev.jdtech.jellyfin.api.JellyfinApi"
         private const val SERVER_DAO = "dev.jdtech.jellyfin.database.ServerDatabaseDao"
+
+        /**
+         * What marks an SDK dependency in a build file: the Maven group, and the accessor of every
+         * catalog library in that group (`jellyfin-core = { group = "<sdk>", … }` gives
+         * `libs.jellyfin.core`), so a new alias is caught too.
+         */
+        private val sdkDependencyMarkers: Set<String> by lazy {
+            val aliases =
+                ProjectTree.versionCatalog
+                    .readLines()
+                    .filter { "\"$SDK\"" in it || "\"$SDK:" in it }
+                    .map {
+                        "libs." + it.substringBefore('=').trim().replace('-', '.').replace('_', '.')
+                    }
+            setOf(SDK) + aliases
+        }
 
         /** About 900 today; far fewer means the tree was not found. */
         private const val MIN_PRODUCTION_FILES = 600

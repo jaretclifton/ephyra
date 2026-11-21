@@ -21,7 +21,7 @@ tasks.test {
     inputs
         .files(
             rootProject.fileTree(rootProject.projectDir) {
-                include("**/*.kt", "**/build.gradle.kts")
+                include("**/*.kt", "**/*.java", "**/build.gradle.kts", "gradle/libs.versions.toml")
                 exclude("**/build/**", "buildSrc/**", ".claude/**", ".gradle/**")
             }
         )

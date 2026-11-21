@@ -40,12 +40,28 @@ object ProjectTree {
         allFiles.filter { (path, _) -> path.endsWith(".kt") && isProduction(path) }
     }
 
-    /** The build file of every module, by module path (`core`, `app/phone`). */
+    /** The Java files of every production source set. The rules read Kotlin only. */
+    val productionJavaFiles: Map<String, File> by lazy {
+        allFiles.filter { (path, _) -> path.endsWith(".java") && isProduction(path) }
+    }
+
+    /**
+     * The build file of every module, by module path (`core`, `app/phone`), and the root build file
+     * as `.`: it can add a dependency to every subproject.
+     */
     val moduleBuildFiles: Map<String, File> by lazy {
         allFiles
-            .filter { (path, _) -> path.endsWith("/build.gradle.kts") }
-            .mapKeys { (path, _) -> path.removeSuffix("/build.gradle.kts") }
+            .filter { (path, _) ->
+                path == "build.gradle.kts" || path.endsWith("/build.gradle.kts")
+            }
+            .mapKeys { (path, _) ->
+                path.removeSuffix("build.gradle.kts").removeSuffix("/").ifEmpty { "." }
+            }
     }
+
+    /** The version catalog. */
+    val versionCatalog: File
+        get() = root.resolve("gradle/libs.versions.toml")
 
     /** Whether the file at [path] belongs to the `data` module, the Jellyfin adapter for now. */
     fun inDataModule(path: String): Boolean = path.startsWith("data/")
