@@ -172,6 +172,21 @@ class ServerAwayReloadTest {
         }
 
     @Test
+    fun `away with no favourites downloaded is an empty list, not an error`() =
+        runTest(dispatcher) {
+            // The repository answers the empty Room list while the server is away.
+            val viewModel = FavoritesViewModel(repository())
+            viewModel.onServerAwayChanged(true)
+            viewModel.loadItems().join()
+
+            val state = viewModel.state.value
+            assertTrue(state.sections.isEmpty())
+            assertTrue(state.downloadsOnly)
+            assertEquals(null, state.error)
+            assertFalse(state.isLoading)
+        }
+
+    @Test
     fun `a failed reload while away keeps the list from the server for what it is`() =
         runTest(dispatcher) {
             val viewModel = FavoritesViewModel(repository())

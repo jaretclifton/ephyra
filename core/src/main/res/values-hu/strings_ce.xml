@@ -143,6 +143,8 @@
     <string name="ce_server_unreachable_downloads">A letöltéseid továbbra is lejátszhatók.</string>
     <string name="ce_server_banner_show">A szerver nem érhető el. Részletek megjelenítése</string>
     <string name="ce_downloads_only">Csak a letöltések látszanak</string>
+    <string name="ce_favorites_none_downloaded">Nincs letöltött kedvenc</string>
+    <string name="ce_favorites_none_downloaded_body">A többi kedvenced a szerverrel együtt tér vissza.</string>
     <string name="ce_download_choice_title">Mely epizódokat töltsük le?</string>
     <string name="ce_download_choice_message">Ezek közül néhány epizódot már megnéztél.</string>
     <string name="ce_download_choice_unwatched">Csak a nem látottak (%1$d)</string>

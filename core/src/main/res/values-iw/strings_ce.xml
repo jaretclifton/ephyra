@@ -143,6 +143,8 @@
     <string name="ce_server_unreachable_downloads">עדיין אפשר לנגן את ההורדות שלך.</string>
     <string name="ce_server_banner_show">אין גישה לשרת. הצגת פרטים</string>
     <string name="ce_downloads_only">מוצגות רק ההורדות</string>
+    <string name="ce_favorites_none_downloaded">אין מועדפים שהורדו</string>
+    <string name="ce_favorites_none_downloaded_body">שאר המועדפים שלך יחזרו עם השרת.</string>
     <string name="ce_download_choice_title">אילו פרקים להוריד?</string>
     <string name="ce_download_choice_message">כבר צפית בחלק מהפרקים האלה.</string>
     <string name="ce_download_choice_unwatched">רק כאלה שלא נצפו (%1$d)</string>

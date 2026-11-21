@@ -138,6 +138,8 @@
     <string name="ce_server_unreachable_downloads">İndirdikleriniz hâlâ oynatılabilir.</string>
     <string name="ce_server_banner_show">Sunucuya ulaşılamıyor. Ayrıntıları göster</string>
     <string name="ce_downloads_only">Yalnızca indirilenler gösteriliyor</string>
+    <string name="ce_favorites_none_downloaded">İndirilmiş favori yok</string>
+    <string name="ce_favorites_none_downloaded_body">Diğer favorileriniz sunucuyla birlikte geri gelir.</string>
     <string name="ce_download_choice_title">Hangi bölümler indirilsin?</string>
     <string name="ce_download_choice_message">Bu bölümlerin bazılarını zaten izledin.</string>
     <string name="ce_download_choice_unwatched">Yalnızca izlenmeyenler (%1$d)</string>

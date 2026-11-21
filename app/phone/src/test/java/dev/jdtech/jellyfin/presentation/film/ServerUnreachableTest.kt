@@ -285,7 +285,52 @@ class ServerUnreachableTest {
             emptyTitle = "No favorites",
             showNavigationIcon = false,
             serverBanner = true,
+            downloadsOnlyEmptyTitle = noneDownloadedText,
+            downloadsOnlyEmptyBody = string(CoreR.string.ce_favorites_none_downloaded_body),
         )
+    }
+
+    private val noneDownloadedText
+        get() = string(CoreR.string.ce_favorites_none_downloaded)
+
+    // Favorites with none of them downloaded (#775)
+
+    @Test
+    fun favoritesWithNoneDownloadedSaySoUnderTheBanner() {
+        // The server is away and Room has no favourites: an answer, not a failed load.
+        status = dismissible()
+        setFavorites(CollectionState(isLoading = false, downloadsOnly = true))
+
+        rule.onNodeWithText(noneDownloadedText).assertIsDisplayed()
+        rule
+            .onNodeWithText(string(CoreR.string.ce_favorites_none_downloaded_body))
+            .assertIsDisplayed()
+        rule.onNodeWithText(unreachableText).assertIsDisplayed()
+        assertAbsent("No favorites")
+        assertAbsent(string(CoreR.string.error_loading_data))
+        // The page says it, so the line under the title does not too.
+        assertAbsent(downloadsOnlyText)
+    }
+
+    @Test
+    fun favoritesWithNoneDownloadedLetTheBannerBePutAway() {
+        status = dismissible()
+        setFavorites(CollectionState(isLoading = false, downloadsOnly = true))
+
+        rule.onNodeWithContentDescription(closeText).performClick()
+        settle()
+
+        assertAbsent(unreachableText)
+        rule.onNodeWithText(noneDownloadedText).assertIsDisplayed()
+        rule.onNodeWithContentDescription(indicatorText).assertIsDisplayed()
+    }
+
+    @Test
+    fun favoritesBackOnlineWithNoneShowTheUsualEmptyPage() {
+        setFavorites(CollectionState(isLoading = false, downloadsOnly = false))
+
+        rule.onNodeWithText("No favorites").assertIsDisplayed()
+        assertAbsent(noneDownloadedText)
     }
 
     @Test
@@ -572,7 +617,7 @@ class ServerUnreachableTest {
     @Test
     fun favoritesLoadedWhileAwaySayTheyAreTheDownloadsOnly() {
         status = dismissible()
-        setFavorites(CollectionState(isLoading = false, downloadsOnly = true))
+        setFavorites(favorites(downloadsOnly = true))
         rule.onNodeWithText(downloadsOnlyText).assertIsDisplayed()
 
         // Also with the banner put away, next to the icon that brings it back.

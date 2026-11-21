@@ -153,6 +153,8 @@
     <string name="ce_server_unreachable_downloads">Pobrane materiały nadal można odtwarzać.</string>
     <string name="ce_server_banner_show">Brak połączenia z serwerem. Pokaż szczegóły</string>
     <string name="ce_downloads_only">Wyświetlane są tylko pobrane materiały</string>
+    <string name="ce_favorites_none_downloaded">Brak pobranych ulubionych</string>
+    <string name="ce_favorites_none_downloaded_body">Pozostałe ulubione wrócą razem z serwerem.</string>
     <string name="ce_download_choice_title">Które odcinki pobrać?</string>
     <string name="ce_download_choice_message">Niektóre z tych odcinków już obejrzałeś.</string>
     <string name="ce_download_choice_unwatched">Tylko nieobejrzane (%1$d)</string>

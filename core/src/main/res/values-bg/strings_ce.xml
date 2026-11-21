@@ -143,6 +143,8 @@
     <string name="ce_server_unreachable_downloads">Изтеглянията ви все още могат да се възпроизвеждат.</string>
     <string name="ce_server_banner_show">Сървърът е недостъпен. Покажи подробности</string>
     <string name="ce_downloads_only">Показват се само изтеглянията</string>
+    <string name="ce_favorites_none_downloaded">Няма изтеглени любими</string>
+    <string name="ce_favorites_none_downloaded_body">Другите ви любими се връщат заедно със сървъра.</string>
     <string name="ce_download_choice_title">Кои епизоди да се изтеглят?</string>
     <string name="ce_download_choice_message">Вече сте гледали някои от тези епизоди.</string>
     <string name="ce_download_choice_unwatched">Само негледаните (%1$d)</string>

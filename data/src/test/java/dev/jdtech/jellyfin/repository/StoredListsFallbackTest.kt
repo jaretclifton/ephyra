@@ -21,8 +21,10 @@ import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.player.DeviceProfileBuilder
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import java.net.ServerSocket
 import java.time.LocalDateTime
 import java.util.UUID
+import kotlin.concurrent.thread
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
@@ -74,10 +76,18 @@ class StoredListsFallbackTest {
 
     private var apiUserId = userId
 
+    /** Where the API client sends its requests; none by default, so they go unanswered. */
+    private var serverUrl: String? = null
+    private val sockets = mutableListOf<ServerSocket>()
+
     private val repository: JellyfinRepository by lazy {
         // The SDK names the device after it; Robolectric has none.
         Settings.Secure.putString(context.contentResolver, Settings.Secure.ANDROID_ID, "test")
-        val api = JellyfinApi(context).apply { userId = this@StoredListsFallbackTest.apiUserId }
+        val api =
+            JellyfinApi(context).apply {
+                userId = this@StoredListsFallbackTest.apiUserId
+                serverUrl?.let { api.update(baseUrl = it, accessToken = "token") }
+            }
         JellyfinRepositoryImpl(
             context,
             api,
@@ -88,7 +98,11 @@ class StoredListsFallbackTest {
         )
     }
 
-    @After fun close() = room.close()
+    @After
+    fun close() {
+        room.close()
+        sockets.forEach { it.close() }
+    }
 
     private fun id(n: Int) = UUID.fromString("00000000-0000-0000-0000-0000000001%02d".format(n))
 
@@ -257,10 +271,55 @@ class StoredListsFallbackTest {
     }
 
     @Test
-    fun `without stored favourites the server's error surfaces`() = runBlocking {
+    fun `without stored favourites an unanswered server gives none`() = runBlocking {
+        // The screen says that none of the favourites are downloaded, not that loading failed.
         storeMovie(id(1), "Not a favourite")
         userData(id(1))
+        assertEquals(emptyList<Any>(), repository.getFavoriteItems())
+    }
+
+    @Test
+    fun `without stored favourites a server known to be away gives none`() = runBlocking {
+        knownServerState.unreachable = true
+
+        assertEquals(emptyList<Any>(), repository.getFavoriteItems())
+        assertEquals(1, knownServerState.skipped)
+    }
+
+    @Test
+    fun `without stored favourites an answered error still surfaces`() = runBlocking {
+        // The server is there and says no: that is an error to show.
+        serverUrl = answering("HTTP/1.1 500 Internal Server Error")
         assertTrue(fails { repository.getFavoriteItems() })
+    }
+
+    @Test
+    fun `without a current server there is no fallback for favourites`() = runBlocking {
+        preferences.setValue(preferences.currentServer, null)
+        assertTrue(fails { repository.getFavoriteItems() })
+    }
+
+    /** A server that answers every request with [statusLine] and an empty body. */
+    private fun answering(statusLine: String): String {
+        // The SDK logs through kotlin-logging, which needs this without SLF4J.
+        System.setProperty("kotlin-logging-to-android-native", "true")
+        val socket = ServerSocket(0)
+        sockets += socket
+        thread(isDaemon = true) {
+            while (!socket.isClosed) {
+                val client = runCatching { socket.accept() }.getOrNull() ?: break
+                client.use {
+                    val reader = it.getInputStream().bufferedReader()
+                    while (reader.readLine().orEmpty().isNotEmpty()) Unit
+                    it.getOutputStream()
+                        .write(
+                            "$statusLine\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+                                .toByteArray()
+                        )
+                }
+            }
+        }
+        return "http://127.0.0.1:${socket.localPort}"
     }
 
     @Test
@@ -452,7 +511,8 @@ class StoredListsFallbackTest {
             assertEquals(listOf(StoredLibraries.MOVIES), repository.getLibraries().map { it.id })
             assertEquals(emptyList(), page(StoredLibraries.SHOWS).items.map { it.id })
             assertEquals(0, repository.getItemCount(parentId = StoredLibraries.SHOWS))
-            assertTrue(fails { repository.getFavoriteItems() }, "no finished favourite")
+            // No finished favourite: none downloaded, which Favorites says (#775).
+            assertEquals(emptyList(), repository.getFavoriteItems().map { it.id })
             assertTrue(
                 fails { repository.getSearchItems("bluey", listOf(BaseItemKind.SERIES)) },
                 "no finished show",
