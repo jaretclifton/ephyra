@@ -156,6 +156,7 @@ fun HomeScreen(
             }
             viewModel.onAction(action)
         },
+        seasonBackdropUrl = viewModel::seasonBackdropUrl,
     )
 }
 
@@ -228,6 +229,7 @@ internal fun HomeScreenLayout(
     onAction: (HomeAction) -> Unit,
     listState: LazyListState = rememberLazyListState(),
     focusPosition: FocusPosition = rememberFocusPosition(),
+    seasonBackdropUrl: (UUID) -> String? = { null },
 ) {
     val rows = remember(state) { state.rows() }
     val hero =
@@ -254,7 +256,7 @@ internal fun HomeScreenLayout(
     val titleSpacePx =
         with(LocalDensity.current) { (ROW_TITLE_HEIGHT + MaterialTheme.spacings.small).toPx() }
     val rowAtTop = remember(titleSpacePx) { rowAtTopSpec(titleSpacePx) }
-    val images = rememberHeroImages()
+    val images = rememberHeroImages(seasonBackdropUrl)
 
     // Loads the backdrops and logos around the focused card, once focus rests for a moment, so
     // moving one card along shows the hero straight from the memory cache (#155).

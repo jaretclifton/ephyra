@@ -284,6 +284,15 @@ interface JellyfinRepository {
 
     fun getBaseUrl(): String
 
+    /** The URL of the thumbnail the server extracted for a chapter. Null when no server is set. */
+    fun chapterImageUrl(itemId: UUID, chapterIndex: Int, tag: String): String?
+
+    /**
+     * The backdrop of [seasonId], whether or not the season has one of its own; the server answers
+     * 404 when it has none. Null when no server is set.
+     */
+    fun seasonBackdropUrl(seasonId: UUID): String?
+
     suspend fun updateDeviceName(name: String)
 
     suspend fun getUserConfiguration(): UserConfiguration?
