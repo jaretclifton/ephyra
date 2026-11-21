@@ -146,7 +146,7 @@ Ids are `java.util.UUID` throughout: 160 production files import it and 46 place
 source ids are already `String`.
 
 This matters for Emby, whose item ids are not UUIDs (they are numeric strings, as far as we know;
-not checked against a server). It does not block the move to ports. See decision D1 in the ADR.
+not checked against a server). It does not block the move to ports. Decision D1 in the ADR: aliases now, the choice when the Emby work starts.
 
 ## 1.2 What `JellyfinRepository` exposes
 
@@ -220,7 +220,7 @@ Two layers, because the Room behaviour above must not be written twice:
   writes, playback (sources, stream URLs, segments, trickplay, reports), session, and connecting
   (discovery, login). Signatures in [3-target.md](3-target.md).
 - **The repository** that ViewModels call stays one class. It composes a server port with Room.
-  It keeps its name until decision D2.
+  It keeps its name until the Emby work starts (decision D2, #774).
 
 ## 1.3 Playback
 

@@ -73,7 +73,10 @@ All five were decided on 2026-11-21. Nothing in the plan waits for a decision an
   audio in sync, HDR). The three PRs go one after the other, and no other session uses the OPPO
   during a run. Accepted gaps: there is no Dolby Vision device since the Xiaomi box went
   (2026-11-15), so Dolby Vision direct play is covered by unit tests of the profile choice only,
-  and TV is tested on the emulator with software rendering.
+  and TV is tested on the emulator with software rendering, which says nothing about decoders,
+  HDR, refresh rate or audio passthrough on TV hardware. Phase 5 moves code without changing what
+  it does, so the phone run covers the shared logic; a TV device, when there is one again, runs
+  the checklist after the fact.
 
 ## Consequences
 

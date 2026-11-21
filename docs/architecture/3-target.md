@@ -59,7 +59,7 @@ file still merges. Packages are only named anew for new code
 ```kotlin
 package dev.jdtech.jellyfin.models
 
-// Aliases today, so signatures say what an id is. See decision D1 for making them opaque.
+// Aliases today, so signatures say what an id is. Making them opaque is decided when the Emby work starts (decision D1, #773).
 typealias ItemId = java.util.UUID
 typealias UserId = java.util.UUID
 typealias ServerId = String
@@ -369,7 +369,7 @@ fun interface SessionRestorer { fun restore(session: ServerSession) }
 ## 3.4 The repository (`data`)
 
 ViewModels keep calling one interface. It is today's `JellyfinRepository` without SDK types; it
-keeps its name until decision D2. Its one implementation composes a `MediaServer` with Room:
+keeps its name until the Emby work starts (decision D2, #774). Its one implementation composes a `MediaServer` with Room:
 
 ```kotlin
 class JellyfinRepositoryImpl(          // no SDK import
