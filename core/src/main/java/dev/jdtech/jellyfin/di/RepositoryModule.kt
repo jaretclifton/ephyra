@@ -9,6 +9,7 @@ import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.reachability.ServerReachability
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.domain.ports.CatalogPort
 import dev.jdtech.jellyfin.domain.ports.DeviceCodecs
 import dev.jdtech.jellyfin.domain.ports.DeviceReportSource
 import dev.jdtech.jellyfin.models.CollectionType
@@ -18,6 +19,7 @@ import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.JellyfinRepositoryImpl
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.repository.StoredLibraryNames
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinCatalog
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceReportSource
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -52,11 +54,17 @@ object RepositoryModule {
     fun providePlaybackEvents(dataChanges: DataChangeEvents): PlaybackEvents =
         PlaybackEvents(dataChanges)
 
+    /** CE (#756): the catalog reads of the Jellyfin server, without Room. */
+    @Singleton
+    @Provides
+    fun provideCatalogPort(jellyfinApi: JellyfinApi): CatalogPort = JellyfinCatalog(jellyfinApi)
+
     @Singleton
     @Provides
     fun provideJellyfinRepositoryImpl(
         application: Application,
         jellyfinApi: JellyfinApi,
+        catalog: CatalogPort,
         serverDatabase: ServerDatabaseDao,
         appPreferences: AppPreferences,
         deviceProfiles: JellyfinDeviceProfiles,
@@ -67,6 +75,7 @@ object RepositoryModule {
         return JellyfinRepositoryImpl(
             application,
             jellyfinApi,
+            catalog,
             serverDatabase,
             appPreferences,
             deviceProfiles,
