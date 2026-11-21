@@ -4,13 +4,13 @@ import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlinx.coroutines.runBlocking
-import org.jellyfin.sdk.model.api.BaseItemKind
 import org.junit.jupiter.api.Test
 
 /** The episode list for the queue is fetched after the first item, not before it. */
@@ -25,7 +25,7 @@ class PlaylistManagerQueueTest {
     fun `the first episode is returned without fetching the season`() {
         val manager = PlaylistManager(fakeRepository())
 
-        val item = runBlocking { manager.getInitialItem(first.id, BaseItemKind.EPISODE) }
+        val item = runBlocking { manager.getInitialItem(first.id, ItemKind.EPISODE) }
 
         assertNotNull(item)
         assertEquals(first.id, item!!.itemId)
@@ -36,7 +36,7 @@ class PlaylistManagerQueueTest {
     fun `loading the queue fills in the upcoming episodes once`() {
         val manager = PlaylistManager(fakeRepository())
         runBlocking {
-            manager.getInitialItem(first.id, BaseItemKind.EPISODE)
+            manager.getInitialItem(first.id, ItemKind.EPISODE)
             manager.loadQueue()
             manager.loadQueue()
         }
@@ -49,7 +49,7 @@ class PlaylistManagerQueueTest {
     fun `the next item waits for the queue`() {
         val manager = PlaylistManager(fakeRepository())
         val next = runBlocking {
-            manager.getInitialItem(first.id, BaseItemKind.EPISODE)
+            manager.getInitialItem(first.id, ItemKind.EPISODE)
             manager.getNextPlayerItem()
         }
 

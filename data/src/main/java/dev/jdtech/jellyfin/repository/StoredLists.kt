@@ -10,6 +10,7 @@ import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovieDto
 import dev.jdtech.jellyfin.models.FindroidShowDto
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
@@ -19,7 +20,6 @@ import dev.jdtech.jellyfin.models.toFindroidShow
 import java.time.LocalDateTime
 import java.util.Locale
 import java.util.UUID
-import org.jellyfin.sdk.model.api.BaseItemKind
 import org.jellyfin.sdk.model.api.ItemFilter
 
 /**
@@ -61,19 +61,19 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
     suspend fun search(
         serverId: String,
         query: String,
-        kinds: List<BaseItemKind>?,
+        kinds: List<ItemKind>?,
         limitPerKind: Int,
     ): List<Any> {
         val pattern = "%" + query.trim().replace(LIKE_SPECIAL) { "\\" + it.value } + "%"
-        val wanted = kinds ?: listOf(BaseItemKind.MOVIE, BaseItemKind.SERIES)
+        val wanted = kinds ?: listOf(ItemKind.MOVIE, ItemKind.SERIES)
         return buildList {
-            if (BaseItemKind.MOVIE in wanted) {
+            if (ItemKind.MOVIE in wanted) {
                 addAll(database.searchMoviesOfServer(serverId, pattern).take(limitPerKind))
             }
-            if (BaseItemKind.SERIES in wanted) {
+            if (ItemKind.SERIES in wanted) {
                 addAll(database.searchShowsOfServer(serverId, pattern).take(limitPerKind))
             }
-            if (BaseItemKind.EPISODE in wanted) {
+            if (ItemKind.EPISODE in wanted) {
                 addAll(database.searchEpisodesOfServer(serverId, pattern).take(limitPerKind))
             }
         }

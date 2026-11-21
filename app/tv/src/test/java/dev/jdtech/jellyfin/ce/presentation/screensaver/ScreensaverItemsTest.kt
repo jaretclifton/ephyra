@@ -5,6 +5,7 @@ import android.net.Uri
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.repository.JellyfinRepository
@@ -15,7 +16,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
-import org.jellyfin.sdk.model.api.BaseItemKind
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -37,7 +37,7 @@ class ScreensaverItemsTest {
         assertEquals(listOf(withBackdrop), items)
         val (name, args) = calls.single()
         assertEquals("getRandomItemsWithBackdrop", name)
-        assertEquals(listOf(BaseItemKind.MOVIE, BaseItemKind.SERIES), args[0])
+        assertEquals(listOf(ItemKind.MOVIE, ItemKind.SERIES), args[0])
     }
 
     @Test

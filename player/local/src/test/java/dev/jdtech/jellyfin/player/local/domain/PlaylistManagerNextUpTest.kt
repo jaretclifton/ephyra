@@ -6,6 +6,7 @@ import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.FindroidTrickplayInfo
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import java.lang.reflect.Proxy
 import java.util.UUID
@@ -13,7 +14,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlinx.coroutines.runBlocking
-import org.jellyfin.sdk.model.api.BaseItemKind
 import org.junit.jupiter.api.Test
 
 /**
@@ -38,7 +38,7 @@ class PlaylistManagerNextUpTest {
     fun `the show's next-up episode starts with its trickplay and chapters`() {
         val manager = PlaylistManager(fakeRepository { full })
 
-        val item = runBlocking { manager.getInitialItem(seriesId, BaseItemKind.SERIES) }
+        val item = runBlocking { manager.getInitialItem(seriesId, ItemKind.SERIES) }
 
         assertNotNull(item)
         assertEquals(episodeId, item!!.itemId)
@@ -52,7 +52,7 @@ class PlaylistManagerNextUpTest {
     fun `the next-up episode still plays when the full episode cannot be fetched`() {
         val manager = PlaylistManager(fakeRepository { error("server error") })
 
-        val item = runBlocking { manager.getInitialItem(seriesId, BaseItemKind.SERIES) }
+        val item = runBlocking { manager.getInitialItem(seriesId, ItemKind.SERIES) }
 
         assertNotNull(item)
         assertEquals(episodeId, item!!.itemId)

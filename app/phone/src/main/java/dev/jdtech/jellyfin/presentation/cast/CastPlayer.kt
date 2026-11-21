@@ -84,6 +84,7 @@ import dev.jdtech.jellyfin.core.presentation.ephyra.seekBarSegmentColor
 import dev.jdtech.jellyfin.core.presentation.ephyra.seekBarSegments
 import dev.jdtech.jellyfin.core.presentation.theme.EphyraColor
 import dev.jdtech.jellyfin.models.FindroidSegment
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.player.cast.models.CastPlaybackStatus
 import dev.jdtech.jellyfin.player.cast.presentation.CastNowPlaying
 import dev.jdtech.jellyfin.player.cast.presentation.CastUiState
@@ -93,7 +94,6 @@ import dev.jdtech.jellyfin.player.local.R as PlayerR
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.presentation.utils.isCompactHeight
-import org.jellyfin.sdk.model.api.BaseItemKind
 
 const val CAST_PLAYER_TAG = "cast_player"
 
@@ -331,7 +331,7 @@ private fun Artwork(
     shown: CastNowPlaying?,
     maxHeight: Dp,
 ) {
-    val ratio = if (shown?.kind == BaseItemKind.MOVIE) 2f / 3f else 16f / 9f
+    val ratio = if (shown?.kind == ItemKind.MOVIE) 2f / 3f else 16f / 9f
     BoxWithConstraints(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         // As wide as the column, unless that makes it taller than its share of the screen.
         val width = minOf(maxWidth, maxHeight * ratio)

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import java.util.UUID
 import javax.inject.Inject
@@ -14,7 +15,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import org.jellyfin.sdk.model.api.BaseItemKind
 
 @HiltViewModel
 class PersonViewModel @Inject internal constructor(private val repository: JellyfinRepository) :
@@ -34,7 +34,7 @@ class PersonViewModel @Inject internal constructor(private val repository: Jelly
                     val itemsAsync = async {
                         repository.getPersonItems(
                             personIds = listOf(personId),
-                            includeTypes = listOf(BaseItemKind.MOVIE, BaseItemKind.SERIES),
+                            includeTypes = listOf(ItemKind.MOVIE, ItemKind.SERIES),
                             recursive = true,
                             limit = PERSON_ITEMS_LIMIT,
                         )

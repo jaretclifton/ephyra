@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.models.CollectionType
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.repository.JellyfinRepository
@@ -21,7 +22,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.jellyfin.sdk.model.api.BaseItemKind
 import org.jellyfin.sdk.model.api.ItemFilter
 import timber.log.Timber
 
@@ -84,27 +84,27 @@ constructor(
     fun loadItems() {
         val itemType =
             when (libraryType) {
-                CollectionType.Movies -> listOf(BaseItemKind.MOVIE)
-                CollectionType.TvShows -> listOf(BaseItemKind.SERIES)
-                CollectionType.BoxSets -> listOf(BaseItemKind.BOX_SET)
+                CollectionType.Movies -> listOf(ItemKind.MOVIE)
+                CollectionType.TvShows -> listOf(ItemKind.SERIES)
+                CollectionType.BoxSets -> listOf(ItemKind.BOX_SET)
                 // CE (#671): every type here has to map to an item, or the indexed pager's
                 // positions shift. Photos don't, so they stay out.
-                CollectionType.MusicVideos -> listOf(BaseItemKind.MUSIC_VIDEO)
+                CollectionType.MusicVideos -> listOf(ItemKind.MUSIC_VIDEO)
                 CollectionType.HomeVideos,
                 CollectionType.Mixed,
                 CollectionType.Folders ->
                     listOf(
-                        BaseItemKind.FOLDER,
-                        BaseItemKind.PHOTO_ALBUM,
-                        BaseItemKind.MOVIE,
-                        BaseItemKind.SERIES,
-                        BaseItemKind.VIDEO,
-                        BaseItemKind.MUSIC_VIDEO,
+                        ItemKind.FOLDER,
+                        ItemKind.PHOTO_ALBUM,
+                        ItemKind.MOVIE,
+                        ItemKind.SERIES,
+                        ItemKind.VIDEO,
+                        ItemKind.MUSIC_VIDEO,
                     )
                 else -> null
             }
 
-        val recursive = itemType == null || !itemType.contains(BaseItemKind.FOLDER)
+        val recursive = itemType == null || !itemType.contains(ItemKind.FOLDER)
 
         viewModelScope.launch {
             _state.emit(_state.value.copy(isLoading = true, error = null))
@@ -183,7 +183,7 @@ constructor(
     private fun loadLetterIndex(
         key: LetterIndexKey,
         total: Int,
-        itemType: List<BaseItemKind>?,
+        itemType: List<ItemKind>?,
         recursive: Boolean,
         filters: List<ItemFilter>?,
     ) {

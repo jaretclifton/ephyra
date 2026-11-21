@@ -9,6 +9,7 @@ import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.FindroidSources
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.player.core.domain.models.ExternalSubtitle
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerChapter
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
@@ -23,7 +24,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.jellyfin.sdk.model.api.BaseItemKind
 import org.jellyfin.sdk.model.api.ItemFields
 import timber.log.Timber
 
@@ -97,7 +97,7 @@ class PlaylistManager @Inject internal constructor(private val repository: Jelly
      */
     suspend fun getInitialItem(
         itemId: UUID,
-        itemKind: BaseItemKind,
+        itemKind: ItemKind,
         mediaSourceId: String? = null,
         startFromBeginning: Boolean = false,
         shuffle: Boolean = false,
@@ -113,7 +113,7 @@ class PlaylistManager @Inject internal constructor(private val repository: Jelly
 
         val initialItem =
             when (itemKind) {
-                BaseItemKind.MOVIE -> {
+                ItemKind.MOVIE -> {
                     val (movie, sources) =
                         coroutineScope {
                             val movie = async { repository.getMovie(itemId) }
@@ -127,7 +127,7 @@ class PlaylistManager @Inject internal constructor(private val repository: Jelly
                     items = listOf(movie)
                     movie
                 }
-                BaseItemKind.SERIES -> {
+                ItemKind.SERIES -> {
                     if (shuffle) {
                         // CE (#638): the whole series in one request, without trickplay and
                         // chapters: 578 episodes take 0.4 s that way, and over 10 s one season at
@@ -190,7 +190,7 @@ class PlaylistManager @Inject internal constructor(private val repository: Jelly
                         }
                     }
                 }
-                BaseItemKind.SEASON -> {
+                ItemKind.SEASON -> {
                     val season = repository.getSeason(itemId)
                     // CE (#638): shuffle a single season too, not only a whole series.
                     val inOrder = fetchEpisodes(season.seriesId, season.id)
@@ -205,7 +205,7 @@ class PlaylistManager @Inject internal constructor(private val repository: Jelly
                     items = episodes
                     episode
                 }
-                BaseItemKind.EPISODE -> {
+                ItemKind.EPISODE -> {
                     val (episode, sources) =
                         coroutineScope {
                             val episode = async { repository.getEpisode(itemId) }

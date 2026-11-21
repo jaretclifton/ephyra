@@ -6,11 +6,11 @@ import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
-import org.jellyfin.sdk.model.api.BaseItemKind
 import org.jellyfin.sdk.model.api.ItemFilter
 
 /**
@@ -21,7 +21,7 @@ import org.jellyfin.sdk.model.api.ItemFilter
  */
 fun JellyfinRepository.getItemsPagingIndexed(
     parentId: UUID? = null,
-    includeTypes: List<BaseItemKind>? = null,
+    includeTypes: List<ItemKind>? = null,
     recursive: Boolean = false,
     sortBy: SortBy = SortBy.defaultValue,
     sortOrder: SortOrder = SortOrder.ASCENDING,
