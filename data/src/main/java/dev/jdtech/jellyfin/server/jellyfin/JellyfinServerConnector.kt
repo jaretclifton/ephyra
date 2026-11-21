@@ -16,6 +16,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import org.jellyfin.sdk.api.client.ApiClient
+import org.jellyfin.sdk.api.client.extensions.authenticationApi
+import org.jellyfin.sdk.api.client.extensions.brandingApi
+import org.jellyfin.sdk.api.client.extensions.userApi
 import org.jellyfin.sdk.discovery.RecommendedServerInfo
 import org.jellyfin.sdk.discovery.RecommendedServerInfoScore
 import org.jellyfin.sdk.discovery.RecommendedServerIssue
@@ -28,9 +32,9 @@ import org.jellyfin.sdk.model.api.ServerDiscoveryInfo
 /**
  * #761: [ServerConnector] over the Jellyfin SDK.
  *
- * The calls after [resolve] go through the app's shared client, which keeps the device id and the
- * detection of a revoked token in one place ([JellyfinApi]). The caller passes the address that
- * client already uses; should it pass another one, the client is pointed there first.
+ * The calls after [resolve] go through the app's shared client when it is at the address asked for,
+ * as they did before #761: it keeps the device id and the detection of a revoked token in one place
+ * ([JellyfinApi]). The connector never changes that client.
  */
 class JellyfinServerConnector(private val api: JellyfinApi) : ServerConnector {
     override fun discover(): Flow<DiscoveredServer> =
@@ -76,11 +80,11 @@ class JellyfinServerConnector(private val api: JellyfinApi) : ServerConnector {
     }
 
     override suspend fun loginDisclaimer(address: String): String? =
-        call(address) { api.brandingApi.getBrandingOptions().content.loginDisclaimer }
+        call(address) { it.brandingApi.getBrandingOptions().content.loginDisclaimer }
 
     override suspend fun publicUsers(address: String): List<PublicUser> =
-        call(address) {
-            api.userApi.getPublicUsers().content.mapNotNull {
+        call(address) { client ->
+            client.userApi.getPublicUsers().content.mapNotNull {
                 PublicUser(
                     id = it.id,
                     name = it.name ?: return@mapNotNull null,
@@ -94,8 +98,8 @@ class JellyfinServerConnector(private val api: JellyfinApi) : ServerConnector {
         username: String,
         password: String,
     ): AuthenticatedUser =
-        call(address) {
-            api.authenticationApi
+        call(address) { client ->
+            client.authenticationApi
                 .authenticateUserByName(
                     data = AuthenticateUserByName(username = username, pw = password)
                 )
@@ -104,19 +108,19 @@ class JellyfinServerConnector(private val api: JellyfinApi) : ServerConnector {
         }
 
     override suspend fun quickConnectEnabled(address: String): Boolean =
-        call(address) { api.authenticationApi.getQuickConnectEnabled().content }
+        call(address) { it.authenticationApi.getQuickConnectEnabled().content }
 
     override suspend fun startQuickConnect(address: String): QuickConnectState =
-        call(address) { api.authenticationApi.initiateQuickConnect().content.toQuickConnectState() }
+        call(address) { it.authenticationApi.initiateQuickConnect().content.toQuickConnectState() }
 
     override suspend fun quickConnectState(address: String, secret: String): QuickConnectState =
-        call(address) {
-            api.authenticationApi.getQuickConnectState(secret).content.toQuickConnectState()
+        call(address) { client ->
+            client.authenticationApi.getQuickConnectState(secret).content.toQuickConnectState()
         }
 
     override suspend fun loginWithQuickConnect(address: String, secret: String): AuthenticatedUser =
-        call(address) {
-            api.authenticationApi
+        call(address) { client ->
+            client.authenticationApi
                 .authenticateWithQuickConnect(data = QuickConnectDto(secret = secret))
                 .content
                 .toAuthenticatedUser()
@@ -126,20 +130,31 @@ class JellyfinServerConnector(private val api: JellyfinApi) : ServerConnector {
         api.endSession(baseUrl = baseUrl, accessToken = accessToken)
 
     /**
-     * Runs [block] on the shared client pointed at [address]. A failure the SDK can tell (a status,
-     * a timeout, TLS) is thrown as a [dev.jdtech.jellyfin.models.ServerException]; anything else as
-     * it is, so the screens tell it apart as before.
+     * Runs [block] on a client for [address]. A failure the SDK can tell (a status, a timeout, TLS)
+     * is thrown as a [dev.jdtech.jellyfin.models.ServerException]; anything else as it is, so the
+     * screens tell it apart as before.
      */
-    private suspend fun <T> call(address: String, block: suspend () -> T): T =
+    private suspend fun <T> call(address: String, block: suspend (ApiClient) -> T): T =
         withContext(Dispatchers.IO) {
-            if (api.api.baseUrl != address) api.api.update(baseUrl = address)
             try {
-                block()
+                block(clientFor(address))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 throw e.asServerException() ?: e
             }
+        }
+
+    /**
+     * The shared client when it is at [address], which is what the setup repository passes.
+     * Otherwise a client of its own, without a token: the shared client's base URL is the session's
+     * and stays as it is, and its token never goes to another server.
+     */
+    private fun clientFor(address: String): ApiClient =
+        if (api.api.baseUrl == address) {
+            api.api
+        } else {
+            api.jellyfin.createApi(baseUrl = address, httpClientOptions = api.api.httpClientOptions)
         }
 }
 

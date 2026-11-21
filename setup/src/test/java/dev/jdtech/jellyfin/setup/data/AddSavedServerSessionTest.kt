@@ -92,11 +92,16 @@ class AddSavedServerSessionTest {
         session.use(baseUrl = address, accessToken = user.accessToken, userId = user.id)
     }
 
-    private suspend fun add(id: String, address: String): Server {
+    /** Adds [address], which the connector finds at [resolvedAddress]. */
+    private suspend fun add(
+        id: String,
+        address: String,
+        resolvedAddress: String = address,
+    ): Server {
         found =
             ResolvedServer(
                 info = ServerInfo(id = id, name = "Server $id", version = null, product = null),
-                address = address,
+                address = resolvedAddress,
             )
         return repository.addServer(address)
     }
@@ -121,12 +126,16 @@ class AddSavedServerSessionTest {
         saveServer("a", "https://a.example/", alice)
         signInClient("https://a.example/", alice)
 
-        add("a", "http://a.local:8096")
+        // The connector completes the address typed: the client and Room get what it found.
+        add("a", "a.local", resolvedAddress = "http://a.local:8096")
 
         assertEquals("http://a.local:8096", session.baseUrl)
         assertEquals("token-a", session.accessToken)
         assertEquals(alice.id, session.userId)
-        assertEquals(2, addresses.count { it.serverId == "a" })
+        assertEquals(
+            listOf("https://a.example/", "http://a.local:8096"),
+            addresses.filter { it.serverId == "a" }.map { it.address },
+        )
     }
 
     @Test

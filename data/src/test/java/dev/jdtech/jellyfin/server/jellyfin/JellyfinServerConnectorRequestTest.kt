@@ -32,6 +32,9 @@ import org.robolectric.annotation.Config
 class JellyfinServerConnectorRequestTest {
     private val context = RuntimeEnvironment.getApplication()
     private val paths: MutableList<String> = Collections.synchronizedList(mutableListOf())
+
+    /** The Authorization header of every request but the public info. */
+    private val authorizations: MutableList<String> = Collections.synchronizedList(mutableListOf())
     private val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
     // The SDK also tries https on the same port, which would block the default single thread.
     private val executor = Executors.newCachedThreadPool()
@@ -50,6 +53,9 @@ class JellyfinServerConnectorRequestTest {
         Settings.Secure.putString(context.contentResolver, Settings.Secure.ANDROID_ID, "test")
         server.createContext("/") { exchange ->
             paths += exchange.requestURI.path
+            if (exchange.requestURI.path != "/System/Info/Public") {
+                authorizations += exchange.requestHeaders.getFirst("Authorization").orEmpty()
+            }
             if (exchange.requestURI.path == "/System/Info/Public") {
                 val body =
                     """{"Id":"abc123","ServerName":"Ephyra Test","Version":"$version",""" +
@@ -118,12 +124,23 @@ class JellyfinServerConnectorRequestTest {
     }
 
     @Test
-    fun `a call for another address points the client there first`() = runBlocking {
-        api.api.update(baseUrl = "http://10.0.2.2:8096", accessToken = "token")
+    fun `a call for the client's address sends its token`() = runBlocking {
+        api.api.update(baseUrl = address, accessToken = "token-in-use")
 
         assertFailsWith<ServerException.HttpStatus> { connector.quickConnectEnabled(address) }
 
-        assertEquals(address, api.api.baseUrl)
-        assertEquals("token", api.api.accessToken)
+        assertTrue(authorizations.single().contains("token-in-use"), "$authorizations")
+    }
+
+    @Test
+    fun `a call for another address leaves the client alone and sends no token`() = runBlocking {
+        api.api.update(baseUrl = "http://10.0.2.2:8096", accessToken = "token-in-use")
+
+        assertFailsWith<ServerException.HttpStatus> { connector.quickConnectEnabled(address) }
+
+        assertTrue(paths.any { it.startsWith("/QuickConnect") }, "$paths")
+        assertTrue(authorizations.none { it.contains("token-in-use") }, "$authorizations")
+        assertEquals("http://10.0.2.2:8096", api.api.baseUrl)
+        assertEquals("token-in-use", api.api.accessToken)
     }
 }
