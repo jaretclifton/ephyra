@@ -174,9 +174,11 @@ class JellyfinRepositoryImpl(
             )
         }
 
-    override suspend fun getUserViews(): List<BaseItemDto> =
+    override suspend fun getUserViews(): List<FindroidCollection> =
         withContext(Dispatchers.IO) {
-            jellyfinApi.userViewApi.getUserViews(currentUserId).content.items
+            jellyfinApi.userViewApi.getUserViews(currentUserId).content.items.mapNotNull {
+                it.toFindroidCollection(this@JellyfinRepositoryImpl)
+            }
         }
 
     // CE (#281): the item getters fall back to the copy in Room (a download, or the show and season

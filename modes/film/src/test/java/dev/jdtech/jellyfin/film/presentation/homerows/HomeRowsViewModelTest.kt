@@ -3,6 +3,9 @@ package dev.jdtech.jellyfin.film.presentation.homerows
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.film.domain.homerows.HomeRowsStore
 import dev.jdtech.jellyfin.film.domain.homerows.MemorySharedPreferences
+import dev.jdtech.jellyfin.models.CollectionType
+import dev.jdtech.jellyfin.models.FindroidCollection
+import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
@@ -17,9 +20,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
-import org.jellyfin.sdk.model.api.BaseItemDto
-import org.jellyfin.sdk.model.api.BaseItemKind
-import org.jellyfin.sdk.model.api.CollectionType
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -28,10 +28,11 @@ import org.junit.jupiter.api.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeRowsViewModelTest {
     private val movies =
-        BaseItemDto(
+        FindroidCollection(
             id = UUID.randomUUID(),
-            type = BaseItemKind.COLLECTION_FOLDER,
-            collectionType = CollectionType.MOVIES,
+            name = "Movies",
+            type = CollectionType.Movies,
+            images = FindroidImages(),
         )
     private val events = DataChangeEvents()
 

@@ -2,6 +2,9 @@ package dev.jdtech.jellyfin.film.presentation.home
 
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.models.CollectionType
+import dev.jdtech.jellyfin.models.FindroidCollection
+import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -20,9 +23,6 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeout
-import org.jellyfin.sdk.model.api.BaseItemDto
-import org.jellyfin.sdk.model.api.BaseItemKind
-import org.jellyfin.sdk.model.api.CollectionType
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -147,10 +147,11 @@ class HomeViewModelPartialFailureTest {
     }
 
     private fun library() =
-        BaseItemDto(
+        FindroidCollection(
             id = UUID.randomUUID(),
-            type = BaseItemKind.COLLECTION_FOLDER,
-            collectionType = CollectionType.MOVIES,
+            name = "Movies",
+            type = CollectionType.Movies,
+            images = FindroidImages(),
         )
 
     private fun repository(): JellyfinRepository =
