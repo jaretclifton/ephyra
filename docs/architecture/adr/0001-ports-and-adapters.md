@@ -1,6 +1,6 @@
 # ADR 0001: Ports and adapters, enforced by the build
 
-**Status:** Proposed (2026-11-20, in #733)
+**Status:** Accepted (2026-11-21, in #733; proposed 2026-11-20)
 
 ## Context
 
@@ -44,30 +44,41 @@ engines that are one idea. Today:
 The signatures are in [3-target.md](../3-target.md), the phases in
 [4-migration.md](../4-migration.md).
 
-## Open decisions
+## Decisions by the user
 
-These are the user's to make. D4 was the only one that blocked the start, and it is decided.
+All five were decided on 2026-11-21. Nothing in the plan waits for a decision any more.
 
-- **D1. Ids.** Keep `UUID` (an Emby adapter would have to map its ids onto UUIDs), or make ids
-  opaque (`value class ItemId(val value: String)`, 160 files). Proposed: aliases now, decide when
-  the Emby work starts and its ids have been looked at on a real server. Blocks only the last
-  task of phase 7 (#773).
-- **D2. The name `JellyfinRepository`.** `CLAUDE.md` says the internal names stay on purpose. With
-  a second server this one becomes false. Proposed: rename to `MediaRepository` in one mechanical
-  PR at the end of phase 7 (#774). Blocks nothing.
-- **D3. The device profile.** Keep it Jellyfin's, built inside the adapter from a
-  `PlaybackTarget` (proposed), or write a server-neutral profile model now. Blocks one task in
-  phase 3 (#752).
+- **D1. Ids: aliases now, the real choice when the Emby work starts.** The ports use
+  `typealias ItemId = UUID` and its siblings. Whether ids become opaque
+  (`value class ItemId(val value: String)`, 160 files and the Room columns) is decided once an
+  Emby server has been looked at: its item ids are believed to be numeric strings, which nobody
+  has checked. Opaque ids now would cost 160 files for no user; keeping `UUID` for good would
+  mean a mapping table in an Emby adapter. #773 stays open until then.
+- **D2. `JellyfinRepository` becomes `MediaRepository`, last, and only when the Emby work really
+  starts.** With a second server the name says something false, which is what sets it apart from
+  the internal names `CLAUDE.md` keeps. Renaming earlier would collide with phase 3, which
+  rewrites the same files, and after the rename every upstream change to a file that names the
+  repository needs a hand. Until Emby the old name costs nothing. One mechanical PR (#774).
+- **D3. The device profile is the adapter's.** It stays Jellyfin's structure, built inside
+  `server/jellyfin` from a `PlaybackTarget` and `DeviceCodecs`, which are server-neutral. No
+  neutral profile model: with one server in sight it would be Jellyfin's model under other names,
+  and `DeviceProfileBuilder` (794 lines, with tests) would be rewritten instead of moved. If
+  Emby's profile turns out to be close, the assembly can be shared then, with two examples.
 - **D4. Konsist `1.0.0-beta.1`.** It is the release built on the Kotlin version this project
-  uses, and it is a beta. Test-only. **Accepted (2026-11-21).** The first task (#735) can start.
-- **D5. Device tests for phase 5.** Every playback PR needs `docs/mpv-checklist.md` on both
-  backends, and mpv does not run on an emulator with a host GPU. Who runs it, on which phone?
-  Blocks phase 5 (#764 to #766).
+  uses, and it is a beta. Test-only. Accepted.
+- **D5. Phase 5 is tested by the agent on the OPPO, with a short check by the user.** For each of
+  #764, #765 and #766 the agent runs `docs/mpv-checklist.md` on both backends on the OPPO over
+  adb (everything that can be measured: start, resume, seek, tracks, queue, progress reports,
+  the refresh-rate vote), and the user then looks and listens for a few minutes (smooth picture,
+  audio in sync, HDR). The three PRs go one after the other, and no other session uses the OPPO
+  during a run. Accepted gaps: there is no Dolby Vision device since the Xiaomi box went
+  (2026-11-15), so Dolby Vision direct play is covered by unit tests of the profile choice only,
+  and TV is tested on the emulator with software rendering.
 
 ## Consequences
 
 - Adding Emby becomes a new module that implements five ports and passes the contract suites. It
-  also needs the server type on the `servers` table, a decision on ids (D1), and server-scoped
+  also needs the server type on the `servers` table, the choice on ids (D1), and server-scoped
   storage of downloads (#718: the tables are keyed by item id alone), since two servers of
   different types can easily use the same ids.
 - An agent that works in `server/jellyfin` needs `domain` and nothing else. An agent that works

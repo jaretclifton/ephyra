@@ -129,7 +129,7 @@ Goal: adding Emby is adding a module.
 - #771 The `testing` module with `FakeMediaServer` and the contract suites; the Jellyfin adapter
   passes them.
 - #772 `CLAUDE.md`, the upstream-sync skill and this folder brought up to date.
-- Decision-gated: #773 opaque ids (D1), #774 renaming the repository (D2).
+- Only when the Emby work starts: #773 opaque ids (D1), #774 renaming the repository (D2).
 
 ## 4.3 Order
 
