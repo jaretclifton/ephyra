@@ -1145,6 +1145,11 @@ class JellyfinRepositoryImpl(
 
     override fun getBaseUrl() = jellyfinApi.api.baseUrl.orEmpty()
 
+    override fun chapterImageUrl(itemId: UUID, chapterIndex: Int, tag: String) =
+        chapterImageUrl(getBaseUrl(), itemId, chapterIndex, tag)
+
+    override fun seasonBackdropUrl(seasonId: UUID) = seasonBackdropUrl(getBaseUrl(), seasonId)
+
     override suspend fun updateDeviceName(name: String) {
         withContext(Dispatchers.IO) {
             jellyfinApi.jellyfin.deviceInfo?.id?.let { id ->

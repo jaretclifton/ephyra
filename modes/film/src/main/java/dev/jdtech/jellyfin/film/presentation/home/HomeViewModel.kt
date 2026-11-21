@@ -424,6 +424,9 @@ constructor(
         }
     }
 
+    /** The backdrop of a season, for the hero of an episode. Null when no server is set. */
+    fun seasonBackdropUrl(seasonId: UUID): String? = repository.seasonBackdropUrl(seasonId)
+
     fun onAction(action: HomeAction) {
         when (action) {
             is HomeAction.OnRetryClick -> {

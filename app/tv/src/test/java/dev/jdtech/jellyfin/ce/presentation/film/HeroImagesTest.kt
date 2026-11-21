@@ -137,10 +137,44 @@ class HeroImagesTest {
                 "$server/items/${dummyEpisode.seasonId}/Images/Backdrop/0?fillWidth=1920&quality=90",
                 "$server/items/${dummyEpisode.id}/Images/Primary?tag=p&fillWidth=1920&quality=90",
             ),
-            heroBackdropUrls(episode, 1344),
+            heroBackdropUrls(
+                episode,
+                1344,
+                seasonBackdropUrl = { "$server/items/$it/Images/Backdrop/0" },
+            ),
         )
         // The screensaver only takes a backdrop the server said is there.
         assertNull(heroBackdropUrl(episode, 1344))
+    }
+
+    @Test
+    fun `an episode with a local picture has no season backdrop`() {
+        val local = "file:///data/user/0/nl.midasvo.findroid.ce/files/${dummyEpisode.id}.jpg"
+        val episode = dummyEpisode.copy(images = FindroidImages(primary = Uri.parse(local)))
+        assertEquals(
+            listOf(local),
+            heroBackdropUrls(episode, 1344, seasonBackdropUrl = { "https://demo.example/$it" }),
+        )
+    }
+
+    @Test
+    fun `an episode has no season backdrop without a server`() {
+        val episode =
+            dummyEpisode.copy(
+                images =
+                    FindroidImages(
+                        primary =
+                            Uri.parse(
+                                "https://demo.example/items/${dummyEpisode.id}/Images/Primary?tag=p"
+                            )
+                    )
+            )
+        assertEquals(
+            listOf(
+                "https://demo.example/items/${dummyEpisode.id}/Images/Primary?tag=p&fillWidth=1920&quality=90"
+            ),
+            heroBackdropUrls(episode, 1344, seasonBackdropUrl = { null }),
+        )
     }
 
     @Test

@@ -2691,9 +2691,7 @@ constructor(
         val itemId = state.currentItemId ?: return null
         val chapter = state.currentChapters.getOrNull(chapterIndex) ?: return null
         val tag = chapter.imageTag ?: return null
-        val base = repository.getBaseUrl().trimEnd('/')
-        if (base.isEmpty()) return null
-        return "$base/Items/$itemId/Images/Chapter/$chapterIndex?tag=$tag"
+        return repository.chapterImageUrl(itemId, chapterIndex, tag)
     }
 
     /**
