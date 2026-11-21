@@ -7,11 +7,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.core.R
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.ServerException
-import dev.jdtech.jellyfin.server.jellyfin.asServerException
+import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -20,10 +18,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jellyfin.sdk.api.sockets.subscribe
-import org.jellyfin.sdk.model.api.PlaystateMessage
 import timber.log.Timber
 
 /**
@@ -44,7 +41,7 @@ class ServerSessionKeeper
 @Inject
 constructor(
     @ApplicationContext private val context: Context,
-    private val jellyfinApi: JellyfinApi,
+    private val serverSession: ServerSession,
     private val appPreferences: AppPreferences,
     private val database: ServerDatabaseDao,
 ) {
@@ -66,63 +63,59 @@ constructor(
         val lifecycle = ProcessLifecycleOwner.get().lifecycle
         scope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                // Any subscription keeps the socket open; the SDK closes it a few seconds after the
-                // last one ends, and reconnects with the new token or address on a switch. Play
-                // state messages need no start message, so nothing is streamed to us.
-                jellyfinApi.api.webSocket
-                    .subscribe<PlaystateMessage>()
+                serverSession
+                    .keepAlive()
                     .catch { e -> Timber.w(e, "Session socket failed") }
-                    .collect { message -> Timber.d("Ignoring play state command %s", message) }
+                    .collect()
             }
         }
     }
 
     private fun signOutRevokedTokens() {
-        scope.launch {
-            jellyfinApi.unauthorized.collect { token ->
-                try {
-                    if (jellyfinApi.api.accessToken != token) return@collect
-                    if (SystemClock.elapsedRealtime() - lastConfirmedAt < RECHECK_AFTER_MS) {
-                        return@collect
-                    }
-                    if (isRevoked()) {
-                        signOut(token)
-                    } else {
-                        lastConfirmedAt = SystemClock.elapsedRealtime()
-                    }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to check the session")
-                }
+        scope.launch { serverSession.unauthorized.collect { token -> onUnauthorized(token) } }
+    }
+
+    /** #763: one token the server answered 401 to. Apart from [start] for the tests. */
+    internal suspend fun onUnauthorized(token: String) {
+        try {
+            if (serverSession.accessToken != token) return
+            if (SystemClock.elapsedRealtime() - lastConfirmedAt < RECHECK_AFTER_MS) {
+                return
             }
+            if (isRevoked()) {
+                signOut(token)
+            } else {
+                lastConfirmedAt = SystemClock.elapsedRealtime()
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to check the session")
         }
     }
 
     /** Whether the server refuses the current token outright, rather than for one request. */
     private suspend fun isRevoked(): Boolean =
         try {
-            jellyfinApi.userApi.getCurrentUser()
-            false
+            !serverSession.isTokenValid()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             // Only a 401 says the token is gone. Offline or a server error: nothing does.
-            (e.asServerException() as? ServerException.HttpStatus)?.status == 401
+            false
         }
 
     private suspend fun signOut(token: String) {
         val serverId = appPreferences.getValue(appPreferences.currentServer) ?: return
         val user = database.getServerCurrentUser(serverId) ?: return
         // Switched to another user meanwhile.
-        if (user.accessToken != token || jellyfinApi.api.accessToken != token) return
+        if (user.accessToken != token || serverSession.accessToken != token) return
         val server = database.getServer(serverId)
 
         Timber.i("The server revoked the token of ${user.name}, signing out")
         database.clearServerCurrentUser(serverId)
         database.deleteUser(user.id)
-        jellyfinApi.api.update(accessToken = null)
-        jellyfinApi.userId = null
+        serverSession.use(baseUrl = serverSession.baseUrl, accessToken = null, userId = null)
 
         withContext(Dispatchers.Main) {
             Toast.makeText(

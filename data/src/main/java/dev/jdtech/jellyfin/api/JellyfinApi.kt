@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.api
 
 import android.content.Context
 import dev.jdtech.jellyfin.data.BuildConfig
+import dev.jdtech.jellyfin.domain.ports.RequestWatcher
 import dev.jdtech.jellyfin.settings.domain.Constants
 import java.io.IOException
 import java.util.UUID
