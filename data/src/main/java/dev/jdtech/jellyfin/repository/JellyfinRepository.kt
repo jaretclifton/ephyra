@@ -13,17 +13,16 @@ import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
+import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.BaseItemKind
-import org.jellyfin.sdk.model.api.PublicSystemInfo
-import org.jellyfin.sdk.model.api.UserConfiguration
 
 interface JellyfinRepository {
-    suspend fun getPublicSystemInfo(): PublicSystemInfo
+    suspend fun getServerInfo(): ServerInfo
 
     suspend fun getUserViews(): List<BaseItemDto>
 
@@ -286,7 +285,11 @@ interface JellyfinRepository {
 
     suspend fun updateDeviceName(name: String)
 
-    suspend fun getUserConfiguration(): UserConfiguration?
+    /**
+     * The user's server-side "play next episode automatically" setting, or null when the server has
+     * none.
+     */
+    suspend fun autoPlayNextEpisode(): Boolean?
 
     suspend fun getDownloads(): List<FindroidItem>
 

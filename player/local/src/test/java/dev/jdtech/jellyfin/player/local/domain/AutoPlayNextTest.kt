@@ -30,7 +30,7 @@ class AutoPlayNextTest {
 
     @Test
     fun `use server setting falls back to autoplay when the server value is unknown`() {
-        // Offline, or getUserConfiguration failed.
+        // Offline, or autoPlayNextEpisode failed.
         assertTrue(resolveAutoPlayNext(pref = "server", server = null))
     }
 

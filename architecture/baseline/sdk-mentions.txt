@@ -20,7 +20,6 @@ core/src/main/java/dev/jdtech/jellyfin/utils/LoadErrorText.kt
 core/src/main/java/dev/jdtech/jellyfin/work/SyncWorker.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/domain/homerows/HomeRowsStore.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/home/HomeViewModel.kt
-modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/home/ServerName.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/library/LibraryViewModel.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/person/PersonViewModel.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/search/SearchViewModel.kt

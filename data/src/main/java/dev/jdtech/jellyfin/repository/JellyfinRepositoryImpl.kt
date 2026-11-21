@@ -18,6 +18,7 @@ import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
+import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
@@ -67,10 +68,8 @@ import org.jellyfin.sdk.model.api.PlaybackOrder
 import org.jellyfin.sdk.model.api.PlaybackProgressInfo
 import org.jellyfin.sdk.model.api.PlaybackStartInfo
 import org.jellyfin.sdk.model.api.PlaybackStopInfo
-import org.jellyfin.sdk.model.api.PublicSystemInfo
 import org.jellyfin.sdk.model.api.RepeatMode
 import org.jellyfin.sdk.model.api.SortOrder as ItemSortOrder
-import org.jellyfin.sdk.model.api.UserConfiguration
 import timber.log.Timber
 
 class JellyfinRepositoryImpl(
@@ -163,8 +162,16 @@ class JellyfinRepositoryImpl(
                     "No authenticated user. userId is null — session may have expired."
                 )
 
-    override suspend fun getPublicSystemInfo(): PublicSystemInfo =
-        withContext(Dispatchers.IO) { jellyfinApi.systemApi.getPublicSystemInfo().content }
+    override suspend fun getServerInfo(): ServerInfo =
+        withContext(Dispatchers.IO) {
+            val info = jellyfinApi.systemApi.getPublicSystemInfo().content
+            ServerInfo(
+                id = info.id.orEmpty(),
+                name = info.serverName.orEmpty(),
+                version = info.version,
+                product = info.productName,
+            )
+        }
 
     override suspend fun getUserViews(): List<BaseItemDto> =
         withContext(Dispatchers.IO) {
@@ -1166,8 +1173,10 @@ class JellyfinRepositoryImpl(
         }
     }
 
-    override suspend fun getUserConfiguration(): UserConfiguration =
-        withContext(Dispatchers.IO) { jellyfinApi.userApi.getCurrentUser().content.configuration!! }
+    override suspend fun autoPlayNextEpisode(): Boolean? =
+        withContext(Dispatchers.IO) {
+            jellyfinApi.userApi.getCurrentUser().content.configuration?.enableNextEpisodeAutoPlay
+        }
 
     override suspend fun getDownloads(): List<FindroidItem> =
         withContext(Dispatchers.IO) {
