@@ -22,7 +22,7 @@ grep -l "libs.jellyfin.core" */build.gradle.kts */*/build.gradle.kts
 |---|---|---|---|---|
 | `data` | 29 | yes | (owns it) | 8 |
 | `app/phone` | 14 | yes | 3 | 4 |
-| `modes/film` | 12 | yes | 0 | 8 |
+| `modes/film` | 12 | yes | 1 | 8 |
 | `core` | 9 | yes | 7 | 6 |
 | `player/cast` | 7 (5 in `proprietary`/`debug`, 2 in `main`) | yes | 2 | 2 (`testProprietary`) |
 | `setup` | 5 | yes | 4 | 6 |
@@ -30,7 +30,7 @@ grep -l "libs.jellyfin.core" */build.gradle.kts */*/build.gradle.kts
 | `player/local` | 4 | yes | 1 | 10 |
 | `settings` | **0** | **yes (unused)** | 0 | 0 |
 | `player/core` | 0 | no | 0 | 0 |
-| **Total** | **85** (56 outside `data`) | **9** | **24** outside `data` | 45 |
+| **Total** | **85** (56 outside `data`) | **9** | **25** outside `data` | 45 |
 
 Every dependency in the build is `implementation`; nothing uses `api(...)`. So each module that
 touches an SDK type has to declare the SDK itself, which is why the line is in nine build files.
