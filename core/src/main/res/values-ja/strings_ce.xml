@@ -136,6 +136,10 @@
     <string name="ce_track_sdh">SDH</string>
     <string name="ce_track_number">トラック %1$d</string>
     <string name="ce_server_unreachable_downloads">ダウンロード済みの作品は引き続き再生できます。</string>
+    <string name="ce_server_banner_show">サーバーに接続できません。詳細を表示</string>
+    <string name="ce_downloads_only">ダウンロード済みのみ表示しています</string>
+    <string name="ce_favorites_none_downloaded">ダウンロード済みのお気に入りはありません</string>
+    <string name="ce_favorites_none_downloaded_body">ほかのお気に入りはサーバーにつながると戻ります。</string>
     <string name="ce_download_choice_title">どのエピソードをダウンロードしますか？</string>
     <string name="ce_download_choice_message">これらのエピソードの一部はすでに視聴済みです。</string>
     <string name="ce_download_choice_unwatched">未視聴のみ (%1$d)</string>

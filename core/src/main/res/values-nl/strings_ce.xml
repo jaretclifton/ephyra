@@ -141,6 +141,10 @@
     <string name="ce_track_sdh">SDH</string>
     <string name="ce_track_number">Spoor %1$d</string>
     <string name="ce_server_unreachable_downloads">Je downloads kun je nog afspelen.</string>
+    <string name="ce_server_banner_show">Server niet bereikbaar. Details tonen</string>
+    <string name="ce_downloads_only">Alleen je downloads worden getoond</string>
+    <string name="ce_favorites_none_downloaded">Geen gedownloade favorieten</string>
+    <string name="ce_favorites_none_downloaded_body">Je andere favorieten komen terug met de server.</string>
     <string name="ce_download_choice_title">Welke afleveringen downloaden?</string>
     <string name="ce_download_choice_message">Je hebt een deel van deze afleveringen al gezien.</string>
     <string name="ce_download_choice_unwatched">Alleen ongezien (%1$d)</string>

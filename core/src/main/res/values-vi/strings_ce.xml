@@ -136,6 +136,10 @@
     <string name="ce_track_sdh">SDH</string>
     <string name="ce_track_number">Track %1$d</string>
     <string name="ce_server_unreachable_downloads">Bạn vẫn có thể phát các nội dung đã tải xuống.</string>
+    <string name="ce_server_banner_show">Không thể kết nối máy chủ. Hiện chi tiết</string>
+    <string name="ce_downloads_only">Chỉ hiển thị nội dung đã tải xuống</string>
+    <string name="ce_favorites_none_downloaded">Không có mục yêu thích đã tải xuống</string>
+    <string name="ce_favorites_none_downloaded_body">Các mục yêu thích khác sẽ trở lại khi có máy chủ.</string>
     <string name="ce_download_choice_title">Tải xuống những tập nào?</string>
     <string name="ce_download_choice_message">Bạn đã xem một số tập trong số này.</string>
     <string name="ce_download_choice_unwatched">Chỉ tập chưa xem (%1$d)</string>

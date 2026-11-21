@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +39,7 @@ import dev.jdtech.jellyfin.film.presentation.search.SearchViewModel
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.presentation.components.ErrorDialog
 import dev.jdtech.jellyfin.presentation.film.components.Direction
+import dev.jdtech.jellyfin.presentation.film.components.DownloadsOnlyLine
 import dev.jdtech.jellyfin.presentation.film.components.ErrorCardInitialHeight
 import dev.jdtech.jellyfin.presentation.film.components.FilmSearchBar
 import dev.jdtech.jellyfin.presentation.film.components.ItemCard
@@ -49,8 +51,12 @@ import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.presentation.utils.GridCellsAdaptiveWithMinColumns
 import dev.jdtech.jellyfin.presentation.utils.KeyboardShortcuts
 import dev.jdtech.jellyfin.presentation.utils.Layout
+import dev.jdtech.jellyfin.presentation.utils.LocalServerStatus
+import dev.jdtech.jellyfin.presentation.utils.ReloadWhenServerAwayChanges
 import dev.jdtech.jellyfin.presentation.utils.rememberSafePadding
+import dev.jdtech.jellyfin.presentation.utils.showsServerIndicator
 import dev.jdtech.jellyfin.presentation.utils.useDockedSearch
+import dev.jdtech.jellyfin.repository.StoredLibraries
 
 @Composable
 fun MediaScreen(
@@ -63,8 +69,18 @@ fun MediaScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val searchState by searchViewModel.state.collectAsStateWithLifecycle()
 
+    // CE (#775): with the server away the libraries and the search are the downloads, so both load
+    // again when it goes and when it comes back.
+    val serverAway = LocalServerStatus.current.unreachable
+    ReloadWhenServerAwayChanges { away ->
+        viewModel.onServerAwayChanged(away)
+        searchViewModel.onServerAwayChanged(away)
+    }
+
     // Reloads only when stale or dirty (#251), and keeps the list on screen while it does.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        // CE (#775): told first, so a resume after a change loads once, not twice.
+        viewModel.onServerAwayChanged(serverAway)
         if (viewModel.shouldReload()) viewModel.loadData(silent = state.libraries.isNotEmpty())
     }
 
@@ -96,7 +112,7 @@ fun MediaScreen(
 }
 
 @Composable
-private fun MediaScreenLayout(
+internal fun MediaScreenLayout(
     state: MediaState,
     searchState: SearchState,
     searchExpanded: Boolean,
@@ -114,7 +130,9 @@ private fun MediaScreenLayout(
     val density = LocalDensity.current
     var errorCardHeight by remember { mutableStateOf(ErrorCardInitialHeight) }
     // CE (#281): the same slot holds the unreachable banner, also when no load has failed.
-    val showCard = showsServerOrErrorCard(state.error)
+    // CE (#775): with no libraries on screen the banner stays: it is what says why.
+    val hasContent = state.libraries.isNotEmpty()
+    val showCard = showsServerOrErrorCard(state.error, hasContent = hasContent)
     val contentPaddingTop by
         animateDpAsState(
             targetValue =
@@ -127,6 +145,12 @@ private fun MediaScreenLayout(
         )
 
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
+    // CE (#775): what is on screen decides, not the server's state: the real libraries can stay
+    // after the server went away (nothing downloaded), and the stored ones are downloads only.
+    val downloadsOnly =
+        remember(state.libraries) {
+            state.libraries.isNotEmpty() && state.libraries.all { StoredLibraries.isStored(it.id) }
+        }
 
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     val minColumnSize =
@@ -153,6 +177,7 @@ private fun MediaScreenLayout(
             paddingStart = paddingStart,
             paddingEnd = paddingEnd,
             docked = useDockedSearch(),
+            serverIndicator = showsServerIndicator(hasContent = hasContent),
         )
         LazyVerticalGrid(
             columns = GridCellsAdaptiveWithMinColumns(minSize = minColumnSize, minColumns = 2),
@@ -167,6 +192,12 @@ private fun MediaScreenLayout(
             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacings.default),
             verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacings.default),
         ) {
+            // CE (#775): the stored libraries (Movies, Shows) hold the downloads.
+            if (downloadsOnly) {
+                item(key = "downloads_only", span = { GridItemSpan(maxLineSpan) }) {
+                    DownloadsOnlyLine(modifier = Modifier.animateItem())
+                }
+            }
             items(state.libraries, key = { it.id }) { library ->
                 ItemCard(
                     item = library,
@@ -182,6 +213,7 @@ private fun MediaScreenLayout(
                 error = state.error,
                 onShowStacktrace = { showErrorDialog = true },
                 onRetryClick = { onAction(MediaAction.OnRetryClick) },
+                hasContent = hasContent,
                 modifier =
                     Modifier.padding(
                             start = paddingStart,

@@ -7,6 +7,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getBoundsInRoot
@@ -16,8 +20,16 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performCustomAccessibilityActionWithLabel
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipe
+import androidx.compose.ui.test.swipeRight
+import androidx.paging.LoadState
+import androidx.paging.LoadStates
+import androidx.paging.PagingData
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloaderState
+import dev.jdtech.jellyfin.core.presentation.dummy.dummyCollections
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyHomeSection
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyServer
@@ -27,16 +39,24 @@ import dev.jdtech.jellyfin.film.presentation.collection.CollectionAction
 import dev.jdtech.jellyfin.film.presentation.collection.CollectionState
 import dev.jdtech.jellyfin.film.presentation.home.HomeAction
 import dev.jdtech.jellyfin.film.presentation.home.HomeState
+import dev.jdtech.jellyfin.film.presentation.library.LibraryState
+import dev.jdtech.jellyfin.film.presentation.media.MediaState
+import dev.jdtech.jellyfin.film.presentation.search.SearchState
+import dev.jdtech.jellyfin.models.CollectionSection
+import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidTrailer
+import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.presentation.film.components.ErrorState
 import dev.jdtech.jellyfin.presentation.film.components.ItemButtonsBar
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.utils.LocalServerStatus
 import dev.jdtech.jellyfin.presentation.utils.ServerStatusUi
+import dev.jdtech.jellyfin.repository.StoredLibraries
 import dev.jdtech.jellyfin.setup.R as SetupR
 import java.net.ConnectException
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlinx.coroutines.flow.flowOf
 import org.jellyfin.sdk.api.client.exception.InvalidStatusException
 import org.junit.Rule
 import org.junit.Test
@@ -265,7 +285,52 @@ class ServerUnreachableTest {
             emptyTitle = "No favorites",
             showNavigationIcon = false,
             serverBanner = true,
+            downloadsOnlyEmptyTitle = noneDownloadedText,
+            downloadsOnlyEmptyBody = string(CoreR.string.ce_favorites_none_downloaded_body),
         )
+    }
+
+    private val noneDownloadedText
+        get() = string(CoreR.string.ce_favorites_none_downloaded)
+
+    // Favorites with none of them downloaded (#775)
+
+    @Test
+    fun favoritesWithNoneDownloadedSaySoUnderTheBanner() {
+        // The server is away and Room has no favourites: an answer, not a failed load.
+        status = dismissible()
+        setFavorites(CollectionState(isLoading = false, downloadsOnly = true))
+
+        rule.onNodeWithText(noneDownloadedText).assertIsDisplayed()
+        rule
+            .onNodeWithText(string(CoreR.string.ce_favorites_none_downloaded_body))
+            .assertIsDisplayed()
+        rule.onNodeWithText(unreachableText).assertIsDisplayed()
+        assertAbsent("No favorites")
+        assertAbsent(string(CoreR.string.error_loading_data))
+        // The page says it, so the line under the title does not too.
+        assertAbsent(downloadsOnlyText)
+    }
+
+    @Test
+    fun favoritesWithNoneDownloadedLetTheBannerBePutAway() {
+        status = dismissible()
+        setFavorites(CollectionState(isLoading = false, downloadsOnly = true))
+
+        rule.onNodeWithContentDescription(closeText).performClick()
+        settle()
+
+        assertAbsent(unreachableText)
+        rule.onNodeWithText(noneDownloadedText).assertIsDisplayed()
+        rule.onNodeWithContentDescription(indicatorText).assertIsDisplayed()
+    }
+
+    @Test
+    fun favoritesBackOnlineWithNoneShowTheUsualEmptyPage() {
+        setFavorites(CollectionState(isLoading = false, downloadsOnly = false))
+
+        rule.onNodeWithText("No favorites").assertIsDisplayed()
+        assertAbsent(noneDownloadedText)
     }
 
     @Test
@@ -359,6 +424,437 @@ class ServerUnreachableTest {
         settle()
         assertEquals(1, retries)
         rule.onNodeWithText(string(CoreR.string.error_loading_data)).assertIsDisplayed()
+    }
+
+    // Dismissing the banner (#775)
+
+    private var bannerShows = 0
+
+    /** Unreachable, with dismiss and show acting on [status] as MainViewModel does. */
+    private fun dismissible(hasDownloads: Boolean = true): ServerStatusUi =
+        unreachable(hasDownloads = hasDownloads)
+            .copy(
+                dismissBanner = { status = status.copy(bannerDismissed = true) },
+                showBanner = {
+                    bannerShows++
+                    status = status.copy(bannerDismissed = false)
+                },
+            )
+
+    private val closeText
+        get() = string(CoreR.string.close)
+
+    private val indicatorText
+        get() = string(CoreR.string.ce_server_banner_show)
+
+    private val downloadsOnlyText
+        get() = string(CoreR.string.ce_downloads_only)
+
+    private fun hasAnyCustomAction() = SemanticsMatcher.keyIsDefined(SemanticsActions.CustomActions)
+
+    private fun assertNoIndicator() =
+        rule.onAllNodes(hasContentDescription(indicatorText)).assertCountEquals(0)
+
+    @Test
+    fun closingTheBannerHidesItAndTheRowsMoveUp() {
+        status = dismissible()
+        setHome(loaded)
+        val rowTopWithBanner = rule.onNodeWithText("Continue watching").getBoundsInRoot().top
+
+        rule.onNodeWithContentDescription(closeText).performClick()
+        settle()
+
+        assertAbsent(unreachableText)
+        val rowTop = rule.onNodeWithText("Continue watching").getBoundsInRoot().top
+        assertTrue(
+            rowTop < rowTopWithBanner,
+            message = "rows at $rowTop, were at $rowTopWithBanner",
+        )
+    }
+
+    @Test
+    fun aSwipeSidewaysPutsTheBannerAway() {
+        status = dismissible()
+        setHome(loaded)
+
+        rule.onNodeWithText(unreachableText).performTouchInput { swipeRight() }
+        settle()
+
+        assertAbsent(unreachableText)
+        assertTrue(status.bannerDismissed)
+    }
+
+    @Test
+    fun aShortDragLeavesTheBannerWhereItIs() {
+        status = dismissible()
+        setHome(loaded)
+
+        rule.onNodeWithText(unreachableText).performTouchInput {
+            swipe(start = centerLeft, end = centerLeft + Offset(width * 0.1f, 0f))
+        }
+        settle()
+
+        rule.onNodeWithText(unreachableText).assertIsDisplayed()
+        assertTrue(!status.bannerDismissed)
+    }
+
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun theScreenReaderCanPutTheBannerAway() {
+        status = dismissible()
+        setHome(loaded)
+
+        rule
+            .onNode(hasText(unreachableText, substring = true) and hasAnyCustomAction())
+            .performCustomAccessibilityActionWithLabel(closeText)
+        settle()
+
+        assertAbsent(unreachableText)
+    }
+
+    @Test
+    fun theBannerWithoutDownloadsCanBeClosedToo() {
+        // The one-row layout: Retry and the close button.
+        status = dismissible(hasDownloads = false)
+        setHome(loaded)
+
+        rule.onNodeWithContentDescription(closeText).performClick()
+        settle()
+
+        assertAbsent(unreachableText)
+    }
+
+    @Test
+    fun theIndicatorShowsOnlyWhileAwayAndPutAway() {
+        setHome(loaded)
+        assertNoIndicator()
+
+        status = dismissible()
+        settle()
+        // The banner is up: no icon as well.
+        assertNoIndicator()
+
+        rule.onNodeWithContentDescription(closeText).performClick()
+        settle()
+        rule.onNodeWithContentDescription(indicatorText).assertIsDisplayed()
+
+        // The server answers: neither the banner nor the icon.
+        status = status.copy(unreachable = false, confirmedUnreachable = false)
+        settle()
+        assertNoIndicator()
+        assertAbsent(unreachableText)
+    }
+
+    @Test
+    fun theIndicatorBringsTheBannerBack() {
+        status = dismissible().copy(bannerDismissed = true)
+        setHome(loaded)
+        assertAbsent(unreachableText)
+
+        rule.onNodeWithContentDescription(indicatorText).performClick()
+        settle()
+
+        assertEquals(1, bannerShows)
+        rule.onNodeWithText(unreachableText).assertIsDisplayed()
+        assertNoIndicator()
+    }
+
+    @Test
+    fun theErrorPageCannotBePutAway() {
+        status = dismissible().copy(bannerDismissed = true)
+        setErrorState()
+
+        // Still the page that says the server is away, with no close button.
+        rule.onNodeWithText(unreachableText).assertIsDisplayed()
+        rule.onAllNodes(hasContentDescription(closeText)).assertCountEquals(0)
+    }
+
+    @Test
+    fun anEmptyHomeThatFailedShowsNoIndicatorOverItsPage() {
+        status = dismissible().copy(bannerDismissed = true)
+        setHome(
+            HomeState(
+                server = dummyServer,
+                isLoading = false,
+                error = ConnectException("Failed to connect"),
+            )
+        )
+
+        rule.onNodeWithText(unreachableText).assertIsDisplayed()
+        assertNoIndicator()
+    }
+
+    @Test
+    fun theRedCardForAnotherErrorHasNoCloseButton() {
+        status = dismissible()
+        setHome(loaded.copy(error = InvalidStatusException(500, null)))
+
+        rule.onNodeWithText(string(CoreR.string.error_loading_data)).assertIsDisplayed()
+        rule.onAllNodes(hasContentDescription(closeText)).assertCountEquals(0)
+    }
+
+    @Test
+    fun aConnectionErrorStaysQuietWithTheBannerPutAway() {
+        // The banner stood in for the red card; put away, nothing takes its place.
+        status = dismissible().copy(bannerDismissed = true)
+        setHome(loaded.copy(error = ConnectException("Failed to connect")))
+
+        assertAbsent(unreachableText)
+        assertAbsent(string(CoreR.string.error_loading_data))
+        rule.onNodeWithContentDescription(indicatorText).assertIsDisplayed()
+    }
+
+    // "Showing downloads only" (#775)
+
+    @Test
+    fun homeDoesNotSayDownloadsOnly() {
+        status = unreachable()
+        setHome(loaded)
+
+        assertAbsent(downloadsOnlyText)
+    }
+
+    @Test
+    fun favoritesLoadedWhileAwaySayTheyAreTheDownloadsOnly() {
+        status = dismissible()
+        setFavorites(favorites(downloadsOnly = true))
+        rule.onNodeWithText(downloadsOnlyText).assertIsDisplayed()
+
+        // Also with the banner put away, next to the icon that brings it back.
+        rule.onNodeWithContentDescription(closeText).performClick()
+        settle()
+        rule.onNodeWithText(downloadsOnlyText).assertIsDisplayed()
+        rule.onNodeWithContentDescription(indicatorText).assertIsDisplayed()
+    }
+
+    @Test
+    fun favoritesFromTheServerSayNothingWhileItIsAway() {
+        // Loaded while the server answered; the reload for the outage has not come back yet.
+        status = unreachable()
+        setFavorites(favorites(downloadsOnly = false))
+
+        rule.onNodeWithText(unreachableText).assertIsDisplayed()
+        assertAbsent(downloadsOnlyText)
+    }
+
+    @Test
+    fun aStaleFavoritesListWithAnErrorSaysNothing() {
+        // Nothing downloaded: the reload failed and the full list from before stays.
+        status = unreachable()
+        setFavorites(favorites(downloadsOnly = false).copy(error = ConnectException("Failed")))
+
+        rule.onNodeWithText("Favorite movie").assertIsDisplayed()
+        assertAbsent(downloadsOnlyText)
+    }
+
+    private fun favorites(downloadsOnly: Boolean) =
+        CollectionState(
+            sections =
+                listOf(
+                    CollectionSection(
+                        id = 0,
+                        name = UiText.StringResource(CoreR.string.movies_label),
+                        items = listOf(dummyMovie.copy(name = "Favorite movie")),
+                    )
+                ),
+            isLoading = false,
+            downloadsOnly = downloadsOnly,
+        )
+
+    // Media and a library: the stored libraries are the downloads, whatever the server does
+
+    private val storedLibraries =
+        listOf(
+            dummyCollections[0].copy(id = StoredLibraries.MOVIES),
+            dummyCollections[1].copy(id = StoredLibraries.SHOWS),
+        )
+
+    private fun setMedia(state: MediaState) = setContent {
+        MediaScreenLayout(
+            state = state,
+            searchState = SearchState(),
+            searchExpanded = false,
+            onSearchExpand = {},
+            onAction = {},
+            onSearchAction = {},
+        )
+    }
+
+    @Test
+    fun mediaWithTheStoredLibrariesSaysDownloadsOnly() {
+        status = unreachable()
+        setMedia(MediaState(libraries = storedLibraries))
+
+        rule.onNodeWithText(downloadsOnlyText).assertIsDisplayed()
+    }
+
+    @Test
+    fun mediaWithTheRealLibrariesSaysNothingWhileTheServerIsAway() {
+        // Loaded online; the quiet reload failed because nothing is downloaded.
+        status = unreachable()
+        setMedia(MediaState(libraries = dummyCollections))
+
+        rule.onNodeWithText(unreachableText).assertIsDisplayed()
+        assertAbsent(downloadsOnlyText)
+    }
+
+    private fun setLibrary(
+        downloadsOnly: Boolean,
+        items: PagingData<FindroidItem> = PagingData.from(listOf<FindroidItem>(dummyMovie)),
+    ) = setContent {
+        LibraryScreenLayout(
+            libraryName = "Movies",
+            state = LibraryState(items = flowOf(items)),
+            onAction = {},
+            downloadsOnly = downloadsOnly,
+        )
+    }
+
+    /** A real library whose first load found the server away. */
+    private val failedLibrary: PagingData<FindroidItem>
+        get() =
+            PagingData.from(
+                emptyList(),
+                sourceLoadStates =
+                    LoadStates(
+                        refresh = LoadState.Error(ConnectException("Failed to connect")),
+                        prepend = LoadState.NotLoading(endOfPaginationReached = false),
+                        append = LoadState.NotLoading(endOfPaginationReached = false),
+                    ),
+            )
+
+    @Test
+    fun aRealLibrarySaysNothingWhileTheServerIsAway() {
+        // Its pages from the server stay in memory.
+        status = unreachable()
+        setLibrary(downloadsOnly = false)
+
+        assertAbsent(downloadsOnlyText)
+    }
+
+    @Test
+    fun aStoredLibrarySaysDownloadsOnlyAlsoWithTheServerBack() {
+        setLibrary(downloadsOnly = true)
+
+        rule.onNodeWithText(downloadsOnlyText).assertIsDisplayed()
+    }
+
+    @Test
+    fun favoritesThatFailedSayNeitherDownloadsOnlyNorShowTheIcon() {
+        status = dismissible().copy(bannerDismissed = true)
+        setFavorites(CollectionState(isLoading = false, error = ConnectException("Failed")))
+
+        rule.onNodeWithText(unreachableText).assertIsDisplayed()
+        assertAbsent(downloadsOnlyText)
+        assertNoIndicator()
+    }
+
+    @Test
+    fun aCollectionIsNotTheDownloadsOnly() {
+        // A collection screen (not Favorites) has no banner and no line.
+        status = unreachable()
+        setContent {
+            CollectionScreenLayout(
+                collectionName = "Marvel",
+                state = CollectionState(isLoading = false),
+                onAction = {},
+            )
+        }
+
+        assertAbsent(downloadsOnlyText)
+    }
+
+    // Only over content can the banner be put away (#775)
+
+    @Test
+    fun mediaWithNothingOnScreenKeepsTheBannerEvenWhenItWasPutAway() {
+        // No downloads and nothing loaded before the server went away.
+        status = dismissible().copy(bannerDismissed = true)
+        setMedia(MediaState(error = ConnectException("Failed to connect")))
+
+        rule.onNodeWithText(unreachableText).assertIsDisplayed()
+        rule.onAllNodes(hasContentDescription(closeText)).assertCountEquals(0)
+        rule.onAllNodes(hasText(unreachableText) and hasAnyCustomAction()).assertCountEquals(0)
+        assertNoIndicator()
+    }
+
+    @Test
+    fun mediaWithLibrariesLetsTheBannerBePutAway() {
+        status = dismissible()
+        setMedia(MediaState(libraries = storedLibraries))
+
+        rule.onNodeWithContentDescription(closeText).performClick()
+        settle()
+
+        assertAbsent(unreachableText)
+        rule.onNodeWithContentDescription(indicatorText).assertIsDisplayed()
+    }
+
+    @Test
+    fun aLibraryWhoseFirstLoadFailedKeepsTheBanner() {
+        status = dismissible().copy(bannerDismissed = true)
+        setLibrary(downloadsOnly = false, items = failedLibrary)
+
+        rule.onNodeWithText(unreachableText).assertIsDisplayed()
+        rule.onAllNodes(hasContentDescription(closeText)).assertCountEquals(0)
+        assertNoIndicator()
+    }
+
+    @Test
+    fun aLibraryWithItemsLetsTheBannerBePutAway() {
+        status = dismissible().copy(bannerDismissed = true)
+        setLibrary(downloadsOnly = false)
+
+        assertAbsent(unreachableText)
+        rule.onNodeWithContentDescription(indicatorText).assertIsDisplayed()
+    }
+
+    // Local network access off while the downloads are on screen (#775, #571)
+
+    private val localNetworkOffText
+        get() = string(SetupR.string.ce_local_network_off)
+
+    @Test
+    fun favoritesFromTheDownloadsStillOfferToAllowLocalNetworkAccess() {
+        // Room answered, so no load failed: the card of #571 says what keeps the server away.
+        localNetworkBlocked = true
+        status = dismissible()
+        setFavorites(favorites(downloadsOnly = true))
+
+        rule.onNodeWithText(localNetworkOffText).assertIsDisplayed()
+        assertAbsent(unreachableText)
+        // Not something to put away, and no details of an error that is not there.
+        rule.onAllNodes(hasContentDescription(closeText)).assertCountEquals(0)
+        rule
+            .onAllNodes(hasContentDescription(string(CoreR.string.show_stacktrace)))
+            .assertCountEquals(0)
+        assertNoIndicator()
+    }
+
+    @Test
+    fun mediaMakesRoomForTheLocalNetworkCard() {
+        localNetworkBlocked = true
+        status = dismissible().copy(bannerDismissed = true)
+        setMedia(MediaState(libraries = storedLibraries))
+
+        val cardBottom = rule.onNodeWithText(localNetworkOffText).getBoundsInRoot().bottom
+        val libraryTop = rule.onNodeWithText(storedLibraries[0].name).getBoundsInRoot().top
+        assertTrue(
+            libraryTop > cardBottom,
+            message = "library at $libraryTop, card ends at $cardBottom",
+        )
+    }
+
+    @Test
+    fun theLocalNetworkCardRetriesAndAsksTheServerAgain() {
+        localNetworkBlocked = true
+        status = dismissible()
+        setFavorites(favorites(downloadsOnly = true))
+
+        rule.onNodeWithContentDescription(string(CoreR.string.retry)).performClick()
+
+        assertEquals(1, checks)
+        assertEquals(1, retries)
     }
 
     // Download and trailer buttons

@@ -141,6 +141,10 @@
     <string name="ce_track_sdh">SDH</string>
     <string name="ce_track_number">Spur %1$d</string>
     <string name="ce_server_unreachable_downloads">Deine Downloads lassen sich weiterhin abspielen.</string>
+    <string name="ce_server_banner_show">Server nicht erreichbar. Details anzeigen</string>
+    <string name="ce_downloads_only">Es werden nur Downloads angezeigt</string>
+    <string name="ce_favorites_none_downloaded">Keine heruntergeladenen Favoriten</string>
+    <string name="ce_favorites_none_downloaded_body">Deine anderen Favoriten kommen mit dem Server zurück.</string>
     <string name="ce_download_choice_title">Welche Folgen herunterladen?</string>
     <string name="ce_download_choice_message">Du hast einige dieser Folgen schon gesehen.</string>
     <string name="ce_download_choice_unwatched">Nur ungesehene (%1$d)</string>

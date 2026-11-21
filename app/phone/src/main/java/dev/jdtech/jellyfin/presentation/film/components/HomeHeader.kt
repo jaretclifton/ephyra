@@ -48,6 +48,7 @@ fun HomeHeader(
     modifier: Modifier = Modifier,
     user: User? = null,
     baseUrl: String? = null,
+    serverIndicator: Boolean = false,
 ) {
     Row(
         modifier = modifier.fillMaxWidth().height(56.dp),
@@ -79,7 +80,15 @@ fun HomeHeader(
             }
         }
 
-        Spacer(Modifier.width(MaterialTheme.spacings.medium))
+        // CE (#775): the unreachable banner put away. Bare, not a filled circle like the buttons
+        // beside it: it is a state, not one more thing to do. It takes the place of the gap: the
+        // button's own padding keeps 12 dp to the pill and to search, so a short server name
+        // keeps its room.
+        if (serverIndicator) {
+            ServerOffIndicator(modifier = Modifier.align(Alignment.CenterVertically))
+        } else {
+            Spacer(Modifier.width(MaterialTheme.spacings.medium))
+        }
 
         Row(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacings.medium)) {
             Surface(
@@ -154,6 +163,21 @@ private fun HomeHeaderPreview() {
             onServerClick = {},
             onSearchClick = {},
             onUserClick = {},
+        )
+    }
+}
+
+@Composable
+@Preview(showBackground = true, widthDp = 411)
+@Preview(showBackground = true, widthDp = 840)
+private fun HomeHeaderServerOffPreview() {
+    FindroidTheme {
+        HomeHeader(
+            serverName = "Ephyra Test",
+            onServerClick = {},
+            onSearchClick = {},
+            onUserClick = {},
+            serverIndicator = true,
         )
     }
 }

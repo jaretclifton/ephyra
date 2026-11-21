@@ -38,25 +38,37 @@ constructor(
     private val _state = MutableStateFlow(MainState())
     val state = _state.asStateFlow()
 
+    private val bannerDismissal = BannerDismissal()
+
     /**
      * CE (#281): what the screens show about the server. Apart from [MainState], so a probe result
      * recomposes the banner and not the navigation.
      */
     val serverStatus: StateFlow<ServerStatus> =
-        serverReachability.state
-            .mapLatest { reachability ->
-                ServerStatus(
-                    unreachable = reachability.unreachable,
-                    confirmedUnreachable = reachability.confirmedUnreachable,
-                    // Only asked when it is shown: the banner points at Downloads when there are
-                    // any.
-                    hasDownloads = !reachability.unreachable || hasDownloads(),
-                )
+        combine(
+                serverReachability.state.mapLatest { reachability ->
+                    ServerStatus(
+                        unreachable = reachability.unreachable,
+                        confirmedUnreachable = reachability.confirmedUnreachable,
+                        // Only asked when it is shown: the banner points at Downloads when there
+                        // are any.
+                        hasDownloads = !reachability.unreachable || hasDownloads(),
+                    )
+                },
+                bannerDismissal.dismissed,
+            ) { status, dismissed ->
+                status.copy(bannerDismissed = dismissed && status.unreachable)
             }
             .stateIn(viewModelScope, SharingStarted.Eagerly, ServerStatus())
 
     /** The banner's Retry: asks whether the server is there, without waiting for the answer. */
     fun checkServer() = serverReachability.check()
+
+    /** CE (#775): the user swiped or closed the unreachable banner. */
+    fun dismissServerBanner() = bannerDismissal.dismiss(serverReachability.state.value.unreachable)
+
+    /** CE (#775): the quiet indicator brings the banner back. */
+    fun showServerBanner() = bannerDismissal.show()
 
     private suspend fun hasDownloads(): Boolean =
         try {
@@ -82,6 +94,13 @@ constructor(
 
     init {
         check()
+        // CE (#775): a dismissed banner stays away until the server has answered again.
+        viewModelScope.launch {
+            serverReachability.state
+                .map { it.unreachable }
+                .distinctUntilChanged()
+                .collect(bannerDismissal::onReachability)
+        }
         // CE (#618): reveals belong to the user who made them.
         viewModelScope.launch {
             appPreferences
@@ -231,4 +250,28 @@ data class ServerStatus(
     val unreachable: Boolean = false,
     val confirmedUnreachable: Boolean = false,
     val hasDownloads: Boolean = true,
+    /** CE (#775): the user put the banner away for this outage. */
+    val bannerDismissed: Boolean = false,
 )
+
+/**
+ * CE (#775): the unreachable banner, put away by the user. It stays away across tabs, screens and
+ * rotations, and comes back with the next outage: the server answering once clears it.
+ */
+class BannerDismissal {
+    private val _dismissed = MutableStateFlow(false)
+    val dismissed: StateFlow<Boolean> = _dismissed.asStateFlow()
+
+    /** Only while [unreachable]: a dismissal that lands after the server answered is stale. */
+    fun dismiss(unreachable: Boolean) {
+        if (unreachable) _dismissed.value = true
+    }
+
+    fun show() {
+        _dismissed.value = false
+    }
+
+    fun onReachability(unreachable: Boolean) {
+        if (!unreachable) _dismissed.value = false
+    }
+}

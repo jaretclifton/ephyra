@@ -9,6 +9,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.jdtech.jellyfin.api.JellyfinApi
+import dev.jdtech.jellyfin.repository.KnownServerState
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -40,7 +41,7 @@ constructor(
     @ApplicationContext private val context: Context,
     private val jellyfinApi: JellyfinApi,
     private val appPreferences: AppPreferences,
-) {
+) : KnownServerState {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var started = false
 
@@ -60,6 +61,14 @@ constructor(
 
     /** Asks now, without waiting for the answer: the banner's Retry and a pull to refresh. */
     fun check() = monitor.check()
+
+    // CE (#775): the lists Room can answer skip the server while this says it is away. Unknown
+    // (also all of TV, where this is not started) never skips.
+    override fun isKnownUnreachable(): Boolean = state.value.unreachable
+
+    // While unreachable the app's failed requests start no probe, only an answered one would show
+    // the server back sooner than the retry probes. The skipped request cannot, so a probe does.
+    override fun onServerSkipped() = check()
 
     /**
      * Starts watching. Safe to call more than once, and cheap enough for `Application.onCreate`.

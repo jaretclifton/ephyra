@@ -146,6 +146,10 @@
     <string name="ce_track_sdh">SDH</string>
     <string name="ce_track_number">Stopa %1$d</string>
     <string name="ce_server_unreachable_downloads">Stiahnutý obsah sa dá stále prehrávať.</string>
+    <string name="ce_server_banner_show">Server je nedostupný. Zobraziť podrobnosti</string>
+    <string name="ce_downloads_only">Zobrazuje sa len stiahnutý obsah</string>
+    <string name="ce_favorites_none_downloaded">Žiadne stiahnuté obľúbené</string>
+    <string name="ce_favorites_none_downloaded_body">Ostatné obľúbené sa vrátia spolu so serverom.</string>
     <string name="ce_download_choice_title">Ktoré epizódy stiahnuť?</string>
     <string name="ce_download_choice_message">Niektoré z týchto epizód ste už videli.</string>
     <string name="ce_download_choice_unwatched">Len nepozreté (%1$d)</string>

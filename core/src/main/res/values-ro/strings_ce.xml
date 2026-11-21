@@ -146,6 +146,10 @@
     <string name="ce_track_sdh">SDH</string>
     <string name="ce_track_number">Pista %1$d</string>
     <string name="ce_server_unreachable_downloads">Descărcările tale pot fi redate în continuare.</string>
+    <string name="ce_server_banner_show">Serverul nu poate fi accesat. Afișează detaliile</string>
+    <string name="ce_downloads_only">Se afișează doar descărcările</string>
+    <string name="ce_favorites_none_downloaded">Niciun favorit descărcat</string>
+    <string name="ce_favorites_none_downloaded_body">Celelalte favorite revin odată cu serverul.</string>
     <string name="ce_download_choice_title">Ce episoade descarci?</string>
     <string name="ce_download_choice_message">Ai văzut deja câteva dintre aceste episoade.</string>
     <string name="ce_download_choice_unwatched">Doar cele nevizionate (%1$d)</string>

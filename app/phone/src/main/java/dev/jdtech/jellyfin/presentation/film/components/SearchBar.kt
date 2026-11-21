@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.CircularProgressIndicator
@@ -72,6 +73,7 @@ fun FilmSearchBar(
     paddingStart: Dp = 0.dp,
     paddingEnd: Dp = 0.dp,
     docked: Boolean = false,
+    serverIndicator: Boolean = false,
 ) {
     val focusRequester = remember { FocusRequester() }
     val safePadding = rememberSafePadding()
@@ -228,6 +230,10 @@ fun FilmSearchBar(
                                 contentDescription = null,
                             )
                         }
+                    } else if (serverIndicator && !expanded) {
+                        // CE (#775): the bar is the header of Media, so the icon for the banner
+                        // that was put away sits at its end.
+                        ServerOffIndicator()
                     }
                 },
             )
@@ -254,6 +260,13 @@ fun FilmSearchBar(
                 horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacings.default),
                 verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacings.default),
             ) {
+                // CE (#775): results of a search made while the server was away come from the
+                // downloads. Not over the error page.
+                if (state.downloadsOnly && query.isNotBlank() && state.error == null) {
+                    item(key = "downloads_only", span = { GridItemSpan(maxLineSpan) }) {
+                        DownloadsOnlyLine()
+                    }
+                }
                 items(items = state.items, key = { it.id }) { item ->
                     ItemCard(
                         item = item,

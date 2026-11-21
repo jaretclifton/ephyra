@@ -59,9 +59,11 @@ import dev.jdtech.jellyfin.models.CollectionType
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.presentation.components.ErrorDialog
 import dev.jdtech.jellyfin.presentation.film.components.Direction
+import dev.jdtech.jellyfin.presentation.film.components.DownloadsOnlyLine
 import dev.jdtech.jellyfin.presentation.film.components.EmptyState
 import dev.jdtech.jellyfin.presentation.film.components.ItemCard
 import dev.jdtech.jellyfin.presentation.film.components.LetterFastScroller
+import dev.jdtech.jellyfin.presentation.film.components.ServerOffIndicator
 import dev.jdtech.jellyfin.presentation.film.components.ServerOrErrorCard
 import dev.jdtech.jellyfin.presentation.film.components.SortByDialog
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
@@ -70,7 +72,9 @@ import dev.jdtech.jellyfin.presentation.utils.GridCellsAdaptiveWithMinColumns
 import dev.jdtech.jellyfin.presentation.utils.Layout
 import dev.jdtech.jellyfin.presentation.utils.currentWidthClass
 import dev.jdtech.jellyfin.presentation.utils.plus
+import dev.jdtech.jellyfin.presentation.utils.showsServerIndicator
 import dev.jdtech.jellyfin.presentation.utils.topAndSideInsets
+import dev.jdtech.jellyfin.repository.StoredLibraries
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -104,15 +108,21 @@ fun LibraryScreen(
             }
             viewModel.onAction(action)
         },
+        downloadsOnly = StoredLibraries.isStored(libraryId),
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LibraryScreenLayout(
+internal fun LibraryScreenLayout(
     libraryName: String,
     state: LibraryState,
     onAction: (LibraryAction) -> Unit,
+    /**
+     * CE (#775): one of the stored libraries, which hold the downloads, also once the server is
+     * back (a real library open when the server goes away keeps its server items).
+     */
+    downloadsOnly: Boolean = false,
 ) {
     val contentPadding = PaddingValues(all = MaterialTheme.spacings.default)
 
@@ -124,6 +134,13 @@ private fun LibraryScreenLayout(
 
     val gridState = rememberLazyGridState()
 
+    // CE (#775): not over a failed first load, which has nothing to show.
+    val showDownloadsOnly =
+        downloadsOnly && !(items.itemCount == 0 && items.loadState.refresh is LoadState.Error)
+    // CE (#775): items, or a load that came back empty, which its empty page explains. A library
+    // left empty by the outage keeps the banner.
+    val hasContent = items.itemCount > 0 || items.loadState.refresh is LoadState.NotLoading
+
     Scaffold(
         modifier =
             Modifier.fillMaxSize()
@@ -131,7 +148,13 @@ private fun LibraryScreenLayout(
                 .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = { Text(libraryName) },
+                title = {
+                    // CE (#775): as on Favorites, under the title.
+                    Column {
+                        Text(libraryName)
+                        if (showDownloadsOnly) DownloadsOnlyLine()
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = { onAction(LibraryAction.OnBackClick) }) {
                         Icon(
@@ -141,6 +164,8 @@ private fun LibraryScreenLayout(
                     }
                 },
                 actions = {
+                    // CE (#775): the banner put away, before the screen's own actions.
+                    if (showsServerIndicator(hasContent)) ServerOffIndicator()
                     IconButton(
                         onClick = {
                             onAction(LibraryAction.ToggleWatchedFilter(!state.filterWatched))
@@ -172,6 +197,7 @@ private fun LibraryScreenLayout(
                 loadStates = items.loadState,
                 onRefresh = { items.refresh() },
                 modifier = Modifier.padding(contentPadding + innerPadding),
+                hasContent = hasContent,
             )
             Box(modifier = Modifier.fillMaxSize()) {
                 LazyVerticalGrid(
@@ -297,6 +323,7 @@ private fun ErrorGroup(
     loadStates: CombinedLoadStates,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
+    hasContent: Boolean = true,
 ) {
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -320,6 +347,7 @@ private fun ErrorGroup(
         onShowStacktrace = { showErrorDialog = true },
         onRetryClick = onRefresh,
         modifier = modifier,
+        hasContent = hasContent,
     )
     loadStateError?.let {
         if (showErrorDialog) {

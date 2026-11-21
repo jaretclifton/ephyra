@@ -68,6 +68,9 @@ class MainActivity : AppCompatActivity() {
                         confirmedUnreachable = server.confirmedUnreachable,
                         hasDownloads = server.hasDownloads,
                         check = viewModel::checkServer,
+                        bannerDismissed = server.bannerDismissed,
+                        dismissBanner = viewModel::dismissServerBanner,
+                        showBanner = viewModel::showServerBanner,
                     )
                 }
 

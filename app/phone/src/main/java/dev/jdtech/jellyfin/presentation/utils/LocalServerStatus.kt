@@ -20,6 +20,9 @@ import dev.jdtech.jellyfin.utils.LoadErrorText
  * is anything in Downloads to point at. [check] asks again without waiting for the answer.
  * [openDownloads] opens the Downloads tab; null where there is no such tab to go to (setup, the
  * Downloads tab itself).
+ *
+ * CE (#775): [bannerDismissed] is the banner put away with [dismissBanner] until the server has
+ * answered again; [showBanner] brings it back.
  */
 @Immutable
 data class ServerStatusUi(
@@ -28,28 +31,55 @@ data class ServerStatusUi(
     val hasDownloads: Boolean = true,
     val check: () -> Unit = {},
     val openDownloads: (() -> Unit)? = null,
+    val bannerDismissed: Boolean = false,
+    val dismissBanner: () -> Unit = {},
+    val showBanner: () -> Unit = {},
 )
 
 /** Reachable unless provided otherwise, so previews and tests need not provide it. */
 val LocalServerStatus = compositionLocalOf { ServerStatusUi() }
 
 /**
- * Whether a screen shows the unreachable banner. Not while Android's local network permission is
- * what keeps the server away: then the error card of #571 names the permission and asks for it.
+ * Whether the screens treat the server as away: the banner, its indicator and the error page. Not
+ * while Android's local network permission is what keeps the server away: then the error card
+ * of #571 names the permission and asks for it.
  */
 @Composable
-fun showsServerBanner(): Boolean =
+fun isServerAway(): Boolean =
     LocalServerStatus.current.unreachable && !LocalLocalNetworkBlock.current.blocked
 
 /**
+ * Whether a screen shows the unreachable banner: the server is away and the banner not put away.
+ */
+@Composable
+fun showsServerBanner(): Boolean = isServerAway() && !LocalServerStatus.current.bannerDismissed
+
+/**
+ * CE (#775): whether a screen shows the quiet "server off" icon in its header in place of the
+ * banner, which the user put away. Not on a screen without content ([hasContent]): the banner stays
+ * there.
+ */
+@Composable
+fun showsServerIndicator(hasContent: Boolean = true): Boolean =
+    hasContent && isServerAway() && LocalServerStatus.current.bannerDismissed
+
+/**
+ * CE (#775): the server is away because Android's local network access is off. The screens say so
+ * with the card of #571, also when they show the downloads and no load failed.
+ */
+@Composable
+fun isBlockedByLocalNetwork(): Boolean =
+    LocalServerStatus.current.unreachable && LocalLocalNetworkBlock.current.blocked
+
+/**
  * Whether [error] is the server being unreachable, as the banner already says: a connection error
- * while the banner shows.
+ * while the server is away. Also with the banner put away (#775): the error is still explained.
  */
 @Composable
 fun isServerUnreachable(error: Throwable?): Boolean {
     val connectionError =
         remember(error) { error != null && LoadErrorText.isConnectionError(error) }
-    return connectionError && showsServerBanner()
+    return connectionError && isServerAway()
 }
 
 /**
@@ -70,4 +100,17 @@ fun RetryWhenServerReturns(error: Throwable?, onRetry: () -> Unit) {
         // Not when the error is gone already: the user's own retry was what reached the server.
         if (retry.shouldRetry(explained, unreachable) && stillFailed) currentOnRetry()
     }
+}
+
+/**
+ * CE (#775): tells [onChange] whether the server is away, at first and at every change, so a list
+ * that falls back to the downloads loads again when the server goes and when it comes back. The
+ * view model decides whether that takes a load: it knows what its list was loaded with, also after
+ * the screen was out of view (another tab), and whether such a load is running already.
+ */
+@Composable
+fun ReloadWhenServerAwayChanges(onChange: (away: Boolean) -> Unit) {
+    val away = LocalServerStatus.current.unreachable
+    val currentOnChange by rememberUpdatedState(onChange)
+    LaunchedEffect(away) { currentOnChange(away) }
 }
