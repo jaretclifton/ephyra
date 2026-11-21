@@ -4,8 +4,8 @@ import androidx.media3.common.MimeTypes
 import dev.jdtech.jellyfin.models.FindroidMediaStream
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
-import org.jellyfin.sdk.model.api.MediaStreamType
-import org.jellyfin.sdk.model.api.SubtitleDeliveryMethod
+import dev.jdtech.jellyfin.models.MediaStreamType
+import dev.jdtech.jellyfin.models.SubtitleDeliveryMethod
 
 /** A subtitle the player loads as a file of its own, next to the stream. */
 data class SubtitleFile(
