@@ -53,6 +53,7 @@ import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.settings.R as SettingsR
+import dev.jdtech.jellyfin.utils.LoadErrorText
 
 /**
  * CE (#142): Settings → Interface → Home rows on TV. Each row is a switch (OK shows or hides it)
@@ -101,7 +102,8 @@ private fun HomeRowsScreenLayout(state: HomeRowsState, onAction: (HomeRowsAction
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacings.medium),
                     ) {
-                        Text(text = error.localizedMessage.orEmpty())
+                        // CE (#756): the reason in plain words (#377), not the exception's text.
+                        Text(text = LoadErrorText.reason(error).asString())
                         Button(
                             onClick = { onAction(HomeRowsAction.OnRetryClick) },
                             modifier = Modifier.focusRequester(retry),

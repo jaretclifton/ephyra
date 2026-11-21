@@ -8,6 +8,7 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.player.DeviceCodecProbe
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinCatalog
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.lang.reflect.Proxy
@@ -80,6 +81,7 @@ class UnfinishedDownloadPlaybackTest {
                 JellyfinRepositoryImpl(
                     context,
                     api(),
+                    JellyfinCatalog(api()),
                     database,
                     preferences(),
                     JellyfinDeviceProfiles(DeviceCodecProbe(context)),

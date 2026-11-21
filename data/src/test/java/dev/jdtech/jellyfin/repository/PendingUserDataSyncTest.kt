@@ -12,6 +12,7 @@ import dev.jdtech.jellyfin.models.FindroidMovieDto
 import dev.jdtech.jellyfin.models.FindroidShowDto
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
 import dev.jdtech.jellyfin.player.DeviceCodecProbe
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinCatalog
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.util.UUID
@@ -57,6 +58,7 @@ class PendingUserDataSyncTest {
         JellyfinRepositoryImpl(
             context,
             api,
+            JellyfinCatalog(api),
             database,
             AppPreferences(context.getSharedPreferences("test", Context.MODE_PRIVATE)),
             JellyfinDeviceProfiles(DeviceCodecProbe(context)),

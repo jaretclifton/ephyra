@@ -22,6 +22,7 @@ import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.player.DeviceCodecProbe
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinCatalog
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.File
@@ -93,6 +94,7 @@ class StoredListsFallbackTest {
         JellyfinRepositoryImpl(
             context,
             api,
+            JellyfinCatalog(api),
             database,
             preferences,
             JellyfinDeviceProfiles(DeviceCodecProbe(context)),
