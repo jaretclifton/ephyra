@@ -190,7 +190,7 @@ constructor(
      */
     private suspend fun refreshServerName(server: Server) {
         logFailure("server name") {
-            val renamed = server.renamedTo(repository.getPublicSystemInfo()) ?: return@logFailure
+            val renamed = server.renamedTo(repository.getServerInfo()) ?: return@logFailure
             database.updateServer(renamed)
             _state.update { if (it.server?.id == renamed.id) it.copy(server = renamed) else it }
         }
@@ -418,6 +418,9 @@ constructor(
             throw results.first()!!.exceptionOrNull()!!
         }
     }
+
+    /** The backdrop of a season, for the hero of an episode. Null when no server is set. */
+    fun seasonBackdropUrl(seasonId: UUID): String? = repository.seasonBackdropUrl(seasonId)
 
     fun onAction(action: HomeAction) {
         when (action) {

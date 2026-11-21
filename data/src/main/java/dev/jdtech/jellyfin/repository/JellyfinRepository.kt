@@ -14,15 +14,14 @@ import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
+import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
-import org.jellyfin.sdk.model.api.PublicSystemInfo
-import org.jellyfin.sdk.model.api.UserConfiguration
 
 interface JellyfinRepository {
-    suspend fun getPublicSystemInfo(): PublicSystemInfo
+    suspend fun getServerInfo(): ServerInfo
 
     /** The libraries the current user sees, in the server's order, of the supported types only. */
     suspend fun getUserViews(): List<FindroidCollection>
@@ -284,9 +283,22 @@ interface JellyfinRepository {
 
     fun getBaseUrl(): String
 
+    /** The URL of the thumbnail the server extracted for a chapter. Null when no server is set. */
+    fun chapterImageUrl(itemId: UUID, chapterIndex: Int, tag: String): String?
+
+    /**
+     * The backdrop of [seasonId], whether or not the season has one of its own; the server answers
+     * 404 when it has none. Null when no server is set.
+     */
+    fun seasonBackdropUrl(seasonId: UUID): String?
+
     suspend fun updateDeviceName(name: String)
 
-    suspend fun getUserConfiguration(): UserConfiguration?
+    /**
+     * The user's server-side "play next episode automatically" setting, or null when the server has
+     * none.
+     */
+    suspend fun autoPlayNextEpisode(): Boolean?
 
     suspend fun getDownloads(): List<FindroidItem>
 
