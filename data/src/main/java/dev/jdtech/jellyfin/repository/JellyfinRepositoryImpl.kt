@@ -84,8 +84,11 @@ class JellyfinRepositoryImpl(
     private val storedLists = StoredLists(database)
 
     /**
-     * CE (#775): [serverOrStored] for a list Room can answer, and straight to Room while the server
-     * is known to be away, without the wait.
+     * CE (#775): a list Room can answer: straight from Room while the server is known to be away,
+     * else from Room only when the request gets no answer. Not after [STORED_FALLBACK_TIMEOUT_MS]
+     * as an item is: a slow server would leave the shorter downloads-only list on a screen that
+     * does not say so. A request left unanswered gets a probe, and the screens reload when that
+     * says unreachable.
      */
     private suspend fun <T> serverOrStoredItems(
         stored: (suspend () -> List<T>)?,
@@ -95,7 +98,7 @@ class JellyfinRepositoryImpl(
             knownServerState.onServerSkipped()
             return stored()
         }
-        return serverOrStored(stored, server = server)
+        return serverOrStoredWhenUnanswered(stored, server)
     }
 
     /** CE (#775): maps stored rows only when they are needed; null when there are none. */

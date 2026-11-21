@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.repository
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withTimeoutOrNull
+import org.jellyfin.sdk.api.client.exception.InvalidStatusException
 import timber.log.Timber
 
 /**
@@ -51,5 +52,36 @@ suspend fun <T> serverOrStoredList(
     server: suspend () -> List<T>,
 ): List<T> =
     serverOrStored(stored.takeIf { it.isNotEmpty() }?.let { suspend { it } }, timeoutMs, server)
+
+/**
+ * CE (#775): [server], or [stored] when the server could not be reached. For a list whose stored
+ * version is shorter than the server's (the downloaded favourites, not all of them), so unlike
+ * [serverOrStored] there is no timeout of its own: a slow server is waited for, and an error the
+ * server answered with (an HTTP status) surfaces. Only a request that got no answer falls back.
+ * That failure also tells the server reachability, which probes and then shows the banner.
+ *
+ * [stored] is null when Room has nothing: then this is just [server].
+ */
+suspend fun <T> serverOrStoredWhenUnanswered(
+    stored: (suspend () -> T)?,
+    server: suspend () -> T,
+): T {
+    if (stored == null) return server()
+    return try {
+        server()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        if (e.isServerAnswer()) throw e
+        Timber.w(e, "Server unavailable, using the stored list")
+        stored()
+    }
+}
+
+/** Whether the server answered, with an error status: it is there, so its error is the answer. */
+internal fun Throwable.isServerAnswer(): Boolean =
+    generateSequence(this) { it.cause.takeIf { cause -> cause !== it } }
+        .take(16)
+        .any { it is InvalidStatusException }
 
 private class Fresh<T>(val value: T)
