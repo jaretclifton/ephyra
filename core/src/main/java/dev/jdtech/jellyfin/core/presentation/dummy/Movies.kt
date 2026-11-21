@@ -6,9 +6,9 @@ import dev.jdtech.jellyfin.models.FindroidMediaStream
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.MediaStreamType
 import java.time.LocalDateTime
 import java.util.UUID
-import org.jellyfin.sdk.model.api.MediaStreamType
 
 val dummyMovie =
     FindroidMovie(

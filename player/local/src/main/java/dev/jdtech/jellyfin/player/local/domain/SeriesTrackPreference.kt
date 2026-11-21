@@ -1,9 +1,9 @@
 package dev.jdtech.jellyfin.player.local.domain
 
 import dev.jdtech.jellyfin.models.FindroidMediaStream
+import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.player.core.domain.models.ServerAudioTrack
 import java.util.Locale
-import org.jellyfin.sdk.model.api.MediaStreamType
 
 /** A track as the matcher sees it: just what survives from one file to the next. */
 data class TrackCandidate(val language: String?, val title: String?)
