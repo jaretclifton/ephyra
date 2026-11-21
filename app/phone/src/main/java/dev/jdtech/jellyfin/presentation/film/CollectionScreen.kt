@@ -39,9 +39,9 @@ import dev.jdtech.jellyfin.presentation.film.components.EmptyState
 import dev.jdtech.jellyfin.presentation.film.components.LoadingOrError
 import dev.jdtech.jellyfin.presentation.film.components.ServerOffIndicator
 import dev.jdtech.jellyfin.presentation.film.components.ServerOrErrorCard
+import dev.jdtech.jellyfin.presentation.film.components.showsServerOrErrorCard
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
-import dev.jdtech.jellyfin.presentation.utils.showsServerBanner
 import dev.jdtech.jellyfin.presentation.utils.showsServerIndicator
 import dev.jdtech.jellyfin.presentation.utils.topAndSideInsets
 import java.util.UUID
@@ -133,7 +133,8 @@ fun CollectionScreenLayout(
         },
         contentWindowInsets = topAndSideInsets,
     ) { innerPadding ->
-        if (serverBanner && showsServerBanner() && !failedEmpty) {
+        // CE (#775): also for the card of #571 while local network access keeps the server away.
+        if (serverBanner && showsServerOrErrorCard(error = null) && !failedEmpty) {
             Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
                 ServerOrErrorCard(
                     error = null,

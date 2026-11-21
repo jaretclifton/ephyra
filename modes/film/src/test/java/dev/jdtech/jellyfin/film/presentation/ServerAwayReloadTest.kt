@@ -1,12 +1,16 @@
 package dev.jdtech.jellyfin.film.presentation
 
+import dev.jdtech.jellyfin.core.presentation.dummy.dummyCollections
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.film.presentation.favorites.FavoritesViewModel
 import dev.jdtech.jellyfin.film.presentation.media.MediaViewModel
 import dev.jdtech.jellyfin.film.presentation.search.SearchAction
 import dev.jdtech.jellyfin.film.presentation.search.SearchViewModel
 import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.StoredLibraries
 import java.lang.reflect.Proxy
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -32,6 +36,13 @@ class ServerAwayReloadTest {
     private val calls = mutableListOf<String>()
     private var fail = false
     private var favoritesAnswers = ArrayDeque<List<Any>>()
+    private var holdNext = false
+    private val held = ArrayDeque<Continuation<Any?>>()
+
+    /** Whether a slow answer is waiting, so the answer now is the newer one. */
+    private fun heldOnce() = held.isNotEmpty()
+
+    private val storedMovies = dummyCollections[0].copy(id = StoredLibraries.MOVIES)
 
     @BeforeEach
     fun setUp() {
@@ -195,6 +206,54 @@ class ServerAwayReloadTest {
             assertEquals(null, state.error)
         }
 
+    // An older load that answers last
+
+    @Test
+    fun `an older favourites load answering after a newer one changes nothing`() =
+        runTest(dispatcher) {
+            val viewModel = FavoritesViewModel(repository())
+            viewModel.onServerAwayChanged(false)
+            // Asked the server before it went away; its answer is slow.
+            holdNext = true
+            viewModel.loadItems()
+            runCurrent()
+
+            // The server goes away: the reload from Room answers at once, with nothing.
+            viewModel.onServerAwayChanged(true)
+            viewModel.loadItems().join()
+            assertTrue(viewModel.state.value.sections.isEmpty())
+            assertTrue(viewModel.state.value.downloadsOnly)
+
+            held.removeFirst().resumeWith(Result.success(listOf(dummyMovie)))
+            advanceUntilIdle()
+
+            assertTrue(viewModel.state.value.sections.isEmpty())
+            assertTrue(viewModel.state.value.downloadsOnly)
+            assertEquals(null, viewModel.state.value.error)
+        }
+
+    @Test
+    fun `an older media load answering after a newer one changes nothing`() =
+        runTest(dispatcher) {
+            val viewModel = MediaViewModel(repository())
+            viewModel.onServerAwayChanged(false)
+            holdNext = true
+            viewModel.loadData()
+            runCurrent()
+
+            viewModel.onServerAwayChanged(true)
+            advanceUntilIdle()
+            assertEquals(listOf(storedMovies), viewModel.state.value.libraries)
+            assertFalse(viewModel.state.value.isLoading)
+
+            held.removeFirst().resumeWith(Result.success(dummyCollections))
+            advanceUntilIdle()
+
+            assertEquals(listOf(storedMovies), viewModel.state.value.libraries)
+            assertEquals(null, viewModel.state.value.error)
+            assertFalse(viewModel.state.value.isLoading)
+        }
+
     // Search
 
     @Test
@@ -253,10 +312,18 @@ class ServerAwayReloadTest {
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
             if (fail) throw java.net.ConnectException("Failed to connect")
+            if (holdNext) {
+                // A slow answer: the test resumes it later.
+                holdNext = false
+                calls += method.name
+                @Suppress("UNCHECKED_CAST")
+                held += args!!.last() as Continuation<Any?>
+                return@newProxyInstance COROUTINE_SUSPENDED
+            }
             when (method.name) {
                 "getLibraries" -> {
                     calls += "libraries"
-                    emptyList<Any>()
+                    if (heldOnce()) listOf(storedMovies) else emptyList<Any>()
                 }
                 "getFavoriteItems" -> {
                     calls += "favorites"

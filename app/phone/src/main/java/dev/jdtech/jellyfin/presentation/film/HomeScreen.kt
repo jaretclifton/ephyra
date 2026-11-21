@@ -142,7 +142,9 @@ internal fun HomeScreenLayout(
     // says the same, so the banner leaves that to it.
     val showErrorState = state.isEmpty && !state.isLoading && state.error != null
     val cardError = state.error.takeIf { !state.isEmpty }
-    val showErrorCard = !showErrorState && showsServerOrErrorCard(cardError)
+    // CE (#775): an empty Home keeps the banner; only over rows can it be put away.
+    val showErrorCard =
+        !showErrorState && showsServerOrErrorCard(cardError, hasContent = !state.isEmpty)
     // CE (#571): the rows start under the card at its real height, which is more than one row with
     // a large font or with the "Allow access" button.
     val density = LocalDensity.current
@@ -266,6 +268,7 @@ internal fun HomeScreenLayout(
                 error = cardError,
                 onShowStacktrace = { showErrorDialog = true },
                 onRetryClick = { onAction(HomeAction.OnRetryClick) },
+                hasContent = !state.isEmpty,
                 modifier =
                     Modifier.padding(
                             start = paddingStart,
@@ -293,7 +296,7 @@ internal fun HomeScreenLayout(
         user = state.user,
         baseUrl = baseUrl,
         // CE (#775): in place of the banner the user put away; the error page says it already.
-        serverIndicator = showsServerIndicator() && !showErrorState,
+        serverIndicator = showsServerIndicator(hasContent = !state.isEmpty) && !showErrorState,
         modifier = Modifier.padding(start = paddingStart, top = paddingTop, end = paddingEnd),
     )
 

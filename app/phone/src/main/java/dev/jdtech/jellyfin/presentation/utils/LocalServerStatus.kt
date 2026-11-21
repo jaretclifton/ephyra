@@ -56,10 +56,20 @@ fun showsServerBanner(): Boolean = isServerAway() && !LocalServerStatus.current.
 
 /**
  * CE (#775): whether a screen shows the quiet "server off" icon in its header in place of the
- * banner, which the user put away.
+ * banner, which the user put away. Not on a screen without content ([hasContent]): the banner stays
+ * there.
  */
 @Composable
-fun showsServerIndicator(): Boolean = isServerAway() && LocalServerStatus.current.bannerDismissed
+fun showsServerIndicator(hasContent: Boolean = true): Boolean =
+    hasContent && isServerAway() && LocalServerStatus.current.bannerDismissed
+
+/**
+ * CE (#775): the server is away because Android's local network access is off. The screens say so
+ * with the card of #571, also when they show the downloads and no load failed.
+ */
+@Composable
+fun isBlockedByLocalNetwork(): Boolean =
+    LocalServerStatus.current.unreachable && LocalLocalNetworkBlock.current.blocked
 
 /**
  * Whether [error] is the server being unreachable, as the banner already says: a connection error
