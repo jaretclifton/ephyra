@@ -78,6 +78,11 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
         }
     }
 
+    /** Whether anything of the server is downloaded (finished), favourite or not. */
+    suspend fun hasDownloads(serverId: String): Boolean =
+        database.countDownloadedMoviesOfServer(serverId) > 0 ||
+            database.countDownloadedShowsOfServer(serverId) > 0
+
     /** Each of [StoredLibraries] that holds something. */
     suspend fun libraries(serverId: String, names: StoredLibraryNames): List<FindroidCollection> =
         buildList {
