@@ -17,6 +17,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -52,6 +53,8 @@ class FavoritesViewModel @Inject constructor(private val repository: JellyfinRep
     fun loadItems(): Job {
         // CE (#775): the same load twice at once, for the server's return and the error page.
         loadJob?.let { if (it.isActive && serverAwayReload.runningIsCurrent()) return it }
+        // A load for the other state makes way, so it cannot land after this one.
+        loadJob?.cancel()
         val away = serverAwayReload.begin()
         return load(away).also { loadJob = it }
     }
@@ -63,6 +66,7 @@ class FavoritesViewModel @Inject constructor(private val repository: JellyfinRep
 
         try {
             val items = repository.getFavoriteItems()
+            ensureActive()
 
             val sections = mutableListOf<CollectionSection>()
 
@@ -104,7 +108,7 @@ class FavoritesViewModel @Inject constructor(private val repository: JellyfinRep
                 _state.value.copy(isLoading = false, sections = sections, downloadsOnly = away)
             )
         } catch (e: CancellationException) {
-            // CE (#775): made way for the load after the sync, which shows its own result.
+            // CE (#775): made way for a newer load, which shows its own result.
             throw e
         } catch (e: Exception) {
             _state.emit(_state.value.copy(isLoading = false, error = e))

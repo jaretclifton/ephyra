@@ -53,6 +53,7 @@ import dev.jdtech.jellyfin.presentation.utils.Layout
 import dev.jdtech.jellyfin.presentation.utils.LocalServerStatus
 import dev.jdtech.jellyfin.presentation.utils.RetryWhenServerReturns
 import dev.jdtech.jellyfin.presentation.utils.ServerStatusUi
+import dev.jdtech.jellyfin.presentation.utils.isBlockedByLocalNetwork
 import dev.jdtech.jellyfin.presentation.utils.isServerAway
 import dev.jdtech.jellyfin.presentation.utils.isServerUnreachable
 import kotlin.math.abs
@@ -300,12 +301,16 @@ private fun explainedByServerAway(error: Throwable?): Boolean =
     isServerAway() && (error == null || isServerUnreachable(error))
 
 /**
- * Whether [ServerOrErrorCard] shows anything for [error], so a screen that lays the card over its
- * content can make room for it.
+ * Whether [ServerOrErrorCard] shows anything for [error] and [hasContent], so a screen that lays
+ * the card over its content can make room for it.
  */
 @Composable
-fun showsServerOrErrorCard(error: Throwable?): Boolean =
-    if (explainedByServerAway(error)) !LocalServerStatus.current.bannerDismissed else error != null
+fun showsServerOrErrorCard(error: Throwable?, hasContent: Boolean = true): Boolean =
+    when {
+        explainedByServerAway(error) -> !hasContent || !LocalServerStatus.current.bannerDismissed
+        error != null -> true
+        else -> isBlockedByLocalNetwork()
+    }
 
 /**
  * The card under a screen's header: the unreachable banner while the server does not answer, the
@@ -313,6 +318,11 @@ fun showsServerOrErrorCard(error: Throwable?): Boolean =
  * error card when the error is the server not answering, so one thing says it. Both load again with
  * [onRetryClick], and by themselves when the server is back. Only the banner can be put away
  * (#775); the error card stays.
+ *
+ * CE (#775): the banner can be put away only over content ([hasContent]). A screen left empty by
+ * the outage keeps it, as the error page is kept: nothing else would say why it is empty. And while
+ * local network access keeps the server away, the card of #571 says so and offers to allow it, also
+ * when the screen shows the downloads and no load failed.
  *
  * [modifier] carries the screen's padding. The width is set here: the error card fills it, the
  * banner stops at the width of a text column (docs/tablet/4-design.md).
@@ -323,21 +333,23 @@ fun ServerOrErrorCard(
     onShowStacktrace: () -> Unit,
     onRetryClick: () -> Unit,
     modifier: Modifier = Modifier,
+    hasContent: Boolean = true,
 ) {
     val status = LocalServerStatus.current
     RetryWhenServerReturns(error = error, onRetry = onRetryClick)
+    val retry = {
+        status.check()
+        onRetryClick()
+    }
 
     if (explainedByServerAway(error)) {
-        if (!status.bannerDismissed) {
+        if (!hasContent || !status.bannerDismissed) {
             ServerUnreachableCard(
                 hasDownloads = status.hasDownloads,
-                onRetryClick = {
-                    status.check()
-                    onRetryClick()
-                },
+                onRetryClick = retry,
                 onDownloadsClick = status.openDownloads,
                 modifier = modifier.widthIn(max = Layout.textMaxWidth).fillMaxWidth(),
-                onDismissClick = status.dismissBanner,
+                onDismissClick = status.dismissBanner.takeIf { hasContent },
             )
         }
     } else if (error != null) {
@@ -347,6 +359,8 @@ fun ServerOrErrorCard(
             modifier = modifier.fillMaxWidth(),
             error = error,
         )
+    } else if (isBlockedByLocalNetwork()) {
+        LocalNetworkOffCard(onRetryClick = retry, modifier = modifier.fillMaxWidth())
     }
 }
 

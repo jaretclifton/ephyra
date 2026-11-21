@@ -24,6 +24,8 @@ import androidx.compose.ui.test.performCustomAccessibilityActionWithLabel
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.test.swipeRight
+import androidx.paging.LoadState
+import androidx.paging.LoadStates
 import androidx.paging.PagingData
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloaderState
@@ -651,14 +653,30 @@ class ServerUnreachableTest {
         assertAbsent(downloadsOnlyText)
     }
 
-    private fun setLibrary(downloadsOnly: Boolean) = setContent {
+    private fun setLibrary(
+        downloadsOnly: Boolean,
+        items: PagingData<FindroidItem> = PagingData.from(listOf<FindroidItem>(dummyMovie)),
+    ) = setContent {
         LibraryScreenLayout(
             libraryName = "Movies",
-            state = LibraryState(items = flowOf(PagingData.from(listOf<FindroidItem>(dummyMovie)))),
+            state = LibraryState(items = flowOf(items)),
             onAction = {},
             downloadsOnly = downloadsOnly,
         )
     }
+
+    /** A real library whose first load found the server away. */
+    private val failedLibrary: PagingData<FindroidItem>
+        get() =
+            PagingData.from(
+                emptyList(),
+                sourceLoadStates =
+                    LoadStates(
+                        refresh = LoadState.Error(ConnectException("Failed to connect")),
+                        prepend = LoadState.NotLoading(endOfPaginationReached = false),
+                        append = LoadState.NotLoading(endOfPaginationReached = false),
+                    ),
+            )
 
     @Test
     fun aRealLibrarySaysNothingWhileTheServerIsAway() {
@@ -699,6 +717,99 @@ class ServerUnreachableTest {
         }
 
         assertAbsent(downloadsOnlyText)
+    }
+
+    // Only over content can the banner be put away (#775)
+
+    @Test
+    fun mediaWithNothingOnScreenKeepsTheBannerEvenWhenItWasPutAway() {
+        // No downloads and nothing loaded before the server went away.
+        status = dismissible().copy(bannerDismissed = true)
+        setMedia(MediaState(error = ConnectException("Failed to connect")))
+
+        rule.onNodeWithText(unreachableText).assertIsDisplayed()
+        rule.onAllNodes(hasContentDescription(closeText)).assertCountEquals(0)
+        rule.onAllNodes(hasText(unreachableText) and hasAnyCustomAction()).assertCountEquals(0)
+        assertNoIndicator()
+    }
+
+    @Test
+    fun mediaWithLibrariesLetsTheBannerBePutAway() {
+        status = dismissible()
+        setMedia(MediaState(libraries = storedLibraries))
+
+        rule.onNodeWithContentDescription(closeText).performClick()
+        settle()
+
+        assertAbsent(unreachableText)
+        rule.onNodeWithContentDescription(indicatorText).assertIsDisplayed()
+    }
+
+    @Test
+    fun aLibraryWhoseFirstLoadFailedKeepsTheBanner() {
+        status = dismissible().copy(bannerDismissed = true)
+        setLibrary(downloadsOnly = false, items = failedLibrary)
+
+        rule.onNodeWithText(unreachableText).assertIsDisplayed()
+        rule.onAllNodes(hasContentDescription(closeText)).assertCountEquals(0)
+        assertNoIndicator()
+    }
+
+    @Test
+    fun aLibraryWithItemsLetsTheBannerBePutAway() {
+        status = dismissible().copy(bannerDismissed = true)
+        setLibrary(downloadsOnly = false)
+
+        assertAbsent(unreachableText)
+        rule.onNodeWithContentDescription(indicatorText).assertIsDisplayed()
+    }
+
+    // Local network access off while the downloads are on screen (#775, #571)
+
+    private val localNetworkOffText
+        get() = string(SetupR.string.ce_local_network_off)
+
+    @Test
+    fun favoritesFromTheDownloadsStillOfferToAllowLocalNetworkAccess() {
+        // Room answered, so no load failed: the card of #571 says what keeps the server away.
+        localNetworkBlocked = true
+        status = dismissible()
+        setFavorites(favorites(downloadsOnly = true))
+
+        rule.onNodeWithText(localNetworkOffText).assertIsDisplayed()
+        assertAbsent(unreachableText)
+        // Not something to put away, and no details of an error that is not there.
+        rule.onAllNodes(hasContentDescription(closeText)).assertCountEquals(0)
+        rule
+            .onAllNodes(hasContentDescription(string(CoreR.string.show_stacktrace)))
+            .assertCountEquals(0)
+        assertNoIndicator()
+    }
+
+    @Test
+    fun mediaMakesRoomForTheLocalNetworkCard() {
+        localNetworkBlocked = true
+        status = dismissible().copy(bannerDismissed = true)
+        setMedia(MediaState(libraries = storedLibraries))
+
+        val cardBottom = rule.onNodeWithText(localNetworkOffText).getBoundsInRoot().bottom
+        val libraryTop = rule.onNodeWithText(storedLibraries[0].name).getBoundsInRoot().top
+        assertTrue(
+            libraryTop > cardBottom,
+            message = "library at $libraryTop, card ends at $cardBottom",
+        )
+    }
+
+    @Test
+    fun theLocalNetworkCardRetriesAndAsksTheServerAgain() {
+        localNetworkBlocked = true
+        status = dismissible()
+        setFavorites(favorites(downloadsOnly = true))
+
+        rule.onNodeWithContentDescription(string(CoreR.string.retry)).performClick()
+
+        assertEquals(1, checks)
+        assertEquals(1, retries)
     }
 
     // Download and trailer buttons

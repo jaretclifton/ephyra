@@ -137,6 +137,9 @@ internal fun LibraryScreenLayout(
     // CE (#775): not over a failed first load, which has nothing to show.
     val showDownloadsOnly =
         downloadsOnly && !(items.itemCount == 0 && items.loadState.refresh is LoadState.Error)
+    // CE (#775): items, or a load that came back empty, which its empty page explains. A library
+    // left empty by the outage keeps the banner.
+    val hasContent = items.itemCount > 0 || items.loadState.refresh is LoadState.NotLoading
 
     Scaffold(
         modifier =
@@ -162,7 +165,7 @@ internal fun LibraryScreenLayout(
                 },
                 actions = {
                     // CE (#775): the banner put away, before the screen's own actions.
-                    if (showsServerIndicator()) ServerOffIndicator()
+                    if (showsServerIndicator(hasContent)) ServerOffIndicator()
                     IconButton(
                         onClick = {
                             onAction(LibraryAction.ToggleWatchedFilter(!state.filterWatched))
@@ -194,6 +197,7 @@ internal fun LibraryScreenLayout(
                 loadStates = items.loadState,
                 onRefresh = { items.refresh() },
                 modifier = Modifier.padding(contentPadding + innerPadding),
+                hasContent = hasContent,
             )
             Box(modifier = Modifier.fillMaxSize()) {
                 LazyVerticalGrid(
@@ -319,6 +323,7 @@ private fun ErrorGroup(
     loadStates: CombinedLoadStates,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
+    hasContent: Boolean = true,
 ) {
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -342,6 +347,7 @@ private fun ErrorGroup(
         onShowStacktrace = { showErrorDialog = true },
         onRetryClick = onRefresh,
         modifier = modifier,
+        hasContent = hasContent,
     )
     loadStateError?.let {
         if (showErrorDialog) {

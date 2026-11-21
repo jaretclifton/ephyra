@@ -52,6 +52,36 @@ fun ErrorCard(
     error: Throwable? = null,
 ) {
     val block = error?.let { localNetworkBlockFor(error = it, onUnblocked = onRetryClick) }
+    ErrorCardContent(
+        block = block,
+        onShowStacktrace = onShowStacktrace,
+        onRetryClick = onRetryClick,
+        modifier = modifier,
+    )
+}
+
+/**
+ * CE (#775): local network access is off and keeps the server away, while the screen shows what it
+ * could load without it (the downloads), so no load failed. The card of #571, without an error to
+ * show the details of.
+ */
+@Composable
+fun LocalNetworkOffCard(onRetryClick: () -> Unit, modifier: Modifier = Modifier) {
+    ErrorCardContent(
+        block = LocalLocalNetworkBlock.current,
+        onShowStacktrace = null,
+        onRetryClick = onRetryClick,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun ErrorCardContent(
+    block: LocalNetworkBlock?,
+    onShowStacktrace: (() -> Unit)?,
+    onRetryClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val request = block?.request
 
     OutlinedCard(
@@ -83,11 +113,13 @@ fun ErrorCard(
                         ),
                     modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
                 )
-                IconButton(onClick = onShowStacktrace) {
-                    Icon(
-                        painter = painterResource(CoreR.drawable.ic_logs),
-                        contentDescription = stringResource(CoreR.string.show_stacktrace),
-                    )
+                if (onShowStacktrace != null) {
+                    IconButton(onClick = onShowStacktrace) {
+                        Icon(
+                            painter = painterResource(CoreR.drawable.ic_logs),
+                            contentDescription = stringResource(CoreR.string.show_stacktrace),
+                        )
+                    }
                 }
                 IconButton(onClick = onRetryClick) {
                     Icon(

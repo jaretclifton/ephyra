@@ -130,7 +130,9 @@ internal fun MediaScreenLayout(
     val density = LocalDensity.current
     var errorCardHeight by remember { mutableStateOf(ErrorCardInitialHeight) }
     // CE (#281): the same slot holds the unreachable banner, also when no load has failed.
-    val showCard = showsServerOrErrorCard(state.error)
+    // CE (#775): with no libraries on screen the banner stays: it is what says why.
+    val hasContent = state.libraries.isNotEmpty()
+    val showCard = showsServerOrErrorCard(state.error, hasContent = hasContent)
     val contentPaddingTop by
         animateDpAsState(
             targetValue =
@@ -175,7 +177,7 @@ internal fun MediaScreenLayout(
             paddingStart = paddingStart,
             paddingEnd = paddingEnd,
             docked = useDockedSearch(),
-            serverIndicator = showsServerIndicator(),
+            serverIndicator = showsServerIndicator(hasContent = hasContent),
         )
         LazyVerticalGrid(
             columns = GridCellsAdaptiveWithMinColumns(minSize = minColumnSize, minColumns = 2),
@@ -211,6 +213,7 @@ internal fun MediaScreenLayout(
                 error = state.error,
                 onShowStacktrace = { showErrorDialog = true },
                 onRetryClick = { onAction(MediaAction.OnRetryClick) },
+                hasContent = hasContent,
                 modifier =
                     Modifier.padding(
                             start = paddingStart,
