@@ -3,9 +3,11 @@ package dev.jdtech.jellyfin.server.jellyfin
 import android.app.Application
 import android.provider.Settings
 import dev.jdtech.jellyfin.api.JellyfinApi
+import dev.jdtech.jellyfin.domain.ports.RequestWatcher
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -75,5 +77,54 @@ class JellyfinServerSessionTest {
         api.userId = other
         assertEquals("https://two.example", session.baseUrl)
         assertEquals(other, session.userId)
+    }
+
+    @Test
+    fun `use puts the address, the token and the user on the client`() {
+        session.use("https://one.example", "token", userId)
+
+        assertEquals("https://one.example", api.api.baseUrl)
+        assertEquals("token", api.api.accessToken)
+        assertEquals(userId, api.userId)
+        assertEquals("token", session.accessToken)
+    }
+
+    @Test
+    fun `signing out with use keeps the address and clears the token and the user`() {
+        // #763: what ServerSessionKeeper did with `api.update(accessToken = null)`.
+        session.use("https://one.example", "token", userId)
+
+        session.use(session.baseUrl, null, null)
+
+        assertEquals("https://one.example", api.api.baseUrl)
+        assertNull(api.api.accessToken)
+        assertNull(api.userId)
+        assertNull(session.accessToken)
+    }
+
+    @Test
+    fun `the request watcher is the client's own field`() {
+        val watcher =
+            object : RequestWatcher {
+                override fun onStarted() = Unit
+
+                override fun onAnswered() = Unit
+
+                override fun onUnanswered() = Unit
+
+                override fun onCancelled() = Unit
+            }
+
+        session.requestWatcher = watcher
+        assertSame(watcher, api.requestWatcher)
+
+        api.requestWatcher = null
+        assertNull(session.requestWatcher)
+    }
+
+    @Test
+    fun `the probe waits as long as it always did`() {
+        assertEquals(3_000L, session.probeTimeoutMs)
+        assertEquals(JellyfinApi.PROBE_TIMEOUT_MS, session.probeTimeoutMs)
     }
 }

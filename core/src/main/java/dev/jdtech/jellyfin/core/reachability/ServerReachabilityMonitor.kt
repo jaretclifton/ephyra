@@ -1,6 +1,6 @@
 package dev.jdtech.jellyfin.core.reachability
 
-import dev.jdtech.jellyfin.api.RequestWatcher
+import dev.jdtech.jellyfin.domain.ports.RequestWatcher
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -48,7 +48,7 @@ class ServerReachabilityMonitor(
     /**
      * Emits when it is worth sending the server what is waiting for it: a probe reached it, or the
      * app came to the foreground and the server answered a moment ago. (The server answering a
-     * request again after failed ones is `JellyfinApi.serverReturned`.)
+     * request again after failed ones is `ServerSession.serverReturned`.)
      */
     val serverConfirmed: SharedFlow<Unit> = _serverConfirmed.asSharedFlow()
 

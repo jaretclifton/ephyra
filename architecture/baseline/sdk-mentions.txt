@@ -1,4 +1,3 @@
-core/src/main/java/dev/jdtech/jellyfin/core/session/ServerSessionKeeper.kt
 data/src/main/java/dev/jdtech/jellyfin/repository/JellyfinRepositoryImpl.kt
 data/src/main/java/dev/jdtech/jellyfin/repository/PlaySessions.kt
 data/src/main/java/dev/jdtech/jellyfin/repository/ResumeThresholds.kt
