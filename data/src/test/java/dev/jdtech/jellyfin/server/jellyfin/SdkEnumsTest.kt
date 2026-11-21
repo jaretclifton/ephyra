@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.server.jellyfin
 
 import dev.jdtech.jellyfin.models.MediaStreamType
+import dev.jdtech.jellyfin.models.PersonKind
 import dev.jdtech.jellyfin.models.SubtitleDeliveryMethod
 import dev.jdtech.jellyfin.models.VideoRangeType
 import kotlin.test.assertEquals
@@ -10,10 +11,28 @@ import org.jellyfin.sdk.model.api.VideoRangeType as SdkVideoRangeType
 import org.junit.jupiter.api.Test
 
 /**
- * Every SDK constant has a counterpart of the same name (#741), so an SDK update that adds one
- * fails here and not in a user's database read. Room stores [MediaStreamType] by constant name.
+ * Every SDK constant has a counterpart of the same name, so an SDK update that adds one fails here
+ * and not in a user's database read. Room stores [MediaStreamType] by constant name (#741).
  */
 class SdkEnumsTest {
+    @Test
+    fun `every SDK person kind has a counterpart with the same name`() {
+        org.jellyfin.sdk.model.api.PersonKind.entries.forEach { sdk ->
+            assertEquals(sdk.name, sdk.toModel().name)
+        }
+    }
+
+    @Test
+    fun `both enums have the same number of constants`() {
+        assertEquals(org.jellyfin.sdk.model.api.PersonKind.entries.size, PersonKind.entries.size)
+    }
+
+    @Test
+    fun `kinds stay apart`() {
+        assertEquals(PersonKind.EDITOR, org.jellyfin.sdk.model.api.PersonKind.EDITOR.toModel())
+        assertEquals(PersonKind.ACTOR, org.jellyfin.sdk.model.api.PersonKind.ACTOR.toModel())
+    }
+
     @Test
     fun `every media stream type converts by name`() {
         assertEquals(

@@ -14,9 +14,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import dev.jdtech.jellyfin.models.FindroidItemPerson
 import dev.jdtech.jellyfin.models.FindroidItemPersonImage
+import dev.jdtech.jellyfin.models.PersonKind
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
-import org.jellyfin.sdk.model.api.PersonKind
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
