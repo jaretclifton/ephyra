@@ -5,6 +5,7 @@ import android.provider.Settings
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.player.DeviceCodecProbe
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinCatalog
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.Closeable
@@ -148,6 +149,7 @@ internal fun StandInServer.repository(
     return JellyfinRepositoryImpl(
         context,
         api,
+        JellyfinCatalog(api),
         database,
         preferences,
         JellyfinDeviceProfiles(DeviceCodecProbe(context)),

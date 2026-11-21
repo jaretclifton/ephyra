@@ -6,6 +6,8 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.domain.ports.CatalogPort
+import dev.jdtech.jellyfin.domain.ports.ItemQuery
 import dev.jdtech.jellyfin.models.EpisodeField
 import dev.jdtech.jellyfin.models.FindroidCollection
 import dev.jdtech.jellyfin.models.FindroidEpisode
@@ -33,18 +35,13 @@ import dev.jdtech.jellyfin.models.toFindroidShow
 import dev.jdtech.jellyfin.models.toFindroidSource
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.server.jellyfin.mappers.MapperContext
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidCollection
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidEpisode
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidItem
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidMovie
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidPerson
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSeason
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSegment
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidShow
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSource
 import dev.jdtech.jellyfin.server.jellyfin.toResumeThresholds
-import dev.jdtech.jellyfin.server.jellyfin.toSdk
-import dev.jdtech.jellyfin.server.jellyfin.toSdkFilters
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.File
 import java.time.LocalDateTime
@@ -53,8 +50,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -64,15 +59,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jellyfin.sdk.api.client.extensions.audioApi
-import org.jellyfin.sdk.model.api.BaseItemDto
-import org.jellyfin.sdk.model.api.BaseItemKind
 import org.jellyfin.sdk.model.api.DeviceOptionsDto
 import org.jellyfin.sdk.model.api.GeneralCommandType
-import org.jellyfin.sdk.model.api.ImageType
-import org.jellyfin.sdk.model.api.ItemFields
-import org.jellyfin.sdk.model.api.ItemFilter as SdkItemFilter
-import org.jellyfin.sdk.model.api.ItemSortBy
 import org.jellyfin.sdk.model.api.MediaType
 import org.jellyfin.sdk.model.api.PlaybackInfoDto
 import org.jellyfin.sdk.model.api.PlaybackOrder
@@ -80,12 +68,12 @@ import org.jellyfin.sdk.model.api.PlaybackProgressInfo
 import org.jellyfin.sdk.model.api.PlaybackStartInfo
 import org.jellyfin.sdk.model.api.PlaybackStopInfo
 import org.jellyfin.sdk.model.api.RepeatMode
-import org.jellyfin.sdk.model.api.SortOrder as ItemSortOrder
 import timber.log.Timber
 
 class JellyfinRepositoryImpl(
     private val context: Context,
     private val jellyfinApi: JellyfinApi,
+    private val catalog: CatalogPort,
     private val database: ServerDatabaseDao,
     private val appPreferences: AppPreferences,
     private val deviceProfiles: JellyfinDeviceProfiles,
@@ -173,23 +161,9 @@ class JellyfinRepositoryImpl(
                     "No authenticated user. userId is null — session may have expired."
                 )
 
-    override suspend fun getServerInfo(): ServerInfo =
-        withContext(Dispatchers.IO) {
-            val info = jellyfinApi.systemApi.getPublicSystemInfo().content
-            ServerInfo(
-                id = info.id.orEmpty(),
-                name = info.serverName.orEmpty(),
-                version = info.version,
-                product = info.productName,
-            )
-        }
+    override suspend fun getServerInfo(): ServerInfo = catalog.serverInfo()
 
-    override suspend fun getUserViews(): List<FindroidCollection> =
-        withContext(Dispatchers.IO) {
-            jellyfinApi.userViewApi.getUserViews(currentUserId).content.items.mapNotNull {
-                it.toFindroidCollection(getBaseUrl())
-            }
-        }
+    override suspend fun getUserViews(): List<FindroidCollection> = catalog.userViews()
 
     // CE (#281): the item getters fall back to the copy in Room (a download, or the show and season
     // of a downloaded episode) when the server fails or is slow, see serverOrStored. CE (#718):
@@ -201,10 +175,7 @@ class JellyfinRepositoryImpl(
             serverOrStored(
                 stored?.let { dto -> suspend { dto.toFindroidEpisode(database, currentUserId) } }
             ) {
-                jellyfinApi.libraryApi
-                    .getItem(itemId, currentUserId)
-                    .content
-                    .toFindroidEpisode(mapperContext(), localSourcesFor(listOf(itemId)))!!
+                catalog.episode(itemId).withLocalSources(localSourcesFor(listOf(itemId)))
             }
         }
 
@@ -214,10 +185,7 @@ class JellyfinRepositoryImpl(
             serverOrStored(
                 stored?.let { dto -> suspend { dto.toFindroidMovie(database, currentUserId) } }
             ) {
-                jellyfinApi.libraryApi
-                    .getItem(itemId, currentUserId)
-                    .content
-                    .toFindroidMovie(mapperContext(), localSourcesFor(listOf(itemId)))
+                catalog.movie(itemId).withLocalSources(localSourcesFor(listOf(itemId)))
             }
         }
 
@@ -227,10 +195,7 @@ class JellyfinRepositoryImpl(
             serverOrStored(
                 stored?.let { dto -> suspend { dto.toFindroidShow(database, currentUserId) } }
             ) {
-                jellyfinApi.libraryApi
-                    .getItem(itemId, currentUserId)
-                    .content
-                    .toFindroidShow(getBaseUrl())
+                catalog.show(itemId)
             }
         }
 
@@ -240,10 +205,7 @@ class JellyfinRepositoryImpl(
             serverOrStored(
                 stored?.let { dto -> suspend { dto.toFindroidSeason(database, currentUserId) } }
             ) {
-                jellyfinApi.libraryApi
-                    .getItem(itemId, currentUserId)
-                    .content
-                    .toFindroidSeason(getBaseUrl())
+                catalog.season(itemId)
             }
         }
 
@@ -255,22 +217,11 @@ class JellyfinRepositoryImpl(
             val stored = serverId?.let { id ->
                 suspend { storedLists.libraries(id, storedLibraryNames, ::hasStoredImage) }
             }
-            serverOrStoredItems(stored) {
-                jellyfinApi.libraryApi.getItems(currentUserId).content.items.mapNotNull {
-                    it.toFindroidCollection(getBaseUrl())
-                }
-            }
+            serverOrStoredItems(stored) { catalog.libraries() }
         }
 
     override suspend fun getItem(itemId: UUID): FindroidItem? =
-        withContext(Dispatchers.IO) {
-            serverOrStored(storedItem(itemId)) {
-                jellyfinApi.libraryApi
-                    .getItem(itemId = itemId, userId = currentUserId)
-                    .content
-                    .toFindroidItem(mapperContext(), emptyMap())
-            }
-        }
+        withContext(Dispatchers.IO) { serverOrStored(storedItem(itemId)) { catalog.item(itemId) } }
 
     /**
      * CE (#281): builds [itemId] from Room, or null when Room doesn't have it for the current
@@ -340,29 +291,21 @@ class JellyfinRepositoryImpl(
                     includeTotal,
                 )
             }
-            val result =
-                jellyfinApi.libraryApi
-                    .getItems(
-                        currentUserId,
+            val page =
+                catalog.items(
+                    ItemQuery(
                         parentId = parentId,
-                        includeItemTypes = includeTypes?.toSdk(),
+                        kinds = includeTypes,
                         recursive = recursive,
-                        sortBy = listOf(ItemSortBy.fromName(sortBy.sortString)),
-                        sortOrder = listOf(ItemSortOrder.fromName(sortOrder.sortString)),
-                        filters = filters.toSdkFilters(),
+                        sortBy = sortBy,
+                        sortOrder = sortOrder,
+                        filters = filters,
                         startIndex = startIndex,
                         limit = limit,
-                        // Cards read the primary image and the first backdrop. The server counts
-                        // only for the first page of a pager (see getItemsPagingIndexed).
-                        imageTypeLimit = 1,
-                        enableImageTypes = ROW_IMAGE_TYPES,
-                        enableTotalRecordCount = includeTotal,
-                    )
-                    .content
-            ItemsPage(
-                items = result.items.toFindroidItems(),
-                totalRecordCount = if (includeTotal) result.totalRecordCount else null,
-            )
+                    ),
+                    includeTotal = includeTotal,
+                )
+            page.copy(items = page.items.withLocalSources())
         }
 
     /**
@@ -394,18 +337,7 @@ class JellyfinRepositoryImpl(
         limit: Int,
     ): List<FindroidItem> =
         withContext(Dispatchers.IO) {
-            jellyfinApi.libraryApi
-                .getItems(
-                    currentUserId,
-                    includeItemTypes = includeTypes.toSdk(),
-                    recursive = true,
-                    sortBy = listOf(ItemSortBy.RANDOM),
-                    imageTypes = listOf(ImageType.BACKDROP),
-                    limit = limit,
-                )
-                .content
-                .items
-                .toFindroidItems()
+            catalog.randomItemsWithBackdrop(includeTypes, limit).withLocalSources()
         }
 
     override suspend fun getItemsPaging(
@@ -458,30 +390,18 @@ class JellyfinRepositoryImpl(
                     nameLessThan,
                 )
             }
-            jellyfinApi.libraryApi
-                .getItems(
-                    currentUserId,
+            catalog.itemCount(
+                ItemQuery(
                     parentId = parentId,
-                    includeItemTypes = includeTypes?.toSdk(),
+                    kinds = includeTypes,
                     recursive = recursive,
-                    filters = filters.toSdkFilters(),
-                    nameLessThan = nameLessThan,
-                    limit = 0,
-                    enableTotalRecordCount = true,
-                    enableImages = false,
-                    enableUserData = false,
-                )
-                .content
-                .totalRecordCount
+                    filters = filters,
+                ),
+                nameLessThan = nameLessThan,
+            )
         }
 
-    override suspend fun getPerson(personId: UUID): FindroidPerson =
-        withContext(Dispatchers.IO) {
-            jellyfinApi.libraryApi
-                .getItem(personId, currentUserId)
-                .content
-                .toFindroidPerson(getBaseUrl())
-        }
+    override suspend fun getPerson(personId: UUID): FindroidPerson = catalog.person(personId)
 
     override suspend fun getPersonItems(
         personIds: List<UUID>,
@@ -490,18 +410,7 @@ class JellyfinRepositoryImpl(
         limit: Int?,
     ): List<FindroidItem> =
         withContext(Dispatchers.IO) {
-            jellyfinApi.libraryApi
-                .getItems(
-                    currentUserId,
-                    personIds = personIds,
-                    includeItemTypes = includeTypes?.toSdk(),
-                    recursive = recursive,
-                    limit = limit,
-                    enableTotalRecordCount = false,
-                )
-                .content
-                .items
-                .toFindroidItems()
+            catalog.personItems(personIds, includeTypes, recursive, limit).withLocalSources()
         }
 
     override suspend fun getFavoriteItems(): ItemsResult<FindroidItem> =
@@ -515,18 +424,7 @@ class JellyfinRepositoryImpl(
             val noneIsAnAnswer =
                 serverId != null && stored.isEmpty() && storedLists.hasDownloads(serverId)
             serverOrStoredItems(storedItems(serverId, stored, emptyIsAnAnswer = noneIsAnAnswer)) {
-                jellyfinApi.libraryApi
-                    .getItems(
-                        currentUserId,
-                        filters = listOf(SdkItemFilter.IS_FAVORITE),
-                        includeItemTypes =
-                            listOf(BaseItemKind.MOVIE, BaseItemKind.SERIES, BaseItemKind.EPISODE),
-                        recursive = true,
-                        enableTotalRecordCount = false,
-                    )
-                    .content
-                    .items
-                    .toFindroidItems()
+                catalog.favorites().withLocalSources()
             }
         }
 
@@ -544,109 +442,34 @@ class JellyfinRepositoryImpl(
                             it,
                             query,
                             itemKinds,
-                            if (itemKinds == null) SEARCH_LIMIT else SEARCH_LIMIT_PER_KIND,
+                            if (itemKinds == null) CatalogPort.SEARCH_LIMIT
+                            else CatalogPort.SEARCH_LIMIT_PER_KIND,
                         )
                     }
                     .orEmpty()
             serverOrStoredItems(storedItems(serverId, stored)) {
-                if (itemKinds == null) {
-                    searchItems(query, listOf(ItemKind.MOVIE, ItemKind.SERIES), SEARCH_LIMIT)
-                } else {
-                    coroutineScope {
-                        itemKinds
-                            .map { kind ->
-                                async { searchItems(query, listOf(kind), SEARCH_LIMIT_PER_KIND) }
-                            }
-                            .awaitAll()
-                            .flatten()
-                    }
-                }
+                catalog.search(query, itemKinds).withLocalSources()
             }
         }
 
-    private suspend fun searchItems(
-        query: String,
-        itemKinds: List<ItemKind>,
-        limit: Int,
-    ): List<FindroidItem> =
-        jellyfinApi.libraryApi
-            .getItems(
-                currentUserId,
-                searchTerm = query,
-                includeItemTypes = itemKinds.toSdk(),
-                recursive = true,
-                limit = limit,
-                enableTotalRecordCount = false,
-            )
-            .content
-            .items
-            .toFindroidItems()
-
     override suspend fun getSuggestions(): List<FindroidItem> =
-        withContext(Dispatchers.IO) {
-            jellyfinApi.suggestionApi
-                .getSuggestions(
-                    currentUserId,
-                    limit = 6,
-                    type = listOf(BaseItemKind.MOVIE, BaseItemKind.SERIES),
-                    enableTotalRecordCount = false,
-                )
-                .content
-                .items
-                .toFindroidItems()
-        }
+        withContext(Dispatchers.IO) { catalog.suggestions().withLocalSources() }
 
     override suspend fun getResumeItems(): List<FindroidItem> =
-        withContext(Dispatchers.IO) {
-            jellyfinApi.libraryApi
-                .getResumeItems(
-                    currentUserId,
-                    limit = 12,
-                    mediaTypes = listOf(MediaType.VIDEO),
-                    includeItemTypes =
-                        listOf(
-                            BaseItemKind.MOVIE,
-                            BaseItemKind.EPISODE,
-                            BaseItemKind.VIDEO,
-                            BaseItemKind.MUSIC_VIDEO,
-                        ),
-                    // The TV hero shows it, and Jellyfin leaves it out of Resume, Latest and Next
-                    // Up unless asked (#410).
-                    fields = listOf(ItemFields.OVERVIEW),
-                    imageTypeLimit = 1,
-                    enableImageTypes = WIDE_ROW_IMAGE_TYPES,
-                    enableTotalRecordCount = false,
-                )
-                .content
-                .items
-                .toFindroidItems()
-        }
+        withContext(Dispatchers.IO) { catalog.resumeItems().withLocalSources() }
 
     override suspend fun getLatestMedia(
         parentId: UUID,
         includeItemTypes: List<ItemKind>?,
     ): List<FindroidItem> =
         withContext(Dispatchers.IO) {
-            jellyfinApi.libraryApi
-                .getLatestMedia(
-                    currentUserId,
-                    parentId = parentId,
-                    includeItemTypes = includeItemTypes?.toSdk(),
-                    fields = listOf(ItemFields.OVERVIEW),
-                    limit = 16,
-                    imageTypeLimit = 1,
-                    enableImageTypes = ROW_IMAGE_TYPES,
-                )
-                .content
-                .toFindroidItems()
+            catalog.latest(parentId, includeItemTypes).withLocalSources()
         }
 
     override suspend fun getSeasons(seriesId: UUID, offline: Boolean): List<FindroidSeason> =
         withContext(Dispatchers.IO) {
             if (!offline) {
-                jellyfinApi.showApi.getSeasons(seriesId, currentUserId).content.items.map {
-                    it.toFindroidSeason(getBaseUrl())
-                }
+                catalog.seasons(seriesId)
             } else {
                 // CE (#718): the current server's stored seasons only.
                 val serverId = currentServerId() ?: return@withContext emptyList()
@@ -658,26 +481,15 @@ class JellyfinRepositoryImpl(
 
     override suspend fun getNextUp(seriesId: UUID?): List<FindroidEpisode> =
         withContext(Dispatchers.IO) {
-            jellyfinApi.showApi
-                .getNextUp(
-                    currentUserId,
-                    limit = 24,
-                    seriesId = seriesId,
-                    fields = listOf(ItemFields.OVERVIEW),
-                    imageTypeLimit = 1,
-                    enableImageTypes = WIDE_ROW_IMAGE_TYPES,
-                    nextUpDateCutoff =
-                        nextUpDateCutoff(
-                            seriesId = seriesId,
-                            maxDays = appPreferences.getValue(appPreferences.homeNextUpMaxDays),
-                            now = LocalDateTime.now(),
-                        ),
-                    enableTotalRecordCount = false,
-                    enableResumable = false,
-                )
-                .content
-                .items
-                .mapNotNull { it.toFindroidEpisode(mapperContext(), emptyMap()) }
+            catalog.nextUp(
+                seriesId,
+                dateCutoff =
+                    nextUpDateCutoff(
+                        seriesId = seriesId,
+                        maxDays = appPreferences.getValue(appPreferences.homeNextUpMaxDays),
+                        now = LocalDateTime.now(),
+                    ),
+            )
         }
 
     override suspend fun getEpisodes(
@@ -690,21 +502,9 @@ class JellyfinRepositoryImpl(
     ): List<FindroidEpisode> =
         withContext(Dispatchers.IO) {
             if (!offline) {
-                jellyfinApi.showApi
-                    .getEpisodes(
-                        seriesId,
-                        currentUserId,
-                        seasonId = seasonId,
-                        fields = fields?.map { it.toSdk() },
-                        startItemId = startItemId,
-                        limit = limit,
-                    )
-                    .content
-                    .items
-                    .let { items ->
-                        val local = localSourcesFor(items.map { it.id })
-                        items.mapNotNull { it.toFindroidEpisode(mapperContext(), local) }
-                    }
+                val episodes = catalog.episodes(seriesId, seasonId, fields, startItemId, limit)
+                val local = localSourcesFor(episodes.map { it.id })
+                episodes.map { it.withLocalSources(local) }
             } else {
                 // CE (#718): the current server's stored episodes only.
                 val serverId = currentServerId() ?: return@withContext emptyList()
@@ -916,13 +716,7 @@ class JellyfinRepositoryImpl(
     override suspend fun getThemeSongUrl(itemId: UUID): String? =
         withContext(Dispatchers.IO) {
             try {
-                val song =
-                    jellyfinApi.libraryApi
-                        .getThemeSongs(itemId, currentUserId, inheritFromParent = true)
-                        .content
-                        .items
-                        .firstOrNull() ?: return@withContext null
-                jellyfinApi.api.audioApi.getAudioStreamUrl(song.id, static = true)
+                catalog.themeSongUrl(itemId)
             } catch (e: Exception) {
                 Timber.e(e)
                 null
@@ -930,44 +724,16 @@ class JellyfinRepositoryImpl(
         }
 
     override suspend fun getSimilarItems(itemId: UUID, limit: Int): List<FindroidItem> =
-        withContext(Dispatchers.IO) {
-            jellyfinApi.libraryApi
-                .getSimilarItems(itemId, userId = currentUserId, limit = limit)
-                .content
-                .items
-                .filter { it.id != itemId }
-                .toFindroidItems()
-        }
+        withContext(Dispatchers.IO) { catalog.similar(itemId, limit).withLocalSources() }
 
     override suspend fun getExtras(
         itemId: UUID,
         localTrailers: Boolean,
         specialFeatures: Boolean,
-    ): List<FindroidMovie> =
-        withContext(Dispatchers.IO) {
-            val trailersAsync = async {
-                if (localTrailers) {
-                    jellyfinApi.libraryApi.getLocalTrailers(itemId, currentUserId).content
-                } else emptyList()
-            }
-            val featuresAsync = async {
-                if (specialFeatures) {
-                    jellyfinApi.libraryApi.getSpecialFeatures(itemId, currentUserId).content
-                } else emptyList()
-            }
-            (trailersAsync.await() + featuresAsync.await())
-                .distinctBy { it.id }
-                .map { it.toFindroidMovie(mapperContext(), emptyMap()) }
-        }
+    ): List<FindroidMovie> = catalog.extras(itemId, localTrailers, specialFeatures)
 
     override suspend fun getItemCollections(itemId: UUID): List<FindroidItem> =
-        withContext(Dispatchers.IO) {
-            jellyfinApi.libraryApi
-                .getItemCollections(itemId, userId = currentUserId)
-                .content
-                .items
-                .toFindroidItems()
-        }
+        withContext(Dispatchers.IO) { catalog.collectionsOf(itemId).withLocalSources() }
 
     override suspend fun postCapabilities() {
         Timber.d("Sending capabilities")
@@ -1255,35 +1021,40 @@ class JellyfinRepositoryImpl(
         return if (any) database.getLocalSourcesForItems(itemIds, serverId) else emptyMap()
     }
 
-    /** Maps a list with one batched lookup of downloaded sources instead of one query per item. */
-    private suspend fun List<BaseItemDto>.toFindroidItems(): List<FindroidItem> {
+    /**
+     * CE (#756): adds the downloaded sources of the movies and episodes the catalog gave, with one
+     * batched lookup for the whole list instead of one query per item.
+     */
+    private suspend fun List<FindroidItem>.withLocalSources(): List<FindroidItem> {
         val local =
-            localSourcesFor(
-                filter { it.type == BaseItemKind.MOVIE || it.type == BaseItemKind.EPISODE }
-                    .map { it.id }
-            )
-        return mapNotNull { it.toFindroidItem(mapperContext(), local) }
+            localSourcesFor(filter { it is FindroidMovie || it is FindroidEpisode }.map { it.id })
+        if (local.isEmpty()) return this
+        return map { item ->
+            when (item) {
+                is FindroidMovie -> item.withLocalSources(local)
+                is FindroidEpisode -> item.withLocalSources(local)
+                else -> item
+            }
+        }
     }
 
     private companion object {
-        /**
-         * The only images row cards (home rows, next up) render: `FindroidImages` reads the primary
-         * tag, the first backdrop and the series primary tag. Together with `imageTypeLimit = 1`
-         * this stops the server from resolving (and sending blurhashes for) every backdrop, logo,
-         * thumb and banner of each item.
-         */
-        val ROW_IMAGE_TYPES = listOf(ImageType.PRIMARY, ImageType.BACKDROP)
-
-        /** CE (#608): Continue Watching and Next Up also show the thumb, the art with the title. */
-        val WIDE_ROW_IMAGE_TYPES = ROW_IMAGE_TYPES + ImageType.THUMB
-
         /** Library grid page; a fling on a 2-4 column grid outruns anything smaller. */
         private const val LIBRARY_PAGE_SIZE = 40
-
-        private const val SEARCH_LIMIT = 50
-        private const val SEARCH_LIMIT_PER_KIND = 20
     }
 }
+
+/**
+ * CE (#756): the movie with its downloads of [local] after the server's sources, the order the
+ * mappers kept before the catalog moved out (the player picks the local one, not the first).
+ */
+private fun FindroidMovie.withLocalSources(local: Map<UUID, List<FindroidSource>>): FindroidMovie =
+    local[id]?.let { copy(sources = sources + it) } ?: this
+
+/** CE (#756): as for a movie, the server's sources first, then the downloads of [local]. */
+private fun FindroidEpisode.withLocalSources(
+    local: Map<UUID, List<FindroidSource>>
+): FindroidEpisode = local[id]?.let { copy(sources = sources + it) } ?: this
 
 /**
  * The Home row only shows series watched in the last [maxDays] days, as the web client's "Max days
