@@ -76,8 +76,36 @@ class JellyfinRepositoryImpl(
     private val appPreferences: AppPreferences,
     private val deviceProfileBuilder: DeviceProfileBuilder,
     private val syncRequester: UserDataSyncRequester = UserDataSyncRequester.NONE,
+    private val knownServerState: KnownServerState = KnownServerState.NONE,
+    private val storedLibraryNames: StoredLibraryNames = StoredLibraryNames.ENGLISH,
 ) : JellyfinRepository {
     private val playSessions = PlaySessions()
+
+    private val storedLists = StoredLists(database)
+
+    /**
+     * CE (#775): [serverOrStored] for a list Room can answer, and straight to Room while the server
+     * is known to be away, without the wait.
+     */
+    private suspend fun <T> serverOrStoredItems(
+        stored: (suspend () -> List<T>)?,
+        server: suspend () -> List<T>,
+    ): List<T> {
+        if (stored != null && knownServerState.isKnownUnreachable()) {
+            knownServerState.onServerSkipped()
+            return stored()
+        }
+        return serverOrStored(stored, server = server)
+    }
+
+    /** CE (#775): maps stored rows only when they are needed; null when there are none. */
+    private fun storedItems(
+        serverId: String?,
+        dtos: List<Any>,
+    ): (suspend () -> List<FindroidItem>)? {
+        if (serverId == null || dtos.isEmpty()) return null
+        return suspend { storedLists.toItems(dtos, serverId, currentUserId) }
+    }
 
     private val resumeThresholds = ResumeThresholdsStore(appPreferences.sharedPreferences)
 
@@ -176,8 +204,13 @@ class JellyfinRepositoryImpl(
 
     override suspend fun getLibraries(): List<FindroidCollection> =
         withContext(Dispatchers.IO) {
-            jellyfinApi.libraryApi.getItems(currentUserId).content.items.mapNotNull {
-                it.toFindroidCollection(this@JellyfinRepositoryImpl)
+            // CE (#775): without the server, a Movies and a Shows library of what is downloaded.
+            val stored =
+                currentServerId()?.let { storedLists.libraries(it, storedLibraryNames) }.orEmpty()
+            serverOrStoredItems(stored.takeIf { it.isNotEmpty() }?.let { suspend { it } }) {
+                jellyfinApi.libraryApi.getItems(currentUserId).content.items.mapNotNull {
+                    it.toFindroidCollection(this@JellyfinRepositoryImpl)
+                }
             }
         }
 
@@ -247,6 +280,18 @@ class JellyfinRepositoryImpl(
         includeTotal: Boolean,
     ): ItemsPage =
         withContext(Dispatchers.IO) {
+            // CE (#775): both pagers and the plain list come through here.
+            if (StoredLibraries.isStored(parentId)) {
+                return@withContext storedLibraryPage(
+                    parentId!!,
+                    sortBy,
+                    sortOrder,
+                    filters,
+                    startIndex,
+                    limit,
+                    includeTotal,
+                )
+            }
             val result =
                 jellyfinApi.libraryApi
                     .getItems(
@@ -271,6 +316,30 @@ class JellyfinRepositoryImpl(
                 totalRecordCount = if (includeTotal) result.totalRecordCount else null,
             )
         }
+
+    /**
+     * CE (#775): a page of one of [StoredLibraries], always from Room: the server does not know
+     * these ids. Only the page is mapped to items.
+     */
+    private suspend fun storedLibraryPage(
+        libraryId: UUID,
+        sortBy: SortBy,
+        sortOrder: SortOrder,
+        filters: List<ItemFilter>?,
+        startIndex: Int?,
+        limit: Int?,
+        includeTotal: Boolean,
+    ): ItemsPage {
+        val serverId = currentServerId() ?: return ItemsPage(emptyList(), 0)
+        val userId = currentUserId
+        val all =
+            storedLists.libraryContents(serverId, userId, libraryId, sortBy, sortOrder, filters)
+        val page = all.drop(startIndex ?: 0).let { if (limit != null) it.take(limit) else it }
+        return ItemsPage(
+            items = storedLists.toItems(page, serverId, userId),
+            totalRecordCount = if (includeTotal) all.size else null,
+        )
+    }
 
     override suspend fun getRandomItemsWithBackdrop(
         includeTypes: List<BaseItemKind>,
@@ -330,6 +399,17 @@ class JellyfinRepositoryImpl(
         nameLessThan: String?,
     ): Int =
         withContext(Dispatchers.IO) {
+            // CE (#775): the A–Z bar of a stored library counts what its grid holds.
+            if (StoredLibraries.isStored(parentId)) {
+                val serverId = currentServerId() ?: return@withContext 0
+                return@withContext storedLists.libraryCount(
+                    serverId,
+                    currentUserId,
+                    parentId!!,
+                    filters,
+                    nameLessThan,
+                )
+            }
             jellyfinApi.libraryApi
                 .getItems(
                     currentUserId,
@@ -378,18 +458,23 @@ class JellyfinRepositoryImpl(
 
     override suspend fun getFavoriteItems(): List<FindroidItem> =
         withContext(Dispatchers.IO) {
-            jellyfinApi.libraryApi
-                .getItems(
-                    currentUserId,
-                    filters = listOf(ItemFilter.IS_FAVORITE),
-                    includeItemTypes =
-                        listOf(BaseItemKind.MOVIE, BaseItemKind.SERIES, BaseItemKind.EPISODE),
-                    recursive = true,
-                    enableTotalRecordCount = false,
-                )
-                .content
-                .items
-                .toFindroidItems()
+            // CE (#775): without the server, the downloaded favourites.
+            val serverId = currentServerId()
+            val stored = serverId?.let { storedLists.favorites(it, currentUserId) }.orEmpty()
+            serverOrStoredItems(storedItems(serverId, stored)) {
+                jellyfinApi.libraryApi
+                    .getItems(
+                        currentUserId,
+                        filters = listOf(ItemFilter.IS_FAVORITE),
+                        includeItemTypes =
+                            listOf(BaseItemKind.MOVIE, BaseItemKind.SERIES, BaseItemKind.EPISODE),
+                        recursive = true,
+                        enableTotalRecordCount = false,
+                    )
+                    .content
+                    .items
+                    .toFindroidItems()
+            }
         }
 
     override suspend fun getSearchItems(
@@ -397,17 +482,37 @@ class JellyfinRepositoryImpl(
         itemKinds: List<BaseItemKind>?,
     ): List<FindroidItem> =
         withContext(Dispatchers.IO) {
-            if (itemKinds == null) {
-                return@withContext searchItems(
-                    query,
-                    listOf(BaseItemKind.MOVIE, BaseItemKind.SERIES),
-                    SEARCH_LIMIT,
-                )
+            // CE (#775): without the server, the downloads by name.
+            val serverId = currentServerId()
+            val stored =
+                serverId
+                    ?.let {
+                        storedLists.search(
+                            it,
+                            query,
+                            itemKinds,
+                            if (itemKinds == null) SEARCH_LIMIT else SEARCH_LIMIT_PER_KIND,
+                        )
+                    }
+                    .orEmpty()
+            serverOrStoredItems(storedItems(serverId, stored)) {
+                if (itemKinds == null) {
+                    searchItems(
+                        query,
+                        listOf(BaseItemKind.MOVIE, BaseItemKind.SERIES),
+                        SEARCH_LIMIT,
+                    )
+                } else {
+                    coroutineScope {
+                        itemKinds
+                            .map { kind ->
+                                async { searchItems(query, listOf(kind), SEARCH_LIMIT_PER_KIND) }
+                            }
+                            .awaitAll()
+                            .flatten()
+                    }
+                }
             }
-            itemKinds
-                .map { kind -> async { searchItems(query, listOf(kind), SEARCH_LIMIT_PER_KIND) } }
-                .awaitAll()
-                .flatten()
         }
 
     private suspend fun searchItems(
