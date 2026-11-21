@@ -17,6 +17,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +32,7 @@ class FavoritesViewModel @Inject constructor(private val repository: JellyfinRep
 
     private val serverAwayReload = ServerAwayReload()
     private var loadJob: Job? = null
+    private var storeRetryJob: Job? = null
 
     /**
      * CE (#775): the server went away or came back. With the server away the favourites are the
@@ -47,7 +49,7 @@ class FavoritesViewModel @Inject constructor(private val repository: JellyfinRep
      */
     fun onSynced(): Job {
         loadJob?.cancel()
-        return load(serverAwayReload.begin()).also { loadJob = it }
+        return start()
     }
 
     fun loadItems(): Job {
@@ -55,17 +57,24 @@ class FavoritesViewModel @Inject constructor(private val repository: JellyfinRep
         loadJob?.let { if (it.isActive && serverAwayReload.runningIsCurrent()) return it }
         // A load for the other state makes way, so it cannot land after this one.
         loadJob?.cancel()
-        val away = serverAwayReload.begin()
-        return load(away).also { loadJob = it }
+        return start()
     }
 
-    private fun load(away: Boolean): Job = viewModelScope.launch {
+    private fun start(): Job {
+        // CE (#779): a newer load stands in for the one more try after a stored answer.
+        storeRetryJob?.cancel()
+        serverAwayReload.begin()
+        return load().also { loadJob = it }
+    }
+
+    private fun load(): Job = viewModelScope.launch {
         // With content on screen the refresh happens quietly (#251).
         val hasContent = _state.value.sections.isNotEmpty()
         _state.emit(_state.value.copy(isLoading = !hasContent, error = null))
 
         try {
-            val items = repository.getFavoriteItems()
+            val result = repository.getFavoriteItems()
+            val items = result.items
             ensureActive()
 
             val sections = mutableListOf<CollectionSection>()
@@ -103,10 +112,22 @@ class FavoritesViewModel @Inject constructor(private val repository: JellyfinRep
                     }
             }
 
-            // CE (#775): a failed load keeps the list on screen, and with it what it was.
+            // CE (#775): a failed load keeps the list on screen, and with it what it was. CE
+            // (#779): downloads only when Room answered, also before the server is known away.
             _state.emit(
-                _state.value.copy(isLoading = false, sections = sections, downloadsOnly = away)
+                _state.value.copy(
+                    isLoading = false,
+                    sections = sections,
+                    downloadsOnly = result.fromStore,
+                )
             )
+            if (serverAwayReload.retriesAfterStore(result.fromStore)) {
+                storeRetryJob = viewModelScope.launch {
+                    delay(ServerAwayReload.STORE_RETRY_DELAY_MS)
+                    storeRetryJob = null
+                    loadItems()
+                }
+            }
         } catch (e: CancellationException) {
             // CE (#775): made way for a newer load, which shows its own result.
             throw e

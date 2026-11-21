@@ -88,17 +88,28 @@ class JellyfinRepositoryImpl(
      * else from Room only when the request gets no answer. Not after [STORED_FALLBACK_TIMEOUT_MS]
      * as an item is: a slow server would leave the shorter downloads-only list on a screen that
      * does not say so. A request left unanswered gets a probe, and the screens reload when that
-     * says unreachable.
+     * says unreachable. CE (#779): the result says which of the two answered.
      */
     private suspend fun <T> serverOrStoredItems(
         stored: (suspend () -> List<T>)?,
         server: suspend () -> List<T>,
-    ): List<T> {
+    ): ItemsResult<T> {
         if (stored != null && knownServerState.isKnownUnreachable()) {
             knownServerState.onServerSkipped()
-            return stored()
+            return ItemsResult(stored(), fromStore = true)
         }
-        return serverOrStoredWhenUnanswered(stored, server)
+        var fromStore = false
+        val items =
+            serverOrStoredWhenUnanswered(
+                stored?.let { read ->
+                    suspend {
+                        fromStore = true
+                        read()
+                    }
+                },
+                server,
+            )
+        return ItemsResult(items, fromStore)
     }
 
     /**
@@ -211,7 +222,7 @@ class JellyfinRepositoryImpl(
             }
         }
 
-    override suspend fun getLibraries(): List<FindroidCollection> =
+    override suspend fun getLibraries(): ItemsResult<FindroidCollection> =
         withContext(Dispatchers.IO) {
             // CE (#775): without the server, a Movies and a Shows library of what is downloaded.
             val stored =
@@ -465,7 +476,7 @@ class JellyfinRepositoryImpl(
                 .toFindroidItems()
         }
 
-    override suspend fun getFavoriteItems(): List<FindroidItem> =
+    override suspend fun getFavoriteItems(): ItemsResult<FindroidItem> =
         withContext(Dispatchers.IO) {
             // CE (#775): without the server, the downloaded favourites, also when there are none
             // but something else is downloaded: the screen says that none are downloaded. With
@@ -494,7 +505,7 @@ class JellyfinRepositoryImpl(
     override suspend fun getSearchItems(
         query: String,
         itemKinds: List<BaseItemKind>?,
-    ): List<FindroidItem> =
+    ): ItemsResult<FindroidItem> =
         withContext(Dispatchers.IO) {
             // CE (#775): without the server, the downloads by name.
             val serverId = currentServerId()
