@@ -1,10 +1,11 @@
 package dev.jdtech.jellyfin.server.jellyfin
 
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.PersonKind
 import org.jellyfin.sdk.model.api.BaseItemKind
 
-// The app's enums and their Jellyfin SDK counterparts (#733). Only the Jellyfin adapter uses the
-// SDK types; everything else holds the app's own.
+/** Maps by name: [PersonKind] has a counterpart of every SDK constant (see SdkEnumsTest). */
+internal fun org.jellyfin.sdk.model.api.PersonKind.toModel(): PersonKind = PersonKind.valueOf(name)
 
 /** The SDK kind of this kind. [ItemKind.UNKNOWN] has none: it throws [IllegalArgumentException]. */
 internal fun ItemKind.toSdk(): BaseItemKind =
