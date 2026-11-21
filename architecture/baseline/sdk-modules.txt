@@ -5,5 +5,4 @@ data
 modes/film
 player/cast
 player/local
-settings
 setup
