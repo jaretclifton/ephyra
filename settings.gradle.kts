@@ -14,6 +14,7 @@ include(":modes:film")
 include(":settings")
 include(":baselineprofile")
 include(":baselineprofile-tv")
+include(":architecture")
 
 pluginManagement {
     repositories {

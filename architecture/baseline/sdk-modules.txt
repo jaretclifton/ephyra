@@ -1,0 +1,9 @@
+app/phone
+app/tv
+core
+data
+modes/film
+player/cast
+player/local
+settings
+setup

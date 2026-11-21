@@ -55,6 +55,7 @@ player/cast      — Google Cast: session and playback on a receiver (real in th
 setup            — Server discovery and login onboarding flow
 settings         — AppPreferences (DataStore) and settings screen
 baselineprofile  — Macrobenchmark module for app/phone: baseline profile and startup benchmark
+architecture     — Konsist rules and their baselines: which files may still touch the Jellyfin SDK
 ```
 
 The `app/phone` module depends on all other modules. ViewModels live in `modes/film`, `setup`, `settings`, and `player/local` — NOT in `app/phone` or `app/tv`. Screens in the app modules consume state from those ViewModels.
@@ -127,6 +128,7 @@ Read the one that fits the change before starting:
 | Track selection or subtitle styling | `docs/track-test-series.md` |
 | Google Play | `docs/play-store.md` |
 | A server or an emulator to test on | `docs/dev-environment.md`, through the `test-server` and `test-devices` skills |
+| Ports and adapters, the Jellyfin SDK boundary, `architecture/baseline/` | `docs/architecture/` |
 
 The numbered files in `docs/mpv-research/`, `docs/tablet/` and `docs/tv-research/` are research from before the work was done. Where they differ from the code, the code is right.
 
