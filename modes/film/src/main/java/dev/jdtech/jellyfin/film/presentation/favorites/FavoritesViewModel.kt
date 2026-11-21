@@ -41,11 +41,11 @@ class FavoritesViewModel @Inject constructor(private val repository: JellyfinRep
     fun loadItems(): Job {
         // CE (#775): the same load twice at once, for the server's return and the error page.
         loadJob?.let { if (it.isActive && serverAwayReload.runningIsCurrent()) return it }
-        serverAwayReload.begin()
-        return load().also { loadJob = it }
+        val away = serverAwayReload.begin()
+        return load(away).also { loadJob = it }
     }
 
-    private fun load(): Job = viewModelScope.launch {
+    private fun load(away: Boolean): Job = viewModelScope.launch {
         // With content on screen the refresh happens quietly (#251).
         val hasContent = _state.value.sections.isNotEmpty()
         _state.emit(_state.value.copy(isLoading = !hasContent, error = null))
@@ -88,7 +88,10 @@ class FavoritesViewModel @Inject constructor(private val repository: JellyfinRep
                     }
             }
 
-            _state.emit(_state.value.copy(isLoading = false, sections = sections))
+            // CE (#775): a failed load keeps the list on screen, and with it what it was.
+            _state.emit(
+                _state.value.copy(isLoading = false, sections = sections, downloadsOnly = away)
+            )
         } catch (e: Exception) {
             _state.emit(_state.value.copy(isLoading = false, error = e))
         }

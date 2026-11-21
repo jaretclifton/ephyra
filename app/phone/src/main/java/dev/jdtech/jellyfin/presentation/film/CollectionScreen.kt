@@ -41,7 +41,6 @@ import dev.jdtech.jellyfin.presentation.film.components.ServerOffIndicator
 import dev.jdtech.jellyfin.presentation.film.components.ServerOrErrorCard
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
-import dev.jdtech.jellyfin.presentation.utils.showsDownloadsOnly
 import dev.jdtech.jellyfin.presentation.utils.showsServerBanner
 import dev.jdtech.jellyfin.presentation.utils.showsServerIndicator
 import dev.jdtech.jellyfin.presentation.utils.topAndSideInsets
@@ -93,7 +92,9 @@ fun CollectionScreenLayout(
     // went away), with the unreachable banner above it. A failed load with nothing to show is the
     // error page, which says the same.
     val failedEmpty = state.sections.isEmpty() && state.error != null
-    val downloadsOnly = serverBanner && showsDownloadsOnly() && !failedEmpty
+    // CE (#775): the list on screen came from the downloads; a reload that failed keeps the list
+    // from before and says nothing.
+    val downloadsOnly = serverBanner && state.downloadsOnly && state.error == null
 
     Scaffold(
         modifier =

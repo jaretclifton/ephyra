@@ -60,11 +60,13 @@ class SearchViewModel @Inject constructor(private val repository: JellyfinReposi
                 // Inside the job, so the next keystroke's cancel also drops this request.
                 delay(SEARCH_DEBOUNCE_MS)
 
-                serverAwayReload.begin()
+                val away = serverAwayReload.begin()
                 _state.emit(_state.value.copy(loading = true))
                 val items = repository.getSearchItems(query, itemKinds)
 
-                _state.emit(SearchState(query = query, items = items, loading = false))
+                _state.emit(
+                    SearchState(query = query, items = items, loading = false, downloadsOnly = away)
+                )
             } catch (_: CancellationException) {} catch (e: Exception) {
                 Timber.e(e)
                 _state.emit(_state.value.copy(query = query, loading = false, error = e))
