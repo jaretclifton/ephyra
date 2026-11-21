@@ -10,8 +10,10 @@ import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.core.presentation.downloader.SmartDownloads
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
+import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.PlaybackEvents
+import dev.jdtech.jellyfin.server.jellyfin.asServerException
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -20,7 +22,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jellyfin.sdk.api.client.ApiClient
-import org.jellyfin.sdk.api.client.exception.InvalidStatusException
 import org.jellyfin.sdk.api.client.extensions.libraryApi
 import org.jellyfin.sdk.api.client.extensions.sessionApi
 import org.jellyfin.sdk.api.client.extensions.userDataApi
@@ -280,12 +281,13 @@ constructor(
                 itemLeftPlaying(api, userId)
             } catch (e: CancellationException) {
                 throw e
-            } catch (e: InvalidStatusException) {
+            } catch (e: Exception) {
+                if (e.serverStatus() == null) {
+                    Timber.e(e, "Failed to sync user data: the server was not reached")
+                    return SyncOutcome(allOk = false, sent = 0)
+                }
                 logFailure(e, "Could not read the playback session", warn = true)
                 null
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to sync user data: the server was not reached")
-                return SyncOutcome(allOk = false, sent = 0)
             }
 
         // CE (#633): what the server has now, so a row only sends its LastPlayedDate when it is
@@ -370,8 +372,15 @@ constructor(
                 database.deleteUserDataIfOrphaned(userId, userData.itemId)
             } catch (e: CancellationException) {
                 throw e
-            } catch (e: InvalidStatusException) {
-                when (afterStatus(e.status)) {
+            } catch (e: Exception) {
+                val status = e.serverStatus()
+                if (status == null) {
+                    // The server was not reached: the other rows would fail the same way, each
+                    // after its own timeout.
+                    Timber.e(e, "Failed to sync user data, leaving the rest for the next run")
+                    return SyncOutcome(allOk = false, sent = sent, tookServer = tookServer)
+                }
+                when (afterStatus(status)) {
                     AfterStatus.DROP -> {
                         // The item is gone from the server: there is nothing to send, ever.
                         // Without this the row of a deleted download would be retried for good.
@@ -382,17 +391,12 @@ constructor(
                     AfterStatus.LEAVE ->
                         // Refused, and a retry in 30 seconds would be refused again. The row
                         // stays marked for the next sync: app start, foreground, the next write.
-                        Timber.w("The server refused ${userData.itemId} with ${e.status}")
+                        Timber.w("The server refused ${userData.itemId} with $status")
                     AfterStatus.RETRY -> {
                         Timber.e(e, "Failed to sync user data")
                         allOk = false
                     }
                 }
-            } catch (e: Exception) {
-                // The server was not reached: the other rows would fail the same way, each after
-                // its own timeout.
-                Timber.e(e, "Failed to sync user data, leaving the rest for the next run")
-                return SyncOutcome(allOk = false, sent = sent, tookServer = tookServer)
             }
         }
         return SyncOutcome(allOk = allOk, sent = sent, tookServer = tookServer)
@@ -493,8 +497,11 @@ internal enum class AfterStatus {
 }
 
 /** CE (#635): whether [e] is the server refusing the user's login: signed out there, or expired. */
-internal fun isRefusedLogin(e: Throwable): Boolean =
-    e is InvalidStatusException && e.status == HTTP_UNAUTHORIZED
+internal fun isRefusedLogin(e: Throwable): Boolean = e.serverStatus() == HTTP_UNAUTHORIZED
+
+/** The error status the server answered with, or null when it did not answer. */
+private fun Throwable.serverStatus(): Int? =
+    (asServerException() as? ServerException.HttpStatus)?.status
 
 /** What an error status from the server means for the row that was sent. */
 internal fun afterStatus(status: Int): AfterStatus =

@@ -23,6 +23,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyServer
 import dev.jdtech.jellyfin.core.presentation.localnetwork.LocalLocalNetworkBlock
 import dev.jdtech.jellyfin.core.presentation.localnetwork.LocalNetworkBlock
 import dev.jdtech.jellyfin.film.presentation.home.HomeState
+import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.presentation.components.ErrorDialog
 import dev.jdtech.jellyfin.presentation.film.components.ErrorCard
 import dev.jdtech.jellyfin.presentation.film.components.ErrorState
@@ -31,7 +32,6 @@ import dev.jdtech.jellyfin.setup.R as SetupR
 import java.net.SocketTimeoutException
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import org.jellyfin.sdk.api.client.exception.InvalidStatusException
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -116,7 +116,7 @@ class LocalNetworkErrorTest {
     @Test
     fun anAnswerFromTheServerIsNotBlamedOnThePermission() {
         // Access is denied, but the server answered: HTTP 500 is not the permission's doing.
-        error = InvalidStatusException(500, null)
+        error = ServerException.HttpStatus(500)
         setErrorState()
 
         rule.onNodeWithText(string(CoreR.string.show_stacktrace)).assertIsDisplayed()
@@ -156,7 +156,7 @@ class LocalNetworkErrorTest {
         error = SocketTimeoutException("failed to connect, again")
         rule.mainClock.advanceTimeBy(5_000)
         rule.waitForIdle()
-        error = InvalidStatusException(503, null)
+        error = ServerException.HttpStatus(503)
         rule.mainClock.advanceTimeBy(5_000)
         rule.waitForIdle()
 
