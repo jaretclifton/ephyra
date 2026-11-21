@@ -62,6 +62,9 @@ class JellyfinRepositoryImpl(
     private val syncRequester: UserDataSyncRequester = UserDataSyncRequester.NONE,
     private val knownServerState: KnownServerState = KnownServerState.NONE,
     private val storedLibraryNames: StoredLibraryNames = StoredLibraryNames.ENGLISH,
+    /** CE (#637): the resume settings read from each server, kept for the stops made offline. */
+    private val resumeThresholds: ResumeThresholdsStore =
+        ResumeThresholdsStore(appPreferences.sharedPreferences),
 ) : JellyfinRepository {
     private val catalog: CatalogPort
         get() = server.catalog
@@ -117,8 +120,6 @@ class JellyfinRepositoryImpl(
         if (dtos.isEmpty()) return if (emptyIsAnAnswer) suspend { emptyList() } else null
         return suspend { storedLists.toItems(dtos, serverId, currentUserId) }
     }
-
-    private val resumeThresholds = ResumeThresholdsStore(appPreferences.sharedPreferences)
 
     private fun currentServerId(): String? = appPreferences.getValue(appPreferences.currentServer)
 
@@ -840,9 +841,11 @@ class JellyfinRepositoryImpl(
     override suspend fun updateDeviceName(name: String) = server.session.updateDeviceName(name)
 
     override suspend fun refreshCurrentUserImage() {
+        // Taken before the request: a switch of user while it waits must not give the tag to the
+        // next user's row.
+        val userId = currentUserId
         val tag = server.session.currentUserImageTag()
-        // The server answers for the user its token is for, the session's current user.
-        withContext(Dispatchers.IO) { database.updateUserPrimaryImageTag(currentUserId, tag) }
+        withContext(Dispatchers.IO) { database.updateUserPrimaryImageTag(userId, tag) }
     }
 
     override suspend fun autoPlayNextEpisode(): Boolean? = server.session.autoPlayNextEpisode()
