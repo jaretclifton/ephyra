@@ -143,6 +143,8 @@
     <string name="ce_server_unreachable_downloads">Latauksesi ovat edelleen toistettavissa.</string>
     <string name="ce_server_banner_show">Palvelimeen ei saada yhteyttä. Näytä tiedot</string>
     <string name="ce_downloads_only">Näytetään vain lataukset</string>
+    <string name="ce_favorites_none_downloaded">Ei ladattuja suosikkeja</string>
+    <string name="ce_favorites_none_downloaded_body">Muut suosikkisi palaavat palvelimen mukana.</string>
     <string name="ce_download_choice_title">Mitkä jaksot ladataan?</string>
     <string name="ce_download_choice_message">Olet jo katsonut osan näistä jaksoista.</string>
     <string name="ce_download_choice_unwatched">Vain katsomattomat (%1$d)</string>

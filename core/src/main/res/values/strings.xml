@@ -264,6 +264,9 @@
     <string name="ce_server_banner_show">Can\'t reach the server. Show details</string>
     <!-- CE (#775): over Favorites, Media, a library and search while the server is away -->
     <string name="ce_downloads_only">Showing downloads only</string>
+    <!-- CE (#775): Favorites while the server is away, when none of the favourites are downloaded -->
+    <string name="ce_favorites_none_downloaded">No downloaded favorites</string>
+    <string name="ce_favorites_none_downloaded_body">Your other favorites come back with the server.</string>
 
     <!-- CE (#636): a season or show download asks this when some of its episodes are watched.
          %1$d is the number of episodes that choice downloads. -->

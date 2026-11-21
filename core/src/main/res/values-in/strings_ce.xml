@@ -138,6 +138,8 @@
     <string name="ce_server_unreachable_downloads">Unduhan Anda masih bisa diputar.</string>
     <string name="ce_server_banner_show">Tidak dapat menjangkau server. Tampilkan detail</string>
     <string name="ce_downloads_only">Hanya menampilkan unduhan</string>
+    <string name="ce_favorites_none_downloaded">Tidak ada favorit yang diunduh</string>
+    <string name="ce_favorites_none_downloaded_body">Favorit Anda yang lain kembali bersama server.</string>
     <string name="ce_download_choice_title">Unduh episode yang mana?</string>
     <string name="ce_download_choice_message">Kamu sudah menonton beberapa episode ini.</string>
     <string name="ce_download_choice_unwatched">Hanya yang belum ditonton (%1$d)</string>

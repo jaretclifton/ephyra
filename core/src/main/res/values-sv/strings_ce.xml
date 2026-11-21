@@ -143,6 +143,8 @@
     <string name="ce_server_unreachable_downloads">Dina nedladdningar går fortfarande att spela upp.</string>
     <string name="ce_server_banner_show">Kan inte nå servern. Visa detaljer</string>
     <string name="ce_downloads_only">Visar bara nedladdningar</string>
+    <string name="ce_favorites_none_downloaded">Inga nedladdade favoriter</string>
+    <string name="ce_favorites_none_downloaded_body">Dina andra favoriter kommer tillbaka med servern.</string>
     <string name="ce_download_choice_title">Vilka avsnitt vill du ladda ner?</string>
     <string name="ce_download_choice_message">Du har redan sett några av de här avsnitten.</string>
     <string name="ce_download_choice_unwatched">Bara osedda (%1$d)</string>

@@ -101,12 +101,18 @@ class JellyfinRepositoryImpl(
         return serverOrStoredWhenUnanswered(stored, server)
     }
 
-    /** CE (#775): maps stored rows only when they are needed; null when there are none. */
+    /**
+     * CE (#775): maps stored rows only when they are needed; null when there are none, so the
+     * server's error comes through. With [emptyIsAnAnswer] no stored rows is an answer too: the
+     * favourites can say "none downloaded", which an empty library or search could not.
+     */
     private fun storedItems(
         serverId: String?,
         dtos: List<Any>,
+        emptyIsAnAnswer: Boolean = false,
     ): (suspend () -> List<FindroidItem>)? {
-        if (serverId == null || dtos.isEmpty()) return null
+        if (serverId == null) return null
+        if (dtos.isEmpty()) return if (emptyIsAnAnswer) suspend { emptyList() } else null
         return suspend { storedLists.toItems(dtos, serverId, currentUserId) }
     }
 
@@ -461,10 +467,11 @@ class JellyfinRepositoryImpl(
 
     override suspend fun getFavoriteItems(): List<FindroidItem> =
         withContext(Dispatchers.IO) {
-            // CE (#775): without the server, the downloaded favourites.
+            // CE (#775): without the server, the downloaded favourites, also when there are none:
+            // the screen says that none are downloaded.
             val serverId = currentServerId()
             val stored = serverId?.let { storedLists.favorites(it, currentUserId) }.orEmpty()
-            serverOrStoredItems(storedItems(serverId, stored)) {
+            serverOrStoredItems(storedItems(serverId, stored, emptyIsAnAnswer = true)) {
                 jellyfinApi.libraryApi
                     .getItems(
                         currentUserId,

@@ -86,6 +86,12 @@ fun CollectionScreenLayout(
      * (#775): and, while the server is away, that its list holds the downloads only.
      */
     serverBanner: Boolean = false,
+    /**
+     * CE (#775): the empty page of a list that holds the downloads only, when none are downloaded:
+     * "no favourites" would not be true then.
+     */
+    downloadsOnlyEmptyTitle: String? = null,
+    downloadsOnlyEmptyBody: String? = null,
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     // CE (#281): what is on screen stays (the items, or "no favourites" from before the server
@@ -95,6 +101,13 @@ fun CollectionScreenLayout(
     // CE (#775): the list on screen came from the downloads; a reload that failed keeps the list
     // from before and says nothing.
     val downloadsOnly = serverBanner && state.downloadsOnly && state.error == null
+    // CE (#775): none downloaded. The page says it, so the line under the title does not.
+    val noneDownloaded =
+        downloadsOnly && state.sections.isEmpty() && downloadsOnlyEmptyTitle != null
+    val shownEmptyTitle =
+        if (noneDownloaded && downloadsOnlyEmptyTitle != null) downloadsOnlyEmptyTitle
+        else emptyTitle
+    val shownEmptyBody = if (noneDownloaded) downloadsOnlyEmptyBody else emptyBody
 
     Scaffold(
         modifier =
@@ -108,7 +121,7 @@ fun CollectionScreenLayout(
                     // page alike.
                     Column {
                         Text(collectionName)
-                        if (downloadsOnly) DownloadsOnlyLine()
+                        if (downloadsOnly && !noneDownloaded) DownloadsOnlyLine()
                     }
                 },
                 navigationIcon = {
@@ -152,8 +165,8 @@ fun CollectionScreenLayout(
                     onAction = onAction,
                     innerPadding = PaddingValues(),
                     emptyIcon = emptyIcon,
-                    emptyTitle = emptyTitle,
-                    emptyBody = emptyBody,
+                    emptyTitle = shownEmptyTitle,
+                    emptyBody = shownEmptyBody,
                 )
             }
         } else {
@@ -162,8 +175,8 @@ fun CollectionScreenLayout(
                 onAction = onAction,
                 innerPadding = innerPadding,
                 emptyIcon = emptyIcon,
-                emptyTitle = emptyTitle,
-                emptyBody = emptyBody,
+                emptyTitle = shownEmptyTitle,
+                emptyBody = shownEmptyBody,
             )
         }
     }

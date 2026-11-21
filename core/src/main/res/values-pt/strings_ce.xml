@@ -143,6 +143,8 @@
     <string name="ce_server_unreachable_downloads">Os seus downloads ainda podem ser reproduzidos.</string>
     <string name="ce_server_banner_show">Não é possível aceder ao servidor. Mostrar detalhes</string>
     <string name="ce_downloads_only">A mostrar apenas os downloads</string>
+    <string name="ce_favorites_none_downloaded">Nenhum favorito transferido</string>
+    <string name="ce_favorites_none_downloaded_body">Os seus outros favoritos voltam com o servidor.</string>
     <string name="ce_download_choice_title">Que episódios transferir?</string>
     <string name="ce_download_choice_message">Já viste alguns destes episódios.</string>
     <string name="ce_download_choice_unwatched">Só os não vistos (%1$d)</string>

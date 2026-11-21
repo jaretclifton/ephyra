@@ -49,6 +49,8 @@ fun FavoritesScreen(
         emptyBody = stringResource(CoreR.string.favorites_empty_body),
         showNavigationIcon = false,
         serverBanner = true,
+        downloadsOnlyEmptyTitle = stringResource(CoreR.string.ce_favorites_none_downloaded),
+        downloadsOnlyEmptyBody = stringResource(CoreR.string.ce_favorites_none_downloaded_body),
     )
 }
 
