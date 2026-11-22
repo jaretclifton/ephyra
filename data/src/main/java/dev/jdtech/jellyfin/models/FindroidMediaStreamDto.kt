@@ -60,9 +60,19 @@ fun FindroidMediaStreamDto.toFindroidMediaStream(): FindroidMediaStream {
         isExternal = isExternal,
         path = path,
         channelLayout = channelLayout,
-        videoRangeType = VideoRangeType.fromNameOrNull(videoRangeType ?: ""),
+        videoRangeType = videoRangeType?.let(::storedVideoRangeType),
         height = height,
         width = width,
         videoDoViTitle = videoDoViTitle,
     )
 }
+
+/**
+ * The stored column holds the constant name ([toFindroidMediaStreamDto] writes `name`). It was read
+ * by the server's serial name, so `DOVI_WITH_HDR10`, `HDR10_PLUS` and the other values whose two
+ * names differ came back as null (#776). The serial name is accepted too, for a row written that
+ * way.
+ */
+internal fun storedVideoRangeType(value: String): VideoRangeType? =
+    VideoRangeType.entries.firstOrNull { it.name == value }
+        ?: VideoRangeType.entries.firstOrNull { it.serialName == value }

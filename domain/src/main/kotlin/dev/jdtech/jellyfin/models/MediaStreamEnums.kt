@@ -24,6 +24,7 @@ enum class SubtitleDeliveryMethod {
 }
 
 /** The dynamic range of a video stream. [serialName] is the server's name for it. */
+// The constant names are what Room has stored in mediastreams.videoRangeType. Do not rename one.
 enum class VideoRangeType(val serialName: String) {
     UNKNOWN("Unknown"),
     SDR("SDR"),
@@ -37,15 +38,5 @@ enum class VideoRangeType(val serialName: String) {
     DOVI_WITH_HDR10_PLUS("DOVIWithHDR10Plus"),
     DOVI_WITH_ELHDR10_PLUS("DOVIWithELHDR10Plus"),
     DOVI_INVALID("DOVIInvalid"),
-    HDR10_PLUS("HDR10Plus");
-
-    companion object {
-        /**
-         * By [serialName], as the SDK's `fromNameOrNull` does. A download stores the constant name,
-         * so most HDR formats do not read back (#776).
-         */
-        fun fromNameOrNull(name: String): VideoRangeType? = entries.firstOrNull {
-            it.serialName == name
-        }
-    }
+    HDR10_PLUS("HDR10Plus"),
 }

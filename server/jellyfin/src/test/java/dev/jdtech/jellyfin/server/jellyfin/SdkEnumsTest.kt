@@ -69,20 +69,6 @@ class SdkEnumsTest {
         }
     }
 
-    @Test
-    fun `video range types are read by serial name like the SDK does`() {
-        // Today's behaviour, bug #776: a download stores the constant name and reads it back by
-        // serial name, so only the types whose two names are equal survive.
-        SdkVideoRangeType.entries.forEach {
-            assertEquals(
-                SdkVideoRangeType.fromNameOrNull(it.name)?.name,
-                VideoRangeType.fromNameOrNull(it.name)?.name,
-            )
-            assertEquals(it.name, VideoRangeType.fromNameOrNull(it.serialName)?.name)
-        }
-        assertEquals(null, VideoRangeType.fromNameOrNull(""))
-    }
-
     // The item kinds' serial names are in intents and TV routes: they must stay the SDK's.
     @Test
     fun `every item kind has the serialName of its SDK kind`() {

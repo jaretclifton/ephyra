@@ -19,6 +19,7 @@ Kept current. Follow these when you work on the matching part of the app.
 | [screenshots.md](screenshots.md) | How the README, website and Play listing screenshots are made |
 | [play-store.md](play-store.md) | Signing, uploading and the listing on Google Play |
 | [upstream-sync.md](upstream-sync.md) | Syncing with Findroid, releasing and publishing a beta |
+| [upstream-ledger.md](upstream-ledger.md) | Every Findroid commit since 2026-11-22 with what Ephyra did with it and why |
 | [open-decisions.md](open-decisions.md) | Product questions from the code audit that nobody has decided yet |
 
 ## Research

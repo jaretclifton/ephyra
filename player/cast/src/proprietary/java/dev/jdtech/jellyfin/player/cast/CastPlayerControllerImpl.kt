@@ -19,6 +19,7 @@ import com.google.android.gms.common.images.WebImage
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.jdtech.jellyfin.domain.ports.MediaServer
 import dev.jdtech.jellyfin.domain.ports.PlaybackRequest
+import dev.jdtech.jellyfin.domain.ports.capMbpsToBitsPerSecond
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidSource
@@ -590,7 +591,7 @@ constructor(
                         target = PlaybackTarget.CastReceiver(supportsHevc = hevc),
                         mediaSourceId = item.mediaSourceId,
                         audioStreamIndex = audioStreamIndex,
-                        maxBitrate = maxBitrateMbps.takeIf { it > 0 }?.let { it * 1_000_000 },
+                        maxBitrate = capMbpsToBitsPerSecond(maxBitrateMbps),
                     )
                 )
                 .firstOrNull()

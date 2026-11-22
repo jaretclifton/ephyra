@@ -65,13 +65,17 @@ interface ServerConnector {
     /** The servers that answer the search on the local network. */
     fun discover(): Flow<DiscoveredServer>
 
-    /** The best of the candidate addresses for [address]. Throws [ServerConnectException]. */
+    /**
+     * The best of the candidate addresses for [address]. Throws [ServerConnectException]. Like
+     * [findAddress] it is not a request of the server in use: the [RequestWatcher] does not see it
+     * (#819).
+     */
     suspend fun resolve(address: String): ResolvedServer
 
     /**
      * The address among the candidates for [address] at which the server [serverId] answers, or
-     * null when it does not answer there. Unlike [resolve] it is not a request of the server in
-     * use: the [RequestWatcher] does not see it (#760).
+     * null when it does not answer there. It is not a request of the server in use: the
+     * [RequestWatcher] does not see it (#760).
      */
     suspend fun findAddress(address: String, serverId: ServerId): String?
 
