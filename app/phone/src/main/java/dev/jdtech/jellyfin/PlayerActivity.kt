@@ -63,6 +63,7 @@ import dev.jdtech.jellyfin.core.presentation.spoiler.Spoilers
 import dev.jdtech.jellyfin.databinding.ActivityPlayerBinding
 import dev.jdtech.jellyfin.film.presentation.season.SeasonState
 import dev.jdtech.jellyfin.film.presentation.season.SeasonViewModel
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.local.PlaybackSessionStore
 import dev.jdtech.jellyfin.player.local.R as PlayerR
 import dev.jdtech.jellyfin.player.local.domain.SleepTimerOption
@@ -83,7 +84,6 @@ import dev.jdtech.jellyfin.utils.PlayerGestureHelper
 import dev.jdtech.jellyfin.utils.PreviewScrubListener
 import dev.jdtech.jellyfin.utils.SegmentTimeBar
 import dev.jdtech.jellyfin.utils.applySubtitleStyle
-import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -655,7 +655,7 @@ class PlayerActivity : BasePlayerActivity() {
             finish()
             return
         }
-        val itemId = itemIdExtra?.let { UUID.fromString(it) }
+        val itemId = itemIdExtra?.toItemId()
         val itemKind = intent.extras?.getString("itemKind")
         val startFromBeginning = intent.extras?.getBoolean("startFromBeginning") ?: false
         val mediaSourceId = intent.extras?.getString("mediaSourceId")
@@ -1442,7 +1442,7 @@ class PlayerActivity : BasePlayerActivity() {
         val itemIdExtra = intent.extras?.getString("itemId") ?: return
         setIntent(intent)
 
-        val itemId = UUID.fromString(itemIdExtra)
+        val itemId = itemIdExtra.toItemId()
         val itemKind = intent.extras!!.getString("itemKind")
         val startFromBeginning = intent.extras!!.getBoolean("startFromBeginning")
         val mediaSourceId = intent.extras!!.getString("mediaSourceId")

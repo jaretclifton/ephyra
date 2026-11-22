@@ -54,7 +54,9 @@ import dev.jdtech.jellyfin.film.presentation.episode.EpisodeAction
 import dev.jdtech.jellyfin.film.presentation.episode.EpisodeState
 import dev.jdtech.jellyfin.film.presentation.episode.EpisodeViewModel
 import dev.jdtech.jellyfin.models.FindroidEpisode
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.cast.LocalCastPlayback
 import dev.jdtech.jellyfin.presentation.film.components.ActorsRow
 import dev.jdtech.jellyfin.presentation.film.components.ArtworkPlacement
@@ -81,16 +83,15 @@ import dev.jdtech.jellyfin.presentation.utils.useWideItemLayout
 import dev.jdtech.jellyfin.utils.ObserveAsEvents
 import dev.jdtech.jellyfin.utils.copyOnLongClick
 import dev.jdtech.jellyfin.utils.format
-import java.util.UUID
 
 @Composable
 fun EpisodeScreen(
-    episodeId: UUID,
+    episodeId: ItemId,
     navigateBack: () -> Unit,
     navigateHome: () -> Unit,
-    navigateToPerson: (personId: UUID) -> Unit,
-    navigateToSeason: (seasonId: UUID, seriesId: UUID) -> Unit,
-    navigateToSeries: (seriesId: UUID) -> Unit = {},
+    navigateToPerson: (personId: ItemId) -> Unit,
+    navigateToSeason: (seasonId: ItemId, seriesId: ItemId) -> Unit,
+    navigateToSeries: (seriesId: ItemId) -> Unit = {},
     viewModel: EpisodeViewModel = hiltViewModel(),
     downloaderViewModel: DownloaderViewModel = hiltViewModel(),
 ) {
@@ -168,7 +169,7 @@ fun EpisodeScreen(
                         )
                     ) {
                         val intent = Intent(context, PlayerActivity::class.java)
-                        intent.putExtra("itemId", episodeId.toString())
+                        intent.putExtra("itemId", episodeId.asString())
                         intent.putExtra("itemKind", ItemKind.EPISODE.serialName)
                         intent.putExtra("startFromBeginning", action.startFromBeginning)
                         intent.putExtra("mediaSourceId", action.mediaSourceId)

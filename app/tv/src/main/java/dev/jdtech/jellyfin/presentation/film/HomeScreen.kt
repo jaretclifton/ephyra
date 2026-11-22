@@ -24,19 +24,19 @@ import dev.jdtech.jellyfin.film.presentation.home.HomeViewModel
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.presentation.film.components.HomeCarousel
 import dev.jdtech.jellyfin.presentation.film.components.HomeSection
 import dev.jdtech.jellyfin.presentation.film.components.HomeView
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
-import java.util.UUID
 
 @Composable
 fun HomeScreen(
-    navigateToMovie: (itemId: UUID) -> Unit,
-    navigateToShow: (itemId: UUID) -> Unit,
-    navigateToPlayer: (itemId: UUID, itemKind: ItemKind) -> Unit,
+    navigateToMovie: (itemId: ItemId) -> Unit,
+    navigateToShow: (itemId: ItemId) -> Unit,
+    navigateToPlayer: (itemId: ItemId, itemKind: ItemKind) -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
     isLoading: (Boolean) -> Unit,
 ) {

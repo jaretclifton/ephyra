@@ -39,7 +39,10 @@ import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidSeason
 import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.navigation.navigateOrReuse
 import dev.jdtech.jellyfin.navigation.resumedAction
 import dev.jdtech.jellyfin.presentation.settings.SettingsScreen
@@ -52,7 +55,6 @@ import dev.jdtech.jellyfin.presentation.setup.users.UsersScreen
 import dev.jdtech.jellyfin.presentation.setup.welcome.WelcomeScreen
 import dev.jdtech.jellyfin.setup.presentation.permission.PermissionAction
 import dev.jdtech.jellyfin.setup.presentation.permission.PermissionViewModel
-import java.util.UUID
 
 @Composable
 fun NavigationRoot(
@@ -173,11 +175,11 @@ fun NavigationRoot(
 @Composable
 private fun episodePlayerAction(
     navigate: (NavKey) -> Unit
-): (itemId: UUID, mediaSourceId: String?, startFromBeginning: Boolean) -> Unit =
+): (itemId: ItemId, mediaSourceId: String?, startFromBeginning: Boolean) -> Unit =
     resumedAction { itemId, mediaSourceId, startFromBeginning ->
         navigate(
             PlayerRoute(
-                itemId = itemId.toString(),
+                itemId = itemId.asString(),
                 itemKind = ItemKind.EPISODE.serialName,
                 mediaSourceId = mediaSourceId,
                 startFromBeginning = startFromBeginning,
@@ -188,10 +190,10 @@ private fun episodePlayerAction(
 /** CE (#332): the page of a movie, show or collection picked from a row on a detail page. */
 private fun navigateToDetail(navigate: (NavKey) -> Unit, item: FindroidItem) {
     when (item) {
-        is FindroidMovie -> navigate(MovieRoute(item.id.toString()))
-        is FindroidShow -> navigate(ShowRoute(item.id.toString()))
+        is FindroidMovie -> navigate(MovieRoute(item.id.asString()))
+        is FindroidShow -> navigate(ShowRoute(item.id.asString()))
         is FindroidBoxSet ->
-            navigate(CollectionRoute(collectionId = item.id.toString(), collectionName = item.name))
+            navigate(CollectionRoute(collectionId = item.id.asString(), collectionName = item.name))
         else -> Unit
     }
 }
@@ -292,23 +294,23 @@ private fun EntryProviderScope<NavKey>.tvEntries(
                 resumedAction { libraryId, libraryName, libraryType ->
                     navigate(
                         LibraryRoute(
-                            libraryId = libraryId.toString(),
+                            libraryId = libraryId.asString(),
                             libraryName = libraryName,
                             libraryType = libraryType,
                         )
                     )
                 },
-            navigateToMovie = resumedAction { itemId -> navigate(MovieRoute(itemId.toString())) },
-            navigateToShow = resumedAction { itemId -> navigate(ShowRoute(itemId.toString())) },
+            navigateToMovie = resumedAction { itemId -> navigate(MovieRoute(itemId.asString())) },
+            navigateToShow = resumedAction { itemId -> navigate(ShowRoute(itemId.asString())) },
             navigateToEpisode =
                 resumedAction { episodeId ->
-                    navigate(EpisodeRoute(episodeId = episodeId.toString()))
+                    navigate(EpisodeRoute(episodeId = episodeId.asString()))
                 },
             navigateToCollection =
                 resumedAction { collectionId, collectionName ->
                     navigate(
                         CollectionRoute(
-                            collectionId = collectionId.toString(),
+                            collectionId = collectionId.asString(),
                             collectionName = collectionName,
                         )
                     )
@@ -318,26 +320,26 @@ private fun EntryProviderScope<NavKey>.tvEntries(
     // CE screens (ADR 0001): library, show and season use the versions in ce/presentation/film.
     entry<LibraryRoute> { key ->
         LibraryScreen(
-            libraryId = UUID.fromString(key.libraryId),
+            libraryId = key.libraryId.toItemId(),
             libraryName = key.libraryName,
             libraryType = key.libraryType,
             navigateToLibrary =
                 resumedAction { libraryId, libraryName, libraryType ->
                     navigate(
                         LibraryRoute(
-                            libraryId = libraryId.toString(),
+                            libraryId = libraryId.asString(),
                             libraryName = libraryName,
                             libraryType = libraryType,
                         )
                     )
                 },
-            navigateToMovie = resumedAction { itemId -> navigate(MovieRoute(itemId.toString())) },
-            navigateToShow = resumedAction { itemId -> navigate(ShowRoute(itemId.toString())) },
+            navigateToMovie = resumedAction { itemId -> navigate(MovieRoute(itemId.asString())) },
+            navigateToShow = resumedAction { itemId -> navigate(ShowRoute(itemId.asString())) },
             navigateToCollection =
                 resumedAction { collectionId, collectionName ->
                     navigate(
                         CollectionRoute(
-                            collectionId = collectionId.toString(),
+                            collectionId = collectionId.asString(),
                             collectionName = collectionName,
                         )
                     )
@@ -346,24 +348,24 @@ private fun EntryProviderScope<NavKey>.tvEntries(
     }
     entry<CollectionRoute> { key ->
         CollectionScreen(
-            collectionId = UUID.fromString(key.collectionId),
+            collectionId = key.collectionId.toItemId(),
             collectionName = key.collectionName,
-            navigateToMovie = resumedAction { itemId -> navigate(MovieRoute(itemId.toString())) },
-            navigateToShow = resumedAction { itemId -> navigate(ShowRoute(itemId.toString())) },
+            navigateToMovie = resumedAction { itemId -> navigate(MovieRoute(itemId.asString())) },
+            navigateToShow = resumedAction { itemId -> navigate(ShowRoute(itemId.asString())) },
             navigateToEpisode =
                 resumedAction { episodeId ->
-                    navigate(EpisodeRoute(episodeId = episodeId.toString()))
+                    navigate(EpisodeRoute(episodeId = episodeId.asString()))
                 },
         )
     }
     entry<MovieRoute> { key ->
         MovieScreen(
-            movieId = UUID.fromString(key.itemId),
+            movieId = key.itemId.toItemId(),
             navigateToPlayer =
                 resumedAction { itemId, mediaSourceId, startFromBeginning ->
                     navigate(
                         PlayerRoute(
-                            itemId = itemId.toString(),
+                            itemId = itemId.asString(),
                             itemKind = ItemKind.MOVIE.serialName,
                             mediaSourceId = mediaSourceId,
                             // CE (#412): Restart on the movie page.
@@ -372,22 +374,22 @@ private fun EntryProviderScope<NavKey>.tvEntries(
                     )
                 },
             navigateToPerson =
-                resumedAction { personId -> navigate(PersonRoute(personId = personId.toString())) },
+                resumedAction { personId -> navigate(PersonRoute(personId = personId.asString())) },
             // CE (#332): a collection the movie is in, or one of "More like this".
             navigateToItem = resumedAction { item -> navigateToDetail(navigate, item) },
         )
     }
     entry<ShowRoute> { key ->
         ShowScreen(
-            showId = UUID.fromString(key.itemId),
+            showId = key.itemId.toItemId(),
             navigateToItem =
                 resumedAction { item ->
                     when (item) {
                         is FindroidSeason ->
                             navigate(
                                 SeasonRoute(
-                                    seasonId = item.id.toString(),
-                                    seriesId = item.seriesId.toString(),
+                                    seasonId = item.id.asString(),
+                                    seriesId = item.seriesId.asString(),
                                 )
                             )
                         else -> navigateToDetail(navigate, item)
@@ -398,7 +400,7 @@ private fun EntryProviderScope<NavKey>.tvEntries(
                 resumedAction { extraId ->
                     navigate(
                         PlayerRoute(
-                            itemId = extraId.toString(),
+                            itemId = extraId.asString(),
                             itemKind = ItemKind.MOVIE.serialName,
                         )
                     )
@@ -407,32 +409,32 @@ private fun EntryProviderScope<NavKey>.tvEntries(
                 resumedAction { itemId, shuffle ->
                     navigate(
                         PlayerRoute(
-                            itemId = itemId.toString(),
+                            itemId = itemId.asString(),
                             itemKind = ItemKind.SERIES.serialName,
                             shuffle = shuffle,
                         )
                     )
                 },
             navigateToPerson =
-                resumedAction { personId -> navigate(PersonRoute(personId = personId.toString())) },
+                resumedAction { personId -> navigate(PersonRoute(personId = personId.asString())) },
         )
     }
     entry<PersonRoute> { key ->
         PersonScreen(
-            personId = UUID.fromString(key.personId),
-            navigateToMovie = resumedAction { itemId -> navigate(MovieRoute(itemId.toString())) },
-            navigateToShow = resumedAction { itemId -> navigate(ShowRoute(itemId.toString())) },
+            personId = key.personId.toItemId(),
+            navigateToMovie = resumedAction { itemId -> navigate(MovieRoute(itemId.asString())) },
+            navigateToShow = resumedAction { itemId -> navigate(ShowRoute(itemId.asString())) },
             navigateToEpisode =
                 resumedAction { episodeId ->
-                    navigate(EpisodeRoute(episodeId = episodeId.toString()))
+                    navigate(EpisodeRoute(episodeId = episodeId.asString()))
                 },
         )
     }
 
     entry<SeasonRoute> { key ->
         SeasonScreen(
-            seasonId = UUID.fromString(key.seasonId),
-            seriesId = key.seriesId?.let(UUID::fromString),
+            seasonId = key.seasonId.toItemId(),
+            seriesId = key.seriesId?.toItemId(),
             episodeId = null,
             navigateToPlayer = episodePlayerAction(navigate),
         )
@@ -440,14 +442,14 @@ private fun EntryProviderScope<NavKey>.tvEntries(
     entry<EpisodeRoute> { key ->
         SeasonScreen(
             seasonId = null,
-            episodeId = UUID.fromString(key.episodeId),
+            episodeId = key.episodeId.toItemId(),
             navigateToPlayer = episodePlayerAction(navigate),
         )
     }
     entry<PlayerRoute> { key ->
         // CE player (ADR 0004): remote seeking, media keys and track dialogs.
         TvPlayerScreen(
-            itemId = UUID.fromString(key.itemId),
+            itemId = key.itemId.toItemId(),
             itemKind = key.itemKind,
             startFromBeginning = key.startFromBeginning,
             mediaSourceId = key.mediaSourceId,

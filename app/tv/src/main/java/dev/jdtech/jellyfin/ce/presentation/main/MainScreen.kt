@@ -83,10 +83,11 @@ import dev.jdtech.jellyfin.core.presentation.session.LocalServerSession
 import dev.jdtech.jellyfin.film.presentation.media.MediaViewModel
 import dev.jdtech.jellyfin.models.CollectionType
 import dev.jdtech.jellyfin.models.FindroidCollection
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.viewmodels.MainViewModel
-import java.util.UUID
 import kotlinx.coroutines.launch
 
 /**
@@ -107,11 +108,12 @@ import kotlinx.coroutines.launch
 fun MainScreen(
     navigateToSettings: () -> Unit,
     navigateToUsers: () -> Unit,
-    navigateToLibrary: (libraryId: UUID, libraryName: String, libraryType: CollectionType) -> Unit,
-    navigateToMovie: (itemId: UUID) -> Unit,
-    navigateToShow: (itemId: UUID) -> Unit,
-    navigateToEpisode: (episodeId: UUID) -> Unit,
-    navigateToCollection: (collectionId: UUID, name: String) -> Unit,
+    navigateToLibrary:
+        (libraryId: ItemId, libraryName: String, libraryType: CollectionType) -> Unit,
+    navigateToMovie: (itemId: ItemId) -> Unit,
+    navigateToShow: (itemId: ItemId) -> Unit,
+    navigateToEpisode: (episodeId: ItemId) -> Unit,
+    navigateToCollection: (collectionId: ItemId, name: String) -> Unit,
     mainViewModel: MainViewModel = hiltViewModel(),
     mediaViewModel: MediaViewModel = hiltViewModel(),
 ) {
@@ -203,7 +205,7 @@ const val DESTINATION_HOME = "home"
 const val DESTINATION_SEARCH = "search"
 const val DESTINATION_FAVORITES = "favorites"
 
-fun libraryDestinationKey(libraryId: UUID): String = "library:$libraryId"
+fun libraryDestinationKey(libraryId: ItemId): String = "library:${libraryId.asString()}"
 
 /** How old the drawer's libraries may get before a return to Main refreshes them (#257). */
 internal const val LIBRARIES_REFRESH_NANOS = 5 * 60 * 1_000_000_000L
@@ -589,13 +591,13 @@ fun MainScreenLayout(
                                     contentDescription = null,
                                     modifier =
                                         Modifier.size(24.dp)
-                                            .testTag("drawer_icon_library_${library.id}"),
+                                            .testTag("drawer_icon_library_${library.id.asString()}"),
                                 )
                             },
                             border = ephyraDrawerItemBorder(),
                             modifier =
                                 Modifier.focusRequester(drawerRequester(itemKey))
-                                    .testTag("drawer_item_library_${library.id}"),
+                                    .testTag("drawer_item_library_${library.id.asString()}"),
                         ) {
                             Text(
                                 text = library.name,
@@ -676,7 +678,7 @@ fun MainScreenLayout(
                         activeDestinationKey.startsWith("library:") -> {
                             val libraryIdString = activeDestinationKey.removePrefix("library:")
                             val library = libraries.firstOrNull {
-                                it.id.toString() == libraryIdString
+                                it.id.asString() == libraryIdString
                             }
                             if (library != null) {
                                 libraryContent(library)

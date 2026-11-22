@@ -36,11 +36,12 @@ import dev.jdtech.jellyfin.ce.ui.focus.ephyraFocusedGlow
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyPerson
 import dev.jdtech.jellyfin.models.FindroidItemPerson
+import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
-import java.util.UUID
 
-internal fun personCardTag(id: UUID) = "ce_person_card_$id"
+internal fun personCardTag(id: ItemId) = "ce_person_card_${id.asString()}"
 
 @Composable
 fun PersonCard(person: FindroidItemPerson, onClick: () -> Unit, modifier: Modifier = Modifier) {

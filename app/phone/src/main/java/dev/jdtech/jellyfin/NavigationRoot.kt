@@ -51,6 +51,8 @@ import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidSeason
 import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.navigation.navigateOrReuse
 import dev.jdtech.jellyfin.navigation.resumedAction
 import dev.jdtech.jellyfin.presentation.cast.CastHost
@@ -85,7 +87,6 @@ import dev.jdtech.jellyfin.presentation.utils.LocalServerStatus
 import dev.jdtech.jellyfin.presentation.utils.useDockedSearch
 import dev.jdtech.jellyfin.setup.presentation.permission.PermissionAction
 import dev.jdtech.jellyfin.setup.presentation.permission.PermissionViewModel
-import java.util.UUID
 
 private val TOP_LEVEL_ROUTES = setOf(HomeRoute, FavoritesRoute, MediaRoute, DownloadsRoute)
 private val GLOBAL_TRANSITION_SPEC = ephyraScreenTransition()
@@ -653,7 +654,7 @@ private fun EntryProviderScope<NavKey>.mainEntries(
                 resumedAction { library ->
                     navigator.navigate(
                         LibraryRoute(
-                            libraryId = library.id.toString(),
+                            libraryId = library.id.asString(),
                             libraryName = library.name,
                             libraryType = library.type,
                         )
@@ -688,7 +689,7 @@ private fun EntryProviderScope<NavKey>.mainEntries(
             onShowClick =
                 resumedAction { show ->
                     navigator.navigate(
-                        DownloadedShowRoute(showId = show.id.toString(), showName = show.name)
+                        DownloadedShowRoute(showId = show.id.asString(), showName = show.name)
                     )
                 },
             onBrowseLibraryClick = dropUnlessResumed { navigator.navigate(MediaRoute) },
@@ -700,7 +701,7 @@ private fun EntryProviderScope<NavKey>.mainEntries(
     }
     entry<DownloadedShowRoute> { key ->
         DownloadedShowScreen(
-            showId = UUID.fromString(key.showId),
+            showId = key.showId.toItemId(),
             showName = key.showName,
             navigateBack = dropUnlessResumed { navigator.goBack() },
             onEpisodeClick = resumedAction { item -> navigateToItem(navigator, item) },
@@ -708,7 +709,7 @@ private fun EntryProviderScope<NavKey>.mainEntries(
     }
     entry<LibraryRoute> { key ->
         LibraryScreen(
-            libraryId = UUID.fromString(key.libraryId),
+            libraryId = key.libraryId.toItemId(),
             libraryName = key.libraryName,
             libraryType = key.libraryType,
             onItemClick = resumedAction { item -> navigateToItem(navigator, item) },
@@ -717,7 +718,7 @@ private fun EntryProviderScope<NavKey>.mainEntries(
     }
     entry<CollectionRoute> { key ->
         CollectionScreen(
-            collectionId = UUID.fromString(key.collectionId),
+            collectionId = key.collectionId.toItemId(),
             collectionName = key.collectionName,
             onItemClick = resumedAction { item -> navigateToItem(navigator, item) },
             navigateBack = dropUnlessResumed { navigator.goBack() },
@@ -728,19 +729,19 @@ private fun EntryProviderScope<NavKey>.mainEntries(
     }
     entry<MovieRoute> { key ->
         MovieScreen(
-            movieId = UUID.fromString(key.movieId),
+            movieId = key.movieId.toItemId(),
             navigateBack = dropUnlessResumed { navigator.goBack() },
             navigateHome = dropUnlessResumed { navigator.navigateHome() },
             navigateToItem = resumedAction { item -> navigateToItem(navigator, item) },
             navigateToPerson =
                 resumedAction { personId ->
-                    navigator.navigate(PersonRoute(personId = personId.toString()))
+                    navigator.navigate(PersonRoute(personId = personId.asString()))
                 },
         )
     }
     entry<ShowRoute> { key ->
         ShowScreen(
-            showId = UUID.fromString(key.showId),
+            showId = key.showId.toItemId(),
             downloadsOnly = key.downloadsOnly,
             navigateBack = dropUnlessResumed { navigator.goBack() },
             navigateHome = dropUnlessResumed { navigator.navigateHome() },
@@ -750,14 +751,14 @@ private fun EntryProviderScope<NavKey>.mainEntries(
                 },
             navigateToPerson =
                 resumedAction { personId ->
-                    navigator.navigate(PersonRoute(personId = personId.toString()))
+                    navigator.navigate(PersonRoute(personId = personId.asString()))
                 },
         )
     }
     entry<SeasonRoute> { key ->
         SeasonScreen(
-            seasonId = UUID.fromString(key.seasonId),
-            seriesId = key.seriesId?.let(UUID::fromString),
+            seasonId = key.seasonId.toItemId(),
+            seriesId = key.seriesId?.toItemId(),
             downloadsOnly = key.downloadsOnly,
             navigateBack = dropUnlessResumed { navigator.goBack() },
             navigateHome = dropUnlessResumed { navigator.navigateHome() },
@@ -768,39 +769,39 @@ private fun EntryProviderScope<NavKey>.mainEntries(
             navigateToSeries =
                 resumedAction { seriesId ->
                     navigator.navigateOrReuse(
-                        ShowRoute(showId = seriesId.toString(), downloadsOnly = key.downloadsOnly)
+                        ShowRoute(showId = seriesId.asString(), downloadsOnly = key.downloadsOnly)
                     )
                 },
             navigateToPerson =
                 resumedAction { personId ->
-                    navigator.navigate(PersonRoute(personId = personId.toString()))
+                    navigator.navigate(PersonRoute(personId = personId.asString()))
                 },
         )
     }
     entry<EpisodeRoute> { key ->
         EpisodeScreen(
-            episodeId = UUID.fromString(key.episodeId),
+            episodeId = key.episodeId.toItemId(),
             navigateBack = dropUnlessResumed { navigator.goBack() },
             navigateHome = dropUnlessResumed { navigator.navigateHome() },
             navigateToPerson =
                 resumedAction { personId ->
-                    navigator.navigate(PersonRoute(personId = personId.toString()))
+                    navigator.navigate(PersonRoute(personId = personId.asString()))
                 },
             navigateToSeason =
                 resumedAction { seasonId, seriesId ->
                     navigator.navigateOrReuse(
-                        SeasonRoute(seasonId = seasonId.toString(), seriesId = seriesId.toString())
+                        SeasonRoute(seasonId = seasonId.asString(), seriesId = seriesId.asString())
                     )
                 },
             navigateToSeries =
                 resumedAction { seriesId ->
-                    navigator.navigateOrReuse(ShowRoute(showId = seriesId.toString()))
+                    navigator.navigateOrReuse(ShowRoute(showId = seriesId.asString()))
                 },
         )
     }
     entry<PersonRoute> { key ->
         PersonScreen(
-            personId = UUID.fromString(key.personId),
+            personId = key.personId.toItemId(),
             navigateBack = dropUnlessResumed { navigator.goBack() },
             navigateHome = dropUnlessResumed { navigator.navigateHome() },
             navigateToItem = resumedAction { item -> navigateToItem(navigator, item) },
@@ -854,26 +855,26 @@ private fun navigateToItem(
     when (item) {
         is FindroidBoxSet ->
             navigator.navigate(
-                CollectionRoute(collectionId = item.id.toString(), collectionName = item.name)
+                CollectionRoute(collectionId = item.id.asString(), collectionName = item.name)
             )
-        is FindroidMovie -> navigator.navigate(MovieRoute(movieId = item.id.toString()))
+        is FindroidMovie -> navigator.navigate(MovieRoute(movieId = item.id.asString()))
         is FindroidShow ->
             navigator.navigate(
-                ShowRoute(showId = item.id.toString(), downloadsOnly = downloadsOnly)
+                ShowRoute(showId = item.id.asString(), downloadsOnly = downloadsOnly)
             )
         is FindroidSeason ->
             navigator.navigate(
                 SeasonRoute(
-                    seasonId = item.id.toString(),
+                    seasonId = item.id.asString(),
                     downloadsOnly = downloadsOnly,
-                    seriesId = item.seriesId.toString(),
+                    seriesId = item.seriesId.asString(),
                 )
             )
-        is FindroidEpisode -> navigator.navigate(EpisodeRoute(episodeId = item.id.toString()))
+        is FindroidEpisode -> navigator.navigate(EpisodeRoute(episodeId = item.id.asString()))
         is FindroidCollection ->
             navigator.navigate(
                 LibraryRoute(
-                    libraryId = item.id.toString(),
+                    libraryId = item.id.asString(),
                     libraryName = item.name,
                     libraryType = item.type,
                 )
@@ -881,7 +882,7 @@ private fun navigateToItem(
         is FindroidFolder ->
             navigator.navigate(
                 LibraryRoute(
-                    libraryId = item.id.toString(),
+                    libraryId = item.id.asString(),
                     libraryName = item.name,
                     libraryType = CollectionType.Folders,
                 )

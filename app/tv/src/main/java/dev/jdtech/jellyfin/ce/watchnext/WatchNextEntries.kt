@@ -4,6 +4,7 @@ import androidx.core.net.toUri
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
+import dev.jdtech.jellyfin.models.asString
 import java.time.LocalDateTime
 import java.time.ZoneId
 
@@ -38,7 +39,7 @@ fun FindroidItem.toWatchNextEntry(
             val landscape =
                 if (hidden) images.showBackdrop else images.primary ?: images.showBackdrop
             WatchNextEntry(
-                itemId = id.toString(),
+                itemId = id.asString(),
                 kind = kind,
                 itemType = WatchNextItemType.EPISODE,
                 // Without a series name the launcher still needs a title: the episode's would
@@ -58,7 +59,7 @@ fun FindroidItem.toWatchNextEntry(
         is FindroidMovie -> {
             val landscape = images.backdrop
             WatchNextEntry(
-                itemId = id.toString(),
+                itemId = id.asString(),
                 kind = kind,
                 itemType = WatchNextItemType.MOVIE,
                 title = name,

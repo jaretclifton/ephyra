@@ -63,18 +63,18 @@ import dev.jdtech.jellyfin.film.presentation.show.ShowAction
 import dev.jdtech.jellyfin.film.presentation.show.ShowState
 import dev.jdtech.jellyfin.film.presentation.show.ShowViewModel
 import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.ui.components.Direction
 import dev.jdtech.jellyfin.ui.components.ItemCard
 import dev.jdtech.jellyfin.utils.getShowDateString
-import java.util.UUID
 
 @Composable
 fun ShowScreen(
-    showId: UUID,
+    showId: ItemId,
     navigateToItem: (item: FindroidItem) -> Unit,
-    navigateToPlayer: (itemId: UUID) -> Unit,
+    navigateToPlayer: (itemId: ItemId) -> Unit,
     viewModel: ShowViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current

@@ -7,9 +7,10 @@ import coil3.ImageLoader
 import coil3.request.ErrorResult
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.localImagePath
+import dev.jdtech.jellyfin.models.toItemId
 import java.io.File
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlinx.coroutines.runBlocking
@@ -29,11 +30,11 @@ import org.robolectric.annotation.GraphicsMode
 class LocalArtworkTest {
     private val context = ApplicationProvider.getApplicationContext<Application>()
     private val imageLoader = ImageLoader(context)
-    private val itemId = UUID.fromString("44444444-4444-4444-4444-444444444444")
+    private val itemId = "44444444-4444-4444-4444-444444444444".toItemId()
 
     /** An image as ImagesDownloaderWorker saves it with a download. */
     private fun storeImage(image: String) {
-        File(context.filesDir, "images/$itemId/$image").apply {
+        File(context.filesDir, "images/${itemId.asString()}/$image").apply {
             parentFile?.mkdirs()
             outputStream().use {
                 Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888)
@@ -65,7 +66,7 @@ class LocalArtworkTest {
 
     @Test
     fun `a server URL is left as it is`() {
-        val url = "https://server/items/$itemId/Images/Primary?tag=p"
+        val url = "https://server/items/${itemId.asString()}/Images/Primary?tag=p"
 
         assertEquals(url, url.resolveIn(context).toString())
     }

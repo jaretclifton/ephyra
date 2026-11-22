@@ -80,7 +80,10 @@ import dev.jdtech.jellyfin.models.CollectionSection
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.film.components.ActiveDownloadRow
 import dev.jdtech.jellyfin.presentation.film.components.DownloadRow
 import dev.jdtech.jellyfin.presentation.film.components.EmptyState
@@ -104,9 +107,9 @@ import java.util.UUID
 private const val COLLAPSED_QUEUE_SIZE = 3
 
 private val UuidSetSaver =
-    listSaver<Set<UUID>, String>(
-        save = { ids -> ids.map { it.toString() } },
-        restore = { ids -> ids.map(UUID::fromString).toSet() },
+    listSaver<Set<ItemId>, String>(
+        save = { ids -> ids.map { it.asString() } },
+        restore = { ids -> ids.map(String::toItemId).toSet() },
     )
 
 @Composable
@@ -219,7 +222,7 @@ internal fun DownloadsScreenLayout(
     // Multi-select: entered from the top bar or by long-pressing a row.
     var selecting by rememberSaveable { mutableStateOf(false) }
     var selectedIds by
-        rememberSaveable(stateSaver = UuidSetSaver) { mutableStateOf(emptySet<UUID>()) }
+        rememberSaveable(stateSaver = UuidSetSaver) { mutableStateOf(emptySet<ItemId>()) }
     fun exitSelection() {
         selecting = false
         selectedIds = emptySet()
@@ -361,7 +364,7 @@ internal fun DownloadsScreenLayout(
                 }
                 itemsIndexed(
                     items = section.items,
-                    key = { _, item -> "library:${item.id}" },
+                    key = { _, item -> "library:${item.id.asString()}" },
                     contentType = { _, item -> item::class },
                 ) { index, item ->
                     val selected = item.id in selectedIds

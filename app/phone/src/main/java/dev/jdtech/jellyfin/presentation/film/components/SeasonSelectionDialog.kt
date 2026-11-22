@@ -27,18 +27,18 @@ import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummySeason
 import dev.jdtech.jellyfin.film.presentation.show.SeasonDownloadInfo
 import dev.jdtech.jellyfin.models.FindroidSeason
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.presentation.components.BaseDialog
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
-import java.util.UUID
 
 @Composable
 fun SeasonSelectionDialog(
     seasons: List<FindroidSeason>,
-    onConfirm: (selectedSeasonIds: Set<UUID>) -> Unit,
+    onConfirm: (selectedSeasonIds: Set<ItemId>) -> Unit,
     onDismiss: () -> Unit,
-    initialSelection: Set<UUID> = seasons.map { it.id }.toSet(),
-    seasonDownloadInfo: Map<UUID, SeasonDownloadInfo> = emptyMap(),
+    initialSelection: Set<ItemId> = seasons.map { it.id }.toSet(),
+    seasonDownloadInfo: Map<ItemId, SeasonDownloadInfo> = emptyMap(),
 ) {
     val lazyListState = rememberLazyListState()
 
@@ -93,7 +93,7 @@ private fun SeasonSelectionDialogItem(
     season: FindroidSeason,
     checked: Boolean,
     downloadInfo: SeasonDownloadInfo?,
-    onCheckedChange: (UUID) -> Unit,
+    onCheckedChange: (ItemId) -> Unit,
 ) {
     val seasonLabel =
         if (season.name.isNotBlank()) {

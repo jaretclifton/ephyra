@@ -95,6 +95,7 @@ import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
 import dev.jdtech.jellyfin.di.SubtitleStyleEntryPoint
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.player.local.R as PlayerR
 import dev.jdtech.jellyfin.player.local.domain.SleepTimerOption
 import dev.jdtech.jellyfin.player.local.domain.StillWatchingTracker
@@ -111,7 +112,6 @@ import dev.jdtech.jellyfin.utils.ObserveAsEvents
 import dev.jdtech.jellyfin.utils.applySubtitleStyle
 import java.util.Date
 import java.util.Locale
-import java.util.UUID
 import kotlinx.coroutines.delay
 
 private enum class PlayerDialog {
@@ -132,7 +132,7 @@ private val SPEEDS = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)
 @OptIn(UnstableApi::class)
 @Composable
 fun TvPlayerScreen(
-    itemId: UUID,
+    itemId: ItemId,
     itemKind: String,
     startFromBeginning: Boolean,
     mediaSourceId: String? = null,
@@ -1036,7 +1036,7 @@ private fun PlayerControls(
 private class PlayerControlsCallbacks(
     val onOpenQueue: () -> Unit,
     val onQueueClosed: () -> Unit,
-    val onPlayQueueItem: (UUID) -> Unit,
+    val onPlayQueueItem: (ItemId) -> Unit,
     val onPrevious: () -> Unit,
     val onNext: () -> Unit,
     val onPendingSeekChange: (Long?) -> Unit,
@@ -1115,7 +1115,7 @@ private fun QueueRow(
     open: Boolean,
     focusRequester: FocusRequester,
     onClosed: () -> Unit,
-    onPlay: (UUID) -> Unit,
+    onPlay: (ItemId) -> Unit,
     onFocus: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacings.small)) {

@@ -51,9 +51,9 @@ import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.ephyra.EphyraMotion
 import dev.jdtech.jellyfin.film.presentation.season.SeasonState
 import dev.jdtech.jellyfin.models.FindroidEpisode
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.presentation.film.CompactEpisodeRow
 import dev.jdtech.jellyfin.presentation.film.components.groupedItemShape
-import java.util.UUID
 import kotlin.math.roundToInt
 
 /**
@@ -72,7 +72,7 @@ fun PlayerEpisodeSheet(
     visibleState: MutableTransitionState<Boolean>,
     state: SeasonState,
     seasonNumber: Int?,
-    currentEpisodeId: UUID?,
+    currentEpisodeId: ItemId?,
     onEpisodeClick: (FindroidEpisode) -> Unit,
     onDismiss: () -> Unit,
     onClosed: () -> Unit,
@@ -153,7 +153,7 @@ fun PlayerEpisodeSheet(
 private fun EpisodeSheetContent(
     state: SeasonState,
     seasonNumber: Int?,
-    currentEpisodeId: UUID?,
+    currentEpisodeId: ItemId?,
     scrollToCurrent: Boolean,
     onEpisodeClick: (FindroidEpisode) -> Unit,
     wantsFocus: Boolean,

@@ -22,6 +22,7 @@ import dev.jdtech.jellyfin.core.presentation.session.LocalServerSession
 import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
 import dev.jdtech.jellyfin.core.presentation.spoiler.Spoilers
 import dev.jdtech.jellyfin.domain.ports.ServerSession
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.setup.presentation.localnetwork.LocalNetworkBlockViewModel
 import dev.jdtech.jellyfin.viewmodels.MainViewModel
@@ -107,5 +108,5 @@ class MainActivity : ComponentActivity() {
 
     /** A link for another user than the current one opens the app without playing it. */
     private fun readWatchNextLink(intent: Intent?): WatchNextLink? =
-        WatchNextLink.fromIntent(intent)?.takeIf { it.userId == serverSession.userId?.toString() }
+        WatchNextLink.fromIntent(intent)?.takeIf { it.userId == serverSession.userId?.asString() }
 }

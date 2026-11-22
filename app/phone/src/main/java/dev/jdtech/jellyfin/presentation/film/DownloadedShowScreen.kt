@@ -51,6 +51,7 @@ import dev.jdtech.jellyfin.core.presentation.spoiler.spoilerFreeName
 import dev.jdtech.jellyfin.film.presentation.downloads.DownloadedShowViewModel
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.presentation.film.components.DownloadRow
 import dev.jdtech.jellyfin.presentation.film.components.SwipeActionBackground
 import dev.jdtech.jellyfin.presentation.film.components.downloadRowSize
@@ -59,13 +60,12 @@ import dev.jdtech.jellyfin.presentation.film.components.playDownloadedItem
 import dev.jdtech.jellyfin.presentation.film.components.rememberUndoController
 import dev.jdtech.jellyfin.presentation.utils.Layout
 import dev.jdtech.jellyfin.presentation.utils.topAndSideInsets
-import java.util.UUID
 
 /** The downloaded episodes of one show, by season, with per-episode and remove-all actions. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DownloadedShowScreen(
-    showId: UUID,
+    showId: ItemId,
     showName: String,
     navigateBack: () -> Unit,
     onEpisodeClick: (FindroidItem) -> Unit,

@@ -57,6 +57,7 @@ import dev.jdtech.jellyfin.film.presentation.library.LibraryState
 import dev.jdtech.jellyfin.film.presentation.library.LibraryViewModel
 import dev.jdtech.jellyfin.models.CollectionType
 import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.presentation.components.ErrorDialog
 import dev.jdtech.jellyfin.presentation.film.components.Direction
 import dev.jdtech.jellyfin.presentation.film.components.DownloadsOnlyLine
@@ -75,13 +76,12 @@ import dev.jdtech.jellyfin.presentation.utils.plus
 import dev.jdtech.jellyfin.presentation.utils.showsServerIndicator
 import dev.jdtech.jellyfin.presentation.utils.topAndSideInsets
 import dev.jdtech.jellyfin.repository.StoredLibraries
-import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
 @Composable
 fun LibraryScreen(
-    libraryId: UUID,
+    libraryId: ItemId,
     libraryName: String,
     libraryType: CollectionType,
     onItemClick: (item: FindroidItem) -> Unit,

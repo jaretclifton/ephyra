@@ -58,12 +58,13 @@ import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.ui.components.Direction
 import dev.jdtech.jellyfin.ui.components.ItemCard
-import java.util.UUID
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
@@ -74,9 +75,9 @@ import kotlinx.coroutines.withTimeoutOrNull
  */
 @Composable
 fun FavoritesScreen(
-    navigateToMovie: (itemId: UUID) -> Unit,
-    navigateToShow: (itemId: UUID) -> Unit,
-    navigateToEpisode: (episodeId: UUID) -> Unit,
+    navigateToMovie: (itemId: ItemId) -> Unit,
+    navigateToShow: (itemId: ItemId) -> Unit,
+    navigateToEpisode: (episodeId: ItemId) -> Unit,
     viewModel: FavoritesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -113,7 +114,7 @@ fun FavoritesScreen(
 internal const val FAVORITES_SCREEN_TAG = "ce_favorites_screen"
 internal const val FAVORITES_EMPTY_TAG = "ce_favorites_empty"
 
-internal fun favoritesCardTag(id: UUID) = "ce_favorites_card_$id"
+internal fun favoritesCardTag(id: ItemId) = "ce_favorites_card_${id.asString()}"
 
 @Composable
 internal fun FavoritesScreenLayout(
@@ -220,7 +221,7 @@ internal fun FavoritesScreenLayout(
         val found =
             state.sections.withIndex().firstNotNullOfOrNull { (r, section) ->
                 section.items
-                    .indexOfFirst { it.id.toString() == key }
+                    .indexOfFirst { it.id.asString() == key }
                     .takeIf { it >= 0 }
                     ?.let { c -> r to c }
             }
@@ -288,7 +289,7 @@ private fun FavoritesRowContent(
                     showSeriesName = direction == Direction.HORIZONTAL,
                     onClick = { onItemClick(item) },
                     modifier =
-                        Modifier.focusPosition(focusPosition, rowIndex, column, item.id.toString())
+                        Modifier.focusPosition(focusPosition, rowIndex, column, item.id.asString())
                             .testTag(favoritesCardTag(item.id)),
                 )
             }

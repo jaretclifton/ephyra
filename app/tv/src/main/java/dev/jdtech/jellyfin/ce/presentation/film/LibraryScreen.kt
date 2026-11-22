@@ -79,11 +79,12 @@ import dev.jdtech.jellyfin.models.FindroidFolder
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.ui.components.Direction
 import dev.jdtech.jellyfin.ui.components.ItemCard
-import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
@@ -97,14 +98,15 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun LibraryScreen(
-    libraryId: UUID,
+    libraryId: ItemId,
     libraryName: String,
     libraryType: CollectionType,
-    navigateToLibrary: (libraryId: UUID, libraryName: String, libraryType: CollectionType) -> Unit,
-    navigateToMovie: (itemId: UUID) -> Unit,
-    navigateToShow: (itemId: UUID) -> Unit,
-    navigateToCollection: (collectionId: UUID, collectionName: String) -> Unit,
-    viewModel: LibraryViewModel = hiltViewModel(key = libraryId.toString()),
+    navigateToLibrary:
+        (libraryId: ItemId, libraryName: String, libraryType: CollectionType) -> Unit,
+    navigateToMovie: (itemId: ItemId) -> Unit,
+    navigateToShow: (itemId: ItemId) -> Unit,
+    navigateToCollection: (collectionId: ItemId, collectionName: String) -> Unit,
+    viewModel: LibraryViewModel = hiltViewModel(key = libraryId.asString()),
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -268,7 +270,7 @@ internal fun LibraryScreenLayout(
                                         focusPosition,
                                         ROW_ITEMS,
                                         i,
-                                        item.id.toString(),
+                                        item.id.asString(),
                                     )
                                     .onFocusChanged { if (it.hasFocus) focusedIndex.intValue = i }
                                     .testTag(libraryCardTag(item.id)),
@@ -343,7 +345,7 @@ internal fun LibraryScreenLayout(
     }
 }
 
-internal fun libraryCardTag(id: UUID) = "ce_library_card_$id"
+internal fun libraryCardTag(id: ItemId) = "ce_library_card_${id.asString()}"
 
 internal const val LETTER_BAR_TAG = "ce_library_letter_bar"
 
@@ -354,7 +356,7 @@ private val LETTER_BAR_WIDTH = 32.dp
 /** About two seconds at 60 fps, for the page of a jump to come in on a slow box. */
 private const val JUMP_FOCUS_FRAMES = 120
 
-private fun LazyPagingItems<FindroidItem>.peekId(index: Int): String? = peek(index)?.id?.toString()
+private fun LazyPagingItems<FindroidItem>.peekId(index: Int): String? = peek(index)?.id?.asString()
 
 /** Scrolls only when [index] isn't on screen, so a return keeps the old scroll position. */
 private suspend fun LazyGridState.scrollIntoView(index: Int) {

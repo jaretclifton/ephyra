@@ -26,6 +26,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyServer
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyUser
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -54,7 +55,7 @@ class DrawerSafeAreaTest {
             "drawer_icon_home",
             "drawer_icon_favorites",
             "drawer_icon_settings",
-        ) + dummyCollections.map { "drawer_icon_library_${it.id}" }
+        ) + dummyCollections.map { "drawer_icon_library_${it.id.asString()}" }
 
     private fun setUp(
         user: User = dummyUser,

@@ -65,12 +65,13 @@ import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.ui.components.Direction
 import dev.jdtech.jellyfin.ui.components.ItemCard
-import java.util.UUID
 
 /**
  * CE search screen (G4), a drawer destination (ADR 0002). Results update while typing and come in
@@ -79,10 +80,10 @@ import java.util.UUID
  */
 @Composable
 fun SearchScreen(
-    navigateToMovie: (itemId: UUID) -> Unit,
-    navigateToShow: (itemId: UUID) -> Unit,
-    navigateToEpisode: (episodeId: UUID) -> Unit,
-    navigateToCollection: (collectionId: UUID, name: String) -> Unit,
+    navigateToMovie: (itemId: ItemId) -> Unit,
+    navigateToShow: (itemId: ItemId) -> Unit,
+    navigateToEpisode: (episodeId: ItemId) -> Unit,
+    navigateToCollection: (collectionId: ItemId, name: String) -> Unit,
     viewModel: SearchViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -177,7 +178,7 @@ internal fun SearchScreenLayout(
         if (!retried || groups.isEmpty()) return@LaunchedEffect
         retried = false
         val (group, items) = groups.first()
-        focusPosition.save(group.row(), 0, items.first().id.toString())
+        focusPosition.save(group.row(), 0, items.first().id.asString())
         // The text field is list item 0, the groups follow it.
         listState.scrollToItem(1)
         repeat(RETRY_FOCUS_FRAMES) {
@@ -311,7 +312,7 @@ internal fun SearchScreenLayout(
                                             focusPosition,
                                             group.row(),
                                             index,
-                                            item.id.toString(),
+                                            item.id.asString(),
                                         )
                                         .testTag(searchCardTag(item.id)),
                             )
@@ -331,7 +332,7 @@ internal fun SearchScreenLayout(
             return@RestoreFocus
         }
         val items = groups[index].second
-        position.resolve(position.row, items.size) { i -> items[i].id.toString() }
+        position.resolve(position.row, items.size) { i -> items[i].id.asString() }
         // The text field is list item 0, the groups follow it.
         listState.scrollToItem(1 + index)
     }
@@ -346,7 +347,7 @@ internal const val SEARCH_FIELD_TAG = "ce_search_field"
 
 internal fun searchRowTag(kind: ItemKind) = "ce_search_row_${kind.serialName}"
 
-internal fun searchCardTag(id: UUID) = "ce_search_card_$id"
+internal fun searchCardTag(id: ItemId) = "ce_search_card_${id.asString()}"
 
 @Preview(device = "id:tv_1080p")
 @Composable

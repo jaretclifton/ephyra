@@ -7,6 +7,7 @@ import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.asString
 
 /** Whether [playDownloadedItem] can start [item] directly. */
 fun canPlayDirectly(item: FindroidItem): Boolean = item is FindroidMovie || item is FindroidEpisode
@@ -21,7 +22,7 @@ fun Context.playDownloadedItem(item: FindroidItem) {
         }
     val intent =
         Intent(this, PlayerActivity::class.java)
-            .putExtra("itemId", item.id.toString())
+            .putExtra("itemId", item.id.asString())
             .putExtra("itemKind", kind.serialName)
             .putExtra("startFromBeginning", false)
     startActivity(intent)
