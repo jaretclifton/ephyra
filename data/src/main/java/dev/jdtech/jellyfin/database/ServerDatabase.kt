@@ -42,7 +42,7 @@ import dev.jdtech.jellyfin.models.User
             PendingDownloadDto::class,
             SeriesTrackPreferenceDto::class,
         ],
-    version = 20,
+    version = 21,
     autoMigrations =
         [
             AutoMigration(from = 2, to = 3),
@@ -62,6 +62,7 @@ import dev.jdtech.jellyfin.models.User
             AutoMigration(from = 17, to = 18),
             AutoMigration(from = 18, to = 19, spec = ServerDatabase.LastPlayedDateMigration::class),
             AutoMigration(from = 19, to = 20, spec = ServerDatabase.SegmentsKeyMigration::class),
+            AutoMigration(from = 20, to = 21),
         ],
 )
 @ColumnTypeConverters(Converters::class)

@@ -7,6 +7,8 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.sqlite.execSQL
 import androidx.test.platform.app.InstrumentationRegistry
+import dev.jdtech.jellyfin.models.ServerType
+import dev.jdtech.jellyfin.models.serverType
 import java.util.UUID
 import kotlin.math.abs
 import kotlin.test.assertEquals
@@ -34,8 +36,11 @@ import org.robolectric.annotation.Config
  * CE (#693): a downloaded item's skip segments survive the change of the segments table's key, and
  * those of an item that is no longer downloaded go.
  *
- * Released schemas: 12 (v1.2.0-ce.0 to ce.3), 14 (v1.2.0-ce.4 to 2.1.0), 16 (2.2.0), 18 (2.3.0,
- * 2.4.0).
+ * CE (#770): every saved server becomes a Jellyfin server, the only type there was before the
+ * column, and the tables keep their keys and indexes.
+ *
+ * Released schemas: 12 (v1.2.0-ce.0 to ce.3), 14 (v1.2.0-ce.4 to 2.1.0), 16 (2.2.0), 18 (2.3.0 to
+ * 2.5.0), 19 (2.6.0, 2.7.0), 20 (2.8.0).
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
@@ -56,6 +61,105 @@ class ServerDatabaseMigrationTest {
     @Test fun `schema 16 migrates with its data`() = migratesWithData(16)
 
     @Test fun `schema 18 migrates with its data`() = migratesWithData(18)
+
+    @Test fun `schema 19 migrates with its data`() = migratesWithData(19)
+
+    @Test fun `schema 20 migrates with its data`() = migratesWithData(20)
+
+    /**
+     * CE (#770): two saved servers, each with its address, user and download, all survive the
+     * migration that adds the server type, and both servers are Jellyfin servers. The type is the
+     * only change: every table keeps its columns, keys, foreign keys and indexes.
+     */
+    @Test
+    fun `schema 20 with two servers migrates, both typed jellyfin`() = runBlocking<Unit> {
+        val before =
+            helper.createDatabase(20).run {
+                insertRows(20)
+                insertSecondServer()
+                val described = describeSchema()
+                close()
+                described
+            }
+
+        helper.runMigrationsAndValidate(latest, MIGRATIONS).apply {
+            assertEquals(
+                listOf(SERVER to "jellyfin", SECOND_SERVER to "jellyfin"),
+                rows("SELECT id, type FROM servers ORDER BY id"),
+            )
+            assertEquals(
+                listOf(ADDRESS_ID to SERVER, SECOND_ADDRESS_ID to SECOND_SERVER),
+                rows("SELECT id, serverId FROM serverAddresses ORDER BY id"),
+            )
+            assertEquals(
+                listOf(USER to TOKEN, SECOND_USER to SECOND_TOKEN),
+                rows("SELECT id, accessToken FROM users ORDER BY id"),
+            )
+            assertEquals(
+                listOf(USER to ADDRESS_ID, SECOND_USER to SECOND_ADDRESS_ID),
+                rows(
+                    "SELECT currentUserId, currentServerAddressId FROM servers ORDER BY currentUserId"
+                ),
+            )
+            assertEquals(
+                listOf(MOVIE to SERVER, SECOND_MOVIE to SECOND_SERVER),
+                rows("SELECT id, serverId FROM movies ORDER BY id"),
+            )
+            assertEquals(
+                listOf("second-source" to SECOND_MOVIE, "source" to MOVIE),
+                rows("SELECT id, itemId FROM sources ORDER BY id"),
+            )
+            assertEquals(2L, long("SELECT COUNT(*) FROM userdata WHERE toBeSynced = 1"))
+
+            val after = describeSchema()
+            // The description does see the foreign keys and indexes it is compared on.
+            assertTrue(before.any { "users foreign key servers serverId id" in it }, "$before")
+            assertTrue(before.any { "users index index_users_serverId" in it }, "$before")
+            assertEquals(
+                before,
+                after - SERVER_TYPE_COLUMN,
+                message = "the migration changed more than the servers table's new column",
+            )
+            assertTrue(SERVER_TYPE_COLUMN in after, message = "no type column: $after")
+            close()
+        }
+    }
+
+    /**
+     * CE (#770): an install that starts at the current version gets the same tables, keys and
+     * indexes as one that migrated to it, the new column with its default included.
+     */
+    @Test
+    fun `a fresh database has the schema of a migrated one`() = runBlocking {
+        helper.createDatabase(20).close()
+        val migrated =
+            helper.runMigrationsAndValidate(latest, MIGRATIONS).run {
+                val described = describeSchema()
+                close()
+                described
+            }
+
+        // Created by Room from the compiled entities, the way a new install creates it.
+        val freshFile = context.getDatabasePath("fresh-install")
+        freshFile.delete()
+        val database =
+            Room.databaseBuilder(context, ServerDatabase::class.java, freshFile.path)
+                .setDriver(AndroidSQLiteDriver())
+                .build()
+        try {
+            database.getServerDatabaseDao().getServers()
+        } finally {
+            database.close()
+        }
+        val fresh =
+            AndroidSQLiteDriver().open(freshFile.path).run {
+                val described = describeSchema()
+                close()
+                described
+            }
+
+        assertEquals(migrated, fresh)
+    }
 
     /** Every exported schema, released or not, has a migration path to the current one. */
     @Test
@@ -85,6 +189,8 @@ class ServerDatabaseMigrationTest {
                 14 to "e90f3d1b1d47c59c2e974df07965d328",
                 16 to "ca0feb86ab6251711afc43b6a5f55957",
                 18 to "8f1beae8cd83dda5184f02488860efa0",
+                19 to "4cf93f4ec8d7317665467ea0a098e807",
+                20 to "122265e99eedfa45c1c8afde729e82b1",
             )
         for ((version, hash) in pinned) {
             val json =
@@ -117,6 +223,7 @@ class ServerDatabaseMigrationTest {
                 .build()
         try {
             val dao = database.getServerDatabaseDao()
+            assertEquals(ServerType.JELLYFIN, dao.getServer(SERVER)!!.serverType)
             assertEquals(TOKEN, dao.getServerCurrentUser(SERVER)!!.accessToken)
             assertEquals(ADDRESS, dao.getServerCurrentAddress(SERVER)!!.address)
             assertEquals("Movie", dao.getMovie(uuid(MOVIE)).name)
@@ -173,9 +280,12 @@ class ServerDatabaseMigrationTest {
         execSQL(
             "INSERT INTO segments (itemId, type, startTicks, endTicks) VALUES ('$MOVIE', 'INTRO', 0, 300000000)"
         )
-        execSQL(
-            "INSERT INTO segments (itemId, type, startTicks, endTicks) VALUES ('$EPISODE', 'OUTRO', 0, 300000000)"
-        )
+        // Left behind by a deleted download, which #693 (schema 20) cleans up and prevents.
+        if (version < 20) {
+            execSQL(
+                "INSERT INTO segments (itemId, type, startTicks, endTicks) VALUES ('$EPISODE', 'OUTRO', 0, 300000000)"
+            )
+        }
         if (version >= 14) {
             execSQL(
                 "INSERT INTO seriesTrackPreferences (userId, seriesId, trackType, disabled, language, title, positionInLanguage) VALUES ('$USER', '$SHOW', 1, 0, 'eng', NULL, 0)"
@@ -189,9 +299,14 @@ class ServerDatabaseMigrationTest {
         if (version >= 18) {
             execSQL("UPDATE users SET lockType = 'pattern' WHERE id = '$USER'")
         }
+        if (version >= 19) {
+            execSQL("UPDATE userdata SET lastPlayedDate = $LAST_PLAYED WHERE userId = '$USER'")
+        }
     }
 
     private fun SQLiteConnection.assertRowsSurvived(from: Int) {
+        // CE (#770): the one server is a Jellyfin server.
+        assertEquals("jellyfin", text("SELECT type FROM servers WHERE id = '$SERVER'"))
         assertEquals(USER, text("SELECT currentUserId FROM servers WHERE id = '$SERVER'"))
         assertEquals(ADDRESS, text("SELECT address FROM serverAddresses WHERE id = '$ADDRESS_ID'"))
         assertEquals(TOKEN, text("SELECT accessToken FROM users WHERE id = '$USER'"))
@@ -203,10 +318,14 @@ class ServerDatabaseMigrationTest {
         assertEquals(1L, long("SELECT toBeSynced FROM userdata"))
         // CE (#633): progress waiting to be sent gets the time of the upgrade as its last play.
         val lastPlayed = long("SELECT lastPlayedDate FROM userdata")
-        assertTrue(
-            abs(System.currentTimeMillis() - lastPlayed) < 60_000L,
-            message = "lastPlayedDate $lastPlayed is not about now",
-        )
+        if (from >= 19) {
+            assertEquals(LAST_PLAYED, lastPlayed)
+        } else {
+            assertTrue(
+                abs(System.currentTimeMillis() - lastPlayed) < 60_000L,
+                message = "lastPlayedDate $lastPlayed is not about now",
+            )
+        }
         assertEquals(EPISODE, text("SELECT itemId FROM pending_downloads"))
         assertEquals(0L, long("SELECT smartQueued FROM sources"))
         assertEquals(300_000_000L, long("SELECT endTicks FROM segments WHERE itemId = '$MOVIE'"))
@@ -224,6 +343,80 @@ class ServerDatabaseMigrationTest {
         }
         assertEquals(if (from >= 18) "pattern" else "pin", text("SELECT lockType FROM users"))
     }
+
+    /** CE (#770): a second server with its own address, user, download and offline position. */
+    private fun SQLiteConnection.insertSecondServer() {
+        execSQL(
+            "INSERT INTO servers (id, name, currentServerAddressId, currentUserId) VALUES ('$SECOND_SERVER', 'Cabin', '$SECOND_ADDRESS_ID', '$SECOND_USER')"
+        )
+        execSQL(
+            "INSERT INTO serverAddresses (id, serverId, address) VALUES ('$SECOND_ADDRESS_ID', '$SECOND_SERVER', 'http://192.168.1.20:8096')"
+        )
+        execSQL(
+            "INSERT INTO users (id, name, serverId, accessToken) VALUES ('$SECOND_USER', 'Bob', '$SECOND_SERVER', '$SECOND_TOKEN')"
+        )
+        execSQL(
+            "INSERT INTO movies (id, serverId, name, overview, runtimeTicks, status) VALUES ('$SECOND_MOVIE', '$SECOND_SERVER', 'Other movie', '', 72000000000, 'Released')"
+        )
+        execSQL(
+            "INSERT INTO sources (id, itemId, name, type, path, downloadId, downloadMaxBitrate) VALUES ('second-source', '$SECOND_MOVIE', 'Other movie', 'LOCAL', '$PATH.2', 43, 8000000)"
+        )
+        execSQL(
+            "INSERT INTO userdata (userId, itemId, played, favorite, playbackPositionTicks, toBeSynced) VALUES ('$SECOND_USER', '$SECOND_MOVIE', 1, 0, 0, 1)"
+        )
+    }
+
+    /**
+     * CE (#770): every table's columns (name, type, not null, default, key), foreign keys and
+     * indexes, as SQLite reports them, one line each.
+     */
+    private fun SQLiteConnection.describeSchema(): Set<String> {
+        val tables =
+            rowsOf(
+                    "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT IN ('room_master_table', 'android_metadata')",
+                    listOf(0),
+                )
+                .map { it.single()!! }
+        return tables
+            .flatMap { table ->
+                val columns =
+                    rowsOf("PRAGMA table_info(`$table`)", listOf(1, 2, 3, 4, 5)).map {
+                        "$table column ${it.joinToString(" ")}"
+                    }
+                val foreignKeys =
+                    rowsOf("PRAGMA foreign_key_list(`$table`)", listOf(2, 3, 4, 5, 6)).map {
+                        "$table foreign key ${it.joinToString(" ")}"
+                    }
+                val indexes =
+                    rowsOf("PRAGMA index_list(`$table`)", listOf(1, 2, 3)).map { index ->
+                        val indexColumns =
+                            rowsOf("PRAGMA index_info(`${index[0]}`)", listOf(2)).joinToString(
+                                ","
+                            ) {
+                                it.single().toString()
+                            }
+                        "$table index ${index.joinToString(" ")} ($indexColumns)"
+                    }
+                columns + foreignKeys + indexes
+            }
+            .toSet()
+    }
+
+    /** The given columns of every row of [sql], as text (null stays null). */
+    private fun SQLiteConnection.rowsOf(sql: String, columns: List<Int>): List<List<String?>> =
+        prepare(sql).use { statement ->
+            buildList {
+                while (statement.step()) {
+                    add(
+                        columns.map { if (statement.isNull(it)) null else statement.getText(it) }
+                    )
+                }
+            }
+        }
+
+    /** The first two columns of every row of [sql]. */
+    private fun SQLiteConnection.rows(sql: String): List<Pair<String?, String?>> =
+        rowsOf(sql, listOf(0, 1)).map { it[0] to it[1] }
 
     private fun SQLiteConnection.text(sql: String): String? =
         prepare(sql).use {
@@ -258,11 +451,21 @@ class ServerDatabaseMigrationTest {
         const val TOKEN = "access-token"
         const val PATH = "/storage/emulated/0/Android/data/downloads/movie.mkv"
         const val POSITION = 36_000_000_000L
+        const val LAST_PLAYED = 1_700_000_000_000L
         const val ADDRESS_ID = "00000000-0000-0000-0000-00000000000a"
         const val USER = "00000000-0000-0000-0000-000000000001"
         const val MOVIE = "00000000-0000-0000-0000-000000000002"
         const val SHOW = "00000000-0000-0000-0000-000000000003"
         const val SEASON = "00000000-0000-0000-0000-000000000004"
         const val EPISODE = "00000000-0000-0000-0000-000000000005"
+
+        const val SECOND_SERVER = "server-2"
+        const val SECOND_TOKEN = "access-token-2"
+        const val SECOND_ADDRESS_ID = "00000000-0000-0000-0000-00000000000b"
+        const val SECOND_USER = "00000000-0000-0000-0000-000000000011"
+        const val SECOND_MOVIE = "00000000-0000-0000-0000-000000000012"
+
+        /** The one line [describeSchema] gains from #770. */
+        const val SERVER_TYPE_COLUMN = "servers column type TEXT 1 'jellyfin' 0"
     }
 }
