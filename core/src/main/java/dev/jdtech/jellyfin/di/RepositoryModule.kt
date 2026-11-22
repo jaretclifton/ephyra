@@ -10,6 +10,7 @@ import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.reachability.ServerReachability
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.CatalogPort
+import dev.jdtech.jellyfin.domain.ports.CurrentServerCapabilities
 import dev.jdtech.jellyfin.domain.ports.DeviceCodecs
 import dev.jdtech.jellyfin.domain.ports.DeviceReportSource
 import dev.jdtech.jellyfin.domain.ports.MediaServer
@@ -79,6 +80,13 @@ object RepositoryModule {
             userData = JellyfinUserData(jellyfinApi),
             playback = JellyfinPlayback(jellyfinApi, deviceProfiles),
         )
+
+    /** CE (#769): what the server in use can do, for code without a repository (settings). */
+    @Provides
+    fun provideCurrentServerCapabilities(server: MediaServer): CurrentServerCapabilities =
+        CurrentServerCapabilities {
+            server.capabilities
+        }
 
     @Singleton
     @Provides

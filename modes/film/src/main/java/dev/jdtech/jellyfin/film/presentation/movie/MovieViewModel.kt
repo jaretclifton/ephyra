@@ -10,6 +10,7 @@ import dev.jdtech.jellyfin.film.presentation.detailSections
 import dev.jdtech.jellyfin.film.presentation.keeping
 import dev.jdtech.jellyfin.film.presentation.launchRelatedItems
 import dev.jdtech.jellyfin.film.presentation.shownIn
+import dev.jdtech.jellyfin.film.presentation.within
 import dev.jdtech.jellyfin.models.FindroidItemPerson
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.PersonKind
@@ -67,7 +68,13 @@ constructor(
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             val token = reloadPolicy.begin()
-            _state.emit(_state.value.copy(error = null))
+            // #769: read on every load, as the server may have changed since.
+            _state.emit(
+                _state.value.copy(
+                    error = null,
+                    cappedDownloads = repository.capabilities.cappedDownloadTranscode,
+                )
+            )
             try {
                 // The preference doesn't depend on the movie, so it is read while it loads.
                 val (movie, displayCastAndCrew) =
@@ -121,6 +128,7 @@ constructor(
                     collections = true,
                 )
                 .shownIn(appPreferences.detailSections())
+                .within(repository.capabilities)
         if (relatedFor == movieId && relatedRequest == request) return
         relatedFor = movieId
         relatedRequest = request

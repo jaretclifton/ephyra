@@ -138,7 +138,14 @@ constructor(
         loadJob = viewModelScope.launch {
             val token = reloadPolicy.begin()
             val previous = _state.value
-            _state.emit(previous.copy(error = null, isLoading = true))
+            // #769: read on every load, as the server may have changed since.
+            _state.emit(
+                previous.copy(
+                    error = null,
+                    isLoading = true,
+                    cappedDownloads = repository.capabilities.cappedDownloadTranscode,
+                )
+            )
             // Another season of the same series (TV season chips) shares the series id.
             val knownSeriesId =
                 seriesId

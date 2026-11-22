@@ -16,4 +16,8 @@ interface Preference {
 
     val minSdk: Int?
         get() = null
+
+    /** #769: the server feature this is about; hidden while the server lacks it. */
+    val serverFeature: ServerFeature?
+        get() = null
 }

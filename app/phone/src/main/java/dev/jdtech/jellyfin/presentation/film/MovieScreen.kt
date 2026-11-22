@@ -405,6 +405,7 @@ private fun MovieScreenLayout(
 
         if (downloadQualityDialogOpen) {
             DownloadQualityDialog(
+                capped = state.cappedDownloads,
                 onSelect = { maxBitrate ->
                     state.movie?.let { movie ->
                         onDownloaderAction(DownloaderAction.Download(movie, maxBitrate))

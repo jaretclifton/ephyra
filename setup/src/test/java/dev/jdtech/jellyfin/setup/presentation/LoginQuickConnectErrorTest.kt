@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.setup.presentation
 
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.models.QuickConnectState
+import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.setup.R as SetupR
@@ -59,6 +60,8 @@ class LoginQuickConnectErrorTest {
             SetupRepository::class.java.classLoader,
             arrayOf(SetupRepository::class.java),
         ) { _, method, _ ->
+            // #769: Jellyfin can do everything.
+            if (method.name == "getCapabilities") return@newProxyInstance ServerCapabilities.ALL
             failures[method.name]?.let { throw it }
             when (method.name) {
                 "initiateQuickConnect",
