@@ -143,7 +143,7 @@ class JellyfinPlayback(
         index: Int,
         mediaSourceId: MediaSourceId?,
     ): ByteArray? = call {
-        api.trickPlayApi
+        api.trickplaySheetApi
             .getTrickplayTileImage(itemId, width, index, trickplayVersion(itemId, mediaSourceId))
             .content
     }
