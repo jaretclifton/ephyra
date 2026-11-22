@@ -48,6 +48,7 @@ import androidx.tv.material3.MaterialTheme
 import dagger.hilt.android.EntryPointAccessors
 import dev.jdtech.jellyfin.core.R
 import dev.jdtech.jellyfin.di.SubtitleStyleEntryPoint
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerChapter
 import dev.jdtech.jellyfin.player.local.presentation.PlayerAction
 import dev.jdtech.jellyfin.player.local.presentation.PlayerEvents
@@ -64,13 +65,12 @@ import dev.jdtech.jellyfin.ui.components.player.rememberVideoPlayerState
 import dev.jdtech.jellyfin.utils.ObserveAsEvents
 import dev.jdtech.jellyfin.utils.applySubtitleStyle
 import dev.jdtech.jellyfin.utils.handleDPadKeyEvents
-import java.util.UUID
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 
 @Composable
 fun PlayerScreen(
-    itemId: UUID,
+    itemId: ItemId,
     itemKind: String,
     startFromBeginning: Boolean,
     mediaSourceId: String? = null,

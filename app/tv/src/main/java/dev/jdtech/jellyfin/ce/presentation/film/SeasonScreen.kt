@@ -93,9 +93,12 @@ import dev.jdtech.jellyfin.film.presentation.season.SeasonViewModel
 import dev.jdtech.jellyfin.models.DisplayProfile
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidSeason
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.VideoMetadata
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.getVersions
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.film.components.VersionDialog
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
@@ -103,7 +106,6 @@ import dev.jdtech.jellyfin.ui.components.Direction
 import dev.jdtech.jellyfin.ui.components.ItemPoster
 import dev.jdtech.jellyfin.ui.components.ProgressBadge
 import java.util.Locale
-import java.util.UUID
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 
@@ -119,10 +121,10 @@ import kotlinx.coroutines.flow.collectLatest
  */
 @Composable
 fun SeasonScreen(
-    seasonId: UUID?,
-    episodeId: UUID?,
-    navigateToPlayer: (itemId: UUID, mediaSourceId: String?, startFromBeginning: Boolean) -> Unit,
-    seriesId: UUID? = null,
+    seasonId: ItemId?,
+    episodeId: ItemId?,
+    navigateToPlayer: (itemId: ItemId, mediaSourceId: String?, startFromBeginning: Boolean) -> Unit,
+    seriesId: ItemId? = null,
     seasonViewModel: SeasonViewModel = hiltViewModel(),
     episodeViewModel: EpisodeViewModel = hiltViewModel(),
 ) {
@@ -134,9 +136,9 @@ fun SeasonScreen(
 
     // The season on screen, which changes with the season chips. Null until the season of
     // [episodeId] is known.
-    var currentSeasonId by rememberSaveable { mutableStateOf(seasonId?.toString()) }
+    var currentSeasonId by rememberSaveable { mutableStateOf(seasonId?.asString()) }
     val selection =
-        rememberSaveable(saver = EpisodeSelection.Saver) { EpisodeSelection(episodeId?.toString()) }
+        rememberSaveable(saver = EpisodeSelection.Saver) { EpisodeSelection(episodeId?.asString()) }
 
     LaunchedEffect(true) {
         if (currentSeasonId == null && episodeId != null) episodeViewModel.loadEpisode(episodeId)
@@ -144,16 +146,16 @@ fun SeasonScreen(
     LaunchedEffect(Unit) {
         snapshotFlow { episodeState.value.episode }
             .collect { episode ->
-                if (currentSeasonId == null) currentSeasonId = episode?.seasonId?.toString()
+                if (currentSeasonId == null) currentSeasonId = episode?.seasonId?.asString()
             }
     }
     // Runs again on each return to the screen, so watch progress is up to date.
     LaunchedEffect(currentSeasonId) {
         currentSeasonId?.let {
-            if (!seasonViewModel.shouldReload(UUID.fromString(it))) return@let
+            if (!seasonViewModel.shouldReload(it.toItemId())) return@let
             // Every season chip is of the same series, so [seriesId] holds for all of them.
             seasonViewModel.loadSeason(
-                UUID.fromString(it),
+                it.toItemId(),
                 includeSeriesSeasons = true,
                 // Read from the flow, not the composable state: this effect runs outside
                 // composition.
@@ -206,8 +208,8 @@ fun SeasonScreen(
         selection = selection,
         episodeState = { episodeState.value },
         onSelectSeason = { season ->
-            if (season.id.toString() != currentSeasonId) {
-                currentSeasonId = season.id.toString()
+            if (season.id.asString() != currentSeasonId) {
+                currentSeasonId = season.id.asString()
                 selection.id = null
             }
         },
@@ -229,7 +231,7 @@ internal class EpisodeSelection(initialId: String?) {
     var id by mutableStateOf(initialId)
 
     fun selected(episodes: List<FindroidEpisode>): FindroidEpisode? =
-        episodes.firstOrNull { it.id.toString() == id } ?: nextUp(episodes)
+        episodes.firstOrNull { it.id.asString() == id } ?: nextUp(episodes)
 
     companion object {
         val Saver: Saver<EpisodeSelection, String> =
@@ -329,7 +331,7 @@ internal fun SeasonScreenLayout(
                                     focusPosition,
                                     ROW_SEASONS,
                                     index,
-                                    item.id.toString(),
+                                    item.id.asString(),
                                 ),
                     ) {
                         Text(text = item.name)
@@ -377,14 +379,14 @@ internal fun SeasonScreenLayout(
                     EpisodeRowCard(
                         episode = item,
                         onClick = { onPlay(item, null, false) },
-                        onFocus = { selection.id = item.id.toString() },
+                        onFocus = { selection.id = item.id.asString() },
                         modifier =
                             Modifier.focusRequesterIf(isSelected, episodeRequester)
                                 .focusPosition(
                                     focusPosition,
                                     ROW_EPISODES,
                                     index,
-                                    item.id.toString(),
+                                    item.id.asString(),
                                 ),
                     )
                 }
@@ -397,15 +399,15 @@ internal fun SeasonScreenLayout(
             if (episodes.isEmpty()) {
                 val seasons = state.seriesSeasons.ifEmpty { listOf(season) }
                 val index = seasons.indexOfFirst { it.id == season.id }.coerceAtLeast(0)
-                position.save(ROW_SEASONS, index, season.id.toString())
+                position.save(ROW_SEASONS, index, season.id.asString())
             }
             // First visit: no episode was focused yet, so point the default at the selected one.
             if (position.row == ROW_EPISODES && position.key == null) {
-                selected.value?.let { position.save(ROW_EPISODES, 0, it.id.toString()) }
+                selected.value?.let { position.save(ROW_EPISODES, 0, it.id.asString()) }
             }
-            position.resolve(ROW_EPISODES, episodes.size) { i -> episodes[i].id.toString() }
+            position.resolve(ROW_EPISODES, episodes.size) { i -> episodes[i].id.asString() }
             position.resolve(ROW_SEASONS, state.seriesSeasons.size) { i ->
-                state.seriesSeasons[i].id.toString()
+                state.seriesSeasons[i].id.asString()
             }
             if (position.row == ROW_EPISODES) episodesState.scrollIntoView(position.column)
             if (position.row == ROW_SEASONS) seasonsState.scrollIntoView(position.column)
@@ -815,7 +817,7 @@ private fun SeasonScreenLayoutPreview() {
             loadError = null,
             onRetry = {},
             episodes = dummyEpisodes,
-            selection = remember { EpisodeSelection(dummyEpisodes.first().id.toString()) },
+            selection = remember { EpisodeSelection(dummyEpisodes.first().id.asString()) },
             episodeState = {
                 EpisodeState(episode = dummyEpisodes.first(), videoMetadata = dummyVideoMetadata)
             },

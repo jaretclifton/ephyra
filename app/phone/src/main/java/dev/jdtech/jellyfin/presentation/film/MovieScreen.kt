@@ -50,7 +50,9 @@ import dev.jdtech.jellyfin.film.presentation.movie.MovieState
 import dev.jdtech.jellyfin.film.presentation.movie.MovieViewModel
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.cast.LocalCastPlayback
 import dev.jdtech.jellyfin.presentation.film.components.ActorsRow
 import dev.jdtech.jellyfin.presentation.film.components.ArtworkPlacement
@@ -81,14 +83,13 @@ import dev.jdtech.jellyfin.presentation.utils.useWideItemLayout
 import dev.jdtech.jellyfin.utils.AfterFirstFrame
 import dev.jdtech.jellyfin.utils.ObserveAsEvents
 import dev.jdtech.jellyfin.utils.copyOnLongClick
-import java.util.UUID
 
 @Composable
 fun MovieScreen(
-    movieId: UUID,
+    movieId: ItemId,
     navigateBack: () -> Unit,
     navigateHome: () -> Unit,
-    navigateToPerson: (personId: UUID) -> Unit,
+    navigateToPerson: (personId: ItemId) -> Unit,
     navigateToItem: (item: FindroidItem) -> Unit = {},
     viewModel: MovieViewModel = hiltViewModel(),
     downloaderViewModel: DownloaderViewModel = hiltViewModel(),
@@ -150,7 +151,7 @@ fun MovieScreen(
                         )
                     ) {
                         val intent = Intent(context, PlayerActivity::class.java)
-                        intent.putExtra("itemId", movieId.toString())
+                        intent.putExtra("itemId", movieId.asString())
                         intent.putExtra("itemKind", ItemKind.MOVIE.serialName)
                         intent.putExtra("startFromBeginning", action.startFromBeginning)
                         intent.putExtra("mediaSourceId", action.mediaSourceId)

@@ -73,14 +73,15 @@ import dev.jdtech.jellyfin.film.presentation.show.ShowAction
 import dev.jdtech.jellyfin.film.presentation.show.ShowState
 import dev.jdtech.jellyfin.film.presentation.show.ShowViewModel
 import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.airSchedule
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.ui.components.Direction
 import dev.jdtech.jellyfin.ui.components.ItemCard
 import dev.jdtech.jellyfin.utils.AfterFirstFrame
 import dev.jdtech.jellyfin.utils.getShowDateString
-import java.util.UUID
 import kotlinx.coroutines.launch
 
 /**
@@ -89,11 +90,11 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun ShowScreen(
-    showId: UUID,
+    showId: ItemId,
     navigateToItem: (item: FindroidItem) -> Unit,
-    navigateToPlayer: (itemId: UUID, shuffle: Boolean) -> Unit,
-    navigateToPerson: (personId: UUID) -> Unit,
-    navigateToExtra: (extraId: UUID) -> Unit = {},
+    navigateToPlayer: (itemId: ItemId, shuffle: Boolean) -> Unit,
+    navigateToPerson: (personId: ItemId) -> Unit,
+    navigateToExtra: (extraId: ItemId) -> Unit = {},
     viewModel: ShowViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -478,7 +479,7 @@ private fun ShowScreenContent(
                                                     focusPosition,
                                                     ROW_SEASONS,
                                                     index,
-                                                    season.id.toString(),
+                                                    season.id.asString(),
                                                 ),
                                         )
                                     }
@@ -530,7 +531,7 @@ private fun ShowScreenContent(
                                                         focusPosition,
                                                         ROW_CAST,
                                                         index,
-                                                        actor.id.toString(),
+                                                        actor.id.asString(),
                                                     ),
                                             )
                                         }
@@ -582,19 +583,19 @@ private fun ShowScreenContent(
                 relatedRows.relatedLazyIndex(position.row, firstRelatedIndex)?.let { index ->
                     relatedRows.forEach { related ->
                         position.resolve(related.row, related.items.size) { i ->
-                            related.items[i].id.toString()
+                            related.items[i].id.asString()
                         }
                     }
                     listState.scrollToItem(index)
                 }
                 if (position.row == ROW_SEASONS) {
                     position.resolve(ROW_SEASONS, state.seasons.size) { i ->
-                        state.seasons[i].id.toString()
+                        state.seasons[i].id.asString()
                     }
                     listState.scrollToItem(ROW_SEASONS)
                 } else if (position.row == ROW_CAST) {
                     position.resolve(ROW_CAST, state.actors.size) { i ->
-                        state.actors[i].id.toString()
+                        state.actors[i].id.asString()
                     }
                     listState.scrollToItem(if (state.seasons.isNotEmpty()) 2 else 1)
                 }

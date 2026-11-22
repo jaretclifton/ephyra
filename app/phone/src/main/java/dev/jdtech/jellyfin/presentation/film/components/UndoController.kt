@@ -15,7 +15,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import dev.jdtech.jellyfin.core.R as CoreR
-import java.util.UUID
+import dev.jdtech.jellyfin.models.ItemId
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -32,10 +32,10 @@ class UndoController(
     private val haptics: HapticFeedback,
     private val undoLabel: String,
 ) {
-    var hiddenIds by mutableStateOf(emptySet<UUID>())
+    var hiddenIds by mutableStateOf(emptySet<ItemId>())
         private set
 
-    fun run(ids: Set<UUID>, message: String, commit: () -> Unit) {
+    fun run(ids: Set<ItemId>, message: String, commit: () -> Unit) {
         haptics.performHapticFeedback(HapticFeedbackType.Confirm)
         hiddenIds = hiddenIds + ids
         scope.launch {
@@ -65,7 +65,7 @@ class UndoController(
      * Stops hiding ids that are no longer on screen once their action went through, so the same
      * item downloaded again later isn't hidden.
      */
-    fun retainHidden(presentIds: Set<UUID>) {
+    fun retainHidden(presentIds: Set<ItemId>) {
         val retained = hiddenIds intersect presentIds
         if (retained.size != hiddenIds.size) hiddenIds = retained
     }

@@ -87,7 +87,9 @@ import dev.jdtech.jellyfin.film.presentation.season.SeasonAction
 import dev.jdtech.jellyfin.film.presentation.season.SeasonState
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidSeason
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.isDownloaded
 import dev.jdtech.jellyfin.presentation.cast.LocalCastPlayback
 import dev.jdtech.jellyfin.presentation.film.components.ArtworkPlacement
@@ -116,7 +118,6 @@ import dev.jdtech.jellyfin.presentation.utils.ReloadOnResume
 import dev.jdtech.jellyfin.presentation.utils.rememberSafePadding
 import dev.jdtech.jellyfin.utils.ObserveAsEvents
 import dev.jdtech.jellyfin.utils.copyOnLongClick
-import java.util.UUID
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
@@ -223,14 +224,14 @@ internal suspend fun restorePosition(state: LazyListState, target: Pair<Int, Int
 @Composable
 fun SeasonListDetail(
     state: SeasonState,
-    selectedEpisodeId: UUID?,
-    onSelectEpisode: (UUID) -> Unit,
+    selectedEpisodeId: ItemId?,
+    onSelectEpisode: (ItemId) -> Unit,
     lazyListState: LazyListState,
     onAction: (SeasonAction) -> Unit,
     onDownloadSeason: () -> Unit,
     onDeleteSeasonDownloads: () -> Unit,
     onReloadSeason: () -> Unit,
-    navigateToPerson: (personId: UUID) -> Unit,
+    navigateToPerson: (personId: ItemId) -> Unit,
 ) {
     // The selection, once the episodes are known: the one asked for if the season has it, else
     // the default. Written back, so marking the default watched doesn't move the selection on.
@@ -284,12 +285,12 @@ fun SeasonListDetail(
 @Composable
 fun SeasonWideLayout(
     state: SeasonState,
-    selectedEpisodeId: UUID?,
-    onSelectEpisode: (UUID) -> Unit,
+    selectedEpisodeId: ItemId?,
+    onSelectEpisode: (ItemId) -> Unit,
     onAction: (SeasonAction) -> Unit,
     onDownloadSeason: () -> Unit,
     onDeleteSeasonDownloads: () -> Unit,
-    detailPane: @Composable (episodeId: UUID) -> Unit,
+    detailPane: @Composable (episodeId: ItemId) -> Unit,
     lazyListState: LazyListState = rememberLazyListState(),
     detailOverArtwork: () -> Boolean = { false },
 ) {
@@ -366,7 +367,7 @@ fun SeasonWideLayout(
     }
 
     val navigator =
-        rememberListDetailPaneScaffoldNavigator<UUID>(
+        rememberListDetailPaneScaffoldNavigator<ItemId>(
             // Both panes, side by side with the divider instead of a gap.
             scaffoldDirective =
                 calculatePaneScaffoldDirective(currentWindowAdaptiveInfo())
@@ -727,8 +728,8 @@ internal fun CompactEpisodeRow(
  */
 @Composable
 private fun SeasonEpisodeDetailPane(
-    episodeId: UUID,
-    navigateToPerson: (personId: UUID) -> Unit,
+    episodeId: ItemId,
+    navigateToPerson: (personId: ItemId) -> Unit,
     onOverArtworkChange: (Boolean) -> Unit,
     onEpisodeChanged: (FindroidEpisode) -> Unit,
     onDownloadChanged: () -> Unit,
@@ -736,9 +737,10 @@ private fun SeasonEpisodeDetailPane(
     val context = LocalContext.current
     val castPlayback = LocalCastPlayback.current
     val serverAway = LocalServerStatus.current.unreachable
-    val viewModel: EpisodeViewModel = hiltViewModel(key = "season-detail-episode-$episodeId")
+    val viewModel: EpisodeViewModel =
+        hiltViewModel(key = "season-detail-episode-${episodeId.asString()}")
     val downloaderViewModel: DownloaderViewModel =
-        hiltViewModel(key = "season-detail-downloader-$episodeId")
+        hiltViewModel(key = "season-detail-downloader-${episodeId.asString()}")
 
     val state by viewModel.state.collectAsStateWithLifecycle()
     // Not read here: a progress tick must only recompose the download button.
@@ -818,7 +820,7 @@ private fun SeasonEpisodeDetailPane(
                         )
                     ) {
                         val intent = Intent(context, PlayerActivity::class.java)
-                        intent.putExtra("itemId", episodeId.toString())
+                        intent.putExtra("itemId", episodeId.asString())
                         intent.putExtra("itemKind", ItemKind.EPISODE.serialName)
                         intent.putExtra("startFromBeginning", action.startFromBeginning)
                         intent.putExtra("mediaSourceId", action.mediaSourceId)

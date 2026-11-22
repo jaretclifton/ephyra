@@ -46,6 +46,7 @@ import dev.jdtech.jellyfin.film.presentation.movie.MovieState
 import dev.jdtech.jellyfin.film.presentation.season.SeasonState
 import dev.jdtech.jellyfin.film.presentation.show.ShowState
 import dev.jdtech.jellyfin.models.FindroidMovie
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
 import kotlin.math.abs
@@ -282,7 +283,7 @@ class DetailOverviewTest {
             loadError = null,
             onRetry = {},
             episodes = state.episodes,
-            selection = EpisodeSelection(longEpisode.id.toString()),
+            selection = EpisodeSelection(longEpisode.id.asString()),
             episodeState = { EpisodeState() },
             onSelectSeason = {},
             onPlay = { _, _, _ -> },

@@ -14,6 +14,7 @@ import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dev.jdtech.jellyfin.domain.ports.ServerSession
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -96,7 +97,7 @@ constructor(
     override suspend fun doWork(): Result = syncLock.withLock { sync() }
 
     private suspend fun sync(): Result {
-        val userId = serverSession.userId?.toString()
+        val userId = serverSession.userId?.asString()
         if (!appPreferences.getValue(appPreferences.tvWatchNext) || userId == null) {
             publisher.clear()
             store.clear()

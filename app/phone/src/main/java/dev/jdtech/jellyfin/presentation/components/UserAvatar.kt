@@ -16,6 +16,7 @@ import dev.jdtech.jellyfin.core.presentation.session.NoServerSession
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.hasPin
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 
@@ -83,7 +84,7 @@ private fun UserAvatarPicturePreview() {
             override val baseUrl = "https://demo.example"
 
             override fun userImageUrl(userId: UserId, tag: String) =
-                "$baseUrl/Users/$userId/Images/Primary?tag=$tag"
+                "$baseUrl/Users/${userId.asString()}/Images/Primary?tag=$tag"
         }
     CompositionLocalProvider(LocalServerSession provides session) {
         FindroidTheme {

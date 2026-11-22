@@ -39,6 +39,7 @@ import dev.jdtech.jellyfin.core.presentation.spoiler.spoilerFreeEpisodeLine
 import dev.jdtech.jellyfin.film.presentation.show.ShowAction
 import dev.jdtech.jellyfin.film.presentation.show.ShowState
 import dev.jdtech.jellyfin.models.FindroidEpisode
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.presentation.film.components.ActorsRow
 import dev.jdtech.jellyfin.presentation.film.components.AirScheduleText
 import dev.jdtech.jellyfin.presentation.film.components.ArtworkPlacement
@@ -66,7 +67,6 @@ import dev.jdtech.jellyfin.presentation.utils.WidthClass
 import dev.jdtech.jellyfin.presentation.utils.currentWidthClass
 import dev.jdtech.jellyfin.presentation.utils.rememberSafePadding
 import dev.jdtech.jellyfin.utils.getShowDateString
-import java.util.UUID
 
 /**
  * The show page at Medium and Expanded width: backdrop hero with the poster and the text column,
@@ -77,7 +77,7 @@ import java.util.UUID
 fun ShowWideLayout(
     state: ShowState,
     onAction: (ShowAction) -> Unit,
-    onDownloadSeasons: (seasonIds: Set<UUID>) -> Unit,
+    onDownloadSeasons: (seasonIds: Set<ItemId>) -> Unit,
     onDeleteShowDownloads: () -> Unit,
 ) {
     val widthClass = currentWidthClass()

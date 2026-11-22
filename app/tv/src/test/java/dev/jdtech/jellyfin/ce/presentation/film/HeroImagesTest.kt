@@ -11,6 +11,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.imageMemoryCacheBytes
 import dev.jdtech.jellyfin.models.FindroidImages
+import dev.jdtech.jellyfin.models.asString
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlinx.coroutines.runBlocking
@@ -124,13 +125,13 @@ class HeroImagesTest {
             dummyEpisode.copy(
                 images =
                     FindroidImages(
-                        primary = "$server/items/${dummyEpisode.id}/Images/Primary?tag=p"
+                        primary = "$server/items/${dummyEpisode.id.asString()}/Images/Primary?tag=p"
                     )
             )
         assertEquals(
             listOf(
-                "$server/items/${dummyEpisode.seasonId}/Images/Backdrop/0?fillWidth=1920&quality=90",
-                "$server/items/${dummyEpisode.id}/Images/Primary?tag=p&fillWidth=1920&quality=90",
+                "$server/items/${dummyEpisode.seasonId.asString()}/Images/Backdrop/0?fillWidth=1920&quality=90",
+                "$server/items/${dummyEpisode.id.asString()}/Images/Primary?tag=p&fillWidth=1920&quality=90",
             ),
             heroBackdropUrls(
                 episode,
@@ -144,7 +145,8 @@ class HeroImagesTest {
 
     @Test
     fun `an episode with a local picture has no season backdrop`() {
-        val local = "file:///data/user/0/nl.midasvo.findroid.ce/files/${dummyEpisode.id}.jpg"
+        val local =
+            "file:///data/user/0/nl.midasvo.findroid.ce/files/${dummyEpisode.id.asString()}.jpg"
         val episode = dummyEpisode.copy(images = FindroidImages(primary = local))
         assertEquals(
             listOf(local),
@@ -159,12 +161,12 @@ class HeroImagesTest {
                 images =
                     FindroidImages(
                         primary =
-                            ("https://demo.example/items/${dummyEpisode.id}/Images/Primary?tag=p")
+                            ("https://demo.example/items/${dummyEpisode.id.asString()}/Images/Primary?tag=p")
                     )
             )
         assertEquals(
             listOf(
-                "https://demo.example/items/${dummyEpisode.id}/Images/Primary?tag=p&fillWidth=1920&quality=90"
+                "https://demo.example/items/${dummyEpisode.id.asString()}/Images/Primary?tag=p&fillWidth=1920&quality=90"
             ),
             heroBackdropUrls(episode, 1344, seasonBackdropUrl = { null }),
         )

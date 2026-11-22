@@ -41,6 +41,9 @@ import dev.jdtech.jellyfin.ce.presentation.pin.TvSwitchPinDialog
 import dev.jdtech.jellyfin.ce.ui.focus.ephyraButtonBorder
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyUser
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.presentation.setup.components.UserItem
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
@@ -50,7 +53,6 @@ import dev.jdtech.jellyfin.setup.presentation.users.UsersEvent
 import dev.jdtech.jellyfin.setup.presentation.users.UsersState
 import dev.jdtech.jellyfin.setup.presentation.users.UsersViewModel
 import dev.jdtech.jellyfin.utils.ObserveAsEvents
-import java.util.UUID
 
 @Composable
 fun UsersScreen(
@@ -86,14 +88,14 @@ fun UsersScreen(
 
 @Composable
 internal fun UsersScreenLayout(state: UsersState, onAction: (UsersAction) -> Unit) {
-    val userRequesters = remember { mutableMapOf<UUID, FocusRequester>() }
+    val userRequesters = remember { mutableMapOf<UserId, FocusRequester>() }
     val addRequester = remember { FocusRequester() }
     // CE (#541): the element that opened another screen, focused again on the way back.
     val serverRequester = remember { FocusRequester() }
-    val publicRequesters = remember { mutableMapOf<UUID, FocusRequester>() }
+    val publicRequesters = remember { mutableMapOf<UserId, FocusRequester>() }
     var opener by rememberSaveable { mutableStateOf<String?>(null) }
     // The saved user that had focus last: what "Remove user" acts on.
-    var focusedUserId by remember { mutableStateOf<UUID?>(null) }
+    var focusedUserId by remember { mutableStateOf<UserId?>(null) }
     var removing by remember { mutableStateOf<User?>(null) }
     val hasUsers = state.users.isNotEmpty() || state.publicUsers.isNotEmpty()
     val focusedUser = state.users.firstOrNull { it.id == focusedUserId }
@@ -159,7 +161,7 @@ internal fun UsersScreenLayout(state: UsersState, onAction: (UsersAction) -> Uni
                     if (state.users.isNotEmpty() && state.publicUsers.isNotEmpty()) {
                         item { Spacer(modifier = Modifier.width(MaterialTheme.spacings.large)) }
                     }
-                    items(state.publicUsers, key = { "public-${it.id}" }) { user ->
+                    items(state.publicUsers, key = { "public-${it.id.asString()}" }) { user ->
                         UserItem(
                             user = user,
                             caption = stringResource(SetupR.string.ce_users_sign_in),
@@ -236,14 +238,14 @@ private fun openerRequester(
     opener: String?,
     addRequester: FocusRequester,
     serverRequester: FocusRequester,
-    publicRequesters: Map<UUID, FocusRequester>,
+    publicRequesters: Map<UserId, FocusRequester>,
 ): FocusRequester? =
     when {
         opener == OPENER_ADD -> addRequester
         opener == OPENER_SERVER -> serverRequester
         opener?.startsWith(OPENER_PUBLIC) == true ->
             publicRequesters.entries
-                .firstOrNull { it.key.toString() == opener.removePrefix(OPENER_PUBLIC) }
+                .firstOrNull { it.key.asString() == opener.removePrefix(OPENER_PUBLIC) }
                 ?.value
         else -> null
     }
@@ -286,14 +288,8 @@ private fun RemoveUserDialog(userName: String, onConfirm: () -> Unit, onDismiss:
 
 private val previewUsers =
     listOf(
-        dummyUser.copy(
-            id = UUID.fromString("00000000-0000-0000-0000-000000000001"),
-            name = "Midas",
-        ),
-        dummyUser.copy(
-            id = UUID.fromString("00000000-0000-0000-0000-000000000002"),
-            name = "Kiddos",
-        ),
+        dummyUser.copy(id = "00000000-0000-0000-0000-000000000001".toUserId(), name = "Midas"),
+        dummyUser.copy(id = "00000000-0000-0000-0000-000000000002".toUserId(), name = "Kiddos"),
     )
 
 @Preview(device = "id:tv_1080p")
@@ -307,7 +303,7 @@ private fun UsersScreenLayoutPreview() {
                     publicUsers =
                         listOf(
                             dummyUser.copy(
-                                id = UUID.fromString("00000000-0000-0000-0000-000000000003"),
+                                id = "00000000-0000-0000-0000-000000000003".toUserId(),
                                 name = "Guest",
                             )
                         ),

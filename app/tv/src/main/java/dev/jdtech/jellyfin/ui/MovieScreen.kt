@@ -52,17 +52,17 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyVideoMetadata
 import dev.jdtech.jellyfin.film.presentation.movie.MovieAction
 import dev.jdtech.jellyfin.film.presentation.movie.MovieState
 import dev.jdtech.jellyfin.film.presentation.movie.MovieViewModel
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.getVersions
 import dev.jdtech.jellyfin.presentation.film.components.VersionDialog
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.utils.format
-import java.util.UUID
 
 @Composable
 fun MovieScreen(
-    movieId: UUID,
-    navigateToPlayer: (itemId: UUID, mediaSourceId: String?) -> Unit,
+    movieId: ItemId,
+    navigateToPlayer: (itemId: ItemId, mediaSourceId: String?) -> Unit,
     viewModel: MovieViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current

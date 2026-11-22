@@ -38,6 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyUser
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.presentation.components.UserAvatar
 import dev.jdtech.jellyfin.presentation.setup.pin.SwitchPinDialog
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
@@ -96,7 +97,7 @@ internal fun ProfileBottomSheetLayout(
     onPublicUserClick: (String) -> Unit,
     onAddUser: () -> Unit,
     onSettings: () -> Unit,
-    onUserClick: (UUID) -> Unit,
+    onUserClick: (UserId) -> Unit,
     onDismissRequest: () -> Unit,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {

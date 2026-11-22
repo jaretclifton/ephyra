@@ -21,15 +21,16 @@ import dev.jdtech.jellyfin.film.presentation.media.MediaAction
 import dev.jdtech.jellyfin.film.presentation.media.MediaState
 import dev.jdtech.jellyfin.film.presentation.media.MediaViewModel
 import dev.jdtech.jellyfin.models.CollectionType
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.ui.components.Direction
 import dev.jdtech.jellyfin.ui.components.ItemCard
-import java.util.UUID
 
 @Composable
 fun MediaScreen(
-    navigateToLibrary: (libraryId: UUID, libraryName: String, libraryType: CollectionType) -> Unit,
+    navigateToLibrary:
+        (libraryId: ItemId, libraryName: String, libraryType: CollectionType) -> Unit,
     isLoading: (Boolean) -> Unit,
     viewModel: MediaViewModel = hiltViewModel(),
 ) {

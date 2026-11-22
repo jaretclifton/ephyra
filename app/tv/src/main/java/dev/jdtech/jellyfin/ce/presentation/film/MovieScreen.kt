@@ -73,6 +73,8 @@ import dev.jdtech.jellyfin.film.presentation.movie.MovieState
 import dev.jdtech.jellyfin.film.presentation.movie.MovieViewModel
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
+import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.getVersions
 import dev.jdtech.jellyfin.presentation.film.components.VersionDialog
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
@@ -80,7 +82,6 @@ import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.ui.components.Direction
 import dev.jdtech.jellyfin.utils.AfterFirstFrame
 import dev.jdtech.jellyfin.utils.format
-import java.util.UUID
 import kotlinx.coroutines.launch
 
 /**
@@ -89,9 +90,9 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun MovieScreen(
-    movieId: UUID,
-    navigateToPlayer: (itemId: UUID, mediaSourceId: String?, startFromBeginning: Boolean) -> Unit,
-    navigateToPerson: (personId: UUID) -> Unit,
+    movieId: ItemId,
+    navigateToPlayer: (itemId: ItemId, mediaSourceId: String?, startFromBeginning: Boolean) -> Unit,
+    navigateToPerson: (personId: ItemId) -> Unit,
     navigateToItem: (item: FindroidItem) -> Unit = {},
     viewModel: MovieViewModel = hiltViewModel(),
 ) {
@@ -526,7 +527,7 @@ private fun MovieScreenContent(
                                                     focusPosition,
                                                     ROW_CAST,
                                                     index,
-                                                    actor.id.toString(),
+                                                    actor.id.asString(),
                                                 ),
                                         )
                                     }
@@ -568,10 +569,10 @@ private fun MovieScreenContent(
                         else -> relatedRows.any { it.row == focusPosition.row }
                     },
             ) { position ->
-                position.resolve(ROW_CAST, state.actors.size) { i -> state.actors[i].id.toString() }
+                position.resolve(ROW_CAST, state.actors.size) { i -> state.actors[i].id.asString() }
                 relatedRows.forEach { related ->
                     position.resolve(related.row, related.items.size) { i ->
-                        related.items[i].id.toString()
+                        related.items[i].id.asString()
                     }
                 }
                 listState.scrollToItem(lazyIndexOf(position.row))

@@ -91,12 +91,13 @@ import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.HomeItem
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.ui.components.Direction
 import dev.jdtech.jellyfin.ui.components.ItemCard
-import java.util.UUID
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.withTimeoutOrNull
@@ -116,9 +117,9 @@ import kotlinx.coroutines.withTimeoutOrNull
  */
 @Composable
 fun HomeScreen(
-    navigateToMovie: (itemId: UUID) -> Unit,
-    navigateToShow: (itemId: UUID) -> Unit,
-    navigateToEpisode: (episodeId: UUID) -> Unit,
+    navigateToMovie: (itemId: ItemId) -> Unit,
+    navigateToShow: (itemId: ItemId) -> Unit,
+    navigateToEpisode: (episodeId: ItemId) -> Unit,
     onRetry: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -184,7 +185,7 @@ private class HeroFocus(initialRow: List<FindroidItem> = emptyList(), initialCol
 }
 
 private class HomeRow(
-    val key: UUID,
+    val key: ItemId,
     val title: UiText,
     val items: List<FindroidItem>,
     val direction: Direction,
@@ -232,7 +233,7 @@ internal fun HomeScreenLayout(
     onAction: (HomeAction) -> Unit,
     listState: LazyListState = rememberLazyListState(),
     focusPosition: FocusPosition = rememberFocusPosition(),
-    seasonBackdropUrl: (UUID) -> String? = { null },
+    seasonBackdropUrl: (ItemId) -> String? = { null },
 ) {
     val rows = remember(state) { state.rows() }
     val hero =
@@ -254,7 +255,7 @@ internal fun HomeScreenLayout(
             HeroFocus(row, col)
         }
     // The row states, so a return can scroll the saved card into view before focusing it.
-    val rowStates = remember { mutableMapOf<UUID, LazyListState>() }
+    val rowStates = remember { mutableMapOf<ItemId, LazyListState>() }
     val rowSpec = LocalBringIntoViewSpec.current
     val titleSpacePx =
         with(LocalDensity.current) { (ROW_TITLE_HEIGHT + MaterialTheme.spacings.small).toPx() }
@@ -360,7 +361,7 @@ private fun HomeRowContent(
     rowIndex: Int,
     focusPosition: FocusPosition,
     hero: HeroFocus,
-    rowStates: MutableMap<UUID, LazyListState>,
+    rowStates: MutableMap<ItemId, LazyListState>,
     onAction: (HomeAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -371,7 +372,7 @@ private fun HomeRowContent(
         onDispose { if (rowStates[row.key] === rowState) rowStates.remove(row.key) }
     }
     val rowFocus = remember { RowFocus() }
-    val cardRequesters = remember { mutableMapOf<UUID, FocusRequester>() }
+    val cardRequesters = remember { mutableMapOf<ItemId, FocusRequester>() }
     val currentItems by rememberUpdatedState(row.items)
     // #688: when the row changes under the focused card, focus follows the card, not the place it
     // was in. The row scrolls to keep it in view while the cards slide, and the saved position and
@@ -392,7 +393,7 @@ private fun HomeRowContent(
         val item = row.items[column]
         val refocus = handover != null || item.id != key
         rowFocus.focus(item.id, column)
-        focusPosition.save(rowIndex, column, item.id.toString())
+        focusPosition.save(rowIndex, column, item.id.asString())
         hero.focus(row.items, column)
         // The new order is laid out on the next frame.
         withFrameNanos {}
@@ -440,7 +441,7 @@ private fun HomeRowContent(
                     // #688: cards fade in where they land and slide over, like on the phone (#640).
                     modifier =
                         animateRowItem()
-                            .focusPosition(focusPosition, rowIndex, column, item.id.toString())
+                            .focusPosition(focusPosition, rowIndex, column, item.id.asString())
                             .focusRequester(requester)
                             .onFocusChanged { state ->
                                 if (state.hasFocus) {
@@ -461,7 +462,7 @@ private fun HomeRowContent(
     }
 }
 
-internal fun homeCardTag(id: UUID) = "ce_home_card_$id"
+internal fun homeCardTag(id: ItemId) = "ce_home_card_${id.asString()}"
 
 /**
  * Backdrop, logo (or title), info line and overview of the focused card. A card whose images are in
@@ -653,7 +654,7 @@ private fun rowAtTopSpec(titleSpace: Float) =
  */
 private class RowFocus {
     var hasFocus = false
-    var key: UUID? = null
+    var key: ItemId? = null
         private set
 
     var column = 0
@@ -664,7 +665,7 @@ private class RowFocus {
      */
     private var handover: Int? = null
 
-    fun focus(key: UUID, column: Int) {
+    fun focus(key: ItemId, column: Int) {
         this.key = key
         this.column = column
     }
@@ -690,7 +691,7 @@ private fun LazyListState.isFullyVisible(index: Int): Boolean {
  * otherwise in the first row that has it.
  */
 private fun findCard(rows: List<HomeRow>, preferredRow: Int, key: String): Pair<Int, Int>? {
-    fun columnIn(r: Int) = rows[r].items.indexOfFirst { it.id.toString() == key }.takeIf { it >= 0 }
+    fun columnIn(r: Int) = rows[r].items.indexOfFirst { it.id.asString() == key }.takeIf { it >= 0 }
     val order = listOf(preferredRow).filter { it in rows.indices } + rows.indices
     return order.firstNotNullOfOrNull { r -> columnIn(r)?.let { r to it } }
 }

@@ -22,6 +22,7 @@ import androidx.compose.ui.test.requestFocus
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyCollections
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyServer
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyUser
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -67,7 +68,7 @@ class MainScreenTest {
                     libraryContent = {
                         Box(
                             Modifier.fillMaxSize()
-                                .testTag("library_screen_content_${it.id}")
+                                .testTag("library_screen_content_${it.id.asString()}")
                                 .focusable()
                         )
                     },
@@ -119,9 +120,9 @@ class MainScreenTest {
         rule.waitForIdle()
 
         val library = dummyCollections.first()
-        selectDrawerItem("drawer_item_library_${library.id}")
+        selectDrawerItem("drawer_item_library_${library.id.asString()}")
 
-        rule.onNodeWithTag("library_screen_content_${library.id}").assertIsDisplayed()
+        rule.onNodeWithTag("library_screen_content_${library.id.asString()}").assertIsDisplayed()
     }
 
     @Test
@@ -214,8 +215,8 @@ class MainScreenTest {
         setUpMainScreen()
         rule.waitForIdle()
         val library = dummyCollections.first()
-        selectDrawerItem("drawer_item_library_${library.id}")
-        rule.onNodeWithTag("library_screen_content_${library.id}").assertIsFocused()
+        selectDrawerItem("drawer_item_library_${library.id.asString()}")
+        rule.onNodeWithTag("library_screen_content_${library.id.asString()}").assertIsFocused()
 
         pressBack()
         rule.onNodeWithTag("home_screen_content").assertIsFocused()
@@ -229,7 +230,7 @@ class MainScreenTest {
         setUpMainScreen()
         rule.waitForIdle()
         val library = dummyCollections.first()
-        selectDrawerItem("drawer_item_library_${library.id}")
+        selectDrawerItem("drawer_item_library_${library.id.asString()}")
 
         pressBack()
         rule.onNodeWithTag("home_screen_content").assertIsFocused()
@@ -271,7 +272,7 @@ class MainScreenTest {
                     libraryContent = {
                         Box(
                             Modifier.fillMaxSize()
-                                .testTag("library_screen_content_${it.id}")
+                                .testTag("library_screen_content_${it.id.asString()}")
                                 .focusable()
                         )
                     },

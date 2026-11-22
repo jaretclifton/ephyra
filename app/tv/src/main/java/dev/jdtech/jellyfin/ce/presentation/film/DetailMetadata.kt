@@ -38,6 +38,7 @@ import dev.jdtech.jellyfin.ce.ui.focus.FocusPosition
 import dev.jdtech.jellyfin.ce.ui.focus.focusPosition
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.ui.components.Direction
 import dev.jdtech.jellyfin.ui.components.ItemCard
@@ -190,7 +191,7 @@ fun TvItemsRow(
                         direction = direction,
                         onClick = onClick,
                         modifier =
-                            Modifier.focusPosition(focusPosition, row, index, item.id.toString()),
+                            Modifier.focusPosition(focusPosition, row, index, item.id.asString()),
                     )
                 }
             }

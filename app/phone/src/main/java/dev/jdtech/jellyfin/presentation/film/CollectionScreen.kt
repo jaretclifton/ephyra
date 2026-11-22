@@ -32,6 +32,7 @@ import dev.jdtech.jellyfin.film.presentation.collection.CollectionState
 import dev.jdtech.jellyfin.film.presentation.collection.CollectionViewModel
 import dev.jdtech.jellyfin.models.CollectionSection
 import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.presentation.film.components.CollectionGrid
 import dev.jdtech.jellyfin.presentation.film.components.DownloadsOnlyLine
@@ -44,11 +45,10 @@ import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.presentation.utils.showsServerIndicator
 import dev.jdtech.jellyfin.presentation.utils.topAndSideInsets
-import java.util.UUID
 
 @Composable
 fun CollectionScreen(
-    collectionId: UUID,
+    collectionId: ItemId,
     collectionName: String,
     onItemClick: (item: FindroidItem) -> Unit,
     navigateBack: () -> Unit,

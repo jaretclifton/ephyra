@@ -38,12 +38,13 @@ import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.ui.components.Direction
 import dev.jdtech.jellyfin.ui.components.ItemCard
-import java.util.UUID
 
 /**
  * CE collection grid on Android TV (ADR 0001). Back from an item restores focus to that card (ADR
@@ -51,12 +52,12 @@ import java.util.UUID
  */
 @Composable
 fun CollectionScreen(
-    collectionId: UUID,
+    collectionId: ItemId,
     collectionName: String,
-    navigateToMovie: (itemId: UUID) -> Unit,
-    navigateToShow: (itemId: UUID) -> Unit,
-    navigateToEpisode: (episodeId: UUID) -> Unit,
-    viewModel: CollectionViewModel = hiltViewModel(key = collectionId.toString()),
+    navigateToMovie: (itemId: ItemId) -> Unit,
+    navigateToShow: (itemId: ItemId) -> Unit,
+    navigateToEpisode: (episodeId: ItemId) -> Unit,
+    viewModel: CollectionViewModel = hiltViewModel(key = collectionId.asString()),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -138,7 +139,7 @@ internal fun CollectionScreenLayout(
                                             focusPosition,
                                             row = sectionIndex,
                                             column = i,
-                                            key = item.id.toString(),
+                                            key = item.id.asString(),
                                         )
                                         .testTag(collectionCardTag(item.id)),
                             )
@@ -153,7 +154,7 @@ internal fun CollectionScreenLayout(
                     val sectionIndex = position.row.coerceIn(0, state.sections.lastIndex)
                     val section = state.sections[sectionIndex]
                     position.resolve(sectionIndex, section.items.size) { i ->
-                        section.items.getOrNull(i)?.id?.toString()
+                        section.items.getOrNull(i)?.id?.asString()
                     }
                     val flatIndex =
                         calculateFlatGridIndex(position.row, position.column, state.sections)
@@ -164,7 +165,7 @@ internal fun CollectionScreenLayout(
     }
 }
 
-internal fun collectionCardTag(id: UUID) = "ce_collection_card_$id"
+internal fun collectionCardTag(id: ItemId) = "ce_collection_card_${id.asString()}"
 
 private fun calculateFlatGridIndex(row: Int, column: Int, sections: List<CollectionSection>): Int {
     var index = 1 // 0 is collectionName title

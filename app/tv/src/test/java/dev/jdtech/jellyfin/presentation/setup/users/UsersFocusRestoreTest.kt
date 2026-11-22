@@ -19,10 +19,10 @@ import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyUser
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.setup.presentation.users.UsersAction
 import dev.jdtech.jellyfin.setup.presentation.users.UsersState
-import java.util.UUID
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,9 +40,9 @@ class UsersFocusRestoreTest {
     @get:Rule val rule = createComposeRule()
 
     private val current =
-        dummyUser.copy(id = UUID.fromString("00000000-0000-0000-0000-000000000001"), name = "Midas")
+        dummyUser.copy(id = "00000000-0000-0000-0000-000000000001".toUserId(), name = "Midas")
     private val guest =
-        dummyUser.copy(id = UUID.fromString("00000000-0000-0000-0000-000000000003"), name = "Guest")
+        dummyUser.copy(id = "00000000-0000-0000-0000-000000000003".toUserId(), name = "Guest")
 
     private var away by mutableStateOf(false)
 

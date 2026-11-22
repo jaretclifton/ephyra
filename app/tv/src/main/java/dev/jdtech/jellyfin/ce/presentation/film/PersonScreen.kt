@@ -66,11 +66,12 @@ import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.ui.components.Direction
 import dev.jdtech.jellyfin.ui.components.ItemCard
-import java.util.UUID
 import kotlinx.coroutines.launch
 
 /**
@@ -79,10 +80,10 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun PersonScreen(
-    personId: UUID,
-    navigateToMovie: (itemId: UUID) -> Unit,
-    navigateToShow: (itemId: UUID) -> Unit,
-    navigateToEpisode: (episodeId: UUID) -> Unit,
+    personId: ItemId,
+    navigateToMovie: (itemId: ItemId) -> Unit,
+    navigateToShow: (itemId: ItemId) -> Unit,
+    navigateToEpisode: (episodeId: ItemId) -> Unit,
     viewModel: PersonViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -109,7 +110,7 @@ internal data class PersonMediaSection(
     val items: List<FindroidItem>,
 )
 
-internal fun personMediaCardTag(id: UUID) = "ce_person_media_card_$id"
+internal fun personMediaCardTag(id: ItemId) = "ce_person_media_card_${id.asString()}"
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -319,7 +320,7 @@ internal fun PersonScreenLayout(
                                                             focusPosition,
                                                             row = sectionIndex,
                                                             column = columnIndex,
-                                                            key = item.id.toString(),
+                                                            key = item.id.asString(),
                                                         )
                                                         .testTag(personMediaCardTag(item.id)),
                                             )
@@ -336,7 +337,7 @@ internal fun PersonScreenLayout(
                     val sectionIndex = position.row.coerceIn(0, sections.lastIndex)
                     val section = sections[sectionIndex]
                     position.resolve(sectionIndex, section.items.size) { i ->
-                        section.items.getOrNull(i)?.id?.toString()
+                        section.items.getOrNull(i)?.id?.asString()
                     }
                     listState.scrollToItem(lazyIndexOf(position.row))
                 }

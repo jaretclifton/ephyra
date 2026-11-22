@@ -54,7 +54,9 @@ import dev.jdtech.jellyfin.film.presentation.show.ShowState
 import dev.jdtech.jellyfin.film.presentation.show.ShowViewModel
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.cast.LocalCastPlayback
 import dev.jdtech.jellyfin.presentation.film.components.ActorsRow
 import dev.jdtech.jellyfin.presentation.film.components.AirScheduleText
@@ -87,15 +89,14 @@ import dev.jdtech.jellyfin.utils.AfterFirstFrame
 import dev.jdtech.jellyfin.utils.ObserveAsEvents
 import dev.jdtech.jellyfin.utils.copyOnLongClick
 import dev.jdtech.jellyfin.utils.getShowDateString
-import java.util.UUID
 
 @Composable
 fun ShowScreen(
-    showId: UUID,
+    showId: ItemId,
     navigateBack: () -> Unit,
     navigateHome: () -> Unit,
     navigateToItem: (item: FindroidItem) -> Unit,
-    navigateToPerson: (personId: UUID) -> Unit,
+    navigateToPerson: (personId: ItemId) -> Unit,
     downloadsOnly: Boolean = false,
     viewModel: ShowViewModel = hiltViewModel(),
 ) {
@@ -167,7 +168,7 @@ fun ShowScreen(
                     // CE (#626): on the Cast receiver when one is connected.
                     if (!castPlayback.play(showId, ItemKind.SERIES, false, null, shuffle = false)) {
                         val intent = Intent(context, PlayerActivity::class.java)
-                        intent.putExtra("itemId", showId.toString())
+                        intent.putExtra("itemId", showId.asString())
                         intent.putExtra("itemKind", ItemKind.SERIES.serialName)
                         context.startActivity(intent)
                     }
@@ -177,7 +178,7 @@ fun ShowScreen(
                     // On the Cast receiver when one is connected, as Play does (#626).
                     if (!castPlayback.play(showId, ItemKind.SERIES, false, null, shuffle = true)) {
                         val intent = Intent(context, PlayerActivity::class.java)
-                        intent.putExtra("itemId", showId.toString())
+                        intent.putExtra("itemId", showId.asString())
                         intent.putExtra("itemKind", ItemKind.SERIES.serialName)
                         intent.putExtra("shuffle", true)
                         context.startActivity(intent)
@@ -209,7 +210,7 @@ fun ShowScreen(
 private fun ShowScreenLayout(
     state: ShowState,
     onAction: (ShowAction) -> Unit,
-    onDownloadSeasons: (seasonIds: Set<UUID>) -> Unit,
+    onDownloadSeasons: (seasonIds: Set<ItemId>) -> Unit,
     onDeleteShowDownloads: () -> Unit,
 ) {
     // CE: medium and expanded windows get the hero layout (docs/tablet/4-design.md §6).

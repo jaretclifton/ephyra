@@ -56,7 +56,9 @@ import dev.jdtech.jellyfin.film.presentation.season.SeasonState
 import dev.jdtech.jellyfin.film.presentation.season.SeasonViewModel
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.isDownloaded
 import dev.jdtech.jellyfin.presentation.cast.LocalCastPlayback
 import dev.jdtech.jellyfin.presentation.film.components.ArtworkPlacement
@@ -84,19 +86,18 @@ import dev.jdtech.jellyfin.presentation.utils.rememberSafePadding
 import dev.jdtech.jellyfin.presentation.utils.useSeasonListDetail
 import dev.jdtech.jellyfin.utils.ObserveAsEvents
 import dev.jdtech.jellyfin.utils.copyOnLongClick
-import java.util.UUID
 
 @Composable
 fun SeasonScreen(
-    seasonId: UUID,
+    seasonId: ItemId,
     navigateBack: () -> Unit,
     navigateHome: () -> Unit,
     navigateToItem: (item: FindroidItem) -> Unit,
-    navigateToSeries: (seriesId: UUID) -> Unit,
-    seriesId: UUID? = null,
+    navigateToSeries: (seriesId: ItemId) -> Unit,
+    seriesId: ItemId? = null,
     downloadsOnly: Boolean = false,
-    initialEpisodeId: UUID? = null,
-    navigateToPerson: (personId: UUID) -> Unit = {},
+    initialEpisodeId: ItemId? = null,
+    navigateToPerson: (personId: ItemId) -> Unit = {},
     viewModel: SeasonViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -150,7 +151,7 @@ fun SeasonScreen(
                 // CE (#626): on the Cast receiver when one is connected.
                 if (!castPlayback.play(seasonId, ItemKind.SEASON, false, null, shuffle = false)) {
                     val intent = Intent(context, PlayerActivity::class.java)
-                    intent.putExtra("itemId", seasonId.toString())
+                    intent.putExtra("itemId", seasonId.asString())
                     intent.putExtra("itemKind", ItemKind.SEASON.serialName)
                     context.startActivity(intent)
                 }
@@ -160,7 +161,7 @@ fun SeasonScreen(
                 // On the Cast receiver when one is connected, as Play does (#626).
                 if (!castPlayback.play(seasonId, ItemKind.SEASON, false, null, shuffle = true)) {
                     val intent = Intent(context, PlayerActivity::class.java)
-                    intent.putExtra("itemId", seasonId.toString())
+                    intent.putExtra("itemId", seasonId.asString())
                     intent.putExtra("itemKind", ItemKind.SEASON.serialName)
                     intent.putExtra("shuffle", true)
                     context.startActivity(intent)

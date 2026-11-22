@@ -24,8 +24,8 @@ import coil3.transition.Transition
 import coil3.transition.TransitionTarget
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.utils.withImageSize
-import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -45,7 +45,7 @@ internal class HeroImages(
     private val logoWidthPx: Int,
     private val logoHeightPx: Int,
     /** The URL of a season's backdrop, from the repository. */
-    private val seasonBackdropUrl: (UUID) -> String? = { null },
+    private val seasonBackdropUrl: (ItemId) -> String? = { null },
 ) {
     /** Prefetches that may still be loading, by memory cache key. */
     private val pending = mutableMapOf<MemoryCache.Key, Disposable>()
@@ -136,7 +136,7 @@ internal class HeroImages(
 
 /** The hero's requests at the current window size. */
 @Composable
-internal fun rememberHeroImages(seasonBackdropUrl: (UUID) -> String? = { null }): HeroImages {
+internal fun rememberHeroImages(seasonBackdropUrl: (ItemId) -> String? = { null }): HeroImages {
     val context = LocalContext.current
     val imageLoader = SingletonImageLoader.get(context)
     val backdropWidthPx =
@@ -212,7 +212,7 @@ internal fun heroBackdropUrls(
     item: FindroidItem,
     widthPx: Int,
     hideStill: Boolean = false,
-    seasonBackdropUrl: (UUID) -> String? = { null },
+    seasonBackdropUrl: (ItemId) -> String? = { null },
 ): List<String> {
     val uris =
         when (item) {
@@ -235,7 +235,7 @@ internal fun heroBackdropUrls(
  */
 private fun seasonBackdrop(
     episode: FindroidEpisode,
-    seasonBackdropUrl: (UUID) -> String?,
+    seasonBackdropUrl: (ItemId) -> String?,
 ): String? {
     val scheme = episode.images.primary?.toUri()?.scheme ?: return null
     if (!scheme.equals("http", ignoreCase = true) && !scheme.equals("https", ignoreCase = true)) {
