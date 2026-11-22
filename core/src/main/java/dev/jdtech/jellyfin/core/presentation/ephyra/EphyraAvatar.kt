@@ -32,7 +32,7 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import dev.jdtech.jellyfin.core.R
 import dev.jdtech.jellyfin.core.presentation.theme.OutfitFamily
-import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.UserId
 import java.text.BreakIterator
 import java.util.Locale
 import kotlin.math.abs
@@ -54,7 +54,7 @@ data class AvatarColors(
 )
 
 /** Which of [count] colours a user gets. Deterministic, so a user keeps their colour. */
-fun avatarColorIndex(seed: ItemId, count: Int): Int = abs(seed.hashCode().toLong()).toInt() % count
+fun avatarColorIndex(seed: UserId, count: Int): Int = abs(seed.hashCode().toLong()).toInt() % count
 
 /**
  * The initials shown when a user has no picture: the first letter of the first and the last word of
@@ -83,7 +83,7 @@ private fun String.firstGrapheme(): String {
 fun EphyraAvatar(
     name: String,
     imageUrl: String?,
-    seed: ItemId,
+    seed: UserId,
     size: Dp,
     colors: AvatarColors,
     modifier: Modifier = Modifier,

@@ -902,7 +902,7 @@ class JellyfinRepositoryImpl(
             items
         }
 
-    override fun getUserId(): ItemId {
+    override fun getUserId(): UserId {
         return currentUserId
     }
 

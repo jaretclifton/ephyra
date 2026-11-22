@@ -20,6 +20,7 @@ import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
+import dev.jdtech.jellyfin.models.UserId
 import kotlinx.coroutines.flow.Flow
 
 interface JellyfinRepository {
@@ -330,7 +331,7 @@ interface JellyfinRepository {
 
     suspend fun getDownloads(): List<FindroidItem>
 
-    fun getUserId(): ItemId
+    fun getUserId(): UserId
 }
 
 /** CE (#332): how many items a "More like this" row shows. */

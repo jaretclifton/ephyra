@@ -18,7 +18,7 @@ import androidx.room3.PrimaryKey
         ],
 )
 data class User(
-    @PrimaryKey val id: ItemId,
+    @PrimaryKey val id: UserId,
     val name: String,
     @ColumnInfo(index = true) val serverId: String,
     val accessToken: String? = null,
