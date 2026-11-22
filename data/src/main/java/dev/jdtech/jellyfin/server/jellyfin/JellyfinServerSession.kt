@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.server.jellyfin
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.domain.ports.RequestWatcher
 import dev.jdtech.jellyfin.domain.ports.ServerSession
+import dev.jdtech.jellyfin.domain.ports.UserImage
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.UserId
 import kotlinx.coroutines.flow.Flow
@@ -90,8 +91,9 @@ class JellyfinServerSession(private val api: JellyfinApi) : ServerSession {
         configuration?.enableNextEpisodeAutoPlay
     }
 
-    override suspend fun currentUserImageTag(): String? = call {
-        api.userApi.getCurrentUser().content.primaryImageTag
+    override suspend fun currentUserImage(): UserImage = call {
+        val user = api.userApi.getCurrentUser().content
+        UserImage(user.id, user.primaryImageTag)
     }
 
     private companion object {

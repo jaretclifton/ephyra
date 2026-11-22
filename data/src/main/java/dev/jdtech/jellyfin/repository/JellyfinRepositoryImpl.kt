@@ -841,11 +841,10 @@ class JellyfinRepositoryImpl(
     override suspend fun updateDeviceName(name: String) = server.session.updateDeviceName(name)
 
     override suspend fun refreshCurrentUserImage() {
-        // Taken before the request: a switch of user while it waits must not give the tag to the
-        // next user's row.
-        val userId = currentUserId
-        val tag = server.session.currentUserImageTag()
-        withContext(Dispatchers.IO) { database.updateUserPrimaryImageTag(userId, tag) }
+        // The row of the user the server answered for, which is the one whose token went out: a
+        // switch of user around the request cannot give the tag to another user's row.
+        val image = server.session.currentUserImage()
+        withContext(Dispatchers.IO) { database.updateUserPrimaryImageTag(image.userId, image.tag) }
     }
 
     override suspend fun autoPlayNextEpisode(): Boolean? = server.session.autoPlayNextEpisode()

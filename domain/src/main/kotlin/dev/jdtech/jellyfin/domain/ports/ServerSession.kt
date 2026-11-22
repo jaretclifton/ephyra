@@ -60,8 +60,12 @@ interface ServerSession {
     suspend fun autoPlayNextEpisode(): Boolean?
 
     /**
-     * #757: the tag of the current user's profile picture as the server has it now, null when they
-     * have none.
+     * #757: the profile picture of the user the token sent is for, as the server has it now. The
+     * user comes from the answer, not from [userId]: during a switch the token and the id are
+     * updated one after the other.
      */
-    suspend fun currentUserImageTag(): String?
+    suspend fun currentUserImage(): UserImage
 }
+
+/** #757: a user and the tag of their profile picture, null when they have none. */
+data class UserImage(val userId: UserId, val tag: String?)

@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.core.presentation.session
 import androidx.compose.runtime.staticCompositionLocalOf
 import dev.jdtech.jellyfin.domain.ports.RequestWatcher
 import dev.jdtech.jellyfin.domain.ports.ServerSession
+import dev.jdtech.jellyfin.domain.ports.UserImage
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.UserId
 import kotlinx.coroutines.flow.Flow
@@ -49,5 +50,5 @@ object NoServerSession : ServerSession {
 
     override suspend fun autoPlayNextEpisode(): Boolean? = throw ServerException.Unreachable()
 
-    override suspend fun currentUserImageTag(): String? = throw ServerException.Unreachable()
+    override suspend fun currentUserImage(): UserImage = throw ServerException.Unreachable()
 }

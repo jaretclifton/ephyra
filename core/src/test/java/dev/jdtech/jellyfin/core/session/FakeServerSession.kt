@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.core.session
 
 import dev.jdtech.jellyfin.domain.ports.RequestWatcher
 import dev.jdtech.jellyfin.domain.ports.ServerSession
+import dev.jdtech.jellyfin.domain.ports.UserImage
 import dev.jdtech.jellyfin.models.UserId
 import java.util.Collections
 import kotlinx.coroutines.awaitCancellation
@@ -71,5 +72,5 @@ internal class FakeServerSession(
 
     override suspend fun autoPlayNextEpisode(): Boolean? = null
 
-    override suspend fun currentUserImageTag(): String? = null
+    override suspend fun currentUserImage(): UserImage = UserImage(checkNotNull(userId), null)
 }
