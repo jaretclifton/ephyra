@@ -2,11 +2,14 @@ package dev.jdtech.jellyfin.setup.data
 
 import android.app.Application
 import android.content.Context
+import dev.jdtech.jellyfin.core.server.CurrentServerType
+import dev.jdtech.jellyfin.core.server.ServerConnectors
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.ResolvedServer
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.ServerInfo
+import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -72,18 +75,23 @@ class AddSavedServerSessionTest {
     private val connector = FakeServerConnector(onResolve = { found!! })
     private val session = RecordingServerSession()
 
+    /** CE (#770): the type of the one connector installed; set before the first [add]. */
+    private var connectorType = ServerType.JELLYFIN
+    private val currentType = CurrentServerType()
+
     private val repository by lazy {
         SetupRepositoryImpl(
-            connector,
+            ServerConnectors(mapOf(connectorType to connector)),
             session,
             database,
             AppPreferences(context.getSharedPreferences("test", Context.MODE_PRIVATE)),
+            currentType,
         )
     }
 
-    private fun saveServer(id: String, address: String, user: User?) {
+    private fun saveServer(id: String, address: String, user: User?, type: String = "jellyfin") {
         val serverAddress = ServerAddress(UUID.randomUUID(), id, address)
-        servers[id] = Server(id, "Server $id", serverAddress.id, user?.id)
+        servers[id] = Server(id, "Server $id", serverAddress.id, user?.id, type)
         addresses += serverAddress
         user?.let { users[it.id] = it }
     }
@@ -163,5 +171,38 @@ class AddSavedServerSessionTest {
         assertNull(session.userId)
         assertNull(servers.getValue("c").currentUserId)
         assertEquals("Server c", server.name)
+    }
+
+    @Test
+    fun `a new server is saved with the type of the connector that found it`() = runBlocking {
+        // CE (#770): Jellyfin today, as every server so far.
+        add("c", "https://c.example/")
+
+        assertEquals("jellyfin", servers.getValue("c").type)
+        assertEquals("jellyfin", currentType.stored)
+    }
+
+    @Test
+    fun `the type is the one the connector found, whichever it is`() = runBlocking {
+        connectorType = ServerType.EMBY
+        saveServer("a", "https://a.example/", alice)
+        signInClient("https://a.example/", alice)
+        currentType.stored = "jellyfin"
+
+        val server = add("c", "https://c.example/")
+
+        assertEquals("emby", server.type)
+        assertEquals("emby", servers.getValue("c").type)
+        assertEquals("emby", currentType.stored)
+    }
+
+    @Test
+    fun `a saved server added again keeps the type it was saved with`() = runBlocking {
+        saveServer("b", "https://b.example/", bob, type = "emby")
+
+        add("b", "https://b.example/")
+
+        assertEquals("emby", servers.getValue("b").type)
+        assertEquals("emby", currentType.stored)
     }
 }

@@ -17,6 +17,9 @@ class AppPreferences @Inject constructor(val sharedPreferences: SharedPreference
     val sessionBaseUrl = Preference<String?>("pref_session_base_url", null)
     val sessionAccessToken = Preference<String?>("pref_session_access_token", null)
     val sessionUserId = Preference<String?>("pref_session_user_id", null)
+    // CE (#770): the server's stored type. A copy without it was saved before servers had a type,
+    // when every server was a Jellyfin server.
+    val sessionServerType = Preference<String?>("pref_session_server_type", null)
 
     // Language
     val preferredAudioLanguage = Preference<String?>("pref_audio_language", null)

@@ -7,6 +7,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dagger.multibindings.IntoMap
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.domain.ports.DeviceCodecs
 import dev.jdtech.jellyfin.domain.ports.DeviceReportSource
@@ -16,6 +17,7 @@ import dev.jdtech.jellyfin.domain.ports.ServerConnector
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.domain.ports.SessionRestorer
 import dev.jdtech.jellyfin.domain.ports.UserDataSyncPorts
+import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinCatalog
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceReportSource
@@ -67,15 +69,22 @@ object JellyfinServerModule {
     fun provideServerSession(jellyfinApi: JellyfinApi): ServerSession =
         JellyfinServerSession(jellyfinApi)
 
-    /** #761: finding a server and logging in, for the onboarding screens. */
+    /**
+     * #761: finding a server and logging in, for the onboarding screens. #770: one of the app's
+     * connectors (`ServerConnectors`).
+     */
     @Singleton
     @Provides
+    @IntoMap
+    @ServerTypeKey(ServerType.JELLYFIN)
     fun provideServerConnector(jellyfinApi: JellyfinApi): ServerConnector =
         JellyfinServerConnector(jellyfinApi)
 
-    /** #762: the server's user data for any saved user, for the sync. */
+    /** #762: the server's user data for any saved user, for the sync. #770: of Jellyfin servers. */
     @Singleton
     @Provides
+    @IntoMap
+    @ServerTypeKey(ServerType.JELLYFIN)
     fun provideUserDataSyncPorts(jellyfinApi: JellyfinApi): UserDataSyncPorts =
         JellyfinUserDataSyncPorts(jellyfinApi)
 
@@ -98,9 +107,14 @@ object JellyfinServerModule {
         profiles: JellyfinDeviceProfiles,
     ): DeviceReportSource = JellyfinDeviceReportSource(application, codecs, profiles)
 
-    /** CE (#756, #757): the Jellyfin server the repository talks to, with its ports. */
+    /**
+     * CE (#756, #757): the Jellyfin server the repository talks to, with its ports. #770: the
+     * repository gets it through `CurrentMediaServer`, while the server in use is a Jellyfin one.
+     */
     @Singleton
     @Provides
+    @IntoMap
+    @ServerTypeKey(ServerType.JELLYFIN)
     fun provideMediaServer(
         jellyfinApi: JellyfinApi,
         session: ServerSession,

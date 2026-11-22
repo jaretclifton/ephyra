@@ -54,5 +54,24 @@ data class ServerCapabilities(
                 deviceRename = true,
                 cappedDownloadTranscode = true,
             )
+
+        /** #770: no feature: a server of a type this build has no adapter for. */
+        val NONE =
+            ServerCapabilities(
+                quickConnect = false,
+                publicUsers = false,
+                loginDisclaimer = false,
+                mediaSegments = false,
+                trickplay = false,
+                themeSongs = false,
+                similarItems = false,
+                extras = false,
+                itemCollections = false,
+                serverResumeThresholds = false,
+                autoPlayNextSetting = false,
+                sessionSocket = false,
+                deviceRename = false,
+                cappedDownloadTranscode = false,
+            )
     }
 }

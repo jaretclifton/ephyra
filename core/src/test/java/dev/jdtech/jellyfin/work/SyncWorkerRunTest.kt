@@ -21,6 +21,7 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.ServerException
+import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
@@ -67,13 +68,14 @@ class SyncWorkerRunTest {
     @After fun close() = room.close()
 
     /** The saved server with its address and one user. */
-    private suspend fun storeServer() {
+    private suspend fun storeServer(type: String = ServerType.JELLYFIN.value) {
         database.insertServer(
             Server(
                 id = SERVER,
                 name = "Server",
                 currentServerAddressId = ADDRESS_ID,
                 currentUserId = USER_ID,
+                type = type,
             )
         )
         database.insertServerAddress(ServerAddress(ADDRESS_ID, SERVER, ADDRESS))
@@ -150,7 +152,7 @@ class SyncWorkerRunTest {
                                 appContext,
                                 workerParameters,
                                 database,
-                                ports,
+                                mapOf(ServerType.JELLYFIN to ports),
                                 smartDownloads(),
                                 PlaybackEvents(),
                                 DataChangeEvents(),
@@ -250,6 +252,22 @@ class SyncWorkerRunTest {
 
         assertEquals(ListenableWorker.Result.retry(), run())
 
+        val row = assertNotNull(database.getUserData(ITEM_ID, USER_ID))
+        assertTrue(row.toBeSynced)
+        assertEquals(LOCAL_POSITION, row.playbackPositionTicks)
+    }
+
+    @Test
+    fun `a server of a type without an adapter is left as it is, without a retry`() = runBlocking {
+        // CE (#770): saved by a build that knows more server types.
+        storeServer(type = "emby")
+        storeMovie()
+        storeMarkedRow()
+
+        assertEquals(ListenableWorker.Result.success(), run())
+
+        assertTrue(opened.isEmpty())
+        assertTrue(port.calls.isEmpty())
         val row = assertNotNull(database.getUserData(ITEM_ID, USER_ID))
         assertTrue(row.toBeSynced)
         assertEquals(LOCAL_POSITION, row.playbackPositionTicks)

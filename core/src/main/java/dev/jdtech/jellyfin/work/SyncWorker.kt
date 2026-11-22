@@ -7,12 +7,14 @@ import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dev.jdtech.jellyfin.core.presentation.downloader.SmartDownloads
+import dev.jdtech.jellyfin.core.server.forStoredType
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.ServerUserData
 import dev.jdtech.jellyfin.domain.ports.UserDataSyncPort
 import dev.jdtech.jellyfin.domain.ports.UserDataSyncPorts
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
 import dev.jdtech.jellyfin.models.ServerException
+import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.serverExceptionOrNull
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.PlaybackEvents
@@ -32,7 +34,8 @@ constructor(
     @Assisted context: Context,
     @Assisted workerParams: WorkerParameters,
     val database: ServerDatabaseDao,
-    private val userDataSyncPorts: UserDataSyncPorts,
+    /** CE (#770): by server type; each server's users go through the ports of its type. */
+    private val userDataSyncPorts: Map<ServerType, @JvmSuppressWildcards UserDataSyncPorts>,
     private val smartDownloads: SmartDownloads,
     private val playbackEvents: PlaybackEvents,
     private val dataChanges: DataChangeEvents,
@@ -51,6 +54,13 @@ constructor(
                     serverWithAddressesAndUsers.addresses.firstOrNull {
                         it.id == server.currentServerAddressId
                     } ?: continue
+                // CE (#770): a server of a type this build cannot talk to keeps its rows marked,
+                // for a build that can. Not a failure: retrying would not change it.
+                val ports = userDataSyncPorts.forStoredType(server.type)
+                if (ports == null) {
+                    Timber.w("No adapter for server type %s, not syncing it", server.type)
+                    continue
+                }
                 for (user in serverWithAddressesAndUsers.users) {
                     // Only the rows still marked to be synced, and the downloads whose progress
                     // the server may have moved on: without either, no item is loaded, no client
@@ -64,8 +74,7 @@ constructor(
                         )
                     if (pending.isEmpty() && !refresh) continue
 
-                    val port =
-                        userDataSyncPorts.forUser(serverAddress.address, user.accessToken, user.id)
+                    val port = ports.forUser(serverAddress.address, user.accessToken, user.id)
                     var ok = true
                     if (pending.isNotEmpty()) {
                         val outcome = syncUserData(port, user.id, pending)
