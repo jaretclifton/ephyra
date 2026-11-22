@@ -16,7 +16,10 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -42,6 +45,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyServer
 import dev.jdtech.jellyfin.core.presentation.ephyra.EphyraMotion
 import dev.jdtech.jellyfin.core.presentation.rows.rememberLazyListStateAtStart
 import dev.jdtech.jellyfin.core.presentation.session.LocalServerSession
+import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.film.presentation.home.HomeAction
 import dev.jdtech.jellyfin.film.presentation.home.HomeState
 import dev.jdtech.jellyfin.film.presentation.home.HomeViewModel
@@ -49,6 +53,7 @@ import dev.jdtech.jellyfin.film.presentation.home.orderedRows
 import dev.jdtech.jellyfin.models.FindroidCollection
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.HomeItem
+import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.presentation.components.ErrorDialog
 import dev.jdtech.jellyfin.presentation.film.components.EmptyState
 import dev.jdtech.jellyfin.presentation.film.components.ErrorCardInitialHeight
@@ -83,18 +88,22 @@ fun HomeScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     // CE (#810): never a frame of the previous user's rows after a switch.
-    val userId = LocalServerSession.current.userId
+    val sessionUser = rememberSessionUser()
 
     ReloadOnResume(shouldReload = { viewModel.shouldReload(stopEventFollows = true) }) {
         viewModel.loadData(silent = true)
     }
 
     HomeScreenLayout(
-        state = state.shownTo(userId),
+        state = state.shownTo(sessionUser.userId),
         onAddUser = onAddUser,
         onPublicUserClick = onPublicUserClick,
         // CE (#810): the ViewModel follows the current user and loads the new user's rows itself.
-        onUserSwitched = onUserSwitched,
+        onUserSwitched = {
+            // CE (#872): Home stays on screen through this switch; it reads the user again now.
+            sessionUser.recheck()
+            onUserSwitched()
+        },
         onAction = { action ->
             when (action) {
                 is HomeAction.OnItemClick -> onItemClick(action.item)
@@ -107,6 +116,31 @@ fun HomeScreen(
             viewModel.onAction(action)
         },
     )
+}
+
+/**
+ * CE (#872): the user the client acts for, as Home reads it. [ServerSession.userId] is no snapshot
+ * state, so a switch does not recompose Home by itself. A switch on the profile sheet keeps Home on
+ * screen, and until the ViewModel heard of it from Room, a couple of frames later, Home went on
+ * showing the previous user's rows. [recheck] makes the readers of [userId] read it again.
+ */
+@Stable
+internal class SessionUser(private val session: ServerSession) {
+    private var checks by mutableIntStateOf(0)
+
+    /** Read fresh each time; reading [checks] makes a [recheck] recompose the reader. */
+    val userId: UserId?
+        get() = session.userId.also { checks }
+
+    fun recheck() {
+        checks++
+    }
+}
+
+@Composable
+internal fun rememberSessionUser(): SessionUser {
+    val session = LocalServerSession.current
+    return remember(session) { SessionUser(session) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -203,60 +237,65 @@ internal fun HomeScreenLayout(
             isRefreshing = state.isLoading,
             onRefresh = { onAction(HomeAction.OnRetryClick) },
         ) {
-            LazyColumn(
-                modifier =
-                    Modifier.fillMaxSize()
-                        .graphicsLayer { alpha = userFade.value }
-                        .semantics { traversalIndex = 1f },
-                state = listState,
-                contentPadding = PaddingValues(top = contentPaddingTop, bottom = paddingBottom),
-                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacings.medium),
-            ) {
-                items(rows, key = { it.id }, contentType = { it::class }) { row ->
-                    when (row) {
-                        is HomeItem.Suggestions ->
-                            HomeCarousel(
-                                items = row.items,
-                                itemsPadding = itemsPadding,
-                                onAction = onAction,
-                                isParentScrolling = { listState.isScrollInProgress },
-                            )
-                        is HomeItem.Section ->
-                            HomeSection(
-                                section = row.homeSection,
-                                itemsPadding = itemsPadding,
-                                onAction = onAction,
-                                modifier = Modifier.animateItem(),
-                                preferThumb = !state.useEpisodeImages,
-                            )
-                        is HomeItem.ViewItem ->
-                            HomeView(
-                                view = row,
-                                itemsPadding = itemsPadding,
-                                onAction = onAction,
-                                modifier = Modifier.animateItem(),
-                            )
-                        HomeItem.OfflineCard -> Unit
+            // CE (#872): a list of its own per user. Rows that leave a list fade out
+            // (animateItem), and after a switch the previous user's rows did so for a few frames
+            // under the new user's header. A new list has no rows to fade out.
+            key(state.user?.id) {
+                LazyColumn(
+                    modifier =
+                        Modifier.fillMaxSize()
+                            .graphicsLayer { alpha = userFade.value }
+                            .semantics { traversalIndex = 1f },
+                    state = listState,
+                    contentPadding = PaddingValues(top = contentPaddingTop, bottom = paddingBottom),
+                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacings.medium),
+                ) {
+                    items(rows, key = { it.id }, contentType = { it::class }) { row ->
+                        when (row) {
+                            is HomeItem.Suggestions ->
+                                HomeCarousel(
+                                    items = row.items,
+                                    itemsPadding = itemsPadding,
+                                    onAction = onAction,
+                                    isParentScrolling = { listState.isScrollInProgress },
+                                )
+                            is HomeItem.Section ->
+                                HomeSection(
+                                    section = row.homeSection,
+                                    itemsPadding = itemsPadding,
+                                    onAction = onAction,
+                                    modifier = Modifier.animateItem(),
+                                    preferThumb = !state.useEpisodeImages,
+                                )
+                            is HomeItem.ViewItem ->
+                                HomeView(
+                                    view = row,
+                                    itemsPadding = itemsPadding,
+                                    onAction = onAction,
+                                    modifier = Modifier.animateItem(),
+                                )
+                            HomeItem.OfflineCard -> Unit
+                        }
                     }
-                }
-                if (state.isEmpty && !state.isLoading) {
-                    item(key = "placeholder") {
-                        val placeholderModifier =
-                            Modifier.fillParentMaxWidth().fillParentMaxHeight(0.75f)
-                        val error = state.error
-                        if (error != null) {
-                            ErrorState(
-                                error = error,
-                                onRetryClick = { onAction(HomeAction.OnRetryClick) },
-                                modifier = placeholderModifier,
-                            )
-                        } else {
-                            EmptyState(
-                                icon = CoreR.drawable.ic_home,
-                                title = stringResource(CoreR.string.nothing_here_yet),
-                                modifier = placeholderModifier,
-                                body = stringResource(CoreR.string.home_empty_body),
-                            )
+                    if (state.isEmpty && !state.isLoading) {
+                        item(key = "placeholder") {
+                            val placeholderModifier =
+                                Modifier.fillParentMaxWidth().fillParentMaxHeight(0.75f)
+                            val error = state.error
+                            if (error != null) {
+                                ErrorState(
+                                    error = error,
+                                    onRetryClick = { onAction(HomeAction.OnRetryClick) },
+                                    modifier = placeholderModifier,
+                                )
+                            } else {
+                                EmptyState(
+                                    icon = CoreR.drawable.ic_home,
+                                    title = stringResource(CoreR.string.nothing_here_yet),
+                                    modifier = placeholderModifier,
+                                    body = stringResource(CoreR.string.home_empty_body),
+                                )
+                            }
                         }
                     }
                 }
@@ -319,8 +358,13 @@ internal fun HomeScreenLayout(
                 onAction(HomeAction.OnSettingsClick)
             },
             onUserSwitched = {
-                showProfileBottomSheet = false
+                // CE (#872): Home lets go of the previous user's rows first, behind the sheet. The
+                // sheet is a window of its own: removed in the same frame, it showed Home's last
+                // frame, the previous user's, before Home had drawn again. It slides away instead.
                 onUserSwitched()
+                scope
+                    .launch { profileSheetState.hide() }
+                    .invokeOnCompletion { showProfileBottomSheet = false }
             },
             onDismissRequest = { showProfileBottomSheet = false },
             sheetState = profileSheetState,

@@ -2,9 +2,11 @@ package dev.jdtech.jellyfin.presentation.film
 
 import android.app.Application
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -18,10 +20,21 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.width
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyHomeSection
+import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovies
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyServer
+import dev.jdtech.jellyfin.core.presentation.dummy.dummyUser
+import dev.jdtech.jellyfin.core.presentation.session.LocalServerSession
+import dev.jdtech.jellyfin.core.presentation.session.NoServerSession
+import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.film.presentation.home.HomeState
+import dev.jdtech.jellyfin.models.HomeItem
+import dev.jdtech.jellyfin.models.HomeSection
+import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
+import java.util.UUID
 import kotlin.test.assertEquals
+import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -86,6 +99,100 @@ class HomeScreenLayoutTest {
 
         assertEquals(nameWidth, rule.onNodeWithText("Stable Demo").getBoundsInRoot().width)
         rule.onNodeWithText(string(CoreR.string.error_loading_data)).assertIsDisplayed()
+    }
+
+    /** #872: the client's session, whose user a switch changes without Compose seeing it. */
+    private class SwitchableSession(var user: UserId?) : ServerSession by NoServerSession {
+        override val userId: UserId?
+            get() = user
+    }
+
+    private val alice = dummyUser.copy(id = UUID.randomUUID(), name = "Alice")
+    private val bob = dummyUser.copy(id = UUID.randomUUID(), name = "Bob")
+    private val aliceHome =
+        HomeState(
+            server = dummyServer,
+            user = alice,
+            resumeSection =
+                HomeItem.Section(
+                    HomeSection(
+                        id = UUID.randomUUID(),
+                        name = UiText.DynamicString("Alice's row"),
+                        items = dummyMovies,
+                    )
+                ),
+            isLoading = false,
+        )
+
+    /**
+     * Home as HomeScreen wires it, on [aliceHome] (the ViewModel has not heard of a switch yet).
+     * Returns what the profile sheet's switch calls.
+     */
+    private fun setHomeOfSession(session: ServerSession): () -> Unit {
+        var recheck: () -> Unit = {}
+        rule.setContent {
+            FindroidTheme {
+                CompositionLocalProvider(LocalServerSession provides session) {
+                    val sessionUser = rememberSessionUser()
+                    recheck = sessionUser::recheck
+                    HomeScreenLayout(state = aliceHome.shownTo(sessionUser.userId), onAction = {})
+                }
+            }
+        }
+        rule.mainClock.advanceTimeBy(1_000)
+        rule.onNodeWithText("Alice's row").assertIsDisplayed()
+        rule.mainClock.autoAdvance = false
+        return recheck
+    }
+
+    /**
+     * The tests that hold the clock let what they started (the rows' fade, the new user's list) run
+     * to its end, or it is still due in the next test class on the same main looper.
+     */
+    @After
+    fun letAnimationsEnd() {
+        rule.mainClock.autoAdvance = true
+        rule.mainClock.advanceTimeBy(1_000)
+        rule.waitForIdle()
+    }
+
+    /** One frame after the client switched to Bob (UsersViewModel.switchTo). */
+    private fun switchClientToBob(session: SwitchableSession, recheck: (() -> Unit)?) {
+        session.user = bob.id
+        recheck?.invoke()
+        Snapshot.sendApplyNotifications()
+        rule.mainClock.advanceTimeByFrame()
+    }
+
+    /**
+     * #872: a switch on the profile sheet keeps Home on screen, and the previous user's rows stayed
+     * there for a couple of frames after the sheet closed, until the ViewModel heard of the switch
+     * from Room. The sheet's switch makes Home read the session's user again, in the frame the
+     * sheet closes.
+     */
+    @Test
+    fun aProfileSheetSwitchHidesThePreviousUsersRowsInTheNextFrame() {
+        val session = SwitchableSession(alice.id)
+        val recheck = setHomeOfSession(session)
+
+        switchClientToBob(session, recheck)
+
+        rule.onAllNodes(hasText("Alice's row")).assertCountEquals(0)
+    }
+
+    /**
+     * #872, the cause: the session's user is no snapshot state, so its change alone recomposes
+     * nothing and Home goes on showing what it showed. This is what main did after the sheet's
+     * switch.
+     */
+    @Test
+    fun theSessionsUserAloneDoesNotRecomposeHome() {
+        val session = SwitchableSession(alice.id)
+        setHomeOfSession(session)
+
+        switchClientToBob(session, recheck = null)
+
+        rule.onNodeWithText("Alice's row").assertExists()
     }
 
     /**
