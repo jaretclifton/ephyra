@@ -51,9 +51,8 @@ import dev.jdtech.jellyfin.player.local.domain.DebugSegments
 import dev.jdtech.jellyfin.player.local.domain.DisplayRefreshRateManager
 import dev.jdtech.jellyfin.player.local.domain.NeighbourLoader
 import dev.jdtech.jellyfin.player.local.domain.NetworkRecovery
-import dev.jdtech.jellyfin.player.local.domain.PlaybackStartGate
+import dev.jdtech.jellyfin.player.local.domain.PlaybackReporter
 import dev.jdtech.jellyfin.player.local.domain.PlaylistManager
-import dev.jdtech.jellyfin.player.local.domain.ReportedPause
 import dev.jdtech.jellyfin.player.local.domain.SegmentDecision
 import dev.jdtech.jellyfin.player.local.domain.SegmentTracker
 import dev.jdtech.jellyfin.player.local.domain.SessionTrackPicks
@@ -76,7 +75,6 @@ import dev.jdtech.jellyfin.player.local.domain.autoPlayNextFollowsServer
 import dev.jdtech.jellyfin.player.local.domain.getTrackNames
 import dev.jdtech.jellyfin.player.local.domain.isNewEndOfItem
 import dev.jdtech.jellyfin.player.local.domain.matchSeriesTrack
-import dev.jdtech.jellyfin.player.local.domain.playbackStopReport
 import dev.jdtech.jellyfin.player.local.domain.playerTitle
 import dev.jdtech.jellyfin.player.local.domain.resolveAutoPlayNext
 import dev.jdtech.jellyfin.player.local.domain.seriesTrackChoice
@@ -99,9 +97,7 @@ import kotlin.coroutines.resume
 import kotlin.math.abs
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -117,10 +113,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 
 /** How long the OS gets to follow the surface frame rate hint before the second log line. */
@@ -140,6 +133,8 @@ constructor(
     private val mediaHttpClient: MediaHttpClient,
     private val appVariant: AppVariant,
     private val engines: Map<PlayerEngineId, @JvmSuppressWildcards PlayerEngine>,
+    /** CE (#765): the start, progress and stop reports to the server. */
+    private val playbackReporter: PlaybackReporter,
 ) : ViewModel(), Player.Listener {
     val player: Player
 
@@ -369,33 +364,6 @@ constructor(
     // than being cleared right after the seek call, so it holds whether a backend delivers the
     // discontinuity synchronously from seekTo() (mpv) or later on the main looper.
     private var pendingAutoAdvanceSeek = false
-
-    /**
-     * The item the server was told is playing, with the last known position and duration. Used to
-     * report playback stopped for the item being left when [onMediaItemTransition] fires, which
-     * covers every item change (auto-advance, next/previous buttons, gestures, media-session and
-     * remote controls, the outro "Next episode" button) on both backends.
-     *
-     * `null` before the first transition, after [releasePlayer], and after the still-watching
-     * prompt already reported the finished item (so the transition that follows does not report it
-     * again).
-     *
-     * [startJob] is the item's playback start report, `null` until it is sent. Until the duration
-     * is known, [positionMs] is the position playback was asked to start at (#461).
-     */
-    private data class PlayingSnapshot(
-        val itemId: UUID,
-        val positionMs: Long,
-        val durationMs: Long,
-        val startJob: Job? = null,
-        /** CE (#616): left from its closing outro, so the stop reports it as played to the end. */
-        val finished: Boolean = false,
-    )
-
-    private var playing: PlayingSnapshot? = null
-
-    /** CE (#601): holds an item's start report until the player has loaded it. */
-    private val startGate = PlaybackStartGate<PlayerItem>()
 
     /**
      * Whether to start the next item by itself at the end of an item: the "Play next episode
@@ -823,7 +791,7 @@ constructor(
      * so this is where its play session becomes the one the reports name (#728).
      */
     private fun PlayerItem.toMediaItem(): MediaItem {
-        repository.setPlaySession(itemId, playSessionId, isTranscoded)
+        playbackReporter.onStreamQueued(this)
         val streamUrl = mediaSourceUri
         val mediaSubtitles = externalSubtitles.map { externalSubtitle ->
             MediaItem.SubtitleConfiguration.Builder(externalSubtitle.uri)
@@ -951,9 +919,7 @@ constructor(
         // Take the exact position, then clear the snapshot so a transition fired while releasing
         // cannot report the same item a second time.
         refreshPlayingSnapshot()
-        val stopped = playing
-        playing = null
-        startGate.clear()
+        val stopped = playbackReporter.onPlayerReleased()
 
         _uiState.value.currentTrickplay?.loader?.release()
         _uiState.update { it.copy(currentTrickplay = null) }
@@ -979,25 +945,25 @@ constructor(
         }
 
         playbackEvents.onPlaying(null)
-        stopped?.let { reportStopped(it) }
+        stopped?.let { playbackReporter.reportStopped(it) }
     }
 
     /**
-     * Copy the player's position and duration into [playing], if the player is still on that item
-     * and both values are known. Unknown values are skipped so the last good ones are kept: mpv
-     * resets its position and duration as soon as it starts loading the next file, before it
-     * reports the item change.
+     * Copy the player's position and duration into [PlaybackReporter.playing], if the player is
+     * still on that item and both values are known. Unknown values are skipped so the last good
+     * ones are kept: mpv resets its position and duration as soon as it starts loading the next
+     * file, before it reports the item change.
      *
      * Called from the periodic progress and segment updates, from the UI poll loops, and right
      * before every app-initiated item change, so a stop report uses a recent position.
      */
     fun refreshPlayingSnapshot() {
-        val current = playing ?: return
+        val current = playbackReporter.playing ?: return
         if (player.currentMediaItem?.mediaId != current.itemId.toString()) return
         val position = player.currentPosition
         val duration = player.duration
         if (position < 0 || duration == C.TIME_UNSET || duration <= 0) return
-        playing = current.copy(positionMs = position, durationMs = duration)
+        playbackReporter.updatePosition(positionMs = position, durationMs = duration)
     }
 
     /**
@@ -1008,141 +974,45 @@ constructor(
      */
     private fun refreshPlayingSnapshotMovingOn() {
         refreshPlayingSnapshot()
-        val current = playing ?: return
+        val current = playbackReporter.playing ?: return
         val outroStartMs =
             segmentTracker.closingOutroStartMs(current.durationMs, hasNextItem = true) ?: return
-        if (current.positionMs >= outroStartMs) playing = current.copy(finished = true)
+        if (current.positionMs >= outroStartMs) playbackReporter.markFinished()
     }
-
-    /**
-     * Tell the server (and the local database) that [snapshot]'s item stopped playing. The only
-     * caller of [JellyfinRepository.postPlaybackStop]. Before the duration is known the stop is
-     * only sent if the start was, and it leaves the local database alone ([playbackStopReport]).
-     *
-     * Runs in [GlobalScope] because it must outlive [viewModelScope]: [releasePlayer] runs from
-     * [onCleared], and the player can be closed right after an item change. It waits up to
-     * [START_REPORT_WAIT_MS] for the item's start report, so the stop reaches the server after it.
-     *
-     * @return the reporting job, so a caller can wait for it, or `null` if nothing was sent.
-     */
-    @OptIn(DelicateCoroutinesApi::class)
-    private fun reportStopped(snapshot: PlayingSnapshot): Job? {
-        val (itemId, position, duration, startJob, finished) = snapshot
-        val report =
-            playbackStopReport(
-                position,
-                duration,
-                startSent = startJob != null,
-                finished = finished,
-            )
-        if (report == null) {
-            Timber.d("No playback stop for $itemId: neither loaded nor started")
-            return null
-        }
-        return GlobalScope.launch(Dispatchers.IO) {
-            try {
-                if (startJob != null && !startJob.isCompleted) {
-                    withTimeoutOrNull(START_REPORT_WAIT_MS) { startJob.join() }
-                        ?: Timber.w("Start report for $itemId still running, sending stop anyway")
-                }
-                if (report.playedPercentage == null) {
-                    Timber.d("Sending playback stop for $itemId at its start, $position ms")
-                } else {
-                    Timber.d(
-                        "Sending playback stop for $itemId at $position / $duration ms" +
-                            if (finished) ", as finished" else ""
-                    )
-                }
-                repository.postPlaybackStop(itemId, report.positionTicks, report.playedPercentage)
-            } catch (e: Exception) {
-                Timber.e(e)
-            } finally {
-                playbackEvents.onStopped(itemId)
-            }
-        }
-    }
-
-    /** CE (#674): one progress report at a time; see [updatePlaybackProgress]. */
-    private val progressReportLock = Mutex()
-
-    /** CE (#674): the number of the latest [updatePlaybackProgress] call. Main thread only. */
-    private var progressReportSeq = 0L
-
-    /**
-     * CE (#674): what the last progress report told the server; guarded by [progressReportLock].
-     */
-    private val reportedPause = ReportedPause()
 
     fun updatePlaybackProgress() {
         Timber.d("Updating playback progress")
-        reportProgress(seq = ++progressReportSeq, onlyIfReportedPaused = false)
+        reportProgress(seq = playbackReporter.newProgressReport(), onlyIfToldPaused = false)
     }
 
     /**
      * CE (#674): playback started. A resume that had to buffer first was reported as paused, so
      * correct that now; after any other report this sends nothing, so a stall adds no reports.
      */
-    private fun reportPlayingIfReportedPaused() {
-        reportProgress(seq = progressReportSeq, onlyIfReportedPaused = true)
+    private fun reportPlayingIfToldPaused() {
+        reportProgress(seq = playbackReporter.latestProgressReport, onlyIfToldPaused = true)
     }
 
-    private fun reportProgress(seq: Long, onlyIfReportedPaused: Boolean) {
+    /**
+     * CE (#765): what [PlaybackReporter.reportProgress] reads of the player when it sends a report.
+     */
+    private val reportedPlayer =
+        object : PlaybackReporter.ReportedPlayer {
+            override fun currentMediaId(): String? = player.currentMediaItem?.mediaId
+
+            override fun isTranscoded(itemId: UUID): Boolean =
+                items.firstOrNull { it.itemId == itemId }?.isTranscoded == true
+
+            override fun isPlaying(): Boolean = player.isPlaying
+
+            override fun currentPositionMs(): Long = player.currentPosition
+        }
+
+    private fun reportProgress(seq: Long, onlyIfToldPaused: Boolean) {
         viewModelScope.launch(Dispatchers.Main) {
             refreshPlayingSnapshot()
             savedStateHandle["position"] = player.currentPosition
-            // The current item's stop was already reported (end of item without autoplay, or the
-            // still-watching prompt). A progress report now would reopen its session on the
-            // server and overwrite the position the stop stored, e.g. from onPause while the
-            // player closes.
-            // CE (#601): nor before the start report, which waits for the item to load. The
-            // server marks an item without a runtime played at its first position report, so an
-            // item that failed to open was marked played.
-            if (playing?.startJob == null) return@launch
-            // CE (#674): a pause right after the start must not reach the server before the start,
-            // which would then mark the item playing again. The stop waits the same way. join()
-            // returns for a failed or cancelled start too.
-            val startJob = playing?.startJob
-            if (startJob != null && !startJob.isCompleted) {
-                withTimeoutOrNull(START_REPORT_WAIT_MS) { startJob.join() }
-                if (playing?.startJob == null) return@launch
-            }
-            val mediaItem = player.currentMediaItem ?: return@launch
-            if (mediaItem.mediaId.isNotEmpty()) {
-                val itemId = UUID.fromString(mediaItem.mediaId)
-                // CE (#599): the item as it plays now; a quality switch replaces it in items.
-                val transcoded = items.firstOrNull { it.itemId == itemId }?.isTranscoded == true
-                // CE (#674): a pause and a resume are reported as they happen, so two reports can
-                // be in flight at once and reach the server in the wrong order. Send one at a
-                // time, skip any that a newer call replaces, and read the state when it is sent.
-                progressReportLock.withLock {
-                    if (seq != progressReportSeq) return@withLock
-                    // While this report waited for the lock, the item's stop may have been sent
-                    // (the snapshot is cleared) or another item may have started (a new start
-                    // report). Posting now would reopen the stopped item's session, or send the
-                    // new item's position for the old one.
-                    if (
-                        playing?.startJob !== startJob ||
-                            player.currentMediaItem?.mediaId != mediaItem.mediaId
-                    ) {
-                        return@withLock
-                    }
-                    if (onlyIfReportedPaused && !reportedPause.needsReportWhenPlaying()) {
-                        return@withLock
-                    }
-                    val isPaused = !player.isPlaying
-                    try {
-                        repository.postPlaybackProgress(
-                            itemId,
-                            player.currentPosition.times(10000),
-                            isPaused,
-                            transcoded,
-                        )
-                        reportedPause.onReported(isPaused)
-                    } catch (e: Exception) {
-                        Timber.e(e)
-                    }
-                }
-            }
+            playbackReporter.reportProgress(seq, onlyIfToldPaused, reportedPlayer)
         }
     }
 
@@ -1244,18 +1114,9 @@ constructor(
         savedStateHandle["mediaItemIndex"] = player.currentMediaItemIndex
 
         // Every item change goes through here, whatever caused it, so this is where the item being
-        // left is reported as stopped. The first load (nothing playing yet) reports nothing, and a
-        // reload of the same item (quality switch) keeps its snapshot and reports nothing.
-        val previous = playing
+        // left is reported as stopped (PlaybackReporter.onItemTransition).
         val newId = mediaItem?.mediaId?.let { runCatching { UUID.fromString(it) }.getOrNull() }
-        val stopJob =
-            if (previous != null && previous.itemId != newId) reportStopped(previous) else null
-        playing =
-            when {
-                previous != null && previous.itemId == newId -> previous
-                newId != null -> PlayingSnapshot(newId, 0L, C.TIME_UNSET)
-                else -> null
-            }
+        val stopJob = playbackReporter.onItemTransition(newId)
         // Smart Downloads must not delete the file that is open, even once the server has marked
         // it played. Only releasePlayer clears this: a finished item stays open until the player
         // closes.
@@ -1301,14 +1162,11 @@ constructor(
                         // auto-advance code did. A stop that reaches the server after the start
                         // can clear the session's now-playing item.
                         stopJob?.join()
-                        // CE (#601): the start waits for the item to load (PlaybackStartGate).
-                        startGate
-                            .onTransition(
-                                item,
-                                ready = player.playbackState == ExoPlayer.STATE_READY,
-                                current = playing?.itemId == item.itemId,
-                            )
-                            ?.let { sendPlaybackStart(it) }
+                        // CE (#601): the start waits for the item to load (the start gate).
+                        playbackReporter.onTransitionHandled(
+                            item,
+                            ready = player.playbackState == ExoPlayer.STATE_READY,
+                        )
 
                         // CE (#681): the seek bar shows them even with every type ignored.
                         if (segmentsOnSeekBar || shouldPollSegments()) {
@@ -1319,45 +1177,6 @@ constructor(
                 Timber.e(e)
             }
         }
-    }
-
-    /**
-     * Tell the server that [item] started playing, and record the report on [playing] so that
-     * leaving the item sends the stop this start is owed (#461). Until the duration is known the
-     * snapshot holds the position playback was asked to start at, so that stop keeps a saved resume
-     * position.
-     *
-     * Sent once the player has loaded the item ([startGate], #601): an item that never opens sends
-     * no start, no progress and no stop.
-     *
-     * The report runs in [GlobalScope] so that closing the player does not cut it off halfway;
-     * [reportStopped] waits for it (with a time limit) to keep the stop behind it.
-     */
-    @OptIn(DelicateCoroutinesApi::class)
-    private suspend fun sendPlaybackStart(item: PlayerItem) {
-        // The player moved on while the previous item's stop was being sent (Previous or Next
-        // pressed while this item was loading). A start now would arrive after the next item's,
-        // and nothing would stop it.
-        if (playing?.itemId != item.itemId) {
-            Timber.d("No playback start for ${item.itemId}: left before it was sent")
-            return
-        }
-        val start =
-            GlobalScope.launch(Dispatchers.IO) {
-                try {
-                    repository.postPlaybackStart(item.itemId, item.isTranscoded)
-                } catch (e: Exception) {
-                    Timber.e(e)
-                }
-            }
-        playing = playing?.let {
-            if (it.durationMs == C.TIME_UNSET) {
-                it.copy(positionMs = item.playbackPosition, startJob = start)
-            } else {
-                it.copy(startJob = start)
-            }
-        }
-        start.join()
     }
 
     /** The item whose trickplay and neighbour queueing wait for the first ready state. */
@@ -1488,8 +1307,7 @@ constructor(
             // pressing play or next after dismissing it) does not report it again.
             player.pause()
             refreshPlayingSnapshotMovingOn()
-            playing?.let { reportStopped(it) }
-            playing = null
+            playbackReporter.takePlaying()?.let { playbackReporter.reportStopped(it) }
             showStillWatchingPrompt()
             return
         }
@@ -1597,18 +1415,17 @@ constructor(
      * for an automatic skip of an outro that runs to the end. The still-watching prompt is not
      * shown, since nothing plays on.
      *
-     * Clearing [playing] keeps [releasePlayer] (and [updatePlaybackProgress]) from reporting the
-     * item again when the player closes. It also makes this a no-op if called again for the same
-     * item, e.g. by the next segment poll while the player is closing.
+     * Clearing [PlaybackReporter.playing] keeps [releasePlayer] (and [updatePlaybackProgress]) from
+     * reporting the item again when the player closes. It also makes this a no-op if called again
+     * for the same item, e.g. by the next segment poll while the player is closing.
      */
     private fun endItemWithoutAdvancing() {
         refreshPlayingSnapshot()
-        val finished = playing ?: return
-        playing = null
+        val finished = playbackReporter.takePlaying() ?: return
         Timber.d("Autoplay off — not advancing past ${finished.itemId}")
         // Already paused at the end of an item; this stops an outro that is still playing.
         player.pause()
-        reportStopped(finished)
+        playbackReporter.reportStopped(finished)
         eventsChannel.trySend(PlayerEvents.NavigateBack)
     }
 
@@ -1884,8 +1701,8 @@ constructor(
                 enginePlayer.onItemReady()
                 _uiState.update { it.copy(fileLoaded = true) }
                 // CE (#601): the item loaded, so its start report is due.
-                startGate.onReady()?.let { item ->
-                    viewModelScope.launch { sendPlaybackStart(item) }
+                playbackReporter.onItemReady()?.let { item ->
+                    viewModelScope.launch { playbackReporter.sendPlaybackStart(item) }
                 }
                 runDeferredWork()
             }
@@ -2616,7 +2433,7 @@ constructor(
         }
         if (isBackgroundAudioEnabled) sessionStore.onPlayingChanged(isPlaying)
         if (isPlaying && isBackgroundAudioEnabled) startBackgroundProgressReports()
-        if (isPlaying) reportPlayingIfReportedPaused()
+        if (isPlaying) reportPlayingIfToldPaused()
     }
 
     /**
@@ -2707,12 +2524,6 @@ private const val MAX_SUBTITLE_BYTES = 5L * 1024 * 1024
 
 /** How often [PlayerViewModel.upNext] is updated. */
 private const val UP_NEXT_TICK_MS = 500L
-
-/**
- * How long a stop report waits for its item's start report before it is sent anyway (#461), so a
- * start that hangs (no network) cannot hold back the stop.
- */
-private const val START_REPORT_WAIT_MS = 5_000L
 
 /** `S01E02` (VISION §4), `S01E02-E03` for a double episode, or null without numbers. */
 internal fun episodeLabel(item: PlayerItem): String? {
