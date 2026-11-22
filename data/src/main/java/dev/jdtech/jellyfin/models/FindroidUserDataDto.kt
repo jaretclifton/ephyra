@@ -3,12 +3,11 @@ package dev.jdtech.jellyfin.models
 import androidx.room3.Entity
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.util.UUID
 
 @Entity(tableName = "userdata", primaryKeys = ["userId", "itemId"])
 data class FindroidUserDataDto(
-    val userId: UUID,
-    val itemId: UUID,
+    val userId: UserId,
+    val itemId: ItemId,
     val played: Boolean,
     val favorite: Boolean,
     val playbackPositionTicks: Long,
@@ -21,7 +20,7 @@ data class FindroidUserDataDto(
     val lastPlayedDate: Long? = null,
 )
 
-fun FindroidItem.toFindroidUserDataDto(userId: UUID): FindroidUserDataDto {
+fun FindroidItem.toFindroidUserDataDto(userId: UserId): FindroidUserDataDto {
     return FindroidUserDataDto(
         userId = userId,
         itemId = id,

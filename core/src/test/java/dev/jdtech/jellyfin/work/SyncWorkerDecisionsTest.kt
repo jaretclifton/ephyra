@@ -1,8 +1,9 @@
 package dev.jdtech.jellyfin.work
 
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ServerException
-import java.util.UUID
+import dev.jdtech.jellyfin.models.toUserId
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -10,12 +11,12 @@ import org.junit.jupiter.api.Test
 
 /** CE (#552): when the user data sync retries, and when it lets a row be. */
 class SyncWorkerDecisionsTest {
-    private val userId = UUID.fromString("00000000-0000-0000-0000-000000000001")
+    private val userId = "00000000-0000-0000-0000-000000000001".toUserId()
 
     private fun row(item: Int, positionTicks: Long = 100L) =
         FindroidUserDataDto(
             userId = userId,
-            itemId = UUID(0L, item.toLong()),
+            itemId = ItemId(0L, item.toLong()),
             played = false,
             favorite = false,
             playbackPositionTicks = positionTicks,
@@ -39,23 +40,25 @@ class SyncWorkerDecisionsTest {
 
     @Test
     fun `a session the server still has playing is ended before its row is sent`() {
-        val item = UUID(0L, 1L)
+        val item = ItemId(0L, 1L)
         assertTrue(
             endsStaleSession(rowItemId = item, leftPlayingOnServer = item, playingHere = null)
         )
-        assertTrue(endsStaleSession(item, leftPlayingOnServer = item, playingHere = UUID(0L, 2L)))
+        assertTrue(endsStaleSession(item, leftPlayingOnServer = item, playingHere = ItemId(0L, 2L)))
     }
 
     @Test
     fun `no session, or one of another item, is left alone`() {
-        val item = UUID(0L, 1L)
+        val item = ItemId(0L, 1L)
         assertFalse(endsStaleSession(item, leftPlayingOnServer = null, playingHere = null))
-        assertFalse(endsStaleSession(item, leftPlayingOnServer = UUID(0L, 2L), playingHere = null))
+        assertFalse(
+            endsStaleSession(item, leftPlayingOnServer = ItemId(0L, 2L), playingHere = null)
+        )
     }
 
     @Test
     fun `an item that is open in the player here keeps its session`() {
-        val item = UUID(0L, 1L)
+        val item = ItemId(0L, 1L)
         assertFalse(endsStaleSession(item, leftPlayingOnServer = item, playingHere = item))
     }
 

@@ -4,15 +4,15 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.ItemFilter
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
-import java.util.UUID
 import timber.log.Timber
 
 class ItemsPagingSource(
     private val jellyfinRepository: JellyfinRepository,
-    private val parentId: UUID?,
+    private val parentId: ItemId?,
     private val includeTypes: List<ItemKind>?,
     private val recursive: Boolean,
     private val sortBy: SortBy,

@@ -1,8 +1,8 @@
 package dev.jdtech.jellyfin.core.presentation.downloader
 
 import dev.jdtech.jellyfin.models.FindroidEpisode
+import dev.jdtech.jellyfin.models.ItemId
 import java.time.ZoneId
-import java.util.UUID
 
 /** What is known about a completed download of an episode. */
 internal data class SmartDownload(
@@ -30,12 +30,12 @@ internal data class SmartDownloadPlan(
  */
 internal fun planSmartDownloads(
     episodes: List<FindroidEpisode>,
-    downloads: Map<UUID, SmartDownload>,
-    inFlightIds: Set<UUID>,
+    downloads: Map<ItemId, SmartDownload>,
+    inFlightIds: Set<ItemId>,
     keepReady: Int,
     since: Long,
     finishedRecently: Boolean,
-    playingItemId: UUID?,
+    playingItemId: ItemId?,
 ): SmartDownloadPlan {
     // Specials do not take part in the aired order, so neither deleting nor topping up looks at
     // them.

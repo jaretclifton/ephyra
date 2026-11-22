@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.profilelock
 
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ProfileLockType
 import dev.jdtech.jellyfin.models.User
 import java.lang.reflect.Proxy
@@ -155,15 +156,15 @@ class ProfileLockTest {
 
     companion object {
         /** Just the user calls [ProfileLock] makes, on an in-memory table. */
-        fun fakeDao(users: MutableMap<UUID, User>): ServerDatabaseDao =
+        fun fakeDao(users: MutableMap<ItemId, User>): ServerDatabaseDao =
             Proxy.newProxyInstance(
                 ServerDatabaseDao::class.java.classLoader,
                 arrayOf(ServerDatabaseDao::class.java),
             ) { _, method, args ->
                 when (method.name) {
-                    "getUser" -> users[args[0] as UUID]
+                    "getUser" -> users[args[0] as ItemId]
                     "updateUserPin" -> {
-                        val id = args[0] as UUID
+                        val id = args[0] as ItemId
                         users[id]?.let {
                             users[id] =
                                 it.copy(
@@ -175,7 +176,7 @@ class ProfileLockTest {
                         Unit
                     }
                     "updateUserPattern" -> {
-                        val id = args[0] as UUID
+                        val id = args[0] as ItemId
                         users[id]?.let {
                             users[id] =
                                 it.copy(
@@ -187,7 +188,7 @@ class ProfileLockTest {
                         Unit
                     }
                     "updateUserPinOnStart" -> {
-                        val id = args[0] as UUID
+                        val id = args[0] as ItemId
                         users[id]?.let { users[id] = it.copy(pinOnStart = args[1] as Boolean) }
                         Unit
                     }

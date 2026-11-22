@@ -1,16 +1,15 @@
 package dev.jdtech.jellyfin.models
 
-import java.util.UUID
 import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
 
 class FindroidItemPersonTest {
-    private val tomKane = UUID.fromString("0bc3e80a-9daa-0c55-1914-59f19cd90460")
-    private val mattLanter = UUID.fromString("11111111-1111-1111-1111-111111111111")
-    private val ashleyEckstein = UUID.fromString("22222222-2222-2222-2222-222222222222")
+    private val tomKane = "0bc3e80a-9daa-0c55-1914-59f19cd90460".toItemId()
+    private val mattLanter = "11111111-1111-1111-1111-111111111111".toItemId()
+    private val ashleyEckstein = "22222222-2222-2222-2222-222222222222".toItemId()
 
     private fun person(
-        id: UUID,
+        id: ItemId,
         role: String,
         type: PersonKind = PersonKind.ACTOR,
         name: String = "Person $id",

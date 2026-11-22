@@ -6,7 +6,6 @@ import androidx.room3.Index
 import androidx.room3.PrimaryKey
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import java.time.LocalDateTime
-import java.util.UUID
 
 @Entity(
     tableName = "episodes",
@@ -28,10 +27,10 @@ import java.util.UUID
     indices = [Index("seasonId"), Index("seriesId")],
 )
 data class FindroidEpisodeDto(
-    @PrimaryKey val id: UUID,
+    @PrimaryKey val id: ItemId,
     val serverId: String?,
-    val seasonId: UUID,
-    val seriesId: UUID,
+    val seasonId: ItemId,
+    val seriesId: ItemId,
     val name: String,
     val seriesName: String,
     val overview: String,
@@ -65,15 +64,15 @@ fun FindroidEpisode.toFindroidEpisodeDto(serverId: String? = null): FindroidEpis
 
 suspend fun FindroidEpisodeDto.toFindroidEpisode(
     database: ServerDatabaseDao,
-    userId: UUID,
+    userId: UserId,
 ): FindroidEpisode =
     toFindroidEpisode(database, userId, database.getLocalSourcesForItems(listOf(id)))
 
 /** For lists: [localSources] comes from one [getLocalSourcesForItems] call for all items. */
 suspend fun FindroidEpisodeDto.toFindroidEpisode(
     database: ServerDatabaseDao,
-    userId: UUID,
-    localSources: Map<UUID, List<FindroidSource>>,
+    userId: UserId,
+    localSources: Map<ItemId, List<FindroidSource>>,
 ): FindroidEpisode {
     val userData = database.getUserDataOrCreateNew(id, userId)
     val sources = localSources[id].orEmpty()
@@ -111,7 +110,7 @@ suspend fun FindroidEpisodeDto.toFindroidEpisode(
     )
 }
 
-fun FindroidEpisodeDto.toLocalFindroidImages(itemId: UUID): FindroidImages {
+fun FindroidEpisodeDto.toLocalFindroidImages(itemId: ItemId): FindroidImages {
     return FindroidImages(
         primary = localImagePath(itemId, "primary"),
         backdrop = localImagePath(itemId, "backdrop"),

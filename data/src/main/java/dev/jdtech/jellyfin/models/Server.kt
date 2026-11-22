@@ -10,7 +10,7 @@ data class Server(
     @PrimaryKey val id: String,
     val name: String,
     var currentServerAddressId: UUID?,
-    var currentUserId: UUID?,
+    var currentUserId: UserId?,
     /**
      * CE (#770): the kind of server, as [ServerType.value]. Every server saved before the column
      * existed is a Jellyfin server, so the migration gives them `jellyfin`. Read it through

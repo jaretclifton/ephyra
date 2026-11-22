@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.utils
 
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
 
 interface Downloader {
@@ -108,7 +109,7 @@ interface Downloader {
     )
 
     /** Removes a persisted pending entry (on start/remove/retry). */
-    suspend fun removePendingDownload(itemId: java.util.UUID)
+    suspend fun removePendingDownload(itemId: ItemId)
 
     /**
      * Returns previously queued but not-yet-started items with the timestamp they were originally

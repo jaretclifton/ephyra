@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import dev.jdtech.jellyfin.core.R
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItem
-import java.util.UUID
+import dev.jdtech.jellyfin.models.ItemId
 
 /**
  * CE (#618): the episodes revealed by a press and hold while "Hide spoilers" is on. They stay
@@ -29,11 +29,11 @@ import java.util.UUID
  * episode page of a revealed card is not hidden again.
  */
 internal object SpoilerReveals {
-    private val revealed = mutableStateMapOf<UUID, Unit>()
+    private val revealed = mutableStateMapOf<ItemId, Unit>()
 
-    fun isRevealed(id: UUID): Boolean = id in revealed
+    fun isRevealed(id: ItemId): Boolean = id in revealed
 
-    fun reveal(id: UUID) {
+    fun reveal(id: ItemId) {
         revealed[id] = Unit
     }
 
@@ -159,7 +159,7 @@ data class UpNextSpoiler(val hidden: Boolean, val episodeNumber: Int?) {
  * in it yet cannot be told from an unwatched episode, so it stays hidden while the setting is on.
  * Reads snapshot state.
  */
-fun Spoilers.upNext(itemId: UUID, queue: List<FindroidItem>): UpNextSpoiler {
+fun Spoilers.upNext(itemId: ItemId, queue: List<FindroidItem>): UpNextSpoiler {
     if (!enabled) return UpNextSpoiler.Shown
     val next = queue.firstOrNull { it.id == itemId } ?: return UpNextSpoiler(true, null)
     return UpNextSpoiler(hides(next), (next as? FindroidEpisode)?.indexNumber)

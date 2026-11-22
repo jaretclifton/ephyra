@@ -7,10 +7,10 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.ItemFilter
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
-import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.Flow
  * the pages around that index instead of every page before it.
  */
 fun JellyfinRepository.getItemsPagingIndexed(
-    parentId: UUID? = null,
+    parentId: ItemId? = null,
     includeTypes: List<ItemKind>? = null,
     recursive: Boolean = false,
     sortBy: SortBy = SortBy.defaultValue,

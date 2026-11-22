@@ -5,13 +5,14 @@ import dev.jdtech.jellyfin.models.EpisodeField
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toFindroidSource
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.NetworkConnectivity
-import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -59,13 +60,16 @@ constructor(
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    Timber.e(e, "Smart Downloads: failed to handle the stop of $itemId")
+                    Timber.e(
+                        e,
+                        "Smart Downloads: failed to handle the stop of ${itemId.asString()}",
+                    )
                 }
             }
         }
     }
 
-    private suspend fun onPlaybackStopped(itemId: UUID) {
+    private suspend fun onPlaybackStopped(itemId: ItemId) {
         if (!isActive()) return
         val episode = repositoryProvider.get().getItem(itemId) as? FindroidEpisode ?: return
         check(episode.seriesId, finishedRecently = episode.played)
@@ -87,7 +91,7 @@ constructor(
      * @param finishedRecently whether an episode of the series was just finished, which is what
      *   makes a series count as being watched.
      */
-    suspend fun check(seriesId: UUID, finishedRecently: Boolean) {
+    suspend fun check(seriesId: ItemId, finishedRecently: Boolean) {
         if (!isActive()) return
         mutex.withLock {
             try {
@@ -95,7 +99,7 @@ constructor(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Smart Downloads: check failed for series $seriesId")
+                Timber.e(e, "Smart Downloads: check failed for series ${seriesId.asString()}")
             }
         }
     }
@@ -104,7 +108,7 @@ constructor(
     private fun isActive(): Boolean =
         appPreferences.getValue(appPreferences.smartDownloads) && networkConnectivity.isOnline()
 
-    private suspend fun run(seriesId: UUID, finishedRecently: Boolean) {
+    private suspend fun run(seriesId: ItemId, finishedRecently: Boolean) {
         // Smart Downloads that was already on before the moment was recorded: only what is watched
         // from now on may be removed.
         var since = appPreferences.getValue(appPreferences.smartDownloadsSince)
@@ -128,7 +132,9 @@ constructor(
         // The server decides what counts as watched, so wait until our own progress has reached
         // it. The sync that pushes it runs a check afterwards.
         if (episodes.any { database.getUserDataToBeSynced(userId, it.id) != null }) {
-            Timber.d("Smart Downloads: unsynced progress for series $seriesId, waiting")
+            Timber.d(
+                "Smart Downloads: unsynced progress for series ${seriesId.asString()}, waiting"
+            )
             return
         }
 
@@ -174,7 +180,7 @@ constructor(
             )
 
         Timber.d(
-            "Smart Downloads: series $seriesId, queue ${plan.toQueue.map { it.describe() }}, remove ${plan.toDelete.map { it.describe() }}"
+            "Smart Downloads: series ${seriesId.asString()}, queue ${plan.toQueue.map { it.describe() }}, remove ${plan.toDelete.map { it.describe() }}"
         )
 
         for (episode in plan.toDelete) {

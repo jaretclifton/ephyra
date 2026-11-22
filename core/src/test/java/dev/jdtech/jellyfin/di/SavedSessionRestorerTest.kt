@@ -12,6 +12,8 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -184,6 +186,6 @@ class SavedSessionRestorerTest {
         const val ADDRESS = "http://127.0.0.1:8096"
         const val TOKEN = "token"
         val ADDRESS_ID: UUID = UUID.fromString("00000000-0000-0000-0000-0000000000ad")
-        val USER_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
+        val USER_ID: UserId = "00000000-0000-0000-0000-000000000001".toUserId()
     }
 }

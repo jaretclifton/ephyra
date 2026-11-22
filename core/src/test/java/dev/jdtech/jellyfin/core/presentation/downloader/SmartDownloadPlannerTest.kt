@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.core.presentation.downloader
 
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidImages
+import dev.jdtech.jellyfin.models.ItemId
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -293,11 +294,11 @@ class SmartDownloadPlannerTest {
 
     private fun plan(
         episodes: List<FindroidEpisode>,
-        downloads: Map<UUID, SmartDownload> = emptyMap(),
-        inFlightIds: Set<UUID> = emptySet(),
+        downloads: Map<ItemId, SmartDownload> = emptyMap(),
+        inFlightIds: Set<ItemId> = emptySet(),
         keepReady: Int,
         finishedRecently: Boolean,
-        playingItemId: UUID? = null,
+        playingItemId: ItemId? = null,
     ) =
         planSmartDownloads(
             episodes = episodes,

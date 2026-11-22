@@ -6,8 +6,10 @@ import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.domain.ports.SessionRestorer
 import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.ServerWithAddressAndUser
+import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -32,7 +34,7 @@ internal data class ApiSession(
     val serverId: String,
     val baseUrl: String?,
     val accessToken: String?,
-    val userId: UUID?,
+    val userId: UserId?,
     val serverType: String? = ServerType.JELLYFIN.value,
 )
 
@@ -91,8 +93,7 @@ internal class SavedSessionRestorer(
 /** The copy of the session kept in preferences, read without touching Room. */
 internal fun AppPreferences.savedApiSession(): ApiSession? {
     val serverId = getValue(sessionServerId) ?: return null
-    val userId =
-        getValue(sessionUserId)?.let { id -> runCatching { UUID.fromString(id) }.getOrNull() }
+    val userId = getValue(sessionUserId)?.let { id -> runCatching { id.toUserId() }.getOrNull() }
     return ApiSession(
         serverId,
         getValue(sessionBaseUrl),
@@ -110,7 +111,7 @@ internal fun AppPreferences.saveApiSession(session: ApiSession?) {
         .putString(sessionServerId.backendName, session?.serverId)
         .putString(sessionBaseUrl.backendName, session?.baseUrl)
         .putString(sessionAccessToken.backendName, session?.accessToken)
-        .putString(sessionUserId.backendName, session?.userId?.toString())
+        .putString(sessionUserId.backendName, session?.userId?.asString())
         .putString(sessionServerType.backendName, session?.serverType)
         .apply()
 }

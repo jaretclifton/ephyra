@@ -13,11 +13,14 @@ import dev.jdtech.jellyfin.models.FindroidShowDto
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
@@ -37,13 +40,13 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class StoredItemsByServerTest {
-    private val userId = UUID.fromString("00000000-0000-0000-0000-000000000001")
-    private val movieId = UUID.fromString("00000000-0000-0000-0000-000000000040")
-    private val showId = UUID.fromString("00000000-0000-0000-0000-000000000020")
-    private val seasonId = UUID.fromString("00000000-0000-0000-0000-000000000021")
-    private val episodeId = UUID.fromString("00000000-0000-0000-0000-000000000022")
-    private val otherSeasonId = UUID.fromString("00000000-0000-0000-0000-000000000031")
-    private val otherEpisodeId = UUID.fromString("00000000-0000-0000-0000-000000000032")
+    private val userId = "00000000-0000-0000-0000-000000000001".toUserId()
+    private val movieId = "00000000-0000-0000-0000-000000000040".toItemId()
+    private val showId = "00000000-0000-0000-0000-000000000020".toItemId()
+    private val seasonId = "00000000-0000-0000-0000-000000000021".toItemId()
+    private val episodeId = "00000000-0000-0000-0000-000000000022".toItemId()
+    private val otherSeasonId = "00000000-0000-0000-0000-000000000031".toItemId()
+    private val otherEpisodeId = "00000000-0000-0000-0000-000000000032".toItemId()
 
     private val context: Context = RuntimeEnvironment.getApplication()
     private val room =
@@ -85,7 +88,12 @@ class StoredItemsByServerTest {
     }
 
     /** What the downloader stores for an episode: the show and season as it finds them. */
-    private suspend fun storeEpisode(serverId: String, season: UUID, episode: UUID, index: Int) {
+    private suspend fun storeEpisode(
+        serverId: String,
+        season: ItemId,
+        episode: ItemId,
+        index: Int,
+    ) {
         database.insertShow(
             FindroidShowDto(
                 id = showId,
@@ -132,13 +140,13 @@ class StoredItemsByServerTest {
         database.insertSource(source(episode))
     }
 
-    private fun source(itemId: UUID) =
+    private fun source(itemId: ItemId) =
         FindroidSourceDto(
-            id = "source-$itemId",
+            id = "source-${itemId.asString()}",
             itemId = itemId,
             name = "Original",
             type = FindroidSourceType.LOCAL,
-            path = "/storage/downloads/$itemId.mkv",
+            path = "/storage/downloads/${itemId.asString()}.mkv",
         )
 
     private suspend fun fails(get: suspend () -> Any?): Boolean = runCatching { get() }.isFailure
@@ -166,7 +174,7 @@ class StoredItemsByServerTest {
             assertTrue(fails { repository.getSeason(seasonId) }, "getSeason on B")
             assertTrue(fails { repository.getShow(showId) }, "getShow on B")
             for (id in listOf(episodeId, seasonId, showId)) {
-                assertTrue(fails { repository.getItem(id) }, "getItem($id) on B")
+                assertTrue(fails { repository.getItem(id) }, "getItem(${id.asString()}) on B")
             }
 
             current(SERVER_A)
@@ -243,7 +251,7 @@ class StoredItemsByServerTest {
 
             current(SERVER_A)
             assertEquals(
-                listOf("/storage/downloads/$movieId.mkv"),
+                listOf("/storage/downloads/${movieId.asString()}.mkv"),
                 repository.getPlaybackSources(movieId, LOCAL_PLAYER, null).map { it.path },
             )
         }
@@ -257,11 +265,11 @@ class StoredItemsByServerTest {
 
         current(SERVER_A)
         assertEquals(
-            listOf("source-$movieId"),
+            listOf("source-${movieId.asString()}"),
             database.getCompletedSources(movieId, SERVER_A).map { it.id },
         )
         assertEquals(
-            listOf("/storage/downloads/$movieId.mkv"),
+            listOf("/storage/downloads/${movieId.asString()}.mkv"),
             repository.getPlaybackSources(movieId, LOCAL_PLAYER, null).map { it.path },
         )
     }

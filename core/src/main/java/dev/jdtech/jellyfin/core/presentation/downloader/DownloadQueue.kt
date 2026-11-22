@@ -12,7 +12,9 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidSources
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -21,7 +23,6 @@ import dev.jdtech.jellyfin.utils.NetworkConnectivity
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
 import dev.jdtech.jellyfin.utils.download.estimateCappedDownloadSize
 import dev.jdtech.jellyfin.utils.download.isPermanentHttpFailure
-import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Provider
@@ -88,7 +89,7 @@ constructor(
     }
 
     data class Entry(
-        val id: UUID,
+        val id: ItemId,
         val item: FindroidItem,
         val addedAt: Long,
         val state: EntryState,
@@ -201,12 +202,12 @@ constructor(
         ensurePump()
     }
 
-    private suspend fun claimSmartQueued(itemId: UUID) {
+    private suspend fun claimSmartQueued(itemId: ItemId) {
         try {
             database.clearPendingDownloadSmartQueued(itemId)
             database.clearSourceSmartQueued(itemId)
         } catch (e: Exception) {
-            Timber.e(e, "Failed to mark download $itemId as user-started")
+            Timber.e(e, "Failed to mark download ${itemId.asString()} as user-started")
         }
     }
 
@@ -317,7 +318,7 @@ constructor(
     suspend fun enqueueAll(items: List<FindroidItem>, maxBitrate: Int? = null) {
         val persistedItems = mutableListOf<FindroidItem>()
         // Already queued by Smart Downloads; the user asking for them makes them theirs.
-        val claimedIds = mutableSetOf<UUID>()
+        val claimedIds = mutableSetOf<ItemId>()
         mutex.withLock {
             val existingIds =
                 _entries.value
@@ -369,7 +370,7 @@ constructor(
      * Cancels a download that has not finished (its partial file and rows go too) or drops a
      * completed entry.
      */
-    fun remove(id: UUID) {
+    fun remove(id: ItemId) {
         scope.launch {
             var cancelEntry: Entry? = null
             mutex.withLock {
@@ -382,7 +383,7 @@ constructor(
             try {
                 downloader.removePendingDownload(id)
             } catch (e: Exception) {
-                Timber.e(e, "Failed to drop persisted pending row for $id")
+                Timber.e(e, "Failed to drop persisted pending row for ${id.asString()}")
             }
             cancelEntry?.let { entry ->
                 for (dlId in unfinishedDownloadIds(entry)) {
@@ -418,7 +419,7 @@ constructor(
     }
 
     /** Re-queues a failed entry. */
-    fun retry(id: UUID) {
+    fun retry(id: ItemId) {
         scope.launch {
             var retried: Entry? = null
             mutex.withLock {
@@ -522,9 +523,9 @@ constructor(
                 lastMediaStreamRetryCheck.keys.retainAll(activeDlIds)
             }
             if (active.isNotEmpty()) {
-                val updates = mutableMapOf<UUID, Entry>()
+                val updates = mutableMapOf<ItemId, Entry>()
                 // Refused by the server in a way asking again won't change (#383).
-                val permanentFailures = mutableSetOf<UUID>()
+                val permanentFailures = mutableSetOf<ItemId>()
                 val now = System.currentTimeMillis()
                 val dlIds = active.mapNotNull { it.downloadId }
                 val snapshots = downloader.getProgress(dlIds)

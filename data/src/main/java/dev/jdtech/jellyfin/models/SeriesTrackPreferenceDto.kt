@@ -1,7 +1,6 @@
 package dev.jdtech.jellyfin.models
 
 import androidx.room3.Entity
-import java.util.UUID
 
 /**
  * The audio or subtitle track a user last picked by hand in a series, so the next episodes start
@@ -10,8 +9,8 @@ import java.util.UUID
  */
 @Entity(tableName = "seriesTrackPreferences", primaryKeys = ["userId", "seriesId", "trackType"])
 data class SeriesTrackPreferenceDto(
-    val userId: UUID,
-    val seriesId: UUID,
+    val userId: UserId,
+    val seriesId: ItemId,
     /** The media3 track type, `C.TRACK_TYPE_AUDIO` or `C.TRACK_TYPE_TEXT`. */
     val trackType: Int,
     /** True when the user switched the track type off (subtitles off). */

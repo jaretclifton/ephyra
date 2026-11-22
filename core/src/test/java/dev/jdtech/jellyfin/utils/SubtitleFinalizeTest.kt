@@ -7,6 +7,7 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidMediaStreamDto
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -365,13 +366,13 @@ class SubtitleFinalizeTest {
                 }
                 "setMediaStreamPath" -> {
                     pathUpdates.incrementAndGet()
-                    streams.computeIfPresent(args[0] as UUID) { _, s ->
+                    streams.computeIfPresent(args[0] as ItemId) { _, s ->
                         s.copy(path = args[1] as String)
                     }
                     Unit
                 }
                 "deleteMediaStream" -> {
-                    streams.remove(args[0] as UUID)
+                    streams.remove(args[0] as ItemId)
                     Unit
                 }
                 "getCompletedDownloadSources" ->

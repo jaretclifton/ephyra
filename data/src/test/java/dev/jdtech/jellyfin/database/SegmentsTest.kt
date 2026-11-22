@@ -5,7 +5,8 @@ import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.models.FindroidSegmentDto
 import dev.jdtech.jellyfin.models.FindroidSegmentType
-import java.util.UUID
+import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.toItemId
 import kotlin.test.assertEquals
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -22,8 +23,8 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class SegmentsTest {
-    private val itemId = UUID.fromString("00000000-0000-0000-0000-000000000005")
-    private val otherId = UUID.fromString("00000000-0000-0000-0000-000000000006")
+    private val itemId = "00000000-0000-0000-0000-000000000005".toItemId()
+    private val otherId = "00000000-0000-0000-0000-000000000006".toItemId()
 
     private val room =
         Room.inMemoryDatabaseBuilder(
@@ -36,7 +37,7 @@ class SegmentsTest {
 
     @After fun close() = room.close()
 
-    private fun segment(id: UUID, type: FindroidSegmentType, start: Long, end: Long) =
+    private fun segment(id: ItemId, type: FindroidSegmentType, start: Long, end: Long) =
         FindroidSegmentDto(itemId = id, type = type, startTicks = start, endTicks = end)
 
     @Test

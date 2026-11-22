@@ -5,11 +5,13 @@ import android.content.Context
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.lang.reflect.Proxy
-import java.util.UUID
 import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -26,8 +28,8 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class UnfinishedDownloadPlaybackTest {
-    private val userId = UUID.fromString("00000000-0000-0000-0000-000000000001")
-    private val episodeId = UUID.fromString("33333333-3333-3333-3333-333333333333")
+    private val userId = "00000000-0000-0000-0000-000000000001".toUserId()
+    private val episodeId = "33333333-3333-3333-3333-333333333333".toItemId()
 
     private val partial =
         FindroidSourceDto(
@@ -44,7 +46,7 @@ class UnfinishedDownloadPlaybackTest {
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
-            val id = args?.firstOrNull() as? UUID
+            val id = args?.firstOrNull() as? ItemId
             when (method.name) {
                 "observeHasSources" -> flowOf(true)
                 // The queries' SQL, on the one row this item has.

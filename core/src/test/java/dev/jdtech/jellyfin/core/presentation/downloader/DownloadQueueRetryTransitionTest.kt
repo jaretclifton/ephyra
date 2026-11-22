@@ -7,6 +7,7 @@ import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
@@ -329,7 +330,7 @@ class DownloadQueueRetryTransitionTest {
     private class FakeDownloader : Downloader {
         @Volatile var progress = Downloader.Progress(DownloadStatus.RUNNING, 0, 0L, -1L)
         val progressOf = ConcurrentHashMap<Long, Downloader.Progress>()
-        val idOf = ConcurrentHashMap<UUID, Long>()
+        val idOf = ConcurrentHashMap<ItemId, Long>()
 
         private fun start(item: FindroidItem): Pair<Long, UiText?> =
             idOf.getOrPut(item.id) { idOf.size + 1L } to null
@@ -370,7 +371,7 @@ class DownloadQueueRetryTransitionTest {
             smartQueued: Boolean,
         ) = Unit
 
-        override suspend fun removePendingDownload(itemId: UUID) = Unit
+        override suspend fun removePendingDownload(itemId: ItemId) = Unit
 
         override suspend fun getPendingDownloads() = emptyList<Downloader.PendingDownload>()
 

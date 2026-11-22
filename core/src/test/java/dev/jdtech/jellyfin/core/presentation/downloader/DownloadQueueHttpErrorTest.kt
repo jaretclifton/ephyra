@@ -10,6 +10,7 @@ import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
@@ -151,7 +152,7 @@ class DownloadQueueHttpErrorTest {
         var startResult: Pair<Long, UiText?> = -1L to null
         @Volatile var progress = Downloader.Progress(DownloadStatus.RUNNING, 0, 0L, -1L)
         @Volatile var starts = 0
-        val cancelled = CopyOnWriteArrayList<Pair<UUID, Long>>()
+        val cancelled = CopyOnWriteArrayList<Pair<ItemId, Long>>()
 
         override suspend fun downloadItem(
             item: FindroidItem,
@@ -190,7 +191,7 @@ class DownloadQueueHttpErrorTest {
             smartQueued: Boolean,
         ) = Unit
 
-        override suspend fun removePendingDownload(itemId: UUID) = Unit
+        override suspend fun removePendingDownload(itemId: ItemId) = Unit
 
         override suspend fun getPendingDownloads() = emptyList<Downloader.PendingDownload>()
 

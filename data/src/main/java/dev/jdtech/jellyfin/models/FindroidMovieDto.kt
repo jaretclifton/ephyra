@@ -4,11 +4,10 @@ import androidx.room3.Entity
 import androidx.room3.PrimaryKey
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import java.time.LocalDateTime
-import java.util.UUID
 
 @Entity(tableName = "movies")
 data class FindroidMovieDto(
-    @PrimaryKey val id: UUID,
+    @PrimaryKey val id: ItemId,
     val serverId: String?,
     val name: String,
     val originalTitle: String?,
@@ -45,14 +44,14 @@ fun FindroidMovie.toFindroidMovieDto(serverId: String? = null): FindroidMovieDto
 
 suspend fun FindroidMovieDto.toFindroidMovie(
     database: ServerDatabaseDao,
-    userId: UUID,
+    userId: UserId,
 ): FindroidMovie = toFindroidMovie(database, userId, database.getLocalSourcesForItems(listOf(id)))
 
 /** For lists: [localSources] comes from one [getLocalSourcesForItems] call for all items. */
 suspend fun FindroidMovieDto.toFindroidMovie(
     database: ServerDatabaseDao,
-    userId: UUID,
-    localSources: Map<UUID, List<FindroidSource>>,
+    userId: UserId,
+    localSources: Map<ItemId, List<FindroidSource>>,
 ): FindroidMovie {
     val userData = database.getUserDataOrCreateNew(id, userId)
     val sources = localSources[id].orEmpty()
@@ -89,7 +88,7 @@ suspend fun FindroidMovieDto.toFindroidMovie(
     )
 }
 
-fun FindroidMovieDto.toLocalFindroidImages(itemId: UUID): FindroidImages {
+fun FindroidMovieDto.toLocalFindroidImages(itemId: ItemId): FindroidImages {
     return FindroidImages(
         primary = localImagePath(itemId, "primary"),
         backdrop = localImagePath(itemId, "backdrop"),

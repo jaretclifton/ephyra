@@ -16,10 +16,14 @@ import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
 import dev.jdtech.jellyfin.models.ItemFilter
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.File
 import java.time.LocalDateTime
@@ -42,11 +46,11 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class StoredListsFallbackTest {
-    private val userId = UUID.fromString("00000000-0000-0000-0000-000000000001")
-    private val otherUserId = UUID.fromString("00000000-0000-0000-0000-000000000002")
-    private val showId = UUID.fromString("00000000-0000-0000-0000-000000000020")
-    private val seasonId = UUID.fromString("00000000-0000-0000-0000-000000000021")
-    private val episodeId = UUID.fromString("00000000-0000-0000-0000-000000000022")
+    private val userId = "00000000-0000-0000-0000-000000000001".toUserId()
+    private val otherUserId = "00000000-0000-0000-0000-000000000002".toUserId()
+    private val showId = "00000000-0000-0000-0000-000000000020".toItemId()
+    private val seasonId = "00000000-0000-0000-0000-000000000021".toItemId()
+    private val episodeId = "00000000-0000-0000-0000-000000000022".toItemId()
 
     private val context: Context = RuntimeEnvironment.getApplication()
     private val room =
@@ -89,10 +93,10 @@ class StoredListsFallbackTest {
         room.close()
     }
 
-    private fun id(n: Int) = UUID.fromString("00000000-0000-0000-0000-0000000001%02d".format(n))
+    private fun id(n: Int) = ("00000000-0000-0000-0000-0000000001%02d".format(n)).toItemId()
 
     private suspend fun storeMovie(
-        id: UUID,
+        id: ItemId,
         name: String,
         serverId: String = SERVER_A,
         rating: Float? = null,
@@ -127,12 +131,13 @@ class StoredListsFallbackTest {
         NO_SOURCE,
     }
 
-    private suspend fun storeSource(itemId: UUID, downloadedAt: Long?, download: Download) {
+    private suspend fun storeSource(itemId: ItemId, downloadedAt: Long?, download: Download) {
         when (download) {
             Download.FINISHED -> database.insertSource(source(itemId, downloadedAt))
             Download.WRITING ->
                 database.insertSource(
-                    source(itemId, null).copy(path = "/storage/downloads/$itemId.mkv.download")
+                    source(itemId, null)
+                        .copy(path = "/storage/downloads/${itemId.asString()}.mkv.download")
                 )
             Download.NO_SOURCE -> Unit
         }
@@ -190,8 +195,8 @@ class StoredListsFallbackTest {
     }
 
     private suspend fun userData(
-        itemId: UUID,
-        user: UUID = userId,
+        itemId: ItemId,
+        user: ItemId = userId,
         favorite: Boolean = false,
         played: Boolean = false,
         lastPlayed: Long? = null,
@@ -207,20 +212,20 @@ class StoredListsFallbackTest {
             )
         )
 
-    private fun source(itemId: UUID, downloadedAt: Long?) =
+    private fun source(itemId: ItemId, downloadedAt: Long?) =
         FindroidSourceDto(
-            id = "source-$itemId",
+            id = "source-${itemId.asString()}",
             itemId = itemId,
             name = "Original",
             type = FindroidSourceType.LOCAL,
-            path = "/storage/downloads/$itemId.mkv",
+            path = "/storage/downloads/${itemId.asString()}.mkv",
             downloadedAt = downloadedAt,
         )
 
     private suspend fun fails(get: suspend () -> Any?): Boolean = runCatching { get() }.isFailure
 
     private suspend fun page(
-        library: UUID,
+        library: ItemId,
         sortBy: SortBy = SortBy.NAME,
         sortOrder: SortOrder = SortOrder.ASCENDING,
         filters: Set<ItemFilter> = emptySet(),
@@ -326,8 +331,8 @@ class StoredListsFallbackTest {
     }
 
     /** An image as ImagesDownloaderWorker saves it with a download. */
-    private fun storeImage(itemId: UUID, image: String) {
-        File(context.filesDir, "images/$itemId/$image").apply {
+    private fun storeImage(itemId: ItemId, image: String) {
+        File(context.filesDir, "images/${itemId.asString()}/$image").apply {
             parentFile?.mkdirs()
             writeBytes(byteArrayOf(1))
         }
@@ -353,21 +358,21 @@ class StoredListsFallbackTest {
         storeImage(showId, "primary")
         assertEquals(
             mapOf(
-                StoredLibraries.MOVIES to "/images/${id(1)}/backdrop",
-                StoredLibraries.SHOWS to "/images/$showId/primary",
+                StoredLibraries.MOVIES to "/images/${id(1).asString()}/backdrop",
+                StoredLibraries.SHOWS to "/images/${showId.asString()}/primary",
             ),
             artwork(),
         )
 
         // A backdrop of the newest: that one.
         storeImage(id(2), "backdrop")
-        assertEquals("/images/${id(2)}/backdrop", artwork()[StoredLibraries.MOVIES])
+        assertEquals("/images/${id(2).asString()}/backdrop", artwork()[StoredLibraries.MOVIES])
     }
 
     @Test
     fun `an empty image file is no artwork`() = runBlocking {
         storeMovie(id(1), "Movie", downloadedAt = 1_000L)
-        File(context.filesDir, "images/${id(1)}/backdrop").apply {
+        File(context.filesDir, "images/${id(1).asString()}/backdrop").apply {
             parentFile?.mkdirs()
             writeBytes(byteArrayOf())
         }

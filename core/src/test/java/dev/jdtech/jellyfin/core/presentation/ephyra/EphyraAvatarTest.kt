@@ -1,5 +1,6 @@
 package dev.jdtech.jellyfin.core.presentation.ephyra
 
+import dev.jdtech.jellyfin.models.toItemId
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -31,7 +32,7 @@ class EphyraAvatarTest {
 
     @Test
     fun `the colour index is stable and in range`() {
-        val seed = UUID.fromString("31e47044-9b79-4bb0-99d0-0e477ed65420")
+        val seed = "31e47044-9b79-4bb0-99d0-0e477ed65420".toItemId()
         val index = avatarColorIndex(seed, 4)
         assertEquals(index, avatarColorIndex(seed, 4))
         assertTrue(index in 0..3)

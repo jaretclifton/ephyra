@@ -6,6 +6,7 @@ import android.os.Environment
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
@@ -57,7 +58,7 @@ class OrphanSweepTest {
             setLastModified(modified)
         }
 
-    private fun artwork(id: UUID, modified: Long = old) =
+    private fun artwork(id: ItemId, modified: Long = old) =
         File(context.filesDir, "images/$id/primary").apply {
             parentFile!!.mkdirs()
             writeBytes(ByteArray(10))

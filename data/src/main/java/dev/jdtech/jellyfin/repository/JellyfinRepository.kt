@@ -12,6 +12,7 @@ import dev.jdtech.jellyfin.models.FindroidSegment
 import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.ItemFilter
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
@@ -19,7 +20,6 @@ import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
-import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
 interface JellyfinRepository {
@@ -36,21 +36,21 @@ interface JellyfinRepository {
     /** Stores the current user's profile picture tag, as the server has it now. */
     suspend fun refreshCurrentUserImage()
 
-    suspend fun getEpisode(itemId: UUID): FindroidEpisode
+    suspend fun getEpisode(itemId: ItemId): FindroidEpisode
 
-    suspend fun getMovie(itemId: UUID): FindroidMovie
+    suspend fun getMovie(itemId: ItemId): FindroidMovie
 
-    suspend fun getShow(itemId: UUID): FindroidShow
+    suspend fun getShow(itemId: ItemId): FindroidShow
 
-    suspend fun getSeason(itemId: UUID): FindroidSeason
+    suspend fun getSeason(itemId: ItemId): FindroidSeason
 
     /** CE (#779): with where the list came from: Room answers it while the server is away. */
     suspend fun getLibraries(): ItemsResult<FindroidCollection>
 
-    suspend fun getItem(itemId: UUID): FindroidItem?
+    suspend fun getItem(itemId: ItemId): FindroidItem?
 
     suspend fun getItems(
-        parentId: UUID? = null,
+        parentId: ItemId? = null,
         includeTypes: List<ItemKind>? = null,
         recursive: Boolean = false,
         sortBy: SortBy = SortBy.defaultValue,
@@ -67,7 +67,7 @@ interface JellyfinRepository {
      * [includeTotal] off for later pages.
      */
     suspend fun getItemsPage(
-        parentId: UUID? = null,
+        parentId: ItemId? = null,
         includeTypes: List<ItemKind>? = null,
         recursive: Boolean = false,
         sortBy: SortBy = SortBy.defaultValue,
@@ -92,7 +92,7 @@ interface JellyfinRepository {
             .take(limit)
 
     suspend fun getItemsPaging(
-        parentId: UUID? = null,
+        parentId: ItemId? = null,
         includeTypes: List<ItemKind>? = null,
         recursive: Boolean = false,
         sortBy: SortBy = SortBy.defaultValue,
@@ -105,17 +105,17 @@ interface JellyfinRepository {
      * [nameLessThan], only those whose sort name comes before it.
      */
     suspend fun getItemCount(
-        parentId: UUID? = null,
+        parentId: ItemId? = null,
         includeTypes: List<ItemKind>? = null,
         recursive: Boolean = false,
         filters: Set<ItemFilter> = emptySet(),
         nameLessThan: String? = null,
     ): Int
 
-    suspend fun getPerson(personId: UUID): FindroidPerson
+    suspend fun getPerson(personId: ItemId): FindroidPerson
 
     suspend fun getPersonItems(
-        personIds: List<UUID>,
+        personIds: List<ItemId>,
         includeTypes: List<ItemKind>? = null,
         recursive: Boolean = true,
         limit: Int? = null,
@@ -140,20 +140,20 @@ interface JellyfinRepository {
 
     /** [includeItemTypes] null leaves the choice to the server. */
     suspend fun getLatestMedia(
-        parentId: UUID,
+        parentId: ItemId,
         includeItemTypes: List<ItemKind>? = null,
     ): List<FindroidItem>
 
-    suspend fun getSeasons(seriesId: UUID, offline: Boolean = false): List<FindroidSeason>
+    suspend fun getSeasons(seriesId: ItemId, offline: Boolean = false): List<FindroidSeason>
 
-    suspend fun getNextUp(seriesId: UUID? = null): List<FindroidEpisode>
+    suspend fun getNextUp(seriesId: ItemId? = null): List<FindroidEpisode>
 
     /** The episodes of one season, or with a null [seasonId] (CE, #252) of the whole series. */
     suspend fun getEpisodes(
-        seriesId: UUID,
-        seasonId: UUID?,
+        seriesId: ItemId,
+        seasonId: ItemId?,
         fields: Set<EpisodeField>? = null,
-        startItemId: UUID? = null,
+        startItemId: ItemId? = null,
         limit: Int? = null,
         offline: Boolean = false,
     ): List<FindroidEpisode>
@@ -169,7 +169,7 @@ interface JellyfinRepository {
      * download as the original. Null = original quality for everything.
      */
     suspend fun getMediaSources(
-        itemId: UUID,
+        itemId: ItemId,
         includePath: Boolean = false,
         transcodeDolbyVision: Boolean = false,
         maxBitrate: Int? = null,
@@ -192,7 +192,7 @@ interface JellyfinRepository {
      * is none). The caller decides both; the repository reads no player preference.
      */
     suspend fun getPlaybackSources(
-        itemId: UUID,
+        itemId: ItemId,
         target: PlaybackTarget,
         mediaSourceId: String? = null,
         audioStreamIndex: Int? = null,
@@ -200,7 +200,7 @@ interface JellyfinRepository {
     ): List<FindroidSource>
 
     /** CE (#580): the tracks the user last picked by hand in [seriesId], one per track type. */
-    suspend fun getSeriesTrackPreferences(seriesId: UUID): List<SeriesTrackPreferenceDto>
+    suspend fun getSeriesTrackPreferences(seriesId: ItemId): List<SeriesTrackPreferenceDto>
 
     /**
      * Remembers [preference] as the current user's choice for its series and track type, replacing
@@ -208,15 +208,15 @@ interface JellyfinRepository {
      */
     suspend fun saveSeriesTrackPreference(preference: SeriesTrackPreferenceDto)
 
-    suspend fun getStreamUrl(itemId: UUID, mediaSourceId: String): String
+    suspend fun getStreamUrl(itemId: ItemId, mediaSourceId: String): String
 
-    suspend fun getSegments(itemId: UUID): List<FindroidSegment>
+    suspend fun getSegments(itemId: ItemId): List<FindroidSegment>
 
     /**
      * CE (#693): the item's segments as the server has them now, not the ones stored with a
      * download. A new download saves these.
      */
-    suspend fun getServerSegments(itemId: UUID): List<FindroidSegment> = getSegments(itemId)
+    suspend fun getServerSegments(itemId: ItemId): List<FindroidSegment> = getSegments(itemId)
 
     /**
      * Sheet [index] of the trickplay images [width] wide of [itemId]. CE (#860): [mediaSourceId] is
@@ -224,7 +224,7 @@ interface JellyfinRepository {
      * what it did before: any downloaded version's sheets, else the server's for the item.
      */
     suspend fun getTrickplayData(
-        itemId: UUID,
+        itemId: ItemId,
         width: Int,
         index: Int,
         mediaSourceId: String? = null,
@@ -234,14 +234,14 @@ interface JellyfinRepository {
      * CE (#141): a stream URL for the first theme song of [itemId] (a series), or null when the
      * server has none. Offline there is no theme music, so the default is null.
      */
-    suspend fun getThemeSongUrl(itemId: UUID): String? = null
+    suspend fun getThemeSongUrl(itemId: ItemId): String? = null
 
     /**
      * CE (#332): up to [limit] items like [itemId], for "More like this". The detail pages load it
      * after they are shown. Offline there is nothing to compare with, so the default is empty.
      */
     suspend fun getSimilarItems(
-        itemId: UUID,
+        itemId: ItemId,
         limit: Int = SIMILAR_ITEMS_LIMIT,
     ): List<FindroidItem> = emptyList()
 
@@ -251,7 +251,7 @@ interface JellyfinRepository {
      * request, made only when asked for. Online only; the default is empty.
      */
     suspend fun getExtras(
-        itemId: UUID,
+        itemId: ItemId,
         localTrailers: Boolean,
         specialFeatures: Boolean,
     ): List<FindroidMovie> = emptyList()
@@ -261,7 +261,7 @@ interface JellyfinRepository {
      * finds them (`/Items/{id}/Collections`, Jellyfin 12 and later). Online only; the default is
      * empty.
      */
-    suspend fun getItemCollections(itemId: UUID): List<FindroidItem> = emptyList()
+    suspend fun getItemCollections(itemId: ItemId): List<FindroidItem> = emptyList()
 
     suspend fun postCapabilities()
 
@@ -275,14 +275,14 @@ interface JellyfinRepository {
      * quality or audio switch that fails after asking for the playing item's new stream keeps the
      * old stream, whose session the reports must keep naming.
      */
-    fun setPlaySession(itemId: UUID, playSessionId: String?, transcodes: Boolean) {}
+    fun setPlaySession(itemId: ItemId, playSessionId: String?, transcodes: Boolean) {}
 
     /**
      * Report that [itemId] started playing. [transcoded] says whether the stream playing is the
      * server's transcode of it (`PlayerItem.isTranscoded`), which the server shows as the play
      * method.
      */
-    suspend fun postPlaybackStart(itemId: UUID, transcoded: Boolean)
+    suspend fun postPlaybackStart(itemId: ItemId, transcoded: Boolean)
 
     /**
      * Report that [itemId] stopped playing at [positionTicks]. What the local database stores
@@ -291,34 +291,34 @@ interface JellyfinRepository {
      * `null`, for an item left before its duration was known, leaves the local database as it is
      * and only tells the server.
      */
-    suspend fun postPlaybackStop(itemId: UUID, positionTicks: Long, playedPercentage: Int?)
+    suspend fun postPlaybackStop(itemId: ItemId, positionTicks: Long, playedPercentage: Int?)
 
     /** Report the position of [itemId]; [transcoded] as for [postPlaybackStart]. */
     suspend fun postPlaybackProgress(
-        itemId: UUID,
+        itemId: ItemId,
         positionTicks: Long,
         isPaused: Boolean,
         transcoded: Boolean,
     )
 
-    suspend fun markAsFavorite(itemId: UUID)
+    suspend fun markAsFavorite(itemId: ItemId)
 
-    suspend fun unmarkAsFavorite(itemId: UUID)
+    suspend fun unmarkAsFavorite(itemId: ItemId)
 
-    suspend fun markAsPlayed(itemId: UUID)
+    suspend fun markAsPlayed(itemId: ItemId)
 
-    suspend fun markAsUnplayed(itemId: UUID)
+    suspend fun markAsUnplayed(itemId: ItemId)
 
     fun getBaseUrl(): String
 
     /** The URL of the thumbnail the server extracted for a chapter. Null when no server is set. */
-    fun chapterImageUrl(itemId: UUID, chapterIndex: Int, tag: String): String?
+    fun chapterImageUrl(itemId: ItemId, chapterIndex: Int, tag: String): String?
 
     /**
      * The backdrop of [seasonId], whether or not the season has one of its own; the server answers
      * 404 when it has none. Null when no server is set.
      */
-    fun seasonBackdropUrl(seasonId: UUID): String?
+    fun seasonBackdropUrl(seasonId: ItemId): String?
 
     suspend fun updateDeviceName(name: String)
 
@@ -330,7 +330,7 @@ interface JellyfinRepository {
 
     suspend fun getDownloads(): List<FindroidItem>
 
-    fun getUserId(): UUID
+    fun getUserId(): ItemId
 }
 
 /** CE (#332): how many items a "More like this" row shows. */
