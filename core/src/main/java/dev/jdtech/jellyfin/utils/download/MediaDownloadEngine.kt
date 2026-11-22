@@ -114,6 +114,12 @@ internal class HttpStatusException(val code: Int, id: Long) :
 
 private class PausedMidTransfer : Exception()
 
+/**
+ * CE (#850): the answer to a resume is from another file than the partial one. The partial is
+ * truncated and the transfer starts over at byte 0.
+ */
+private class RestartTransfer : Exception()
+
 // Engine ------------------------------------------------------------------------
 
 /**
@@ -131,6 +137,7 @@ class MediaDownloadEngine
 constructor(
     @DownloadHttpClient private val client: OkHttpClient,
     private val connectivity: NetworkConnectivity,
+    private val validators: ResumeValidatorStore = InMemoryResumeValidatorStore(),
 ) {
     // Public API types ---------------------------------------------------------
 
@@ -237,6 +244,10 @@ constructor(
         // Cancel the OkHttp call first so a blocking read unblocks immediately, then the job.
         state?.call?.cancel()
         state?.job?.cancel()
+        // CE (#850): cancelled or finalized, the partial file is not resumed any more. A cancel
+        // after a restart does not know the file; a later download there starts with a 200 and
+        // writes its own validator.
+        state?.let { validators.put(it.request.destFile, null) }
     }
 
     /** Returns a point-in-time [Snapshot] for [id], or null if the engine has no record. */
@@ -299,6 +310,9 @@ constructor(
             } catch (e: PausedMidTransfer) {
                 // Network became metered/roaming mid-transfer; loop back to top to re-evaluate.
                 continue
+            } catch (e: RestartTransfer) {
+                Timber.i("Download id=${req.id}: the server's file changed; starting over")
+                continue
             } catch (e: HttpStatusException) {
                 // The server answered, so the network is fine: fail now with the status instead
                 // of showing "Waiting for network" (#383). The queue decides whether to retry.
@@ -348,13 +362,18 @@ constructor(
     private fun httpTransfer(state: TaskState) {
         val req = state.request
         val existingLen = if (req.destFile.exists()) req.destFile.length() else 0L
+        val resuming = existingLen > 0L && req.resumable
+        val stored = if (resuming) validators.get(req.destFile) else null
 
         val httpRequest =
             okhttp3.Request.Builder()
                 .url(req.url)
                 .apply {
-                    if (existingLen > 0L && req.resumable) {
+                    if (resuming) {
                         header("Range", "bytes=$existingLen-")
+                        // CE (#850): a server whose file changed answers 200 with the whole new
+                        // file instead of a 206 that would append to the old bytes.
+                        stored?.ifRange?.let { header("If-Range", it) }
                     }
                 }
                 .build()
@@ -387,7 +406,41 @@ constructor(
                 else -> throw HttpStatusException(code, req.id)
             }
 
+            val responseValidator = ifRangeValidatorOf(response)
+            if (code == 206 || code == 416) {
+                val matches =
+                    resumeMatches(
+                        code = code,
+                        existingLength = existingLen,
+                        stored = stored,
+                        responseValidator = responseValidator,
+                        contentRangeStart =
+                            parseContentRangeStart(response.header("Content-Range")),
+                        contentRangeTotal = contentRangeTotal,
+                    )
+                if (!matches) {
+                    // A server or proxy that ignores If-Range, or a file that changed in a way
+                    // only the length shows: these bytes do not continue the partial file.
+                    RandomAccessFile(req.destFile, "rw").use { it.setLength(0L) }
+                    validators.put(req.destFile, null)
+                    throw RestartTransfer()
+                }
+                // A partial from before #850, or the first answer that names the file: keep
+                // what it says, so the next resume is checked.
+                if (stored == null && req.resumable) {
+                    validators.put(
+                        req.destFile,
+                        ResumeValidator(responseValidator, contentRangeTotal),
+                    )
+                }
+            }
+
             val plan = resolveResumePlan(code, existingLen, contentLength, contentRangeTotal)
+
+            if (code == 200 && req.resumable) {
+                // The file starts over at byte 0: from now on the partial is this file's.
+                validators.put(req.destFile, ResumeValidator(responseValidator, contentLength))
+            }
 
             if (plan.complete) {
                 // 416: file already complete.
