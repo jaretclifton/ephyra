@@ -91,6 +91,7 @@ import dev.jdtech.jellyfin.ce.ui.focus.ephyraFocusedGlow
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.ephyra.SeekBarSegment
 import dev.jdtech.jellyfin.core.presentation.ephyra.seekBarSegments
+import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
 import dev.jdtech.jellyfin.di.SubtitleStyleEntryPoint
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItem
@@ -1205,17 +1206,8 @@ private fun QueueCard(
             }
             Spacer(modifier = Modifier.height(MaterialTheme.spacings.extraSmall))
             Text(
-                text =
-                    if (item is FindroidEpisode) {
-                        episodeLine(
-                            item.parentIndexNumber,
-                            item.indexNumber,
-                            item.indexNumberEnd,
-                            item.name,
-                        )
-                    } else {
-                        item.name
-                    },
+                // CE (#865): the tile hides an unwatched episode's name, so the caption does too.
+                text = queueCaption(item, hidden = LocalSpoilers.current.hides(item)),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White,
                 maxLines = 1,
@@ -1336,11 +1328,25 @@ private fun rememberTimeFormat(): java.text.DateFormat {
 /** `S01E06 – Title`, or `S01E06–E07 – Title` for a double episode; just the name for a movie. */
 internal fun episodeLine(season: Int?, episode: Int?, episodeEnd: Int?, name: String): String {
     if (season == null || episode == null) return name
-    val number =
-        if (episodeEnd == null) "S%02dE%02d".format(Locale.ROOT, season, episode)
-        else "S%02dE%02d–E%02d".format(Locale.ROOT, season, episode, episodeEnd)
-    return "$number – $name"
+    return "${episodeNumber(season, episode, episodeEnd)} – $name"
 }
+
+/** `S01E06`, or `S01E06–E07` for a double episode. */
+private fun episodeNumber(season: Int, episode: Int, episodeEnd: Int?): String =
+    if (episodeEnd == null) "S%02dE%02d".format(Locale.ROOT, season, episode)
+    else "S%02dE%02d–E%02d".format(Locale.ROOT, season, episode, episodeEnd)
+
+/**
+ * The caption under a tile of the queue: [episodeLine], or only the episode's number while [hidden]
+ * (Hide spoilers, #865), as the episode list shows a hidden episode.
+ */
+internal fun queueCaption(item: FindroidItem, hidden: Boolean): String =
+    when {
+        item !is FindroidEpisode -> item.name
+        hidden -> episodeNumber(item.parentIndexNumber, item.indexNumber, item.indexNumberEnd)
+        else ->
+            episodeLine(item.parentIndexNumber, item.indexNumber, item.indexNumberEnd, item.name)
+    }
 
 @Composable
 private fun ControlButton(
