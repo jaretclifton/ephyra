@@ -52,6 +52,7 @@ The rules, each with a baseline file of the current violations:
 | R4. No file outside `data` imports `ServerDatabaseDao` | 22 files | frozen; not part of this migration |
 | R5. `domain` imports nothing from `android.`, `androidx.` (except `androidx.paging`), `org.jellyfin.sdk`, `dev.jdtech.jellyfin.database`, `dev.jdtech.jellyfin.api` | 0 | 0 |
 | R6. In `player/local`, engine packages do not import each other and shared code imports neither | added in phase 5 | 0 |
+| R7. No module but `app/phone` and `app/tv` depends on `server/jellyfin` | added in #758, no baseline | 0 |
 
 **A baseline is exact.** The test fails when a file that is not listed violates a rule, and it
 also fails when a listed file no longer does ("remove it from the baseline"). So a baseline can

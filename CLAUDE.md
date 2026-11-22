@@ -48,7 +48,8 @@ app/phone        — Phone UI: screens, navigation, Compose layouts
 app/tv           — TV UI: separate screen implementations for Android TV
 core             — Shared DI modules, DownloaderViewModel, MainViewModel, common Composables
 domain           — pure Kotlin: the app's own models and the ports. No Android, no SDK
-data             — JellyfinRepository interface + Room database + online/offline implementations
+data             — JellyfinRepository interface + Room database + the repository over a server's ports. No SDK
+server/jellyfin  — the Jellyfin adapter: the only module with the Jellyfin SDK (JellyfinApi, mappers, ports, device profiles) and its own Hilt module. Only app/phone and app/tv depend on it
 modes/film       — Feature ViewModels and State/Action classes for home, library, search, episode, movie, show, season
 player/core      — Player models shared by the player and its callers (PlayerItem, Track, Trickplay)
 player/local     — ExoPlayer + mpv PlayerViewModel and playback logic
@@ -76,7 +77,7 @@ Each screen follows this pattern:
 
 Events that fire once (navigation, toasts) use a `Channel<FooEvent>` exposed as `Flow`, observed via `ObserveAsEvents()`.
 
-**Dependency Injection:** Hilt throughout. DI modules are in `core/src/main/java/dev/jdtech/jellyfin/di/`.
+**Dependency Injection:** Hilt throughout. DI modules are in `core/src/main/java/dev/jdtech/jellyfin/di/`, except the Jellyfin adapter's `JellyfinServerModule` in `server/jellyfin`.
 
 **Navigation:** Navigation 3 with `@Serializable` route objects. `NavigationRoot.kt` in `app/phone` is the single source of truth for the nav graph.
 
