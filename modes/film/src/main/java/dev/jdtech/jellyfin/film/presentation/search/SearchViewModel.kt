@@ -75,6 +75,11 @@ class SearchViewModel @Inject constructor(private val repository: JellyfinReposi
                     serverAwayReload.begin()
                     _state.emit(_state.value.copy(loading = true))
                     val result = repository.getSearchItems(query, itemKinds)
+                    // CE (#866): the request runs as whoever the client acts for when it is sent,
+                    // which after the debounce or the store retry can be another user than the one
+                    // this search began for. Such results are no one's to show: the next search
+                    // (the tab's return, a keystroke) asks again.
+                    if (sessionUser() != user) break
 
                     // CE (#779): downloads only when Room answered.
                     _state.emit(
@@ -100,7 +105,13 @@ class SearchViewModel @Inject constructor(private val repository: JellyfinReposi
             } catch (_: CancellationException) {} catch (e: Exception) {
                 Timber.e(e)
                 _state.emit(
-                    _state.value.copy(query = query, loading = false, error = e, userId = user)
+                    _state.value.copy(
+                        query = query,
+                        loading = false,
+                        error = e,
+                        // CE (#866): an unknown user keeps the owner of what is already there.
+                        userId = user ?: _state.value.userId,
+                    )
                 )
             }
         }

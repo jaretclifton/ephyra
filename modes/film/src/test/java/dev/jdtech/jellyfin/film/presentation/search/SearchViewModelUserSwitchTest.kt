@@ -96,6 +96,23 @@ class SearchViewModelUserSwitchTest {
         }
 
     @Test
+    fun `results asked for after a switch are not labelled as the previous user's`() =
+        runTest(dispatcher) {
+            val viewModel = SearchViewModel(repository())
+            viewModel.onAction(SearchAction.Search("movie"))
+            // The switch comes during the debounce: the request goes out as Bob.
+            advanceTimeBy(SearchViewModel.SEARCH_DEBOUNCE_MS - 1)
+            sessionUser = bob
+            advanceUntilIdle()
+
+            val state = viewModel.state.value
+            assertTrue(
+                state.items.isEmpty() || state.userId == bob,
+                "Bob's results under the label ${state.userId}",
+            )
+        }
+
+    @Test
     fun `the same user's results stay while a new search runs`() =
         runTest(dispatcher) {
             val viewModel = SearchViewModel(repository())
