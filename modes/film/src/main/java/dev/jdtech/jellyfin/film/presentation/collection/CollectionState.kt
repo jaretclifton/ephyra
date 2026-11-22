@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.film.presentation.collection
 
 import dev.jdtech.jellyfin.models.CollectionSection
+import java.util.UUID
 
 data class CollectionState(
     val sections: List<CollectionSection> = emptyList(),
@@ -11,4 +12,21 @@ data class CollectionState(
      * downloaded favourites only.
      */
     val downloadsOnly: Boolean = false,
-)
+    /**
+     * CE (#866): the user [sections] are for, where the screen stays on its stack across a user
+     * switch (Favourites); null before the first load, or when unknown.
+     */
+    val userId: UUID? = null,
+) {
+    /**
+     * CE (#866): what the screen may show while [userId] is signed in: nothing of another user's
+     * sections, only a loading list until the new user's arrive. Null [userId] (no session at hand,
+     * as in previews) shows everything.
+     */
+    fun shownTo(userId: UUID?): CollectionState =
+        if (userId == null || this.userId == null || this.userId == userId) {
+            this
+        } else {
+            CollectionState(isLoading = true, userId = userId)
+        }
+}

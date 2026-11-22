@@ -60,4 +60,23 @@ data class DownloadsState(
     val storageIsExternal: Boolean = false,
     val isLoading: Boolean = false,
     val error: Exception? = null,
-)
+    /**
+     * CE (#866): the user whose played state and progress [sections] carry. The downloads are the
+     * same for every user of the server, their user data is not. Null before the first load, or
+     * when unknown.
+     */
+    val userId: UUID? = null,
+) {
+    /**
+     * CE (#866): what the screen may show while [userId] is signed in: the queue and the storage,
+     * which belong to no user, but none of the downloaded items with another user's played state
+     * and progress, only a loading list until the new user's arrive. Null [userId] (no session at
+     * hand, as in previews) shows everything.
+     */
+    fun shownTo(userId: UUID?): DownloadsState =
+        if (userId == null || this.userId == null || this.userId == userId) {
+            this
+        } else {
+            copy(sections = emptyList(), isLoading = true, error = null, userId = userId)
+        }
+}
