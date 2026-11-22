@@ -1,0 +1,14 @@
+[
+    {
+        "request": "POST /Sessions/Playing",
+        "status": 204
+    },
+    {
+        "request": "POST /Sessions/Playing/Progress",
+        "status": 204
+    },
+    {
+        "request": "POST /Sessions/Playing/Stopped",
+        "status": 204
+    }
+]

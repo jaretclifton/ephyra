@@ -1,0 +1,38 @@
+[
+    {
+        "request": "GET /Items?userId=00000000-0000-0000-0000-000000000001&limit=50&recursive=true&searchTerm=Versions&includeItemTypes=Movie&includeItemTypes=Series&enableTotalRecordCount=false&enableImages=true",
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "json": {
+            "Items": [
+                {
+                    "Name": "Versions Movie (2018)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "00000000000000000000000000000103",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 600230000,
+                    "ProductionYear": 2018,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-0000-0000-000000000103",
+                        "ItemId": "00000000000000000000000000000103"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                }
+            ],
+            "TotalRecordCount": 1,
+            "StartIndex": 0
+        }
+    }
+]

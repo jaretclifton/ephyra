@@ -1,0 +1,70 @@
+[
+    {
+        "request": "POST /UserPlayedItems/00000000-0000-0000-0000-000000000312",
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "json": {
+            "PlaybackPositionTicks": 0,
+            "PlayCount": 1,
+            "IsFavorite": false,
+            "LastPlayedDate": "2026-11-22T08:44:45.7399633Z",
+            "Played": true,
+            "Key": "00000000-0000-0000-0000-000000000201001002",
+            "ItemId": "00000000000000000000000000000312"
+        }
+    },
+    {
+        "request": "GET /Shows/NextUp?userId=00000000-0000-0000-0000-000000000001&limit=24&fields=Overview&seriesId=00000000-0000-0000-0000-000000000201&imageTypeLimit=1&enableImageTypes=Primary&enableImageTypes=Backdrop&enableImageTypes=Thumb&enableTotalRecordCount=false&enableResumable=false&enableRewatching=false",
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "json": {
+            "Items": [
+                {
+                    "Name": "Test Show - S01E03 - Episode 03",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "00000000000000000000000000000313",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 900230000,
+                    "IndexNumber": 3,
+                    "ParentIndexNumber": 1,
+                    "IsFolder": false,
+                    "Type": "Episode",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-0000-0000-000000000313",
+                        "ItemId": "00000000000000000000000000000313"
+                    },
+                    "SeriesName": "Test Show",
+                    "SeriesId": "00000000000000000000000000000201",
+                    "SeasonId": "00000000000000000000000000000211",
+                    "SeasonName": "Season 1",
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                }
+            ],
+            "TotalRecordCount": 0,
+            "StartIndex": 0
+        }
+    },
+    {
+        "request": "DELETE /UserPlayedItems/00000000-0000-0000-0000-000000000312",
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "json": {
+            "PlaybackPositionTicks": 0,
+            "PlayCount": 0,
+            "IsFavorite": false,
+            "Played": false,
+            "Key": "00000000-0000-0000-0000-000000000201001002",
+            "ItemId": "00000000000000000000000000000312"
+        }
+    }
+]

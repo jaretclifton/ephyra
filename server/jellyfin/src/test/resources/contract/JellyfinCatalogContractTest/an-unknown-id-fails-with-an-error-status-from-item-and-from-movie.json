@@ -1,0 +1,24 @@
+[
+    {
+        "request": "GET /Items/00000000-0000-0000-0000-00000000dead?userId=00000000-0000-0000-0000-000000000001",
+        "status": 404,
+        "contentType": "application/json; charset=utf-8",
+        "json": {
+            "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+            "title": "Not Found",
+            "status": 404,
+            "traceId": "00-101831564ccd0eaf3c634014aca731a3-366079ef9794c96a-00"
+        }
+    },
+    {
+        "request": "GET /Items/00000000-0000-0000-0000-00000000dead?userId=00000000-0000-0000-0000-000000000001",
+        "status": 404,
+        "contentType": "application/json; charset=utf-8",
+        "json": {
+            "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+            "title": "Not Found",
+            "status": 404,
+            "traceId": "00-d4a522d3db5105c389fedc0034985403-e9f1eb8717d1d8a0-00"
+        }
+    }
+]

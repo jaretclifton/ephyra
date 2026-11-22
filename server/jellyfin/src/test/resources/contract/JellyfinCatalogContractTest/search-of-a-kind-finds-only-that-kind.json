@@ -1,0 +1,38 @@
+[
+    {
+        "request": "GET /Items?userId=00000000-0000-0000-0000-000000000001&limit=20&recursive=true&searchTerm=Test%20Show&includeItemTypes=Series&enableTotalRecordCount=false&enableImages=true",
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "json": {
+            "Items": [
+                {
+                    "Name": "Test Show",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "00000000000000000000000000000201",
+                    "ChannelId": null,
+                    "ProductionYear": 2020,
+                    "IsFolder": true,
+                    "Type": "Series",
+                    "UserData": {
+                        "PlayedPercentage": 12.5,
+                        "UnplayedItemCount": 7,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-0000-0000-000000000201",
+                        "ItemId": "00000000000000000000000000000201"
+                    },
+                    "AirDays": [],
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                }
+            ],
+            "TotalRecordCount": 1,
+            "StartIndex": 0
+        }
+    }
+]
