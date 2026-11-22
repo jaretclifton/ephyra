@@ -635,6 +635,8 @@ class ServerAwayReloadTest {
         ) { _, method, args ->
             // #769: Jellyfin can do everything.
             if (method.name == "getCapabilities") return@newProxyInstance ServerCapabilities.ALL
+            // #810: Media asks whom the client acts for; always the same user here.
+            if (method.name == "getUserId") return@newProxyInstance USER_ID
             if (fail) throw java.net.ConnectException("Failed to connect")
             if (holdNext) {
                 // A slow answer: the test resumes it later.
@@ -660,4 +662,8 @@ class ServerAwayReloadTest {
                 else -> throw NotImplementedError("JellyfinRepository.${method.name}")
             }
         } as JellyfinRepository
+
+    private companion object {
+        val USER_ID: java.util.UUID = java.util.UUID.randomUUID()
+    }
 }

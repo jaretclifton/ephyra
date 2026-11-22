@@ -37,6 +37,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -45,6 +46,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 
 @HiltViewModel
@@ -67,6 +69,10 @@ constructor(
         private val UUID_SUGGESTIONS = UUID.fromString("31e47044-9b79-4bb0-99d0-0e477ed65420")
         private val UUID_CONTINUE_WATCHING = UUID.fromString("44845958-8326-4e83-beb4-c4f42e9eeb95")
         private val UUID_NEXT_UP = UUID.fromString("18bfced5-f237-4d42-aa72-d9d7fed19279")
+
+        /** CE (#810): see [clientActsFor]. */
+        private const val CLIENT_SWITCH_WAIT_MS = 3_000L
+        private const val CLIENT_SWITCH_POLL_MS = 20L
     }
 
     private val homeRowsStore = HomeRowsStore(appPreferences, database)
@@ -209,6 +215,18 @@ constructor(
         _state.update { if (load != null && load.value != generation.get()) it else change(it) }
     }
 
+    /**
+     * CE (#810): waits, a few seconds at most, until the client acts for [userId]. False when it
+     * does not by then (signed out in the meantime, or switched to someone else).
+     */
+    private suspend fun clientActsFor(userId: UUID): Boolean =
+        withTimeoutOrNull(CLIENT_SWITCH_WAIT_MS) {
+            while (runCatching { repository.getUserId() }.getOrNull() != userId) {
+                delay(CLIENT_SWITCH_POLL_MS)
+            }
+            true
+        } ?: false
+
     private suspend fun runLoad(silent: Boolean) {
         val token = reloadPolicy.begin()
         if (!silent) updateState { it.copy(isLoading = true, error = null) }
@@ -222,6 +240,15 @@ constructor(
             if (server != null) {
                 val user = logFailure("user") { database.getServerCurrentUser(server.id) }
                 updateState { it.copy(user = user.getOrNull()) }
+                // CE (#810): a login or switch writes Room before it switches the client, so a
+                // load that a new current user started can be early: what it fetched would be the
+                // previous user's rows under the new user's name.
+                val userId = user.getOrNull()?.id
+                if (userId != null && !clientActsFor(userId)) {
+                    Timber.w("The client is not signed in as the current user: no Home load")
+                    updateState { it.copy(isLoading = false) }
+                    return
+                }
                 showCachedRows(server.id, user.getOrNull()?.id)
             }
             // CE (#142): the rows this user chose for this server, in their order.
@@ -273,7 +300,9 @@ constructor(
             updateState { it.copy(error = e) }
         }
         updateState { it.copy(isLoading = false) }
-        if (loaded) {
+        // CE (#810): a load overtaken by a user switch neither counts as fresh nor is cached.
+        val current = currentCoroutineContext()[LoadGeneration]?.value == generation.get()
+        if (loaded && current) {
             reloadPolicy.complete(token)
             saveRows(server)
         }

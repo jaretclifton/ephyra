@@ -1,0 +1,112 @@
+package dev.jdtech.jellyfin.film.presentation.media
+
+import dev.jdtech.jellyfin.models.CollectionType
+import dev.jdtech.jellyfin.models.FindroidCollection
+import dev.jdtech.jellyfin.models.FindroidImages
+import dev.jdtech.jellyfin.models.ServerCapabilities
+import dev.jdtech.jellyfin.repository.ItemsResult
+import dev.jdtech.jellyfin.repository.JellyfinRepository
+import java.lang.reflect.Proxy
+import java.util.UUID
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+
+/**
+ * #810: the Media tab stays on its stack across a user switch. Opened again less than a minute
+ * after its last load, it showed the previous user's libraries.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+class MediaViewModelUserSwitchTest {
+    private val dispatcher = StandardTestDispatcher()
+    private val alice = UUID.randomUUID()
+    private val bob = UUID.randomUUID()
+    private val aliceLibraries = listOf(library("Alice's movies"))
+    private val bobLibraries = listOf(library("Bob's shows"), library("Bob's music"))
+
+    /** The user the client acts for. */
+    private var sessionUser: UUID = alice
+
+    @BeforeEach
+    fun setUp() {
+        Dispatchers.setMain(dispatcher)
+    }
+
+    @AfterEach
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    @Test
+    fun `the tab shows the new user's libraries after a switch`() =
+        runTest(dispatcher) {
+            val viewModel = MediaViewModel(repository())
+            viewModel.loadData()
+            advanceUntilIdle()
+            assertEquals(aliceLibraries, viewModel.state.value.libraries)
+            assertFalse(viewModel.shouldReload())
+
+            // Home's profile sheet, a login or the Users screen: the client acts for Bob now.
+            sessionUser = bob
+
+            // The tab comes back into view (MediaScreen's ON_RESUME).
+            assertTrue(viewModel.shouldReload())
+            viewModel.loadData(silent = viewModel.state.value.libraries.isNotEmpty())
+            // Before Bob's libraries arrive: none of Alice's, and a loading list.
+            assertEquals(emptyList(), viewModel.state.value.libraries)
+            assertTrue(viewModel.state.value.isLoading)
+            advanceUntilIdle()
+
+            assertEquals(bobLibraries, viewModel.state.value.libraries)
+            assertEquals(bob, viewModel.state.value.userId)
+            assertFalse(viewModel.state.value.isLoading)
+            assertFalse(viewModel.shouldReload())
+        }
+
+    @Test
+    fun `the screen shows nothing of another user's libraries`() {
+        val aliceState = MediaState(libraries = aliceLibraries, userId = alice)
+
+        val forBob = aliceState.shownTo(bob)
+
+        assertEquals(emptyList(), forBob.libraries)
+        assertTrue(forBob.isLoading)
+        assertEquals(aliceState, aliceState.shownTo(alice))
+        // No session at hand (previews), or a list from before the user was known.
+        assertEquals(aliceState, aliceState.shownTo(null))
+        val unknown = MediaState(libraries = aliceLibraries)
+        assertEquals(unknown, unknown.shownTo(bob))
+    }
+
+    private fun repository(): JellyfinRepository =
+        Proxy.newProxyInstance(
+            JellyfinRepository::class.java.classLoader,
+            arrayOf(JellyfinRepository::class.java),
+        ) { _, method, _ ->
+            when (method.name) {
+                "getCapabilities" -> ServerCapabilities.ALL
+                "getUserId" -> sessionUser
+                "getLibraries" ->
+                    ItemsResult(if (sessionUser == bob) bobLibraries else aliceLibraries)
+                else -> throw NotImplementedError("JellyfinRepository.${method.name}")
+            }
+        } as JellyfinRepository
+
+    private fun library(name: String) =
+        FindroidCollection(
+            id = UUID.randomUUID(),
+            name = name,
+            type = CollectionType.Movies,
+            images = FindroidImages(),
+        )
+}

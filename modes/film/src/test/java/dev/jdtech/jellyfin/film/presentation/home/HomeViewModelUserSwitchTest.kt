@@ -39,8 +39,9 @@ import org.junit.jupiter.api.Test
  *
  * The fakes stand for what each flow writes in `SetupRepositoryImpl`: a login (password and Quick
  * Connect both end in `saveAuthenticationResult`) inserts the user and sets the server's current
- * user; the Users screen (`setCurrentUser`) updates the server row. Both also switch the client
- * first, so the repository answers for the new user from then on.
+ * user; the Users screen (`setCurrentUser`) updates the server row. Both switch the client
+ * (`session.use`) only after those writes, so the repository answers for the new user from a moment
+ * after Room has the new user.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelUserSwitchTest {
@@ -54,8 +55,11 @@ class HomeViewModelUserSwitchTest {
     private val users = mutableMapOf(alice.id to alice)
     private val currentUser = MutableStateFlow<User?>(alice)
 
-    /** The user the client sends requests for. */
-    @Volatile private var sessionUser: User = alice
+    /** The user the client sends requests for; null when nobody is signed in. */
+    @Volatile private var sessionUser: User? = alice
+
+    /** Whom each request for rows was sent as. */
+    private val requests = java.util.concurrent.CopyOnWriteArrayList<String>()
 
     /** Set to hold the next requests for [bob] until it counts down. */
     @Volatile private var bobGate: CountDownLatch? = null
@@ -143,6 +147,50 @@ class HomeViewModelUserSwitchTest {
     }
 
     @Test
+    fun `the new user's load waits until the client acts for them`() {
+        homeShowsAlice()
+        requests.clear()
+
+        // A login has written Room; the client still acts for Alice.
+        loginRoomOnly(bob)
+        val between = waitFor { it.user?.id == bob.id }
+        assertTrue(between.isEmpty)
+        // Long enough for a load that does not wait to have asked the server as Alice.
+        Thread.sleep(300)
+        assertEquals(emptyList(), requests, "Home asked the server as the previous user")
+
+        sessionUser = bob
+        val state = settle { it.resumeSection == null || it.nextUpSection == null }
+        assertEquals(bob, state.user)
+        assertEquals(listOf(bobItem), state.resumeSection?.homeSection?.items)
+        assertEquals(listOf(bobItem), state.nextUpSection?.homeSection?.items)
+        assertTrue(requests.all { it == bob.name }, "requests: $requests")
+    }
+
+    @Test
+    fun `a client that never switches leaves Home empty, not waiting for good`() {
+        homeShowsAlice()
+        requests.clear()
+
+        loginRoomOnly(bob)
+        // The load gives up after its few seconds.
+        val state = runBlocking {
+            withTimeout(10_000) {
+                while (viewModel.state.value.isLoading || viewModel.state.value.user == alice) {
+                    delay(50)
+                }
+                viewModel.state.value
+            }
+        }
+
+        assertEquals(bob.id, state.user?.id)
+        assertTrue(state.isEmpty)
+        assertEquals(emptyList(), requests)
+        // Not counted as loaded: coming back loads again.
+        assertTrue(viewModel.shouldReload(stopEventFollows = true))
+    }
+
+    @Test
     fun `signing the user out leaves no rows`() {
         homeShowsAlice()
 
@@ -221,7 +269,12 @@ class HomeViewModelUserSwitchTest {
 
     /** `saveAuthenticationResult`, after a login with a password. */
     private fun login(user: User) {
+        loginRoomOnly(user)
         sessionUser = user
+    }
+
+    /** What `saveAuthenticationResult` writes before `session.use`. */
+    private fun loginRoomOnly(user: User) {
         users[user.id] = user
         server.currentUserId = user.id
         currentUser.value = user
@@ -232,9 +285,9 @@ class HomeViewModelUserSwitchTest {
 
     /** `setCurrentUser`. */
     private fun pickOnUsersScreen(user: User) {
-        sessionUser = user
         server.currentUserId = user.id
         currentUser.value = users.getValue(user.id)
+        sessionUser = user
     }
 
     /** The first state that is [done], within a few seconds; fails with the last one otherwise. */
@@ -255,7 +308,9 @@ class HomeViewModelUserSwitchTest {
         }
     }
 
-    private fun rowsOf(user: User): List<FindroidItem> {
+    private fun rowsOf(user: User?): List<FindroidItem> {
+        requests += user?.name ?: "nobody"
+        if (user == null) throw IOException("signed out")
         val gate = if (user.id == bob.id) bobGate else aliceGate
         if (gate != null && user.id == alice.id) aliceAsked?.countDown()
         gate?.await(5, TimeUnit.SECONDS)
@@ -273,6 +328,7 @@ class HomeViewModelUserSwitchTest {
                 "getSuggestions",
                 "getUserViews" -> emptyList<Any>()
                 "refreshCurrentUserImage" -> Unit
+                "getUserId" -> sessionUser?.id ?: throw IllegalStateException("signed out")
                 "getServerInfo" -> throw IOException("not needed here")
                 else -> throw NotImplementedError("JellyfinRepository.${method.name}")
             }
