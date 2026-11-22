@@ -115,6 +115,18 @@ class MPVPlayer(
 
         fun detachSurface() = calls.post { mpvLib.detachSurface() }
 
+        /**
+         * CE (#833): selects the playing subtitle track again, so mpv decodes it anew as when it is
+         * picked during playback. Read and both sets in one go, after the calls before it.
+         */
+        fun reselectSubtitleTrack() = calls.post {
+            val sid = mpvLib.getPropertyString("sid")
+            if (sid?.toIntOrNull() != null) {
+                mpvLib.setPropertyString("sid", "no")
+                mpvLib.setPropertyString("sid", sid)
+            }
+        }
+
         fun getPropertyBoolean(name: String): Boolean? = calls.read {
             mpvLib.getPropertyBoolean(name)
         }
@@ -2506,9 +2518,16 @@ class MPVPlayer(
         }
     }
 
+    /** CE (#833): the subtitle options mpv has now, from the start or the last update. */
+    private var appliedSubtitleOptions = subtitleOptions
+
     /** CE (#300, #308): applies [options] from [mpvSubtitleOptions] to the playing subtitles. */
     fun updateSubtitleOptions(options: Map<String, String>) {
         options.forEach { (name, value) -> mpv.setOptionString(name, value) }
+        if (mpvSubtitleNeedsReselect(appliedSubtitleOptions, options)) {
+            mpv.reselectSubtitleTrack()
+        }
+        appliedSubtitleOptions = options
     }
 
     /** CE (#619): shifts subtitles by [delayMs] (positive = later, negative = earlier). */
