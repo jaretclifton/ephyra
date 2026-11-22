@@ -143,8 +143,8 @@ gh pr create --repo midasvo/ephyra   --title "chore(upstream): sync with Findroi
 Merge it with `--merge` once `gh pr checks` is fully green: a squash or rebase would drop the
 upstream parent and the counter would not move (`--auto` merges right away because `main` has no
 required checks). A sync with no translation changes gets `--body "[skip beta]"`. After the
-merge, `git rev-list --left-right --count upstream/main...origin/main` must start with `0`. Don't touch
-`CHANGELOG.md` here; the release skill writes the **From Findroid** part.
+merge, `git rev-list --left-right --count upstream/main...origin/main` must start with `0`.
+Don't touch `CHANGELOG.md` here; the release skill writes the **From Findroid** part.
 
 ### 6. Report
 
