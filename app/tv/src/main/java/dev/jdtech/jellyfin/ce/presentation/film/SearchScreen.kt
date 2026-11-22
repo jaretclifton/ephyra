@@ -149,6 +149,14 @@ internal fun SearchScreenLayout(
 
     LaunchedEffect(editing) { if (editing) keyboardController?.show() }
 
+    // CE (#866): after a user switch the state is SearchState.shownTo's placeholder, and the field
+    // still holds the query. Nothing else searches it again for the new user, so this does.
+    LaunchedEffect(state.userId) {
+        if (state.loading && state.query.isEmpty() && query.isNotBlank()) {
+            onAction(SearchAction.Search(query))
+        }
+    }
+
     // The search for the text in the field failed. It stays while a Retry loads, so focus stays on
     // Retry. A failed search keeps the previous query's items: those are not shown with it.
     val error = state.error?.takeIf { query.isNotBlank() && state.query == query }
