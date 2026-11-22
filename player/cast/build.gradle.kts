@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 java { toolchain { languageVersion = Versions.JAVA } }
@@ -42,7 +43,6 @@ dependencies {
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-    implementation(libs.jellyfin.core)
     implementation(libs.timber)
 
     // Only the proprietary flavor has Google Cast; libre gets none of it.

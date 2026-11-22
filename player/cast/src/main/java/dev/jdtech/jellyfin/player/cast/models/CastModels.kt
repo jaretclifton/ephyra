@@ -1,8 +1,8 @@
 package dev.jdtech.jellyfin.player.cast.models
 
+import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.player.core.domain.models.Track
-import org.jellyfin.sdk.model.api.PlaybackInfoResponse
 
 enum class CastConnectionState {
     DISCONNECTED,
@@ -76,7 +76,8 @@ data class CastPlayerState(
 
 data class CastMediaItem(
     val item: PlayerItem,
-    val playbackInfo: PlaybackInfoResponse? = null,
+    /** The source the receiver plays, as the server adapter made it for a receiver (#767). */
+    val source: FindroidSource? = null,
     val subtitleTracks: List<Track> = emptyList(),
     val audioTracks: List<Track> = emptyList(),
 )

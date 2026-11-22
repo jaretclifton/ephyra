@@ -30,9 +30,16 @@ import dev.jdtech.jellyfin.presentation.utils.VideoQualities
  * CE (#372): every download the user starts passes here, so this is where the notification
  * permission is asked for, right after the download has started. The download never waits for the
  * answer.
+ *
+ * #769: [capped] is whether the server can transcode a download down to a cap; without it the only
+ * choice is the original.
  */
 @Composable
-fun DownloadQualityDialog(onSelect: (maxBitrate: Int?) -> Unit, onDismiss: () -> Unit) {
+fun DownloadQualityDialog(
+    capped: Boolean,
+    onSelect: (maxBitrate: Int?) -> Unit,
+    onDismiss: () -> Unit,
+) {
     val lazyListState = rememberLazyListState()
     val requestNotificationPermission = LocalNotificationPermissionRequest.current
 
@@ -44,7 +51,7 @@ fun DownloadQualityDialog(onSelect: (maxBitrate: Int?) -> Unit, onDismiss: () ->
             modifier = Modifier.fillMaxWidth().weight(1f, fill = false),
             state = lazyListState,
         ) {
-            items(items = VideoQualities.bitrates, key = { it }) { bitrate ->
+            items(items = VideoQualities.downloadChoices(capped), key = { it }) { bitrate ->
                 Text(
                     text =
                         VideoQualities.label(bitrate)
@@ -73,5 +80,5 @@ fun DownloadQualityDialog(onSelect: (maxBitrate: Int?) -> Unit, onDismiss: () ->
 @Preview
 @Composable
 private fun DownloadQualityDialogPreview() {
-    FindroidTheme { DownloadQualityDialog(onSelect = {}, onDismiss = {}) }
+    FindroidTheme { DownloadQualityDialog(capped = true, onSelect = {}, onDismiss = {}) }
 }

@@ -15,4 +15,5 @@ data class PreferenceSwitch(
     val onClick: (PreferenceSwitch) -> Unit = {},
     val backendPreference: PreferenceBackend<Boolean>,
     val value: Boolean = false,
+    override val serverFeature: ServerFeature? = null,
 ) : Preference

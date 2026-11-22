@@ -10,6 +10,11 @@ data class EpisodeState(
     val actors: List<FindroidItemPerson> = emptyList(),
     val error: Exception? = null,
     /**
+     * #769: whether a download can be transcoded down to a chosen quality. Without it the quality
+     * dialog offers the original only.
+     */
+    val cappedDownloads: Boolean = true,
+    /**
      * CE (#630): the "Use episode images" setting. The phone page's header shows the episode's own
      * image with it and the show's backdrop without, like the card that led here.
      */

@@ -4,10 +4,12 @@ import android.content.Context
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.CatalogPort
 import dev.jdtech.jellyfin.domain.ports.ItemQuery
+import dev.jdtech.jellyfin.domain.ports.MediaServer
+import dev.jdtech.jellyfin.domain.ports.PlaybackReport
+import dev.jdtech.jellyfin.domain.ports.PlaybackRequest
 import dev.jdtech.jellyfin.models.EpisodeField
 import dev.jdtech.jellyfin.models.FindroidCollection
 import dev.jdtech.jellyfin.models.FindroidEpisode
@@ -23,6 +25,7 @@ import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
+import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
@@ -33,15 +36,6 @@ import dev.jdtech.jellyfin.models.toFindroidSeason
 import dev.jdtech.jellyfin.models.toFindroidSegment
 import dev.jdtech.jellyfin.models.toFindroidShow
 import dev.jdtech.jellyfin.models.toFindroidSource
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
-import dev.jdtech.jellyfin.server.jellyfin.mappers.MapperContext
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidEpisode
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidMovie
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSeason
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSegment
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidShow
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSource
-import dev.jdtech.jellyfin.server.jellyfin.toResumeThresholds
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.File
 import java.time.LocalDateTime
@@ -59,28 +53,26 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jellyfin.sdk.model.api.DeviceOptionsDto
-import org.jellyfin.sdk.model.api.GeneralCommandType
-import org.jellyfin.sdk.model.api.MediaType
-import org.jellyfin.sdk.model.api.PlaybackInfoDto
-import org.jellyfin.sdk.model.api.PlaybackOrder
-import org.jellyfin.sdk.model.api.PlaybackProgressInfo
-import org.jellyfin.sdk.model.api.PlaybackStartInfo
-import org.jellyfin.sdk.model.api.PlaybackStopInfo
-import org.jellyfin.sdk.model.api.RepeatMode
 import timber.log.Timber
 
 class JellyfinRepositoryImpl(
     private val context: Context,
-    private val jellyfinApi: JellyfinApi,
-    private val catalog: CatalogPort,
+    private val server: MediaServer,
     private val database: ServerDatabaseDao,
     private val appPreferences: AppPreferences,
-    private val deviceProfiles: JellyfinDeviceProfiles,
     private val syncRequester: UserDataSyncRequester = UserDataSyncRequester.NONE,
     private val knownServerState: KnownServerState = KnownServerState.NONE,
     private val storedLibraryNames: StoredLibraryNames = StoredLibraryNames.ENGLISH,
+    /** CE (#637): the resume settings read from each server, kept for the stops made offline. */
+    private val resumeThresholds: ResumeThresholdsStore =
+        ResumeThresholdsStore(appPreferences.sharedPreferences),
 ) : JellyfinRepository {
+    override val capabilities: ServerCapabilities
+        get() = server.capabilities
+
+    private val catalog: CatalogPort
+        get() = server.catalog
+
     private val playSessions = PlaySessions()
 
     private val storedLists = StoredLists(database)
@@ -133,8 +125,6 @@ class JellyfinRepositoryImpl(
         return suspend { storedLists.toItems(dtos, serverId, currentUserId) }
     }
 
-    private val resumeThresholds = ResumeThresholdsStore(appPreferences.sharedPreferences)
-
     private fun currentServerId(): String? = appPreferences.getValue(appPreferences.currentServer)
 
     /**
@@ -142,11 +132,12 @@ class JellyfinRepositoryImpl(
      * follow them. A failure keeps the last ones read, or Jellyfin's defaults.
      */
     private suspend fun readResumeThresholds() {
+        // #769: a server without its own thresholds leaves the defaults.
+        if (!capabilities.serverResumeThresholds) return
         val serverId = currentServerId() ?: return
         if (resumeThresholds.isFresh(serverId)) return
         try {
-            val configuration = jellyfinApi.systemApi.getConfiguration().content
-            resumeThresholds.put(serverId, configuration.toResumeThresholds())
+            server.playback.resumeThresholds()?.let { resumeThresholds.put(serverId, it) }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -156,7 +147,7 @@ class JellyfinRepositoryImpl(
 
     private val currentUserId: UUID
         get() =
-            jellyfinApi.userId
+            server.session.userId
                 ?: throw IllegalStateException(
                     "No authenticated user. userId is null — session may have expired."
                 )
@@ -522,35 +513,18 @@ class JellyfinRepositoryImpl(
         maxBitrate: Int?,
     ): List<FindroidSource> =
         withContext(Dispatchers.IO) {
-            // The downloader's path. The profile direct-plays everything (→ original
-            // file) unless transcodeDolbyVision is set (Dolby Vision routed through a
-            // progressive H.264 transcode) or the user picked a download quality cap
-            // (files over the cap transcoded down to it). Everything else stays the
-            // original file.
+            // The downloader's path: the original file, or a transcode for Dolby Vision or a
+            // download quality cap (JellyfinPlayback).
             val sources = mutableListOf<FindroidSource>()
             sources.addAll(
-                jellyfinApi.mediaInfoApi
-                    .getPostedPlaybackInfo(
-                        itemId,
-                        PlaybackInfoDto(
-                            userId = currentUserId,
-                            deviceProfile =
-                                deviceProfiles.profileFor(
-                                    PlaybackTarget.Download(transcodeDolbyVision),
-                                    bitrateCapped = maxBitrate != null,
-                                ),
-                            maxStreamingBitrate = maxBitrate ?: 1_000_000_000,
-                            enableTranscoding = transcodeDolbyVision || maxBitrate != null,
-                            // Force a real video re-encode when a transcode happens —
-                            // never let the server copy the DV bitstream into the
-                            // container, and never let a stream copy defeat the cap.
-                            allowVideoStreamCopy = false,
-                            allowAudioStreamCopy = true,
-                        ),
+                server.playback.sources(
+                    PlaybackRequest(
+                        itemId = itemId,
+                        target = PlaybackTarget.Download(transcodeDolbyVision),
+                        maxBitrate = maxBitrate,
+                        includePath = includePath,
                     )
-                    .content
-                    .mediaSources
-                    .map { it.toFindroidSource(mapperContext(), itemId, includePath) }
+                )
             )
             // CE (#718): the current server's download of the item, not another server's.
             currentServerId()?.let { serverId ->
@@ -585,48 +559,21 @@ class JellyfinRepositoryImpl(
                 return@withContext localSources
             }
 
-            // mpv software-decodes practically everything, so it stays on the permissive
-            // direct-play profile. ExoPlayer gets the honest, hardware-probed profile so
-            // the server transcodes anything it cannot direct-play, such as Dolby Vision
-            // without a DV decoder (JellyfinDeviceProfiles.profileFor).
-            val target = localPlayerTarget()
-            val useDirectPlay = target.engine == PlayerEngineId.MPV
             // User-selected bitrate cap (player quality selector). 0 = original quality.
-            // Files above the cap get a server-side transcode; files below it still
-            // direct-play. mpv's plain profile has no transcoding profiles, so a cap
-            // switches it to the variant that carries the HLS fallback.
             val maxBitrate =
                 appPreferences.getValue(appPreferences.playerMaxBitrate).takeIf { it > 0 }
-            val deviceProfile =
-                deviceProfiles.profileFor(target, bitrateCapped = maxBitrate != null)
-            val enableTranscoding = !useDirectPlay || maxBitrate != null
             val sources = mutableListOf<FindroidSource>()
-            val playbackInfo =
-                jellyfinApi.mediaInfoApi
-                    .getPostedPlaybackInfo(
-                        itemId,
-                        PlaybackInfoDto(
-                            userId = currentUserId,
-                            deviceProfile = deviceProfile,
-                            maxStreamingBitrate = maxBitrate ?: deviceProfile.maxStreamingBitrate,
-                            enableTranscoding = enableTranscoding,
-                            allowVideoStreamCopy = true,
-                            allowAudioStreamCopy = true,
-                            autoOpenLiveStream = enableTranscoding,
-                            // CE (#580): the server ignores the index without the source's id.
-                            mediaSourceId = mediaSourceId.takeIf { audioStreamIndex != null },
-                            audioStreamIndex = audioStreamIndex.takeIf { mediaSourceId != null },
-                        ),
-                    )
-                    .content
-            // CE (#728): each transcode carries its play session; the player records it when it
-            // loads the stream (setPlaySession), not here: a switch that fails keeps the old one.
-            val playSessionId = playbackInfo.playSessionId?.takeIf { it.isNotBlank() }
             sources.addAll(
-                playbackInfo.mediaSources.map {
-                    val source = it.toFindroidSource(mapperContext(), itemId, includePath = true)
-                    if (source.transcoded) source.copy(playSessionId = playSessionId) else source
-                }
+                server.playback.sources(
+                    PlaybackRequest(
+                        itemId = itemId,
+                        target = localPlayerTarget(),
+                        mediaSourceId = mediaSourceId,
+                        audioStreamIndex = audioStreamIndex,
+                        maxBitrate = maxBitrate,
+                        includePath = true,
+                    )
+                )
             )
             sources.addAll(localSources)
             sources
@@ -656,11 +603,7 @@ class JellyfinRepositoryImpl(
     override suspend fun getStreamUrl(itemId: UUID, mediaSourceId: String): String =
         withContext(Dispatchers.IO) {
             try {
-                jellyfinApi.videoApi.getVideoStreamUrl(
-                    itemId,
-                    static = true,
-                    mediaSourceId = mediaSourceId,
-                )
+                server.playback.streamUrl(itemId, mediaSourceId)
             } catch (e: Exception) {
                 Timber.e(e)
                 ""
@@ -680,13 +623,10 @@ class JellyfinRepositoryImpl(
 
     override suspend fun getServerSegments(itemId: UUID): List<FindroidSegment> =
         withContext(Dispatchers.IO) {
+            // #769: the player and the downloads ask here; without segments they get none.
+            if (!capabilities.mediaSegments) return@withContext emptyList()
             try {
-                val apiSegments =
-                    jellyfinApi.mediaSegmentApi.getItemSegments(itemId).content.items.map {
-                        it.toFindroidSegment()
-                    }
-
-                return@withContext apiSegments
+                return@withContext server.playback.segments(itemId)
             } catch (e: Exception) {
                 Timber.e(e)
                 return@withContext emptyList()
@@ -705,9 +645,9 @@ class JellyfinRepositoryImpl(
                     Timber.e(e, "Failed to read local trickplay data")
                 }
 
-                return@withContext jellyfinApi.trickPlayApi
-                    .getTrickplayTileImage(itemId, width, index)
-                    .content
+                // #769: the player and the downloads ask here; without trickplay they get none.
+                if (!capabilities.trickplay) return@withContext null
+                return@withContext server.playback.trickplayTile(itemId, width, index)
             } catch (_: Exception) {
                 return@withContext null
             }
@@ -737,28 +677,7 @@ class JellyfinRepositoryImpl(
 
     override suspend fun postCapabilities() {
         Timber.d("Sending capabilities")
-        withContext(Dispatchers.IO) {
-            jellyfinApi.sessionApi.postCapabilities(
-                playableMediaTypes = listOf(MediaType.VIDEO),
-                supportedCommands =
-                    listOf(
-                        GeneralCommandType.VOLUME_UP,
-                        GeneralCommandType.VOLUME_DOWN,
-                        GeneralCommandType.TOGGLE_MUTE,
-                        GeneralCommandType.SET_AUDIO_STREAM_INDEX,
-                        GeneralCommandType.SET_SUBTITLE_STREAM_INDEX,
-                        GeneralCommandType.MUTE,
-                        GeneralCommandType.UNMUTE,
-                        GeneralCommandType.SET_VOLUME,
-                        GeneralCommandType.DISPLAY_MESSAGE,
-                        GeneralCommandType.PLAY,
-                        GeneralCommandType.PLAY_STATE,
-                        GeneralCommandType.PLAY_NEXT,
-                        GeneralCommandType.PLAY_MEDIA_SOURCE,
-                    ),
-                supportsMediaControl = true,
-            )
-        }
+        server.playback.announceCapabilities()
     }
 
     override fun setPlaySession(itemId: UUID, playSessionId: String?, transcodes: Boolean) =
@@ -767,23 +686,21 @@ class JellyfinRepositoryImpl(
     override suspend fun postPlaybackStart(itemId: UUID, transcoded: Boolean) {
         // CE (#599): Transcode with the transcode's play session, see PlaySessions.playReport.
         val report = playSessions.playReport(itemId, transcoded)
-        Timber.d("Sending start $itemId, ${report.playMethod}")
+        Timber.d("Sending start $itemId, transcoded: ${report.transcoded}")
         withContext(Dispatchers.IO) {
             // CE (#637): read alongside the start report, not before it, so a slow or failing read
             // does not hold up the start. The player waits for this call before it reports the
             // stop (up to 5 s), so the stop of this item still has them.
             coroutineScope {
                 launch { readResumeThresholds() }
-                jellyfinApi.sessionApi.reportPlaybackStart(
-                    PlaybackStartInfo(
+                server.playback.reportStart(
+                    PlaybackReport(
                         itemId = itemId,
-                        canSeek = true,
+                        // The start sends no position.
+                        positionTicks = 0L,
                         isPaused = false,
-                        isMuted = false,
-                        playMethod = report.playMethod,
+                        transcoded = report.transcoded,
                         playSessionId = report.playSessionId,
-                        repeatMode = RepeatMode.REPEAT_NONE,
-                        playbackOrder = PlaybackOrder.DEFAULT,
                     )
                 )
             }
@@ -807,16 +724,16 @@ class JellyfinRepositoryImpl(
                     thresholds = resumeThresholds.get(currentServerId()),
                 )
             val stop = suspend {
-                jellyfinApi.sessionApi.reportPlaybackStopped(
-                    PlaybackStopInfo(
+                server.playback.reportStopped(
+                    PlaybackReport(
                         itemId = itemId,
                         positionTicks = positionTicks,
-                        failed = false,
+                        isPaused = false,
+                        transcoded = false,
                         // With it the server ends the item's transcode now, not a minute later.
                         playSessionId = playSessions.sessionOf(itemId),
                     )
                 )
-                Unit
             }
             if (userData == null) {
                 // Nothing local changes without user data, so there is nothing to sync later.
@@ -848,17 +765,13 @@ class JellyfinRepositoryImpl(
             reportUserData(
                 itemId,
                 report = {
-                    jellyfinApi.sessionApi.reportPlaybackProgress(
-                        PlaybackProgressInfo(
+                    server.playback.reportProgress(
+                        PlaybackReport(
                             itemId = itemId,
-                            canSeek = true,
-                            isPaused = isPaused,
-                            isMuted = false,
-                            playMethod = report.playMethod,
-                            playSessionId = report.playSessionId,
-                            repeatMode = RepeatMode.REPEAT_NONE,
-                            playbackOrder = PlaybackOrder.DEFAULT,
                             positionTicks = positionTicks,
+                            isPaused = isPaused,
+                            transcoded = report.transcoded,
+                            playSessionId = report.playSessionId,
                         )
                     )
                 },
@@ -872,8 +785,8 @@ class JellyfinRepositoryImpl(
 
     override suspend fun markAsFavorite(itemId: UUID) {
         withContext(Dispatchers.IO) {
-            reportUserData(itemId, report = { jellyfinApi.userDataApi.markFavoriteItem(itemId) }) {
-                userId ->
+            reportUserData(itemId, report = { server.userData.setFavorite(itemId, true) }) { userId
+                ->
                 setFavorite(userId, itemId, true)
             }
         }
@@ -881,10 +794,8 @@ class JellyfinRepositoryImpl(
 
     override suspend fun unmarkAsFavorite(itemId: UUID) {
         withContext(Dispatchers.IO) {
-            reportUserData(
-                itemId,
-                report = { jellyfinApi.userDataApi.unmarkFavoriteItem(itemId) },
-            ) { userId ->
+            reportUserData(itemId, report = { server.userData.setFavorite(itemId, false) }) { userId
+                ->
                 setFavorite(userId, itemId, false)
             }
         }
@@ -892,8 +803,7 @@ class JellyfinRepositoryImpl(
 
     override suspend fun markAsPlayed(itemId: UUID) {
         withContext(Dispatchers.IO) {
-            reportUserData(itemId, report = { jellyfinApi.userDataApi.markPlayedItem(itemId) }) {
-                userId ->
+            reportUserData(itemId, report = { server.userData.setPlayed(itemId, true) }) { userId ->
                 setPlayed(userId, itemId, true)
                 // CE (#633): as the server does for a played mark without a date.
                 setLastPlayedDateIfUnknown(userId, itemId, System.currentTimeMillis())
@@ -907,10 +817,8 @@ class JellyfinRepositoryImpl(
             // after a timeout must not make the mark look later than a play elsewhere meanwhile.
             val markedAt = System.currentTimeMillis()
             val reached =
-                reportUserData(
-                    itemId,
-                    report = { jellyfinApi.userDataApi.markUnplayedItem(itemId) },
-                ) { userId ->
+                reportUserData(itemId, report = { server.userData.setPlayed(itemId, false) }) {
+                    userId ->
                     setPlayed(userId, itemId, false)
                     // CE (#635): kept until the sync sends the mark, which cannot clear the
                     // server's; with it the sync sees the mark is not older than the play it
@@ -933,47 +841,29 @@ class JellyfinRepositoryImpl(
         return writeAndReport(database, syncRequester, userId, itemId, { write(userId) }, report)
     }
 
-    override fun getBaseUrl() = jellyfinApi.api.baseUrl.orEmpty()
-
-    /**
-     * What the mappers need from the current server. Built at each mapping, never kept: the base
-     * URL changes when the user switches server.
-     */
-    private fun mapperContext() =
-        MapperContext(
-            baseUrl = getBaseUrl(),
-            streamUrl = { id, source -> getStreamUrl(id, source) },
-        )
+    override fun getBaseUrl() = server.session.baseUrl.orEmpty()
 
     override fun chapterImageUrl(itemId: UUID, chapterIndex: Int, tag: String) =
-        chapterImageUrl(getBaseUrl(), itemId, chapterIndex, tag)
+        server.playback.chapterImageUrl(itemId, chapterIndex, tag)
 
-    override fun seasonBackdropUrl(seasonId: UUID) = seasonBackdropUrl(getBaseUrl(), seasonId)
+    override fun seasonBackdropUrl(seasonId: UUID) = server.playback.seasonBackdropUrl(seasonId)
 
     override suspend fun updateDeviceName(name: String) {
-        withContext(Dispatchers.IO) {
-            jellyfinApi.jellyfin.deviceInfo?.id?.let { id ->
-                jellyfinApi.deviceApi.updateDeviceOptions(
-                    id,
-                    DeviceOptionsDto(0, customName = name),
-                )
-            }
-        }
+        // #769: nothing in the app renames the device yet; a server that cannot is not asked.
+        if (!capabilities.deviceRename) return
+        server.session.updateDeviceName(name)
     }
 
     override suspend fun refreshCurrentUserImage() {
-        withContext(Dispatchers.IO) {
-            val user = jellyfinApi.userApi.getCurrentUser().content
-            database.updateUserPrimaryImageTag(user.id, user.primaryImageTag)
-        }
+        // The row of the user the server answered for, which is the one whose token went out: a
+        // switch of user around the request cannot give the tag to another user's row.
+        val image = server.session.currentUserImage()
+        withContext(Dispatchers.IO) { database.updateUserPrimaryImageTag(image.userId, image.tag) }
     }
 
+    // #769: the player asks here; a server without the setting has none, as the interface says.
     override suspend fun autoPlayNextEpisode(): Boolean? =
-        withContext(Dispatchers.IO) {
-            val configuration = jellyfinApi.userApi.getCurrentUser().content.configuration
-            if (configuration == null) Timber.w("The server gave no user configuration")
-            configuration?.enableNextEpisodeAutoPlay
-        }
+        if (capabilities.autoPlayNextSetting) server.session.autoPlayNextEpisode() else null
 
     override suspend fun getDownloads(): List<FindroidItem> =
         withContext(Dispatchers.IO) {

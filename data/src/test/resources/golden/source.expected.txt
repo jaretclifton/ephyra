@@ -29,6 +29,7 @@ FindroidSource(
         deliveryMethod = EXTERNAL
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = ""
@@ -53,6 +54,7 @@ FindroidSource(
         deliveryMethod = EXTERNAL
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = ""
@@ -77,6 +79,7 @@ FindroidSource(
         deliveryMethod = EXTERNAL
         isForced = true
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = ""
@@ -101,6 +104,7 @@ FindroidSource(
         deliveryMethod = null
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = "English Stereo"
@@ -125,6 +129,7 @@ FindroidSource(
         deliveryMethod = null
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = "Dutch 5.1"
@@ -149,6 +154,7 @@ FindroidSource(
         deliveryMethod = null
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = ""
@@ -173,6 +179,7 @@ FindroidSource(
         deliveryMethod = EXTERNAL
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = ""
@@ -197,6 +204,7 @@ FindroidSource(
         deliveryMethod = EXTERNAL
         isForced = true
         isDefault = false
+        isHearingImpaired = false
       )
   ]
   downloadId = null
@@ -205,6 +213,7 @@ FindroidSource(
   bitrate = 2290293
   defaultAudioStreamIndex = 4
   playSessionId = null
+  defaultSubtitleStreamIndex = 0
 )
 
 == direct, includePath = true
@@ -238,6 +247,7 @@ FindroidSource(
         deliveryMethod = EXTERNAL
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = ""
@@ -262,6 +272,7 @@ FindroidSource(
         deliveryMethod = EXTERNAL
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = ""
@@ -286,6 +297,7 @@ FindroidSource(
         deliveryMethod = EXTERNAL
         isForced = true
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = ""
@@ -310,6 +322,7 @@ FindroidSource(
         deliveryMethod = null
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = "English Stereo"
@@ -334,6 +347,7 @@ FindroidSource(
         deliveryMethod = null
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = "Dutch 5.1"
@@ -358,6 +372,7 @@ FindroidSource(
         deliveryMethod = null
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = ""
@@ -382,6 +397,7 @@ FindroidSource(
         deliveryMethod = EXTERNAL
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = ""
@@ -406,6 +422,7 @@ FindroidSource(
         deliveryMethod = EXTERNAL
         isForced = true
         isDefault = false
+        isHearingImpaired = false
       )
   ]
   downloadId = null
@@ -414,6 +431,7 @@ FindroidSource(
   bitrate = 2290293
   defaultAudioStreamIndex = 4
   playSessionId = null
+  defaultSubtitleStreamIndex = 0
 )
 
 == transcode, includePath = false
@@ -447,6 +465,7 @@ FindroidSource(
         deliveryMethod = EXTERNAL
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = ""
@@ -471,6 +490,7 @@ FindroidSource(
         deliveryMethod = EXTERNAL
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = ""
@@ -495,6 +515,7 @@ FindroidSource(
         deliveryMethod = EXTERNAL
         isForced = true
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = ""
@@ -519,6 +540,7 @@ FindroidSource(
         deliveryMethod = null
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = "English Stereo"
@@ -543,6 +565,7 @@ FindroidSource(
         deliveryMethod = null
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = "Dutch 5.1"
@@ -567,6 +590,7 @@ FindroidSource(
         deliveryMethod = null
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = ""
@@ -591,6 +615,7 @@ FindroidSource(
         deliveryMethod = EXTERNAL
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = ""
@@ -615,6 +640,7 @@ FindroidSource(
         deliveryMethod = EXTERNAL
         isForced = true
         isDefault = false
+        isHearingImpaired = false
       )
   ]
   downloadId = null
@@ -623,6 +649,7 @@ FindroidSource(
   bitrate = 2290293
   defaultAudioStreamIndex = 4
   playSessionId = null
+  defaultSubtitleStreamIndex = 0
 )
 
 == transcode, includePath = true
@@ -656,6 +683,7 @@ FindroidSource(
         deliveryMethod = EXTERNAL
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = ""
@@ -680,6 +708,7 @@ FindroidSource(
         deliveryMethod = EXTERNAL
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = ""
@@ -704,6 +733,7 @@ FindroidSource(
         deliveryMethod = EXTERNAL
         isForced = true
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = ""
@@ -728,6 +758,7 @@ FindroidSource(
         deliveryMethod = null
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = "English Stereo"
@@ -752,6 +783,7 @@ FindroidSource(
         deliveryMethod = null
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = "Dutch 5.1"
@@ -776,6 +808,7 @@ FindroidSource(
         deliveryMethod = null
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = ""
@@ -800,6 +833,7 @@ FindroidSource(
         deliveryMethod = EXTERNAL
         isForced = false
         isDefault = false
+        isHearingImpaired = false
       )
     - FindroidMediaStream(
         title = ""
@@ -824,6 +858,7 @@ FindroidSource(
         deliveryMethod = EXTERNAL
         isForced = true
         isDefault = false
+        isHearingImpaired = false
       )
   ]
   downloadId = null
@@ -832,4 +867,5 @@ FindroidSource(
   bitrate = 2290293
   defaultAudioStreamIndex = 4
   playSessionId = null
+  defaultSubtitleStreamIndex = 0
 )

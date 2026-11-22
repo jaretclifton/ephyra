@@ -34,6 +34,7 @@ FindroidMovie(
               deliveryMethod = null
               isForced = false
               isDefault = true
+              isHearingImpaired = false
             )
           - FindroidMediaStream(
               title = ""
@@ -58,6 +59,7 @@ FindroidMovie(
               deliveryMethod = null
               isForced = false
               isDefault = true
+              isHearingImpaired = false
             )
           - FindroidMediaStream(
               title = "Full"
@@ -82,6 +84,7 @@ FindroidMovie(
               deliveryMethod = EMBED
               isForced = true
               isDefault = false
+              isHearingImpaired = false
             )
           - FindroidMediaStream(
               title = ""
@@ -106,6 +109,7 @@ FindroidMovie(
               deliveryMethod = EXTERNAL
               isForced = false
               isDefault = false
+              isHearingImpaired = false
             )
         ]
         downloadId = null
@@ -114,6 +118,7 @@ FindroidMovie(
         bitrate = 8000000
         defaultAudioStreamIndex = 1
         playSessionId = null
+        defaultSubtitleStreamIndex = null
       )
     - FindroidSource(
         id = "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a2"
@@ -128,6 +133,7 @@ FindroidMovie(
         bitrate = null
         defaultAudioStreamIndex = null
         playSessionId = null
+        defaultSubtitleStreamIndex = null
       )
   ]
   played = false

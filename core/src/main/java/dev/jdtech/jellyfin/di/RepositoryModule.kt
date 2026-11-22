@@ -10,8 +10,11 @@ import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.reachability.ServerReachability
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.CatalogPort
+import dev.jdtech.jellyfin.domain.ports.CurrentServerCapabilities
 import dev.jdtech.jellyfin.domain.ports.DeviceCodecs
 import dev.jdtech.jellyfin.domain.ports.DeviceReportSource
+import dev.jdtech.jellyfin.domain.ports.MediaServer
+import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.models.CollectionType
 import dev.jdtech.jellyfin.player.DeviceCodecProbe
 import dev.jdtech.jellyfin.repository.DataChangeEvents
@@ -22,6 +25,9 @@ import dev.jdtech.jellyfin.repository.StoredLibraryNames
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinCatalog
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceReportSource
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinPlayback
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinUserData
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.work.UserDataSync
 import javax.inject.Singleton
@@ -59,26 +65,45 @@ object RepositoryModule {
     @Provides
     fun provideCatalogPort(jellyfinApi: JellyfinApi): CatalogPort = JellyfinCatalog(jellyfinApi)
 
+    /** CE (#757): the Jellyfin server the repository talks to, with its ports. */
+    @Singleton
+    @Provides
+    fun provideMediaServer(
+        jellyfinApi: JellyfinApi,
+        session: ServerSession,
+        catalog: CatalogPort,
+        deviceProfiles: JellyfinDeviceProfiles,
+    ): MediaServer =
+        JellyfinMediaServer(
+            session = session,
+            catalog = catalog,
+            userData = JellyfinUserData(jellyfinApi),
+            playback = JellyfinPlayback(jellyfinApi, deviceProfiles),
+        )
+
+    /** CE (#769): what the server in use can do, for code without a repository (settings). */
+    @Provides
+    fun provideCurrentServerCapabilities(server: MediaServer): CurrentServerCapabilities =
+        CurrentServerCapabilities {
+            server.capabilities
+        }
+
     @Singleton
     @Provides
     fun provideJellyfinRepositoryImpl(
         application: Application,
-        jellyfinApi: JellyfinApi,
-        catalog: CatalogPort,
+        server: MediaServer,
         serverDatabase: ServerDatabaseDao,
         appPreferences: AppPreferences,
-        deviceProfiles: JellyfinDeviceProfiles,
         userDataSync: UserDataSync,
         serverReachability: ServerReachability,
     ): JellyfinRepositoryImpl {
 
         return JellyfinRepositoryImpl(
             application,
-            jellyfinApi,
-            catalog,
+            server,
             serverDatabase,
             appPreferences,
-            deviceProfiles,
             userDataSync,
             serverReachability,
             // CE (#775): the stored libraries get the names the app uses for these kinds.

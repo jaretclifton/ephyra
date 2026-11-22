@@ -20,6 +20,9 @@ android {
 }
 
 dependencies {
+    // #769: ServerCapabilities and CurrentServerCapabilities, to hide what the server cannot do.
+    implementation(projects.domain)
+
     implementation(libs.timber)
 
     implementation(libs.androidx.compose.foundation)

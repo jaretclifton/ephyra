@@ -12,6 +12,11 @@ data class SeasonState(
     val seriesSeasons: List<FindroidSeason> = emptyList(),
     val episodeDownloadProgress: Map<UUID, DownloadProgress> = emptyMap(),
     val error: Exception? = null,
+    /**
+     * #769: whether a download can be transcoded down to a chosen quality. Without it the quality
+     * dialog offers the original only.
+     */
+    val cappedDownloads: Boolean = true,
     /** CE (#505): a load is running, so empty [episodes] may still be coming. */
     val isLoading: Boolean = false,
     /**

@@ -12,6 +12,7 @@ import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -57,7 +58,9 @@ class ServerSessionKeeperTest {
     private val preferences =
         AppPreferences(context.getSharedPreferences("session-keeper", Context.MODE_PRIVATE))
     private val session = FakeServerSession(ADDRESS, TOKEN, USER_ID)
-    private val keeper = ServerSessionKeeper(context, session, preferences, database)
+    private var capabilities = ServerCapabilities.ALL
+    private val keeper =
+        ServerSessionKeeper(context, session, preferences, database) { capabilities }
 
     /**
      * Runs [ServerSessionKeeper.onUnauthorized] off the main thread, as the keeper's scope does,
@@ -234,13 +237,18 @@ class ServerSessionKeeperTest {
         keeper.start()
 
         val until = System.currentTimeMillis() + 5_000
-        while (database.getServerCurrentUser(SERVER) != null) {
+        // Until the sign-out is through: the current user is cleared before the session is told,
+        // so an empty current user alone does not mean the session was switched yet.
+        while (session.uses.isEmpty()) {
             check(System.currentTimeMillis() < until) { "Not signed out" }
             // Again until the keeper's collector, which starts on its own scope, is there.
-            session.unauthorized.tryEmit(TOKEN)
+            if (database.getServerCurrentUser(SERVER) != null) {
+                session.unauthorized.tryEmit(TOKEN)
+            }
             shadowOf(Looper.getMainLooper()).idle()
             Thread.sleep(10)
         }
+        assertNull(database.getServerCurrentUser(SERVER))
         assertEquals(listOf(FakeServerSession.Use(ADDRESS, null, null)), session.uses)
     }
 
@@ -250,6 +258,28 @@ class ServerSessionKeeperTest {
         keeper.start()
         assertEquals(0, session.keepingAlive.get())
 
+        process.currentState = Lifecycle.State.STARTED
+        waitFor { session.keepingAlive.get() == 1 }
+
+        process.currentState = Lifecycle.State.CREATED
+        waitFor { session.keepingAlive.get() == 0 }
+    }
+
+    @Test
+    fun `#769 a server without the session socket gets none in the foreground`() {
+        capabilities = ServerCapabilities.ALL.copy(sessionSocket = false)
+        val process = ProcessLifecycleOwner.get().lifecycle as LifecycleRegistry
+        keeper.start()
+
+        process.currentState = Lifecycle.State.STARTED
+        // Long enough for a socket to have been opened, as in the test above.
+        Thread.sleep(300)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals(0, session.keepingAlive.get())
+
+        // The next return to the foreground asks again: a server that has it gets it.
+        process.currentState = Lifecycle.State.CREATED
+        capabilities = ServerCapabilities.ALL
         process.currentState = Lifecycle.State.STARTED
         waitFor { session.keepingAlive.get() == 1 }
 

@@ -6,7 +6,6 @@ import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.player.DolbyVisionLimit
 import dev.jdtech.jellyfin.player.ProbedCodecs
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import org.jellyfin.sdk.model.api.DeviceProfile
@@ -598,11 +597,18 @@ class JellyfinDeviceProfilesTest {
     }
 
     @Test
-    fun `a Cast receiver has no profile here yet`() {
+    fun `a Cast receiver gets the Chromecast profile, with HEVC when it plays it`() {
         val profiles = JellyfinDeviceProfiles(FakeCodecs(dvCodecs, displayDolbyVision = true))
 
-        assertFailsWith<IllegalArgumentException> {
-            profiles.profileFor(PlaybackTarget.CastReceiver(supportsHevc = true), false)
+        listOf(false, true).forEach { capped ->
+            assertEquals(
+                "Chromecast Video Profile (H.264)",
+                profiles.profileFor(PlaybackTarget.CastReceiver(supportsHevc = false), capped).name,
+            )
+            assertEquals(
+                "Chromecast Video Profile (HEVC)",
+                profiles.profileFor(PlaybackTarget.CastReceiver(supportsHevc = true), capped).name,
+            )
         }
     }
 }

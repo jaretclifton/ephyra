@@ -553,6 +553,7 @@ fun SeasonWideLayout(
 
         episodeQualityTarget?.let { episode ->
             DownloadQualityDialog(
+                capped = state.cappedDownloads,
                 onSelect = { maxBitrate ->
                     onAction(SeasonAction.DownloadEpisode(episode, maxBitrate))
                     episodeQualityTarget = null

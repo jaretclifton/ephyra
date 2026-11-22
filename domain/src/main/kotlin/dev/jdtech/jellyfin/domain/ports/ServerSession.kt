@@ -52,4 +52,20 @@ interface ServerSession {
 
     /** The URL of a user's profile picture, or null when no server is set. */
     fun userImageUrl(userId: UserId, tag: String): String?
+
+    /** #757: the name the server shows for this device. */
+    suspend fun updateDeviceName(name: String)
+
+    /** #757: the current user's next episode autoplay setting, null when the server gave none. */
+    suspend fun autoPlayNextEpisode(): Boolean?
+
+    /**
+     * #757: the profile picture of the user the token sent is for, as the server has it now. The
+     * user comes from the answer, not from [userId]: during a switch the token and the id are
+     * updated one after the other.
+     */
+    suspend fun currentUserImage(): UserImage
 }
+
+/** #757: a user and the tag of their profile picture, null when they have none. */
+data class UserImage(val userId: UserId, val tag: String?)

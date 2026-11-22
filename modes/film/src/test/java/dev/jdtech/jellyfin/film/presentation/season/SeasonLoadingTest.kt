@@ -8,6 +8,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidSeason
+import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.lang.reflect.Proxy
@@ -143,6 +144,8 @@ class SeasonLoadingTest {
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
+            // #769: Jellyfin can do everything.
+            if (method.name == "getCapabilities") return@newProxyInstance ServerCapabilities.ALL
             when (method.name) {
                 "getSeason" -> season()
                 "getEpisodes" -> {

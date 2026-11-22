@@ -25,6 +25,8 @@ import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.player.DolbyVisionLimit
 import dev.jdtech.jellyfin.player.ProbedCodecs
+import dev.jdtech.jellyfin.server.jellyfin.cast.Chromecast
+import dev.jdtech.jellyfin.server.jellyfin.cast.ChromecastH265
 import org.jellyfin.sdk.model.api.CodecProfile
 import org.jellyfin.sdk.model.api.CodecType
 import org.jellyfin.sdk.model.api.ContainerProfile
@@ -47,7 +49,7 @@ class JellyfinDeviceProfiles(private val codecs: DeviceCodecs) {
      *
      * mpv software-decodes practically everything, so it gets the permissive direct-play profile,
      * with the transcode fallback under a cap. ExoPlayer gets the honest, hardware-probed profile,
-     * cap or not. A Cast receiver has no profile here yet (#767).
+     * cap or not. A Cast receiver gets a Chromecast profile, with or without HEVC (#767).
      */
     fun profileFor(target: PlaybackTarget, bitrateCapped: Boolean): DeviceProfile =
         when (target) {
@@ -60,8 +62,10 @@ class JellyfinDeviceProfiles(private val codecs: DeviceCodecs) {
                 }
             is PlaybackTarget.Download ->
                 getDownloadProfile(target.transcodeDolbyVision, bitrateCapped)
+            // CE (#767): a receiver tells a sender nothing about its codecs; the caller decides
+            // whether it plays HEVC. A cap is sent as the request's maximum bitrate.
             is PlaybackTarget.CastReceiver ->
-                throw IllegalArgumentException("No Jellyfin device profile for $target yet (#767)")
+                if (target.supportsHevc) ChromecastH265.deviceProfile else Chromecast.deviceProfile
         }
 
     /**

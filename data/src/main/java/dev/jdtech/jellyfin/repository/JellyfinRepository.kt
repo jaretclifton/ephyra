@@ -14,6 +14,7 @@ import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
+import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
@@ -21,6 +22,11 @@ import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
 interface JellyfinRepository {
+    /**
+     * #769: what the server in use can do. It changes with the server: read it when a screen loads.
+     */
+    val capabilities: ServerCapabilities
+
     suspend fun getServerInfo(): ServerInfo
 
     /** The libraries the current user sees, in the server's order, of the supported types only. */

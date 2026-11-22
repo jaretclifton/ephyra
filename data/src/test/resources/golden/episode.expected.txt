@@ -37,6 +37,7 @@ FindroidEpisode(
               deliveryMethod = null
               isForced = false
               isDefault = false
+              isHearingImpaired = false
             )
           - FindroidMediaStream(
               title = ""
@@ -61,6 +62,7 @@ FindroidEpisode(
               deliveryMethod = null
               isForced = false
               isDefault = false
+              isHearingImpaired = false
             )
         ]
         downloadId = null
@@ -69,6 +71,7 @@ FindroidEpisode(
         bitrate = 428181
         defaultAudioStreamIndex = 1
         playSessionId = null
+        defaultSubtitleStreamIndex = null
       )
   ]
   played = true

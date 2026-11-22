@@ -277,6 +277,7 @@ fun EpisodeWideContent(
 
         if (downloadQualityDialogOpen) {
             DownloadQualityDialog(
+                capped = state.cappedDownloads,
                 onSelect = { maxBitrate ->
                     state.episode?.let { episode ->
                         onDownloaderAction(DownloaderAction.Download(episode, maxBitrate))

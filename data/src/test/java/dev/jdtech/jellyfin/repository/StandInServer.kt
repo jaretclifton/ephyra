@@ -4,9 +4,11 @@ import android.content.Context
 import android.provider.Settings
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.domain.ports.MediaServer
+import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.player.DeviceCodecProbe
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinCatalog
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.Closeable
 import java.io.InputStream
@@ -140,18 +142,21 @@ internal fun StandInServer.repository(
     context: Context = StandInServer.context(),
     database: ServerDatabaseDao = StandInServer.noDownloads(),
     preferences: AppPreferences = StandInServer.preferences(context),
+    /** #769: what the server says it can do; a Jellyfin server can do everything. */
+    capabilities: ServerCapabilities = ServerCapabilities.ALL,
 ): JellyfinRepositoryImpl {
     val api =
         JellyfinApi(context).apply {
             api.update(baseUrl = baseUrl, accessToken = "token")
             userId = StandInServer.USER_ID
         }
+    val jellyfin = JellyfinMediaServer(api, JellyfinDeviceProfiles(DeviceCodecProbe(context)))
     return JellyfinRepositoryImpl(
         context,
-        api,
-        JellyfinCatalog(api),
+        object : MediaServer by jellyfin {
+            override val capabilities = capabilities
+        },
         database,
         preferences,
-        JellyfinDeviceProfiles(DeviceCodecProbe(context)),
     )
 }

@@ -1,0 +1,235 @@
+package dev.jdtech.jellyfin.server.jellyfin
+
+import dev.jdtech.jellyfin.api.JellyfinApi
+import dev.jdtech.jellyfin.domain.ports.PlaybackPort
+import dev.jdtech.jellyfin.domain.ports.PlaybackReport
+import dev.jdtech.jellyfin.domain.ports.PlaybackRequest
+import dev.jdtech.jellyfin.models.FindroidSegment
+import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.MediaSourceId
+import dev.jdtech.jellyfin.models.PlaybackTarget
+import dev.jdtech.jellyfin.models.PlayerEngineId
+import dev.jdtech.jellyfin.repository.ResumeThresholds
+import dev.jdtech.jellyfin.server.jellyfin.cast.toReceiverSource
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSegment
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSource
+import org.jellyfin.sdk.model.api.GeneralCommandType
+import org.jellyfin.sdk.model.api.MediaType
+import org.jellyfin.sdk.model.api.PlayMethod
+import org.jellyfin.sdk.model.api.PlaybackInfoDto
+import org.jellyfin.sdk.model.api.PlaybackOrder
+import org.jellyfin.sdk.model.api.PlaybackProgressInfo
+import org.jellyfin.sdk.model.api.PlaybackStartInfo
+import org.jellyfin.sdk.model.api.PlaybackStopInfo
+import org.jellyfin.sdk.model.api.RepeatMode
+
+/**
+ * [PlaybackPort] over the Jellyfin SDK (#757). No Room: the repository answers with a download
+ * before it asks here. Throws [dev.jdtech.jellyfin.models.ServerException] for every failure the
+ * SDK reports as one (see [asServerException]); anything else leaves as it is.
+ */
+class JellyfinPlayback(
+    private val api: JellyfinApi,
+    private val deviceProfiles: JellyfinDeviceProfiles,
+) : PlaybackPort {
+
+    override suspend fun sources(request: PlaybackRequest): List<FindroidSource> = call {
+        val playbackInfo =
+            api.mediaInfoApi.getPostedPlaybackInfo(request.itemId, playbackInfoOf(request)).content
+        // CE (#728): each transcode carries its play session; the player records it when it loads
+        // the stream (setPlaySession), not here: a switch that fails keeps the old one. A download
+        // is fetched once and has no session to end.
+        val playSessionId =
+            playbackInfo.playSessionId
+                ?.takeIf { it.isNotBlank() }
+                ?.takeIf { request.target !is PlaybackTarget.Download }
+        playbackInfo.mediaSources.map {
+            val source =
+                if (request.target is PlaybackTarget.CastReceiver) {
+                    it.toReceiverSource(api.mapperContext(), request.itemId, api.api.accessToken)
+                } else {
+                    it.toFindroidSource(api.mapperContext(), request.itemId, request.includePath)
+                }
+            if (source.transcoded && playSessionId != null) {
+                source.copy(playSessionId = playSessionId)
+            } else {
+                source
+            }
+        }
+    }
+
+    /**
+     * The body of the playback info request. The Jellyfin fields that follow from the target and
+     * the cap (the profile, transcoding, stream copies, the live stream) are derived here.
+     */
+    private fun playbackInfoOf(request: PlaybackRequest): PlaybackInfoDto {
+        val maxBitrate = request.maxBitrate
+        val capped = maxBitrate != null
+        return when (val target = request.target) {
+            is PlaybackTarget.LocalPlayer -> {
+                // mpv software-decodes practically everything, so it stays on the permissive
+                // direct-play profile. ExoPlayer gets the honest, hardware-probed profile so the
+                // server transcodes anything it cannot direct-play, such as Dolby Vision without a
+                // DV decoder (JellyfinDeviceProfiles.profileFor). A cap transcodes files above it;
+                // files below it still direct-play. mpv's plain profile has no transcoding
+                // profiles, so a cap switches it to the variant that carries the HLS fallback.
+                val deviceProfile = deviceProfiles.profileFor(target, bitrateCapped = capped)
+                val enableTranscoding = target.engine != PlayerEngineId.MPV || capped
+                PlaybackInfoDto(
+                    userId = api.currentUserId,
+                    deviceProfile = deviceProfile,
+                    maxStreamingBitrate = maxBitrate ?: deviceProfile.maxStreamingBitrate,
+                    enableTranscoding = enableTranscoding,
+                    allowVideoStreamCopy = true,
+                    allowAudioStreamCopy = true,
+                    autoOpenLiveStream = enableTranscoding,
+                    // CE (#580): the server ignores the index without the source's id.
+                    mediaSourceId =
+                        request.mediaSourceId.takeIf { request.audioStreamIndex != null },
+                    audioStreamIndex =
+                        request.audioStreamIndex.takeIf { request.mediaSourceId != null },
+                )
+            }
+            is PlaybackTarget.Download ->
+                // The profile direct-plays everything (→ original file) unless
+                // transcodeDolbyVision is set (Dolby Vision routed through a progressive H.264
+                // transcode) or the user picked a download quality cap (files over the cap
+                // transcoded down to it). Everything else stays the original file.
+                PlaybackInfoDto(
+                    userId = api.currentUserId,
+                    deviceProfile = deviceProfiles.profileFor(target, bitrateCapped = capped),
+                    maxStreamingBitrate = maxBitrate ?: DOWNLOAD_MAX_BITRATE,
+                    enableTranscoding = target.transcodeDolbyVision || capped,
+                    // Force a real video re-encode when a transcode happens — never let the server
+                    // copy the DV bitstream into the container, and never let a stream copy defeat
+                    // the cap.
+                    allowVideoStreamCopy = false,
+                    allowAudioStreamCopy = true,
+                )
+            is PlaybackTarget.CastReceiver ->
+                // As the Cast controller asks today: the source with or without an audio index, and
+                // no maximum bitrate when uncapped (#767).
+                PlaybackInfoDto(
+                    userId = api.currentUserId,
+                    mediaSourceId = request.mediaSourceId,
+                    deviceProfile = deviceProfiles.profileFor(target, bitrateCapped = capped),
+                    maxStreamingBitrate = maxBitrate,
+                    audioStreamIndex = request.audioStreamIndex,
+                    // The receiver plays a file's own default audio track and cannot be told to
+                    // play another, so a chosen track has to come out of the server.
+                    enableDirectPlay = request.audioStreamIndex == null,
+                    enableDirectStream = true,
+                    enableTranscoding = true,
+                    allowAudioStreamCopy = true,
+                    allowVideoStreamCopy = true,
+                )
+        }
+    }
+
+    override suspend fun streamUrl(itemId: ItemId, mediaSourceId: MediaSourceId): String = call {
+        api.videoApi.getVideoStreamUrl(itemId, static = true, mediaSourceId = mediaSourceId)
+    }
+
+    override suspend fun segments(itemId: ItemId): List<FindroidSegment> = call {
+        api.mediaSegmentApi.getItemSegments(itemId).content.items.map { it.toFindroidSegment() }
+    }
+
+    override suspend fun trickplayTile(itemId: ItemId, width: Int, index: Int): ByteArray? = call {
+        api.trickPlayApi.getTrickplayTileImage(itemId, width, index).content
+    }
+
+    override fun chapterImageUrl(itemId: ItemId, chapterIndex: Int, tag: String): String? =
+        chapterImageUrl(api.baseUrl(), itemId, chapterIndex, tag)
+
+    override fun seasonBackdropUrl(seasonId: ItemId): String? =
+        seasonBackdropUrl(api.baseUrl(), seasonId)
+
+    override suspend fun reportStart(report: PlaybackReport) {
+        call {
+            api.sessionApi.reportPlaybackStart(
+                PlaybackStartInfo(
+                    itemId = report.itemId,
+                    canSeek = true,
+                    isPaused = report.isPaused,
+                    isMuted = false,
+                    playMethod = report.playMethod(),
+                    playSessionId = report.playSessionId,
+                    repeatMode = RepeatMode.REPEAT_NONE,
+                    playbackOrder = PlaybackOrder.DEFAULT,
+                )
+            )
+        }
+    }
+
+    override suspend fun reportProgress(report: PlaybackReport) {
+        call {
+            api.sessionApi.reportPlaybackProgress(
+                PlaybackProgressInfo(
+                    itemId = report.itemId,
+                    canSeek = true,
+                    isPaused = report.isPaused,
+                    isMuted = false,
+                    playMethod = report.playMethod(),
+                    playSessionId = report.playSessionId,
+                    repeatMode = RepeatMode.REPEAT_NONE,
+                    playbackOrder = PlaybackOrder.DEFAULT,
+                    positionTicks = report.positionTicks,
+                )
+            )
+        }
+    }
+
+    override suspend fun reportStopped(report: PlaybackReport) {
+        call {
+            api.sessionApi.reportPlaybackStopped(
+                PlaybackStopInfo(
+                    itemId = report.itemId,
+                    positionTicks = report.positionTicks,
+                    failed = false,
+                    // With it the server ends the item's transcode now, not a minute later.
+                    playSessionId = report.playSessionId,
+                )
+            )
+        }
+    }
+
+    override suspend fun announceCapabilities() {
+        call {
+            api.sessionApi.postCapabilities(
+                playableMediaTypes = listOf(MediaType.VIDEO),
+                supportedCommands =
+                    listOf(
+                        GeneralCommandType.VOLUME_UP,
+                        GeneralCommandType.VOLUME_DOWN,
+                        GeneralCommandType.TOGGLE_MUTE,
+                        GeneralCommandType.SET_AUDIO_STREAM_INDEX,
+                        GeneralCommandType.SET_SUBTITLE_STREAM_INDEX,
+                        GeneralCommandType.MUTE,
+                        GeneralCommandType.UNMUTE,
+                        GeneralCommandType.SET_VOLUME,
+                        GeneralCommandType.DISPLAY_MESSAGE,
+                        GeneralCommandType.PLAY,
+                        GeneralCommandType.PLAY_STATE,
+                        GeneralCommandType.PLAY_NEXT,
+                        GeneralCommandType.PLAY_MEDIA_SOURCE,
+                    ),
+                supportsMediaControl = true,
+            )
+        }
+    }
+
+    /** CE (#637): Jellyfin always has resume settings, in its configuration. */
+    override suspend fun resumeThresholds(): ResumeThresholds? = call {
+        api.systemApi.getConfiguration().content.toResumeThresholds()
+    }
+
+    private companion object {
+        /** A download without a cap: no limit the server would apply. */
+        const val DOWNLOAD_MAX_BITRATE = 1_000_000_000
+    }
+}
+
+/** CE (#599): Transcode with the transcode's play session, else DirectPlay (see PlaySessions). */
+private fun PlaybackReport.playMethod(): PlayMethod =
+    if (transcoded) PlayMethod.TRANSCODE else PlayMethod.DIRECT_PLAY

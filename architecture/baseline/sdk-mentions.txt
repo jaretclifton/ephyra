@@ -1,9 +1,1 @@
-data/src/main/java/dev/jdtech/jellyfin/repository/JellyfinRepositoryImpl.kt
-data/src/main/java/dev/jdtech/jellyfin/repository/PlaySessions.kt
 data/src/main/java/dev/jdtech/jellyfin/repository/StoredFallback.kt
-player/cast/src/main/java/dev/jdtech/jellyfin/player/cast/models/CastModels.kt
-player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/CastPlayerControllerImpl.kt
-player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/CastTracks.kt
-player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/devices/Chromecast.kt
-player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/devices/ChromecastH265.kt
-setup/src/main/java/dev/jdtech/jellyfin/setup/data/SetupRepositoryImpl.kt

@@ -187,6 +187,7 @@ fun SeasonScreen(
             )
         DownloadPrompt.Quality ->
             DownloadQualityDialog(
+                capped = state.cappedDownloads,
                 onSelect = { maxBitrate -> viewModel.chooseQuality(maxBitrate) },
                 onDismiss = { viewModel.dismissDownloadPrompt() },
             )
@@ -473,6 +474,7 @@ private fun SeasonScreenLayout(
 
         episodeQualityTarget?.let { episode ->
             DownloadQualityDialog(
+                capped = state.cappedDownloads,
                 onSelect = { maxBitrate ->
                     onAction(SeasonAction.DownloadEpisode(episode, maxBitrate))
                     episodeQualityTarget = null

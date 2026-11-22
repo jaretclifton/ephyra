@@ -41,4 +41,10 @@ object VideoQualities {
             720_000 -> "360p - 720 kbps"
             else -> null
         }
+
+    /**
+     * #769: the rungs a download can be asked for: the whole ladder when the server can transcode a
+     * download down to one ([capped]), else the original only.
+     */
+    fun downloadChoices(capped: Boolean): List<Int> = if (capped) bitrates else listOf(0)
 }

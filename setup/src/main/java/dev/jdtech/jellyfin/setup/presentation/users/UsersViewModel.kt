@@ -45,6 +45,8 @@ constructor(private val repository: SetupRepository, private val profileLock: Pr
                 )
             )
 
+            // #769: a server type that lists no users is not asked for them.
+            if (!repository.capabilities.publicUsers) return@launch
             try {
                 val publicUsers = repository.getPublicUsers(server.id)
                 // Pick up changed profile pictures of the saved users.

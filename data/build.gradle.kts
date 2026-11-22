@@ -58,4 +58,6 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)
+    // #761: the SDK's server discovery logs through SLF4J, which the app gets from core.
+    testImplementation(libs.slf4j.api)
 }
