@@ -1264,7 +1264,18 @@ class DownloaderImpl(
         for (row in rows) {
             val status = row.downloadId?.let { snapshots[it]?.status }
             if (status == DownloadStatus.SUCCESSFUL) {
-                if (!finalizeMediaStream(row)) left = true
+                // CE (#848): the video is final by now. A subtitle whose rename or row fails is
+                // left to the job below and the start-up repair, and does not fail the download.
+                val finalized =
+                    try {
+                        finalizeMediaStream(row)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Timber.w(e, "Failed to finalize the subtitle at ${row.path}")
+                        false
+                    }
+                if (!finalized) left = true
             } else {
                 left = true
             }

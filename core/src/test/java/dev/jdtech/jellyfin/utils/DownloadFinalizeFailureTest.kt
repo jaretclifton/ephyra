@@ -8,9 +8,11 @@ import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.models.FindroidMediaStreamDto
 import dev.jdtech.jellyfin.models.FindroidMovieDto
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
@@ -58,6 +60,7 @@ class DownloadFinalizeFailureTest {
     /** Every request the server got, with its Range header. */
     private val requests = CopyOnWriteArrayList<String>()
     @Volatile private var failRoomWrite = false
+    @Volatile private var failSubtitleWrite = false
 
     private val engine =
         MediaDownloadEngine(
@@ -148,6 +151,19 @@ class DownloadFinalizeFailureTest {
     }
 
     @Test
+    fun `a failed subtitle write does not fail a finalized video`() {
+        val source = downloadingSource()
+        val subtitle = subtitleRow(source)
+        transfer(source)
+        transfer(SUBTITLE_ID, subtitle.path)
+        failSubtitleWrite = true
+
+        assertTrue(runBlocking { downloader().finalizeDownload(VIDEO_ID) })
+
+        assertFinalized(source)
+    }
+
+    @Test
     fun `a download renamed when the app stopped is finalized at the next start, not resumed`() {
         val source = downloadingSource()
         // The app stopped between the rename and the Room write: the engine of the new process
@@ -189,18 +205,44 @@ class DownloadFinalizeFailureTest {
 
     private fun final(source: FindroidSourceDto) = source.path.removeSuffix(".download")
 
-    private fun transfer(source: FindroidSourceDto) {
+    private fun subtitleRow(source: FindroidSourceDto): FindroidMediaStreamDto {
+        val id = UUID.randomUUID()
+        val row =
+            FindroidMediaStreamDto(
+                id = id,
+                sourceId = source.id,
+                title = "Deutsch",
+                displayTitle = null,
+                language = "deu",
+                type = MediaStreamType.SUBTITLE,
+                codec = "subrip",
+                isExternal = true,
+                path = File(root, "Movie (2024)/Movie (2024).$id.srt.download").absolutePath,
+                channelLayout = null,
+                videoRangeType = null,
+                height = null,
+                width = null,
+                videoDoViTitle = null,
+                downloadId = SUBTITLE_ID,
+            )
+        runBlocking { database().insertMediaStream(row) }
+        return row
+    }
+
+    private fun transfer(source: FindroidSourceDto) = transfer(VIDEO_ID, source.path)
+
+    private fun transfer(id: Long, path: String) {
         engine.start(
             MediaDownloadEngine.Request(
-                id = VIDEO_ID,
-                url = "http://server.test/video",
-                destFile = File(source.path),
+                id = id,
+                url = "http://server.test/$id",
+                destFile = File(path),
                 allowMetered = true,
                 allowRoaming = true,
             )
         )
         val deadline = System.currentTimeMillis() + 5_000
-        while (engine.snapshot(VIDEO_ID)?.status != DownloadStatus.SUCCESSFUL) {
+        while (engine.snapshot(id)?.status != DownloadStatus.SUCCESSFUL) {
             check(System.currentTimeMillis() < deadline) { "timed out" }
             Thread.sleep(10)
         }
@@ -249,6 +291,9 @@ class DownloadFinalizeFailureTest {
             if (failRoomWrite && method.name == "setSourceDownloaded") {
                 throw SQLiteFullException("database or disk is full")
             }
+            if (failSubtitleWrite && method.name == "setMediaStreamPath") {
+                throw SQLiteFullException("database or disk is full")
+            }
             try {
                 method.invoke(real, *(args ?: emptyArray()))
             } catch (e: InvocationTargetException) {
@@ -290,6 +335,7 @@ class DownloadFinalizeFailureTest {
 
     private companion object {
         const val VIDEO_ID = 1L
+        const val SUBTITLE_ID = 2L
         val USER_ID: UUID = UUID.fromString("00000000-0000-0000-0000-0000000000a1")
         val VIDEO = ByteArray(64) { it.toByte() }
     }
