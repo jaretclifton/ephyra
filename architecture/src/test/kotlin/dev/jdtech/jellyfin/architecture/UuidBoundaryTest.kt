@@ -58,6 +58,7 @@ class UuidBoundaryTest {
                 "val url = \"https://example.test/\${java.util.UUID.randomUUID()}\"\n",
                 "val raw = \"\"\"a // b\"\"\" + java.util.UUID.randomUUID()\n",
                 "val s = \"/* not a comment\" + java.util.UUID.randomUUID() + \"*/\"\n",
+                "/* outer /* inner */ \" */ val id = java.util.UUID.randomUUID()\n",
             )
         val notNamed =
             listOf(
@@ -68,6 +69,7 @@ class UuidBoundaryTest {
                 "import java.util.Locale\n\nval id: ItemId? = null // a UUID once\n",
                 "val q = '\"' // java.util.UUID\n",
                 "fun `a movie's id`() = 1 // java.util.UUID\n",
+                "/* outer /* inner */ java.util.UUID */ val id = 1\n",
             )
 
         assertEquals(named.map { true }, named.map(::namesUuid))
@@ -113,13 +115,24 @@ class UuidBoundaryTest {
                         out.append(" ")
                         i = end
                     }
+                    // Kotlin's block comments nest: the comment ends at the */ of its own /*.
                     at("/*") -> {
-                        val end =
-                            source.indexOf("*/", i + 2).let {
-                                if (it < 0) source.length else it + 2
+                        var depth = 0
+                        while (i < source.length) {
+                            when {
+                                at("/*") -> {
+                                    depth++
+                                    i += 2
+                                }
+                                at("*/") -> {
+                                    depth--
+                                    i += 2
+                                    if (depth == 0) break
+                                }
+                                else -> i++
                             }
+                        }
                         out.append(" ")
-                        i = end
                     }
                     at("\"\"\"") -> {
                         val end =
