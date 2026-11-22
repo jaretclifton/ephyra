@@ -1,46 +1,112 @@
 package dev.jdtech.jellyfin.testing
 
-import dev.jdtech.jellyfin.domain.ports.CatalogPort
 import dev.jdtech.jellyfin.domain.ports.MediaServer
 import dev.jdtech.jellyfin.domain.ports.ServerConnector
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerException
 
 // #771: the fake passes every suite, as the Jellyfin adapter does (`Jellyfin*ContractTest` in
-// server/jellyfin). The suites are what keep the fake honest.
+// server/jellyfin). The suites are what keep the fake honest. The `WithoutFeatures` classes are a
+// server type without the optional features: the capability-gated calls give nothing.
+
+/** The fakes the suites ask for, for a server with [capabilities]. */
+private fun fakes(capabilities: ServerCapabilities) =
+    object {
+        fun server(): MediaServer = FakeMediaServer(capabilities = capabilities)
+
+        fun failing(): MediaServer =
+            FakeMediaServer(capabilities = capabilities).apply {
+                failWith(ServerException.HttpStatus(500))
+            }
+
+        // A refused connection, as an adapter reports it (see `isUnanswered`).
+        fun unreachable(): MediaServer =
+            FakeMediaServer(capabilities = capabilities).apply {
+                failWith(ServerException.Timeout())
+            }
+
+        fun stalling(): MediaServer = FakeMediaServer(capabilities = capabilities).apply { stall() }
+    }
 
 class FakeMediaServerContractTest : CatalogContract() {
-    override fun catalog(): CatalogPort = FakeMediaServer().catalog
+    private val fakes = fakes(ServerCapabilities.ALL)
 
-    override fun failingCatalog(): CatalogPort =
-        FakeMediaServer().apply { failWith(ServerException.HttpStatus(500)) }.catalog
+    override fun server() = fakes.server()
+
+    override fun failingServer() = fakes.failing()
+
+    override fun unreachableServer() = fakes.unreachable()
+
+    override fun stallingServer() = fakes.stalling()
 }
 
-/** A server type without the optional features: the capability-gated calls give nothing. */
 class FakeMediaServerWithoutFeaturesContractTest : CatalogContract() {
-    override val capabilities = NONE
+    private val fakes = fakes(NONE)
 
-    override fun catalog(): CatalogPort = FakeMediaServer(capabilities = NONE).catalog
+    override fun server() = fakes.server()
 
-    override fun failingCatalog(): CatalogPort =
-        FakeMediaServer(capabilities = NONE)
-            .apply { failWith(ServerException.HttpStatus(500)) }
-            .catalog
+    override fun failingServer() = fakes.failing()
+
+    override fun unreachableServer() = fakes.unreachable()
+
+    override fun stallingServer() = fakes.stalling()
 }
 
 class FakeMediaServerUserDataContractTest : UserDataContract() {
-    override fun server(): MediaServer = FakeMediaServer()
+    private val fakes = fakes(ServerCapabilities.ALL)
+
+    override fun server() = fakes.server()
+
+    override fun failingServer() = fakes.failing()
+
+    override fun unreachableServer() = fakes.unreachable()
+
+    override fun stallingServer() = fakes.stalling()
 }
 
 class FakeMediaServerPlaybackContractTest : PlaybackContract() {
-    override fun server(): MediaServer = FakeMediaServer()
+    private val fakes = fakes(ServerCapabilities.ALL)
+
+    override fun server() = fakes.server()
+
+    override fun failingServer() = fakes.failing()
+
+    override fun unreachableServer() = fakes.unreachable()
+
+    override fun stallingServer() = fakes.stalling()
+}
+
+class FakeMediaServerPlaybackWithoutFeaturesContractTest : PlaybackContract() {
+    private val fakes = fakes(NONE)
+
+    override fun server() = fakes.server()
+
+    override fun failingServer() = fakes.failing()
+
+    override fun unreachableServer() = fakes.unreachable()
+
+    override fun stallingServer() = fakes.stalling()
 }
 
 class FakeServerConnectorContractTest : ServerConnectorContract() {
-    override fun connector(): ServerConnector = FakeServerConnector()
+    override fun connector(): ServerConnector =
+        FakeServerConnector(failingAddresses = setOf(FAILING_ADDRESS))
 
     override val address = ContractLibrary.address
+    override val failingAddress = FAILING_ADDRESS
+    override val unreachableAddress = "http://nothing.here"
 }
+
+class FakeServerConnectorWithoutFeaturesContractTest : ServerConnectorContract() {
+    override fun connector(): ServerConnector =
+        FakeServerConnector(capabilities = NONE, failingAddresses = setOf(FAILING_ADDRESS))
+
+    override val address = ContractLibrary.address
+    override val failingAddress = FAILING_ADDRESS
+    override val unreachableAddress = "http://nothing.here"
+}
+
+private const val FAILING_ADDRESS = "http://failing.server"
 
 private val NONE =
     ServerCapabilities(

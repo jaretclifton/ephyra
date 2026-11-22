@@ -1,6 +1,6 @@
 [
     {
-        "request": "POST /Items/00000000-0000-0000-0000-000000000101/PlaybackInfo",
+        "request": "POST /Items/00000000-0000-0000-0000-000000000101/PlaybackInfo {\"UserId\":\"00000000-0000-0000-0000-000000000001\",\"MaxStreamingBitrate\":1000000000,\"EnableTranscoding\":false,\"AllowVideoStreamCopy\":true,\"AllowAudioStreamCopy\":true,\"AutoOpenLiveStream\":false}",
         "status": 200,
         "contentType": "application/json; charset=utf-8",
         "json": {
@@ -100,7 +100,7 @@
                     "HasSegments": false
                 }
             ],
-            "PlaySessionId": "000000000000727a42baa19545923f0b"
+            "PlaySessionId": "000000000000b818d9b983f76e6fa317"
         }
     }
 ]

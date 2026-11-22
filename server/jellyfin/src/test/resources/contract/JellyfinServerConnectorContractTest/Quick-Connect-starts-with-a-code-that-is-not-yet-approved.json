@@ -11,28 +11,28 @@
         "contentType": "application/json; charset=utf-8",
         "json": {
             "Authenticated": false,
-            "Secret": "48A670725648958463F525F5074A7BAEEC6FDA6B7DCA5C4666835D2955FBB3D0",
-            "Code": "963459",
+            "Secret": "0000000000007f5627acd8394e6c971f5ac9d8c4cda760ef6c788c3084d86d73",
+            "Code": "620768",
             "DeviceId": "ephyra-contract-login",
             "DeviceName": "contract",
             "AppName": "Ephyra contract tests",
             "AppVersion": "1",
-            "DateAdded": "2026-11-22T08:44:45.308883Z"
+            "DateAdded": "2026-11-22T09:23:21.6494297Z"
         }
     },
     {
-        "request": "GET /QuickConnect/Connect?secret=48A670725648958463F525F5074A7BAEEC6FDA6B7DCA5C4666835D2955FBB3D0",
+        "request": "GET /QuickConnect/Connect?secret=0000000000007f5627acd8394e6c971f5ac9d8c4cda760ef6c788c3084d86d73",
         "status": 200,
         "contentType": "application/json; charset=utf-8",
         "json": {
             "Authenticated": false,
-            "Secret": "48A670725648958463F525F5074A7BAEEC6FDA6B7DCA5C4666835D2955FBB3D0",
-            "Code": "963459",
+            "Secret": "0000000000007f5627acd8394e6c971f5ac9d8c4cda760ef6c788c3084d86d73",
+            "Code": "620768",
             "DeviceId": "ephyra-contract-login",
             "DeviceName": "contract",
             "AppName": "Ephyra contract tests",
             "AppVersion": "1",
-            "DateAdded": "2026-11-22T08:44:45.308883Z"
+            "DateAdded": "2026-11-22T09:23:21.6494297Z"
         }
     }
 ]

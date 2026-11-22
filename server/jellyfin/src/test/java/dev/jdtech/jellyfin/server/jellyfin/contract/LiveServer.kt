@@ -95,6 +95,14 @@ private constructor(
             fakeToReal[library.episodeWithSegments.id.n()]?.let {
                 json(get("/MediaSegments/$it")).items()
             }
+        val realSeries = fakeToReal.getValue(library.series.id.n())
+        val themeSongs = json(get("/Items/$realSeries/ThemeSongs?userId=$userId")).items()
+        val movie = fakeToReal[library.movieWithResume.id.n()]
+        val similar = movie?.let { id ->
+            json(get("/Items/$id/Similar?userId=$userId&limit=12")).items().filterNot {
+                it.text("Id") == id
+            }
+        }
 
         userDataItems = (library.movies + library.episodes).mapNotNull { fakeToReal[it.id.n()] }
         check(userDataItems.size == library.movies.size + library.episodes.size) {
@@ -104,8 +112,29 @@ private constructor(
             if (boxSet == null) add(Part.BOX_SET)
             if (person == null) add(Part.PERSON)
             if (segments.isNullOrEmpty()) add(Part.SEGMENTS)
+            if (themeSongs.isEmpty()) add(Part.THEME_SONG)
+            if (similar.isNullOrEmpty()) add(Part.SIMILAR_ITEMS)
         }
     }
+
+    private val secretFakeToReal = ConcurrentHashMap<String, String>()
+    private val secretRealToFake = ConcurrentHashMap<String, String>()
+
+    /** The server's Quick Connect secrets (64 hex digits) made up, as ids are. */
+    private fun fakeSecrets(text: String): String =
+        SECRET.replace(text) { match ->
+            secretRealToFake.getOrPut(match.value.lowercase()) {
+                val hash = MessageDigest.getInstance("SHA-256").digest(match.value.toByteArray())
+                val fake =
+                    FAKE_PREFIX +
+                        hash.joinToString("") { "%02x".format(it) }.take(64 - FAKE_PREFIX.length)
+                secretFakeToReal[fake] = match.value
+                fake
+            }
+        }
+
+    private fun realSecrets(text: String): String =
+        SECRET.replace(text) { secretFakeToReal[it.value.lowercase()] ?: it.value }
 
     /** Sets the user data of the library on the server as [ContractLibrary] has it. */
     fun resetUserData() {
@@ -167,7 +196,7 @@ private constructor(
     }
 
     private fun toReal(text: String): String =
-        ID.replace(text) { match ->
+        ID.replace(realSecrets(text)) { match ->
             val n = match.value.lowercase().replace("-", "")
             val real = fakeToReal[n] ?: return@replace match.value
             if ('-' in match.value) dashed(real) else real
@@ -181,7 +210,7 @@ private constructor(
                 .replace(LOCAL_ADDRESS, "\"LocalAddress\":\"$SERVER\"")
                 // The address the server saw this test come from.
                 .replace(REMOTE_END_POINT, "\"RemoteEndPoint\":\"127.0.0.1\"")
-        return ID.replace(plain) { match ->
+        return ID.replace(fakeSecrets(plain)) { match ->
             val n = match.value.lowercase().replace("-", "")
             val fake = realToFake[n] ?: derived(n).also { link(it, n) }
             if ('-' in match.value) dashed(fake) else fake
@@ -286,6 +315,9 @@ private constructor(
                 "(?<![0-9a-fA-F-])(?:[0-9a-fA-F]{32}(?![0-9a-fA-F-])|[0-9a-fA-F]{8}-" +
                     "[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})"
             )
+
+        /** A Quick Connect secret: 64 hex digits. */
+        val SECRET = Regex("(?<![0-9a-fA-F])[0-9a-fA-F]{64}(?![0-9a-fA-F])")
 
         private val TOKEN = Regex("Token=\"([^\"]*)\"")
 

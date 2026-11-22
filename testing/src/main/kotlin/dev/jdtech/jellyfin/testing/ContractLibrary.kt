@@ -43,6 +43,12 @@ object ContractLibrary : FakeLibrary {
         PERSON,
         /** [episodeWithSegments]: the test server has no segment provider. */
         SEGMENTS,
+        /** A theme song of [series]: the test server has none. */
+        THEME_SONG,
+        /**
+         * Items similar to [movieWithResume]: the test server finds none among its test patterns.
+         */
+        SIMILAR_ITEMS,
     }
 
     /** Ids start with twelve zeros, the mark of a fake id in the recordings. */
@@ -228,7 +234,11 @@ object ContractLibrary : FakeLibrary {
 
     override val segments = mapOf(episodeWithSegments.id to listOf(introOfEpisodeWithSegments))
 
-    override val themeSongs: Map<ItemId, String> = emptyMap()
+    /** The theme song of [series]. */
+    val seriesThemeSongId: UUID = id(602)
+
+    override val themeSongs: Map<ItemId, String> =
+        mapOf(series.id to "$address/Audio/$seriesThemeSongId/stream?static=true")
 
     /** The form of an id in a server's JSON and in a source id: no dashes. */
     fun UUID.toN(): String = toString().replace("-", "")

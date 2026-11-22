@@ -28,6 +28,8 @@ class FakeServerConnector(
     override val capabilities: ServerCapabilities = ServerCapabilities.ALL,
     /** Whether the admin turned Quick Connect on; only asked when [capabilities] have it. */
     private val quickConnectOn: Boolean = true,
+    /** Addresses where a server answers every request with HTTP 500. */
+    private val failingAddresses: Set<String> = emptySet(),
 ) : ServerConnector {
     private val tokens: MutableSet<String> = Collections.synchronizedSet(mutableSetOf())
 
@@ -40,6 +42,7 @@ class FakeServerConnector(
 
     /** Nothing answers at another address. */
     private fun requireServer(address: String) {
+        if (address in failingAddresses) throw ServerException.HttpStatus(500)
         if (!at(address)) throw ServerException.Unreachable()
     }
 

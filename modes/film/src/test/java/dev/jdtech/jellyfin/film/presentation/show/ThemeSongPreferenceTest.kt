@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.film.presentation.show
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.SharedPreferences
+import androidx.lifecycle.viewModelScope
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.ServerCapabilities
@@ -16,8 +17,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -61,21 +62,19 @@ class ThemeSongPreferenceTest {
     @Test
     fun `off by default, so no lookup`() {
         val viewModel = viewModel(appPreferences(stored = null))
-        viewModel.loadThemeSong(showId)
+        viewModel.loadThemeSongAndWait()
 
         assertEquals(0, lookups)
         assertNull(viewModel.state.value.themeSongUrl)
     }
 
     @Test
-    fun `turned on, the song lands in the state`() = runBlocking {
+    fun `turned on, the song lands in the state`() {
         val viewModel = viewModel(appPreferences(stored = true))
-        viewModel.loadThemeSong(showId)
+        viewModel.loadThemeSongAndWait()
 
-        // The repository asks on the IO dispatcher.
-        val state = withTimeout(5_000) { viewModel.state.first { it.themeSongUrl != null } }
         assertEquals(1, lookups)
-        assertEquals(url, state.themeSongUrl)
+        assertEquals(url, viewModel.state.value.themeSongUrl)
     }
 
     @Test
@@ -85,10 +84,23 @@ class ThemeSongPreferenceTest {
                 appPreferences(stored = true),
                 ServerCapabilities.ALL.copy(themeSongs = false),
             )
-        viewModel.loadThemeSong(showId)
+        viewModel.loadThemeSongAndWait()
 
         assertEquals(0, lookups)
         assertNull(viewModel.state.value.themeSongUrl)
+    }
+
+    /**
+     * Loads the theme song and waits for what that started in the ViewModel: the repository asks on
+     * the IO dispatcher, so without the wait a lookup could land after the assertions.
+     */
+    private fun ShowViewModel.loadThemeSongAndWait() {
+        val job = viewModelScope.coroutineContext.job
+        val before = job.children.toSet()
+        loadThemeSong(showId)
+        runBlocking {
+            withTimeout(5_000) { job.children.filterNot { it in before }.forEach { it.join() } }
+        }
     }
 
     private fun viewModel(

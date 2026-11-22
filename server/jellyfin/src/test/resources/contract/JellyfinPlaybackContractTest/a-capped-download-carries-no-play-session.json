@@ -1,6 +1,6 @@
 [
     {
-        "request": "POST /Items/00000000-0000-0000-0000-000000000101/PlaybackInfo",
+        "request": "POST /Items/00000000-0000-0000-0000-000000000101/PlaybackInfo {\"UserId\":\"00000000-0000-0000-0000-000000000001\",\"MaxStreamingBitrate\":100000,\"EnableTranscoding\":true,\"AllowVideoStreamCopy\":false,\"AllowAudioStreamCopy\":true}",
         "status": 200,
         "contentType": "application/json; charset=utf-8",
         "json": {
@@ -95,14 +95,14 @@
                     "Formats": [],
                     "Bitrate": 428657,
                     "RequiredHttpHeaders": {},
-                    "TranscodingUrl": "/videos/00000000-0000-0000-0000-000000000101/stream.ts?DeviceId=ephyra-contract-proxy&MediaSourceId=00000000000000000000000000000101&VideoCodec=h264&AudioCodec=aac,ac3,eac3,mp3&AudioStreamIndex=1&VideoBitrate=64000&AudioBitrate=128000&MaxFramerate=24&PlaySessionId=000000000000820e29b67a30b0646744&ApiKey=token&RequireAvc=false&EnableAudioVbrEncoding=true&Tag=00000000000042d90f4790eab95b2c94&h264-level=30&h264-videobitdepth=8&h264-profile=high&TranscodeReasons=AudioCodecNotSupported,ContainerBitrateExceedsLimit&allowVideoStreamCopy=false",
+                    "TranscodingUrl": "/videos/00000000-0000-0000-0000-000000000101/stream.ts?DeviceId=ephyra-contract-proxy&MediaSourceId=00000000000000000000000000000101&VideoCodec=h264&AudioCodec=aac,ac3,eac3,mp3&AudioStreamIndex=1&VideoBitrate=64000&AudioBitrate=128000&MaxFramerate=24&PlaySessionId=00000000000021a636d1c7404cd680b4&ApiKey=token&RequireAvc=false&EnableAudioVbrEncoding=true&Tag=00000000000042d90f4790eab95b2c94&h264-level=30&h264-videobitdepth=8&h264-profile=high&TranscodeReasons=AudioCodecNotSupported,ContainerBitrateExceedsLimit&allowVideoStreamCopy=false",
                     "TranscodingSubProtocol": "http",
                     "TranscodingContainer": "ts",
                     "DefaultAudioStreamIndex": 1,
                     "HasSegments": false
                 }
             ],
-            "PlaySessionId": "000000000000820e29b67a30b0646744"
+            "PlaySessionId": "00000000000021a636d1c7404cd680b4"
         }
     }
 ]

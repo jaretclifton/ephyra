@@ -1,6 +1,5 @@
 package dev.jdtech.jellyfin.testing
 
-import dev.jdtech.jellyfin.domain.ports.MediaServer
 import dev.jdtech.jellyfin.domain.ports.PlaybackPort
 import dev.jdtech.jellyfin.domain.ports.PlaybackReport
 import dev.jdtech.jellyfin.domain.ports.PlaybackRequest
@@ -15,6 +14,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
+import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 
@@ -22,15 +22,7 @@ import org.junit.Test
  * The contract of [PlaybackPort] (#771): sources, the reports and what the player shows alongside.
  * The tests for a feature behind a capability start with an assumption on it.
  */
-abstract class PlaybackContract {
-    /** A server that presents [ContractLibrary]. */
-    abstract fun server(): MediaServer
-
-    /** The parts of the library the server does not hold; their tests are skipped. */
-    open val notOnServer: Set<Part> = emptySet()
-
-    private val library = ContractLibrary
-
+abstract class PlaybackContract : MediaServerContract() {
     /** mpv: it direct-plays what the server has, whatever the device's decoders. */
     private val player =
         PlaybackTarget.LocalPlayer(PlayerEngineId.MPV, directPlayDolbyVision = false)
@@ -83,6 +75,12 @@ abstract class PlaybackContract {
         assertNull(source.playSessionId)
     }
 
+    /**
+     * The index goes to the server only with the source it is of (#580). The outcome binds a server
+     * that would honour a lone index; one that ignores it (Jellyfin) gives equal answers either
+     * way. For the Jellyfin adapter the recordings hold what it asks: they are matched on the index
+     * the request carries, so an adapter that sent it alone finds no recording.
+     */
     @Test
     fun `audioStreamIndex without mediaSourceId is ignored`() = runTest {
         val playback = server().playback
@@ -160,7 +158,7 @@ abstract class PlaybackContract {
     fun `the episode with segments has its intro`() = runTest {
         val server = server()
         assumeTrue(server.capabilities.mediaSegments)
-        assumeTrue("the server has no segments", Part.SEGMENTS !in notOnServer)
+        assumeOnServer(Part.SEGMENTS)
 
         val segments = server.playback.segments(library.episodeWithSegments.id)
 
@@ -187,6 +185,65 @@ abstract class PlaybackContract {
         val thresholds = assertNotNull(server.playback.resumeThresholds())
 
         assertTrue(thresholds.minResumePct < thresholds.maxResumePct, "$thresholds")
+    }
+
+    @Test
+    fun `a server without segments gives none`() = runTest {
+        val server = server()
+        assumeFalse(server.capabilities.mediaSegments)
+
+        assertTrue(server.playback.segments(library.episodeWithSegments.id).isEmpty())
+    }
+
+    @Test
+    fun `a server without trickplay gives no tile`() = runTest {
+        val server = server()
+        assumeFalse(server.capabilities.trickplay)
+        val episode = library.season1Episodes.first()
+
+        assertNull(server.playback.trickplayTile(episode.id, 320, 0))
+    }
+
+    @Test
+    fun `a server without resume thresholds gives none`() = runTest {
+        val server = server()
+        assumeFalse(server.capabilities.serverResumeThresholds)
+
+        assertNull(server.playback.resumeThresholds())
+    }
+
+    @Test
+    fun `a server without the auto-play setting gives none`() = runTest {
+        val server = server()
+        assumeFalse(server.capabilities.autoPlayNextSetting)
+
+        assertNull(server.session.autoPlayNextEpisode())
+    }
+
+    @Test
+    fun `a failing server gives an error status`() = runTest {
+        val playback = failingServer().playback
+        val id = library.movieWithResume.id
+
+        assertErrorStatus { playback.sources(PlaybackRequest(id, player)) }
+        assertErrorStatus { playback.reportStart(report(id, 0L)) }
+        assertErrorStatus { playback.reportStopped(report(id, 0L)) }
+    }
+
+    @Test
+    fun `a server that does not answer gives an unanswered failure`() = runTest {
+        val playback = unreachableServer().playback
+        val id = library.movieWithResume.id
+
+        assertUnanswered { playback.sources(PlaybackRequest(id, player)) }
+        assertUnanswered { playback.reportProgress(report(id, 0L)) }
+    }
+
+    @Test
+    fun `a request for sources cancelled while it waits is cancelled`() = runTest {
+        val playback = stallingServer().playback
+
+        assertCancellable { playback.sources(PlaybackRequest(library.movieWithResume.id, player)) }
     }
 
     private fun report(id: java.util.UUID, positionTicks: Long) =

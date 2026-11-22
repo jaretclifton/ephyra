@@ -41,6 +41,7 @@ import dev.jdtech.jellyfin.repository.stopUserData
 import java.time.LocalDateTime
 import java.util.Collections
 import java.util.UUID
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
@@ -97,27 +98,45 @@ class FakeMediaServer(
         get() = reported.map { it.second }
 
     /**
-     * Make the next calls fail the way a server does: every call, or only those named in [only]
-     * (the names of [calls]). Null makes them succeed again.
+     * Make the next calls that reach the server (the suspending ones) fail the way a server does:
+     * every such call, or only those named in [only] (the names of [calls]). Null makes them
+     * succeed again. A call that only builds a URL or sets a field never fails, as with an adapter.
+     * A [ServerException.HttpStatus] 401 also reaches [ServerSession.unauthorized] with the
+     * session's token, as a real client reports a refused token.
      */
     fun failWith(error: ServerException?, only: Set<String>? = null) {
         failure = error
         failingCalls = only
     }
 
+    @Volatile private var stalled = false
+
+    /** With [stall], the calls that reach the server wait for an answer that never comes. */
+    fun stall(stall: Boolean = true) {
+        stalled = stall
+    }
+
+    /** A call that only builds a URL or sets a field: listed, never failing. */
     private fun <T> answer(name: String, block: () -> T): T {
         callLog += name
-        val error = failure
-        if (error != null && failingCalls.let { it == null || name in it }) throw error
         return block()
     }
 
+    /** A call that reaches the server. */
     private suspend fun <T> call(name: String, block: suspend () -> T): T {
         callLog += name
+        if (stalled) awaitCancellation()
         val error = failure
-        if (error != null && failingCalls.let { it == null || name in it }) throw error
+        if (error != null && failingCalls.let { it == null || name in it }) {
+            if (error is ServerException.HttpStatus && error.status == 401) {
+                session.accessToken?.let { unauthorizedTokens.tryEmit(it) }
+            }
+            throw error
+        }
         return block()
     }
+
+    private val unauthorizedTokens = MutableSharedFlow<String>(extraBufferCapacity = 64)
 
     // The library as the user sees it now.
 
@@ -244,7 +263,9 @@ class FakeMediaServer(
         override suspend fun userViews(): List<FindroidCollection> =
             call("userViews") { library.libraries }
 
-        override suspend fun item(id: ItemId): FindroidItem? = call("item") { currentItem(id) }
+        /** A person is a kind the app does not handle as an item: null, as from an adapter. */
+        override suspend fun item(id: ItemId): FindroidItem? =
+            call("item") { if (library.people.any { it.id == id }) null else currentItem(id) }
 
         override suspend fun movie(id: ItemId): FindroidMovie =
             call("movie") { currentItem(id) as? FindroidMovie ?: notFound() }
@@ -565,7 +586,7 @@ class FakeMediaServer(
         @Volatile override var baseUrl: String? = library.address
         @Volatile override var userId: UserId? = library.userId
         @Volatile override var accessToken: String? = TOKEN
-        override val unauthorized = MutableSharedFlow<String>()
+        override val unauthorized: Flow<String> = unauthorizedTokens
         override val serverReturned = MutableSharedFlow<Unit>()
         @Volatile override var requestWatcher: RequestWatcher? = null
         override val probeTimeoutMs: Long = 1_000L

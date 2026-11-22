@@ -1,6 +1,6 @@
 [
     {
-        "request": "POST /Items/00000000-0000-0000-0000-000000000105/PlaybackInfo",
+        "request": "POST /Items/00000000-0000-0000-0000-000000000105/PlaybackInfo {\"UserId\":\"00000000-0000-0000-0000-000000000001\",\"MaxStreamingBitrate\":1000000000,\"EnableTranscoding\":false,\"AllowVideoStreamCopy\":true,\"AllowAudioStreamCopy\":true,\"AutoOpenLiveStream\":false}",
         "status": 200,
         "contentType": "application/json; charset=utf-8",
         "json": {
@@ -279,11 +279,11 @@
                     "HasSegments": false
                 }
             ],
-            "PlaySessionId": "000000000000b18b43d6ec12779ad770"
+            "PlaySessionId": "000000000000be6a909b9d2f01f93913"
         }
     },
     {
-        "request": "POST /Items/00000000-0000-0000-0000-000000000105/PlaybackInfo",
+        "request": "POST /Items/00000000-0000-0000-0000-000000000105/PlaybackInfo {\"UserId\":\"00000000-0000-0000-0000-000000000001\",\"MaxStreamingBitrate\":1000000000,\"EnableTranscoding\":false,\"AllowVideoStreamCopy\":true,\"AllowAudioStreamCopy\":true,\"AutoOpenLiveStream\":false}",
         "status": 200,
         "contentType": "application/json; charset=utf-8",
         "json": {
@@ -562,7 +562,7 @@
                     "HasSegments": false
                 }
             ],
-            "PlaySessionId": "000000000000c98d47ebb1668f443244"
+            "PlaySessionId": "000000000000eaad7286302dfe0fa5cf"
         }
     }
 ]

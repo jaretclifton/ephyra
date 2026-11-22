@@ -7,8 +7,9 @@ import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.ItemKind
-import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerException
+import dev.jdtech.jellyfin.models.SortBy
+import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.testing.ContractLibrary.Part
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -27,25 +28,11 @@ import org.junit.Test
  * subclass says how to build the implementation over that library; the tests are written once.
  *
  * The tests assert on the kind of outcome, not on one server's quirks (the order of equal names,
- * the status of a malformed id), so a server of another type can pass them.
+ * the status of a malformed id), so a server of another type can pass them. What is gated on a
+ * capability reads it from [server], the implementation under test.
  */
-abstract class CatalogContract {
-    /** A catalog that presents [ContractLibrary]. */
-    abstract fun catalog(): CatalogPort
-
-    /** A catalog whose server answers every request with an error status. */
-    abstract fun failingCatalog(): CatalogPort
-
-    /** What the server of [catalog] can do. */
-    open val capabilities: ServerCapabilities = ServerCapabilities.ALL
-
-    /** The parts of the library the server of [catalog] does not hold; their tests are skipped. */
-    open val notOnServer: Set<Part> = emptySet()
-
-    private fun assumeOnServer(part: Part) =
-        assumeTrue("the server has no ${part.name.lowercase()}", part !in notOnServer)
-
-    private val library = ContractLibrary
+abstract class CatalogContract : MediaServerContract() {
+    private fun catalog(): CatalogPort = server().catalog
 
     @Test
     fun `a movie has its name, runtime and resume position`() = runTest {
@@ -68,6 +55,13 @@ abstract class CatalogContract {
         val episode = assertIs<FindroidEpisode>(catalog.item(library.nextUp.id))
         assertEquals(library.season1.id, episode.seasonId)
         assertEquals(library.series.id, episode.seriesId)
+    }
+
+    @Test
+    fun `item gives null for a kind the app does not handle`() = runTest {
+        assumeOnServer(Part.PERSON)
+        // A person is an item on the server, of a kind the app shows only as a person.
+        assertNull(catalog().item(library.person.id))
     }
 
     @Test
@@ -119,27 +113,49 @@ abstract class CatalogContract {
         assertTrue(shows.items.all { it is FindroidShow }, "shows: ${shows.items}")
     }
 
+    private val season1Query =
+        ItemQuery(parentId = library.season1.id, kinds = listOf(ItemKind.EPISODE))
+
     @Test
     fun `a page reports the total only when asked`() = runTest {
         val catalog = catalog()
-        val query = ItemQuery(parentId = library.season1.id, kinds = listOf(ItemKind.EPISODE))
 
-        assertNull(catalog.items(query).totalRecordCount)
-        val counted = catalog.items(query.copy(limit = 2), includeTotal = true)
+        assertNull(catalog.items(season1Query).totalRecordCount)
+        val counted = catalog.items(season1Query.copy(limit = 2), includeTotal = true)
         assertEquals(library.season1Episodes.size, counted.totalRecordCount)
         assertEquals(2, counted.items.size)
-        assertEquals(library.season1Episodes.size, catalog.itemCount(query.copy(limit = 2)))
+        assertEquals(library.season1Episodes.size, catalog.itemCount(season1Query.copy(limit = 2)))
     }
 
     @Test
     fun `start index and limit page through the items`() = runTest {
         val catalog = catalog()
-        val query = ItemQuery(parentId = library.season1.id, kinds = listOf(ItemKind.EPISODE))
-        val all = catalog.items(query).items.map { it.id }
-        val page = catalog.items(query.copy(startIndex = 1, limit = 2)).items.map { it.id }
+        val all = catalog.items(season1Query).items.map { it.id }
+        val page = catalog.items(season1Query.copy(startIndex = 1, limit = 2)).items.map { it.id }
 
         assertEquals(library.season1Episodes.map { it.id }.toSet(), all.toSet())
         assertEquals(all.drop(1).take(2), page)
+    }
+
+    @Test
+    fun `a page past the end is empty and still counts all`() = runTest {
+        val past = library.season1Episodes.size + 5
+        val page = catalog().items(season1Query.copy(startIndex = past), includeTotal = true)
+
+        assertTrue(page.items.isEmpty(), "items: ${page.items}")
+        assertEquals(library.season1Episodes.size, page.totalRecordCount)
+    }
+
+    @Test
+    fun `items come in the sort order and direction asked for`() = runTest {
+        val catalog = catalog()
+        val query = season1Query.copy(sortBy = SortBy.NAME)
+        val ascending = catalog.items(query.copy(sortOrder = SortOrder.ASCENDING)).items
+        val descending = catalog.items(query.copy(sortOrder = SortOrder.DESCENDING)).items
+
+        // The episodes' names are distinct and in episode order.
+        assertEquals(library.season1Episodes.map { it.id }, ascending.map { it.id })
+        assertEquals(ascending.map { it.id }.reversed(), descending.map { it.id })
     }
 
     @Test
@@ -177,10 +193,12 @@ abstract class CatalogContract {
 
     @Test
     fun `search finds by a word of the title`() = runTest {
-        val found = catalog().search("Versions", kinds = null)
+        val found = catalog().search("Versions", kinds = null).map { it.id }
 
-        assertTrue(library.movieWithTwoVersions.id in found.map { it.id }, "found: $found")
-        assertTrue(found.all { it is FindroidMovie || it is FindroidShow }, "found: $found")
+        assertTrue(library.movieWithTwoVersions.id in found, "found: $found")
+        // A search that ignored the word would give every movie.
+        assertFalse(library.movieWithResume.id in found, "found: $found")
+        assertFalse(library.series.id in found, "found: $found")
     }
 
     @Test
@@ -213,7 +231,7 @@ abstract class CatalogContract {
 
     @Test
     fun `a failing server gives ServerException, never another exception type`() = runTest {
-        val catalog = failingCatalog()
+        val catalog = failingServer().catalog
         val calls: List<suspend () -> Any?> =
             listOf(
                 { catalog.item(library.movieWithResume.id) },
@@ -225,51 +243,85 @@ abstract class CatalogContract {
                 { catalog.libraries() },
             )
 
-        for (call in calls) {
-            val error = assertFailsWith<ServerException> { call() }
-            assertIs<ServerException.HttpStatus>(error)
-        }
+        for (call in calls) assertErrorStatus(call)
+    }
+
+    @Test
+    fun `a server that does not answer gives an unanswered failure`() = runTest {
+        val catalog = unreachableServer().catalog
+
+        assertUnanswered { catalog.item(library.movieWithResume.id) }
+        assertUnanswered { catalog.items(ItemQuery(parentId = library.season1.id)) }
+    }
+
+    @Test
+    fun `a call cancelled while it waits is cancelled`() = runTest {
+        val catalog = stallingServer().catalog
+
+        assertCancellable { catalog.item(library.movieWithResume.id) }
     }
 
     @Test
     fun `a server without theme songs gives none`() = runTest {
-        assumeFalse(capabilities.themeSongs)
-        assertNull(catalog().themeSongUrl(library.series.id))
+        val server = server()
+        assumeFalse(server.capabilities.themeSongs)
+        assertNull(server.catalog.themeSongUrl(library.series.id))
     }
 
     @Test
     fun `a server without similar items gives none`() = runTest {
-        assumeFalse(capabilities.similarItems)
-        assertTrue(catalog().similar(library.movieWithResume.id, limit = 12).isEmpty())
+        val server = server()
+        assumeFalse(server.capabilities.similarItems)
+        assertTrue(server.catalog.similar(library.movieWithResume.id, limit = 12).isEmpty())
     }
 
     @Test
     fun `a server without extras gives none`() = runTest {
-        assumeFalse(capabilities.extras)
+        val server = server()
+        assumeFalse(server.capabilities.extras)
         val extras =
-            catalog()
-                .extras(library.movieWithResume.id, localTrailers = true, specialFeatures = true)
+            server.catalog.extras(
+                library.movieWithResume.id,
+                localTrailers = true,
+                specialFeatures = true,
+            )
         assertTrue(extras.isEmpty())
     }
 
     @Test
     fun `a server without item collections gives none`() = runTest {
-        assumeFalse(capabilities.itemCollections)
-        assertTrue(catalog().collectionsOf(library.movieWithResume.id).isEmpty())
+        val server = server()
+        assumeFalse(server.capabilities.itemCollections)
+        assertTrue(server.catalog.collectionsOf(library.movieWithResume.id).isEmpty())
     }
 
     @Test
-    fun `similar items are not the item itself`() = runTest {
-        assumeTrue(capabilities.similarItems)
-        val similar = catalog().similar(library.movieWithResume.id, limit = 12)
+    fun `similar items are there and are not the item itself`() = runTest {
+        val server = server()
+        assumeTrue(server.capabilities.similarItems)
+        assumeOnServer(Part.SIMILAR_ITEMS)
+        val similar = server.catalog.similar(library.movieWithResume.id, limit = 12).map { it.id }
 
-        assertFalse(library.movieWithResume.id in similar.map { it.id })
+        assertTrue(similar.isNotEmpty(), "no similar items")
+        assertFalse(library.movieWithResume.id in similar, "similar: $similar")
     }
 
     @Test
-    fun `a series without a theme song has none`() = runTest {
-        assumeTrue(capabilities.themeSongs)
-        assertNull(catalog().themeSongUrl(library.series.id))
+    fun `the series has its theme song`() = runTest {
+        val server = server()
+        assumeTrue(server.capabilities.themeSongs)
+        assumeOnServer(Part.THEME_SONG)
+        val url = assertNotNull(server.catalog.themeSongUrl(library.series.id))
+
+        assertTrue(url.startsWith("http"), url)
+        assertTrue(library.seriesThemeSongId.toString() in url, url)
+    }
+
+    @Test
+    fun `a movie without a theme song has none`() = runTest {
+        val server = server()
+        assumeTrue(server.capabilities.themeSongs)
+        assertNull(server.catalog.themeSongUrl(library.movieWithResume.id))
     }
 
     @Test

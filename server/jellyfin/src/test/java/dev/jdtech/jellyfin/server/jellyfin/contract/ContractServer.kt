@@ -169,7 +169,13 @@ class ContractServer : TestRule {
 
         private val PRETTY = Json { prettyPrint = true }
 
-        /** A request as the recordings name it: its method and target, without an API key. */
+        /**
+         * A request as the recordings name it: its method and target, without an API key, and for a
+         * request whose body carries a decision, the fields that carry it ([DECISIONS]). So an
+         * adapter that asks differently (another cap, a lone audio index, another position) finds
+         * no recording, as a changed query does. The device profile is left out: it follows the
+         * device, not the request.
+         */
         internal fun key(request: Request): String {
             val path = request.target.substringBefore('?')
             val query =
@@ -178,9 +184,40 @@ class ContractServer : TestRule {
                         !it.startsWith("api_key=", ignoreCase = true) &&
                         !it.startsWith("ApiKey=", ignoreCase = true)
                 }
-            return "${request.method} $path" +
-                if (query.isEmpty()) "" else "?" + query.joinToString("&")
+            val target =
+                "${request.method} $path" +
+                    if (query.isEmpty()) "" else "?" + query.joinToString("&")
+            val fields =
+                DECISIONS.entries.firstOrNull { it.key.matches(path) }?.value ?: return target
+            val body =
+                runCatching { Json.parseToJsonElement(request.body).jsonObject }.getOrNull()
+                    ?: return "$target {}"
+            val decision =
+                JsonObject(fields.filter { it in body }.associateWith { body.getValue(it) })
+            return "$target $decision"
         }
+
+        /** The body fields that carry the decision of a request, by the paths they are sent to. */
+        private val DECISIONS =
+            mapOf(
+                Regex("/Items/[^/]+/PlaybackInfo") to
+                    listOf(
+                        "UserId",
+                        "MaxStreamingBitrate",
+                        "EnableTranscoding",
+                        "EnableDirectPlay",
+                        "EnableDirectStream",
+                        "AllowVideoStreamCopy",
+                        "AllowAudioStreamCopy",
+                        "AutoOpenLiveStream",
+                        "MediaSourceId",
+                        "AudioStreamIndex",
+                    ),
+                Regex("/Sessions/Playing(/Progress|/Stopped)?") to
+                    listOf("ItemId", "PositionTicks", "PlaySessionId", "IsPaused", "PlayMethod"),
+                // Not the password: the order of the login tests tells the answers apart.
+                Regex("/Users/AuthenticateByName") to listOf("Username"),
+            )
 
         private fun fileName(description: Description): String =
             description.methodName.replace(Regex("[^A-Za-z0-9]+"), "-").trim('-')

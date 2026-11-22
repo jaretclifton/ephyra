@@ -1,0 +1,85 @@
+[
+    {
+        "request": "GET /Items/00000000-0000-0000-0000-000000000401?userId=00000000-0000-0000-0000-000000000001",
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "json": {
+            "Name": "Bryan Cranston",
+            "ServerId": "00000000000000000000000000000002",
+            "Id": "00000000000000000000000000000401",
+            "Etag": "00000000000079eafc60f12ea6cbdfb8",
+            "DateCreated": "2026-11-11T08:30:08.0676034Z",
+            "CanDelete": false,
+            "CanDownload": false,
+            "SortName": "Bryan Cranston",
+            "PremiereDate": "1956-03-07T00:00:00.0000000Z",
+            "ExternalUrls": [
+                {
+                    "Name": "IMDb",
+                    "Url": "https://www.imdb.com/name/nm0186505"
+                },
+                {
+                    "Name": "TMDB",
+                    "Url": "https://www.themoviedb.org/person/17419"
+                }
+            ],
+            "ProductionLocations": [
+                "Hollywood, Los Angeles, California, USA"
+            ],
+            "Path": "/config/metadata/People/B/Bryan Cranston",
+            "EnableMediaSourceDisplay": true,
+            "ChannelId": null,
+            "Overview": "Bryan Lee Cranston (born March 7, 1956) is an American actor. After taking minor roles in television, he established himself as a leading actor in both comedic and dramatic works on stage and screen. He has received several accolades, including seven Primetime Emmy Awards, a Golden Globe Award, a Laurence Olivier Award, and two Tony Awards, as well as nominations for an Academy Award and a BAFTA Award.\n\nCranston first gained prominence playing Hal in the Fox sitcom Malcolm in the Middle (2000–2006), for which he was nominated for the Primetime Emmy Award for Outstanding Supporting Actor in a Comedy Series. He gained stardom for his dramatic leading role playing Walter White in the AMC crime drama series Breaking Bad (2008–2013), for which he won the Outstanding Lead Actor in a Drama Series four times (2008, 2009, 2010, and 2014). He was Emmy-nominated for All the Way (2016) and Curb Your Enthusiasm (2018). Cranston co-developed and appeared in the crime drama series Sneaky Pete (2015–2019), and has also starred in the drama series Your Honor (2020–2023).\n\nOn stage, he earned a Tony Award for Best Actor in a Play for his portrayal of President Lyndon B. Johnson in the Broadway play All the Way (2014), a role he reprised in the 2016 HBO film of the same name. He received the Laurence Olivier Award for Best Actor and his second Tony Award for portraying Howard Beale in the play Network on the West End and Broadway, respectively.\n\nCranston earned nominations for the Academy Award and the BAFTA Award for Best Actor for portraying Dalton Trumbo in the Hollywood blacklist drama Trumbo (2015). Other notable films include Saving Private Ryan (1998), Little Miss Sunshine (2006), Drive (2011), Contagion (2011), Argo (2012), Godzilla (2014), The Infiltrator (2016), The Upside (2017), Last Flag Flying (2017), Isle of Dogs (2018), Asteroid City (2023), and The Phoenician Scheme (2025). He has also voiced roles in Madagascar 3 (2012), Kung Fu Panda 3 (2016), and Kung Fu Panda 4 (2024).\n\nDescription above from the Wikipedia article Bryan Cranston, licensed under CC-BY-SA, full list of contributors on Wikipedia.",
+            "Taglines": [],
+            "Genres": [],
+            "PlayAccess": "Full",
+            "RemoteTrailers": [],
+            "ProviderIds": {
+                "Imdb": "nm0186505",
+                "Tmdb": "17419"
+            },
+            "ParentId": null,
+            "Type": "Person",
+            "People": [],
+            "Studios": [],
+            "GenreItems": [],
+            "LocalTrailerCount": 0,
+            "UserData": {
+                "PlaybackPositionTicks": 0,
+                "PlayCount": 0,
+                "IsFavorite": false,
+                "Played": false,
+                "Key": "Person-Bryan Cranston",
+                "ItemId": "00000000000000000000000000000401"
+            },
+            "ChildCount": 21,
+            "SpecialFeatureCount": 0,
+            "DisplayPreferencesId": "0000000000007990a74895b006ef4bfe",
+            "Tags": [],
+            "PrimaryImageAspectRatio": 0.6666666666666666,
+            "ImageTags": {
+                "Primary": "000000000000f6458c6a98f0ee8dcb92"
+            },
+            "BackdropImageTags": [],
+            "ImageBlurHashes": {
+                "Primary": {
+                    "000000000000f6458c6a98f0ee8dcb92": "dI9@SE%M0KIU#%n$OZS5ENR*xCt6E1WC%Ls:M_axxbkD"
+                }
+            },
+            "Chapters": [],
+            "LocationType": "FileSystem",
+            "MediaType": "Unknown",
+            "LockedFields": [],
+            "TrailerCount": 0,
+            "MovieCount": 0,
+            "SeriesCount": 1,
+            "ProgramCount": 0,
+            "EpisodeCount": 20,
+            "SongCount": 0,
+            "AlbumCount": 0,
+            "ArtistCount": 0,
+            "MusicVideoCount": 0,
+            "LockData": false
+        }
+    }
+]
