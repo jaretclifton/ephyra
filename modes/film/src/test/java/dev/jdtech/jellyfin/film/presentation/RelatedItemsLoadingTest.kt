@@ -23,6 +23,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -270,6 +271,11 @@ class RelatedItemsLoadingTest {
         viewModel.loadMovie(itemId)
         val related =
             withTimeout(5_000) { viewModel.state.first { it.related.similar.isEmpty() } }.related
+        // The row goes before the reload asks for the others: wait for that request too, or it
+        // reaches Dispatchers.Main after tearDown has reset it and fails a later runTest.
+        withTimeout(5_000) {
+            while ("getItemCollections" !in synchronized(calls) { calls.toList() }) delay(10)
+        }
 
         assertEquals(listOf(collection), related.collections)
         assertTrue("getSimilarItems" !in calls)
