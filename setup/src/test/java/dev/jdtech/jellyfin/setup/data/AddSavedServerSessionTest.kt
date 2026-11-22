@@ -2,11 +2,11 @@ package dev.jdtech.jellyfin.setup.data
 
 import android.app.Application
 import android.content.Context
-import android.provider.Settings
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.domain.ports.ResolvedServer
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -15,9 +15,6 @@ import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlinx.coroutines.runBlocking
-import org.jellyfin.sdk.discovery.RecommendedServerInfo
-import org.jellyfin.sdk.discovery.RecommendedServerInfoScore
-import org.jellyfin.sdk.model.api.PublicSystemInfo
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -26,7 +23,8 @@ import org.robolectric.annotation.Config
 
 /**
  * CE (#425): adding a server that is already saved keeps the API client signed in as that server's
- * current user. It used to clear the token, so every request failed with 401 until a restart.
+ * current user. It used to clear the token, so every request failed with 401 until a restart. #761:
+ * the server is found through a fake connector, and the client is a recording session.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
@@ -66,18 +64,18 @@ class AddSavedServerSessionTest {
             }
         } as ServerDatabaseDao
 
-    private val context: Context by lazy {
-        RuntimeEnvironment.getApplication().also {
-            // The SDK names the device after it; Robolectric has none.
-            Settings.Secure.putString(it.contentResolver, Settings.Secure.ANDROID_ID, "test")
-        }
-    }
+    private val context: Context by lazy { RuntimeEnvironment.getApplication() }
 
-    private val jellyfinApi by lazy { JellyfinApi(context) }
+    /** What the connector finds at the next address. */
+    private var found: ResolvedServer? = null
+
+    private val connector = FakeServerConnector(onResolve = { found!! })
+    private val session = RecordingServerSession()
 
     private val repository by lazy {
         SetupRepositoryImpl(
-            jellyfinApi,
+            connector,
+            session,
             database,
             AppPreferences(context.getSharedPreferences("test", Context.MODE_PRIVATE)),
         )
@@ -91,18 +89,22 @@ class AddSavedServerSessionTest {
     }
 
     private fun signInClient(address: String, user: User) {
-        jellyfinApi.api.update(baseUrl = address, accessToken = user.accessToken)
-        jellyfinApi.userId = user.id
+        session.use(baseUrl = address, accessToken = user.accessToken, userId = user.id)
     }
 
-    private fun found(id: String, address: String) =
-        RecommendedServerInfo(
-            address = address,
-            responseTime = 10,
-            score = RecommendedServerInfoScore.GREAT,
-            issues = emptyList(),
-            systemInfo = Result.success(PublicSystemInfo(id = id, serverName = "Server $id")),
-        )
+    /** Adds [address], which the connector finds at [resolvedAddress]. */
+    private suspend fun add(
+        id: String,
+        address: String,
+        resolvedAddress: String = address,
+    ): Server {
+        found =
+            ResolvedServer(
+                info = ServerInfo(id = id, name = "Server $id", version = null, product = null),
+                address = resolvedAddress,
+            )
+        return repository.addServer(address)
+    }
 
     private val alice = User(UUID.randomUUID(), "alice", serverId = "a", accessToken = "token-a")
     private val bob = User(UUID.randomUUID(), "bob", serverId = "b", accessToken = "token-b")
@@ -112,11 +114,11 @@ class AddSavedServerSessionTest {
         saveServer("a", "https://a.example/", alice)
         signInClient("https://a.example/", alice)
 
-        repository.saveServerInDatabase(found("a", "https://a.example/"))
+        add("a", "https://a.example/")
 
-        assertEquals("https://a.example/", jellyfinApi.api.baseUrl)
-        assertEquals("token-a", jellyfinApi.api.accessToken)
-        assertEquals(alice.id, jellyfinApi.userId)
+        assertEquals("https://a.example/", session.baseUrl)
+        assertEquals("token-a", session.accessToken)
+        assertEquals(alice.id, session.userId)
     }
 
     @Test
@@ -124,12 +126,16 @@ class AddSavedServerSessionTest {
         saveServer("a", "https://a.example/", alice)
         signInClient("https://a.example/", alice)
 
-        repository.saveServerInDatabase(found("a", "http://a.local:8096"))
+        // The connector completes the address typed: the client and Room get what it found.
+        add("a", "a.local", resolvedAddress = "http://a.local:8096")
 
-        assertEquals("http://a.local:8096", jellyfinApi.api.baseUrl)
-        assertEquals("token-a", jellyfinApi.api.accessToken)
-        assertEquals(alice.id, jellyfinApi.userId)
-        assertEquals(2, addresses.count { it.serverId == "a" })
+        assertEquals("http://a.local:8096", session.baseUrl)
+        assertEquals("token-a", session.accessToken)
+        assertEquals(alice.id, session.userId)
+        assertEquals(
+            listOf("https://a.example/", "http://a.local:8096"),
+            addresses.filter { it.serverId == "a" }.map { it.address },
+        )
     }
 
     @Test
@@ -138,11 +144,11 @@ class AddSavedServerSessionTest {
         saveServer("b", "https://b.example/", bob)
         signInClient("https://a.example/", alice)
 
-        repository.saveServerInDatabase(found("b", "https://b.example/"))
+        add("b", "https://b.example/")
 
-        assertEquals("https://b.example/", jellyfinApi.api.baseUrl)
-        assertEquals("token-b", jellyfinApi.api.accessToken)
-        assertEquals(bob.id, jellyfinApi.userId)
+        assertEquals("https://b.example/", session.baseUrl)
+        assertEquals("token-b", session.accessToken)
+        assertEquals(bob.id, session.userId)
     }
 
     @Test
@@ -150,11 +156,12 @@ class AddSavedServerSessionTest {
         saveServer("a", "https://a.example/", alice)
         signInClient("https://a.example/", alice)
 
-        repository.saveServerInDatabase(found("c", "https://c.example/"))
+        val server = add("c", "https://c.example/")
 
-        assertEquals("https://c.example/", jellyfinApi.api.baseUrl)
-        assertNull(jellyfinApi.api.accessToken)
-        assertNull(jellyfinApi.userId)
+        assertEquals("https://c.example/", session.baseUrl)
+        assertNull(session.accessToken)
+        assertNull(session.userId)
         assertNull(servers.getValue("c").currentUserId)
+        assertEquals("Server c", server.name)
     }
 }
