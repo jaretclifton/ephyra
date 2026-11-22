@@ -183,11 +183,13 @@ internal fun HomeScreenLayout(
                 0f,
                 tween(EphyraMotion.DURATION_SHORT, easing = EphyraMotion.EasingExit),
             )
-            userFade.animateTo(
-                1f,
-                tween(EphyraMotion.DURATION_MEDIUM, easing = EphyraMotion.EasingEnter),
-            )
         }
+        // Also after a fade that a moment without user cut short, back to the same user: the
+        // rows always end fully visible. Nothing to do when they are.
+        userFade.animateTo(
+            1f,
+            tween(EphyraMotion.DURATION_MEDIUM, easing = EphyraMotion.EasingEnter),
+        )
     }
 
     // Sections arrive in any order, and a list keeps its first item in place when another lands

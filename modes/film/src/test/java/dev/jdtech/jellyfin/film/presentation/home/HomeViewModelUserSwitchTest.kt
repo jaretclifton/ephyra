@@ -12,8 +12,9 @@ import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.IOException
 import java.lang.reflect.Proxy
 import java.util.UUID
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
+import kotlin.coroutines.intrinsics.intercepted
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -61,14 +62,41 @@ class HomeViewModelUserSwitchTest {
     /** Whom each request for rows was sent as. */
     private val requests = java.util.concurrent.CopyOnWriteArrayList<String>()
 
-    /** Set to hold the next requests for [bob] until it counts down. */
-    @Volatile private var bobGate: CountDownLatch? = null
+    /** Set to hold the next requests for [bob] until it opens. */
+    @Volatile private var bobGate: Gate? = null
 
-    /** Set to hold the next requests for [alice] until it counts down. */
-    @Volatile private var aliceGate: CountDownLatch? = null
+    /** Set to hold the next requests for [alice] until it opens. */
+    @Volatile private var aliceGate: Gate? = null
 
-    /** Counted down by each request for [alice] that [aliceGate] holds. */
-    @Volatile private var aliceAsked: CountDownLatch? = null
+    /**
+     * Requests that wait for the test, suspended: they hold no thread, so a few held requests
+     * cannot keep the next load off `Dispatchers.Default`.
+     */
+    private class Gate {
+        private val waiting = mutableListOf<() -> Unit>()
+        private var opened = false
+
+        /** False when the gate is open already: the request answers at once. */
+        @Synchronized
+        fun hold(answer: () -> Unit): Boolean {
+            if (opened) return false
+            waiting += answer
+            return true
+        }
+
+        @get:Synchronized
+        val held: Int
+            get() = waiting.size
+
+        fun open() {
+            val answers =
+                synchronized(this) {
+                    opened = true
+                    waiting.toList().also { waiting.clear() }
+                }
+            answers.forEach { it() }
+        }
+    }
 
     private val dataChanges = DataChangeEvents()
     private val playbackEvents = PlaybackEvents(dataChanges)
@@ -124,20 +152,21 @@ class HomeViewModelUserSwitchTest {
     fun `a load for the previous user that answers after the switch leaves nothing behind`() {
         homeShowsAlice()
 
-        val gate = CountDownLatch(1)
-        val asked = CountDownLatch(2)
-        aliceAsked = asked
+        val gate = Gate()
         aliceGate = gate
         val aliceLoad = viewModel.loadData(silent = true)
         // The load is waiting for the server, for Alice's Continue Watching and Next Up.
-        assertTrue(asked.await(5, TimeUnit.SECONDS))
+        waitUntil { gate.held == 2 }
         users[bob.id] = bob
         pickOnUsersScreen(bob)
-        val bobLoaded = waitFor { it.user?.id == bob.id && it.resumeSection != null }
+        val bobLoaded = waitFor {
+            it.user?.id == bob.id && it.resumeSection != null && !it.isLoading
+        }
         assertEquals(listOf(bobItem), bobLoaded.resumeSection?.homeSection?.items)
-        // Now the server answers Alice's load.
+        // Alice's answers are still due, after Bob's rows: now the server gives them.
+        assertFalse(aliceLoad.isCompleted)
         aliceGate = null
-        gate.countDown()
+        gate.open()
         runBlocking { withTimeout(5_000) { aliceLoad.join() } }
 
         val state = settle { it.resumeSection == null }
@@ -186,8 +215,8 @@ class HomeViewModelUserSwitchTest {
         assertEquals(bob.id, state.user?.id)
         assertTrue(state.isEmpty)
         assertEquals(emptyList(), requests)
-        // Not counted as loaded: coming back loads again.
-        assertTrue(viewModel.shouldReload(stopEventFollows = true))
+        // Not counted as loaded: coming back loads again, once the given-up load has ended.
+        waitUntil { viewModel.shouldReload(stopEventFollows = true) }
     }
 
     @Test
@@ -238,7 +267,7 @@ class HomeViewModelUserSwitchTest {
         }
 
         // Home is under the Login or Users screen now. Bob's rows wait for the test.
-        val gate = CountDownLatch(1)
+        val gate = Gate()
         bobGate = gate
         flow(bob)
 
@@ -249,7 +278,7 @@ class HomeViewModelUserSwitchTest {
         // Home comes back into view (ON_RESUME); it must not load a second time.
         if (viewModel.shouldReload(stopEventFollows = true)) viewModel.loadData(silent = true)
         bobGate = null
-        gate.countDown()
+        gate.open()
 
         val state = settle { it.resumeSection == null || it.nextUpSection == null }
         assertEquals(bob, state.user)
@@ -308,23 +337,39 @@ class HomeViewModelUserSwitchTest {
         }
     }
 
-    private fun rowsOf(user: User?): List<FindroidItem> {
+    /** Polls [done] until it holds, within a few seconds. */
+    private fun waitUntil(done: () -> Boolean) = runBlocking {
+        withTimeoutOrNull(5_000) { while (!done()) delay(10) }
+            ?: throw AssertionError("never happened")
+    }
+
+    /**
+     * The rows of the client's user, as a suspend function's proxy answers: at once, or
+     * [COROUTINE_SUSPENDED] while a [Gate] holds them.
+     */
+    private fun rowsOf(user: User?, continuation: Continuation<Any?>): Any? {
         requests += user?.name ?: "nobody"
         if (user == null) throw IOException("signed out")
+        val items = listOf(if (user.id == bob.id) bobItem else aliceItem)
         val gate = if (user.id == bob.id) bobGate else aliceGate
-        if (gate != null && user.id == alice.id) aliceAsked?.countDown()
-        gate?.await(5, TimeUnit.SECONDS)
-        return listOf(if (user.id == bob.id) bobItem else aliceItem)
+        val resume = continuation.intercepted()
+        return if (gate?.hold { resume.resumeWith(Result.success(items)) } == true) {
+            COROUTINE_SUSPENDED
+        } else {
+            items
+        }
     }
 
     private fun repository(): JellyfinRepository =
         Proxy.newProxyInstance(
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
-        ) { _, method, _ ->
+        ) { _, method, args ->
             when (method.name) {
                 "getResumeItems",
-                "getNextUp" -> rowsOf(sessionUser)
+                "getNextUp" ->
+                    @Suppress("UNCHECKED_CAST")
+                    rowsOf(sessionUser, args!!.last() as Continuation<Any?>)
                 "getSuggestions",
                 "getUserViews" -> emptyList<Any>()
                 "refreshCurrentUserImage" -> Unit

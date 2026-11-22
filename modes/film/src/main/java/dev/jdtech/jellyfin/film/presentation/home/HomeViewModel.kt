@@ -89,6 +89,13 @@ constructor(
      */
     private val generation = AtomicLong()
 
+    /**
+     * CE (#810): a switch moves [generation] on and invalidates the reload policy in one step, and
+     * a load checks its generation and completes the policy in one step, so a load the switch
+     * overtook cannot mark Home fresh after the switch.
+     */
+    private val switchLock = Any()
+
     /** CE (#810): the load a user switch started, while it runs. */
     private var switchLoad: Job? = null
 
@@ -150,10 +157,12 @@ constructor(
                 (shownIdentity != null && shownIdentity != identity)
         if (!switched) return
         Timber.i("The current user changed: Home starts over")
-        generation.incrementAndGet()
+        synchronized(switchLock) {
+            generation.incrementAndGet()
+            reloadPolicy.invalidate()
+        }
         loadJob?.cancel()
         cacheChecked = false
-        reloadPolicy.invalidate()
         _state.value =
             HomeState(
                 server = shown.server?.takeIf { it.id == serverId },
@@ -300,12 +309,16 @@ constructor(
             updateState { it.copy(error = e) }
         }
         updateState { it.copy(isLoading = false) }
-        // CE (#810): a load overtaken by a user switch neither counts as fresh nor is cached.
-        val current = currentCoroutineContext()[LoadGeneration]?.value == generation.get()
-        if (loaded && current) {
-            reloadPolicy.complete(token)
-            saveRows(server)
-        }
+        // CE (#810): a load overtaken by a user switch neither counts as fresh nor is cached. The
+        // check and the completion are one step for a switch ([switchLock]).
+        val load = currentCoroutineContext()[LoadGeneration]
+        val current =
+            synchronized(switchLock) {
+                (loaded && load?.value == generation.get()).also {
+                    if (it) reloadPolicy.complete(token)
+                }
+            }
+        if (current) saveRows(server)
     }
 
     /** The avatar's image tag changes on the server; Room holds it, so read the user again. */
