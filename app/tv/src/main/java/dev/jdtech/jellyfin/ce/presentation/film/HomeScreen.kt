@@ -77,6 +77,7 @@ import dev.jdtech.jellyfin.core.presentation.ephyra.EphyraMotion
 import dev.jdtech.jellyfin.core.presentation.ephyra.backdropCrossfadeMillis
 import dev.jdtech.jellyfin.core.presentation.rows.animateRowItem
 import dev.jdtech.jellyfin.core.presentation.rows.rememberLazyListStateAtStart
+import dev.jdtech.jellyfin.core.presentation.session.LocalServerSession
 import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
 import dev.jdtech.jellyfin.core.presentation.spoiler.spoilerFreeName
 import dev.jdtech.jellyfin.core.presentation.spoiler.spoilerFreeOverview
@@ -122,6 +123,8 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    // CE (#810): never a frame of the previous user's rows after a switch.
+    val userId = LocalServerSession.current.userId
 
     var initialLoad by rememberSaveable { mutableStateOf(true) }
     // Not saveable on purpose: false again on every return, until that refresh is done.
@@ -140,7 +143,7 @@ fun HomeScreen(
     }
 
     HomeScreenLayout(
-        state = state,
+        state = state.shownTo(userId),
         refreshed = refreshed,
         onAction = { action ->
             when (action) {

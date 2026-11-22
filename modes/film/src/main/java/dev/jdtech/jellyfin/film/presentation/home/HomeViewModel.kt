@@ -18,23 +18,35 @@ import dev.jdtech.jellyfin.models.HomeItem
 import dev.jdtech.jellyfin.models.HomeSection
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.ReloadPolicy
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.toView
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 
 @HiltViewModel
@@ -57,18 +69,46 @@ constructor(
         private val UUID_SUGGESTIONS = UUID.fromString("31e47044-9b79-4bb0-99d0-0e477ed65420")
         private val UUID_CONTINUE_WATCHING = UUID.fromString("44845958-8326-4e83-beb4-c4f42e9eeb95")
         private val UUID_NEXT_UP = UUID.fromString("18bfced5-f237-4d42-aa72-d9d7fed19279")
+
+        /** CE (#810): see [clientActsFor]. */
+        private const val CLIENT_SWITCH_WAIT_MS = 3_000L
+        private const val CLIENT_SWITCH_POLL_MS = 20L
     }
 
     private val homeRowsStore = HomeRowsStore(appPreferences, database)
 
     private val reloadPolicy = ReloadPolicy(dataChanges)
     private var loadJob: Job? = null
-    private var cachedLibraries: List<FindroidCollection>? = null
-    private var cachedLibrariesKey: Pair<String?, UUID?>? = null
+    /**
+     * The last library list, with the server and user it is for. CE (#810): one value, so a load a
+     * switch overtook cannot pair one user's list with another user's key.
+     */
+    @Volatile
+    private var cachedLibraries: Pair<Pair<String?, UUID?>, List<FindroidCollection>>? = null
     private var cacheChecked = false
+
+    /**
+     * CE (#810): counts the user switches. A load started before the last one is for the previous
+     * user: what it still finds leaves the state alone ([updateState]).
+     */
+    private val generation = AtomicLong()
+
+    /**
+     * CE (#810): a switch moves [generation] on and invalidates the reload policy in one step, and
+     * a load checks its generation and completes the policy in one step, so a load the switch
+     * overtook cannot mark Home fresh after the switch.
+     */
+    private val switchLock = Any()
+
+    /** CE (#810): the load a user switch started, while it runs. */
+    private var switchLoad: Job? = null
+
+    /** CE (#810): the server and user [followCurrentUser] saw last. Main thread only. */
+    private var followedUser: Pair<String?, UUID?>? = null
 
     init {
         syncPreferences()
+        followCurrentUser()
     }
 
     /**
@@ -81,6 +121,62 @@ constructor(
     }
 
     /**
+     * CE (#810): Home stays on the back stack while a user is added or picked, and [ReloadPolicy]
+     * counts changes to the data, not who it is for: a Home loaded less than a minute before (after
+     * the player, for one) kept the previous user's rows and avatar. So Home follows the current
+     * user of the current server itself, as Room has it: every way of changing the user writes it
+     * there.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun followCurrentUser() {
+        viewModelScope.launch {
+            appPreferences
+                .observe(appPreferences.currentServer)
+                .flatMapLatest { serverId ->
+                    if (serverId == null) {
+                        flowOf(null to null)
+                    } else {
+                        database.observeServerCurrentUser(serverId).map { user -> serverId to user }
+                    }
+                }
+                .catch { e -> Timber.e(e, "Failed to follow the current user") }
+                .collect { (serverId, user) -> onCurrentUser(serverId, user) }
+        }
+    }
+
+    /**
+     * When the current user changed, or the rows on screen are someone else's than [user]'s, they
+     * go at once and [user]'s load starts, replacing one that was still loading for the previous
+     * user. Until it arrives Home shows the new user's avatar and no rows (nothing at all when
+     * nobody is signed in).
+     */
+    private fun onCurrentUser(serverId: String?, user: User?) {
+        val identity = serverId to user?.id
+        val previous = followedUser
+        followedUser = identity
+        val shown = _state.value
+        val shownIdentity = shown.user?.let { shown.server?.id to it.id }
+        val switched =
+            (previous != null && previous != identity) ||
+                (shownIdentity != null && shownIdentity != identity)
+        if (!switched) return
+        Timber.i("The current user changed: Home starts over")
+        synchronized(switchLock) {
+            generation.incrementAndGet()
+            reloadPolicy.invalidate()
+        }
+        loadJob?.cancel()
+        cacheChecked = false
+        _state.value =
+            HomeState(
+                server = shown.server?.takeIf { it.id == serverId },
+                user = user,
+                useEpisodeImages = shown.useEpisodeImages,
+            )
+        switchLoad = if (user != null) loadData() else null
+    }
+
+    /**
      * With [silent] the refresh indicator stays hidden, for reloads the user didn't ask for. The
      * returned job ends once every row has loaded, for screens that wait for that (TV Home puts
      * focus back only then, so it lands on the item in its new place). A load that starts while
@@ -89,7 +185,10 @@ constructor(
     fun loadData(silent: Boolean = false): Job {
         Timber.i("Loading data")
         loadJob?.cancel()
-        val job = viewModelScope.launch(Dispatchers.Default) { runLoad(silent) }
+        val job =
+            viewModelScope.launch(Dispatchers.Default + LoadGeneration(generation.get())) {
+                runLoad(silent)
+            }
         loadJob = job
         return job
     }
@@ -97,16 +196,53 @@ constructor(
     /** Whether coming back to Home needs a load (#251), see [ReloadPolicy]. */
     fun shouldReload(stopEventFollows: Boolean = false): Boolean {
         syncPreferences()
+        // CE (#810): the new user's rows are already on their way.
+        if (switchLoad?.isActive == true) return false
         return reloadPolicy.shouldReload(stopEventFollows)
     }
 
     /** [loadData] when [shouldReload] says so, else a job that is already done. */
-    fun loadDataIfNeeded(silent: Boolean = false): Job =
-        if (shouldReload(stopEventFollows = false)) loadData(silent) else Job().apply { complete() }
+    fun loadDataIfNeeded(silent: Boolean = false): Job {
+        switchLoad
+            ?.takeIf { it.isActive }
+            ?.let {
+                return it
+            }
+        return if (shouldReload(stopEventFollows = false)) {
+            loadData(silent)
+        } else {
+            Job().apply { complete() }
+        }
+    }
+
+    /** CE (#810): the [generation] a load started in. */
+    private class LoadGeneration(val value: Long) : AbstractCoroutineContextElement(Key) {
+        companion object Key : CoroutineContext.Key<LoadGeneration>
+    }
+
+    /** Changes the state for the load this runs in, unless a user switch came after its start. */
+    private suspend fun updateState(change: (HomeState) -> HomeState) =
+        updateState(currentCoroutineContext()[LoadGeneration], change)
+
+    private fun updateState(load: LoadGeneration?, change: (HomeState) -> HomeState) {
+        _state.update { if (load != null && load.value != generation.get()) it else change(it) }
+    }
+
+    /**
+     * CE (#810): waits, a few seconds at most, until the client acts for [userId]. False when it
+     * does not by then (signed out in the meantime, or switched to someone else).
+     */
+    private suspend fun clientActsFor(userId: UUID): Boolean =
+        withTimeoutOrNull(CLIENT_SWITCH_WAIT_MS) {
+            while (runCatching { repository.getUserId() }.getOrNull() != userId) {
+                delay(CLIENT_SWITCH_POLL_MS)
+            }
+            true
+        } ?: false
 
     private suspend fun runLoad(silent: Boolean) {
         val token = reloadPolicy.begin()
-        if (!silent) _state.update { it.copy(isLoading = true, error = null) }
+        if (!silent) updateState { it.copy(isLoading = true, error = null) }
         var server: Server? = null
         var loaded = false
         try {
@@ -116,14 +252,23 @@ constructor(
                 }
             if (server != null) {
                 val user = logFailure("user") { database.getServerCurrentUser(server.id) }
-                _state.update { it.copy(user = user.getOrNull()) }
+                updateState { it.copy(user = user.getOrNull()) }
+                // CE (#810): a login or switch writes Room before it switches the client, so a
+                // load that a new current user started can be early: what it fetched would be the
+                // previous user's rows under the new user's name.
+                val userId = user.getOrNull()?.id
+                if (userId != null && !clientActsFor(userId)) {
+                    Timber.w("The client is not signed in as the current user: no Home load")
+                    updateState { it.copy(isLoading = false) }
+                    return
+                }
                 showCachedRows(server.id, user.getOrNull()?.id)
             }
             // CE (#142): the rows this user chose for this server, in their order.
             val stored = homeRowsStore.read(HomeRowsProfile.of(server))
             val legacy = homeRowsStore.legacy()
             val layout = HomeRows.resolve(stored, null, legacy)
-            _state.update { it.copy(rowOrder = layout.map { row -> row.key }) }
+            updateState { it.copy(rowOrder = layout.map { row -> row.key }) }
             fun show(type: HomeRowType) = layout.any { it.type == type && it.visible }
 
             // coroutineScope { } is required here: without it, a failure
@@ -160,18 +305,24 @@ constructor(
                 results
             }
             val error = errorIfAllFailed(rows)
-            _state.update { it.copy(error = error) }
+            updateState { it.copy(error = error) }
             loaded = error == null
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            _state.update { it.copy(error = e) }
+            updateState { it.copy(error = e) }
         }
-        _state.update { it.copy(isLoading = false) }
-        if (loaded) {
-            reloadPolicy.complete(token)
-            saveRows(server)
-        }
+        updateState { it.copy(isLoading = false) }
+        // CE (#810): a load overtaken by a user switch neither counts as fresh nor is cached. The
+        // check and the completion are one step for a switch ([switchLock]).
+        val load = currentCoroutineContext()[LoadGeneration]
+        val current =
+            synchronized(switchLock) {
+                (loaded && load?.value == generation.get()).also {
+                    if (it) reloadPolicy.complete(token)
+                }
+            }
+        if (current) saveRows(server)
     }
 
     /** The avatar's image tag changes on the server; Room holds it, so read the user again. */
@@ -179,7 +330,11 @@ constructor(
         logFailure("user image") {
             repository.refreshCurrentUserImage()
             database.getServerCurrentUser(serverId)?.let { user ->
-                _state.update { it.copy(user = user) }
+                // CE (#810): a new picture of the same user. Another user is a switch, which
+                // onCurrentUser handles, rows and all.
+                updateState {
+                    if (it.user == null || it.user.id == user.id) it.copy(user = user) else it
+                }
             }
         }
     }
@@ -192,7 +347,7 @@ constructor(
         logFailure("server name") {
             val renamed = server.renamedTo(repository.getServerInfo()) ?: return@logFailure
             database.updateServer(renamed)
-            _state.update { if (it.server?.id == renamed.id) it.copy(server = renamed) else it }
+            updateState { if (it.server?.id == renamed.id) it.copy(server = renamed) else it }
         }
     }
 
@@ -210,7 +365,7 @@ constructor(
             return
         }
         val rows = cache.read(serverId, userId) ?: return
-        _state.update {
+        updateState {
             if (!it.isEmpty) {
                 it
             } else {
@@ -262,7 +417,7 @@ constructor(
     private suspend fun loadServerName(serverId: String): Server? {
         val server = database.getServer(serverId)
         if (server != null) {
-            _state.update { it.copy(server = server) }
+            updateState { it.copy(server = server) }
         }
         return server
     }
@@ -270,7 +425,7 @@ constructor(
     private suspend fun loadSuggestions(show: Boolean): Boolean {
         Timber.i("Loading suggestions")
         if (!show) {
-            _state.update { it.copy(suggestionsSection = null) }
+            updateState { it.copy(suggestionsSection = null) }
             return false
         }
 
@@ -283,14 +438,14 @@ constructor(
                 HomeItem.Suggestions(id = UUID_SUGGESTIONS, items = items)
             }
 
-        _state.update { it.copy(suggestionsSection = section) }
+        updateState { it.copy(suggestionsSection = section) }
         return true
     }
 
     private suspend fun loadResumeItems(show: Boolean): Boolean {
         Timber.i("Loading resume items")
         if (!show) {
-            _state.update { it.copy(resumeSection = null) }
+            updateState { it.copy(resumeSection = null) }
             return false
         }
 
@@ -305,14 +460,14 @@ constructor(
                 )
             }
 
-        _state.update { it.copy(resumeSection = section) }
+        updateState { it.copy(resumeSection = section) }
         return true
     }
 
     private suspend fun loadNextUpItems(show: Boolean): Boolean {
         Timber.i("Loading next up items")
         if (!show) {
-            _state.update { it.copy(nextUpSection = null) }
+            updateState { it.copy(nextUpSection = null) }
             return false
         }
 
@@ -325,7 +480,7 @@ constructor(
                 HomeItem.Section(HomeSection(UUID_NEXT_UP, uiTextNextUp, nextUpItems))
             }
 
-        _state.update { it.copy(nextUpSection = section) }
+        updateState { it.copy(nextUpSection = section) }
         return true
     }
 
@@ -335,24 +490,23 @@ constructor(
     ): Boolean {
         Timber.i("Loading views")
         if (!HomeRows.needsLibraries(stored, legacy)) {
-            _state.update { it.copy(views = emptyList()) }
+            updateState { it.copy(views = emptyList()) }
             return false
         }
 
         // The library list rarely changes: later loads start the Latest rows from the last list
         // right away and check the list alongside (#251).
         val key = _state.value.server?.id to _state.value.user?.id
-        val known = cachedLibraries?.takeIf { cachedLibrariesKey == key }
+        val known = cachedLibraries?.takeIf { it.first == key }?.second
         coroutineScope {
             val fresh = async { logFailure("libraries") { repository.homeLibraries() } }
             val libraries = known ?: fresh.await().getOrThrow()
-            cachedLibraries = libraries
-            cachedLibrariesKey = key
+            cachedLibraries = key to libraries
             loadLatest(libraries, stored, legacy)
             if (known != null) {
                 val now = fresh.await().getOrNull()
                 if (now != null && now.map { it.id } != known.map { it.id }) {
-                    cachedLibraries = now
+                    cachedLibraries = key to now
                     loadLatest(now, stored, legacy)
                 }
             }
@@ -371,12 +525,12 @@ constructor(
     ) {
         // CE (#142): now that the libraries are known, new ones get their place and hidden ones go.
         val layout = HomeRows.resolve(stored, libraries.map { it.id }, legacy)
-        _state.update { it.copy(rowOrder = layout.map { row -> row.key }) }
+        updateState { it.copy(rowOrder = layout.map { row -> row.key }) }
         val shown = layout.filter { it.visible }.mapNotNullTo(mutableSetOf()) { it.libraryId }
         val views = libraries.filter { it.id in shown }
         if (views.isEmpty()) {
             // CE (#428): no Latest row to load, so none of the old ones may stay.
-            _state.update { it.copy(views = emptyList()) }
+            updateState { it.copy(views = emptyList()) }
             return
         }
 
@@ -397,6 +551,7 @@ constructor(
                 }
             }
 
+        val load = currentCoroutineContext()[LoadGeneration]
         coroutineScope {
             views
                 .mapIndexed { i, view ->
@@ -407,7 +562,7 @@ constructor(
                             }
                         synchronized(results) {
                             results[i] = result
-                            _state.update { it.copy(views = items()) }
+                            updateState(load) { it.copy(views = items()) }
                         }
                     }
                 }

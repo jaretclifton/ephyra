@@ -150,7 +150,8 @@ fun MainScreen(
     MainScreenLayout(
         user = user,
         server = server,
-        libraries = mediaState.libraries,
+        // CE (#810): not the previous user's libraries for the moment before they reload.
+        libraries = mediaState.shownTo(session.userId).libraries,
         showFavorites = mainState.showFavoritesTab,
         navigateToSettings = navigateToSettings,
         navigateToUsers = navigateToUsers,

@@ -41,6 +41,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyHomeView
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyServer
 import dev.jdtech.jellyfin.core.presentation.ephyra.EphyraMotion
 import dev.jdtech.jellyfin.core.presentation.rows.rememberLazyListStateAtStart
+import dev.jdtech.jellyfin.core.presentation.session.LocalServerSession
 import dev.jdtech.jellyfin.film.presentation.home.HomeAction
 import dev.jdtech.jellyfin.film.presentation.home.HomeState
 import dev.jdtech.jellyfin.film.presentation.home.HomeViewModel
@@ -81,20 +82,19 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    // CE (#810): never a frame of the previous user's rows after a switch.
+    val userId = LocalServerSession.current.userId
 
     ReloadOnResume(shouldReload = { viewModel.shouldReload(stopEventFollows = true) }) {
         viewModel.loadData(silent = true)
     }
 
     HomeScreenLayout(
-        state = state,
+        state = state.shownTo(userId),
         onAddUser = onAddUser,
         onPublicUserClick = onPublicUserClick,
-        onUserSwitched = {
-            // Home stays alive across a switch, so load the new user's rows now.
-            viewModel.loadData()
-            onUserSwitched()
-        },
+        // CE (#810): the ViewModel follows the current user and loads the new user's rows itself.
+        onUserSwitched = onUserSwitched,
         onAction = { action ->
             when (action) {
                 is HomeAction.OnItemClick -> onItemClick(action.item)
@@ -170,21 +170,26 @@ internal fun HomeScreenLayout(
     val userFade = remember { Animatable(1f) }
     var shownUserId by remember { mutableStateOf(state.user?.id) }
     LaunchedEffect(state.user?.id) {
+        // CE (#810): no user is no one to switch to. During a switch Home can show no user for a
+        // moment (HomeState.shownTo); the switch is from the previous user to the next one.
+        val userId = state.user?.id ?: return@LaunchedEffect
         if (shownUserId == null) {
             // The first user of this screen isn't a switch: a cold start arrives with no user and
             // gets one a moment later, and the rows must not dip for that.
-            shownUserId = state.user?.id
-        } else if (state.user?.id != shownUserId) {
-            shownUserId = state.user?.id
+            shownUserId = userId
+        } else if (userId != shownUserId) {
+            shownUserId = userId
             userFade.animateTo(
                 0f,
                 tween(EphyraMotion.DURATION_SHORT, easing = EphyraMotion.EasingExit),
             )
-            userFade.animateTo(
-                1f,
-                tween(EphyraMotion.DURATION_MEDIUM, easing = EphyraMotion.EasingEnter),
-            )
         }
+        // Also after a fade that a moment without user cut short, back to the same user: the
+        // rows always end fully visible. Nothing to do when they are.
+        userFade.animateTo(
+            1f,
+            tween(EphyraMotion.DURATION_MEDIUM, easing = EphyraMotion.EasingEnter),
+        )
     }
 
     // Sections arrive in any order, and a list keeps its first item in place when another lands

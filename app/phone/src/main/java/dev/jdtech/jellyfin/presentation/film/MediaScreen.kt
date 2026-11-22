@@ -30,6 +30,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyCollections
+import dev.jdtech.jellyfin.core.presentation.session.LocalServerSession
 import dev.jdtech.jellyfin.film.presentation.media.MediaAction
 import dev.jdtech.jellyfin.film.presentation.media.MediaState
 import dev.jdtech.jellyfin.film.presentation.media.MediaViewModel
@@ -90,7 +91,8 @@ fun MediaScreen(
     if (searchExpanded) KeyboardShortcuts.OnEscape { onSearchExpand(false) }
 
     MediaScreenLayout(
-        state = state,
+        // CE (#810): never a frame of the previous user's libraries after a switch.
+        state = state.shownTo(LocalServerSession.current.userId),
         searchState = searchState,
         searchExpanded = searchExpanded,
         onSearchExpand = onSearchExpand,
