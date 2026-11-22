@@ -54,16 +54,6 @@ internal suspend fun BaseItemDto.toFindroidMovie(
         specialFeatureCount = specialFeatureCount,
         images = toFindroidImages(context.baseUrl),
         chapters = toFindroidChapters(),
-        trickplayInfo =
-            trickplay
-                ?.mapNotNull { (width, info) ->
-                    info
-                        ?.keys
-                        ?.maxOrNull()
-                        ?.let { info[it] }
-                        ?.toFindroidTrickplayInfo()
-                        ?.let { width to it }
-                }
-                ?.toMap(),
+        trickplayInfo = toFindroidTrickplayInfo(),
     )
 }
