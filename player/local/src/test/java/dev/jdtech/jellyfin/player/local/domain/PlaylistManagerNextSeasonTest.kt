@@ -124,7 +124,7 @@ class PlaylistManagerNextSeasonTest {
         start: FindroidEpisode,
         show: Map<FindroidSeason, List<FindroidEpisode>>,
     ): PlaylistManager {
-        val manager = PlaylistManager(fakeRepository(show))
+        val manager = playlistManager(fakeRepository(show))
         runBlocking { manager.getInitialItem(start.id, ItemKind.EPISODE) }
         return manager
     }

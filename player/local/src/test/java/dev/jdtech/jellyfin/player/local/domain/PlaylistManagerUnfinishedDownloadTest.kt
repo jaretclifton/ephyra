@@ -20,7 +20,7 @@ class PlaylistManagerUnfinishedDownloadTest {
 
     @Test
     fun `an unfinished download gives way to the server source`() {
-        val manager = PlaylistManager(fakeRepository(listOf(partial(), remote())))
+        val manager = playlistManager(fakeRepository(listOf(partial(), remote())))
 
         val item = runBlocking { manager.getInitialItem(episode.id, ItemKind.EPISODE) }
 
@@ -29,7 +29,7 @@ class PlaylistManagerUnfinishedDownloadTest {
 
     @Test
     fun `an unfinished download alone is not played and gives no raw error text`() {
-        val manager = PlaylistManager(fakeRepository(listOf(partial())))
+        val manager = playlistManager(fakeRepository(listOf(partial())))
 
         try {
             val item = runBlocking { manager.getInitialItem(episode.id, ItemKind.EPISODE) }

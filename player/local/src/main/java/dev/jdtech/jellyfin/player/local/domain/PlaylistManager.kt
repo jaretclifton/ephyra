@@ -27,7 +27,12 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
-class PlaylistManager @Inject internal constructor(private val repository: JellyfinRepository) {
+class PlaylistManager
+@Inject
+internal constructor(
+    private val repository: JellyfinRepository,
+    private val resolvePlayback: ResolvePlayback,
+) {
     private var startItem: FindroidItem? = null
     private var items: List<FindroidItem> = emptyList()
 
@@ -117,9 +122,7 @@ class PlaylistManager @Inject internal constructor(private val repository: Jelly
                     val (movie, sources) =
                         coroutineScope {
                             val movie = async { repository.getMovie(itemId) }
-                            val sources = async {
-                                repository.getPlaybackSources(itemId, mediaSourceId)
-                            }
+                            val sources = async { resolvePlayback.sources(itemId, mediaSourceId) }
                             movie.await() to sources.await()
                         }
                     prefetchedSources = sources
@@ -162,10 +165,7 @@ class PlaylistManager @Inject internal constructor(private val repository: Jelly
                                 coroutineScope {
                                     val episode = async { fullEpisode(nextUpEpisode) }
                                     val sources = async {
-                                        repository.getPlaybackSources(
-                                            nextUpEpisode.id,
-                                            mediaSourceId,
-                                        )
+                                        resolvePlayback.sources(nextUpEpisode.id, mediaSourceId)
                                     }
                                     episode.await() to sources.await()
                                 }
@@ -209,9 +209,7 @@ class PlaylistManager @Inject internal constructor(private val repository: Jelly
                     val (episode, sources) =
                         coroutineScope {
                             val episode = async { repository.getEpisode(itemId) }
-                            val sources = async {
-                                repository.getPlaybackSources(itemId, mediaSourceId)
-                            }
+                            val sources = async { resolvePlayback.sources(itemId, mediaSourceId) }
                             episode.await() to sources.await()
                         }
                     prefetchedSources = sources
@@ -477,24 +475,20 @@ class PlaylistManager @Inject internal constructor(private val repository: Jelly
     ): PlayerItem {
         Timber.d("Converting FindroidItem ${this.id} to PlayerItem")
 
-        // A downloaded copy shares its id with the server version, so it wins for that version too.
-        val mediaSources =
-            (prefetchedSources ?: repository.getPlaybackSources(id, mediaSourceId)).let { sources ->
-                sources.filter { it.id == mediaSourceId }.ifEmpty { sources }
-            }
-        // Never an unfinished download (#454): its partial file plays as far as it got, or not at
-        // all. With no other source (offline) there is nothing to play: the exception carries no
-        // message, so the player shows its own error instead of a raw one.
-        val local = mediaSources.firstOrNull {
-            it.type == FindroidSourceType.LOCAL && !it.path.endsWith(".download")
-        }
+        // CE (#766): the pick is ResolvePlayback's; it only returns a local source that is a
+        // finished download. With no source (offline) there is nothing to play: the exception
+        // carries no message, so the player shows its own error instead of a raw one.
+        val picked =
+            resolvePlayback.pick(
+                prefetchedSources ?: resolvePlayback.sources(id, mediaSourceId),
+                mediaSourceId,
+            )
+        val local = picked?.takeIf { it.type == FindroidSourceType.LOCAL }
         val remote =
             if (local != null) {
                 null
             } else {
-                mediaSources
-                    .firstOrNull { it.type != FindroidSourceType.LOCAL }
-                    ?.let { withChosenAudio(it, selectedAudio, audioStreamIndex) }
+                picked?.let { withChosenAudio(it, selectedAudio, audioStreamIndex) }
             }
         val mediaSource = local ?: remote?.source ?: throw NoSuchElementException()
         val externalSubtitles =
@@ -583,8 +577,8 @@ class PlaylistManager @Inject internal constructor(private val repository: Jelly
         requestedAudio[id] = index
         if (index == source.defaultAudioStreamIndex) return default
         return try {
-            repository
-                .getPlaybackSources(id, source.id, audioStreamIndex = index)
+            resolvePlayback
+                .sources(id, source.id, audioStreamIndex = index)
                 .firstOrNull { it.id == source.id && it.type != FindroidSourceType.LOCAL }
                 ?.let { RemoteSource(it, index) } ?: default
         } catch (e: CancellationException) {

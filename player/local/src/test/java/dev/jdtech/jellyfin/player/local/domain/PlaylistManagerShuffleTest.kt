@@ -38,7 +38,7 @@ class PlaylistManagerShuffleTest {
         val showMap =
             mapOf(season0 to listOf(epSpecial), season1 to listOf(ep1, ep2), season2 to listOf(ep3))
 
-        val manager = PlaylistManager(fakeRepository(showMap))
+        val manager = playlistManager(fakeRepository(showMap))
         val initialItem = runBlocking {
             manager.getInitialItem(itemId = seriesId, itemKind = ItemKind.SERIES, shuffle = true)
         }
@@ -59,7 +59,7 @@ class PlaylistManagerShuffleTest {
         val seasons = List(24) { season(it) }
         val showMap = seasons.associateWith { season -> List(5) { episode(season, it + 1) } }
 
-        val manager = PlaylistManager(fakeRepository(showMap))
+        val manager = playlistManager(fakeRepository(showMap))
         val initialItem = runBlocking {
             manager.getInitialItem(itemId = seriesId, itemKind = ItemKind.SERIES, shuffle = true)
         }
@@ -75,7 +75,7 @@ class PlaylistManagerShuffleTest {
     fun `a shuffled series keeps going after the second episode`() {
         val seasons = List(4) { season(it + 1) }
         val showMap = seasons.associateWith { season -> List(5) { episode(season, it + 1) } }
-        val manager = PlaylistManager(fakeRepository(showMap))
+        val manager = playlistManager(fakeRepository(showMap))
 
         runBlocking {
             val first =
@@ -99,7 +99,7 @@ class PlaylistManagerShuffleTest {
     fun `jumping to a queued episode of a series shuffle gets its chapters`() {
         val seasons = List(3) { season(it + 1) }
         val showMap = seasons.associateWith { season -> List(4) { episode(season, it + 1) } }
-        val manager = PlaylistManager(fakeRepository(showMap))
+        val manager = playlistManager(fakeRepository(showMap))
 
         runBlocking {
             manager.getInitialItem(itemId = seriesId, itemKind = ItemKind.SERIES, shuffle = true)
@@ -115,7 +115,7 @@ class PlaylistManagerShuffleTest {
     fun `a shuffled episode is fetched in full once, however often it is converted`() {
         val seasons = List(2) { season(it + 1) }
         val showMap = seasons.associateWith { season -> List(4) { episode(season, it + 1) } }
-        val manager = PlaylistManager(fakeRepository(showMap))
+        val manager = playlistManager(fakeRepository(showMap))
 
         runBlocking {
             val first =
@@ -140,7 +140,7 @@ class PlaylistManagerShuffleTest {
         val specials = season(0)
         val showMap = mapOf(specials to List(3) { episode(specials, it + 1) })
 
-        val manager = PlaylistManager(fakeRepository(showMap))
+        val manager = playlistManager(fakeRepository(showMap))
         val initialItem = runBlocking {
             manager.getInitialItem(itemId = seriesId, itemKind = ItemKind.SERIES, shuffle = true)
         }
@@ -157,7 +157,7 @@ class PlaylistManagerShuffleTest {
             List(10) { episode(season1, it + 1) }.map { it.copy(playbackPositionTicks = 50000000L) }
         val showMap = mapOf(season1 to inSeason, season2 to listOf(episode(season2, 1)))
 
-        val manager = PlaylistManager(fakeRepository(showMap)).apply { random = Random(638) }
+        val manager = playlistManager(fakeRepository(showMap)).apply { random = Random(638) }
         val initialItem = runBlocking {
             manager.getInitialItem(itemId = season1.id, itemKind = ItemKind.SEASON, shuffle = true)
         }
@@ -175,7 +175,7 @@ class PlaylistManagerShuffleTest {
     fun `a season without shuffle plays in order from its first episode`() {
         val season1 = season(1)
         val inSeason = List(10) { episode(season1, it + 1) }
-        val manager = PlaylistManager(fakeRepository(mapOf(season1 to inSeason)))
+        val manager = playlistManager(fakeRepository(mapOf(season1 to inSeason)))
 
         val initialItem = runBlocking {
             manager.getInitialItem(itemId = season1.id, itemKind = ItemKind.SEASON)

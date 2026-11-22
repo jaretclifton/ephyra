@@ -5,6 +5,8 @@ import android.provider.Settings
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.MediaServer
+import dev.jdtech.jellyfin.models.PlaybackTarget
+import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.toUserId
@@ -163,6 +165,12 @@ internal class StandInServer(
 
     companion object {
         val USER_ID: UserId = "00000000-0000-0000-0000-000000000001".toUserId()
+
+        /**
+         * CE (#766): the target the player resolves with every player preference at its default:
+         * ExoPlayer, Dolby Vision direct play allowed.
+         */
+        val LOCAL_PLAYER = PlaybackTarget.LocalPlayer(PlayerEngineId.EXOPLAYER, true)
 
         /** The test application, with the device id the SDK names the device after. */
         fun context(): Context =

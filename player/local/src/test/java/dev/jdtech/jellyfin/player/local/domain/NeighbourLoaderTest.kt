@@ -48,7 +48,7 @@ class NeighbourLoaderTest {
     /** The held requests, oldest first, by the item id they ask about. */
     private val held = mutableListOf<Pair<UUID, () -> Unit>>()
 
-    private val manager = PlaylistManager(fakeRepository())
+    private val manager = playlistManager(fakeRepository())
     private val loader = NeighbourLoader(manager)
 
     @Test

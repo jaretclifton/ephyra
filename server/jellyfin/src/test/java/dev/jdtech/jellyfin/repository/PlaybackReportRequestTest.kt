@@ -84,7 +84,7 @@ class PlaybackReportRequestTest {
     /** Asks for the item's stream and loads it, as the player does, then plays and stops it. */
     private suspend fun playAndStop(answer: String) {
         this.answer = answer
-        val source = repository.getPlaybackSources(itemId).single()
+        val source = repository.getPlaybackSources(itemId, StandInServer.LOCAL_PLAYER).single()
         repository.setPlaySession(itemId, source.playSessionId, source.transcoded)
         repository.postPlaybackStart(itemId, source.transcoded)
         repository.postPlaybackProgress(itemId, PROGRESS, isPaused = true, source.transcoded)

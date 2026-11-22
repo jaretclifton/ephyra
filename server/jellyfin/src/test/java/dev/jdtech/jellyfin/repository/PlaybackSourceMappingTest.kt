@@ -43,7 +43,7 @@ class PlaybackSourceMappingTest {
 
     private suspend fun playbackSource(answer: String): FindroidSource {
         this.answer = answer
-        return repository.getPlaybackSources(itemId).single()
+        return repository.getPlaybackSources(itemId, StandInServer.LOCAL_PLAYER).single()
     }
 
     private suspend fun downloadSource(answer: String, includePath: Boolean): FindroidSource {

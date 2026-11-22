@@ -23,7 +23,6 @@ import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.PlaybackTarget
-import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerInfo
@@ -539,11 +538,14 @@ class JellyfinRepositoryImpl(
 
     override suspend fun getPlaybackSources(
         itemId: UUID,
+        target: PlaybackTarget,
         mediaSourceId: String?,
         audioStreamIndex: Int?,
+        maxBitrate: Int?,
     ): List<FindroidSource> =
         withContext(Dispatchers.IO) {
-            // A downloaded copy wins over any server source (see PlaylistManager), so do not wait
+            // A downloaded copy wins over any server source (see ResolvePlayback.pick), so do not
+            // wait
             // for the server when it is the one that will play. Only a finished one: an unfinished
             // download's partial file would play as far as it got, or not at all (#454). CE (#718):
             // and only a download stored for the current server.
@@ -559,15 +561,12 @@ class JellyfinRepositoryImpl(
                 return@withContext localSources
             }
 
-            // User-selected bitrate cap (player quality selector). 0 = original quality.
-            val maxBitrate =
-                appPreferences.getValue(appPreferences.playerMaxBitrate).takeIf { it > 0 }
             val sources = mutableListOf<FindroidSource>()
             sources.addAll(
                 server.playback.sources(
                     PlaybackRequest(
                         itemId = itemId,
-                        target = localPlayerTarget(),
+                        target = target,
                         mediaSourceId = mediaSourceId,
                         audioStreamIndex = audioStreamIndex,
                         maxBitrate = maxBitrate,
@@ -578,19 +577,6 @@ class JellyfinRepositoryImpl(
             sources.addAll(localSources)
             sources
         }
-
-    /**
-     * CE (#752): who plays a stream of [getPlaybackSources], from the player preferences. Any
-     * backend value other than mpv's plays on ExoPlayer, as before. #766 moves this to the player.
-     */
-    private fun localPlayerTarget(): PlaybackTarget.LocalPlayer =
-        PlaybackTarget.LocalPlayer(
-            engine =
-                PlayerEngineId.fromPreference(appPreferences.getValue(appPreferences.playerBackend))
-                    ?: PlayerEngineId.EXOPLAYER,
-            directPlayDolbyVision =
-                appPreferences.getValue(appPreferences.playerDirectPlayDolbyVision),
-        )
 
     override suspend fun getSeriesTrackPreferences(seriesId: UUID): List<SeriesTrackPreferenceDto> =
         withContext(Dispatchers.IO) { database.getSeriesTrackPreferences(currentUserId, seriesId) }
