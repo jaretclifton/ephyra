@@ -187,8 +187,10 @@ regular expression** `^Beta`, and **Filter APKs by regular expression**
 
 **Android TV**: a separate app built for the remote, [below](#android-tv).
 
-The rest is Findroid's, and Findroid's changes are merged in regularly. Release-by-release detail
-is in the [changelog](CHANGELOG.md).
+The rest is Findroid's. Ephyra stays 0 commits behind Findroid: its translations are merged in,
+and each of its code changes is judged and, where it is worth having, built again in Ephyra's own
+structure. The [upstream ledger](docs/upstream-ledger.md) lists every Findroid commit with what
+Ephyra did with it and why. Release-by-release detail is in the [changelog](CHANGELOG.md).
 
 ## Tablet
 
