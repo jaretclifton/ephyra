@@ -2,7 +2,9 @@ package dev.jdtech.jellyfin.api
 
 import android.app.Application
 import android.provider.Settings
+import dev.jdtech.jellyfin.server.jellyfin.BuildConfig
 import kotlin.test.assertEquals
+import org.jellyfin.sdk.android.androidDevice
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -58,5 +60,24 @@ class JellyfinApiClientInfoTest {
         installedVersion(null)
 
         assertEquals("unknown", JellyfinApi(context).api.clientInfo.version)
+    }
+
+    /**
+     * #758: the device id has the build type suffix it had while the client lived in `data`, read
+     * from this module's own BuildConfig: the plain id for release, `-staging` for the beta,
+     * `-debug` for a debug build. A wrong one signs every user out on update, or lets the beta log
+     * out the release app. The unit tests run for the debug build type only; the expected ids of
+     * the other two say what their BuildConfig must give.
+     */
+    @Test
+    fun `the device id carries the build type unless it is release`() {
+        val plain = androidDevice(context).id
+        val expected =
+            mapOf("debug" to "$plain-debug", "staging" to "$plain-staging", "release" to plain)
+
+        assertEquals(
+            expected.getValue(BuildConfig.BUILD_TYPE),
+            JellyfinApi(context).jellyfin.deviceInfo?.id,
+        )
     }
 }
