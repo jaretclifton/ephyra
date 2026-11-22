@@ -701,10 +701,16 @@ class JellyfinRepositoryImpl(
     override fun setPlaySession(itemId: ItemId, playSessionId: String?, transcodes: Boolean) =
         playSessions.onPlaybackInfo(itemId, playSessionId, transcodes)
 
-    override suspend fun postPlaybackStart(itemId: ItemId, transcoded: Boolean) {
+    override suspend fun postPlaybackStart(
+        itemId: ItemId,
+        positionTicks: Long?,
+        transcoded: Boolean,
+    ) {
         // CE (#599): Transcode with the transcode's play session, see PlaySessions.playReport.
         val report = playSessions.playReport(itemId, transcoded)
-        Timber.d("Sending start ${itemId.asString()}, transcoded: ${report.transcoded}")
+        Timber.d(
+            "Sending start ${itemId.asString()} at $positionTicks, transcoded: ${report.transcoded}"
+        )
         withContext(Dispatchers.IO) {
             // CE (#637): read alongside the start report, not before it, so a slow or failing read
             // does not hold up the start. The player waits for this call before it reports the
@@ -714,8 +720,7 @@ class JellyfinRepositoryImpl(
                 server.playback.reportStart(
                     PlaybackReport(
                         itemId = itemId,
-                        // The start sends no position.
-                        positionTicks = 0L,
+                        positionTicks = positionTicks,
                         isPaused = false,
                         transcoded = report.transcoded,
                         playSessionId = report.playSessionId,

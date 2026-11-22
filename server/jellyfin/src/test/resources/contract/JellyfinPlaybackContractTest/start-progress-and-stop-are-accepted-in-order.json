@@ -1,6 +1,6 @@
 [
     {
-        "request": "POST /Sessions/Playing {\"ItemId\":\"00000000-0000-0000-0000-000000000102\",\"IsPaused\":false,\"PlayMethod\":\"DirectPlay\"}",
+        "request": "POST /Sessions/Playing {\"ItemId\":\"00000000-0000-0000-0000-000000000102\",\"PositionTicks\":0,\"IsPaused\":false,\"PlayMethod\":\"DirectPlay\"}",
         "status": 204
     },
     {

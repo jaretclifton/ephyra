@@ -1,6 +1,6 @@
 [
     {
-        "request": "POST /Sessions/Playing {\"ItemId\":\"00000000-0000-0000-0000-000000000101\",\"IsPaused\":false,\"PlayMethod\":\"DirectPlay\"}",
+        "request": "POST /Sessions/Playing {\"ItemId\":\"00000000-0000-0000-0000-000000000101\",\"PositionTicks\":1200000000,\"IsPaused\":false,\"PlayMethod\":\"DirectPlay\"}",
         "status": 204
     },
     {
@@ -141,7 +141,7 @@
                 "PlaybackPositionTicks": 3600115000,
                 "PlayCount": 1,
                 "IsFavorite": false,
-                "LastPlayedDate": "2026-11-22T09:23:13.5004847Z",
+                "LastPlayedDate": "2026-11-22T23:21:54.5602937Z",
                 "Played": false,
                 "Key": "00000000-0000-0000-0000-000000000101",
                 "ItemId": "00000000000000000000000000000101"

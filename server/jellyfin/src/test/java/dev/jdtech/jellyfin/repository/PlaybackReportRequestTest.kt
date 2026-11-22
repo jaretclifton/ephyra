@@ -86,7 +86,7 @@ class PlaybackReportRequestTest {
         this.answer = answer
         val source = repository.getPlaybackSources(itemId, StandInServer.LOCAL_PLAYER).single()
         repository.setPlaySession(itemId, source.playSessionId, source.transcoded)
-        repository.postPlaybackStart(itemId, source.transcoded)
+        repository.postPlaybackStart(itemId, START, source.transcoded)
         repository.postPlaybackProgress(itemId, PROGRESS, isPaused = true, source.transcoded)
         repository.postPlaybackStop(itemId, STOP, playedPercentage = 30)
     }
@@ -97,7 +97,7 @@ class PlaybackReportRequestTest {
 
         assertEquals(
             listOf(
-                Report("POST /Sessions/Playing", ITEM, null, "false", "DirectPlay", null),
+                Report("POST /Sessions/Playing", ITEM, "$START", "false", "DirectPlay", null),
                 Report(
                     "POST /Sessions/Playing/Progress",
                     ITEM,
@@ -118,7 +118,7 @@ class PlaybackReportRequestTest {
 
         assertEquals(
             listOf(
-                Report("POST /Sessions/Playing", ITEM, null, "false", "Transcode", SESSION),
+                Report("POST /Sessions/Playing", ITEM, "$START", "false", "Transcode", SESSION),
                 Report(
                     "POST /Sessions/Playing/Progress",
                     ITEM,
@@ -130,6 +130,19 @@ class PlaybackReportRequestTest {
                 // The stop names the session, so the server ends the transcode now.
                 Report("POST /Sessions/Playing/Stopped", ITEM, "$STOP", null, null, SESSION),
             ),
+            reports(),
+        )
+    }
+
+    @Test
+    fun `a start without a position sends no PositionTicks`() = runBlocking {
+        // #868: the Cast start, which does not read the receiver's position, sends none as before.
+        repository.postPlaybackStart(itemId, positionTicks = null, transcoded = false)
+
+        val start = server.requests.single { it.path == "/Sessions/Playing" }.json()
+        assertFalse("PositionTicks" in start, message = "body: $start")
+        assertEquals(
+            listOf(Report("POST /Sessions/Playing", ITEM, null, "false", "DirectPlay", null)),
             reports(),
         )
     }
@@ -185,6 +198,8 @@ class PlaybackReportRequestTest {
         const val SESSION = "51c3f794f3da47dcb92c5c42f43f8c88"
         const val SERVER = "server"
         const val RUNTIME = 6_000_000_000L // 10 minutes
+        /** #868: the start carries the position, here a resume at 1 minute. */
+        const val START = 600_000_000L
         const val PROGRESS = 1_200_000_000L
         const val STOP = 1_800_000_000L // 3 minutes, 30 %
     }
