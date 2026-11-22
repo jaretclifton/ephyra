@@ -2,11 +2,11 @@ package dev.jdtech.jellyfin.player.local.domain
 
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import java.util.UUID
 import javax.inject.Inject
 
 /**
@@ -44,7 +44,7 @@ constructor(
      * when this is called (a quality switch writes its cap first).
      */
     suspend fun sources(
-        itemId: UUID,
+        itemId: ItemId,
         mediaSourceId: String? = null,
         audioStreamIndex: Int? = null,
     ): List<FindroidSource> {
