@@ -2,8 +2,9 @@
 
 Three separate flows, each a Claude Code skill:
 
-- **Syncing with Findroid** merges Findroid's changes (mostly translations and fixes) into
-  Ephyra in a pull request, when it's worth it. It never releases anything.
+- **Syncing with Findroid** merges Findroid's history into Ephyra in a pull request, so Ephyra
+  stays 0 commits behind. Translations come in; each code change gets a verdict in the
+  [upstream ledger](upstream-ledger.md) instead of being merged. It never releases anything.
   See [`.claude/skills/upstream-sync/SKILL.md`](../.claude/skills/upstream-sync/SKILL.md).
 - **Releasing** turns `main` into a stable `vX.Y.Z`, with the version picked by semver from the
   commits since the last release.
