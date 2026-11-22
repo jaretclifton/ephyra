@@ -604,6 +604,8 @@ class JellyfinRepositoryImpl(
         withContext(Dispatchers.IO) {
             try {
                 server.playback.streamUrl(itemId, mediaSourceId)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.e(e)
                 ""
@@ -627,6 +629,8 @@ class JellyfinRepositoryImpl(
             if (!capabilities.mediaSegments) return@withContext emptyList()
             try {
                 return@withContext server.playback.segments(itemId)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.e(e)
                 return@withContext emptyList()
@@ -648,6 +652,8 @@ class JellyfinRepositoryImpl(
                 // #769: the player and the downloads ask here; without trickplay they get none.
                 if (!capabilities.trickplay) return@withContext null
                 return@withContext server.playback.trickplayTile(itemId, width, index)
+            } catch (e: CancellationException) {
+                throw e
             } catch (_: Exception) {
                 return@withContext null
             }
@@ -657,6 +663,8 @@ class JellyfinRepositoryImpl(
         withContext(Dispatchers.IO) {
             try {
                 catalog.themeSongUrl(itemId)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.e(e)
                 null
