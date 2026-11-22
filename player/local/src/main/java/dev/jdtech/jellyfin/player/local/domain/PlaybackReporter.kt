@@ -211,6 +211,9 @@ class PlaybackReporter(
             )
         if (report == null) {
             Timber.d("No playback stop for $itemId: neither loaded nor started")
+            // CE (#846): every way out of an item ends here (item change, release, the
+            // still-watching prompt), so this is where the stop that will not come is called off.
+            playbackEvents.onLeftWithoutStop()
             return null
         }
         return reportScope.launch(ioDispatcher) {

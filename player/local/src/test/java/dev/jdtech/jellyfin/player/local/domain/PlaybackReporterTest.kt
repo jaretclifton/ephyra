@@ -2,12 +2,15 @@ package dev.jdtech.jellyfin.player.local.domain
 
 import androidx.media3.common.C
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
+import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
+import dev.jdtech.jellyfin.repository.ReloadPolicy
 import java.io.IOException
 import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CoroutineScope
@@ -127,7 +130,9 @@ class PlaybackReporterTest {
 
         /** The application's scope, as Hilt gives it: never cancelled. */
         val reportScope = CoroutineScope(SupervisorJob() + dispatcher)
-        val reporter = PlaybackReporter(fake.repository, PlaybackEvents(), reportScope, dispatcher)
+        val dataChanges = DataChangeEvents()
+        val events = PlaybackEvents(dataChanges)
+        val reporter = PlaybackReporter(fake.repository, events, reportScope, dispatcher)
 
         /** The calls the repository got, without the play sessions. */
         val reports
@@ -418,5 +423,62 @@ class PlaybackReporterTest {
         s.transition(item(id = nextId))
         advanceUntilIdle()
         assertEquals(listOf("0: start $itemId false", "0: stop $itemId 6000000000 100"), s.reports)
+    }
+
+    /** What the player's ViewModel does on an item change: the reporter first, then the events. */
+    private fun Setup.openItem(item: PlayerItem) {
+        transition(item)
+        events.onPlaying(item.itemId)
+    }
+
+    /** What the player's ViewModel does when it is closed (releasePlayer). */
+    private fun Setup.close(): Job? {
+        val stopped = reporter.onPlayerReleased()
+        events.onPlaying(null)
+        return stopped?.let { reporter.reportStopped(it) }
+    }
+
+    @Test
+    fun `closing the player before the item loaded leaves no stop pending (#846)`() = test { s ->
+        s.openItem(item())
+        advanceUntilIdle()
+        assertTrue(s.dataChanges.playbackPending)
+        assertNull(s.close())
+        advanceUntilIdle()
+        assertEquals(emptyList(), s.reports)
+        assertFalse(s.dataChanges.playbackPending)
+    }
+
+    @Test
+    fun `a screen reloads again after the player closed before loading (#846)`() = test { s ->
+        val policy = ReloadPolicy(s.dataChanges)
+        policy.complete(policy.begin())
+        s.openItem(item())
+        s.close()
+        advanceUntilIdle()
+        // An episode marked played on another screen afterwards.
+        s.dataChanges.onChanged()
+        assertTrue(policy.shouldReload(stopEventFollows = true))
+    }
+
+    @Test
+    fun `an item left before it loaded keeps the next item's stop pending (#846)`() = test { s ->
+        s.openItem(item())
+        s.openItem(item(id = nextId))
+        advanceUntilIdle()
+        assertTrue(s.dataChanges.playbackPending)
+    }
+
+    @Test
+    fun `a stop that is sent stays pending until it is reported (#846)`() = test { s ->
+        s.openItem(item())
+        s.loaded()
+        advanceUntilIdle()
+        s.reporter.updatePosition(positionMs = 300_000L, durationMs = 600_000L)
+        val stop = s.close()
+        assertTrue(stop != null && !stop.isCompleted)
+        assertTrue(s.dataChanges.playbackPending)
+        advanceUntilIdle()
+        assertFalse(s.dataChanges.playbackPending)
     }
 }

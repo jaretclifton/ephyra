@@ -32,6 +32,15 @@ class PlaybackEvents(private val dataChanges: DataChangeEvents = DataChangeEvent
         _stopped.tryEmit(itemId)
     }
 
+    /**
+     * CE (#846): the player left an item that owes no stop report (closed or moved on before the
+     * item loaded). No stop event follows, so screens must not wait for one: [ReloadPolicy] would
+     * otherwise skip every reload on resume until some later stop is reported.
+     */
+    fun onLeftWithoutStop() {
+        dataChanges.playbackPending = false
+    }
+
     fun onPlaying(itemId: UUID?) {
         if (itemId != null) dataChanges.playbackPending = true
         _playingItemId.value = itemId
