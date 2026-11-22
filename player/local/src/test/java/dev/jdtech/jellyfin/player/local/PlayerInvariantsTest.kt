@@ -27,16 +27,20 @@ class PlayerInvariantsTest {
         // refresh rate" setting defaults to off) removed the surface frame rate hint, so 120Hz
         // panels stayed at 120Hz for the whole playback. ExoPlayer's default, ONLY_IF_SEAMLESS,
         // is what upstream Findroid runs with and what lets the OS drop to 48Hz for 24fps.
-        val viewModel = source("presentation/PlayerViewModel.kt")
+        // #764: ExoEngine builds the player, PlayerViewModel holds it.
+        for (path in listOf("engine/exo/ExoEngine.kt", "presentation/PlayerViewModel.kt")) {
+            val name = path.substringAfterLast('/').removeSuffix(".kt")
+            val code = source(path)
 
-        assertFalse(
-            viewModel.contains("setVideoChangeFrameRateStrategy"),
-            message = "PlayerViewModel must not call setVideoChangeFrameRateStrategy (#338)",
-        )
-        assertFalse(
-            viewModel.contains("VIDEO_CHANGE_FRAME_RATE_STRATEGY_OFF"),
-            message = "PlayerViewModel must not use VIDEO_CHANGE_FRAME_RATE_STRATEGY_OFF (#338)",
-        )
+            assertFalse(
+                code.contains("setVideoChangeFrameRateStrategy"),
+                message = "$name must not call setVideoChangeFrameRateStrategy (#338)",
+            )
+            assertFalse(
+                code.contains("VIDEO_CHANGE_FRAME_RATE_STRATEGY_OFF"),
+                message = "$name must not use VIDEO_CHANGE_FRAME_RATE_STRATEGY_OFF (#338)",
+            )
+        }
     }
 
     @Test
@@ -45,7 +49,7 @@ class PlayerInvariantsTest {
         // the media session crashed on the state change prepare() sends, and a jump from the first
         // item kept the old item's title and server reports. MpvItemTransitionsTest covers the
         // events; this checks MPVPlayer still sends them.
-        val mpvPlayer = source("mpv/MPVPlayer.kt")
+        val mpvPlayer = source("engine/mpv/MPVPlayer.kt")
         val setMediaItems =
             Regex(
                     """override fun setMediaItems\(\s*mediaItems: MutableList<MediaItem>,\s*""" +
@@ -67,7 +71,7 @@ class PlayerInvariantsTest {
         // mpv has no frame rate hint of its own (nothing in its Android sources calls
         // Surface.setFrameRate), so MPVPlayer sends one: seamless-only by default, like ExoPlayer,
         // with fixed-source compatibility so the OS picks an exact match or a multiple (#338).
-        val mpvPlayer = source("mpv/MPVPlayer.kt")
+        val mpvPlayer = source("engine/mpv/MPVPlayer.kt")
 
         assertTrue(
             mpvPlayer.contains("Surface.CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS"),
@@ -89,7 +93,7 @@ class PlayerInvariantsTest {
         // #445: a lost connection reaches eof-reached like a real end, so the item was reported
         // finished at its full length and the next episode started. MpvStreamBreakTest covers the
         // decision; this checks the eof-reached handler still asks before ENDED or advancing.
-        val mpvPlayer = source("mpv/MPVPlayer.kt")
+        val mpvPlayer = source("engine/mpv/MPVPlayer.kt")
         val handler = Regex(""""eof-reached" -> \{[\s\S]*?\n {16}\}""").find(mpvPlayer)
         assertTrue(handler != null, message = "MPVPlayer's eof-reached handler not found")
         val body = handler!!.value
@@ -112,7 +116,7 @@ class PlayerInvariantsTest {
         // #460: vo=null with video still selected made mpv re-create the hardware decoder for a
         // surface that was gone; on the emulator that codec never answered and the main thread
         // hung behind it (ANR on leaving the player). surfaceCreated must select video again.
-        val mpvPlayer = source("mpv/MPVPlayer.kt")
+        val mpvPlayer = source("engine/mpv/MPVPlayer.kt")
         val detach =
             Regex("""private fun detachVideoSurface\(\) \{[\s\S]*?\n    \}""").find(mpvPlayer)
         assertTrue(detach != null, message = "MPVPlayer.detachVideoSurface not found")
@@ -139,7 +143,7 @@ class PlayerInvariantsTest {
         // #460: libmpv calls wait for mpv's core. With the core stuck on a wedged decoder or a
         // dead connection, onPause (setPlayWhenReady), surfaceChanged and leaving the player
         // blocked the main thread into ANRs. After init every call goes through MpvCallQueue.
-        val mpvPlayer = source("mpv/MPVPlayer.kt")
+        val mpvPlayer = source("engine/mpv/MPVPlayer.kt")
         val firstInit = Regex("""\n    init \{[\s\S]*?\n    \}""").find(mpvPlayer)
         val callsClass =
             Regex("""private inner class MpvCalls \{[\s\S]*?\n    \}""").find(mpvPlayer)
@@ -167,7 +171,7 @@ class PlayerInvariantsTest {
     fun `mpv sets a network timeout`() {
         // #460: with mpv's default of 60 s a stalled read blocked recovery for over a minute
         // after the network came back. 10 s used up ffmpeg's reconnects during a longer stall.
-        val mpvPlayer = source("mpv/MPVPlayer.kt")
+        val mpvPlayer = source("engine/mpv/MPVPlayer.kt")
         val timeout = Regex("""setOptionString\("network-timeout", "(\d+)"\)""").find(mpvPlayer)
         assertTrue(timeout != null, message = "MPVPlayer must set network-timeout (#460)")
         val seconds = timeout!!.groupValues[1].toInt()
@@ -182,7 +186,7 @@ class PlayerInvariantsTest {
         // #654: mpv 0.42 reads http(s) through libcurl by default. That backend ignores
         // network-timeout and logs its errors under "curl", so the stall handling (#460) and the
         // stream-break and connection-error detection (#445, #576) would stop working.
-        val mpvPlayer = source("mpv/MPVPlayer.kt")
+        val mpvPlayer = source("engine/mpv/MPVPlayer.kt")
         assertTrue(
             mpvPlayer.contains("""setOptionString("curl-enabled", "no")"""),
             message = "MPVPlayer must set curl-enabled=no until curl is handled (#654)",
@@ -194,7 +198,7 @@ class PlayerInvariantsTest {
         // #652, #655: libplacebo's grain shader flipped the picture on OpenGL ES before 7.387.0,
         // and on Mali it fails to compile in every version tested, which drops the grain silently
         // (measured on a Dimensity 1200: pixel noise 0.5 with the shader, 14.3 with dav1d).
-        val mpvPlayer = source("mpv/MPVPlayer.kt")
+        val mpvPlayer = source("engine/mpv/MPVPlayer.kt")
         assertTrue(
             mpvPlayer.contains("""setOptionString("vd-lavc-film-grain", "cpu")"""),
             message = "MPVPlayer must set vd-lavc-film-grain=cpu (#652, #655)",
@@ -205,7 +209,7 @@ class PlayerInvariantsTest {
     fun `mpv reports a failed load at END_FILE without requiring an error line`() {
         // #446: libmpv can deliver END_FILE before the error lines that explain it. Requiring an
         // error line first left the player black and BUFFERING without an error.
-        val mpvPlayer = source("mpv/MPVPlayer.kt")
+        val mpvPlayer = source("engine/mpv/MPVPlayer.kt")
         val endFile =
             Regex("""MpvEvent\.MPV_EVENT_END_FILE -> \{[\s\S]*?\n {16}\}""").find(mpvPlayer)
         assertTrue(endFile != null, message = "MPVPlayer's END_FILE branch not found")
@@ -359,7 +363,7 @@ class PlayerInvariantsTest {
         // subtitle is downloaded. With the async prefix mpv downloads it on its own thread, cancels
         // it when the file ends and waits for it in destroy(), so no thread of ours can race
         // destroy(). The list stays after running, so a reload after an error (#474) adds them.
-        val mpvPlayer = source("mpv/MPVPlayer.kt")
+        val mpvPlayer = source("engine/mpv/MPVPlayer.kt")
         assertTrue(
             Regex(""""async",\s*(/\* command= \*/\s*)?"sub-add"""").containsMatchIn(mpvPlayer),
             message = "the sub-add commands must carry mpv's async prefix (#617)",

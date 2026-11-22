@@ -7,6 +7,10 @@ import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.SubtitleDeliveryMethod
 
+/** The image subtitle formats: pictures, not text (PGS, VobSub, DVB). */
+internal val IMAGE_SUBTITLE_TYPES =
+    setOf(MimeTypes.APPLICATION_PGS, MimeTypes.APPLICATION_VOBSUB, MimeTypes.APPLICATION_DVBSUBS)
+
 /** A subtitle the player loads as a file of its own, next to the stream. */
 data class SubtitleFile(
     val title: String,

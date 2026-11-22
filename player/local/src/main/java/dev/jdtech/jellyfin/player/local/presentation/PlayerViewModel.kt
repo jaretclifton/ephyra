@@ -5,21 +5,17 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.net.Uri
-import android.os.Build
-import android.os.Looper
 import android.os.SystemClock
 import android.view.Window
 import android.widget.Toast
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
@@ -31,11 +27,7 @@ import androidx.media3.common.Timeline
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.text.CueGroup
-import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.Renderer
-import androidx.media3.exoplayer.text.TextOutput
-import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaSession
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.domain.ports.MediaHttpClient
@@ -44,6 +36,7 @@ import dev.jdtech.jellyfin.models.FindroidSegment
 import dev.jdtech.jellyfin.models.FindroidSegmentType
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.MediaSegmentAction
+import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerChapter
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
@@ -53,7 +46,6 @@ import dev.jdtech.jellyfin.player.core.domain.models.Trickplay
 import dev.jdtech.jellyfin.player.local.PlaybackService
 import dev.jdtech.jellyfin.player.local.PlaybackSessionStore
 import dev.jdtech.jellyfin.player.local.R
-import dev.jdtech.jellyfin.player.local.domain.AudioDecoderFallback
 import dev.jdtech.jellyfin.player.local.domain.AutoSyncSubtitleCueParser
 import dev.jdtech.jellyfin.player.local.domain.DebugSegments
 import dev.jdtech.jellyfin.player.local.domain.DisplayRefreshRateManager
@@ -81,7 +73,6 @@ import dev.jdtech.jellyfin.player.local.domain.TrickplayTiles
 import dev.jdtech.jellyfin.player.local.domain.UpNextCountdown
 import dev.jdtech.jellyfin.player.local.domain.UpNextDecision
 import dev.jdtech.jellyfin.player.local.domain.autoPlayNextFollowsServer
-import dev.jdtech.jellyfin.player.local.domain.buildMediaSourceFactory
 import dev.jdtech.jellyfin.player.local.domain.getTrackNames
 import dev.jdtech.jellyfin.player.local.domain.isNewEndOfItem
 import dev.jdtech.jellyfin.player.local.domain.matchSeriesTrack
@@ -91,15 +82,14 @@ import dev.jdtech.jellyfin.player.local.domain.resolveAutoPlayNext
 import dev.jdtech.jellyfin.player.local.domain.seriesTrackChoice
 import dev.jdtech.jellyfin.player.local.domain.toTrackPick
 import dev.jdtech.jellyfin.player.local.domain.trackPreferenceKey
-import dev.jdtech.jellyfin.player.local.mpv.MPVPlayer
-import dev.jdtech.jellyfin.player.local.mpv.mpvSubtitleOptionChanges
-import dev.jdtech.jellyfin.player.local.mpv.mpvSubtitleOptions
+import dev.jdtech.jellyfin.player.local.engine.EnginePlayer
+import dev.jdtech.jellyfin.player.local.engine.PlayerEngine
+import dev.jdtech.jellyfin.player.local.engine.PlayerEngineConfig
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.settings.domain.Constants
 import dev.jdtech.jellyfin.settings.presentation.enums.AppVariant
-import java.util.ArrayList
 import java.util.Collections
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicLong
@@ -149,8 +139,12 @@ constructor(
     private val sessionStore: PlaybackSessionStore,
     private val mediaHttpClient: MediaHttpClient,
     private val appVariant: AppVariant,
+    private val engines: Map<PlayerEngineId, @JvmSuppressWildcards PlayerEngine>,
 ) : ViewModel(), Player.Listener {
     val player: Player
+
+    /** CE (#764): the engine behind [player], built once per player session. */
+    private val enginePlayer: EnginePlayer
 
     /**
      * The only media session for [player], on phone and TV alike. Media3 does not allow two
@@ -335,16 +329,6 @@ constructor(
 
     private val displayRefreshRateManager = DisplayRefreshRateManager(appPreferences)
     private var loggedDisplayFrameRate: Float? = null
-    private val trackSelector = DefaultTrackSelector(application)
-    private val audioDecoderFallback =
-        AudioDecoderFallback(
-            build = Build.FINGERPRINT,
-            broken = appPreferences.getValue(appPreferences.playerBrokenAudioDecoders),
-            isTv = application.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK),
-            onBrokenChanged = {
-                appPreferences.setValue(appPreferences.playerBrokenAudioDecoders, it)
-            },
-        )
     var playWhenReady = true
     private var currentMediaItemIndex = savedStateHandle["mediaItemIndex"] ?: 0
     private var playbackPosition: Long = savedStateHandle["position"] ?: 0
@@ -383,7 +367,7 @@ constructor(
     // not treat our own advance as a user interaction (which would reset the still-watching
     // counter and refresh the inactivity timer). The flag persists until the callback fires rather
     // than being cleared right after the seek call, so it holds whether a backend delivers the
-    // discontinuity synchronously from seekTo() (MPVPlayer) or later on the main looper.
+    // discontinuity synchronously from seekTo() (mpv) or later on the main looper.
     private var pendingAutoAdvanceSeek = false
 
     /**
@@ -443,7 +427,7 @@ constructor(
     val subtitleOffsetUs = AtomicLong(0L)
 
     /**
-     * CE (#619): the playing item's duration for [SubtitleOffsetRenderer], which runs on the
+     * CE (#619): the playing item's duration for `SubtitleOffsetRenderer`, which runs on the
      * playback thread and must not ask the player itself.
      */
     private val itemDurationUs = AtomicLong(C.TIME_UNSET)
@@ -476,7 +460,7 @@ constructor(
     @Volatile private var subtitleDelayItemId: String? = null
 
     /**
-     * CE (#650): the subtitle delay of the item [mediaId], for [SubtitleDelayMediaPeriod] on the
+     * CE (#650): the subtitle delay of the item [mediaId], for `SubtitleDelayMediaPeriod` on the
      * playback thread. Only the playing item has one: the next item, buffered ahead, starts at 0.
      */
     private fun subtitleDelayUsFor(mediaId: String): Long =
@@ -508,9 +492,8 @@ constructor(
         // ExoPlayer: SubtitleOffsetRenderer picks the new delay up on its next render, also
         // while paused, so the player is not asked to seek.
         subtitleOffsetUs.set(clamped * 1000L)
-        if (player is MPVPlayer) {
-            player.setSubtitleDelayMs(clamped)
-        }
+        // mpv shifts its subtitles itself.
+        enginePlayer.setSubtitleDelayMs(clamped)
     }
 
     /** The subtitle track the cues were last collected for, see [onTracksChanged]. */
@@ -707,126 +690,23 @@ constructor(
                         Constants.PlayerMediaSegmentsAutoSkip.PIP,
             )
 
-        val audioAttributes =
-            AudioAttributes.Builder()
-                .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-                .setUsage(C.USAGE_MEDIA)
-                .build()
-
-        trackSelector.setParameters(
-            trackSelector
-                .buildUponParameters()
-                .setTunnelingEnabled(true)
-                .setPreferredAudioLanguage(
-                    appPreferences.getValue(appPreferences.preferredAudioLanguage)
-                )
-                .setPreferredTextLanguage(
-                    appPreferences.getValue(appPreferences.preferredSubtitleLanguage)
-                )
-        )
-
+        // CE (#764): the engine builds the player, see engine/exo and engine/mpv. An unknown value
+        // fails here, as before.
         val playerBackend = appPreferences.getValue(appPreferences.playerBackend)
-        player =
-            when (playerBackend) {
-                "exoplayer" -> {
-                    // ON (not PREFER) so the platform MediaCodec decodes audio ahead of the
-                    // bundled ffmpeg extension: only the platform pipeline does Atmos spatial
-                    // audio and E-AC-3/Atmos passthrough over HDMI, and it costs less battery.
-                    // ffmpeg always decodes to PCM. It picks up what no platform decoder
-                    // handles, and what a broken one fails on, see AudioDecoderFallback.
-                    val renderersFactory =
-                        object : DefaultRenderersFactory(application) {
-                                override fun buildTextRenderers(
-                                    context: Context,
-                                    output: TextOutput,
-                                    outputLooper: Looper,
-                                    extensionRendererMode: Int,
-                                    out: ArrayList<Renderer>,
-                                ) {
-                                    val startIndex = out.size
-                                    super.buildTextRenderers(
-                                        context,
-                                        output,
-                                        outputLooper,
-                                        extensionRendererMode,
-                                        out,
-                                    )
-                                    for (index in startIndex until out.size) {
-                                        out[index] =
-                                            SubtitleOffsetRenderer(
-                                                baseRenderer = out[index],
-                                                subtitleDelayUsProvider = subtitleOffsetUs::get,
-                                                itemDurationUsProvider = itemDurationUs::get,
-                                            )
-                                    }
-                                }
-                            }
-                            .setExtensionRendererMode(
-                                DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
-                            )
-                            .setMediaCodecSelector(audioDecoderFallback)
-                    // Keep ExoPlayer's default frame rate strategy (ONLY_IF_SEAMLESS): it hints
-                    // the surface with the video frame rate so the OS can drop a 120Hz phone
-                    // panel to a multiple of 24fps, as upstream does. Forcing it OFF when the
-                    // TV-only "match refresh rate" setting is unset left phones at their
-                    // maximum rate for the whole playback (#338). The TV setting only drives
-                    // the non-seamless mode switch in DisplayRefreshRateManager.
-                    ExoPlayer.Builder(application, renderersFactory)
-                        .setAudioAttributes(audioAttributes, true)
-                        .setHandleAudioBecomingNoisy(true)
-                        .setMediaSourceFactory(
-                            SubtitleDelayMediaSource.Factory(
-                                buildMediaSourceFactory(application, mediaHttpClient.client()),
-                                ::subtitleDelayUsFor,
-                            )
-                        )
-                        .setTrackSelector(trackSelector)
-                        .setSeekBackIncrementMs(
-                            appPreferences.getValue(appPreferences.playerSeekBackInc)
-                        )
-                        .setSeekForwardIncrementMs(
-                            appPreferences.getValue(appPreferences.playerSeekForwardInc)
-                        )
-                        .setPauseAtEndOfMediaItems(true)
-                        .build()
-                }
-                "mpv" -> {
-                    MPVPlayer.Builder(application)
-                        .setAudioAttributes(audioAttributes, true)
-                        .setTrackSelectionParameters(trackSelector.parameters)
-                        .setSeekBackIncrementMs(
-                            appPreferences.getValue(appPreferences.playerSeekBackInc)
-                        )
-                        .setSeekForwardIncrementMs(
-                            appPreferences.getValue(appPreferences.playerSeekForwardInc)
-                        )
-                        .setPauseAtEndOfMediaItems(true)
-                        .setVideoOutput(appPreferences.getValue(appPreferences.playerMpvVo))
-                        .setAudioOutput(appPreferences.getValue(appPreferences.playerMpvAo))
-                        .setHwDec(appPreferences.getValue(appPreferences.playerMpvHwdec))
-                        .setMatchRefreshRate(
-                            appPreferences.getValue(appPreferences.playerTvMatchRefreshRate)
-                        )
-                        .setSubtitleOptions(appPreferences.mpvSubtitleOptions())
-                        // CE (#711): the subtitle files go over the API's client, as on ExoPlayer.
-                        .setSubtitleHttpClient(mediaHttpClient.client())
-                        .build()
-                }
-
-                else -> throw RuntimeException("$playerBackend is not a valid player backend")
-            }
-
-        // CE (#300, #308): mpv takes a subtitle setting changed while it plays (from the settings,
-        // with
-        // the player in picture-in-picture). ExoPlayer's SubtitleView is styled when the player
-        // screen opens.
-        (player as? MPVPlayer)?.let { mpvPlayer ->
-            viewModelScope.launch {
-                appPreferences.mpvSubtitleOptionChanges().collect {
-                    mpvPlayer.updateSubtitleOptions(it)
-                }
-            }
-        }
+        val engine =
+            PlayerEngineId.fromPreference(playerBackend)?.let(engines::get)
+                ?: throw RuntimeException("$playerBackend is not a valid player backend")
+        enginePlayer =
+            engine.create(
+                PlayerEngineConfig(
+                    httpClient = mediaHttpClient.client(),
+                    subtitleDelayUs = subtitleOffsetUs::get,
+                    itemDurationUs = itemDurationUs::get,
+                    subtitleDelayUsFor = ::subtitleDelayUsFor,
+                    scope = viewModelScope,
+                )
+            )
+        player = enginePlayer.player
 
         // A new player can open while the old one is still alive (a Watch Next link while playing,
         // #187), so each session needs its own ID: Media3 allows only one session per ID.
@@ -1845,9 +1725,16 @@ constructor(
         stillWatchingTracker.onUserInteraction(nowMs = System.currentTimeMillis())
     }
 
+    /**
+     * CE (#764): zooms the picture to fill the screen, or back to fit.
+     *
+     * @return `false` when the engine leaves the zoom to the view (the `PlayerView` resize mode).
+     */
+    fun setZoomMode(enabled: Boolean): Boolean = enginePlayer.setZoomMode(enabled)
+
     override fun onPlayerError(error: PlaybackException) {
         Timber.e(error, "Player error: ${error.errorCodeName}")
-        if (audioDecoderFallback.onPlayerError(error)) {
+        if (enginePlayer.onPlayerError(error)) {
             // Stays on the same item and position, and keeps playing if it was.
             Timber.w("Audio decoder failed, continuing without it")
             player.prepare()
@@ -1993,10 +1880,8 @@ constructor(
                 // CE (#450): loaded again after the connection was lost.
                 if (networkRecovery.isWaiting) endNetworkWait()
                 // CE (#619): mpv sets sub-delay back to 0 whenever it loads a file, also a reload
-                // of the same item that keeps the delay.
-                if (player is MPVPlayer && subtitleDelayMs != 0) {
-                    player.setSubtitleDelayMs(subtitleDelayMs)
-                }
+                // of the same item that keeps the delay: its engine sets it again.
+                enginePlayer.onItemReady()
                 _uiState.update { it.copy(fileLoaded = true) }
                 // CE (#601): the item loaded, so its start report is due.
                 startGate.onReady()?.let { item ->
@@ -2422,14 +2307,14 @@ constructor(
      * Change the max streaming bitrate (0 = original quality) and switch the running stream over to
      * it. Every queued item's sources are re-resolved under the new cap — the server answers with a
      * transcode URL for files above it — and the whole queue is swapped in place, preserving
-     * position and pause state. Works on both backends: ExoPlayer and MPVPlayer share the
+     * position and pause state. Works on both backends: ExoPlayer and mpv share the
      * setMediaItems(items, index, position) + prepare() reload path.
      *
-     * The playlist rebuild is done here explicitly instead of relying on onMediaItemTransition:
-     * MPVPlayer only emits a transition when the media *id* changes, which it does not on an
-     * in-place quality switch. PlaylistManager's cache entries are replaced by recreatePlayerItem,
-     * so when ExoPlayer does fire the transition its prev/next re-add finds the items already
-     * queued and adds nothing.
+     * The playlist rebuild is done here explicitly instead of relying on onMediaItemTransition: mpv
+     * only emits a transition when the media *id* changes, which it does not on an in-place quality
+     * switch. PlaylistManager's cache entries are replaced by recreatePlayerItem, so when ExoPlayer
+     * does fire the transition its prev/next re-add finds the items already queued and adds
+     * nothing.
      */
     fun selectMaxBitrate(bitrate: Int) {
         markUserInteraction()

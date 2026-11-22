@@ -46,7 +46,7 @@ them, so these rules have no exceptions:
 | R3. No build file but `server/jellyfin`'s declares the SDK (`libs.jellyfin.core`, any SDK alias or the Maven group, any configuration, the root build file included) | 9 modules | exactly `server/jellyfin`, a constant in the test (#768) |
 | R4. No file outside `data` imports `ServerDatabaseDao` | 22 files | frozen in `architecture/baseline/dao-imports.txt`; not part of this migration |
 | R5. `domain` imports nothing from `android.`, `androidx.` (except `androidx.paging`), `org.jellyfin.sdk`, `dev.jdtech.jellyfin.database`, `dev.jdtech.jellyfin.api` | 0 | none allowed |
-| R6. In `player/local`, engine packages do not import each other and shared code imports neither | added in phase 5 | 0 |
+| R6. In `player/local`, engine packages do not import each other and shared code imports neither (`PlayerEngineBoundaryTest`, #764; `engine.di` binds both) | added in #764 | none allowed |
 | R7. No module but `app/phone` and `app/tv` depends on `server/jellyfin` | added in #758 | exactly the two apps, no baseline |
 
 **A baseline is exact.** The test fails when a file that is not listed violates a rule, and it
