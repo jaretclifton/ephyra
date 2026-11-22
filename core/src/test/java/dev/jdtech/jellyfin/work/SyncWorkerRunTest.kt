@@ -67,7 +67,7 @@ class SyncWorkerRunTest {
     private val preferences =
         AppPreferences(context.getSharedPreferences("sync-worker-run", Context.MODE_PRIVATE))
     private val port = FakeUserDataSyncPort()
-    private val opened = mutableListOf<Triple<String, String?, ItemId>>()
+    private val opened = mutableListOf<Triple<String, String?, UserId>>()
 
     @After fun close() = room.close()
 
@@ -198,7 +198,7 @@ class SyncWorkerRunTest {
         assertEquals(ListenableWorker.Result.success(), run())
 
         assertEquals(
-            listOf<Triple<String, String?, ItemId>>(Triple(ADDRESS, TOKEN, USER_ID)),
+            listOf<Triple<String, String?, UserId>>(Triple(ADDRESS, TOKEN, USER_ID)),
             opened,
         )
         assertEquals(listOf("itemLeftPlaying", "userDataOf [${ITEM_ID.asString()}]"), port.calls)

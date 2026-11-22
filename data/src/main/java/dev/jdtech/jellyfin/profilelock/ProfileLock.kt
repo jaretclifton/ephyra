@@ -1,7 +1,6 @@
 package dev.jdtech.jellyfin.profilelock
 
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ProfileLockType
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
@@ -31,7 +30,7 @@ class ProfileLock(
     /** Where the deliberately slow hashing runs. */
     private val hashDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
-    private val _unlockedUserIds = MutableStateFlow<Set<ItemId>>(emptySet())
+    private val _unlockedUserIds = MutableStateFlow<Set<UserId>>(emptySet())
 
     /**
      * The profiles unlocked, or switched to without a PIN, in this process. Only the last one

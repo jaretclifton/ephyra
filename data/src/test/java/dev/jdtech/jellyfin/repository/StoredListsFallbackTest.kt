@@ -21,6 +21,7 @@ import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
+import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
@@ -196,7 +197,7 @@ class StoredListsFallbackTest {
 
     private suspend fun userData(
         itemId: ItemId,
-        user: ItemId = userId,
+        user: UserId = userId,
         favorite: Boolean = false,
         played: Boolean = false,
         lastPlayed: Long? = null,
