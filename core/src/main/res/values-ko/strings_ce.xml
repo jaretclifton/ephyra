@@ -147,4 +147,5 @@
     <string name="ce_spoiler_title_hidden">제목 숨김</string>
     <string name="ce_spoiler_overview_hidden">이 에피소드를 볼 때까지 숨겨집니다. 길게 누르면 표시됩니다.</string>
     <string name="ce_spoiler_reveal">표시</string>
+    <string name="ce_cast_amp_crew">출연진 및 제작진</string>
 </resources>

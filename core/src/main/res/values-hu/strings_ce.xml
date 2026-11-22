@@ -152,4 +152,5 @@
     <string name="ce_spoiler_title_hidden">Cím elrejtve</string>
     <string name="ce_spoiler_overview_hidden">Elrejtve, amíg meg nem nézi ezt az epizódot. Tartsa lenyomva a megjelenítéséhez.</string>
     <string name="ce_spoiler_reveal">Megjelenítés</string>
+    <string name="ce_cast_amp_crew">Szereplők és Stáb</string>
 </resources>
