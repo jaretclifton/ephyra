@@ -6,6 +6,7 @@ import dev.jdtech.jellyfin.models.CollectionType
 import dev.jdtech.jellyfin.models.FindroidCollection
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.IOException
@@ -33,7 +34,7 @@ class HomeViewModelPartialFailureTest {
     private val libraryA = library()
     private val libraryB = library()
     private val failing = mutableSetOf<String>()
-    private val failingLibraries = mutableSetOf<UUID>()
+    private val failingLibraries = mutableSetOf<ItemId>()
     private val turnedOff = mutableSetOf<String>()
     private var libraries = listOf(libraryA, libraryB)
 

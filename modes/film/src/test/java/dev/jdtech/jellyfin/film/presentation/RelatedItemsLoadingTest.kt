@@ -12,7 +12,9 @@ import dev.jdtech.jellyfin.models.FindroidBoxSet
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ServerCapabilities
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.IOException
@@ -40,7 +42,7 @@ import org.junit.jupiter.api.Test
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class RelatedItemsLoadingTest {
-    private val itemId = UUID.fromString("11111111-1111-1111-1111-111111111111")
+    private val itemId = "11111111-1111-1111-1111-111111111111".toItemId()
     private val calls = mutableListOf<String>()
     private val extraArgs = mutableListOf<Pair<Boolean, Boolean>>()
     private val failing = mutableSetOf<String>()
@@ -378,7 +380,7 @@ class RelatedItemsLoadingTest {
             }
         } as ServerDatabaseDao
 
-    private fun movie(id: UUID, name: String, localTrailers: Int = 0, specialFeatures: Int? = 0) =
+    private fun movie(id: ItemId, name: String, localTrailers: Int = 0, specialFeatures: Int? = 0) =
         FindroidMovie(
             id = id,
             name = name,

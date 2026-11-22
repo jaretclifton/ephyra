@@ -12,9 +12,11 @@ import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.HomeItem
 import dev.jdtech.jellyfin.models.HomeSection
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.View
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
 import java.io.File
-import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +35,8 @@ import timber.log.Timber
 class HomeCache @Inject constructor(@ApplicationContext context: Context) {
     private val dir = File(context.filesDir, "home-cache")
 
-    private fun file(serverId: String, userId: UUID) = File(dir, "${serverId}_$userId.json")
+    private fun file(serverId: String, userId: UserId) =
+        File(dir, "${serverId}_${userId.asString()}.json")
 
     /** What Home needs to show the rows: the sections, the library rows and their order. */
     class Rows(
@@ -44,7 +47,7 @@ class HomeCache @Inject constructor(@ApplicationContext context: Context) {
         val rowOrder: List<String>,
     )
 
-    suspend fun read(serverId: String, userId: UUID): Rows? =
+    suspend fun read(serverId: String, userId: UserId): Rows? =
         withContext(Dispatchers.IO) {
             try {
                 val file = file(serverId, userId)
@@ -54,7 +57,7 @@ class HomeCache @Inject constructor(@ApplicationContext context: Context) {
                 Rows(
                     suggestions =
                         json.optJSONObject("suggestions")?.let { obj ->
-                            HomeItem.Suggestions(UUID.fromString(obj.getString("id")), items(obj))
+                            HomeItem.Suggestions(obj.getString("id").toItemId(), items(obj))
                         },
                     resume =
                         json.optJSONObject("resume")?.let {
@@ -66,7 +69,7 @@ class HomeCache @Inject constructor(@ApplicationContext context: Context) {
                         json.getJSONArray("views").objects().map { obj ->
                             HomeItem.ViewItem(
                                 View(
-                                    id = UUID.fromString(obj.getString("id")),
+                                    id = obj.getString("id").toItemId(),
                                     name = obj.getString("name"),
                                     items = items(obj),
                                     type = CollectionType.valueOf(obj.getString("type")),
@@ -82,7 +85,7 @@ class HomeCache @Inject constructor(@ApplicationContext context: Context) {
             }
         }
 
-    suspend fun write(serverId: String, userId: UUID, state: HomeState) =
+    suspend fun write(serverId: String, userId: UserId, state: HomeState) =
         withContext(Dispatchers.IO) {
             try {
                 val json =
@@ -94,7 +97,7 @@ class HomeCache @Inject constructor(@ApplicationContext context: Context) {
                             JSONArray(
                                 state.views.map { item ->
                                     JSONObject()
-                                        .put("id", item.view.id.toString())
+                                        .put("id", item.view.id.asString())
                                         .put("name", item.view.name)
                                         .put("type", item.view.type.name)
                                         .put("items", items(item.view.items))
@@ -104,7 +107,7 @@ class HomeCache @Inject constructor(@ApplicationContext context: Context) {
                 state.suggestionsSection?.let {
                     json.put(
                         "suggestions",
-                        JSONObject().put("id", it.id.toString()).put("items", items(it.items)),
+                        JSONObject().put("id", it.id.asString()).put("items", items(it.items)),
                     )
                 }
                 state.resumeSection?.let { json.put("resume", sectionJson(it)) }
@@ -130,13 +133,13 @@ class HomeCache @Inject constructor(@ApplicationContext context: Context) {
 
     private fun sectionJson(section: HomeItem.Section) =
         JSONObject()
-            .put("id", section.homeSection.id.toString())
+            .put("id", section.homeSection.id.asString())
             .put("items", items(section.homeSection.items))
 
     private fun section(obj: JSONObject, nameRes: Int): HomeItem.Section =
         HomeItem.Section(
             HomeSection(
-                id = UUID.fromString(obj.getString("id")),
+                id = obj.getString("id").toItemId(),
                 name = UiText.StringResource(nameRes),
                 items = items(obj),
             )
@@ -148,7 +151,7 @@ class HomeCache @Inject constructor(@ApplicationContext context: Context) {
     private fun item(item: FindroidItem): JSONObject? {
         val obj =
             JSONObject()
-                .put("id", item.id.toString())
+                .put("id", item.id.asString())
                 .put("name", item.name)
                 .put("overview", item.overview.take(OVERVIEW_MAX))
                 .put("played", item.played)
@@ -169,9 +172,9 @@ class HomeCache @Inject constructor(@ApplicationContext context: Context) {
                     .put("index", item.indexNumber)
                     .put("indexEnd", item.indexNumberEnd ?: JSONObject.NULL)
                     .put("parentIndex", item.parentIndexNumber)
-                    .put("seriesId", item.seriesId.toString())
+                    .put("seriesId", item.seriesId.asString())
                     .put("seriesName", item.seriesName)
-                    .put("seasonId", item.seasonId.toString())
+                    .put("seasonId", item.seasonId.asString())
                     .put("seasonName", item.seasonName ?: JSONObject.NULL)
             else -> return null
         }
@@ -182,7 +185,7 @@ class HomeCache @Inject constructor(@ApplicationContext context: Context) {
         parent.getJSONArray("items").objects().mapNotNull { runCatching { item(it) }.getOrNull() }
 
     private fun item(obj: JSONObject): FindroidItem? {
-        val id = UUID.fromString(obj.getString("id"))
+        val id = obj.getString("id").toItemId()
         val images = images(obj.getJSONObject("images"))
         val unplayed = obj.optIntOrNull("unplayed")
         val year = obj.optIntOrNull("year")
@@ -256,9 +259,9 @@ class HomeCache @Inject constructor(@ApplicationContext context: Context) {
                     runtimeTicks = obj.getLong("runtime"),
                     playbackPositionTicks = obj.getLong("position"),
                     premiereDate = null,
-                    seriesId = UUID.fromString(obj.getString("seriesId")),
+                    seriesId = obj.getString("seriesId").toItemId(),
                     seriesName = obj.getString("seriesName"),
-                    seasonId = UUID.fromString(obj.getString("seasonId")),
+                    seasonId = obj.getString("seasonId").toItemId(),
                     seasonName =
                         if (obj.isNull("seasonName")) null else obj.getString("seasonName"),
                     communityRating = null,

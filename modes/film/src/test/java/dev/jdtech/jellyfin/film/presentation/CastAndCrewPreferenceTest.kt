@@ -17,6 +17,7 @@ import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.PersonKind
 import dev.jdtech.jellyfin.models.ServerCapabilities
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.lang.reflect.Proxy
@@ -42,7 +43,7 @@ import org.junit.jupiter.api.Test
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class CastAndCrewPreferenceTest {
-    private val itemId = UUID.fromString("11111111-1111-1111-1111-111111111111")
+    private val itemId = "11111111-1111-1111-1111-111111111111".toItemId()
 
     private val actor = person("Actor", PersonKind.ACTOR)
     private val director = person("Director", PersonKind.DIRECTOR)

@@ -14,13 +14,13 @@ import dev.jdtech.jellyfin.film.presentation.selectEpisodesToDownload
 import dev.jdtech.jellyfin.models.EpisodeField
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.isDownloaded
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.ReloadPolicy
 import dev.jdtech.jellyfin.repository.serverOrStoredList
 import dev.jdtech.jellyfin.utils.Downloader
-import java.util.UUID
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -55,7 +55,7 @@ constructor(
     private val eventsChannel = Channel<SeasonEvent>()
     val events = eventsChannel.receiveAsFlow()
 
-    private lateinit var seasonId: UUID
+    private lateinit var seasonId: ItemId
     private var downloadsOnly: Boolean = false
     private var includeSeriesSeasons: Boolean = false
 
@@ -65,7 +65,7 @@ constructor(
 
     /** Whether coming back to the page needs a load (#251), see [ReloadPolicy]. */
     fun shouldReload(
-        seasonId: UUID,
+        seasonId: ItemId,
         downloadsOnly: Boolean = this.downloadsOnly,
         stopEventFollows: Boolean = false,
     ): Boolean =
@@ -126,10 +126,10 @@ constructor(
      *   from the season already on screen, or else from the season once it has loaded.
      */
     fun loadSeason(
-        seasonId: UUID,
+        seasonId: ItemId,
         downloadsOnly: Boolean = this.downloadsOnly,
         includeSeriesSeasons: Boolean = this.includeSeriesSeasons,
-        seriesId: UUID? = null,
+        seriesId: ItemId? = null,
     ) {
         this.seasonId = seasonId
         this.downloadsOnly = downloadsOnly
@@ -364,7 +364,7 @@ constructor(
     private fun buildDownloadProgressMap(
         episodes: List<FindroidEpisode>,
         entries: List<DownloadQueue.Entry>,
-    ): Map<UUID, DownloadProgress> {
+    ): Map<ItemId, DownloadProgress> {
         val byId = entries.associateBy { it.id }
         return episodes.associate { episode ->
             val entry = byId[episode.id]

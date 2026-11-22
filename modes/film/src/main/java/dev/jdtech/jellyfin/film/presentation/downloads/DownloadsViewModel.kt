@@ -20,14 +20,15 @@ import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
 import dev.jdtech.jellyfin.models.toFindroidEpisode
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
 import java.io.File
-import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -79,16 +80,16 @@ constructor(
     @Volatile private var storageDirty = true
 
     /** Completed queue entries already scheduled to move into the library. */
-    private val handledCompletions = mutableSetOf<UUID>()
+    private val handledCompletions = mutableSetOf<ItemId>()
 
     /** Exponential moving average of each active download's transfer rate. */
-    private val speedAverages = mutableMapOf<UUID, Double>()
+    private val speedAverages = mutableMapOf<ItemId, Double>()
 
     /** CE (#866): the user the last load started for. */
-    private var loadingFor: UUID? = null
+    private var loadingFor: UserId? = null
 
     /** CE (#866): the user the client acts for now. */
-    private fun sessionUser(): UUID? = runCatching { repository.getUserId() }.getOrNull()
+    private fun sessionUser(): UserId? = runCatching { repository.getUserId() }.getOrNull()
 
     /** The screen's first ON_RESUME comes right after [init]'s load, so it doesn't load again. */
     private var skipNextResume = true
@@ -290,7 +291,7 @@ constructor(
     }
 
     /** CE (#718): the stored episodes of [showId] that the current server downloaded. */
-    private suspend fun storedEpisodes(showId: UUID): List<FindroidEpisodeDto> {
+    private suspend fun storedEpisodes(showId: ItemId): List<FindroidEpisodeDto> {
         val serverId = appPreferences.getValue(appPreferences.currentServer) ?: return emptyList()
         return database.getEpisodesByShowIdOfServer(showId, serverId)
     }
@@ -344,16 +345,16 @@ constructor(
     private class LoadedLibrary(
         val movies: List<FindroidMovie>,
         val shows: List<FindroidShow>,
-        val episodesByShow: Map<UUID, List<FindroidEpisodeDto>>,
-        val sourcesByItem: Map<UUID, List<FindroidSource>>,
-        val itemSizes: Map<UUID, Long>,
-        val episodeCounts: Map<UUID, Int>,
+        val episodesByShow: Map<ItemId, List<FindroidEpisodeDto>>,
+        val sourcesByItem: Map<ItemId, List<FindroidSource>>,
+        val itemSizes: Map<ItemId, Long>,
+        val episodeCounts: Map<ItemId, Int>,
     ) {
         /** Changes when files were added or removed, whoever did it. */
         val sizeSignature: Long = itemSizes.values.sum() * 31 + itemSizes.size
 
         /** Newest file modification time per item, filled in when sorting by date. */
-        val mtimes = java.util.concurrent.ConcurrentHashMap<UUID, Long>()
+        val mtimes = java.util.concurrent.ConcurrentHashMap<ItemId, Long>()
     }
 
     private class StorageInfo(
@@ -378,12 +379,12 @@ constructor(
                         episodesByShow.values.flatten().map { it.id }
                 )
 
-            fun sizeOf(id: UUID): Long =
+            fun sizeOf(id: ItemId): Long =
                 sourcesByItem[id].orEmpty().sumOf { src ->
                     val f = File(src.path)
                     if (f.exists()) f.length() else 0L
                 }
-            val itemSizes = mutableMapOf<UUID, Long>()
+            val itemSizes = mutableMapOf<ItemId, Long>()
             for (item in items) {
                 val bytes =
                     if (item is FindroidShow) {
@@ -400,7 +401,7 @@ constructor(
                 }
             }
 
-            fun hasCompletedSource(id: UUID) =
+            fun hasCompletedSource(id: ItemId) =
                 sourcesByItem[id].orEmpty().any { !it.path.endsWith(".download") }
             // A movie/show with ONLY a .download source is still being downloaded
             // and belongs in the Queue tab, not the Library tab.
@@ -425,7 +426,7 @@ constructor(
     ): List<CollectionSection> {
         val itemSizes = library.itemSizes
 
-        fun mtimeOf(id: UUID): Long =
+        fun mtimeOf(id: ItemId): Long =
             library.mtimes.getOrPut(id) {
                 library.sourcesByItem[id].orEmpty().maxOfOrNull { File(it.path).lastModified() }
                     ?: 0L

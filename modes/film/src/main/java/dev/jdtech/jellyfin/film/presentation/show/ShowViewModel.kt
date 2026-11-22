@@ -21,6 +21,7 @@ import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItemPerson
 import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.PersonKind
 import dev.jdtech.jellyfin.models.SeasonEpisodeCounts
 import dev.jdtech.jellyfin.models.mergeDuplicateRoles
@@ -31,7 +32,6 @@ import dev.jdtech.jellyfin.repository.serverOrStored
 import dev.jdtech.jellyfin.repository.serverOrStoredList
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
-import java.util.UUID
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -71,17 +71,17 @@ constructor(
     private val eventsChannel = Channel<ShowEvent>()
     val events = eventsChannel.receiveAsFlow()
 
-    private lateinit var showId: UUID
+    private lateinit var showId: ItemId
     private var downloadsOnly: Boolean = false
     private val reloadPolicy = ReloadPolicy(dataChanges)
     private var loadJob: Job? = null
     private var relatedJob: Job? = null
-    private var relatedFor: UUID? = null
+    private var relatedFor: ItemId? = null
     private var relatedRequest: RelatedItemsRequest? = null
 
     /** Whether coming back to the page needs a load (#251), see [ReloadPolicy]. */
     fun shouldReload(
-        showId: UUID,
+        showId: ItemId,
         downloadsOnly: Boolean = this.downloadsOnly,
         stopEventFollows: Boolean = false,
     ): Boolean =
@@ -95,7 +95,7 @@ constructor(
      * requested at once; then the per-season download counts. Those come from Room plus a single
      * request for the series' episodes, not one request per season.
      */
-    fun loadShow(showId: UUID, downloadsOnly: Boolean = this.downloadsOnly) {
+    fun loadShow(showId: ItemId, downloadsOnly: Boolean = this.downloadsOnly) {
         this.showId = showId
         this.downloadsOnly = downloadsOnly
         if (relatedFor != null && relatedFor != showId) {
@@ -215,7 +215,7 @@ constructor(
     }
 
     /** Stored and downloaded episodes per season, from Room only, of the current server (#718). */
-    private suspend fun getLocalEpisodeCounts(showId: UUID): Map<UUID, SeasonEpisodeCounts> =
+    private suspend fun getLocalEpisodeCounts(showId: ItemId): Map<ItemId, SeasonEpisodeCounts> =
         withContext(Dispatchers.IO) {
             val serverId =
                 appPreferences.getValue(appPreferences.currentServer)
@@ -229,7 +229,7 @@ constructor(
      * Episodes per season on the server, and whether any of them may be downloaded, from one
      * request for the whole series.
      */
-    private suspend fun getServerEpisodeTotals(showId: UUID): Map<UUID, SeasonEpisodeTotals> =
+    private suspend fun getServerEpisodeTotals(showId: ItemId): Map<ItemId, SeasonEpisodeTotals> =
         repository
             .getEpisodes(seriesId = showId, seasonId = null, fields = showEpisodeFields)
             .groupBy { it.seasonId }
@@ -255,7 +255,7 @@ constructor(
      * this once it has drawn the show, so these requests never delay it; they are made once per
      * show. Not on the downloads-only page.
      */
-    fun loadRelated(showId: UUID) {
+    fun loadRelated(showId: ItemId) {
         val show = _state.value.show?.takeIf { it.id == showId } ?: return
         if (downloadsOnly) return
         val request =
@@ -286,7 +286,7 @@ constructor(
      * CE (#141): look up the series' theme song for the TV show page, only when theme music is
      * turned on. Separate from [loadShow] so the page never waits for it, and the phone never asks.
      */
-    fun loadThemeSong(showId: UUID) {
+    fun loadThemeSong(showId: ItemId) {
         if (!appPreferences.getValue(appPreferences.tvThemeMusic)) return
         // #769: a server without theme songs is not asked for one.
         if (!repository.capabilities.themeSongs) return
@@ -329,7 +329,7 @@ constructor(
         }
     }
 
-    fun downloadSeasons(seasonIds: Set<UUID>) {
+    fun downloadSeasons(seasonIds: Set<ItemId>) {
         viewModelScope.launch(Dispatchers.IO) {
             val episodes = seasonIds.flatMap { seasonId ->
                 repository.getEpisodes(
@@ -373,7 +373,7 @@ constructor(
         }
     }
 
-    private suspend fun getNextUp(showId: UUID): FindroidEpisode? {
+    private suspend fun getNextUp(showId: ItemId): FindroidEpisode? {
         val nextUpItems = repository.getNextUp(showId)
         return nextUpItems.getOrNull(0)
     }

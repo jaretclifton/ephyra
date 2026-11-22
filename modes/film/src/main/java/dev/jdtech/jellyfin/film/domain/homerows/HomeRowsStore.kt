@@ -3,16 +3,17 @@ package dev.jdtech.jellyfin.film.domain.homerows
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidCollection
 import dev.jdtech.jellyfin.models.Server
+import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.settings.domain.models.Preference
-import java.util.UUID
 import javax.inject.Inject
 
 /** CE (#142): whose Home layout it is. Each user on each server has their own. */
-data class HomeRowsProfile(val serverId: String, val userId: UUID) {
+data class HomeRowsProfile(val serverId: String, val userId: UserId) {
     val preference: Preference<String?>
-        get() = Preference("pref_ce_home_rows_${serverId}_$userId", null)
+        get() = Preference("pref_ce_home_rows_${serverId}_${userId.asString()}", null)
 
     companion object {
         fun of(server: Server?): HomeRowsProfile? {

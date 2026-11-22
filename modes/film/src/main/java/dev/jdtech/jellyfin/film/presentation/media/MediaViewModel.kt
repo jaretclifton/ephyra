@@ -4,10 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.film.presentation.ServerAwayReload
+import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.ReloadPolicy
-import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -34,16 +34,16 @@ constructor(
      * CE (#810): the user the client acts for now. The tab stays on its stack across a user switch,
      * and [ReloadPolicy] knows nothing of who the list is for.
      */
-    private fun sessionUser(): UUID? = runCatching { repository.getUserId() }.getOrNull()
+    private fun sessionUser(): UserId? = runCatching { repository.getUserId() }.getOrNull()
 
     /** CE (#810): whether the list on screen, or the load running, is for another user. */
-    private fun userChanged(user: UUID?): Boolean {
+    private fun userChanged(user: UserId?): Boolean {
         val shown = _state.value.userId ?: loadingFor
         return user != null && shown != null && shown != user
     }
 
     /** CE (#810): the user the last load started for. */
-    private var loadingFor: UUID? = null
+    private var loadingFor: UserId? = null
 
     private val _state = MutableStateFlow(MediaState())
     val state = _state.asStateFlow()

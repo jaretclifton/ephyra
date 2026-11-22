@@ -4,12 +4,13 @@ import android.content.SharedPreferences
 import androidx.paging.PagingData
 import dev.jdtech.jellyfin.models.CollectionType
 import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.lang.reflect.Proxy
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -28,9 +29,9 @@ import org.junit.jupiter.api.Test
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class LibraryLoadOnceTest {
-    private val movies = UUID.fromString("11111111-1111-1111-1111-111111111111")
-    private val shows = UUID.fromString("22222222-2222-2222-2222-222222222222")
-    private val requests = mutableListOf<UUID?>()
+    private val movies = "11111111-1111-1111-1111-111111111111".toItemId()
+    private val shows = "22222222-2222-2222-2222-222222222222".toItemId()
+    private val requests = mutableListOf<ItemId?>()
 
     @BeforeEach
     fun setUp() {
@@ -48,7 +49,7 @@ class LibraryLoadOnceTest {
         viewModel.setup(parentId = movies, libraryType = CollectionType.Movies)
         viewModel.loadItemsIfNeeded()
 
-        assertEquals(listOf<UUID?>(movies), requests)
+        assertEquals(listOf<ItemId?>(movies), requests)
     }
 
     @Test
@@ -59,7 +60,7 @@ class LibraryLoadOnceTest {
             viewModel.loadItemsIfNeeded()
         }
 
-        assertEquals(listOf<UUID?>(movies), requests)
+        assertEquals(listOf<ItemId?>(movies), requests)
     }
 
     @Test
@@ -70,7 +71,7 @@ class LibraryLoadOnceTest {
         viewModel.setup(parentId = shows, libraryType = CollectionType.TvShows)
         viewModel.loadItemsIfNeeded()
 
-        assertEquals(listOf<UUID?>(movies, shows), requests)
+        assertEquals(listOf<ItemId?>(movies, shows), requests)
     }
 
     @Test
@@ -81,7 +82,7 @@ class LibraryLoadOnceTest {
         viewModel.onAction(LibraryAction.ChangeSorting(SortBy.DATE_ADDED, SortOrder.DESCENDING))
         viewModel.loadItemsIfNeeded()
 
-        assertEquals(listOf<UUID?>(movies, movies), requests)
+        assertEquals(listOf<ItemId?>(movies, movies), requests)
     }
 
     private fun viewModel() = LibraryViewModel(repository(), appPreferences())
@@ -93,7 +94,7 @@ class LibraryLoadOnceTest {
         ) { _, method, args ->
             when (method.name) {
                 "getItemsPaging" -> {
-                    requests.add(args!![0] as UUID?)
+                    requests.add(args!![0] as ItemId?)
                     flowOf(PagingData.empty<FindroidItem>())
                 }
                 else -> throw NotImplementedError("JellyfinRepository.${method.name}")

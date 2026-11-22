@@ -10,8 +10,10 @@ import dev.jdtech.jellyfin.models.CollectionSection
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.lang.reflect.Proxy
@@ -54,7 +56,7 @@ class DownloadsViewModelUserSwitchTest {
     private val bobMovie = aliceMovie.copy(playbackPositionTicks = 0)
 
     /** The user the client acts for. */
-    @Volatile private var sessionUser: UUID? = alice
+    @Volatile private var sessionUser: UserId? = alice
 
     /** Holds Bob's read (on the IO thread) until the test has looked at the screen before it. */
     private val bobsRead = CountDownLatch(1)
@@ -213,7 +215,7 @@ class DownloadsViewModelUserSwitchTest {
                     (args!![0] as List<*>).map { id ->
                         FindroidSourceDto(
                             id = "source-$id",
-                            itemId = id as UUID,
+                            itemId = id as ItemId,
                             name = "source",
                             type = FindroidSourceType.LOCAL,
                             path = "/nowhere/$id.mkv",

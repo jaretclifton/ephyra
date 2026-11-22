@@ -1,7 +1,7 @@
 package dev.jdtech.jellyfin.film.presentation.movie
 
 import dev.jdtech.jellyfin.models.FindroidItem
-import java.util.UUID
+import dev.jdtech.jellyfin.models.ItemId
 
 sealed interface MovieAction {
     data class Play(val startFromBeginning: Boolean = false, val mediaSourceId: String? = null) :
@@ -23,13 +23,13 @@ sealed interface MovieAction {
 
     data object OnHomeClick : MovieAction
 
-    data class NavigateToPerson(val personId: UUID) : MovieAction
+    data class NavigateToPerson(val personId: ItemId) : MovieAction
 
     /** CE (#332): a collection or a "More like this" item. */
     data class NavigateToItem(val item: FindroidItem) : MovieAction
 
     /** CE (#332): plays a local trailer or special feature in the app's player. */
-    data class PlayExtra(val extraId: UUID) : MovieAction
+    data class PlayExtra(val extraId: ItemId) : MovieAction
 
     /** CE (#332): opens the movie on IMDb, TMDB and the like. */
     data class OpenExternalLink(val url: String) : MovieAction

@@ -6,13 +6,13 @@ import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.models.CollectionType
 import dev.jdtech.jellyfin.models.ItemFilter
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.getItemsPagingIndexed
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -35,7 +35,7 @@ constructor(
     private val _state = MutableStateFlow(LibraryState())
     val state = _state.asStateFlow()
 
-    private lateinit var parentId: UUID
+    private lateinit var parentId: ItemId
     private lateinit var libraryType: CollectionType
 
     private lateinit var sortBy: SortBy
@@ -54,7 +54,7 @@ constructor(
      * @param indexed CE (#135): load the grid with placeholders, so it knows its length and can
      *   jump, and build a [LetterIndex] when sorting by name. TV and phone (#672) both use it.
      */
-    fun setup(parentId: UUID, libraryType: CollectionType, indexed: Boolean = false) {
+    fun setup(parentId: ItemId, libraryType: CollectionType, indexed: Boolean = false) {
         this.parentId = parentId
         this.libraryType = libraryType
         this.indexed = indexed
@@ -62,7 +62,7 @@ constructor(
 
     /** CE (#371): what the first load was for, so a surviving ViewModel doesn't load again. */
     private data class LoadKey(
-        val parentId: UUID,
+        val parentId: ItemId,
         val libraryType: CollectionType,
         val indexed: Boolean,
     )

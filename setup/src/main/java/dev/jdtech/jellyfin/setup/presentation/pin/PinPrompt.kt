@@ -1,7 +1,7 @@
 package dev.jdtech.jellyfin.setup.presentation.pin
 
 import dev.jdtech.jellyfin.models.ProfileLockType
-import java.util.UUID
+import dev.jdtech.jellyfin.models.UserId
 
 /** CE (#299): why the last PIN (or, #330, pattern) was not taken. */
 enum class PinError {
@@ -19,7 +19,7 @@ enum class PinError {
  * a PIN.
  */
 data class PinPrompt(
-    val userId: UUID,
+    val userId: UserId,
     val userName: String,
     val error: PinError? = null,
     val errorCount: Int = 0,

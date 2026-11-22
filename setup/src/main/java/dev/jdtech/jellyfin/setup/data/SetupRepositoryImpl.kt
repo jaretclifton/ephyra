@@ -21,6 +21,7 @@ import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.domain.AddressRejected
@@ -302,7 +303,7 @@ class SetupRepositoryImpl(
             }
         }
 
-    override suspend fun updateUserImageTag(userId: UUID, tag: String?) {
+    override suspend fun updateUserImageTag(userId: UserId, tag: String?) {
         database.updateUserPrimaryImageTag(userId, tag)
     }
 
@@ -311,7 +312,7 @@ class SetupRepositoryImpl(
         return database.getServerCurrentUser(currentServer.id)
     }
 
-    override suspend fun deleteUser(userId: UUID) {
+    override suspend fun deleteUser(userId: UserId) {
         // Let the user delete the current active user for now
         /*val currentUser = getCurrentUser() ?: return
         if (userId == currentUser.id) {
@@ -331,7 +332,7 @@ class SetupRepositoryImpl(
         database.deleteUser(userId)
     }
 
-    override suspend fun setCurrentUser(userId: UUID) {
+    override suspend fun setCurrentUser(userId: UserId) {
         val server = getCurrentServer() ?: return
         val user = database.getUser(userId) ?: return
         server.currentUserId = user.id

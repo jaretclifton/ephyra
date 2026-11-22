@@ -4,6 +4,7 @@ import dev.jdtech.jellyfin.models.CollectionType
 import dev.jdtech.jellyfin.models.FindroidCollection
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.ServerCapabilities
+import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.repository.ItemsResult
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import java.lang.reflect.Proxy
@@ -35,7 +36,7 @@ class MediaViewModelUserSwitchTest {
     private val bobLibraries = listOf(library("Bob's shows"), library("Bob's music"))
 
     /** The user the client acts for. */
-    private var sessionUser: UUID = alice
+    private var sessionUser: UserId = alice
 
     @BeforeEach
     fun setUp() {

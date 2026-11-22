@@ -4,8 +4,9 @@ import dev.jdtech.jellyfin.core.presentation.downloader.DownloadProgress
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadStatus
 import dev.jdtech.jellyfin.models.CollectionSection
 import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
-import java.util.UUID
+import dev.jdtech.jellyfin.models.UserId
 
 data class ActiveDownload(
     val item: FindroidItem,
@@ -47,9 +48,9 @@ data class DownloadsState(
     val queueItems: List<ActiveDownload> = emptyList(),
     val sortOrder: DownloadSortOrder = DownloadSortOrder.DATE,
     val sections: List<CollectionSection> = emptyList(),
-    val itemSizes: Map<UUID, Long> = emptyMap(),
+    val itemSizes: Map<ItemId, Long> = emptyMap(),
     /** Number of downloaded episodes per show id. */
-    val episodeCounts: Map<UUID, Int> = emptyMap(),
+    val episodeCounts: Map<ItemId, Int> = emptyMap(),
     /** Bytes taken by downloaded movies and shows, for the storage bar segments. */
     val moviesBytes: Long = 0L,
     val showsBytes: Long = 0L,
@@ -65,7 +66,7 @@ data class DownloadsState(
      * same for every user of the server, their user data is not. Null before the first load, or
      * when unknown.
      */
-    val userId: UUID? = null,
+    val userId: UserId? = null,
 ) {
     /**
      * CE (#866): what the screen may show while [userId] is signed in: the queue and the storage,
@@ -73,7 +74,7 @@ data class DownloadsState(
      * and progress, only a loading list until the new user's arrive. Null [userId] (no session at
      * hand, as in previews) shows everything.
      */
-    fun shownTo(userId: UUID?): DownloadsState =
+    fun shownTo(userId: UserId?): DownloadsState =
         if (userId == null || this.userId == null || this.userId == userId) {
             this
         } else {

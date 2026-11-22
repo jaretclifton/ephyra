@@ -21,6 +21,7 @@ import dev.jdtech.jellyfin.models.ServerWithAddressAndUser
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.domain.AddressRejected
@@ -64,7 +65,7 @@ class SetupRepositoryConnectorTest {
         ) { _, method, args ->
             when (method.name) {
                 "getServer" -> server.takeIf { it.id == args[0] }
-                "getUser" -> users[args[0] as UUID]
+                "getUser" -> users[args[0] as UserId]
                 "getAddress" -> addresses.single { it.id == args[0] }
                 "getServerWithAddresses" -> ServerWithAddresses(server, addresses.toList(), null)
                 "getServerWithAddressAndUser" ->
@@ -80,7 +81,7 @@ class SetupRepositoryConnectorTest {
                     Unit
                 }
                 "updateServerCurrentUser" -> {
-                    server = server.copy(currentUserId = args[1] as UUID)
+                    server = server.copy(currentUserId = args[1] as UserId)
                     writes += "updateServerCurrentUser ${args[0]}"
                     Unit
                 }
@@ -95,7 +96,7 @@ class SetupRepositoryConnectorTest {
                     Unit
                 }
                 "deleteUser" -> {
-                    users.remove(args[0] as UUID)
+                    users.remove(args[0] as UserId)
                     writes += "deleteUser"
                     Unit
                 }
