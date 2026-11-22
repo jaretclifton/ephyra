@@ -49,7 +49,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.ephyra.EphyraMotion
+import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
+import dev.jdtech.jellyfin.core.presentation.spoiler.UpNextSpoiler
+import dev.jdtech.jellyfin.core.presentation.spoiler.spoilerImage
+import dev.jdtech.jellyfin.core.presentation.spoiler.upNext
+import dev.jdtech.jellyfin.core.presentation.spoiler.upNextTitle
 import dev.jdtech.jellyfin.core.presentation.theme.EphyraColor
+import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.player.local.R as PlayerR
 import dev.jdtech.jellyfin.player.local.presentation.PlayerViewModel.UpNextState
 import dev.jdtech.jellyfin.presentation.film.components.ArtworkImage
@@ -69,6 +75,7 @@ import java.util.UUID
 @Composable
 fun PlayerUpNextCard(
     state: UpNextState?,
+    queue: List<FindroidItem>,
     visible: Boolean,
     onPlayNow: () -> Unit,
     onCancel: () -> Unit,
@@ -93,7 +100,11 @@ fun PlayerUpNextCard(
                 WindowInsets.safeDrawing.only(WindowInsetsSides.End + WindowInsetsSides.Bottom)
             ),
     ) {
-        last.value?.let { UpNextCardContent(it, onPlayNow = onPlayNow, onCancel = onCancel) }
+        last.value?.let {
+            // CE (#856): hidden like an episode of the player's list while Hide spoilers is on.
+            val spoiler = LocalSpoilers.current.upNext(it.itemId, queue)
+            UpNextCardContent(it, spoiler, onPlayNow = onPlayNow, onCancel = onCancel)
+        }
     }
 }
 
@@ -102,7 +113,12 @@ private class LastValue<T> {
 }
 
 @Composable
-private fun UpNextCardContent(state: UpNextState, onPlayNow: () -> Unit, onCancel: () -> Unit) {
+private fun UpNextCardContent(
+    state: UpNextState,
+    spoiler: UpNextSpoiler,
+    onPlayNow: () -> Unit,
+    onCancel: () -> Unit,
+) {
     // Compact, so that on a phone in landscape it stays below the controls' centre row.
     Surface(
         shape = MaterialTheme.shapes.medium,
@@ -119,7 +135,14 @@ private fun UpNextCardContent(state: UpNextState, onPlayNow: () -> Unit, onCance
                 ArtworkImage(
                     sources = listOf(state.imageUri?.toString()),
                     contentDescription = null,
-                    modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+                    modifier =
+                        Modifier.fillMaxWidth()
+                            .fillMaxHeight()
+                            .spoilerImage(
+                                hidden = spoiler.hidden,
+                                fallback = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            ),
                 )
                 state.secondsLeft?.let { seconds ->
                     val description =
@@ -145,10 +168,14 @@ private fun UpNextCardContent(state: UpNextState, onPlayNow: () -> Unit, onCance
                         text = seconds.toString(),
                         style = MaterialTheme.typography.headlineSmall,
                         color = Color.White,
+                        // Hidden, the eye of the spoiler cover takes the centre: the seconds move
+                        // to the corner rather than sit on it.
                         modifier =
-                            Modifier.align(Alignment.Center).semantics {
-                                contentDescription = description
-                            },
+                            Modifier.align(
+                                    if (spoiler.hidden) Alignment.TopEnd else Alignment.Center
+                                )
+                                .padding(if (spoiler.hidden) 6.dp else 0.dp)
+                                .semantics { contentDescription = description },
                     )
                 }
                 state.fractionLeft?.let { fraction ->
@@ -168,12 +195,14 @@ private fun UpNextCardContent(state: UpNextState, onPlayNow: () -> Unit, onCance
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                 )
-                Text(
-                    text = state.title,
-                    style = MaterialTheme.typography.titleSmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                upNextTitle(state.title, spoiler)?.let { title ->
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     // Not cyan: Cancel is not alive (VISION §1).
                     TextButton(
@@ -232,6 +261,7 @@ private fun PlayerUpNextCardPreview() {
                 secondsLeft = 12,
                 fractionLeft = 0.8f,
             ),
+            UpNextSpoiler.Shown,
             onPlayNow = {},
             onCancel = {},
         )

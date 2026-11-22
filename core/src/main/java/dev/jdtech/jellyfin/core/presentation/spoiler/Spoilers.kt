@@ -141,3 +141,36 @@ fun spoilerFreeEpisodeLine(episode: FindroidEpisode, hidden: Boolean): String =
 fun spoilerFreeOverview(overview: String, hidden: Boolean): String =
     if (hidden && overview.isNotBlank()) stringResource(R.string.ce_spoiler_overview_hidden)
     else overview
+
+/**
+ * CE (#856): how the player's up-next card shows the next item. [episodeNumber] makes the title
+ * "Episode 5" while [hidden]; it is null when the item is not known.
+ */
+@Immutable
+data class UpNextSpoiler(val hidden: Boolean, val episodeNumber: Int?) {
+    companion object {
+        val Shown = UpNextSpoiler(hidden = false, episodeNumber = null)
+    }
+}
+
+/**
+ * CE (#856): whether the up-next card hides the still and the title of [itemId], the next item.
+ * [queue] is the player's upcoming items, which know whether they are played. An item that is not
+ * in it yet cannot be told from an unwatched episode, so it stays hidden while the setting is on.
+ * Reads snapshot state.
+ */
+fun Spoilers.upNext(itemId: UUID, queue: List<FindroidItem>): UpNextSpoiler {
+    if (!enabled) return UpNextSpoiler.Shown
+    val next = queue.firstOrNull { it.id == itemId } ?: return UpNextSpoiler(true, null)
+    return UpNextSpoiler(hides(next), (next as? FindroidEpisode)?.indexNumber)
+}
+
+/** The title of the up-next card: [title], "Episode 5" while [spoiler] hides it, or none. */
+@Composable
+fun upNextTitle(title: String, spoiler: UpNextSpoiler): String? =
+    when {
+        !spoiler.hidden -> title
+        spoiler.episodeNumber != null ->
+            stringResource(R.string.episode_number, spoiler.episodeNumber)
+        else -> null
+    }
