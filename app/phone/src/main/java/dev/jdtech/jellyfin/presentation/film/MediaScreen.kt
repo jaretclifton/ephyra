@@ -93,7 +93,8 @@ fun MediaScreen(
     MediaScreenLayout(
         // CE (#810): never a frame of the previous user's libraries after a switch.
         state = state.shownTo(LocalServerSession.current.userId),
-        searchState = searchState,
+        // CE (#866): nor of their search results.
+        searchState = searchState.shownTo(LocalServerSession.current.userId),
         searchExpanded = searchExpanded,
         onSearchExpand = onSearchExpand,
         onAction = { action ->

@@ -70,6 +70,7 @@ import dev.jdtech.jellyfin.core.presentation.downloader.DownloadStatus
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovies
+import dev.jdtech.jellyfin.core.presentation.session.LocalServerSession
 import dev.jdtech.jellyfin.film.presentation.downloads.ActiveDownload
 import dev.jdtech.jellyfin.film.presentation.downloads.DownloadSortOrder
 import dev.jdtech.jellyfin.film.presentation.downloads.DownloadsState
@@ -130,7 +131,9 @@ fun DownloadsScreen(
     }
 
     DownloadsScreenLayout(
-        state = state,
+        // CE (#866): never a frame of the previous user's played state and progress after a
+        // switch.
+        state = state.shownTo(LocalServerSession.current.userId),
         onItemClick = onItemClick,
         onShowClick = onShowClick,
         onItemsDelete = { viewModel.deleteDownloadedItems(it) },
