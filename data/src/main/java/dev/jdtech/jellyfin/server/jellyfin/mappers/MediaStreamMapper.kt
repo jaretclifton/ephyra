@@ -30,5 +30,6 @@ internal fun MediaStream.toFindroidMediaStream(baseUrl: String): FindroidMediaSt
         deliveryMethod = deliveryMethod?.toModel(),
         isForced = isForced,
         isDefault = isDefault,
+        isHearingImpaired = isHearingImpaired,
     )
 }

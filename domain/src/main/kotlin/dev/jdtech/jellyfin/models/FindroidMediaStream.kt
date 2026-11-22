@@ -32,4 +32,6 @@ data class FindroidMediaStream(
     val deliveryMethod: SubtitleDeliveryMethod? = null,
     val isForced: Boolean = false,
     val isDefault: Boolean = false,
+    /** CE (#767): what the Cast track dialogs show. */
+    val isHearingImpaired: Boolean = false,
 )

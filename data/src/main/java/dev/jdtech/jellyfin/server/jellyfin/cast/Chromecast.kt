@@ -1,4 +1,4 @@
-package dev.jdtech.jellyfin.player.cast.devices
+package dev.jdtech.jellyfin.server.jellyfin.cast
 
 import org.jellyfin.sdk.model.api.CodecType
 import org.jellyfin.sdk.model.api.DlnaProfileType
@@ -8,21 +8,21 @@ import org.jellyfin.sdk.model.api.ProfileConditionValue
 import org.jellyfin.sdk.model.api.SubtitleDeliveryMethod
 import org.jellyfin.sdk.model.deviceprofile.buildDeviceProfile
 
-object ChromecastH265 {
+internal object Chromecast {
     val deviceProfile = buildDeviceProfile {
-        name = "Chromecast Video Profile (HEVC)"
+        name = "Chromecast Video Profile (H.264)"
 
-        maxStreamingBitrate = 120000000
-        maxStaticBitrate = 120000000
+        maxStreamingBitrate = 12000000
+        maxStaticBitrate = 12000000
 
         codecProfile {
             type = CodecType.VIDEO
-            codec = "hevc,h264"
+            codec = "h264"
             conditions {
-                lowerThanOrEquals(ProfileConditionValue.VIDEO_LEVEL, 153)
+                lowerThanOrEquals(ProfileConditionValue.VIDEO_LEVEL, 41)
                 notEquals(ProfileConditionValue.VIDEO_PROFILE, "high 10")
-                lowerThanOrEquals(ProfileConditionValue.WIDTH, 3840)
-                lowerThanOrEquals(ProfileConditionValue.HEIGHT, 2160)
+                lowerThanOrEquals(ProfileConditionValue.WIDTH, 1920)
+                lowerThanOrEquals(ProfileConditionValue.HEIGHT, 1080)
                 lowerThanOrEquals(ProfileConditionValue.VIDEO_FRAMERATE, 60)
             }
         }
@@ -36,22 +36,20 @@ object ChromecastH265 {
         directPlayProfile {
             container("mp4", "m4v")
             type = DlnaProfileType.VIDEO
-            videoCodec("hevc", "h264")
+            videoCodec("h264")
             audioCodec("aac", "mp3", "opus", "vorbis", "flac", "ac3", "eac3")
         }
 
         transcodingProfile {
             container = "ts"
             type = DlnaProfileType.VIDEO
-            // The server encodes to the first codec and copies a stream whose codec is anywhere in
-            // the list: H.264 first, so a transcode is never encoded to HEVC (#673), while an HEVC
-            // source that only needs another container or audio codec is still copied.
-            videoCodec("h264", "hevc")
-            audioCodec("aac", "mp3", "ac3", "eac3")
+            videoCodec("h264")
+            audioCodec("aac", "mp3")
             protocol = MediaStreamProtocol.HLS
             context = EncodingContext.STREAMING
             minSegments = 2
             breakOnNonKeyFrames = true
+            maxAudioChannels = "2"
         }
 
         subtitleProfile("vtt", SubtitleDeliveryMethod.EXTERNAL)

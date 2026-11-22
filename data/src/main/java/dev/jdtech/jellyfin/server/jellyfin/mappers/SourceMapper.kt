@@ -41,5 +41,6 @@ internal suspend fun MediaSourceInfo.toFindroidSource(
         container = container,
         bitrate = bitrate,
         defaultAudioStreamIndex = defaultAudioStreamIndex,
+        defaultSubtitleStreamIndex = defaultSubtitleStreamIndex,
     )
 }

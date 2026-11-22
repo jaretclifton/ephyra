@@ -13,7 +13,6 @@ import com.google.android.gms.cast.framework.CastState
 import com.google.android.gms.cast.framework.CastStateListener
 import com.google.android.gms.cast.framework.SessionManagerListener
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.player.cast.models.CastAvailability
 import dev.jdtech.jellyfin.player.cast.models.CastConnectionState
 import dev.jdtech.jellyfin.player.cast.models.Device
@@ -53,7 +52,6 @@ class CastSessionManagerImpl
 @Inject
 constructor(
     @param:ApplicationContext private val context: Context,
-    private val jellyfinApi: JellyfinApi,
     private val appPreferences: AppPreferences,
 ) : CastSessionManager {
 
