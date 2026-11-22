@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.film.presentation.search
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.repository.ItemsResult
 import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -95,12 +96,12 @@ class SearchViewModelTest {
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getSearchItems" -> {
                     requests += args!![0] as String
                     ItemsResult(listOf(item()))
                 }
-                else -> throw NotImplementedError("JellyfinRepository.${method.name}")
+                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
             }
         } as JellyfinRepository
 
@@ -109,6 +110,6 @@ class SearchViewModelTest {
             FindroidItem::class.java.classLoader,
             arrayOf(FindroidItem::class.java),
         ) { _, method, _ ->
-            throw NotImplementedError("FindroidItem.${method.name}")
+            throw NotImplementedError("FindroidItem.${method.kotlinName}")
         } as FindroidItem
 }

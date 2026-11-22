@@ -38,6 +38,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(libs.junit)
+    testImplementation(projects.testing)
     testImplementation(libs.kotlinx.coroutines.test)
     // CE (#425): the repository and ViewModel tests need a Context for the preferences.
     testImplementation(libs.robolectric)

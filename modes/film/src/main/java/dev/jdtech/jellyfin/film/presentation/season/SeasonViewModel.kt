@@ -58,6 +58,7 @@ constructor(
     private var seasonIdOrNull: ItemId? = null
     private val seasonId: ItemId
         get() = checkNotNull(seasonIdOrNull) { "seasonId is read before it is loaded" }
+
     private var downloadsOnly: Boolean = false
     private var includeSeriesSeasons: Boolean = false
 

@@ -9,7 +9,11 @@ import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.testing.asItemIdOrNull
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -225,7 +229,7 @@ class PlaylistManagerAudioChoiceTest {
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getEpisode" -> episode
                 "getEpisodes" -> listOf(episode)
                 "getPlaybackSources" -> {
@@ -239,16 +243,16 @@ class PlaylistManagerAudioChoiceTest {
                         if (downloaded) listOf(download()) else emptyList()
                 }
                 "getSeriesTrackPreferences" -> {
-                    assertEquals(episode.seriesId, args[0])
+                    assertEquals(episode.seriesId, args[0].asItemIdOrNull())
                     listOfNotNull(saved)
                 }
-                else -> error("Unexpected call to ${method.name}")
+                else -> error("Unexpected call to ${method.kotlinName}")
             }
         } as JellyfinRepository
 
     private fun dutch() =
         SeriesTrackPreferenceDto(
-            userId = UUID.randomUUID(),
+            userId = UUID.randomUUID().toString().toUserId(),
             seriesId = episode.seriesId,
             trackType = C.TRACK_TYPE_AUDIO,
             disabled = false,
@@ -306,7 +310,7 @@ class PlaylistManagerAudioChoiceTest {
 
     private fun episode() =
         FindroidEpisode(
-            id = UUID.randomUUID(),
+            id = UUID.randomUUID().toString().toItemId(),
             name = "Episode 1",
             originalTitle = null,
             overview = "",
@@ -321,9 +325,9 @@ class PlaylistManagerAudioChoiceTest {
             runtimeTicks = 0L,
             playbackPositionTicks = 0L,
             premiereDate = null,
-            seriesId = UUID.randomUUID(),
+            seriesId = UUID.randomUUID().toString().toItemId(),
             seriesName = "Show",
-            seasonId = UUID.randomUUID(),
+            seasonId = UUID.randomUUID().toString().toItemId(),
             seasonName = "Season 1",
             communityRating = null,
             people = emptyList(),

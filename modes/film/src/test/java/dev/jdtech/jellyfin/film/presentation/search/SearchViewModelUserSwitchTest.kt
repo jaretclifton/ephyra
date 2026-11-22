@@ -3,8 +3,11 @@ package dev.jdtech.jellyfin.film.presentation.search
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.ItemsResult
 import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -31,10 +34,12 @@ import org.junit.jupiter.api.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class SearchViewModelUserSwitchTest {
     private val dispatcher = StandardTestDispatcher()
-    private val alice = UUID.randomUUID()
-    private val bob = UUID.randomUUID()
-    private val aliceResults = listOf(dummyMovie.copy(id = UUID.randomUUID(), name = "Alice's"))
-    private val bobResults = listOf(dummyMovie.copy(id = UUID.randomUUID(), name = "Bob's"))
+    private val alice = UUID.randomUUID().toString().toUserId()
+    private val bob = UUID.randomUUID().toString().toUserId()
+    private val aliceResults =
+        listOf(dummyMovie.copy(id = UUID.randomUUID().toString().toItemId(), name = "Alice's"))
+    private val bobResults =
+        listOf(dummyMovie.copy(id = UUID.randomUUID().toString().toItemId(), name = "Bob's"))
 
     /** The user the client acts for. */
     private var sessionUser: UserId = alice
@@ -147,13 +152,13 @@ class SearchViewModelUserSwitchTest {
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, _ ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getCapabilities" -> ServerCapabilities.ALL
                 "getUserId" -> sessionUser
                 "getSearchItems" ->
                     if (searchFails) throw IllegalStateException("No connection")
                     else ItemsResult(if (sessionUser == bob) bobResults else aliceResults)
-                else -> throw NotImplementedError("JellyfinRepository.${method.name}")
+                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
             }
         } as JellyfinRepository
 }

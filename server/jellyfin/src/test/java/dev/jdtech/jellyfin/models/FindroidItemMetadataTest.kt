@@ -6,6 +6,7 @@ import dev.jdtech.jellyfin.server.jellyfin.mappers.externalLinks
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidEpisode
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidMovie
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidShow
+import dev.jdtech.jellyfin.server.jellyfin.toUserId
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDateTime
@@ -247,9 +248,9 @@ class FindroidItemMetadataTest {
 
             assertEquals(
                 Instant.parse("2026-11-13T03:02:51Z").toEpochMilli(),
-                movie.toFindroidUserDataDto(id).lastPlayedDate,
+                movie.toFindroidUserDataDto(id.toUserId()).lastPlayedDate,
             )
-            assertNull(never.toFindroidUserDataDto(id).lastPlayedDate)
+            assertNull(never.toFindroidUserDataDto(id.toUserId()).lastPlayedDate)
         } finally {
             TimeZone.setDefault(default)
         }

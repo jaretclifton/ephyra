@@ -16,6 +16,8 @@ import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.asItemIdOrNull
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -216,16 +218,17 @@ class ShowLoadingTest {
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
             // #769: Jellyfin can do everything.
-            if (method.name == "getCapabilities") return@newProxyInstance ServerCapabilities.ALL
-            synchronized(calls) { calls.add(method.name) }
-            when (method.name) {
+            if (method.kotlinName == "getCapabilities")
+                return@newProxyInstance ServerCapabilities.ALL
+            synchronized(calls) { calls.add(method.kotlinName) }
+            when (method.kotlinName) {
                 "getShow" -> show()
                 "getNextUp" -> emptyList<Any>()
                 "getSeasons" -> listOf(season(season1, 1), season(season2, 2))
                 "getEpisodes" -> {
                     @Suppress("UNCHECKED_CAST")
                     synchronized(calls) {
-                        episodeSeasonIds.add(args!![1] as ItemId?)
+                        episodeSeasonIds.add(args!![1].asItemIdOrNull())
                         episodeFields.add(args[2] as Set<EpisodeField>?)
                     }
                     if (episodesFail) throw IllegalStateException("No connection")
@@ -233,7 +236,7 @@ class ShowLoadingTest {
                         List(2) { episode(season2, season2CanDownload) }
                 }
                 "markAsFavorite" -> Unit
-                else -> throw NotImplementedError("JellyfinRepository.${method.name}")
+                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
             }
         } as JellyfinRepository
 
@@ -242,9 +245,9 @@ class ShowLoadingTest {
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, _ ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getSeasonEpisodeCounts" -> counts
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.name}")
+                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
         } as ServerDatabaseDao
 
@@ -294,7 +297,7 @@ class ShowLoadingTest {
 
     private fun episode(seasonId: ItemId, canDownload: Boolean = true) =
         FindroidEpisode(
-            id = UUID.randomUUID(),
+            id = UUID.randomUUID().toString().toItemId(),
             name = "Episode",
             originalTitle = null,
             overview = "",
@@ -329,8 +332,9 @@ class ShowLoadingTest {
             ) { _, method, args ->
                 when {
                     // CE (#718): the stored episode counts are the current server's.
-                    method.name == "getString" && args!![0] == "pref_current_server" -> "server"
-                    else -> defaultValue(method.name, args)
+                    method.kotlinName == "getString" && args!![0] == "pref_current_server" ->
+                        "server"
+                    else -> defaultValue(method.kotlinName, args)
                 }
             } as SharedPreferences
         return AppPreferences(preferences)
@@ -349,6 +353,6 @@ class ShowLoadingTest {
 
     private inline fun <reified T : Any> unused(): T =
         Proxy.newProxyInstance(T::class.java.classLoader, arrayOf(T::class.java)) { _, method, _ ->
-            throw NotImplementedError("${T::class.java.simpleName}.${method.name}")
+            throw NotImplementedError("${T::class.java.simpleName}.${method.kotlinName}")
         } as T
 }

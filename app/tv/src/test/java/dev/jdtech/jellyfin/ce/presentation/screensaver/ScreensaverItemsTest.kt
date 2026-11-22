@@ -7,7 +7,9 @@ import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -82,19 +84,19 @@ class ScreensaverItemsTest {
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getItems",
                 "getRandomItemsWithBackdrop" -> {
-                    calls += method.name to (args ?: emptyArray())
+                    calls += method.kotlinName to (args ?: emptyArray())
                     answer()
                 }
-                else -> throw NotImplementedError("JellyfinRepository.${method.name}")
+                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
             }
         } as JellyfinRepository
 
     private fun movie(name: String, backdrop: String?) =
         FindroidMovie(
-            id = UUID.nameUUIDFromBytes(name.toByteArray()),
+            id = UUID.nameUUIDFromBytes(name.toByteArray()).toString().toItemId(),
             name = name,
             originalTitle = null,
             overview = "",

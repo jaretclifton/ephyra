@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.presentation.cast
 import dev.jdtech.jellyfin.models.FindroidSegment
 import dev.jdtech.jellyfin.models.FindroidSegmentType
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.cast.models.CastAvailability
 import dev.jdtech.jellyfin.player.cast.models.CastConnectionState
 import dev.jdtech.jellyfin.player.cast.models.CastPlaybackStatus
@@ -13,7 +14,6 @@ import dev.jdtech.jellyfin.player.cast.presentation.CastNowPlaying
 import dev.jdtech.jellyfin.player.cast.presentation.CastUiState
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerChapter
 import dev.jdtech.jellyfin.player.core.domain.models.Track
-import dev.jdtech.jellyfin.models.toItemId
 
 /** States for the Cast surfaces' previews: one per thing a surface can say. */
 internal object CastPreviews {

@@ -11,6 +11,7 @@ import dev.jdtech.jellyfin.setup.domain.ServerLocalNetworkBlock
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.presentation.login.LoginAction
 import dev.jdtech.jellyfin.setup.presentation.login.LoginViewModel
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -61,9 +62,10 @@ class LoginQuickConnectErrorTest {
             arrayOf(SetupRepository::class.java),
         ) { _, method, _ ->
             // #769: Jellyfin can do everything.
-            if (method.name == "getCapabilities") return@newProxyInstance ServerCapabilities.ALL
-            failures[method.name]?.let { throw it }
-            when (method.name) {
+            if (method.kotlinName == "getCapabilities")
+                return@newProxyInstance ServerCapabilities.ALL
+            failures[method.kotlinName]?.let { throw it }
+            when (method.kotlinName) {
                 "initiateQuickConnect",
                 "getQuickConnectState" -> result()
                 "loginWithSecret" -> Unit
@@ -71,7 +73,7 @@ class LoginQuickConnectErrorTest {
                 "toString" -> "FakeSetupRepository"
                 "hashCode" -> 0
                 "equals" -> false
-                else -> throw UnsupportedOperationException(method.name)
+                else -> throw UnsupportedOperationException(method.kotlinName)
             }
         } as SetupRepository
 

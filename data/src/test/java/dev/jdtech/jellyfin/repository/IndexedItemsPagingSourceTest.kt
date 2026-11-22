@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.repository
 import androidx.paging.PagingSource.LoadParams
 import androidx.paging.PagingSource.LoadResult
 import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -21,7 +22,7 @@ class IndexedItemsPagingSourceTest {
             FindroidItem::class.java.classLoader,
             arrayOf(FindroidItem::class.java),
         ) { _, method, _ ->
-            throw NotImplementedError(method.name)
+            throw NotImplementedError(method.kotlinName)
         } as FindroidItem
 
     /** A library of [size] items; the server counts only when asked. */

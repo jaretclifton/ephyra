@@ -5,7 +5,9 @@ import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -15,8 +17,8 @@ import org.junit.jupiter.api.Test
 
 /** The episode list for the queue is fetched after the first item, not before it. */
 class PlaylistManagerQueueTest {
-    private val seriesId = UUID.randomUUID()
-    private val seasonId = UUID.randomUUID()
+    private val seriesId = UUID.randomUUID().toString().toItemId()
+    private val seasonId = UUID.randomUUID().toString().toItemId()
     private val first = episode(1)
     private val second = episode(2)
     private val calls = mutableListOf<String>()
@@ -61,19 +63,19 @@ class PlaylistManagerQueueTest {
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, _ ->
-            calls.add(method.name)
-            when (method.name) {
+            calls.add(method.kotlinName)
+            when (method.kotlinName) {
                 "getEpisode" -> first
                 "getEpisodes" -> listOf(first, second)
                 "getSeasons" -> emptyList<Any>()
                 "getPlaybackSources" -> listOf(source())
-                else -> error("Unexpected call to ${method.name}")
+                else -> error("Unexpected call to ${method.kotlinName}")
             }
         } as JellyfinRepository
 
     private fun episode(number: Int) =
         FindroidEpisode(
-            id = UUID.randomUUID(),
+            id = UUID.randomUUID().toString().toItemId(),
             name = "Episode $number",
             originalTitle = null,
             overview = "",

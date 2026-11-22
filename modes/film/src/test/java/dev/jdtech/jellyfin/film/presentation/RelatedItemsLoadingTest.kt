@@ -17,6 +17,7 @@ import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.IOException
 import java.lang.reflect.Proxy
 import java.util.UUID
@@ -53,10 +54,14 @@ class RelatedItemsLoadingTest {
     /** #769: what the server can do; Jellyfin can do everything. */
     @Volatile private var capabilities = ServerCapabilities.ALL
 
-    private val extra = movie(UUID.randomUUID(), "Behind the scenes")
-    private val similar = movie(UUID.randomUUID(), "Similar")
+    private val extra = movie(UUID.randomUUID().toString().toItemId(), "Behind the scenes")
+    private val similar = movie(UUID.randomUUID().toString().toItemId(), "Similar")
     private val collection =
-        FindroidBoxSet(id = UUID.randomUUID(), name = "Saga", images = FindroidImages())
+        FindroidBoxSet(
+            id = UUID.randomUUID().toString().toItemId(),
+            name = "Saga",
+            images = FindroidImages(),
+        )
 
     @BeforeEach
     fun setUp() {
@@ -347,10 +352,10 @@ class RelatedItemsLoadingTest {
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
             // #769: not a request of the server, so not in [calls].
-            if (method.name == "getCapabilities") return@newProxyInstance capabilities
-            synchronized(calls) { calls.add(method.name) }
-            if (method.name in failing) throw IOException("${method.name} failed")
-            when (method.name) {
+            if (method.kotlinName == "getCapabilities") return@newProxyInstance capabilities
+            synchronized(calls) { calls.add(method.kotlinName) }
+            if (method.kotlinName in failing) throw IOException("${method.kotlinName} failed")
+            when (method.kotlinName) {
                 "getMovie" -> answer ?: movie
                 "getShow" -> show()
                 "getNextUp",
@@ -365,7 +370,7 @@ class RelatedItemsLoadingTest {
                 "getItemCollections" -> listOf(collection)
                 // The server may return the item itself; the row leaves it out.
                 "getSimilarItems" -> listOf(similar, movie(itemId, "Self"))
-                else -> throw NotImplementedError("JellyfinRepository.${method.name}")
+                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
             }
         } as JellyfinRepository
 
@@ -374,9 +379,9 @@ class RelatedItemsLoadingTest {
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, _ ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getSeasonEpisodeCounts" -> emptyList<Any>()
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.name}")
+                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
         } as ServerDatabaseDao
 
@@ -441,14 +446,17 @@ class RelatedItemsLoadingTest {
                 SharedPreferences::class.java.classLoader,
                 arrayOf(SharedPreferences::class.java),
             ) { _, method, args ->
-                when (method.name) {
+                when (method.kotlinName) {
                     "getBoolean" -> if (args!![0] in switchedOff) false else args[1]
                     "getString",
                     "getInt",
                     "getLong",
                     "getFloat",
                     "getStringSet" -> args!![1]
-                    else -> throw UnsupportedOperationException("SharedPreferences.${method.name}")
+                    else ->
+                        throw UnsupportedOperationException(
+                            "SharedPreferences.${method.kotlinName}"
+                        )
                 }
             } as SharedPreferences
         return AppPreferences(preferences)
@@ -456,6 +464,6 @@ class RelatedItemsLoadingTest {
 
     private inline fun <reified T : Any> unused(): T =
         Proxy.newProxyInstance(T::class.java.classLoader, arrayOf(T::class.java)) { _, method, _ ->
-            throw NotImplementedError("${T::class.java.simpleName}.${method.name}")
+            throw NotImplementedError("${T::class.java.simpleName}.${method.kotlinName}")
         } as T
 }

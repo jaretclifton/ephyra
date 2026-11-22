@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.IOException
 import java.lang.reflect.Proxy
 import kotlin.test.assertFalse
@@ -109,13 +110,13 @@ class HomeViewModelOfflineCrashTest {
         ) { proxy, method, args ->
             when {
                 method.declaringClass == Any::class.java ->
-                    when (method.name) {
+                    when (method.kotlinName) {
                         "hashCode" -> System.identityHashCode(proxy)
                         "toString" -> "offlineRepository"
                         "equals" -> proxy === args?.getOrNull(0)
                         else -> null
                     }
-                else -> throw IOException("Simulated offline: ${method.name}")
+                else -> throw IOException("Simulated offline: ${method.kotlinName}")
             }
         } as JellyfinRepository
 
@@ -128,7 +129,9 @@ class HomeViewModelOfflineCrashTest {
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, _ ->
-            throw NotImplementedError("ServerDatabaseDao.${method.name} not expected in this test")
+            throw NotImplementedError(
+                "ServerDatabaseDao.${method.kotlinName} not expected in this test"
+            )
         } as ServerDatabaseDao
 
     /**
@@ -141,7 +144,7 @@ class HomeViewModelOfflineCrashTest {
             SharedPreferences::class.java.classLoader,
             arrayOf(SharedPreferences::class.java),
         ) { proxy, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 // AppPreferences.getValue always passes the default as the 2nd arg.
                 "getString",
                 "getBoolean",
@@ -153,7 +156,8 @@ class HomeViewModelOfflineCrashTest {
                 "hashCode" -> System.identityHashCode(proxy)
                 "toString" -> "defaultsOnlySharedPreferences"
                 "equals" -> proxy === args?.getOrNull(0)
-                else -> throw UnsupportedOperationException("SharedPreferences.${method.name}")
+                else ->
+                    throw UnsupportedOperationException("SharedPreferences.${method.kotlinName}")
             }
         } as SharedPreferences
 }

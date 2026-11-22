@@ -15,6 +15,7 @@ import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
 import dev.jdtech.jellyfin.server.jellyfin.toUuid
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.Closeable
 import java.io.InputStream
 import java.lang.reflect.Proxy
@@ -191,9 +192,9 @@ internal class StandInServer(
                 ServerDatabaseDao::class.java.classLoader,
                 arrayOf(ServerDatabaseDao::class.java),
             ) { _, method, _ ->
-                when (method.name) {
+                when (method.kotlinName) {
                     "observeHasSources" -> flowOf(false)
-                    else -> throw NotImplementedError("ServerDatabaseDao.${method.name}")
+                    else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
                 }
             } as ServerDatabaseDao
 

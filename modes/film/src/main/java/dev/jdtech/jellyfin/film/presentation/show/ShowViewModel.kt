@@ -74,6 +74,7 @@ constructor(
     private var showIdOrNull: ItemId? = null
     private val showId: ItemId
         get() = checkNotNull(showIdOrNull) { "showId is read before it is loaded" }
+
     private var downloadsOnly: Boolean = false
     private val reloadPolicy = ReloadPolicy(dataChanges)
     private var loadJob: Job? = null

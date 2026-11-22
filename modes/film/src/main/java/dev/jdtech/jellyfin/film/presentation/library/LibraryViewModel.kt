@@ -38,6 +38,7 @@ constructor(
     private var parentIdOrNull: ItemId? = null
     private val parentId: ItemId
         get() = checkNotNull(parentIdOrNull) { "parentId is read before it is loaded" }
+
     private lateinit var libraryType: CollectionType
 
     private lateinit var sortBy: SortBy

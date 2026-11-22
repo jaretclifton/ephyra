@@ -14,9 +14,11 @@ import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
 import java.io.File
@@ -56,7 +58,7 @@ class DownloadFinalizeFailureTest {
         Room.inMemoryDatabaseBuilder(context, ServerDatabase::class.java)
             .setDriver(AndroidSQLiteDriver())
             .build()
-    private val itemId = UUID.randomUUID()
+    private val itemId = UUID.randomUUID().toString().toItemId()
     private lateinit var root: File
 
     /** Every request the server got, with its Range header. */
@@ -320,10 +322,10 @@ class DownloadFinalizeFailureTest {
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
-            if (failRoomWrite && method.name == "setSourceDownloaded") {
+            if (failRoomWrite && method.kotlinName == "setSourceDownloaded") {
                 throw SQLiteFullException("database or disk is full")
             }
-            if (failSubtitleWrite && method.name == "setMediaStreamPath") {
+            if (failSubtitleWrite && method.kotlinName == "setMediaStreamPath") {
                 throw SQLiteFullException("database or disk is full")
             }
             try {
@@ -340,9 +342,9 @@ class DownloadFinalizeFailureTest {
                 JellyfinRepository::class.java.classLoader,
                 arrayOf(JellyfinRepository::class.java),
             ) { _, method, _ ->
-                when (method.name) {
+                when (method.kotlinName) {
                     "getUserId" -> USER_ID
-                    else -> throw IllegalStateException("JellyfinRepository.${method.name}")
+                    else -> throw IllegalStateException("JellyfinRepository.${method.kotlinName}")
                 }
             } as JellyfinRepository
         val preferences =

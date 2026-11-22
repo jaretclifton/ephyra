@@ -31,6 +31,7 @@ import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.NetworkConnectivity
 import java.lang.reflect.Proxy
@@ -185,7 +186,7 @@ class SyncWorkerRunTest {
 
     private inline fun <reified T> unused(): T =
         Proxy.newProxyInstance(T::class.java.classLoader, arrayOf(T::class.java)) { _, method, _ ->
-            throw NotImplementedError("${T::class.simpleName}.${method.name}")
+            throw NotImplementedError("${T::class.simpleName}.${method.kotlinName}")
         } as T
 
     @Test

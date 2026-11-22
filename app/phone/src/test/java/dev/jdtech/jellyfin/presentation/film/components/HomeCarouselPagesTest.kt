@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.width
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.utils.WidthClass
 import java.util.UUID
@@ -39,7 +40,12 @@ class HomeCarouselPagesTest {
     @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
 
     private val movies =
-        List(5) { index -> dummyMovie.copy(id = UUID.randomUUID(), name = "Movie ${index + 1}") }
+        List(5) { index ->
+            dummyMovie.copy(
+                id = UUID.randomUUID().toString().toItemId(),
+                name = "Movie ${index + 1}",
+            )
+        }
 
     @Test
     fun `one page per width class`() {

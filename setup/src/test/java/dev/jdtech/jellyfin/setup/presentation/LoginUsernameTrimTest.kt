@@ -5,6 +5,7 @@ import dev.jdtech.jellyfin.setup.domain.ServerLocalNetworkBlock
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.presentation.login.LoginAction
 import dev.jdtech.jellyfin.setup.presentation.login.LoginViewModel
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import kotlin.test.assertEquals
 import kotlinx.coroutines.Dispatchers
@@ -31,13 +32,13 @@ class LoginUsernameTrimTest {
             SetupRepository::class.java.classLoader,
             arrayOf(SetupRepository::class.java),
         ) { _, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "login" -> {
                     logins.add(args[0] as String to args[1] as String)
                     Unit
                 }
                 "toString" -> "FakeSetupRepository"
-                else -> throw UnsupportedOperationException(method.name)
+                else -> throw UnsupportedOperationException(method.kotlinName)
             }
         } as SetupRepository
 

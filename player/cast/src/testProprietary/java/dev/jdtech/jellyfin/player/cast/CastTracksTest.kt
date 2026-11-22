@@ -4,6 +4,7 @@ import dev.jdtech.jellyfin.models.FindroidMediaStream
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.MediaStreamType
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.cast.models.CastMediaItem
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.player.core.domain.models.Track
@@ -367,7 +368,7 @@ class CastTracksTest {
             item =
                 PlayerItem(
                     name = "Movie",
-                    itemId = UUID.randomUUID(),
+                    itemId = UUID.randomUUID().toString().toItemId(),
                     mediaSourceId = "source",
                     playbackPosition = 0L,
                 ),

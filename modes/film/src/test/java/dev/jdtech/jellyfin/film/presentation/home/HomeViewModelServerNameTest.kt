@@ -6,6 +6,7 @@ import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.IOException
 import java.lang.reflect.Proxy
 import kotlin.test.assertEquals
@@ -93,14 +94,14 @@ class HomeViewModelServerNameTest {
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, _ ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getServerInfo" -> systemInfo()
                 "refreshCurrentUserImage" -> Unit
                 "getSuggestions",
                 "getResumeItems",
                 "getNextUp",
                 "getUserViews" -> emptyList<Any>()
-                else -> throw NotImplementedError("JellyfinRepository.${method.name}")
+                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
             }
         } as JellyfinRepository
 
@@ -109,11 +110,11 @@ class HomeViewModelServerNameTest {
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getServer" -> stored
                 "getServerCurrentUser" -> null
                 "updateServer" -> updated.add(args!![0] as Server).let { Unit }
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.name}")
+                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
         } as ServerDatabaseDao
 
@@ -122,12 +123,13 @@ class HomeViewModelServerNameTest {
             SharedPreferences::class.java.classLoader,
             arrayOf(SharedPreferences::class.java),
         ) { _, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getString" -> if (args!![0] == "pref_current_server") SERVER_ID else args[1]
                 "getBoolean",
                 "getInt",
                 "getLong" -> args!![1]
-                else -> throw UnsupportedOperationException("SharedPreferences.${method.name}")
+                else ->
+                    throw UnsupportedOperationException("SharedPreferences.${method.kotlinName}")
             }
         } as SharedPreferences
 

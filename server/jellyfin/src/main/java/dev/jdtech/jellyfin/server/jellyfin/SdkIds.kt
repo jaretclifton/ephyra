@@ -4,13 +4,13 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UserId
 import java.util.UUID
 
-// The one place where the Jellyfin SDK's `UUID` ids meet the domain's ids (#773), and the only place
-// an id string is parsed as a `UUID`. Every id that comes from the SDK goes through `toItemId()` or
-// `toUserId()`, which give the dashed lowercase form `UUID.toString()` gives (Room holds that text,
-// see `Ids.kt` in domain); every id the SDK is given goes through `toUuid()`.
+// The one place where the Jellyfin SDK's `UUID` ids meet the domain's ids (#773), and the only
+// place an id string is parsed as a `UUID`. Every id that comes from the SDK goes through
+// `toItemId()` or `toUserId()`, which give the dashed lowercase form `UUID.toString()` gives (Room
+// holds that text, see `Ids.kt` in domain); every id the SDK is given goes through `toUuid()`.
 //
-// An id that is not a UUID reaching the adapter is a programming error: every id the app holds for a
-// Jellyfin server came from this adapter or from Room rows it wrote. `toUuid()` then throws
+// An id that is not a UUID reaching the adapter is a programming error: every id the app holds
+// for a Jellyfin server came from this adapter or from Room rows it wrote. `toUuid()` then throws
 // `IllegalArgumentException` (from `UUID.fromString`) instead of mapping the id onto some other
 // item, so the call fails the way any failed request does.
 

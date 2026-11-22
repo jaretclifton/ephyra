@@ -4,7 +4,10 @@ import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.testing.asItemIdOrNull
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -14,7 +17,7 @@ import org.junit.jupiter.api.Test
 
 /** CE (#766): the player decides who plays, with which cap, and which source plays. */
 class ResolvePlaybackTest {
-    private val itemId = UUID.randomUUID()
+    private val itemId = UUID.randomUUID().toString().toItemId()
 
     /** The arguments of each getPlaybackSources call, after the item id. */
     private val requests = mutableListOf<List<Any?>>()
@@ -135,14 +138,14 @@ class ResolvePlaybackTest {
                 JellyfinRepository::class.java.classLoader,
                 arrayOf(JellyfinRepository::class.java),
             ) { _, method, args ->
-                when (method.name) {
+                when (method.kotlinName) {
                     "getPlaybackSources" -> {
-                        assertEquals(itemId, args[0])
+                        assertEquals(itemId, args[0].asItemIdOrNull())
                         // The last argument is the continuation.
                         requests += args.toList().subList(1, args.size - 1)
                         emptyList<FindroidSource>()
                     }
-                    else -> error("Unexpected call to ${method.name}")
+                    else -> error("Unexpected call to ${method.kotlinName}")
                 }
             } as JellyfinRepository
         return ResolvePlayback(repository, testPreferences(values.toMap()))

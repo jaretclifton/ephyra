@@ -4,6 +4,7 @@ import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.toItemId
 import java.util.UUID
 import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
@@ -191,7 +192,7 @@ class EpisodeDownloadSelectionTest {
         positionTicks: Long = 0L,
     ) =
         FindroidEpisode(
-            id = UUID.randomUUID(),
+            id = UUID.randomUUID().toString().toItemId(),
             name = "Episode",
             originalTitle = null,
             overview = "",
@@ -218,9 +219,9 @@ class EpisodeDownloadSelectionTest {
             runtimeTicks = 0L,
             playbackPositionTicks = positionTicks,
             premiereDate = null,
-            seriesId = UUID.randomUUID(),
+            seriesId = UUID.randomUUID().toString().toItemId(),
             seriesName = "Show",
-            seasonId = UUID.randomUUID(),
+            seasonId = UUID.randomUUID().toString().toItemId(),
             seasonName = null,
             communityRating = null,
             people = emptyList(),

@@ -4,6 +4,9 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.ProfileLockType
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toUserId
+import dev.jdtech.jellyfin.testing.asUserId
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -16,8 +19,10 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
 class ProfileLockTest {
-    private val alice = User(id = UUID.randomUUID(), name = "Alice", serverId = "s")
-    private val bob = User(id = UUID.randomUUID(), name = "Bob", serverId = "s")
+    private val alice =
+        User(id = UUID.randomUUID().toString().toUserId(), name = "Alice", serverId = "s")
+    private val bob =
+        User(id = UUID.randomUUID().toString().toUserId(), name = "Bob", serverId = "s")
     private val users = mutableMapOf(alice.id to alice, bob.id to bob)
     private val lock = ProfileLock(fakeDao(users))
 
@@ -86,7 +91,7 @@ class ProfileLockTest {
     @Test
     fun `a profile without a PIN verifies anything`() = runBlocking {
         assertTrue(lock.verifyPin(bob.id, "0000"))
-        assertFalse(lock.verifyPin(UUID.randomUUID(), "0000"))
+        assertFalse(lock.verifyPin(UUID.randomUUID().toString().toUserId(), "0000"))
     }
 
     @Test
@@ -161,10 +166,10 @@ class ProfileLockTest {
                 ServerDatabaseDao::class.java.classLoader,
                 arrayOf(ServerDatabaseDao::class.java),
             ) { _, method, args ->
-                when (method.name) {
-                    "getUser" -> users[args[0] as UserId]
+                when (method.kotlinName) {
+                    "getUser" -> users[args[0].asUserId()]
                     "updateUserPin" -> {
-                        val id = args[0] as UserId
+                        val id = args[0].asUserId()
                         users[id]?.let {
                             users[id] =
                                 it.copy(
@@ -176,7 +181,7 @@ class ProfileLockTest {
                         Unit
                     }
                     "updateUserPattern" -> {
-                        val id = args[0] as UserId
+                        val id = args[0].asUserId()
                         users[id]?.let {
                             users[id] =
                                 it.copy(
@@ -188,12 +193,12 @@ class ProfileLockTest {
                         Unit
                     }
                     "updateUserPinOnStart" -> {
-                        val id = args[0] as UserId
+                        val id = args[0].asUserId()
                         users[id]?.let { users[id] = it.copy(pinOnStart = args[1] as Boolean) }
                         Unit
                     }
                     "toString" -> "FakeServerDatabaseDao"
-                    else -> throw UnsupportedOperationException(method.name)
+                    else -> throw UnsupportedOperationException(method.kotlinName)
                 }
             } as ServerDatabaseDao
     }

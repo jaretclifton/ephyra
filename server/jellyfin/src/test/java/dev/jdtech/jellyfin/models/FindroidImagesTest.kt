@@ -134,7 +134,7 @@ class FindroidImagesTest {
     fun `a downloaded movie's images are the paths the Uri builder gave`() {
         val images =
             FindroidMovieDto(
-                    id = episodeId,
+                    id = episodeId.toItemId(),
                     serverId = null,
                     name = "Movie",
                     originalTitle = null,
@@ -148,7 +148,7 @@ class FindroidImagesTest {
                     endDate = null,
                     chapters = null,
                 )
-                .toLocalFindroidImages(episodeId)
+                .toLocalFindroidImages(episodeId.toItemId())
 
         assertEquals("/images/$episodeId/primary", images.primary)
         assertEquals(oldLocalUri("images/$episodeId/primary"), images.primary)

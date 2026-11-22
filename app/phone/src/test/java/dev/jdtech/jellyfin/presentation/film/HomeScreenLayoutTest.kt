@@ -31,6 +31,8 @@ import dev.jdtech.jellyfin.models.HomeItem
 import dev.jdtech.jellyfin.models.HomeSection
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -107,8 +109,8 @@ class HomeScreenLayoutTest {
             get() = user
     }
 
-    private val alice = dummyUser.copy(id = UUID.randomUUID(), name = "Alice")
-    private val bob = dummyUser.copy(id = UUID.randomUUID(), name = "Bob")
+    private val alice = dummyUser.copy(id = UUID.randomUUID().toString().toUserId(), name = "Alice")
+    private val bob = dummyUser.copy(id = UUID.randomUUID().toString().toUserId(), name = "Bob")
     private val aliceHome =
         HomeState(
             server = dummyServer,
@@ -116,7 +118,7 @@ class HomeScreenLayoutTest {
             resumeSection =
                 HomeItem.Section(
                     HomeSection(
-                        id = UUID.randomUUID(),
+                        id = UUID.randomUUID().toString().toItemId(),
                         name = UiText.DynamicString("Alice's row"),
                         items = dummyMovies,
                     )

@@ -12,6 +12,7 @@ import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.ContractLibrary
 import dev.jdtech.jellyfin.testing.FakeLibrary
 import dev.jdtech.jellyfin.testing.FakeMediaServer
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -89,9 +90,9 @@ class PlaylistManagerNextUpTest {
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, _ ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "observeHasSources" -> flowOf(false)
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.name}")
+                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
         } as ServerDatabaseDao
 
@@ -102,14 +103,17 @@ class PlaylistManagerNextUpTest {
                 SharedPreferences::class.java.classLoader,
                 arrayOf(SharedPreferences::class.java),
             ) { _, method, args ->
-                when (method.name) {
+                when (method.kotlinName) {
                     "getBoolean",
                     "getString",
                     "getInt",
                     "getLong",
                     "getFloat",
                     "getStringSet" -> args!![1]
-                    else -> throw UnsupportedOperationException("SharedPreferences.${method.name}")
+                    else ->
+                        throw UnsupportedOperationException(
+                            "SharedPreferences.${method.kotlinName}"
+                        )
                 }
             } as SharedPreferences
         )

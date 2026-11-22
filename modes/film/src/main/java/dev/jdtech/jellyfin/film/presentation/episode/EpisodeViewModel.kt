@@ -43,6 +43,7 @@ constructor(
     private var episodeIdOrNull: ItemId? = null
     private val episodeId: ItemId
         get() = checkNotNull(episodeIdOrNull) { "episodeId is read before it is loaded" }
+
     private val reloadPolicy = ReloadPolicy(dataChanges)
     private var loadJob: Job? = null
 

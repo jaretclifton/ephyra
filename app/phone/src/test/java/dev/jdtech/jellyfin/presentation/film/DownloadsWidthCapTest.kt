@@ -17,6 +17,7 @@ import dev.jdtech.jellyfin.film.presentation.downloads.ActiveDownload
 import dev.jdtech.jellyfin.film.presentation.downloads.DownloadsState
 import dev.jdtech.jellyfin.models.CollectionSection
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
 import kotlin.test.assertTrue
@@ -40,7 +41,12 @@ class DownloadsWidthCapTest {
     @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
 
     private val movies =
-        List(4) { index -> dummyMovie.copy(id = UUID.randomUUID(), name = "Movie ${index + 1}") }
+        List(4) { index ->
+            dummyMovie.copy(
+                id = UUID.randomUUID().toString().toItemId(),
+                name = "Movie ${index + 1}",
+            )
+        }
 
     // The grid's 16 dp content padding plus the 720 dp cap, and a little for rounding.
     private val capRightEdge = 16.dp + 720.dp + 1.dp

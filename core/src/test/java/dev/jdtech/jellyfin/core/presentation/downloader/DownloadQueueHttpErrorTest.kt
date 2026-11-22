@@ -12,7 +12,10 @@ import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.asItemIdOrNull
+import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
 import java.lang.reflect.Proxy
@@ -142,9 +145,10 @@ class DownloadQueueHttpErrorTest {
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
-            when (method.name) {
-                "getSources" -> listOf(partialRow).filter { it.itemId == args?.firstOrNull() }
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.name}")
+            when (method.kotlinName) {
+                "getSources" ->
+                    listOf(partialRow).filter { it.itemId == args?.firstOrNull().asItemIdOrNull() }
+                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
         } as ServerDatabaseDao
 
@@ -204,7 +208,7 @@ class DownloadQueueHttpErrorTest {
 
     private fun episode() =
         FindroidEpisode(
-            id = UUID.randomUUID(),
+            id = UUID.randomUUID().toString().toItemId(),
             name = "Episode 1",
             originalTitle = null,
             overview = "",
@@ -219,9 +223,9 @@ class DownloadQueueHttpErrorTest {
             runtimeTicks = 0L,
             playbackPositionTicks = 0L,
             premiereDate = null,
-            seriesId = UUID.randomUUID(),
+            seriesId = UUID.randomUUID().toString().toItemId(),
             seriesName = "Show",
-            seasonId = UUID.randomUUID(),
+            seasonId = UUID.randomUUID().toString().toItemId(),
             seasonName = "Season 1",
             communityRating = null,
             people = emptyList(),

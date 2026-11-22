@@ -10,6 +10,7 @@ import androidx.compose.ui.test.pressKey
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -70,11 +71,11 @@ class TvPlaybackProblemTest {
             _,
             method,
             _ ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getPlaybackState" -> state
                 "getPlayerError" -> error
                 else -> {
-                    calls += method.name
+                    calls += method.kotlinName
                     null
                 }
             }

@@ -576,8 +576,10 @@ class StoredListsFallbackTest {
     @Test
     fun `a real library still asks the server`() = runBlocking {
         storeMovie(id(1), "Movie")
-        assertTrue(fails { page(UUID.randomUUID()) })
-        assertTrue(fails { repository.getItemCount(parentId = UUID.randomUUID()) })
+        assertTrue(fails { page(UUID.randomUUID().toString().toItemId()) })
+        assertTrue(
+            fails { repository.getItemCount(parentId = UUID.randomUUID().toString().toItemId()) }
+        )
     }
 
     @Test

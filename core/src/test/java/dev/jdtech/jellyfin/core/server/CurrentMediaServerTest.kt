@@ -11,6 +11,7 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -119,11 +120,11 @@ class CurrentMediaServerTest {
                 proxy,
                 method,
                 args ->
-                when (method.name) {
+                when (method.kotlinName) {
                     "equals" -> proxy === args?.get(0)
                     "hashCode" -> System.identityHashCode(proxy)
                     "toString" -> "uncalled ${T::class.simpleName}"
-                    else -> throw NotImplementedError("${T::class.simpleName}.${method.name}")
+                    else -> throw NotImplementedError("${T::class.simpleName}.${method.kotlinName}")
                 }
             } as T
     }

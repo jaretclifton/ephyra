@@ -47,6 +47,7 @@ import dev.jdtech.jellyfin.film.presentation.season.SeasonState
 import dev.jdtech.jellyfin.film.presentation.show.ShowState
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
 import kotlin.math.abs
@@ -72,7 +73,9 @@ class DetailOverviewTest {
     @get:Rule val rule = createComposeRule()
 
     private val actors =
-        (0 until 6).map { dummyPerson.copy(id = UUID(2, it.toLong()), name = "Actor $it") }
+        (0 until 6).map {
+            dummyPerson.copy(id = UUID(2, it.toLong()).toString().toItemId(), name = "Actor $it")
+        }
 
     private val longOverview = "A long overview that wraps over several lines. ".repeat(20)
 
@@ -251,11 +254,13 @@ class DetailOverviewTest {
     }
 
     private val seasons =
-        (1..2).map { dummySeason.copy(id = UUID(4, it.toLong()), name = "Season $it") }
+        (1..2).map {
+            dummySeason.copy(id = UUID(4, it.toLong()).toString().toItemId(), name = "Season $it")
+        }
 
     private val longEpisode =
         dummyEpisode.copy(
-            id = UUID(5, 1),
+            id = UUID(5, 1).toString().toItemId(),
             name = "Long Episode",
             indexNumber = 1,
             overview = longOverview,
@@ -264,7 +269,7 @@ class DetailOverviewTest {
         )
     private val shortEpisode =
         longEpisode.copy(
-            id = UUID(5, 2),
+            id = UUID(5, 2).toString().toItemId(),
             name = "Short Episode",
             indexNumber = 2,
             overview = "Short.",

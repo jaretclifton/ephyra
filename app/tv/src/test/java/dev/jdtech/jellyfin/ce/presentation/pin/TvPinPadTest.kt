@@ -10,6 +10,7 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.setup.presentation.pin.PinPrompt
 import java.util.UUID
@@ -36,7 +37,11 @@ class TvPinPadTest {
         rule.setContent {
             FindroidTheme {
                 TvPinPad(
-                    prompt = PinPrompt(userId = UUID.randomUUID(), userName = "second"),
+                    prompt =
+                        PinPrompt(
+                            userId = UUID.randomUUID().toString().toUserId(),
+                            userName = "second",
+                        ),
                     pin = pin,
                     onSubmit = { submitted += it },
                 )

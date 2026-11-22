@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.player.local.domain
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 
 /** A [PlaylistManager] over [repository] that resolves playback with [preferences] (#766). */
@@ -18,14 +19,15 @@ internal fun testPreferences(values: Map<String, Any> = emptyMap()): AppPreferen
             SharedPreferences::class.java.classLoader,
             arrayOf(SharedPreferences::class.java),
         ) { _, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getBoolean",
                 "getString",
                 "getInt",
                 "getLong",
                 "getFloat",
                 "getStringSet" -> values[args!![0] as String] ?: args[1]
-                else -> throw UnsupportedOperationException("SharedPreferences.${method.name}")
+                else ->
+                    throw UnsupportedOperationException("SharedPreferences.${method.kotlinName}")
             }
         } as SharedPreferences
     )

@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.width
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.film.presentation.search.SearchState
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.utils.useDockedSearch
 import java.util.UUID
@@ -37,7 +38,12 @@ class SearchBarDockedTest {
     @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
 
     private val movies =
-        List(8) { index -> dummyMovie.copy(id = UUID.randomUUID(), name = "Movie ${index + 1}") }
+        List(8) { index ->
+            dummyMovie.copy(
+                id = UUID.randomUUID().toString().toItemId(),
+                name = "Movie ${index + 1}",
+            )
+        }
 
     @Test
     @Config(qualifiers = "w1280dp-h800dp-land")

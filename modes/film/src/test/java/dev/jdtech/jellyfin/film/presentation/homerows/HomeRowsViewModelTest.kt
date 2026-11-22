@@ -7,10 +7,13 @@ import dev.jdtech.jellyfin.models.CollectionType
 import dev.jdtech.jellyfin.models.FindroidCollection
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.Server
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.ReloadPolicy
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertFalse
@@ -29,7 +32,7 @@ import org.junit.jupiter.api.Test
 class HomeRowsViewModelTest {
     private val movies =
         FindroidCollection(
-            id = UUID.randomUUID(),
+            id = UUID.randomUUID().toString().toItemId(),
             name = "Movies",
             type = CollectionType.Movies,
             images = FindroidImages(),
@@ -46,7 +49,11 @@ class HomeRowsViewModelTest {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         val prefs = AppPreferences(MemorySharedPreferences())
         prefs.setValue(prefs.currentServer, "server")
-        val store = HomeRowsStore(prefs, dao(Server("server", "Server", null, UUID.randomUUID())))
+        val store =
+            HomeRowsStore(
+                prefs,
+                dao(Server("server", "Server", null, UUID.randomUUID().toString().toUserId())),
+            )
         viewModel = HomeRowsViewModel(repository(), store, events)
     }
 
@@ -83,9 +90,9 @@ class HomeRowsViewModelTest {
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, _ ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getUserViews" -> listOf(movies)
-                else -> throw NotImplementedError("JellyfinRepository.${method.name}")
+                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
             }
         } as JellyfinRepository
 
@@ -94,9 +101,9 @@ class HomeRowsViewModelTest {
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getServer" -> server.takeIf { it.id == args!![0] }
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.name}")
+                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
         } as ServerDatabaseDao
 }

@@ -25,6 +25,7 @@ import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.unit.dp
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -46,7 +47,12 @@ class HomeCarouselFocusTest {
     @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
 
     private val movies =
-        List(5) { index -> dummyMovie.copy(id = UUID.randomUUID(), name = "Movie ${index + 1}") }
+        List(5) { index ->
+            dummyMovie.copy(
+                id = UUID.randomUUID().toString().toItemId(),
+                name = "Movie ${index + 1}",
+            )
+        }
 
     private lateinit var focusManager: FocusManager
     private lateinit var inputModeManager: InputModeManager

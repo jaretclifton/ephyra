@@ -15,6 +15,7 @@ import androidx.compose.ui.test.onNodeWithText
 import dev.jdtech.jellyfin.models.FindroidItemPerson
 import dev.jdtech.jellyfin.models.FindroidItemPersonImage
 import dev.jdtech.jellyfin.models.PersonKind
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
 import org.junit.Rule
@@ -31,7 +32,7 @@ class InfoTextTest {
 
     private fun person(name: String) =
         FindroidItemPerson(
-            id = UUID.randomUUID(),
+            id = UUID.randomUUID().toString().toItemId(),
             name = name,
             type = PersonKind.DIRECTOR,
             role = "",

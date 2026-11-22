@@ -1,38 +1,38 @@
-# R10 (#773): production files outside server/jellyfin that import or name java.util.UUID.
-# It only shrinks: the next slices of #773 delete lines, and no line is added (UuidBoundaryTest).
-app/phone/src/main/java/dev/jdtech/jellyfin/presentation/cast/CastPreviews.kt
-app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/DownloadsScreen.kt
-app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/components/InfoText.kt
-app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/components/ProfileBottomSheet.kt
+# R10 (#773): the production files outside server/jellyfin that may name java.util.UUID, each for a
+# reason below. Item and user ids are ItemId and UserId (domain/.../models/Ids.kt) and never a UUID
+# here; what is left are ids the app makes for itself. An allowlist, not debt: a new file gets a
+# line only with a reason of the same kind, given in the PR that adds it (UuidBoundaryTest).
+
+# Server addresses: the app gives each address it stores a random UUID (Room column
+# serverAddresses.id, servers.currentServerAddressId), and the screens and setup flow pass it around.
 app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/components/ServerSelectionItem.kt
-app/phone/src/main/java/dev/jdtech/jellyfin/presentation/player/PlayerUpNextCard.kt
-app/phone/src/main/java/dev/jdtech/jellyfin/presentation/setup/pin/PatternGrid.kt
-app/phone/src/main/java/dev/jdtech/jellyfin/presentation/setup/pin/PinDialog.kt
-app/phone/src/main/java/dev/jdtech/jellyfin/presentation/setup/users/UsersScreen.kt
 app/tv/src/main/java/dev/jdtech/jellyfin/presentation/setup/servers/ServersScreen.kt
-core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/Collections.kt
-core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/Episodes.kt
-core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/HomeItems.kt
-core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/Movies.kt
-core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/People.kt
-core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/Season.kt
 core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/Servers.kt
-core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/Show.kt
-core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/Users.kt
-core/src/main/java/dev/jdtech/jellyfin/utils/DownloaderImpl.kt
-data/src/main/java/dev/jdtech/jellyfin/database/Converters.kt
-data/src/main/java/dev/jdtech/jellyfin/database/ServerDatabaseDao.kt
-data/src/main/java/dev/jdtech/jellyfin/models/FindroidMediaStreamDto.kt
 data/src/main/java/dev/jdtech/jellyfin/models/Server.kt
 data/src/main/java/dev/jdtech/jellyfin/models/ServerAddress.kt
-domain/src/main/kotlin/dev/jdtech/jellyfin/models/Ids.kt
-player/local/src/main/java/dev/jdtech/jellyfin/player/local/engine/mpv/MPVPlayer.kt
-player/local/src/main/java/dev/jdtech/jellyfin/player/local/presentation/PlayerViewModel.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/data/SetupRepositoryImpl.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/domain/SetupRepository.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/addresses/ServerAddressesAction.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/addresses/ServerAddressesViewModel.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/servers/ServersAction.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/servers/ServersViewModel.kt
+
+# Downloaded media streams (subtitles): the downloader gives each stored stream a random UUID
+# (Room column mediastreams.id).
+core/src/main/java/dev/jdtech/jellyfin/utils/DownloaderImpl.kt
+data/src/main/java/dev/jdtech/jellyfin/models/FindroidMediaStreamDto.kt
+
+# Room: the queries on those two kinds of id, and the column converter that stores them as text.
+data/src/main/java/dev/jdtech/jellyfin/database/Converters.kt
+data/src/main/java/dev/jdtech/jellyfin/database/ServerDatabaseDao.kt
+
+# Random names that are not ids of anything stored: the media session, mpv's subtitle files.
+player/local/src/main/java/dev/jdtech/jellyfin/player/local/engine/mpv/MPVPlayer.kt
+player/local/src/main/java/dev/jdtech/jellyfin/player/local/presentation/PlayerViewModel.kt
+
+# Random ids for previews: the dummies' item and user ids, in a Jellyfin id's form.
+core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/DummyIds.kt
+
+# The test fakes' random tokens and secrets (the testing module is test-only, rule R8).
 testing/src/main/kotlin/dev/jdtech/jellyfin/testing/FakeMediaServer.kt
 testing/src/main/kotlin/dev/jdtech/jellyfin/testing/FakeServerConnector.kt

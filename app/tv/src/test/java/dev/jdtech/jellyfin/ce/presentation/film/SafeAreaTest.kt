@@ -19,6 +19,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.film.presentation.home.HomeState
 import dev.jdtech.jellyfin.film.presentation.library.LibraryState
 import dev.jdtech.jellyfin.models.HomeItem
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -40,7 +41,9 @@ class SafeAreaTest {
 
     private val title = "The Great St. Louis Bank Robbery"
     private val movies =
-        (0 until 6).map { dummyMovie.copy(id = UUID(0, it.toLong()), name = "$title $it") }
+        (0 until 6).map {
+            dummyMovie.copy(id = UUID(0, it.toLong()).toString().toItemId(), name = "$title $it")
+        }
 
     private fun assertAboveSafeBottom(bottom: Dp, what: String) {
         assertTrue(
@@ -62,7 +65,10 @@ class SafeAreaTest {
                     state =
                         HomeState(
                             suggestionsSection =
-                                HomeItem.Suggestions(id = UUID(1, 0), items = movies),
+                                HomeItem.Suggestions(
+                                    id = UUID(1, 0).toString().toItemId(),
+                                    items = movies,
+                                ),
                             isLoading = false,
                         ),
                     refreshed = true,

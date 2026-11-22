@@ -4,12 +4,14 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.profilelock.ProfileLock
 import dev.jdtech.jellyfin.setup.domain.FakeLocalNetworkAccess
 import dev.jdtech.jellyfin.setup.domain.ServerLocalNetworkBlock
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.presentation.login.LoginViewModel
 import dev.jdtech.jellyfin.setup.presentation.users.UsersViewModel
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -32,8 +34,10 @@ import org.junit.jupiter.api.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class LoginCapabilitiesTest {
     private val asked = mutableListOf<String>()
-    private val saved = User(id = UUID.randomUUID(), name = "Saved", serverId = "s")
-    private val listed = User(id = UUID.randomUUID(), name = "Listed", serverId = "s")
+    private val saved =
+        User(id = UUID.randomUUID().toString().toUserId(), name = "Saved", serverId = "s")
+    private val listed =
+        User(id = UUID.randomUUID().toString().toUserId(), name = "Listed", serverId = "s")
     private val server =
         Server(id = "s", name = "Home", currentServerAddressId = null, currentUserId = null)
 
@@ -110,17 +114,17 @@ class LoginCapabilitiesTest {
             SetupRepository::class.java.classLoader,
             arrayOf(SetupRepository::class.java),
         ) { _, method, _ ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getCapabilities" -> capabilities
                 "getCurrentServer" -> server
                 "getUsers" -> listOf(saved)
-                "getIsQuickConnectEnabled" -> true.also { asked += method.name }
-                "loadDisclaimer" -> "For testing.".also { asked += method.name }
-                "getPublicUsers" -> listOf(saved, listed).also { asked += method.name }
+                "getIsQuickConnectEnabled" -> true.also { asked += method.kotlinName }
+                "loadDisclaimer" -> "For testing.".also { asked += method.kotlinName }
+                "getPublicUsers" -> listOf(saved, listed).also { asked += method.kotlinName }
                 "toString" -> "FakeSetupRepository"
                 "hashCode" -> 0
                 "equals" -> false
-                else -> throw UnsupportedOperationException(method.name)
+                else -> throw UnsupportedOperationException(method.kotlinName)
             }
         } as SetupRepository
 
@@ -129,6 +133,6 @@ class LoginCapabilitiesTest {
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, _ ->
-            throw UnsupportedOperationException(method.name)
+            throw UnsupportedOperationException(method.kotlinName)
         } as ServerDatabaseDao
 }

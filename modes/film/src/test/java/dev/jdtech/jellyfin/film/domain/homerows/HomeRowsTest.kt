@@ -7,7 +7,10 @@ import dev.jdtech.jellyfin.film.domain.homerows.HomeRowType.LATEST
 import dev.jdtech.jellyfin.film.domain.homerows.HomeRowType.NEXT_UP
 import dev.jdtech.jellyfin.film.domain.homerows.HomeRowType.SUGGESTIONS
 import dev.jdtech.jellyfin.models.Server
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -16,8 +19,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
 class HomeRowsTest {
-    private val movies = UUID.randomUUID()
-    private val shows = UUID.randomUUID()
+    private val movies = UUID.randomUUID().toString().toItemId()
+    private val shows = UUID.randomUUID().toString().toItemId()
     private val legacy = LegacyHomeSwitches()
 
     private fun keys(rows: List<HomeRowConfig>) = rows.map { it.key }
@@ -97,7 +100,7 @@ class HomeRowsTest {
                 HomeRowConfig(SUGGESTIONS, visible = false),
                 HomeRowConfig(CONTINUE_WATCHING),
             )
-        val anime = UUID.randomUUID()
+        val anime = UUID.randomUUID().toString().toItemId()
 
         val rows = HomeRows.resolve(stored, listOf(shows, anime), legacy)
 
@@ -142,8 +145,8 @@ class HomeRowsTest {
     @Test
     fun `each user on each server has their own layout`() = runBlocking {
         val prefs = AppPreferences(MemorySharedPreferences())
-        val alice = UUID.randomUUID()
-        val bob = UUID.randomUUID()
+        val alice = UUID.randomUUID().toString().toUserId()
+        val bob = UUID.randomUUID().toString().toUserId()
         val servers =
             mutableMapOf(
                 "server1" to Server("server1", "One", null, alice),
@@ -197,9 +200,9 @@ class HomeRowsTest {
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getServer" -> servers[args!![0]]
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.name}")
+                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
         } as ServerDatabaseDao
 }

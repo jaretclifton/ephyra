@@ -23,6 +23,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyPersonDetail
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyShow
 import dev.jdtech.jellyfin.film.presentation.person.PersonState
 import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
 import kotlin.test.assertTrue
@@ -39,10 +40,14 @@ class PersonFocusRestoreTest {
     @get:Rule val rule = createComposeRule()
 
     private val movies: List<dev.jdtech.jellyfin.models.FindroidMovie> =
-        (0 until 10).map { dummyMovie.copy(id = UUID(0, it.toLong()), name = "Movie $it") }
+        (0 until 10).map {
+            dummyMovie.copy(id = UUID(0, it.toLong()).toString().toItemId(), name = "Movie $it")
+        }
 
     private val shows: List<dev.jdtech.jellyfin.models.FindroidShow> =
-        (0 until 10).map { dummyShow.copy(id = UUID(1, it.toLong()), name = "Show $it") }
+        (0 until 10).map {
+            dummyShow.copy(id = UUID(1, it.toLong()).toString().toItemId(), name = "Show $it")
+        }
 
     private var detailOpen by mutableStateOf(false)
     private var opened: FindroidItem? = null

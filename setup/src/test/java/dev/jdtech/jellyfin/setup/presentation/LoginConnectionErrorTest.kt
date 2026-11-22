@@ -11,6 +11,7 @@ import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.domain.parseIpAddress
 import dev.jdtech.jellyfin.setup.presentation.login.LoginAction
 import dev.jdtech.jellyfin.setup.presentation.login.LoginViewModel
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import java.net.SocketTimeoutException
 import kotlin.test.assertEquals
@@ -38,7 +39,7 @@ class LoginConnectionErrorTest {
             SetupRepository::class.java.classLoader,
             arrayOf(SetupRepository::class.java),
         ) { _, method, _ ->
-            throw UnsupportedOperationException(method.name)
+            throw UnsupportedOperationException(method.kotlinName)
         } as SetupRepository
 
     private val repository =

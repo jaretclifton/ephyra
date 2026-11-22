@@ -12,6 +12,7 @@ import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.ContractLibrary
 import dev.jdtech.jellyfin.testing.FakeLibrary
 import dev.jdtech.jellyfin.testing.FakeMediaServer
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -137,9 +138,9 @@ class ThemeSongPreferenceTest {
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, _ ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "observeHasSources" -> flowOf(false)
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.name}")
+                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
         } as ServerDatabaseDao
 
@@ -150,7 +151,7 @@ class ThemeSongPreferenceTest {
                 SharedPreferences::class.java.classLoader,
                 arrayOf(SharedPreferences::class.java),
             ) { _, method, args ->
-                when (method.name) {
+                when (method.kotlinName) {
                     "getBoolean" ->
                         if (args!![0] == "pref_tv_theme_music" && stored != null) stored
                         else args[1]
@@ -159,7 +160,10 @@ class ThemeSongPreferenceTest {
                     "getLong",
                     "getFloat",
                     "getStringSet" -> args!![1]
-                    else -> throw UnsupportedOperationException("SharedPreferences.${method.name}")
+                    else ->
+                        throw UnsupportedOperationException(
+                            "SharedPreferences.${method.kotlinName}"
+                        )
                 }
             } as SharedPreferences
         return AppPreferences(preferences)
@@ -167,6 +171,6 @@ class ThemeSongPreferenceTest {
 
     private inline fun <reified T : Any> unused(): T =
         Proxy.newProxyInstance(T::class.java.classLoader, arrayOf(T::class.java)) { _, method, _ ->
-            throw NotImplementedError("${T::class.java.simpleName}.${method.name}")
+            throw NotImplementedError("${T::class.java.simpleName}.${method.kotlinName}")
         } as T
 }

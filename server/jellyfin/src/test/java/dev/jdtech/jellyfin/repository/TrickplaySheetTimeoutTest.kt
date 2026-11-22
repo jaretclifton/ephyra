@@ -7,6 +7,7 @@ import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.DeviceCodecProbe
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
+import dev.jdtech.jellyfin.server.jellyfin.toUuid
 import kotlin.test.assertContentEquals
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.runBlocking
@@ -41,7 +42,7 @@ class TrickplaySheetTimeoutTest {
                 )
                 .apply {
                     api.update(baseUrl = server.baseUrl, accessToken = "token")
-                    userId = StandInServer.USER_ID
+                    userId = StandInServer.USER_ID.toUuid()
                 }
         JellyfinMediaServer(api, JellyfinDeviceProfiles(DeviceCodecProbe(context)))
     }

@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.core.presentation.downloader
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.toItemId
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test
 
 /** Unit tests for what Smart Downloads queues and removes. */
 class SmartDownloadPlannerTest {
-    private val seriesId = UUID.randomUUID()
+    private val seriesId = UUID.randomUUID().toString().toItemId()
     private val since = 1_000L
 
     @Test
@@ -325,7 +326,7 @@ class SmartDownloadPlannerTest {
         lastPlayedAt: Long? = null,
     ) =
         FindroidEpisode(
-            id = UUID.randomUUID(),
+            id = UUID.randomUUID().toString().toItemId(),
             name = "Episode $number",
             originalTitle = null,
             overview = "",
@@ -342,7 +343,7 @@ class SmartDownloadPlannerTest {
             premiereDate = null,
             seriesId = seriesId,
             seriesName = "Show",
-            seasonId = UUID.nameUUIDFromBytes("season $season".toByteArray()),
+            seasonId = UUID.nameUUIDFromBytes("season $season".toByteArray()).toString().toItemId(),
             seasonName = null,
             communityRating = null,
             people = emptyList(),

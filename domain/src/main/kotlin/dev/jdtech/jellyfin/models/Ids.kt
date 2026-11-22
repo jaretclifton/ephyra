@@ -20,9 +20,9 @@ import java.io.Serializable
  * [toString] gives [value] too, so an id in a log line or a string template reads as it did when
  * ids were `UUID`s; code that needs the string form says [asString].
  *
- * It is [Serializable] as `UUID` was: where the id is boxed (a nullable or generic position), Android
- * stores it in a `Bundle` that way. Compose's lazy list keys and `rememberSaveable` values must be
- * Bundle types, and screens use item ids as both.
+ * It is [Serializable] as `UUID` was: where the id is boxed (a nullable or generic position),
+ * Android stores it in a `Bundle` that way. Compose's lazy list keys and `rememberSaveable` values
+ * must be Bundle types, and screens use item ids as both.
  */
 @JvmInline
 value class ItemId(val value: String) : Serializable {
@@ -56,8 +56,7 @@ fun String.toItemId(): ItemId = ItemId(this)
 /** The user id whose string form is this text; the same rules as [toItemId]. */
 fun String.toUserId(): UserId = UserId(this)
 
-private val JELLYFIN_ID_FORM =
-    Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
+private val JELLYFIN_ID_FORM = Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 
 /**
  * Whether this text has the form the Jellyfin adapter gives every id (dashed lowercase UUID). Only
@@ -68,7 +67,10 @@ private val JELLYFIN_ID_FORM =
  */
 fun String.looksLikeJellyfinId(): Boolean = JELLYFIN_ID_FORM.matches(this)
 
-/** The string form of the id (see the top of this file): what Room stores, routes carry and the server is sent. */
+/**
+ * The string form of the id (see the top of this file): what Room stores, routes carry and the
+ * server is sent.
+ */
 fun ItemId.asString(): String = value
 
 /** The string form of the id; see [ItemId.asString]. */

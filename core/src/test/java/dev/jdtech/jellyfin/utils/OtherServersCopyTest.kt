@@ -24,6 +24,7 @@ import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
 import java.io.File
 import java.lang.reflect.Proxy
@@ -78,7 +79,7 @@ class OtherServersCopyTest {
                 JellyfinRepository::class.java.classLoader,
                 arrayOf(JellyfinRepository::class.java),
             ) { _, method, _ ->
-                server("JellyfinRepository.${method.name}")
+                server("JellyfinRepository.${method.kotlinName}")
             } as JellyfinRepository
         DownloaderImpl(
             context,

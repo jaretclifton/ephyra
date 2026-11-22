@@ -19,6 +19,7 @@ import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.HomeSection
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -40,9 +41,9 @@ class HomeSectionSizesTest {
     @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
 
     private fun movie(name: String): FindroidMovie =
-        dummyMovie.copy(id = UUID.randomUUID(), name = name)
+        dummyMovie.copy(id = UUID.randomUUID().toString().toItemId(), name = name)
 
-    private val sectionId = UUID.randomUUID()
+    private val sectionId = UUID.randomUUID().toString().toItemId()
     private var items by mutableStateOf(listOf<FindroidItem>())
 
     private fun leftOf(text: String): Float =

@@ -1,7 +1,5 @@
 package dev.jdtech.jellyfin.core.presentation.ephyra
 
-import dev.jdtech.jellyfin.models.looksLikeJellyfinId
-import dev.jdtech.jellyfin.models.asString
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -35,6 +33,8 @@ import coil3.request.crossfade
 import dev.jdtech.jellyfin.core.R
 import dev.jdtech.jellyfin.core.presentation.theme.OutfitFamily
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.looksLikeJellyfinId
 import java.text.BreakIterator
 import java.util.Locale
 import kotlin.math.abs

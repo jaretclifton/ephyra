@@ -1,6 +1,5 @@
 package dev.jdtech.jellyfin.utils
 
-import dev.jdtech.jellyfin.models.looksLikeJellyfinId
 import android.content.Context
 import android.os.Environment
 import android.os.StatFs
@@ -24,6 +23,7 @@ import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.looksLikeJellyfinId
 import dev.jdtech.jellyfin.models.toFindroidEpisode
 import dev.jdtech.jellyfin.models.toFindroidEpisodeDto
 import dev.jdtech.jellyfin.models.toFindroidMediaStreamDto

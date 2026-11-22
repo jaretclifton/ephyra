@@ -12,6 +12,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummySeason
 import dev.jdtech.jellyfin.film.presentation.episode.EpisodeState
 import dev.jdtech.jellyfin.film.presentation.season.SeasonState
 import dev.jdtech.jellyfin.models.FindroidSeason
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -28,7 +29,9 @@ class SeasonEmptyTest {
     @get:Rule val rule = createComposeRule()
 
     private val seasons: List<FindroidSeason> =
-        (1..3).map { dummySeason.copy(id = UUID(4, it.toLong()), name = "Season $it") }
+        (1..3).map {
+            dummySeason.copy(id = UUID(4, it.toLong()).toString().toItemId(), name = "Season $it")
+        }
 
     private fun setSeason(state: SeasonState) {
         rule.setContent {

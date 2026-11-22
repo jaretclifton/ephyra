@@ -7,10 +7,11 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidMediaStreamDto
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
-import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.MediaStreamType
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
 import java.io.File
@@ -48,7 +49,7 @@ import org.robolectric.shadows.ShadowEnvironment
 class SubtitleFinalizeTest {
     private val context: Context = RuntimeEnvironment.getApplication()
     private lateinit var root: File
-    private val itemId = UUID.randomUUID()
+    private val itemId = UUID.randomUUID().toString().toItemId()
     private val slowSubtitle = CountDownLatch(1)
 
     private val sources = ConcurrentHashMap<String, FindroidSourceDto>()
@@ -349,7 +350,7 @@ class SubtitleFinalizeTest {
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getSourceByDownloadId" -> sources.values.firstOrNull { it.downloadId == args[0] }
                 "getMediaStreamByDownloadId" ->
                     streams.values.firstOrNull { it.downloadId == args[0] }
@@ -366,13 +367,13 @@ class SubtitleFinalizeTest {
                 }
                 "setMediaStreamPath" -> {
                     pathUpdates.incrementAndGet()
-                    streams.computeIfPresent(args[0] as ItemId) { _, s ->
+                    streams.computeIfPresent(args[0] as UUID) { _, s ->
                         s.copy(path = args[1] as String)
                     }
                     Unit
                 }
                 "deleteMediaStream" -> {
-                    streams.remove(args[0] as ItemId)
+                    streams.remove(args[0] as UUID)
                     Unit
                 }
                 "getCompletedDownloadSources" ->
@@ -380,7 +381,7 @@ class SubtitleFinalizeTest {
                 "getActiveDownloadSources" ->
                     sources.values.filter { it.path.endsWith(".download") }
                 "getAllItemIds" -> listOf(itemId)
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.name}")
+                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
         } as ServerDatabaseDao
 
@@ -390,10 +391,10 @@ class SubtitleFinalizeTest {
                 JellyfinRepository::class.java.classLoader,
                 arrayOf(JellyfinRepository::class.java),
             ) { _, method, _ ->
-                when (method.name) {
-                    "getUserId" -> UUID.randomUUID()
+                when (method.kotlinName) {
+                    "getUserId" -> UUID.randomUUID().toString().toItemId()
                     // The server is not there: a failed subtitle cannot be started again.
-                    else -> throw IllegalStateException("JellyfinRepository.${method.name}")
+                    else -> throw IllegalStateException("JellyfinRepository.${method.kotlinName}")
                 }
             } as JellyfinRepository
         val preferences =

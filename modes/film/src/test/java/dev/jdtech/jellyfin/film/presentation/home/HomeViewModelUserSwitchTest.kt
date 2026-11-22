@@ -6,10 +6,13 @@ import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.IOException
 import java.lang.reflect.Proxy
 import java.util.UUID
@@ -47,9 +50,15 @@ import org.junit.jupiter.api.Test
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelUserSwitchTest {
-    private val alice = User(id = UUID.randomUUID(), name = "Alice", serverId = SERVER_ID)
+    private val alice =
+        User(id = UUID.randomUUID().toString().toUserId(), name = "Alice", serverId = SERVER_ID)
     private val bob =
-        User(id = UUID.randomUUID(), name = "Bob", serverId = SERVER_ID, primaryImageTag = "b")
+        User(
+            id = UUID.randomUUID().toString().toUserId(),
+            name = "Bob",
+            serverId = SERVER_ID,
+            primaryImageTag = "b",
+        )
     private val aliceItem = item("Alice's movie")
     private val bobItem = item("Bob's movie")
 
@@ -366,7 +375,7 @@ class HomeViewModelUserSwitchTest {
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getResumeItems",
                 "getNextUp" ->
                     @Suppress("UNCHECKED_CAST")
@@ -376,7 +385,7 @@ class HomeViewModelUserSwitchTest {
                 "refreshCurrentUserImage" -> Unit
                 "getUserId" -> sessionUser?.id ?: throw IllegalStateException("signed out")
                 "getServerInfo" -> throw IOException("not needed here")
-                else -> throw NotImplementedError("JellyfinRepository.${method.name}")
+                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
             }
         } as JellyfinRepository
 
@@ -385,11 +394,11 @@ class HomeViewModelUserSwitchTest {
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, _ ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getServer" -> server.copy()
                 "getServerCurrentUser" -> server.currentUserId?.let { users[it] }
                 "observeServerCurrentUser" -> currentUser
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.name}")
+                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
         } as ServerDatabaseDao
 
@@ -398,14 +407,15 @@ class HomeViewModelUserSwitchTest {
             SharedPreferences::class.java.classLoader,
             arrayOf(SharedPreferences::class.java),
         ) { _, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getString" -> if (args!![0] == "pref_current_server") SERVER_ID else args[1]
                 "getBoolean",
                 "getInt",
                 "getLong" -> args!![1]
                 "registerOnSharedPreferenceChangeListener",
                 "unregisterOnSharedPreferenceChangeListener" -> Unit
-                else -> throw UnsupportedOperationException("SharedPreferences.${method.name}")
+                else ->
+                    throw UnsupportedOperationException("SharedPreferences.${method.kotlinName}")
             }
         } as SharedPreferences
 
@@ -414,16 +424,16 @@ class HomeViewModelUserSwitchTest {
             FindroidItem::class.java.classLoader,
             arrayOf(FindroidItem::class.java),
         ) { proxy, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "equals" -> proxy === args?.getOrNull(0)
                 "hashCode" -> System.identityHashCode(proxy)
                 "toString" -> name
-                else -> throw NotImplementedError("FindroidItem.${method.name}")
+                else -> throw NotImplementedError("FindroidItem.${method.kotlinName}")
             }
         } as FindroidItem
 
     private companion object {
         const val SERVER_ID = "0123456789abcdef0123456789abcdef"
-        val aliceItemId: ItemId = UUID.randomUUID()
+        val aliceItemId: ItemId = UUID.randomUUID().toString().toItemId()
     }
 }

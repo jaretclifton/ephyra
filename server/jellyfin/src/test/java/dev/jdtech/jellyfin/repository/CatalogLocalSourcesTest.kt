@@ -10,6 +10,7 @@ import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import java.util.Collections
 import kotlin.test.assertEquals
@@ -56,7 +57,7 @@ class CatalogLocalSourcesTest {
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "observeHasSources" -> flowOf(true)
                 "getMovieOfServer",
                 "getEpisodeOfServer" -> null
@@ -66,7 +67,7 @@ class CatalogLocalSourcesTest {
                     ids.filter { it == movieId || it == episodeId }.map { localSource(it) }
                 }
                 "getMediaStreamsForSources" -> emptyList<Any>()
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.name}")
+                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
         } as ServerDatabaseDao
 

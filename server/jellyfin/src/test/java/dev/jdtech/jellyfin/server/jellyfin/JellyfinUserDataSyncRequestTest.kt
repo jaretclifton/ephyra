@@ -61,7 +61,7 @@ class JellyfinUserDataSyncRequestTest {
     private fun JsonObject.value(name: String): String? =
         get(name)?.takeIf { it !is JsonNull }?.jsonPrimitive?.content
 
-    private fun itemsAnswer(vararg ids: ItemId) =
+    private fun itemsAnswer(ids: List<ItemId>) =
         ids.joinToString(
             prefix = "{\"Items\":[",
             postfix = "],\"TotalRecordCount\":${ids.size},\"StartIndex\":0}",
@@ -74,7 +74,7 @@ class JellyfinUserDataSyncRequestTest {
     @Test
     fun `the server's user data is read 100 items per request`() = runBlocking {
         val ids = (1..150).map { UUID(0L, it.toLong()).toItemId() }
-        items = itemsAnswer(ids.first())
+        items = itemsAnswer(listOf(ids.first()))
 
         val read = port.userDataOf(ids)
 

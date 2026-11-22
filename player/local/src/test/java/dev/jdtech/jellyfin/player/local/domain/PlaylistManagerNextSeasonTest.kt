@@ -7,7 +7,10 @@ import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.testing.asItemIdOrNull
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -17,7 +20,7 @@ import org.junit.jupiter.api.Test
 
 /** Unit tests for how [PlaylistManager] continues into the next season. */
 class PlaylistManagerNextSeasonTest {
-    private val seriesId = UUID.randomUUID()
+    private val seriesId = UUID.randomUUID().toString().toItemId()
 
     @Test
     fun `the last episode of a season is followed by the next season`() {
@@ -140,18 +143,18 @@ class PlaylistManagerNextSeasonTest {
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
-            when (method.name) {
-                "getEpisode" -> show.values.flatten().first { it.id == args[0] }
+            when (method.kotlinName) {
+                "getEpisode" -> show.values.flatten().first { it.id == args[0].asItemIdOrNull() }
                 "getSeasons" -> show.keys.toList()
-                "getEpisodes" -> show.entries.first { it.key.id == args[1] }.value
+                "getEpisodes" -> show.entries.first { it.key.id == args[1].asItemIdOrNull() }.value
                 "getPlaybackSources" -> listOf(source())
-                else -> error("Unexpected call to ${method.name}")
+                else -> error("Unexpected call to ${method.kotlinName}")
             }
         } as JellyfinRepository
 
     private fun season(number: Int) =
         FindroidSeason(
-            id = UUID.randomUUID(),
+            id = UUID.randomUUID().toString().toItemId(),
             name = "Season $number",
             seriesId = seriesId,
             seriesName = "Show",
@@ -170,7 +173,7 @@ class PlaylistManagerNextSeasonTest {
 
     private fun episode(season: FindroidSeason, number: Int, missing: Boolean = false) =
         FindroidEpisode(
-            id = UUID.randomUUID(),
+            id = UUID.randomUUID().toString().toItemId(),
             name = "Episode $number",
             originalTitle = null,
             overview = "",

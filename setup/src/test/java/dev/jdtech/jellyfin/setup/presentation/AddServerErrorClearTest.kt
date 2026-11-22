@@ -10,6 +10,7 @@ import dev.jdtech.jellyfin.setup.domain.FakeLocalNetworkAccess
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.presentation.addserver.AddServerAction
 import dev.jdtech.jellyfin.setup.presentation.addserver.AddServerViewModel
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -43,7 +44,7 @@ class AddServerErrorClearTest {
             SetupRepository::class.java.classLoader,
             arrayOf(SetupRepository::class.java),
         ) { _, method, _ ->
-            throw UnsupportedOperationException(method.name)
+            throw UnsupportedOperationException(method.kotlinName)
         } as SetupRepository
 
     private val repository =

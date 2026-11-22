@@ -20,6 +20,7 @@ import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -163,7 +164,7 @@ class CastAndCrewPreferenceTest {
 
     private fun person(name: String, type: PersonKind) =
         FindroidItemPerson(
-            id = UUID.nameUUIDFromBytes(name.toByteArray()),
+            id = UUID.nameUUIDFromBytes(name.toByteArray()).toString().toItemId(),
             name = name,
             type = type,
             role = "",
@@ -176,15 +177,16 @@ class CastAndCrewPreferenceTest {
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, _ ->
             // #769: Jellyfin can do everything.
-            if (method.name == "getCapabilities") return@newProxyInstance ServerCapabilities.ALL
-            when (method.name) {
+            if (method.kotlinName == "getCapabilities")
+                return@newProxyInstance ServerCapabilities.ALL
+            when (method.kotlinName) {
                 "getMovie" -> movie()
                 "getShow" -> show()
                 "getEpisode" -> episode()
                 "getNextUp",
                 "getSeasons",
                 "getEpisodes" -> emptyList<Any>()
-                else -> throw NotImplementedError("JellyfinRepository.${method.name}")
+                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
             }
         } as JellyfinRepository
 
@@ -276,7 +278,7 @@ class CastAndCrewPreferenceTest {
                 SharedPreferences::class.java.classLoader,
                 arrayOf(SharedPreferences::class.java),
             ) { _, method, args ->
-                when (method.name) {
+                when (method.kotlinName) {
                     "getBoolean" ->
                         when {
                             args!![0] == "pref_display_cast_and_crew" && stored != null -> stored
@@ -288,7 +290,10 @@ class CastAndCrewPreferenceTest {
                     "getLong",
                     "getFloat",
                     "getStringSet" -> args!![1]
-                    else -> throw UnsupportedOperationException("SharedPreferences.${method.name}")
+                    else ->
+                        throw UnsupportedOperationException(
+                            "SharedPreferences.${method.kotlinName}"
+                        )
                 }
             } as SharedPreferences
         return AppPreferences(preferences)
@@ -300,14 +305,14 @@ class CastAndCrewPreferenceTest {
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, _ ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getSeasonEpisodeCounts" -> emptyList<Any>()
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.name}")
+                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
         } as ServerDatabaseDao
 
     private inline fun <reified T : Any> unused(): T =
         Proxy.newProxyInstance(T::class.java.classLoader, arrayOf(T::class.java)) { _, method, _ ->
-            throw NotImplementedError("${T::class.java.simpleName}.${method.name}")
+            throw NotImplementedError("${T::class.java.simpleName}.${method.kotlinName}")
         } as T
 }

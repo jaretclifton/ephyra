@@ -9,7 +9,9 @@ import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
 import java.lang.reflect.Proxy
@@ -243,7 +245,7 @@ class DownloadQueueRetryTransitionTest {
             offline: Boolean = false,
         ) =
             DownloadQueue.Entry(
-                id = UUID.randomUUID(),
+                id = UUID.randomUUID().toString().toItemId(),
                 item = first,
                 addedAt = 0L,
                 state = state,
@@ -323,7 +325,7 @@ class DownloadQueueRetryTransitionTest {
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, _ ->
-            throw NotImplementedError("ServerDatabaseDao.${method.name}")
+            throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
         } as ServerDatabaseDao
 
     /** Every item gets its own download id; [progress] is what the engine reports for all. */
@@ -384,7 +386,7 @@ class DownloadQueueRetryTransitionTest {
 
     private fun episode(number: Int) =
         FindroidEpisode(
-            id = UUID.randomUUID(),
+            id = UUID.randomUUID().toString().toItemId(),
             name = "Episode $number",
             originalTitle = null,
             overview = "",
@@ -399,9 +401,9 @@ class DownloadQueueRetryTransitionTest {
             runtimeTicks = 0L,
             playbackPositionTicks = 0L,
             premiereDate = null,
-            seriesId = UUID.randomUUID(),
+            seriesId = UUID.randomUUID().toString().toItemId(),
             seriesName = "Show",
-            seasonId = UUID.randomUUID(),
+            seasonId = UUID.randomUUID().toString().toItemId(),
             seasonName = "Season 1",
             communityRating = null,
             people = emptyList(),
