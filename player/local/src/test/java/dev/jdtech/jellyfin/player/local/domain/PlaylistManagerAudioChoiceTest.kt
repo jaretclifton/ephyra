@@ -215,6 +215,90 @@ class PlaylistManagerAudioChoiceTest {
         assertNull(item.playSessionId, message = "no transcode to name")
     }
 
+    @Test
+    fun `a transcode is requested again with the preferred audio language`() {
+        // #834: the settings' value, as the language list stores it.
+        val manager = preferring("nld", repository(transcodes = true, saved = null))
+
+        val item = runBlocking { manager.getInitialItem(episode.id, ItemKind.EPISODE) }!!
+
+        assertEquals(listOf(null, DUTCH), requests)
+        assertEquals(path(DUTCH), item.mediaSourceUri)
+        assertEquals(DUTCH, item.audioStreamIndex)
+    }
+
+    @Test
+    fun `a preferred language the server's default track has needs no second request`() {
+        val manager = preferring("eng", repository(transcodes = true, saved = null))
+
+        runBlocking { manager.getInitialItem(episode.id, ItemKind.EPISODE) }
+
+        assertEquals(listOf<Int?>(null), requests)
+    }
+
+    @Test
+    fun `a preferred language the file does not have leaves the server's default`() {
+        val manager = preferring("fra", repository(transcodes = true, saved = null))
+
+        val item = runBlocking { manager.getInitialItem(episode.id, ItemKind.EPISODE) }!!
+
+        assertEquals(listOf<Int?>(null), requests)
+        assertEquals(ENGLISH, item.audioStreamIndex)
+    }
+
+    @Test
+    fun `the track saved for the series wins over the preferred language`() {
+        val saved = dutch().copy(language = "eng", title = "English")
+        val manager = preferring("nld", repository(transcodes = true, saved = saved))
+
+        runBlocking { manager.getInitialItem(episode.id, ItemKind.EPISODE) }
+
+        assertEquals(listOf<Int?>(null), requests)
+    }
+
+    @Test
+    fun `the playing track wins over the preferred language on a quality switch`() {
+        val manager = preferring("nld", repository(transcodes = true, saved = null))
+        val item = runBlocking { manager.getInitialItem(episode.id, ItemKind.EPISODE) }!!
+        requests.clear()
+
+        val switched = runBlocking {
+            manager.recreatePlayerItem(item, StoredChoice("eng", "English", 0))
+        }
+
+        assertEquals(listOf<Int?>(null), requests)
+        assertEquals(ENGLISH, switched.audioStreamIndex)
+    }
+
+    @Test
+    fun `a track picked in the audio dialog stays over the preferred language`() {
+        val manager = preferring("nld", repository(transcodes = true, saved = null))
+        val item = runBlocking { manager.getInitialItem(episode.id, ItemKind.EPISODE) }!!
+
+        val picked = runBlocking { manager.recreatePlayerItem(item, audioStreamIndex = ENGLISH) }
+        // A quality switch from that transcode: its single track has no name.
+        val switched = runBlocking { manager.recreatePlayerItem(picked, null) }
+
+        assertEquals(ENGLISH, picked.audioStreamIndex)
+        assertEquals(ENGLISH, switched.audioStreamIndex)
+        assertEquals(path(null), switched.mediaSourceUri)
+    }
+
+    @Test
+    fun `a source that plays directly is not requested again for the preferred language`() {
+        // The player selects the preferred language among its tracks itself.
+        val manager = preferring("nld", repository(transcodes = false, saved = null))
+
+        val item = runBlocking { manager.getInitialItem(episode.id, ItemKind.EPISODE) }!!
+
+        assertEquals(listOf<Int?>(null), requests)
+        assertNull(item.audioStreamIndex)
+    }
+
+    /** A [PlaylistManager] over [repository] with [language] as the preferred audio language. */
+    private fun preferring(language: String, repository: JellyfinRepository) =
+        playlistManager(repository, testPreferences(mapOf("pref_audio_language" to language)))
+
     private fun repository(
         transcodes: Boolean,
         saved: SeriesTrackPreferenceDto?,

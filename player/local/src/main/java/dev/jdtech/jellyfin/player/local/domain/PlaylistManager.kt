@@ -556,8 +556,10 @@ internal constructor(
      * another. So when [source] is a transcode and the user's track is not that default, the source
      * is asked for once more, with the track. In order: the track picked in the audio dialog of a
      * transcode ([pickedIndex], #596), the track playing now ([selectedAudio], on a quality
-     * switch), the choice saved for the series, the track this item was last requested with. A
-     * source that plays directly is returned as it is: the player selects among its tracks itself.
+     * switch), the choice saved for the series, the track this item was last requested with, the
+     * preferred audio language (#834). The language comes last so that it never undoes a pick: a
+     * pick is kept as the last requested track. A source that plays directly is returned as it is:
+     * the player selects among its tracks itself.
      */
     private suspend fun FindroidItem.withChosenAudio(
         source: FindroidSource,
@@ -573,6 +575,7 @@ internal constructor(
                 ?: selectedAudio?.let { audioStreamIndex(it, source.mediaStreams) }
                 ?: savedAudioChoice()?.let { audioStreamIndex(it, source.mediaStreams) }
                 ?: requestedAudio[id]
+                ?: preferredAudio(source)
                 ?: return default
         requestedAudio[id] = index
         if (index == source.defaultAudioStreamIndex) return default
@@ -588,6 +591,23 @@ internal constructor(
             Timber.e("Failed to request audio stream $index: $e")
             default
         }
+    }
+
+    /**
+     * CE (#834): the server's index of the first audio track of [source] in the preferred language,
+     * matched as a saved choice of only a language is. Null without a preference, without such a
+     * track, or when the server's default track has that language already.
+     */
+    private fun preferredAudio(source: FindroidSource): Int? {
+        val language = normalizeLanguage(resolvePlayback.preferredAudioLanguage()) ?: return null
+        val defaultTrack =
+            serverAudioTracks(source.mediaStreams).firstOrNull {
+                it.index == source.defaultAudioStreamIndex
+            }
+        if (defaultTrack != null && normalizeLanguage(defaultTrack.language) == language) {
+            return null
+        }
+        return audioStreamIndex(StoredChoice(language, null, null), source.mediaStreams)
     }
 
     /** The audio track saved for this episode's series, or null: a movie has none. */

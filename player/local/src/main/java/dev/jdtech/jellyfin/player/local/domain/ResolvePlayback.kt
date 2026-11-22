@@ -40,6 +40,13 @@ constructor(
         appPreferences.getValue(appPreferences.playerMaxBitrate).takeIf { it > 0 }
 
     /**
+     * CE (#834): the audio language the user prefers, as the settings store it ("nld"), or null. A
+     * transcode carries one audio track, so it has to be asked for with the request.
+     */
+    fun preferredAudioLanguage(): String? =
+        appPreferences.getValue(appPreferences.preferredAudioLanguage)
+
+    /**
      * The sources to play [itemId] on the local player, with the target and cap the settings have
      * when this is called (a quality switch writes its cap first).
      */
