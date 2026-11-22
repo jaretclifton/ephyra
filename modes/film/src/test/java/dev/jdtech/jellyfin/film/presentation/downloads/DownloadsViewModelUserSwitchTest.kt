@@ -70,30 +70,37 @@ class DownloadsViewModelUserSwitchTest {
     }
 
     @Test
-    fun `the screen shows the new user's progress after a switch, never the previous user's`() =
-        runBlocking {
-            val viewModel = viewModel()
-            // The screen's first ON_RESUME, which leaves the load to the ViewModel's own.
-            viewModel.onScreenResumed()
-            val first = withTimeout(5_000) { viewModel.state.first { it.sections.isNotEmpty() } }
-            assertEquals(listOf<FindroidItem>(aliceMovie), items(first))
+    fun `the screen shows the new user's progress after a switch, never the previous user's`():
+        Unit = runBlocking {
+        val viewModel = viewModel()
+        // The screen's first ON_RESUME, which leaves the load to the ViewModel's own.
+        viewModel.onScreenResumed()
+        val first = withTimeout(5_000) { viewModel.state.first { it.sections.isNotEmpty() } }
+        assertEquals(listOf<FindroidItem>(aliceMovie), items(first))
 
-            // Home's profile sheet, a login or the Users screen: the client acts for Bob now.
-            sessionUser = bob
+        // Home's profile sheet, a login or the Users screen: the client acts for Bob now.
+        sessionUser = bob
 
-            // The screen comes back (DownloadsScreen's ON_RESUME).
-            viewModel.onScreenResumed()
-            // Before Bob's user data is read: none of Alice's progress, and a loading list.
-            assertEquals(emptyList(), items(viewModel.state.value))
-            assertTrue(viewModel.state.value.isLoading)
+        // The screen comes back (DownloadsScreen's ON_RESUME).
+        viewModel.onScreenResumed()
+        // Before Bob's user data is read: none of Alice's progress, and a loading list.
+        assertEquals(emptyList(), items(viewModel.state.value))
+        assertTrue(viewModel.state.value.isLoading)
 
-            bobsRead.countDown()
-            val after =
-                withTimeout(5_000) {
-                    viewModel.state.first { it.userId == bob && it.sections.isNotEmpty() }
-                }
-            assertEquals(listOf<FindroidItem>(bobMovie), items(after))
+        bobsRead.countDown()
+        val after =
+            withTimeout(5_000) {
+                viewModel.state.first { it.userId == bob && it.sections.isNotEmpty() }
+            }
+        assertEquals(listOf<FindroidItem>(bobMovie), items(after))
+
+        // The load ends with the storage walk, which comes back on Dispatchers.Main: wait for
+        // it before tearDown resets Main, or it fails in the next test. Without a real Context
+        // the walk fails, which is its end too.
+        withTimeout(5_000) {
+            viewModel.state.first { it.error != null || it.storageTotalBytes > 0 }
         }
+    }
 
     @Test
     fun `the screen shows nothing of another user's progress`() {
