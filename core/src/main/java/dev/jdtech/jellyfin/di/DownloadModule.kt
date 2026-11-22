@@ -1,9 +1,13 @@
 package dev.jdtech.jellyfin.di
 
+import android.content.Context
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dev.jdtech.jellyfin.utils.download.ResumeValidatorStore
+import dev.jdtech.jellyfin.utils.download.SharedPreferencesResumeValidatorStore
 import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
 import javax.inject.Singleton
@@ -30,4 +34,12 @@ object DownloadModule {
             .readTimeout(60, TimeUnit.SECONDS)
             .retryOnConnectionFailure(true)
             .build()
+
+    /** CE (#850): the If-Range validators of partial downloads, kept across restarts. */
+    @Singleton
+    @Provides
+    fun provideResumeValidatorStore(@ApplicationContext context: Context): ResumeValidatorStore =
+        SharedPreferencesResumeValidatorStore(
+            context.getSharedPreferences("download_resume_validators", Context.MODE_PRIVATE)
+        )
 }
