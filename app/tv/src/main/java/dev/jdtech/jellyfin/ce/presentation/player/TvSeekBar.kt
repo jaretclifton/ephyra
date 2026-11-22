@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.ce.presentation.player
 
 import android.graphics.BlurMaskFilter
+import android.graphics.Paint as AndroidPaint
 import android.view.KeyEvent
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Canvas
@@ -19,8 +20,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.asComposePaint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.nativeKeyCode
@@ -72,11 +73,13 @@ fun TvSeekBar(
     val density = LocalDensity.current
     val haloPaint =
         remember(color, density) {
-            Paint().apply {
-                this.color = color.copy(alpha = EphyraFocusGlowAlpha)
-                asFrameworkPaint().maskFilter =
-                    BlurMaskFilter(with(density) { 20.dp.toPx() }, BlurMaskFilter.Blur.NORMAL)
-            }
+            AndroidPaint(AndroidPaint.ANTI_ALIAS_FLAG)
+                .apply {
+                    maskFilter =
+                        BlurMaskFilter(with(density) { 20.dp.toPx() }, BlurMaskFilter.Blur.NORMAL)
+                }
+                .asComposePaint()
+                .apply { this.color = color.copy(alpha = EphyraFocusGlowAlpha) }
         }
 
     Canvas(
