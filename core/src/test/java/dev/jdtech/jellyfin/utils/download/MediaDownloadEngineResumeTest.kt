@@ -131,6 +131,41 @@ class MediaDownloadEngineResumeTest {
     }
 
     @Test
+    fun `a validator that appears on a later answer is kept and used`() {
+        // The first answer names no validator, only the length.
+        server.lastModified = null
+        interruptedDownload()
+        // The resume is answered with one, and is interrupted again.
+        server.lastModified = LAST_MODIFIED
+        server.cutAfter = CUT
+        assertEquals(DownloadStatus.FAILED, engine().run())
+        server.cutAfter = null
+        assertEquals(ResumeValidator(LAST_MODIFIED, OLD.size.toLong()), store.get(dest))
+        // The file changes, at the same length: only the validator shows it.
+        server.replace(NEW, lastModified = "Tue, 17 Nov 2026 08:00:00 GMT")
+
+        finish()
+
+        assertEquals(LAST_MODIFIED, server.requests.last { it.range != null }.ifRange)
+        assertContentEquals(NEW, dest.readBytes())
+    }
+
+    @Test
+    fun `a validator that cannot be stored stops the download before it writes`() {
+        // The disk is full: the validator of the 200 that starts the file cannot be written.
+        val failing =
+            object : ResumeValidatorStore {
+                override fun get(file: File): ResumeValidator? = null
+
+                override fun put(file: File, validator: ResumeValidator?) = false
+            }
+        val engine = MediaDownloadEngine(server.client(), Online, failing)
+
+        assertEquals(DownloadStatus.FAILED, engine.run())
+        assertEquals(0L, if (dest.exists()) dest.length() else 0L)
+    }
+
+    @Test
     fun `a removed download forgets its validator`() {
         interruptedDownload()
         val engine = engine()

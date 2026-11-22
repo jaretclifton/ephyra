@@ -425,21 +425,29 @@ constructor(
                     validators.put(req.destFile, null)
                     throw RestartTransfer()
                 }
-                // A partial from before #850, or the first answer that names the file: keep
-                // what it says, so the next resume is checked.
-                if (stored == null && req.resumable) {
-                    validators.put(
-                        req.destFile,
-                        ResumeValidator(responseValidator, contentRangeTotal),
+                // A partial from before #850, or a record that lacks what this answer names:
+                // keep what is known and add the rest, so the next resume is checked.
+                val known =
+                    ResumeValidator(
+                        ifRange = stored?.ifRange ?: responseValidator,
+                        totalBytes = stored?.totalBytes?.takeIf { it > 0 } ?: contentRangeTotal,
                     )
-                }
+                if (req.resumable && known != stored) validators.put(req.destFile, known)
             }
 
             val plan = resolveResumePlan(code, existingLen, contentLength, contentRangeTotal)
 
             if (code == 200 && req.resumable) {
-                // The file starts over at byte 0: from now on the partial is this file's.
-                validators.put(req.destFile, ResumeValidator(responseValidator, contentLength))
+                // The file starts over at byte 0: from now on the partial is this file's. Empty
+                // first, so the old bytes never sit under the new validator.
+                if (req.destFile.exists()) {
+                    RandomAccessFile(req.destFile, "rw").use { it.setLength(0L) }
+                }
+                if (
+                    !validators.put(req.destFile, ResumeValidator(responseValidator, contentLength))
+                ) {
+                    throw IOException("Could not store the resume validator of download ${req.id}")
+                }
             }
 
             if (plan.complete) {

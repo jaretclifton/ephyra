@@ -24,8 +24,11 @@ data class ResumeValidator(val ifRange: String?, val totalBytes: Long) {
 interface ResumeValidatorStore {
     fun get(file: File): ResumeValidator?
 
-    /** Stores [validator] for [file], or forgets the file when it is null or empty. */
-    fun put(file: File, validator: ResumeValidator?)
+    /**
+     * Stores [validator] for [file], or forgets the file when it is null or empty. Written before
+     * it returns, as the engine writes the file's bytes next; false when that failed.
+     */
+    fun put(file: File, validator: ResumeValidator?): Boolean
 }
 
 /** For tests, and for an engine built by hand: forgotten when the process ends. */
@@ -34,9 +37,10 @@ class InMemoryResumeValidatorStore : ResumeValidatorStore {
 
     override fun get(file: File): ResumeValidator? = validators[file.absolutePath]
 
-    override fun put(file: File, validator: ResumeValidator?) {
+    override fun put(file: File, validator: ResumeValidator?): Boolean {
         if (validator == null || validator.isEmpty) validators.remove(file.absolutePath)
         else validators[file.absolutePath] = validator
+        return true
     }
 }
 
@@ -50,7 +54,7 @@ class SharedPreferencesResumeValidatorStore(private val preferences: SharedPrefe
         return ResumeValidator(ifRange, total)
     }
 
-    override fun put(file: File, validator: ResumeValidator?) {
+    override fun put(file: File, validator: ResumeValidator?): Boolean {
         val editor = preferences.edit()
         if (validator == null || validator.isEmpty) {
             editor.remove(file.absolutePath)
@@ -60,7 +64,9 @@ class SharedPreferencesResumeValidatorStore(private val preferences: SharedPrefe
                 "${validator.totalBytes}\n${validator.ifRange ?: ""}",
             )
         }
-        editor.apply()
+        // commit, not apply: the engine is on an IO thread, and a write still queued when the
+        // process dies would leave the old file's validator with the new file's bytes.
+        return editor.commit()
     }
 }
 

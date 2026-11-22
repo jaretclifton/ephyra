@@ -30,7 +30,7 @@ class ResumeValidatorsTest {
         preferences.edit().clear().commit()
         val validator = ResumeValidator("Sat, 14 Nov 2026 22:45:55 GMT", 404_124L)
 
-        SharedPreferencesResumeValidatorStore(preferences).put(file, validator)
+        assertTrue(SharedPreferencesResumeValidatorStore(preferences).put(file, validator))
 
         // A new store over the same preferences: the app after a restart.
         assertEquals(validator, SharedPreferencesResumeValidatorStore(preferences).get(file))
