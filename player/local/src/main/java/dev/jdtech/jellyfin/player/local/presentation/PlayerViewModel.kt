@@ -78,6 +78,7 @@ import dev.jdtech.jellyfin.player.local.domain.matchSeriesTrack
 import dev.jdtech.jellyfin.player.local.domain.playerTitle
 import dev.jdtech.jellyfin.player.local.domain.resolveAutoPlayNext
 import dev.jdtech.jellyfin.player.local.domain.seriesTrackChoice
+import dev.jdtech.jellyfin.player.local.domain.switchFailureText
 import dev.jdtech.jellyfin.player.local.domain.toTrackPick
 import dev.jdtech.jellyfin.player.local.domain.trackPreferenceKey
 import dev.jdtech.jellyfin.player.local.engine.EnginePlayer
@@ -2181,10 +2182,13 @@ constructor(
 
                     override fun failed(error: Exception) {
                         Timber.e(error)
-                        // A Toast without text throws, and some errors (an NPE) have no message.
-                        error.localizedMessage?.let {
-                            Toast.makeText(application, it, Toast.LENGTH_LONG).show()
-                        }
+                        // #825: the reason in plain words, not the exception's own text.
+                        Toast.makeText(
+                                application,
+                                switchFailureText(error).asString(application.resources),
+                                Toast.LENGTH_LONG,
+                            )
+                            .show()
                     }
                 },
         )
