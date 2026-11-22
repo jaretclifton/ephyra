@@ -509,9 +509,15 @@ constructor(
         val client = remoteMediaClient ?: return
         val media = client.currentItem?.media ?: return
         val itemId = media.customData?.optString("itemId")?.toUuidOrNull() ?: return
-        // Null too for an item an older version of the app loaded: the item comes back without
-        // its tracks.
-        val playback = CastCustomData.decode(media.customData?.optString(CastCustomData.KEY))
+        // An item a version before #767 loaded has the server's whole answer instead. What cannot
+        // be read at all brings the item back without its tracks.
+        val customData = media.customData
+        val playback =
+            CastCustomData.decode(customData?.optString(CastCustomData.KEY))
+                ?: decodeLegacyPlaybackInfo(
+                    customData?.optString(LEGACY_PLAYBACK_INFO_KEY),
+                    mediaServer.session.baseUrl,
+                )
         // The audio track is part of the stream the server was asked for; the subtitle is
         // whichever text track the receiver shows.
         val audioIndex = media.contentId?.let { audioStreamIndexOf(it) }
