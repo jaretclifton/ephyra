@@ -1008,6 +1008,18 @@ class DownloaderImpl(
             val result = mutableListOf<Downloader.ActiveDownload>()
             for (source in sources) {
                 val downloadId = source.downloadId ?: continue
+                if (renamedBeforeStop(source, downloadId)) {
+                    // CE (#848): the app stopped between the rename of the finished file and the
+                    // Room write. The file is complete: finish the finalize instead of resuming,
+                    // which would download it all again. Should the finalize fail, the row is kept
+                    // for the next start and never resumed: the `.download` file is gone.
+                    try {
+                        finalizeSource(source)
+                    } catch (e: Exception) {
+                        Timber.e(e, "Failed to finalize the download at ${source.path}")
+                    }
+                    continue
+                }
                 val item: FindroidItem? =
                     try {
                         database.getMovie(source.itemId).toFindroidMovie(database, userId)
@@ -1031,6 +1043,16 @@ class DownloaderImpl(
             }
             result
         }
+
+    /**
+     * A `.download` row whose file has its final name already: only the rename of a finished
+     * transfer makes that file. A task the engine knows is still this session's, and left alone.
+     */
+    private fun renamedBeforeStop(source: FindroidSourceDto, downloadId: Long): Boolean {
+        if (engine.snapshot(downloadId) != null) return false
+        val finalFile = File(source.path.removeSuffix(".download"))
+        return !File(source.path).exists() && finalFile.isFile && finalFile.length() > 0
+    }
 
     private fun mapDownloadError(e: Throwable): UiText = downloadErrorText(e)
 
@@ -1083,6 +1105,17 @@ class DownloaderImpl(
                 remember(source)
                 if (!isUnderMountedRoot(source.path, mountedRoots)) continue
                 val engineAlive = source.downloadId != null && source.downloadId in liveTaskIds
+                // CE (#848): renamed when the app stopped, before its row was updated. The file is
+                // complete, so the sweep finishes the finalize, as the start does, if it comes
+                // first. Should that fail, the row stays for the next start.
+                if (source.downloadId?.let { renamedBeforeStop(source, it) } == true) {
+                    try {
+                        finalizeSource(source)
+                    } catch (e: Exception) {
+                        Timber.w(e, "Failed to finalize the download at ${source.path}")
+                    }
+                    continue
+                }
                 if (!engineAlive && !File(source.path).exists()) {
                     Timber.i("Sweeping dead active source: ${source.path}")
                     cleanupOrphanSource(source.itemId, userId)
@@ -1207,12 +1240,25 @@ class DownloaderImpl(
 
         if (!isDownloadSuccessful(source.downloadId)) return false
 
+        // CE (#848): a failed finalize keeps the finished `.download` file and its row, as a failed
+        // transfer keeps its partial file. The queue shows the download as failed; Retry resumes
+        // it, the server answers that the file is complete, and it is finalized again. Removing
+        // the download deletes both.
         if (!renameDownloadFile(source.path, finalPath)) {
-            Timber.e("Failed to rename download, deleting item. path=${source.path}")
-            deleteSourceItem(source)
+            Timber.e("Failed to rename download. path=${source.path}")
             return false
         }
-        database.setSourceDownloaded(source.id, finalPath, System.currentTimeMillis())
+        try {
+            database.setSourceDownloaded(source.id, finalPath, System.currentTimeMillis())
+        } catch (e: Exception) {
+            // The row still says `.download`: the file goes back under that name, so the row and
+            // the disk agree for the retry, the removal and the storage sweep.
+            Timber.e(e, "Failed to store the finished download. path=$finalPath")
+            if (!renameDownloadFile(finalPath, source.path)) {
+                Timber.e("Failed to rename the download back. path=$finalPath")
+            }
+            return false
+        }
         // Drop the terminal task from the engine registry after successful finalize.
         source.downloadId?.let { engine.cancel(it) }
         Timber.d("Finalized download at: $finalPath")
@@ -1239,7 +1285,18 @@ class DownloaderImpl(
         for (row in rows) {
             val status = row.downloadId?.let { snapshots[it]?.status }
             if (status == DownloadStatus.SUCCESSFUL) {
-                if (!finalizeMediaStream(row)) left = true
+                // CE (#848): the video is final by now. A subtitle whose rename or row fails is
+                // left to the job below and the start-up repair, and does not fail the download.
+                val finalized =
+                    try {
+                        finalizeMediaStream(row)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Timber.w(e, "Failed to finalize the subtitle at ${row.path}")
+                        false
+                    }
+                if (!finalized) left = true
             } else {
                 left = true
             }
@@ -1409,25 +1466,11 @@ class DownloaderImpl(
             true
         } catch (e: Exception) {
             Timber.e(e, "copyTo fallback also failed: $fromPath -> $toPath")
+            // CE (#848): a copy that ran out of space leaves part of the file: only the source
+            // is complete.
+            if (src.exists() && dst.isFile) dst.delete()
             false
         }
-    }
-
-    private suspend fun deleteSourceItem(sourceDto: FindroidSourceDto) {
-        val source = sourceDto.toFindroidSource(database)
-        val userId = jellyfinRepository.getUserId()
-        val item: FindroidItem? =
-            try {
-                database.getMovie(sourceDto.itemId).toFindroidMovie(database, userId)
-            } catch (_: Exception) {
-                try {
-                    database.getEpisode(sourceDto.itemId).toFindroidEpisode(database, userId)
-                } catch (_: Exception) {
-                    null
-                }
-            }
-        if (item == null) return
-        deleteItem(item, source)
     }
 
     private suspend fun cleanupOrphanSource(itemId: UUID, userId: UUID) {

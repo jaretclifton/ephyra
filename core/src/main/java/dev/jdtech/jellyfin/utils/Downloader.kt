@@ -95,7 +95,8 @@ interface Downloader {
      * Returns every in-flight download known to the DB. Used on app startup to re-attach the queue
      * to partial downloads that survived process death. The engine (OkHttp) does not persist across
      * processes, so these entries are restored as Pending and resumed via Range request on the next
-     * pump cycle.
+     * pump cycle. A download that was renamed to its final name when the app stopped, before its
+     * row was updated, is finalized instead (#848) and not returned.
      */
     suspend fun getActiveDownloads(): List<ActiveDownload>
 
@@ -136,7 +137,8 @@ interface Downloader {
      * Promotes a finished download from `<path>.download` to `<path>` and updates the DB source
      * path so the Library tab can find it. Idempotent — safe to call from both the pump and the
      * broadcast receiver, in either order. Returns true if the source is in a finalized state after
-     * the call (already finalized, or just finalized successfully).
+     * the call (already finalized, or just finalized successfully). On false (#848) the finished
+     * `.download` file and its row are kept, so a retry can finalize it again.
      */
     suspend fun finalizeDownload(downloadId: Long): Boolean
 
