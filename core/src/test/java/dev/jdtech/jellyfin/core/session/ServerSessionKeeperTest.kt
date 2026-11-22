@@ -234,13 +234,18 @@ class ServerSessionKeeperTest {
         keeper.start()
 
         val until = System.currentTimeMillis() + 5_000
-        while (database.getServerCurrentUser(SERVER) != null) {
+        // Until the sign-out is through: the current user is cleared before the session is told,
+        // so an empty current user alone does not mean the session was switched yet.
+        while (session.uses.isEmpty()) {
             check(System.currentTimeMillis() < until) { "Not signed out" }
             // Again until the keeper's collector, which starts on its own scope, is there.
-            session.unauthorized.tryEmit(TOKEN)
+            if (database.getServerCurrentUser(SERVER) != null) {
+                session.unauthorized.tryEmit(TOKEN)
+            }
             shadowOf(Looper.getMainLooper()).idle()
             Thread.sleep(10)
         }
+        assertNull(database.getServerCurrentUser(SERVER))
         assertEquals(listOf(FakeServerSession.Use(ADDRESS, null, null)), session.uses)
     }
 

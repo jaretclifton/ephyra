@@ -15,8 +15,8 @@ import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
 import dev.jdtech.jellyfin.player.DeviceCodecProbe
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinCatalog
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.lang.reflect.Proxy
 import java.util.UUID
@@ -152,13 +152,11 @@ class StoredItemFallbackTest {
         val api = JellyfinApi(context).apply { userId = this@StoredItemFallbackTest.userId }
         JellyfinRepositoryImpl(
             context,
-            api,
-            JellyfinCatalog(api),
+            JellyfinMediaServer(api, JellyfinDeviceProfiles(DeviceCodecProbe(context))),
             database,
             AppPreferences(context.getSharedPreferences("test", Context.MODE_PRIVATE)).apply {
                 setValue(currentServer, "server")
             },
-            JellyfinDeviceProfiles(DeviceCodecProbe(context)),
         )
     }
 

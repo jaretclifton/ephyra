@@ -6,6 +6,7 @@ import dev.jdtech.jellyfin.domain.ports.RequestWatcher
 import dev.jdtech.jellyfin.domain.ports.ResolvedServer
 import dev.jdtech.jellyfin.domain.ports.ServerConnector
 import dev.jdtech.jellyfin.domain.ports.ServerSession
+import dev.jdtech.jellyfin.domain.ports.UserImage
 import dev.jdtech.jellyfin.models.DiscoveredServer
 import dev.jdtech.jellyfin.models.QuickConnectState
 import dev.jdtech.jellyfin.models.ServerId
@@ -104,4 +105,13 @@ class RecordingServerSession(
     override fun keepAlive(): Flow<Nothing> = emptyFlow()
 
     override fun userImageUrl(userId: UserId, tag: String): String? = null
+
+    // #757: setup never calls these.
+    override suspend fun updateDeviceName(name: String) = unexpected()
+
+    override suspend fun autoPlayNextEpisode(): Boolean? = unexpected()
+
+    override suspend fun currentUserImage(): UserImage = unexpected()
+
+    private fun unexpected(): Nothing = throw UnsupportedOperationException("not expected")
 }

@@ -22,8 +22,8 @@ import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.player.DeviceCodecProbe
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinCatalog
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.File
 import java.net.ServerSocket
@@ -93,11 +93,9 @@ class StoredListsFallbackTest {
             }
         JellyfinRepositoryImpl(
             context,
-            api,
-            JellyfinCatalog(api),
+            JellyfinMediaServer(api, JellyfinDeviceProfiles(DeviceCodecProbe(context))),
             database,
             preferences,
-            JellyfinDeviceProfiles(DeviceCodecProbe(context)),
             knownServerState = knownServerState,
         )
     }
