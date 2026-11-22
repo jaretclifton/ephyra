@@ -2181,7 +2181,7 @@ class MPVPlayer(
      * milliseconds. This includes pre-buffered data for subsequent ads and windows.
      */
     override fun getTotalBufferedDuration(): Long {
-        return bufferedPosition
+        return bufferedDurationAheadMs(bufferedPosition, currentPosition)
     }
 
     /** Returns whether the player is currently playing an ad. */

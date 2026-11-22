@@ -7,4 +7,4 @@ package dev.jdtech.jellyfin.player.local.engine.mpv
  * time and must not be returned as the duration.
  */
 internal fun bufferedDurationAheadMs(bufferedPositionMs: Long, positionMs: Long): Long =
-    bufferedPositionMs
+    (bufferedPositionMs - positionMs).coerceAtLeast(0L)
