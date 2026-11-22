@@ -13,6 +13,7 @@ import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -38,7 +39,10 @@ class FavoritesViewModelUserSwitchTest {
     private val bobFavorites = listOf(movie("Bob's movie"))
 
     /** The user the client acts for. */
-    private var sessionUser: UUID = alice
+    private var sessionUser: UUID? = alice
+
+    /** Whether the server fails the favourites request. */
+    private var favoritesFail = false
 
     @BeforeEach
     fun setUp() {
@@ -77,6 +81,33 @@ class FavoritesViewModelUserSwitchTest {
         }
 
     @Test
+    fun `a load while no one is signed in does not hide the next switch`() =
+        runTest(dispatcher) {
+            val viewModel = FavoritesViewModel(repository(), DataChangeEvents(), dispatcher)
+            viewModel.loadItems()
+            advanceUntilIdle()
+
+            // The session is cleared (token revoked, current user removed), and a load runs in
+            // that gap, such as the store retry. It fails without a user.
+            sessionUser = null
+            viewModel.loadItems()
+            advanceUntilIdle()
+
+            // Bob signs in and opens Favorites; his first load fails.
+            sessionUser = bob
+            favoritesFail = true
+            assertTrue(viewModel.shouldReload())
+            viewModel.loadItems()
+            advanceUntilIdle()
+
+            // What the screen shows Bob: his error with its Retry, not a spinner that never ends.
+            val shown = viewModel.state.value.shownTo(bob)
+            assertEquals(emptyList(), items(shown))
+            assertNotNull(shown.error)
+            assertFalse(shown.isLoading)
+        }
+
+    @Test
     fun `the screen shows nothing of another user's favourites`() {
         val aliceState =
             CollectionState(
@@ -107,9 +138,11 @@ class FavoritesViewModelUserSwitchTest {
         ) { _, method, _ ->
             when (method.name) {
                 "getCapabilities" -> ServerCapabilities.ALL
-                "getUserId" -> sessionUser
+                "getUserId" -> sessionUser ?: throw IllegalStateException("No user")
                 "getFavoriteItems" ->
-                    ItemsResult(if (sessionUser == bob) bobFavorites else aliceFavorites)
+                    if (sessionUser == null || favoritesFail)
+                        throw IllegalStateException("No answer")
+                    else ItemsResult(if (sessionUser == bob) bobFavorites else aliceFavorites)
                 else -> throw NotImplementedError("JellyfinRepository.${method.name}")
             }
         } as JellyfinRepository

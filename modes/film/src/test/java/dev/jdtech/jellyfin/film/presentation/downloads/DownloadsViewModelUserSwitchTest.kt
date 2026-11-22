@@ -54,7 +54,7 @@ class DownloadsViewModelUserSwitchTest {
     private val bobMovie = aliceMovie.copy(playbackPositionTicks = 0)
 
     /** The user the client acts for. */
-    @Volatile private var sessionUser: UUID = alice
+    @Volatile private var sessionUser: UUID? = alice
 
     /** Holds Bob's read (on the IO thread) until the test has looked at the screen before it. */
     private val bobsRead = CountDownLatch(1)
@@ -99,6 +99,32 @@ class DownloadsViewModelUserSwitchTest {
         // the walk fails, which is its end too.
         withTimeout(5_000) {
             viewModel.state.first { it.error != null || it.storageTotalBytes > 0 }
+        }
+    }
+
+    @Test
+    fun `a load while no one is signed in does not hide the next switch`(): Unit = runBlocking {
+        val viewModel = viewModel()
+        viewModel.onScreenResumed()
+        withTimeout(5_000) { viewModel.state.first { it.error != null } }
+        assertEquals(listOf<FindroidItem>(aliceMovie), items(viewModel.state.value))
+
+        // The session is cleared (token revoked, current user removed), and a load runs in that
+        // gap, such as the queue's reload when a download finishes. It fails without a user.
+        sessionUser = null
+        viewModel.loadItems()
+        withTimeout(5_000) { viewModel.state.first { it.error != null } }
+
+        // Bob signs in and opens Downloads.
+        sessionUser = bob
+        viewModel.onScreenResumed()
+        // None of Alice's progress, as after a switch without the gap.
+        assertEquals(emptyList(), items(viewModel.state.value))
+        assertEquals(bob, viewModel.state.value.userId)
+
+        bobsRead.countDown()
+        withTimeout(5_000) {
+            viewModel.state.first { it.sections.isNotEmpty() && it.error != null }
         }
     }
 
@@ -159,10 +185,12 @@ class DownloadsViewModelUserSwitchTest {
         ) { _, method, _ ->
             when (method.name) {
                 "getCapabilities" -> ServerCapabilities.ALL
-                "getUserId" -> sessionUser
+                "getUserId" -> sessionUser ?: throw IllegalStateException("No user")
                 // Room's copy of the downloads, with the user data of the user the client acts for.
                 "getDownloads" ->
-                    if (sessionUser == bob) {
+                    if (sessionUser == null) {
+                        throw IllegalStateException("No user")
+                    } else if (sessionUser == bob) {
                         bobsRead.await(5, TimeUnit.SECONDS)
                         listOf(bobMovie)
                     } else {

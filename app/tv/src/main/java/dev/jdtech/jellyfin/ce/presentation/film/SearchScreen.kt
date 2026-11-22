@@ -150,9 +150,11 @@ internal fun SearchScreenLayout(
     LaunchedEffect(editing) { if (editing) keyboardController?.show() }
 
     // CE (#866): after a user switch the state is SearchState.shownTo's placeholder, and the field
-    // still holds the query. Nothing else searches it again for the new user, so this does.
+    // still holds the query. Nothing else searches it again for the new user, so this does. The
+    // placeholder always names its user; a first search still running has none, and runs on.
     LaunchedEffect(state.userId) {
-        if (state.loading && state.query.isEmpty() && query.isNotBlank()) {
+        val user = state.userId
+        if (user != null && state.loading && state.query.isEmpty() && query.isNotBlank()) {
             onAction(SearchAction.Search(query))
         }
     }

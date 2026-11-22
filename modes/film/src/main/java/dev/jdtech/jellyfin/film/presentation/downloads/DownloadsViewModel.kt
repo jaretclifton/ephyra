@@ -174,7 +174,8 @@ constructor(
                 it.copy(sections = emptyList(), isLoading = true, error = null, userId = user)
             }
         }
-        loadingFor = user
+        // A load while no one is signed in keeps the last user, or the next switch goes unseen.
+        if (user != null) loadingFor = user
         loadJob = viewModelScope.launch {
             // Only the very first load shows the spinner; later ones refresh in place.
             _state.update { it.copy(isLoading = loaded == null, error = null) }
@@ -263,7 +264,8 @@ constructor(
         }
         viewModelScope.launch {
             val sections = withContext(Dispatchers.IO) { buildSections(library, order) }
-            _state.update { it.withLibrary(library, sections) }
+            // CE (#866): not when a switch or a newer load replaced what was sorted.
+            _state.update { if (loaded === library) it.withLibrary(library, sections) else it }
         }
     }
 

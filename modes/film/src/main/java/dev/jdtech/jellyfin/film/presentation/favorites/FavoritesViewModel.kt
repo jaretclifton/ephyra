@@ -104,7 +104,9 @@ internal constructor(
         // CE (#866): another user's favourites go at once, and the load shows that it runs.
         val user = sessionUser()
         if (switchedTo(user)) _state.value = CollectionState(isLoading = true, userId = user)
-        loadingFor = user
+        // CE (#866): a load while no one is signed in keeps the last user, or the next switch goes
+        // unseen.
+        if (user != null) loadingFor = user
         // CE (#779): a newer load stands in for the one more try after a stored answer.
         // A pending one gives its try back: only a retry that ran counts.
         storeRetryJob?.let { if (it.isActive) serverAwayReload.onStoreRetryCancelled() }
