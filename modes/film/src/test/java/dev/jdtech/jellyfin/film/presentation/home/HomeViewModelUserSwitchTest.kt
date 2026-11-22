@@ -1,0 +1,327 @@
+package dev.jdtech.jellyfin.film.presentation.home
+
+import android.content.SharedPreferences
+import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Server
+import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.repository.DataChangeEvents
+import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.PlaybackEvents
+import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import java.io.IOException
+import java.lang.reflect.Proxy
+import java.util.UUID
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+
+/**
+ * #810: Home stays on the back stack while a user is added (by password or Quick Connect) or picked
+ * on the Users screen. Coming back less than a minute after a load, which is always the case right
+ * after the player, Home kept the previous user's rows and avatar until the app restarted.
+ *
+ * The fakes stand for what each flow writes in `SetupRepositoryImpl`: a login (password and Quick
+ * Connect both end in `saveAuthenticationResult`) inserts the user and sets the server's current
+ * user; the Users screen (`setCurrentUser`) updates the server row. Both also switch the client
+ * first, so the repository answers for the new user from then on.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+class HomeViewModelUserSwitchTest {
+    private val alice = User(id = UUID.randomUUID(), name = "Alice", serverId = SERVER_ID)
+    private val bob =
+        User(id = UUID.randomUUID(), name = "Bob", serverId = SERVER_ID, primaryImageTag = "b")
+    private val aliceItem = item("Alice's movie")
+    private val bobItem = item("Bob's movie")
+
+    private val server = Server(SERVER_ID, "Server", null, alice.id)
+    private val users = mutableMapOf(alice.id to alice)
+    private val currentUser = MutableStateFlow<User?>(alice)
+
+    /** The user the client sends requests for. */
+    @Volatile private var sessionUser: User = alice
+
+    /** Set to hold the next requests for [bob] until it counts down. */
+    @Volatile private var bobGate: CountDownLatch? = null
+
+    /** Set to hold the next requests for [alice] until it counts down. */
+    @Volatile private var aliceGate: CountDownLatch? = null
+
+    /** Counted down by each request for [alice] that [aliceGate] holds. */
+    @Volatile private var aliceAsked: CountDownLatch? = null
+
+    private val dataChanges = DataChangeEvents()
+    private val playbackEvents = PlaybackEvents(dataChanges)
+
+    private lateinit var viewModel: HomeViewModel
+
+    @BeforeEach
+    fun setUp() {
+        // Unconfined: Home hears of a change to the current user as Room emits it.
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+        viewModel =
+            HomeViewModel(
+                repository = repository(),
+                appPreferences = AppPreferences(sharedPreferences()),
+                database = database(),
+                dataChanges = dataChanges,
+            )
+    }
+
+    @AfterEach
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    @Test
+    fun `adding a user by password shows their Home`() = switchUser(::login, playerFirst = false)
+
+    @Test
+    fun `adding a user by password after the player shows their Home`() =
+        switchUser(::login, playerFirst = true)
+
+    @Test
+    fun `adding a user by Quick Connect shows their Home`() =
+        switchUser(::quickConnect, playerFirst = false)
+
+    @Test
+    fun `adding a user by Quick Connect after the player shows their Home`() =
+        switchUser(::quickConnect, playerFirst = true)
+
+    @Test
+    fun `switching user on the Users screen shows their Home`() {
+        users[bob.id] = bob
+        switchUser(::pickOnUsersScreen, playerFirst = false)
+    }
+
+    @Test
+    fun `switching user on the Users screen after the player shows their Home`() {
+        users[bob.id] = bob
+        switchUser(::pickOnUsersScreen, playerFirst = true)
+    }
+
+    @Test
+    fun `a load for the previous user that answers after the switch leaves nothing behind`() {
+        homeShowsAlice()
+
+        val gate = CountDownLatch(1)
+        val asked = CountDownLatch(2)
+        aliceAsked = asked
+        aliceGate = gate
+        val aliceLoad = viewModel.loadData(silent = true)
+        // The load is waiting for the server, for Alice's Continue Watching and Next Up.
+        assertTrue(asked.await(5, TimeUnit.SECONDS))
+        users[bob.id] = bob
+        pickOnUsersScreen(bob)
+        val bobLoaded = waitFor { it.user?.id == bob.id && it.resumeSection != null }
+        assertEquals(listOf(bobItem), bobLoaded.resumeSection?.homeSection?.items)
+        // Now the server answers Alice's load.
+        aliceGate = null
+        gate.countDown()
+        runBlocking { withTimeout(5_000) { aliceLoad.join() } }
+
+        val state = settle { it.resumeSection == null }
+        assertEquals(bob, state.user)
+        assertEquals(listOf(bobItem), state.resumeSection?.homeSection?.items)
+        assertEquals(listOf(bobItem), state.nextUpSection?.homeSection?.items)
+    }
+
+    @Test
+    fun `signing the user out leaves no rows`() {
+        homeShowsAlice()
+
+        server.currentUserId = null
+        currentUser.value = null
+
+        val state = waitFor { it.user == null }
+        assertNull(state.user)
+        assertTrue(state.isEmpty)
+    }
+
+    @Test
+    fun `the same user written again changes nothing`() {
+        val before = homeShowsAlice()
+
+        currentUser.value = alice.copy(primaryImageTag = "new")
+
+        assertEquals(before, viewModel.state.value)
+        assertFalse(viewModel.shouldReload(stopEventFollows = true))
+    }
+
+    @Test
+    fun `the screen shows nothing of a user that is not the signed in one`() {
+        val shown = homeShowsAlice()
+
+        val forBob = shown.shownTo(bob.id)
+        //
+        assertNull(forBob.user)
+        assertTrue(forBob.isEmpty)
+        assertTrue(forBob.isLoading)
+        assertEquals(shown.server, forBob.server)
+        assertEquals(shown, shown.shownTo(alice.id))
+        // No session at hand (previews): everything shows.
+        assertEquals(shown, shown.shownTo(null))
+    }
+
+    private fun switchUser(flow: (User) -> Unit, playerFirst: Boolean) {
+        homeShowsAlice()
+        if (playerFirst) {
+            // The player opens over Home, and its stop reloads Home (ReloadOnResume).
+            playbackEvents.onPlaying(aliceItemId)
+            playbackEvents.onPlaying(null)
+            playbackEvents.onStopped(aliceItemId)
+            runBlocking { withTimeout(5_000) { viewModel.loadData(silent = true).join() } }
+        }
+
+        // Home is under the Login or Users screen now. Bob's rows wait for the test.
+        val gate = CountDownLatch(1)
+        bobGate = gate
+        flow(bob)
+
+        // Between the switch and Bob's rows: Bob's avatar, none of Alice's rows.
+        val between = waitFor { it.user?.id == bob.id }
+        assertTrue(between.isEmpty, "Alice's rows are still there: $between")
+
+        // Home comes back into view (ON_RESUME); it must not load a second time.
+        if (viewModel.shouldReload(stopEventFollows = true)) viewModel.loadData(silent = true)
+        bobGate = null
+        gate.countDown()
+
+        val state = settle { it.resumeSection == null || it.nextUpSection == null }
+        assertEquals(bob, state.user)
+        assertEquals(listOf(bobItem), state.resumeSection?.homeSection?.items)
+        assertEquals(listOf(bobItem), state.nextUpSection?.homeSection?.items)
+        assertNull(state.error)
+        assertFalse(viewModel.shouldReload(stopEventFollows = true))
+    }
+
+    private fun homeShowsAlice(): HomeState {
+        runBlocking { withTimeout(5_000) { viewModel.loadData().join() } }
+        val state = viewModel.state.value
+        assertEquals(alice, state.user)
+        assertEquals(listOf(aliceItem), state.resumeSection?.homeSection?.items)
+        return state
+    }
+
+    /** `saveAuthenticationResult`, after a login with a password. */
+    private fun login(user: User) {
+        sessionUser = user
+        users[user.id] = user
+        server.currentUserId = user.id
+        currentUser.value = user
+    }
+
+    /** `saveAuthenticationResult` too, after Quick Connect: the same writes. */
+    private fun quickConnect(user: User) = login(user)
+
+    /** `setCurrentUser`. */
+    private fun pickOnUsersScreen(user: User) {
+        sessionUser = user
+        server.currentUserId = user.id
+        currentUser.value = users.getValue(user.id)
+    }
+
+    /** The first state that is [done], within a few seconds; fails with the last one otherwise. */
+    private fun waitFor(done: (HomeState) -> Boolean): HomeState = runBlocking {
+        val found =
+            withTimeoutOrNull(5_000) {
+                while (!done(viewModel.state.value)) delay(10)
+                viewModel.state.value
+            }
+        found ?: throw AssertionError("Home never got there: ${viewModel.state.value}")
+    }
+
+    /** loadData() runs on Dispatchers.Default; wait until it has finished. */
+    private fun settle(waiting: (HomeState) -> Boolean): HomeState = runBlocking {
+        withTimeout(5_000) {
+            while (with(viewModel.state.value) { isLoading || waiting(this) }) delay(10)
+            viewModel.state.value
+        }
+    }
+
+    private fun rowsOf(user: User): List<FindroidItem> {
+        val gate = if (user.id == bob.id) bobGate else aliceGate
+        if (gate != null && user.id == alice.id) aliceAsked?.countDown()
+        gate?.await(5, TimeUnit.SECONDS)
+        return listOf(if (user.id == bob.id) bobItem else aliceItem)
+    }
+
+    private fun repository(): JellyfinRepository =
+        Proxy.newProxyInstance(
+            JellyfinRepository::class.java.classLoader,
+            arrayOf(JellyfinRepository::class.java),
+        ) { _, method, _ ->
+            when (method.name) {
+                "getResumeItems",
+                "getNextUp" -> rowsOf(sessionUser)
+                "getSuggestions",
+                "getUserViews" -> emptyList<Any>()
+                "refreshCurrentUserImage" -> Unit
+                "getServerInfo" -> throw IOException("not needed here")
+                else -> throw NotImplementedError("JellyfinRepository.${method.name}")
+            }
+        } as JellyfinRepository
+
+    private fun database(): ServerDatabaseDao =
+        Proxy.newProxyInstance(
+            ServerDatabaseDao::class.java.classLoader,
+            arrayOf(ServerDatabaseDao::class.java),
+        ) { _, method, _ ->
+            when (method.name) {
+                "getServer" -> server.copy()
+                "getServerCurrentUser" -> server.currentUserId?.let { users[it] }
+                "observeServerCurrentUser" -> currentUser
+                else -> throw NotImplementedError("ServerDatabaseDao.${method.name}")
+            }
+        } as ServerDatabaseDao
+
+    private fun sharedPreferences(): SharedPreferences =
+        Proxy.newProxyInstance(
+            SharedPreferences::class.java.classLoader,
+            arrayOf(SharedPreferences::class.java),
+        ) { _, method, args ->
+            when (method.name) {
+                "getString" -> if (args!![0] == "pref_current_server") SERVER_ID else args[1]
+                "getBoolean",
+                "getInt",
+                "getLong" -> args!![1]
+                "registerOnSharedPreferenceChangeListener",
+                "unregisterOnSharedPreferenceChangeListener" -> Unit
+                else -> throw UnsupportedOperationException("SharedPreferences.${method.name}")
+            }
+        } as SharedPreferences
+
+    private fun item(name: String): FindroidItem =
+        Proxy.newProxyInstance(
+            FindroidItem::class.java.classLoader,
+            arrayOf(FindroidItem::class.java),
+        ) { proxy, method, args ->
+            when (method.name) {
+                "equals" -> proxy === args?.getOrNull(0)
+                "hashCode" -> System.identityHashCode(proxy)
+                "toString" -> name
+                else -> throw NotImplementedError("FindroidItem.${method.name}")
+            }
+        } as FindroidItem
+
+    private companion object {
+        const val SERVER_ID = "0123456789abcdef0123456789abcdef"
+        val aliceItemId: UUID = UUID.randomUUID()
+    }
+}

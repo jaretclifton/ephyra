@@ -41,6 +41,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyHomeView
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyServer
 import dev.jdtech.jellyfin.core.presentation.ephyra.EphyraMotion
 import dev.jdtech.jellyfin.core.presentation.rows.rememberLazyListStateAtStart
+import dev.jdtech.jellyfin.core.presentation.session.LocalServerSession
 import dev.jdtech.jellyfin.film.presentation.home.HomeAction
 import dev.jdtech.jellyfin.film.presentation.home.HomeState
 import dev.jdtech.jellyfin.film.presentation.home.HomeViewModel
@@ -81,20 +82,19 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    // CE (#810): never a frame of the previous user's rows after a switch.
+    val userId = LocalServerSession.current.userId
 
     ReloadOnResume(shouldReload = { viewModel.shouldReload(stopEventFollows = true) }) {
         viewModel.loadData(silent = true)
     }
 
     HomeScreenLayout(
-        state = state,
+        state = state.shownTo(userId),
         onAddUser = onAddUser,
         onPublicUserClick = onPublicUserClick,
-        onUserSwitched = {
-            // Home stays alive across a switch, so load the new user's rows now.
-            viewModel.loadData()
-            onUserSwitched()
-        },
+        // CE (#810): the ViewModel follows the current user and loads the new user's rows itself.
+        onUserSwitched = onUserSwitched,
         onAction = { action ->
             when (action) {
                 is HomeAction.OnItemClick -> onItemClick(action.item)
