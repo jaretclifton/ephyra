@@ -14,6 +14,8 @@ functions and give the search command instead.
 | [3-target.md](3-target.md) | The target module layout and the port interfaces as Kotlin signatures |
 | [4-migration.md](4-migration.md) | The phases, what each one costs an upstream sync, and the options that were rejected |
 | [adr/0001-ports-and-adapters.md](adr/0001-ports-and-adapters.md) | The decision |
+| [5-hexagonal-ddd.md](5-hexagonal-ddd.md) | 2026-11-22: what is not hexagonal yet, where DDD pays, the next tasks |
+| [adr/0002-hexagonal-ddd.md](adr/0002-hexagonal-ddd.md) | The decision on that, with the owner's answers |
 
 ## Why
 
