@@ -12,11 +12,17 @@ data class PlaybackRequest(
     val itemId: ItemId,
     val target: PlaybackTarget,
     val mediaSourceId: MediaSourceId? = null,
-    /** For a local player, only together with [mediaSourceId]. */
+    /**
+     * For a local player, only together with [mediaSourceId]. For a Cast receiver, as it is: the
+     * receiver cannot pick a track itself, so a chosen one comes out of the server (#767).
+     */
     val audioStreamIndex: Int? = null,
     /** Bits per second; null is no cap. */
     val maxBitrate: Int? = null,
-    /** Ask for the URL of file sources too (downloads need it). */
+    /**
+     * Ask for the URL of file sources too (downloads need it). A Cast receiver always gets every
+     * URL it needs, ready for it to fetch without a session (token included), whatever this says.
+     */
     val includePath: Boolean = false,
 )
 
