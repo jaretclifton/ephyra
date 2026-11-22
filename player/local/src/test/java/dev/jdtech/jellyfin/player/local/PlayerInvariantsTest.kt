@@ -237,27 +237,44 @@ class PlayerInvariantsTest {
         // #601: the start went out at the item transition and progress reports followed, so an
         // item that never opened was counted as played, and one without a runtime marked played.
         // PlaybackStartGateTest covers the decision; this checks PlayerViewModel still uses it.
+        // #765: the gate and the reports are PlaybackReporter's; PlayerViewModel tells it when.
         val viewModel = source("presentation/PlayerViewModel.kt")
+        val reporter = source("domain/PlaybackReporter.kt")
         val transition =
             Regex("""override fun onMediaItemTransition\([\s\S]*?\n    }""").find(viewModel)
         assertTrue(transition != null, message = "PlayerViewModel.onMediaItemTransition not found")
         assertTrue(
-            Regex("""startGate\s*\.onTransition\(""").containsMatchIn(transition!!.value) &&
-                !Regex("""\n\s*sendPlaybackStart\(item\)""").containsMatchIn(transition.value),
-            message = "onMediaItemTransition must hand the start to startGate (#601)",
+            transition!!.value.contains("playbackReporter.onTransitionHandled(") &&
+                !Regex("""\n\s*(playbackReporter\.)?sendPlaybackStart\(item\)""")
+                    .containsMatchIn(transition.value),
+            message = "onMediaItemTransition must hand the start to the reporter's gate (#601)",
+        )
+        val handled =
+            Regex("""suspend fun onTransitionHandled\([^)]*\) \{[\s\S]*?\n    }""").find(reporter)
+        assertTrue(handled != null, message = "PlaybackReporter.onTransitionHandled not found")
+        assertTrue(
+            Regex("""startGate\s*\.onTransition\(""").containsMatchIn(handled!!.value),
+            message = "PlaybackReporter.onTransitionHandled must hand the start to startGate (#601)",
         )
         val ready = Regex("""ExoPlayer\.STATE_READY -> \{[\s\S]*?\n {12}}""").find(viewModel)
         assertTrue(ready != null, message = "PlayerViewModel's STATE_READY branch not found")
         assertTrue(
-            ready!!.value.contains("startGate.onReady()"),
+            ready!!.value.contains("playbackReporter.onItemReady()") &&
+                reporter.contains("fun onItemReady(): PlayerItem? = startGate.onReady()"),
             message = "STATE_READY must send the start the gate holds (#601)",
         )
-        // #674: updatePlaybackProgress sends its report through reportProgress.
-        val progress =
+        // #674: updatePlaybackProgress sends its report through PlaybackReporter.reportProgress.
+        val viewModelProgress =
             Regex("""private fun reportProgress\([^)]*\) \{[\s\S]*?\n    }""").find(viewModel)
-        assertTrue(progress != null, message = "PlayerViewModel.reportProgress not found")
         assertTrue(
-            progress!!.value.contains("if (playing?.startJob == null) return@launch"),
+            viewModelProgress?.value?.contains("playbackReporter.reportProgress(") == true,
+            message = "PlayerViewModel.reportProgress must send through PlaybackReporter (#765)",
+        )
+        val progress =
+            Regex("""suspend fun reportProgress\([^)]*\) \{[\s\S]*?\n    }""").find(reporter)
+        assertTrue(progress != null, message = "PlaybackReporter.reportProgress not found")
+        assertTrue(
+            progress!!.value.contains("if (playing?.startJob == null) return\n"),
             message = "No progress report before the start report (#601)",
         )
         // #674: a report that waited for the lock must not follow its item's stop.
@@ -288,7 +305,7 @@ class PlayerInvariantsTest {
             Regex("""override fun onIsPlayingChanged\([\s\S]*?\n    }""").find(viewModel)
         assertTrue(isPlaying != null, message = "PlayerViewModel.onIsPlayingChanged not found")
         assertTrue(
-            isPlaying!!.value.contains("if (isPlaying) reportPlayingIfReportedPaused()"),
+            isPlaying!!.value.contains("if (isPlaying) reportPlayingIfToldPaused()"),
             message =
                 "onIsPlayingChanged must report a start of playback the server has as paused (#674)",
         )

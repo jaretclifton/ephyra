@@ -63,7 +63,7 @@ fun mpvSubtitleOptions(
         )
 
     return linkedMapOf(
-        "sub-ass-override" to if (overrideEmbeddedStyles) "force" else "scale",
+        ASS_OVERRIDE to if (overrideEmbeddedStyles) "force" else "scale",
         "sub-font" to
             when (fontFamily) {
                 Constants.SubtitleStyle.FONT_SERIF -> "serif"
@@ -79,6 +79,22 @@ fun mpvSubtitleOptions(
         "sub-shadow-offset" to if (shadow) SHADOW_OFFSET else "0",
     )
 }
+
+/**
+ * CE (#833): whether the subtitle track has to be selected again after [next] is applied while mpv
+ * plays, after [previous].
+ *
+ * A change of `sub-ass-override` makes mpv (sd_ass) rebuild its ASS track and decode again only the
+ * packets in its small packet cache, which keeps only the latest packet that has started. Of two
+ * cues on screen together, the earlier one is lost, and a seek does not bring it back: the demuxer
+ * resumes a subtitle stream at its latest packet before the target. Selecting the track again gives
+ * it a new decoder and makes the demuxer read the stream again from 10 s back, as when a track is
+ * picked during playback.
+ */
+fun mpvSubtitleNeedsReselect(previous: Map<String, String>, next: Map<String, String>): Boolean =
+    previous[ASS_OVERRIDE] != next[ASS_OVERRIDE]
+
+private const val ASS_OVERRIDE = "sub-ass-override"
 
 private val KNOWN_EDGE_TYPES =
     setOf(

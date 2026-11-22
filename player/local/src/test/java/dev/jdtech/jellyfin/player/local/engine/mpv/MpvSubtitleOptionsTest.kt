@@ -2,6 +2,8 @@ package dev.jdtech.jellyfin.player.local.engine.mpv
 
 import dev.jdtech.jellyfin.settings.domain.Constants
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import org.junit.jupiter.api.Test
 
 /** Unit tests for the mpv options [mpvSubtitleOptions] builds from the subtitle settings. */
@@ -115,5 +117,27 @@ class MpvSubtitleOptionsTest {
         assertEquals("#FF000000", mpvColor("yellow", "#FF000000"))
         assertEquals("#FF000000", mpvColor("#12345", "#FF000000"))
         assertEquals("#FF000000", mpvColor(null, "#FF000000"))
+    }
+
+    // #833: switching the override on during playback lost the bottom ASS cue, because mpv
+    // rebuilt the track from the latest subtitle packet only.
+    @Test
+    fun `switching the override during playback selects the subtitle track again`() {
+        val on = options(overrideEmbeddedStyles = true)
+        val off = options(overrideEmbeddedStyles = false)
+
+        assertTrue(mpvSubtitleNeedsReselect(off, on))
+        assertTrue(mpvSubtitleNeedsReselect(on, off))
+    }
+
+    @Test
+    fun `a style change that keeps the override leaves the track alone`() {
+        assertFalse(mpvSubtitleNeedsReselect(options(), options(fontScalePercent = 150)))
+        assertFalse(
+            mpvSubtitleNeedsReselect(
+                options(overrideEmbeddedStyles = true),
+                options(overrideEmbeddedStyles = true, foregroundColor = "#FFFFFF00"),
+            )
+        )
     }
 }
