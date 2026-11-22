@@ -6,10 +6,9 @@ import kotlin.test.assertTrue
 
 /**
  * Only the Jellyfin adapter may see the Jellyfin SDK
- * (docs/architecture/2-enforcement-and-tests.md, #733). The adapter is the packages
- * `dev.jdtech.jellyfin.server.jellyfin` and `dev.jdtech.jellyfin.api` of the `data` module (#753);
- * R4, about Room rather than the SDK, still allows the whole module. Each rule has a baseline of
- * today's violations that may only shrink.
+ * (docs/architecture/2-enforcement-and-tests.md, #733). The adapter is the module `server/jellyfin`
+ * (#758), and only the apps depend on it (R7). R4, about Room rather than the SDK, allows the whole
+ * `data` module. Each baseline lists today's violations and may only shrink.
  *
  * Test sources of every module are out of scope.
  */
@@ -117,6 +116,36 @@ class SdkBoundaryTest {
         )
     }
 
+    /**
+     * R7 (#758). The apps are the composition root: no other module depends on the adapter module,
+     * so no feature module reaches into it and an Emby adapter can sit next to it. No baseline.
+     */
+    @Test
+    fun `R7 only the apps depend on the Jellyfin adapter module`() {
+        val markers = adapterDependencyMarkers(ProjectTree.JELLYFIN_ADAPTER_MODULE)
+        val dependents =
+            ProjectTree.moduleBuildFiles
+                .filter { (_, file) ->
+                    val text = file.readText()
+                    markers.any { it in text }
+                }
+                .keys
+        val others = (dependents - APP_MODULES).sorted()
+        assertTrue(
+            others.isEmpty(),
+            others.joinToString("\n") {
+                "$it/build.gradle.kts depends on ${ProjectTree.JELLYFIN_ADAPTER_MODULE}. Only " +
+                    "${APP_MODULES.sorted().joinToString(" and ")} may: use a port from domain " +
+                    "instead (docs/architecture/3-target.md)."
+            },
+        )
+        assertTrue(
+            APP_MODULES.all { it in dependents },
+            "Not every app depends on ${ProjectTree.JELLYFIN_ADAPTER_MODULE}, so the check " +
+                "looks for the wrong text: ${dependents.sorted()}",
+        )
+    }
+
     /** R4. Room's server DAO stays inside `data`; frozen, not part of the migration. */
     @Test
     fun `R4 no production file outside data imports ServerDatabaseDao`() {
@@ -157,6 +186,16 @@ class SdkBoundaryTest {
         private const val SDK_PACKAGE = "$SDK."
         private const val JELLYFIN_API = "dev.jdtech.jellyfin.api.JellyfinApi"
         private const val SERVER_DAO = "dev.jdtech.jellyfin.database.ServerDatabaseDao"
+
+        /** The composition roots, the only modules that may depend on a server adapter (R7). */
+        private val APP_MODULES = setOf("app/phone", "app/tv")
+
+        /**
+         * How a build file names the module at [path] (`server/jellyfin`): the type-safe accessor
+         * (`projects.server.jellyfin`) or the project path (`project(":server:jellyfin")`).
+         */
+        private fun adapterDependencyMarkers(path: String): Set<String> =
+            setOf("projects." + path.replace('/', '.'), "\":" + path.replace('/', ':') + "\"")
 
         /**
          * What marks an SDK dependency in a build file: the Maven group, and the accessor of every

@@ -1,2 +1,0 @@
-core/src/main/java/dev/jdtech/jellyfin/di/ApiModule.kt
-core/src/main/java/dev/jdtech/jellyfin/di/RepositoryModule.kt

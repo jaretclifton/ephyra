@@ -66,17 +66,13 @@ object ProjectTree {
     /** Whether the file at [path] belongs to the `data` module. */
     fun inDataModule(path: String): Boolean = path.startsWith("data/")
 
-    /**
-     * Whether the file at [path] is in the Jellyfin adapter: the packages
-     * `dev.jdtech.jellyfin.server.jellyfin` and `dev.jdtech.jellyfin.api` of the `data` module
-     * (#753), in any source set.
-     */
-    fun inJellyfinAdapter(path: String): Boolean =
-        inDataModule(path) &&
-            ADAPTER_PACKAGES.any { pkg -> "/java/$pkg/" in path || "/kotlin/$pkg/" in path }
+    /** The module path of the Jellyfin adapter (#758). */
+    const val JELLYFIN_ADAPTER_MODULE = "server/jellyfin"
 
-    private val ADAPTER_PACKAGES =
-        listOf("dev/jdtech/jellyfin/server/jellyfin", "dev/jdtech/jellyfin/api")
+    /**
+     * Whether the file at [path] is in the Jellyfin adapter: the module `server/jellyfin` (#758).
+     */
+    fun inJellyfinAdapter(path: String): Boolean = path.startsWith("$JELLYFIN_ADAPTER_MODULE/")
 
     fun relativePath(file: File): String =
         file.absoluteFile.normalize().relativeTo(root).path.replace('\\', '/')
