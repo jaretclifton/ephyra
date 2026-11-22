@@ -37,8 +37,8 @@ in the [changelog](../CHANGELOG.md) under **From Findroid**.
 
 | Commit | Date | Kind | What it does | Verdict | Where |
 |---|---|---|---|---|---|
-| [`cc3423a07`](https://github.com/jarnedemeulemeester/findroid/commit/cc3423a07) | 2026-11-22 | refactoring | Moves the search bar's state (`SearchBarState`) up to `NavigationRoot` | re-implement | #843, together with the search bar migration. Ephyra's `NavigationRoot` and search bar differ too much to merge |
-| [`a5e5d1725`](https://github.com/jarnedemeulemeester/findroid/commit/a5e5d1725) | 2026-11-22 | dependency | Compose 1.13.0, Material3 1.5.0 and compile SDK 37.1, with the bottom sheets, the password field and the search bar moved to the new APIs | re-implement | #843. Ephyra uses the old APIs in more files, and its search bar has fixes of its own (#387, #430, #439) |
+| [`cc3423a07`](https://github.com/jarnedemeulemeester/findroid/commit/cc3423a07) | 2026-11-22 | refactoring | Moves the search bar's state (`SearchBarState`) up to `NavigationRoot` | skipped | Material 3 1.5 does not deprecate the search bar API Ephyra uses, and Ephyra's search bar has fixes of its own (#387, #430, #439). Rebuilding it on `SearchBarState` gains nothing a user sees |
+| [`a5e5d1725`](https://github.com/jarnedemeulemeester/findroid/commit/a5e5d1725) | 2026-11-22 | dependency | Compose 1.13.0, Material3 1.5.0 and compile SDK 37.1, with the bottom sheets, the password field and the search bar moved to the new APIs | re-implemented | #857 (issue #843): the versions and compile SDK 37.1, and the three places that no longer compiled. The bottom sheet, password field and search bar APIs upstream moved away from are not deprecated and stay |
 
 ### Sync to `c7a8b0b20` (2026-11-22, #831)
 
