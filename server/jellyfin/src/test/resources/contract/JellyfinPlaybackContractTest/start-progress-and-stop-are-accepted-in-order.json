@@ -1,0 +1,14 @@
+[
+    {
+        "request": "POST /Sessions/Playing {\"ItemId\":\"00000000-0000-0000-0000-000000000102\",\"IsPaused\":false,\"PlayMethod\":\"DirectPlay\"}",
+        "status": 204
+    },
+    {
+        "request": "POST /Sessions/Playing/Progress {\"ItemId\":\"00000000-0000-0000-0000-000000000102\",\"PositionTicks\":10000000,\"IsPaused\":false,\"PlayMethod\":\"DirectPlay\"}",
+        "status": 204
+    },
+    {
+        "request": "POST /Sessions/Playing/Stopped {\"ItemId\":\"00000000-0000-0000-0000-000000000102\",\"PositionTicks\":20000000}",
+        "status": 204
+    }
+]
