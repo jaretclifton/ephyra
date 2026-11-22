@@ -1,10 +1,10 @@
 package dev.jdtech.jellyfin.player.cast
 
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.player.cast.models.CastError
 import dev.jdtech.jellyfin.player.cast.models.CastMediaItem
 import dev.jdtech.jellyfin.player.cast.models.CastPlayerState
 import dev.jdtech.jellyfin.player.core.domain.models.Track
-import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -21,7 +21,7 @@ interface CastPlayerController {
      * [shuffle], a series or season plays in random order.
      */
     fun playItem(
-        itemId: UUID,
+        itemId: ItemId,
         itemKind: String,
         startFromBeginning: Boolean,
         mediaSourceId: String? = null,
@@ -40,7 +40,7 @@ interface CastPlayerController {
 
     fun setVolume(volume: Float)
 
-    fun setAudioTrack(track: Track?, itemId: UUID?)
+    fun setAudioTrack(track: Track?, itemId: ItemId?)
 
     fun setSubtitleTrack(track: Track?)
 

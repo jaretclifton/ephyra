@@ -1,7 +1,7 @@
 package dev.jdtech.jellyfin.player.local.domain
 
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
-import java.util.UUID
 import timber.log.Timber
 
 /**
@@ -20,14 +20,14 @@ class NeighbourLoader(private val playlistManager: PlaylistManager) {
     /** The player's playlist, as the items in it. */
     interface Playlist {
         /** The ids of the items in the playlist, in order. */
-        fun itemIds(): List<UUID>
+        fun itemIds(): List<ItemId>
 
         /** Adds [item] to the playlist at [index]. */
         fun insert(index: Int, item: PlayerItem)
     }
 
     /** Fetches the items before and after [anchor] and puts them next to it in [playlist]. */
-    suspend fun load(anchor: UUID, playlist: Playlist) {
+    suspend fun load(anchor: ItemId, playlist: Playlist) {
         playlistManager.getPreviousPlayerItem(anchor)?.let {
             place(it, anchor, before = true, playlist)
         }
@@ -36,7 +36,7 @@ class NeighbourLoader(private val playlistManager: PlaylistManager) {
         }
     }
 
-    private fun place(neighbour: PlayerItem, anchor: UUID, before: Boolean, playlist: Playlist) {
+    private fun place(neighbour: PlayerItem, anchor: ItemId, before: Boolean, playlist: Playlist) {
         val ids = playlist.itemIds()
         val anchorIndex = ids.indexOf(anchor)
         when {

@@ -1,5 +1,6 @@
 package dev.jdtech.jellyfin.player.cast
 
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.player.cast.models.CastPlaybackStatus
 import dev.jdtech.jellyfin.player.cast.models.CastPlaybackStatus.BUFFERING
 import dev.jdtech.jellyfin.player.cast.models.CastPlaybackStatus.ENDED
@@ -31,8 +32,8 @@ class CastPlaybackReporterTest {
     private fun state(
         status: CastPlaybackStatus,
         positionMs: Long = 0L,
-        receiver: UUID? = a,
-        current: UUID? = a,
+        receiver: ItemId? = a,
+        current: ItemId? = a,
         loadPending: Boolean = false,
     ) = CastReceiverState(status, receiver, current, positionMs, loadPending)
 

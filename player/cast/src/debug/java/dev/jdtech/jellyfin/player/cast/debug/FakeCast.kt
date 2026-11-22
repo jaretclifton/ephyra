@@ -5,6 +5,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.player.cast.CastPlayerController
 import dev.jdtech.jellyfin.player.cast.CastSessionManager
@@ -20,7 +21,6 @@ import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.player.core.domain.models.Track
 import dev.jdtech.jellyfin.player.local.domain.PlaylistManager
 import dev.jdtech.jellyfin.repository.JellyfinRepository
-import java.util.UUID
 import javax.inject.Provider
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
@@ -233,7 +233,7 @@ internal class FakeCastPlayerController(
     }
 
     override fun playItem(
-        itemId: UUID,
+        itemId: ItemId,
         itemKind: String,
         startFromBeginning: Boolean,
         mediaSourceId: String?,
@@ -343,7 +343,7 @@ internal class FakeCastPlayerController(
         _playerState.update { it.copy(volume = volume.coerceIn(0f, 1f)) }
     }
 
-    override fun setAudioTrack(track: Track?, itemId: UUID?) {
+    override fun setAudioTrack(track: Track?, itemId: ItemId?) {
         _currentItem.update { item ->
             item?.copy(
                 audioTracks = item.audioTracks.map { it.copy(selected = it.id == track?.id) }

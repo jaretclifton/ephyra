@@ -34,10 +34,14 @@ import dev.jdtech.jellyfin.domain.ports.MediaHttpClient
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidSegment
 import dev.jdtech.jellyfin.models.FindroidSegmentType
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.MediaSegmentAction
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
+import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerChapter
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.player.core.domain.models.ServerAudioTrack
@@ -206,7 +210,7 @@ constructor(
 
     data class UiState(
         /** The item currently loaded in the player. `null` until the first transition fires. */
-        val currentItemId: UUID?,
+        val currentItemId: ItemId?,
         val currentItemTitle: String,
         /** The segment the skip button is for, while playback is in one set to ask. */
         val currentSegment: FindroidSegment?,
@@ -295,7 +299,7 @@ constructor(
      * countdown to it; both are null when autoplay is off, as nothing starts by itself then.
      */
     data class UpNextState(
-        val itemId: UUID,
+        val itemId: ItemId,
         val title: String,
         /** `S01E02`, or null for an item without season and episode numbers. */
         val episodeLabel: String?,
@@ -318,7 +322,7 @@ constructor(
      * CE (#296): the playing series' saved audio and subtitle choice, read from Room while its
      * first item buffers. See [seriesTrackPreferences].
      */
-    private var trackPreferences: Pair<UUID, Deferred<List<SeriesTrackPreferenceDto>>>? = null
+    private var trackPreferences: Pair<ItemId, Deferred<List<SeriesTrackPreferenceDto>>>? = null
 
     /** CE (#596): the tracks picked by hand in an item without a series, such as a movie. */
     private val sessionTrackPicks = SessionTrackPicks()
@@ -721,7 +725,7 @@ constructor(
     }
 
     fun initializePlayer(
-        itemId: UUID,
+        itemId: ItemId,
         itemKind: String,
         startFromBeginning: Boolean,
         mediaSourceId: String? = null,
@@ -822,7 +826,7 @@ constructor(
         Timber.d("Stream url: $streamUrl")
         val mediaItem =
             MediaItem.Builder()
-                .setMediaId(itemId.toString())
+                .setMediaId(itemId.asString())
                 .setUri(streamUrl)
                 .setMediaMetadata(
                     MediaMetadata.Builder()
@@ -847,7 +851,7 @@ constructor(
      * starts over at that item, and [onMediaItemTransition] queues its neighbours as usual and
      * reports the item being left as stopped.
      */
-    fun playQueueItem(itemId: UUID) {
+    fun playQueueItem(itemId: ItemId) {
         markUserInteraction()
         viewModelScope.launch { jumpToQueued(itemId) }
     }
@@ -858,7 +862,7 @@ constructor(
      * run) is jumped to as [playQueueItem] does; any other starts over as the episode page's Play
      * would, in this player.
      */
-    fun playEpisode(itemId: UUID) {
+    fun playEpisode(itemId: ItemId) {
         markUserInteraction()
         viewModelScope.launch {
             playlistManager.loadQueue()
@@ -873,14 +877,14 @@ constructor(
     }
 
     /** Restarts the player's playlist at [itemId] if it is queued. False when it is not. */
-    private suspend fun jumpToQueued(itemId: UUID): Boolean {
+    private suspend fun jumpToQueued(itemId: ItemId): Boolean {
         val playerItem =
             try {
                 playlistManager.jumpTo(itemId)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Could not jump to queue item $itemId")
+                Timber.e(e, "Could not jump to queue item ${itemId.asString()}")
                 null
             } ?: return false
         refreshPlayingSnapshot()
@@ -960,7 +964,7 @@ constructor(
      */
     fun refreshPlayingSnapshot() {
         val current = playbackReporter.playing ?: return
-        if (player.currentMediaItem?.mediaId != current.itemId.toString()) return
+        if (player.currentMediaItem?.mediaId != current.itemId.asString()) return
         val position = player.currentPosition
         val duration = player.duration
         if (position < 0 || duration == C.TIME_UNSET || duration <= 0) return
@@ -1001,7 +1005,7 @@ constructor(
         object : PlaybackReporter.ReportedPlayer {
             override fun currentMediaId(): String? = player.currentMediaItem?.mediaId
 
-            override fun isTranscoded(itemId: UUID): Boolean =
+            override fun isTranscoded(itemId: ItemId): Boolean =
                 items.firstOrNull { it.itemId == itemId }?.isTranscoded == true
 
             override fun isPlaying(): Boolean = player.isPlaying
@@ -1116,7 +1120,7 @@ constructor(
 
         // Every item change goes through here, whatever caused it, so this is where the item being
         // left is reported as stopped (PlaybackReporter.onItemTransition).
-        val newId = mediaItem?.mediaId?.let { runCatching { UUID.fromString(it) }.getOrNull() }
+        val newId = mediaItem?.mediaId?.let { runCatching { it.toItemId() }.getOrNull() }
         val stopJob = playbackReporter.onItemTransition(newId)
         // Smart Downloads must not delete the file that is open, even once the server has marked
         // it played. Only releasePlayer clears this: a finished item stays open until the player
@@ -1127,7 +1131,7 @@ constructor(
         viewModelScope.launch {
             try {
                 items
-                    .first { it.itemId.toString() == player.currentMediaItem?.mediaId }
+                    .first { it.itemId.asString() == player.currentMediaItem?.mediaId }
                     .let { item ->
                         // CE (#452): the series name is a line of its own above this.
                         val itemTitle = playerTitle(item)
@@ -1188,7 +1192,7 @@ constructor(
     /** [items] and the player's playlist, which [neighbourLoader] adds to together. */
     private val neighbourPlaylist =
         object : NeighbourLoader.Playlist {
-            override fun itemIds(): List<UUID> = items.map { it.itemId }
+            override fun itemIds(): List<ItemId> = items.map { it.itemId }
 
             override fun insert(index: Int, item: PlayerItem) {
                 items.add(index, item)
@@ -1199,7 +1203,7 @@ constructor(
     /** Runs the work [onMediaItemTransition] left for the ready state, once per item. */
     private fun runDeferredWork() {
         val item = deferredWork ?: return
-        if (item.itemId.toString() != player.currentMediaItem?.mediaId) return
+        if (item.itemId.asString() != player.currentMediaItem?.mediaId) return
         deferredWork = null
 
         viewModelScope.launch {
@@ -1781,7 +1785,7 @@ constructor(
     }
 
     private fun currentPlayerItem(): PlayerItem? = items.firstOrNull {
-        it.itemId.toString() == player.currentMediaItem?.mediaId
+        it.itemId.asString() == player.currentMediaItem?.mediaId
     }
 
     private fun supportedGroups(trackType: @C.TrackType Int) =
@@ -1971,7 +1975,9 @@ constructor(
      * The saved choice for [seriesId], read on IO once per series and kept for its next items. Null
      * without a logged-in user. A read error gives no choice, as if none was saved.
      */
-    private fun seriesTrackPreferences(seriesId: UUID): Deferred<List<SeriesTrackPreferenceDto>>? {
+    private fun seriesTrackPreferences(
+        seriesId: ItemId
+    ): Deferred<List<SeriesTrackPreferenceDto>>? {
         trackPreferences?.let { (id, preferences) -> if (id == seriesId) return preferences }
         if (signedInUserId() == null) return null
         val preferences =
@@ -1984,14 +1990,16 @@ constructor(
      * The signed-in user, or null without one: the repository throws then, and the player keeps no
      * track choice.
      */
-    private fun signedInUserId(): UUID? =
+    private fun signedInUserId(): UserId? =
         try {
             repository.getUserId()
         } catch (_: IllegalStateException) {
             null
         }
 
-    private suspend fun readSeriesTrackPreferences(seriesId: UUID): List<SeriesTrackPreferenceDto> =
+    private suspend fun readSeriesTrackPreferences(
+        seriesId: ItemId
+    ): List<SeriesTrackPreferenceDto> =
         try {
             repository.getSeriesTrackPreferences(seriesId)
         } catch (e: CancellationException) {
@@ -2160,7 +2168,7 @@ constructor(
                             audio = selectedAudioChoice(),
                         )
 
-                    override fun forget(itemId: UUID) = playlistManager.forget(itemId)
+                    override fun forget(itemId: ItemId) = playlistManager.forget(itemId)
 
                     override suspend fun recreate(
                         item: PlayerItem,
@@ -2194,7 +2202,7 @@ constructor(
         )
     }
 
-    private suspend fun getSegments(itemId: UUID) {
+    private suspend fun getSegments(itemId: ItemId) {
         val segments =
             try {
                 // Debuggable builds can fake segments for testing (#271).

@@ -1,6 +1,9 @@
 package dev.jdtech.jellyfin.player.local.domain
 
 import androidx.media3.common.C
+import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
@@ -8,7 +11,6 @@ import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.repository.ReloadPolicy
 import java.io.IOException
 import java.lang.reflect.Proxy
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -33,11 +35,11 @@ import org.junit.jupiter.api.Test
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlaybackReporterTest {
-    private val itemId = UUID.fromString("00000000-0000-0000-0000-000000000001")
-    private val nextId = UUID.fromString("00000000-0000-0000-0000-000000000002")
+    private val itemId = "00000000-0000-0000-0000-000000000001".toItemId()
+    private val nextId = "00000000-0000-0000-0000-000000000002".toItemId()
 
     private fun item(
-        id: UUID = itemId,
+        id: ItemId = itemId,
         session: String? = "session-1",
         transcoded: Boolean = false,
         position: Long = 0L,
@@ -73,21 +75,21 @@ class PlaybackReporterTest {
         val repository: JellyfinRepository =
             object : JellyfinRepository by unused {
                 override fun setPlaySession(
-                    itemId: UUID,
+                    itemId: ItemId,
                     playSessionId: String?,
                     transcodes: Boolean,
                 ) {
                     record("session $itemId $playSessionId $transcodes")
                 }
 
-                override suspend fun postPlaybackStart(itemId: UUID, transcoded: Boolean) {
+                override suspend fun postPlaybackStart(itemId: ItemId, transcoded: Boolean) {
                     delay(startDelayMs)
                     if (failStart) throw IOException("no server")
                     record("start $itemId $transcoded")
                 }
 
                 override suspend fun postPlaybackProgress(
-                    itemId: UUID,
+                    itemId: ItemId,
                     positionTicks: Long,
                     isPaused: Boolean,
                     transcoded: Boolean,
@@ -97,7 +99,7 @@ class PlaybackReporterTest {
                 }
 
                 override suspend fun postPlaybackStop(
-                    itemId: UUID,
+                    itemId: ItemId,
                     positionTicks: Long,
                     playedPercentage: Int?,
                 ) {
@@ -114,7 +116,7 @@ class PlaybackReporterTest {
 
         override fun currentMediaId() = mediaId
 
-        override fun isTranscoded(itemId: UUID) = transcoded
+        override fun isTranscoded(itemId: ItemId) = transcoded
 
         override fun isPlaying() = playing
 
@@ -185,7 +187,7 @@ class PlaybackReporterTest {
     @Test
     fun `an item that never loads sends nothing`() = test { s ->
         s.transition(item())
-        s.progress(Player(itemId.toString()))
+        s.progress(Player(itemId.asString()))
         advanceUntilIdle()
         s.reporter.onPlayerReleased()?.let { s.reporter.reportStopped(it) }
         s.loaded()
@@ -225,7 +227,7 @@ class PlaybackReporterTest {
     fun `no progress before the start is sent`() = test { s ->
         s.transition(item())
         advanceUntilIdle()
-        s.progress(Player(itemId.toString()))
+        s.progress(Player(itemId.asString()))
         advanceUntilIdle()
         assertEquals(emptyList(), s.reports)
     }
@@ -233,7 +235,7 @@ class PlaybackReporterTest {
     @Test
     fun `of two reports waiting for a slow start only the later one is sent`() = test { s ->
         s.fake.startDelayMs = 1_000L
-        val player = Player(itemId.toString())
+        val player = Player(itemId.asString())
         s.transition(item())
         s.loaded()
         // The start is on its way: both reports wait for it.
@@ -257,7 +259,7 @@ class PlaybackReporterTest {
     @Test
     fun `a report asked for while one is sent waits for it and replaces the ones between`() =
         test { s ->
-            val player = Player(itemId.toString())
+            val player = Player(itemId.asString())
             s.transition(item())
             s.loaded()
             advanceUntilIdle()
@@ -283,7 +285,7 @@ class PlaybackReporterTest {
 
     @Test
     fun `a pause is reported at once and a resume after it too`() = test { s ->
-        val player = Player(itemId.toString())
+        val player = Player(itemId.asString())
         s.transition(item())
         s.loaded()
         advanceUntilIdle()
@@ -311,7 +313,7 @@ class PlaybackReporterTest {
 
     @Test
     fun `a report for an item the player has left is not sent`() = test { s ->
-        val player = Player(itemId.toString())
+        val player = Player(itemId.asString())
         s.transition(item())
         s.loaded()
         advanceUntilIdle()
@@ -322,7 +324,7 @@ class PlaybackReporterTest {
         // The next report waits for the lock while the player moves on.
         s.progress(player)
         testScheduler.runCurrent()
-        player.mediaId = nextId.toString()
+        player.mediaId = nextId.asString()
         advanceUntilIdle()
         assertEquals(
             listOf("0: start $itemId false", "500: progress $itemId 0 paused=false false"),

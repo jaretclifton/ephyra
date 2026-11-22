@@ -10,6 +10,7 @@ import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.FindroidSources
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.player.core.domain.models.ExternalSubtitle
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerChapter
@@ -17,7 +18,6 @@ import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.player.core.domain.models.ServerAudioTrack
 import dev.jdtech.jellyfin.player.core.domain.models.TrickplayInfo
 import dev.jdtech.jellyfin.repository.JellyfinRepository
-import java.util.UUID
 import javax.inject.Inject
 import kotlin.random.Random
 import kotlinx.coroutines.CancellationException
@@ -49,11 +49,11 @@ internal constructor(
     private var lightQueue = false
 
     /** CE (#638): the items of a light queue that have been fetched in full. */
-    private val fetchedInFull = mutableSetOf<UUID>()
+    private val fetchedInFull = mutableSetOf<ItemId>()
     private val playerItems: MutableList<PlayerItem> = mutableListOf()
     var currentItemIndex: Int = 0
 
-    private var currentItemId: UUID? = null
+    private var currentItemId: ItemId? = null
 
     /**
      * Fetches the full episode list for the queue. Set when the first item could start playing
@@ -70,9 +70,9 @@ internal constructor(
      * stream of a transcode does not say which track it carries, so a quality switch from one
      * transcode to another has only this to keep the track.
      */
-    private val requestedAudio = HashMap<UUID, Int>()
+    private val requestedAudio = HashMap<ItemId, Int>()
 
-    private suspend fun fetchEpisodes(seriesId: UUID, seasonId: UUID): List<FindroidEpisode> =
+    private suspend fun fetchEpisodes(seriesId: ItemId, seasonId: ItemId): List<FindroidEpisode> =
         repository
             .getEpisodes(
                 seriesId = seriesId,
@@ -101,7 +101,7 @@ internal constructor(
      * [loadQueue] after the player is prepared (the neighbour lookups also wait for it).
      */
     suspend fun getInitialItem(
-        itemId: UUID,
+        itemId: ItemId,
         itemKind: ItemKind,
         mediaSourceId: String? = null,
         startFromBeginning: Boolean = false,
@@ -265,7 +265,7 @@ internal constructor(
      * none or the player already has it. CE (#657): the caller names the item, as the current one
      * can change while this is fetched.
      */
-    suspend fun getPreviousPlayerItem(itemId: UUID? = null): PlayerItem? {
+    suspend fun getPreviousPlayerItem(itemId: ItemId? = null): PlayerItem? {
         Timber.d("Retrieving previous player item")
 
         loadQueue()
@@ -302,7 +302,7 @@ internal constructor(
     }
 
     /** The item after [itemId], as [getPreviousPlayerItem] is the item before it. */
-    suspend fun getNextPlayerItem(itemId: UUID? = null): PlayerItem? {
+    suspend fun getNextPlayerItem(itemId: ItemId? = null): PlayerItem? {
         Timber.d("Retrieving next player item")
 
         loadQueue()
@@ -387,18 +387,18 @@ internal constructor(
     }
 
     /** The index of [itemId] in the queue, or of the current item; -1 when it is not queued. */
-    private fun queueIndex(itemId: UUID?): Int =
+    private fun queueIndex(itemId: ItemId?): Int =
         if (itemId == null) currentItemIndex else items.indexOfFirst { it.id == itemId }
 
     /**
      * CE (#657): [itemId] was fetched as a neighbour but did not go into the player (the item it
      * was fetched for had left the playlist), so the next lookup fetches it again.
      */
-    fun forget(itemId: UUID) {
+    fun forget(itemId: ItemId) {
         playerItems.removeAll { it.itemId == itemId }
     }
 
-    fun setCurrentMediaItemIndex(itemId: UUID) {
+    fun setCurrentMediaItemIndex(itemId: ItemId) {
         currentItemId = itemId
         currentItemIndex = items.indexOfFirst { it.id == itemId }
     }
@@ -411,7 +411,7 @@ internal constructor(
      * CE (#131): start over at [itemId], a queued item, from its beginning. Forgets which items the
      * player already has, as the caller replaces the player's playlist with the returned item.
      */
-    suspend fun jumpTo(itemId: UUID): PlayerItem? {
+    suspend fun jumpTo(itemId: ItemId): PlayerItem? {
         val index = items.indexOfFirst { it.id == itemId }
         if (index < 0) return null
         val playerItem = queued(items[index]).toPlayerItem(null, 0L)

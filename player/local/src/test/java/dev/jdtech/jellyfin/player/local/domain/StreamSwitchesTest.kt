@@ -1,5 +1,6 @@
 package dev.jdtech.jellyfin.player.local.domain
 
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -29,7 +30,7 @@ class StreamSwitchesTest {
     private val settingChanges = mutableListOf<Int>()
     private val swaps = mutableListOf<List<PlayerItem>>()
     private val errors = mutableListOf<Exception>()
-    private val forgotten = mutableListOf<UUID>()
+    private val forgotten = mutableListOf<ItemId>()
 
     /** A stream request on its way: for [item], under [bitrate], with [pickedAudio]. */
     private class Request(
@@ -53,7 +54,7 @@ class StreamSwitchesTest {
 
                 override fun playing() = StreamSwitches.Playing(e2, playingAudio)
 
-                override fun forget(itemId: UUID) {
+                override fun forget(itemId: ItemId) {
                     forgotten += itemId
                 }
 
@@ -83,7 +84,7 @@ class StreamSwitchesTest {
             },
         )
 
-    private fun item(id: UUID, bitrate: Int, audio: Int?) =
+    private fun item(id: ItemId, bitrate: Int, audio: Int?) =
         PlayerItem(
             name = "$id",
             itemId = id,

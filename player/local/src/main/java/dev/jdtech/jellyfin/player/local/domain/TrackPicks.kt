@@ -1,7 +1,7 @@
 package dev.jdtech.jellyfin.player.local.domain
 
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
-import java.util.UUID
 
 /**
  * CE (#596): what a track dialog lists: the [names] of the tracks in order, and the position of the
@@ -32,17 +32,17 @@ fun trackPreferenceKey(itemId: String, selectableTracks: Int): String = "$itemId
  * switch, and on an audio switch while the server transcodes.
  */
 class SessionTrackPicks {
-    private val picks = HashMap<UUID, MutableMap<Int, TrackPick>>()
+    private val picks = HashMap<ItemId, MutableMap<Int, TrackPick>>()
 
     /** Keeps [pick] for [itemId], in place of an earlier pick of the same track type. */
-    fun remember(itemId: UUID, pick: TrackPick) {
+    fun remember(itemId: ItemId, pick: TrackPick) {
         picks.getOrPut(itemId) { LinkedHashMap() }[pick.trackType] = pick
     }
 
     /** Drops the pick of [trackType] for [itemId]: the item's own default applies again. */
-    fun forget(itemId: UUID, trackType: Int) {
+    fun forget(itemId: ItemId, trackType: Int) {
         picks[itemId]?.remove(trackType)
     }
 
-    fun of(itemId: UUID): List<TrackPick> = picks[itemId]?.values?.toList().orEmpty()
+    fun of(itemId: ItemId): List<TrackPick> = picks[itemId]?.values?.toList().orEmpty()
 }

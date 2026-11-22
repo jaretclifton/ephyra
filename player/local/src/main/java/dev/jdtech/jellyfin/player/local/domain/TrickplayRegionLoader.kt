@@ -6,9 +6,9 @@ import android.graphics.BitmapRegionDecoder
 import android.graphics.Rect
 import android.os.Build
 import android.util.LruCache
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.player.core.domain.models.TrickplayTileLoader
 import dev.jdtech.jellyfin.repository.JellyfinRepository
-import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -27,7 +27,7 @@ const val TV_TRICKPLAY_WIDTH_DP = 240
  */
 class TrickplayRegionLoader(
     private val repository: JellyfinRepository,
-    private val itemId: UUID,
+    private val itemId: ItemId,
     private val tiles: TrickplayTiles,
     /** The width the thumbnail is shown at, in pixels. Decoding stops at the power of two above. */
     targetWidth: Int,

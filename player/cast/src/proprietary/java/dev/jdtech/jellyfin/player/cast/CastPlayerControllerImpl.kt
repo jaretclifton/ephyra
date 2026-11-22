@@ -23,8 +23,11 @@ import dev.jdtech.jellyfin.domain.ports.capMbpsToBitsPerSecond
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.PlaybackTarget
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.cast.models.CastConnectionState
 import dev.jdtech.jellyfin.player.cast.models.CastError
 import dev.jdtech.jellyfin.player.cast.models.CastMediaItem
@@ -35,7 +38,6 @@ import dev.jdtech.jellyfin.player.core.domain.models.Track
 import dev.jdtech.jellyfin.player.local.domain.PlaylistManager
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Provider
@@ -150,7 +152,7 @@ constructor(
     private var playlistManager: PlaylistManager = playlistManagers.get()
 
     /** What was built for each item in the receiver's queue. */
-    private val itemCache = ConcurrentHashMap<UUID, CastMediaItem>()
+    private val itemCache = ConcurrentHashMap<ItemId, CastMediaItem>()
 
     /** The playlist's order, as far as [playlistManager] has told it. */
     private val playlist = CastPlaylistOrder()
@@ -314,12 +316,12 @@ constructor(
     }
 
     /** The Jellyfin id of the item the receiver has loaded now, from its custom data. */
-    private fun remoteItemId(): UUID? =
+    private fun remoteItemId(): ItemId? =
         remoteMediaClient?.currentItem?.media?.customData?.optString("itemId")?.toUuidOrNull()
 
-    private fun String.toUuidOrNull(): UUID? =
+    private fun String.toUuidOrNull(): ItemId? =
         try {
-            UUID.fromString(this)
+            toItemId()
         } catch (_: IllegalArgumentException) {
             null
         }
@@ -436,7 +438,7 @@ constructor(
     }
 
     /** Whether the stream of [itemId] is a transcode, which the reports name. */
-    private fun isTranscoded(itemId: UUID): Boolean =
+    private fun isTranscoded(itemId: ItemId): Boolean =
         (_currentItem.value?.takeIf { it.item.itemId == itemId } ?: itemCache[itemId])
             ?.isTranscoded() == true
 
@@ -447,7 +449,7 @@ constructor(
             try {
                 repository.postPlaybackStart(itemId = itemId, transcoded = transcoded)
             } catch (e: Exception) {
-                Timber.e(e, "Failed to report start for $itemId")
+                Timber.e(e, "Failed to report start for ${itemId.asString()}")
             }
         }
     }
@@ -486,7 +488,7 @@ constructor(
     private fun stopReporting() = send(reporter.stop())
 
     /** [currentItem] now holds the item the receiver plays. */
-    private fun onCurrentItemSet(itemId: UUID) {
+    private fun onCurrentItemSet(itemId: ItemId) {
         manageQueue(itemId)
         remoteMediaClient?.let { send(reporter.currentItemChanged(receiverState(it))) }
     }
@@ -565,7 +567,7 @@ constructor(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Failed to restore item $itemId")
+                Timber.e(e, "Failed to restore item ${itemId.asString()}")
             }
         }
     }
@@ -658,7 +660,7 @@ constructor(
 
         val customData =
             JSONObject().apply {
-                put("itemId", item.itemId.toString())
+                put("itemId", item.itemId.asString())
                 put(CastCustomData.KEY, CastCustomData.of(source, tracks).encode())
             }
         val mediaInfo =
@@ -690,7 +692,7 @@ constructor(
     }
 
     override fun playItem(
-        itemId: UUID,
+        itemId: ItemId,
         itemKind: String,
         startFromBeginning: Boolean,
         mediaSourceId: String?,
@@ -707,7 +709,7 @@ constructor(
         playJob = scope.launch {
             val client = remoteMediaClient
             if (client == null) {
-                fail(message = "No Cast session to play $itemId on")
+                fail(message = "No Cast session to play ${itemId.asString()} on")
                 return@launch
             }
 
@@ -726,11 +728,11 @@ constructor(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                fail(e, "Failed to prepare $itemId for Cast")
+                fail(e, "Failed to prepare ${itemId.asString()} for Cast")
                 return@launch
             }
             if (item == null || built == null) {
-                fail(message = "Nothing to play for $itemId")
+                fail(message = "Nothing to play for ${itemId.asString()}")
                 return@launch
             }
 
@@ -766,7 +768,7 @@ constructor(
      * Keeps the playlist's next and previous item in the receiver's queue around [itemId], the
      * current item, so the receiver goes on by itself and the TV remote's skip buttons work.
      */
-    private fun manageQueue(itemId: UUID) {
+    private fun manageQueue(itemId: ItemId) {
         queueJob?.cancel()
         queueJob = scope.launch {
             try {
@@ -793,12 +795,17 @@ constructor(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Failed to queue the neighbours of $itemId")
+                Timber.e(e, "Failed to queue the neighbours of ${itemId.asString()}")
             }
         }
     }
 
-    private fun queueInsert(status: MediaStatus, current: UUID, item: PlayerItem, before: Boolean) =
+    private fun queueInsert(
+        status: MediaStatus,
+        current: ItemId,
+        item: PlayerItem,
+        before: Boolean,
+    ) =
         queueInsertPosition(
             queue =
                 status.queueItems.map {
@@ -814,7 +821,7 @@ constructor(
         )
 
     /** Puts [item] in the receiver's queue right [before] or after [current], unless it is in. */
-    private suspend fun queueItem(current: UUID, item: PlayerItem, before: Boolean) {
+    private suspend fun queueItem(current: ItemId, item: PlayerItem, before: Boolean) {
         val statusBefore = remoteMediaClient?.mediaStatus ?: return
         if (queueInsert(statusBefore, current, item, before) == QueueInsert.Skip) return
 
@@ -930,7 +937,7 @@ constructor(
         }
     }
 
-    override fun setAudioTrack(track: Track?, itemId: UUID?) {
+    override fun setAudioTrack(track: Track?, itemId: ItemId?) {
         val current = _currentItem.value ?: return
         if (track == null || (itemId != null && itemId != current.item.itemId)) return
         if (current.audioTracks.firstOrNull { it.selected }?.id == track.id) return
