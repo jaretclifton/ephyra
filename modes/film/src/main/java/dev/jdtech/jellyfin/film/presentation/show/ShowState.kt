@@ -28,6 +28,11 @@ data class ShowState(
     // CE (#332): loaded after the page is shown, see ShowViewModel.loadRelated.
     val related: RelatedItems = RelatedItems(),
     val error: Exception? = null,
+    /**
+     * #769: whether a download can be transcoded down to a chosen quality. Without it the quality
+     * dialog offers the original only.
+     */
+    val cappedDownloads: Boolean = true,
 ) {
     /**
      * Whether the page offers Download (#373): known once the series' episodes are in, so a page

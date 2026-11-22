@@ -50,6 +50,8 @@ constructor(
     }
 
     fun loadDisclaimer() {
+        // #769: a server type without a disclaimer is not asked for one.
+        if (!repository.capabilities.loginDisclaimer) return
         viewModelScope.launch {
             try {
                 val loginDisclaimer = repository.loadDisclaimer()
@@ -61,6 +63,11 @@ constructor(
     }
 
     fun loadQuickConnectEnabled() {
+        // #769: without Quick Connect there is no button, and no question whether it is turned on.
+        if (!repository.capabilities.quickConnect) {
+            _state.update { it.copy(quickConnectEnabled = false) }
+            return
+        }
         viewModelScope.launch {
             try {
                 val isEnabled = repository.getIsQuickConnectEnabled()

@@ -5,6 +5,7 @@ import android.content.ContextWrapper
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.lang.reflect.Proxy
@@ -55,8 +56,24 @@ class ThemeSongPreferenceTest {
         assertEquals(url, viewModel.state.value.themeSongUrl)
     }
 
-    private fun viewModel(preferences: AppPreferences): ShowViewModel {
-        val repository = repository()
+    @Test
+    fun `#769 turned on, a server without theme songs is not asked`() {
+        val viewModel =
+            viewModel(
+                appPreferences(stored = true),
+                ServerCapabilities.ALL.copy(themeSongs = false),
+            )
+        viewModel.loadThemeSong(showId)
+
+        assertEquals(0, lookups)
+        assertNull(viewModel.state.value.themeSongUrl)
+    }
+
+    private fun viewModel(
+        preferences: AppPreferences,
+        capabilities: ServerCapabilities = ServerCapabilities.ALL,
+    ): ShowViewModel {
+        val repository = repository(capabilities)
         return ShowViewModel(
             repository = repository,
             appPreferences = preferences,
@@ -73,12 +90,13 @@ class ThemeSongPreferenceTest {
         )
     }
 
-    private fun repository(): JellyfinRepository =
+    private fun repository(capabilities: ServerCapabilities): JellyfinRepository =
         Proxy.newProxyInstance(
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, _ ->
             when (method.name) {
+                "getCapabilities" -> capabilities
                 "getThemeSongUrl" -> url.also { lookups++ }
                 else -> throw NotImplementedError("JellyfinRepository.${method.name}")
             }

@@ -4,12 +4,16 @@ import dev.jdtech.jellyfin.models.DiscoveredServer
 import dev.jdtech.jellyfin.models.QuickConnectState
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.User
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
 interface SetupRepository {
+    /** #769: what servers of the type being logged in to can do. Read when a screen loads. */
+    val capabilities: ServerCapabilities
+
     fun discoverServers(): Flow<DiscoveredServer>
 
     suspend fun getServers(): List<ServerWithAddresses>

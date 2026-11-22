@@ -15,6 +15,7 @@ import dev.jdtech.jellyfin.film.presentation.keeping
 import dev.jdtech.jellyfin.film.presentation.launchRelatedItems
 import dev.jdtech.jellyfin.film.presentation.selectEpisodesToDownload
 import dev.jdtech.jellyfin.film.presentation.shownIn
+import dev.jdtech.jellyfin.film.presentation.within
 import dev.jdtech.jellyfin.models.EpisodeField
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItemPerson
@@ -105,7 +106,13 @@ constructor(
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             val token = reloadPolicy.begin()
-            _state.emit(_state.value.copy(error = null))
+            // #769: read on every load, as the server may have changed since.
+            _state.emit(
+                _state.value.copy(
+                    error = null,
+                    cappedDownloads = repository.capabilities.cappedDownloadTranscode,
+                )
+            )
             try {
                 // coroutineScope { } is required: without it a failure inside an async { }
                 // child goes straight to viewModelScope and crashes the app, past this
@@ -258,6 +265,7 @@ constructor(
                     collections = false,
                 )
                 .shownIn(appPreferences.detailSections())
+                .within(repository.capabilities)
         if (relatedFor == showId && relatedRequest == request) return
         relatedFor = showId
         relatedRequest = request
@@ -280,6 +288,8 @@ constructor(
      */
     fun loadThemeSong(showId: UUID) {
         if (!appPreferences.getValue(appPreferences.tvThemeMusic)) return
+        // #769: a server without theme songs is not asked for one.
+        if (!repository.capabilities.themeSongs) return
         viewModelScope.launch {
             val url = repository.getThemeSongUrl(showId)
             _state.emit(_state.value.copy(themeSongUrl = url))

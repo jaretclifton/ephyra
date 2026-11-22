@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.setup.presentation
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.ProfileLockType
 import dev.jdtech.jellyfin.models.Server
+import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.profilelock.ProfileLock
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
@@ -364,6 +365,7 @@ class ProfilePinSwitchTest {
             arrayOf(SetupRepository::class.java),
         ) { _, method, args ->
             when (method.name) {
+                "getCapabilities" -> ServerCapabilities.ALL
                 "getCurrentServer" -> server
                 "getUsers" -> users.values.toList()
                 "getPublicUsers" -> emptyList<User>()

@@ -9,6 +9,7 @@ import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.domain.ports.UserImage
 import dev.jdtech.jellyfin.models.DiscoveredServer
 import dev.jdtech.jellyfin.models.QuickConnectState
+import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.UserId
 import java.util.Collections
@@ -28,6 +29,8 @@ class FakeServerConnector(
 ) : ServerConnector {
     val findAddressCalls: MutableList<String> = Collections.synchronizedList(mutableListOf())
     val calls: MutableList<Pair<String, String>> = Collections.synchronizedList(mutableListOf())
+
+    override var capabilities: ServerCapabilities = ServerCapabilities.ALL
 
     var onLogin: suspend (String, String) -> AuthenticatedUser = { _, _ -> unexpected() }
     var onPublicUsers: suspend () -> List<PublicUser> = { unexpected() }

@@ -12,6 +12,7 @@ import dev.jdtech.jellyfin.models.FindroidBoxSet
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.IOException
@@ -22,6 +23,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -46,6 +48,8 @@ class RelatedItemsLoadingTest {
     private val switchedOff = mutableSetOf<String>()
     /** What getMovie answers from now on, in place of the movie the view model was made with. */
     @Volatile private var answer: FindroidMovie? = null
+    /** #769: what the server can do; Jellyfin can do everything. */
+    @Volatile private var capabilities = ServerCapabilities.ALL
 
     private val extra = movie(UUID.randomUUID(), "Behind the scenes")
     private val similar = movie(UUID.randomUUID(), "Similar")
@@ -181,6 +185,60 @@ class RelatedItemsLoadingTest {
     }
 
     @Test
+    fun `#769 rows the server cannot fill are never requested`() = runBlocking {
+        capabilities =
+            ServerCapabilities.ALL.copy(
+                extras = false,
+                itemCollections = false,
+                similarItems = false,
+            )
+        val viewModel =
+            movieViewModel(movie(itemId, "Movie", localTrailers = 1, specialFeatures = 2))
+        viewModel.loadMovie(itemId)
+        withTimeout(5_000) { viewModel.state.first { it.movie != null } }
+
+        viewModel.loadRelated(itemId)
+
+        assertEquals(listOf("getMovie"), synchronized(calls) { calls.toList() })
+        assertEquals(RelatedItems(), viewModel.state.value.related)
+    }
+
+    @Test
+    fun `#769 each row follows its own capability`() = runBlocking {
+        capabilities =
+            ServerCapabilities.ALL.copy(similarItems = false, cappedDownloadTranscode = false)
+        val viewModel = showViewModel()
+        viewModel.loadShow(itemId)
+        val loaded = withTimeout(5_000) { viewModel.state.first { it.show != null } }
+        assertEquals(false, loaded.cappedDownloads)
+        calls.clear()
+
+        viewModel.loadRelated(itemId)
+        val related =
+            withTimeout(5_000) { viewModel.state.first { it.related.extras.isNotEmpty() } }.related
+
+        assertTrue(related.similar.isEmpty())
+        assertTrue("getSimilarItems" !in calls)
+    }
+
+    @Test
+    fun `#769 the quality dialog offers the cap only where the server can transcode`() =
+        runBlocking {
+            val capped = movieViewModel(movie(itemId, "Movie"))
+            capped.loadMovie(itemId)
+            assertTrue(
+                withTimeout(5_000) { capped.state.first { it.movie != null } }.cappedDownloads
+            )
+
+            capabilities = ServerCapabilities.ALL.copy(cappedDownloadTranscode = false)
+            val original = movieViewModel(movie(itemId, "Movie"))
+            original.loadMovie(itemId)
+            val state = withTimeout(5_000) { original.state.first { it.movie != null } }
+
+            assertEquals(false, state.cappedDownloads)
+        }
+
+    @Test
     fun `metadata switched off in the settings is cleared before the page gets it`() = runBlocking {
         switchedOff += listOf("pref_detail_tagline", "pref_detail_watch_history")
         val viewModel =
@@ -213,6 +271,11 @@ class RelatedItemsLoadingTest {
         viewModel.loadMovie(itemId)
         val related =
             withTimeout(5_000) { viewModel.state.first { it.related.similar.isEmpty() } }.related
+        // The row goes before the reload asks for the others: wait for that request too, or it
+        // reaches Dispatchers.Main after tearDown has reset it and fails a later runTest.
+        withTimeout(5_000) {
+            while ("getItemCollections" !in synchronized(calls) { calls.toList() }) delay(10)
+        }
 
         assertEquals(listOf(collection), related.collections)
         assertTrue("getSimilarItems" !in calls)
@@ -281,6 +344,8 @@ class RelatedItemsLoadingTest {
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
+            // #769: not a request of the server, so not in [calls].
+            if (method.name == "getCapabilities") return@newProxyInstance capabilities
             synchronized(calls) { calls.add(method.name) }
             if (method.name in failing) throw IOException("${method.name} failed")
             when (method.name) {

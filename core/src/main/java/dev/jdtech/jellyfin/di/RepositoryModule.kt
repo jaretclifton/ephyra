@@ -8,6 +8,7 @@ import dagger.hilt.components.SingletonComponent
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.reachability.ServerReachability
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.domain.ports.CurrentServerCapabilities
 import dev.jdtech.jellyfin.domain.ports.DeviceCodecs
 import dev.jdtech.jellyfin.domain.ports.MediaServer
 import dev.jdtech.jellyfin.models.CollectionType
@@ -35,6 +36,16 @@ object RepositoryModule {
     @Provides
     fun providePlaybackEvents(dataChanges: DataChangeEvents): PlaybackEvents =
         PlaybackEvents(dataChanges)
+
+    /**
+     * CE (#769): what the server in use can do, for code without a repository (settings), over the
+     * MediaServer the adapter provides.
+     */
+    @Provides
+    fun provideCurrentServerCapabilities(server: MediaServer): CurrentServerCapabilities =
+        CurrentServerCapabilities {
+            server.capabilities
+        }
 
     /**
      * The repository over the server the adapter provides (#758: `JellyfinServerModule` in

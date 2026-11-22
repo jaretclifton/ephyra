@@ -52,6 +52,15 @@
         <item>on</item>
         <item>off</item>
     </string-array>
+    <!-- #769: for a server without its own setting to follow. -->
+    <string-array name="ce_player_autoplay_next_local">
+        <item>@string/player_autoplay_next_on</item>
+        <item>@string/player_autoplay_next_off</item>
+    </string-array>
+    <string-array name="ce_player_autoplay_next_local_values" translatable="false">
+        <item>on</item>
+        <item>off</item>
+    </string-array>
     <string-array name="media_segments_auto_skip">
         <item>@string/ce_media_segments_auto_skip_pip</item>
         <item>@string/ce_media_segments_auto_skip_always</item>

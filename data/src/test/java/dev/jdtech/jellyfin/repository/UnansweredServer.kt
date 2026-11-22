@@ -23,6 +23,7 @@ import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.MediaSourceId
+import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.ServerType
@@ -43,6 +44,9 @@ internal class UnansweredServer(
     var failure: () -> Exception = { ServerException.Unreachable() },
 ) : MediaServer {
     override val type = ServerType.JELLYFIN
+
+    /** #769: as a Jellyfin server, so the repository asks for everything it would ask Jellyfin. */
+    override val capabilities = ServerCapabilities.ALL
 
     private fun fail(): Nothing = throw failure()
 
