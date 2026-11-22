@@ -46,10 +46,11 @@ class JellyfinServerConnector(private val api: JellyfinApi) : ServerConnector {
 
     /**
      * A GREAT server is taken at once, a GOOD one over an OK one, and an OK one is refused with its
-     * issues. This discovers through the watched client, as adding a server always has (#819).
+     * issues. CE (#819): runs on [JellyfinApi.unwatchedDiscovery], so a server being added is not
+     * counted as traffic of the server in use.
      */
     override suspend fun resolve(address: String): ResolvedServer {
-        val discovery = api.jellyfin.discovery
+        val discovery = api.unwatchedDiscovery
         val candidates = discovery.getAddressCandidates(address)
         val recommended = discovery.getRecommendedServers(candidates, RecommendedServerInfoScore.OK)
         val goodServers = mutableListOf<RecommendedServerInfo>()
