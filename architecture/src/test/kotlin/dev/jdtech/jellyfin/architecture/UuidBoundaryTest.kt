@@ -55,6 +55,9 @@ class UuidBoundaryTest {
                 "import java.util.UUID as Id\n",
                 "val id = java.util.UUID.randomUUID()\n",
                 "import java.util.*\n\nval id: UUID? = null\n",
+                "val url = \"https://example.test/\${java.util.UUID.randomUUID()}\"\n",
+                "val raw = \"\"\"a // b\"\"\" + java.util.UUID.randomUUID()\n",
+                "val s = \"/* not a comment\" + java.util.UUID.randomUUID() + \"*/\"\n",
             )
         val notNamed =
             listOf(
@@ -63,6 +66,8 @@ class UuidBoundaryTest {
                 "/**\n * Was a [java.util.UUID] before #773.\n */\nval id = 1\n",
                 "import java.util.*\n\nval ids = listOf(UUIDs)\n",
                 "import java.util.Locale\n\nval id: ItemId? = null // a UUID once\n",
+                "val q = '\"' // java.util.UUID\n",
+                "fun `a movie's id`() = 1 // java.util.UUID\n",
             )
 
         assertEquals(named.map { true }, named.map(::namesUuid))
@@ -74,8 +79,6 @@ class UuidBoundaryTest {
 
         /** About 900 today; far fewer means the tree was not found. */
         const val MIN_FILES = 600
-
-        val COMMENT = Regex("""//[^\n]*|/\*.*?\*/""", RegexOption.DOT_MATCHES_ALL)
 
         val FULL_NAME = Regex("""\bjava\.util\.UUID\b""")
 
@@ -89,9 +92,70 @@ class UuidBoundaryTest {
          * out first. A string that mentions it counts too, which is fine for a rule about ids.
          */
         fun namesUuid(source: String): Boolean {
-            val code = COMMENT.replace(source, " ")
+            val code = withoutComments(source)
             return FULL_NAME.containsMatchIn(code) ||
                 (WILDCARD.containsMatchIn(code) && SIMPLE_NAME.containsMatchIn(code))
+        }
+
+        /**
+         * [source] with its `//` and `/* */` comments blanked out, string literals kept as they
+         * are: a `//` inside `"https://…"` starts no comment. A quote inside a template
+         * (`"${f("x")}"`) ends and reopens the literal, which keeps all of its text either way.
+         */
+        fun withoutComments(source: String): String {
+            val out = StringBuilder(source.length)
+            var i = 0
+            fun at(text: String) = source.startsWith(text, i)
+            while (i < source.length) {
+                when {
+                    at("//") -> {
+                        val end = source.indexOf('\n', i).let { if (it < 0) source.length else it }
+                        out.append(" ")
+                        i = end
+                    }
+                    at("/*") -> {
+                        val end =
+                            source.indexOf("*/", i + 2).let {
+                                if (it < 0) source.length else it + 2
+                            }
+                        out.append(" ")
+                        i = end
+                    }
+                    at("\"\"\"") -> {
+                        val end =
+                            source.indexOf("\"\"\"", i + 3).let {
+                                if (it < 0) source.length else it + 3
+                            }
+                        out.append(source, i, end)
+                        i = end
+                    }
+                    at("\"") -> {
+                        var j = i + 1
+                        while (j < source.length && source[j] != '"' && source[j] != '\n') {
+                            j += if (source[j] == '\\') 2 else 1
+                        }
+                        val end = minOf(j + 1, source.length)
+                        out.append(source, i, end)
+                        i = end
+                    }
+                    // A name in backticks may hold an apostrophe or a quote.
+                    at("`") -> {
+                        val end = source.indexOf('`', i + 1).let { if (it < 0) i + 1 else it + 1 }
+                        out.append(source, i, end)
+                        i = end
+                    }
+                    // A character literal: '"' starts no string.
+                    at("'") -> {
+                        var j = i + 1
+                        if (j < source.length && source[j] == '\\') j++
+                        val end = source.indexOf('\'', j + 1).let { if (it < 0) i + 1 else it + 1 }
+                        out.append(source, i, end)
+                        i = end
+                    }
+                    else -> out.append(source[i++])
+                }
+            }
+            return out.toString()
         }
     }
 }
