@@ -57,7 +57,7 @@ player/cast      — Google Cast: session and playback on a receiver (real in th
 setup            — Server discovery and login onboarding flow
 settings         — AppPreferences (DataStore) and settings screen
 baselineprofile  — Macrobenchmark module for app/phone: baseline profile and startup benchmark
-architecture     — Konsist rules and their baselines: which files may still touch the Jellyfin SDK
+architecture     — Konsist rules: only server/jellyfin touches the Jellyfin SDK (no exceptions)
 ```
 
 The `app/phone` module depends on all other modules. ViewModels live in `modes/film`, `setup`, `settings`, and `player/local` — NOT in `app/phone` or `app/tv`. Screens in the app modules consume state from those ViewModels.

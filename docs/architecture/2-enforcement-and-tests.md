@@ -13,16 +13,10 @@ Every module dependency in this build is `implementation`. A module that does no
 `libs.jellyfin.core` cannot compile against an SDK type, whether it imports it or only reads a
 property of that type. So the hard boundary is one line per build file.
 
-Nine build files declare the SDK today. The target is one (`server/jellyfin`). To make the
-progress visible and to stop the line from coming back, a check reads the build files and compares
-them with an allowlist:
-
-```
-architecture/baseline/sdk-modules.txt      9 lines today, 1 at the end
-```
-
-Removing the line from a module is the last step of cleaning that module, and it is the step that
-makes the cleanup permanent.
+Nine build files declared the SDK when the migration started. Since #768 exactly one does
+(`server/jellyfin`), and a check (R3) reads every build file, the root one included, and fails when
+any other declares it, in any configuration and through any catalog alias. The allowlist is a
+constant in the test, not a file.
 
 Two more module rules follow the same pattern once the modules exist:
 
@@ -42,24 +36,25 @@ Gradle cannot express three things this plan needs:
 3. **Rules about our own types.** `JellyfinApi` is not an SDK type, so removing the SDK from a
    module does not stop a composable from calling `JellyfinApi.getInstance(context)`.
 
-The rules, each with a baseline file of the current violations:
+The rules. During the migration R1 to R3 had a baseline file of the violations left; #768 deleted
+them, so these rules have no exceptions:
 
-| Rule | Baseline today | Ends at |
+| Rule | At the start | Now |
 |---|---|---|
-| R1. No production file outside the adapter mentions `org.jellyfin.sdk` | 56 files outside `data` | 0 |
-| R2. No production file outside the adapter imports `dev.jdtech.jellyfin.api.JellyfinApi` | 25 files | 0 |
-| R3. Only allowlisted modules declare `libs.jellyfin.core` | 9 modules | 1 |
-| R4. No file outside `data` imports `ServerDatabaseDao` | 22 files | frozen; not part of this migration |
-| R5. `domain` imports nothing from `android.`, `androidx.` (except `androidx.paging`), `org.jellyfin.sdk`, `dev.jdtech.jellyfin.database`, `dev.jdtech.jellyfin.api` | 0 | 0 |
+| R1. No production file outside `server/jellyfin` mentions `org.jellyfin.sdk` | 56 files outside `data` | none allowed, no baseline (#768) |
+| R2. No production file outside `server/jellyfin` imports `dev.jdtech.jellyfin.api.JellyfinApi` | 25 files | none allowed, no baseline (#768) |
+| R3. No build file but `server/jellyfin`'s declares the SDK (`libs.jellyfin.core`, any SDK alias or the Maven group, any configuration, the root build file included) | 9 modules | exactly `server/jellyfin`, a constant in the test (#768) |
+| R4. No file outside `data` imports `ServerDatabaseDao` | 22 files | frozen in `architecture/baseline/dao-imports.txt`; not part of this migration |
+| R5. `domain` imports nothing from `android.`, `androidx.` (except `androidx.paging`), `org.jellyfin.sdk`, `dev.jdtech.jellyfin.database`, `dev.jdtech.jellyfin.api` | 0 | none allowed |
 | R6. In `player/local`, engine packages do not import each other and shared code imports neither | added in phase 5 | 0 |
-| R7. No module but `app/phone` and `app/tv` depends on `server/jellyfin` | added in #758, no baseline | 0 |
+| R7. No module but `app/phone` and `app/tv` depends on `server/jellyfin` | added in #758 | exactly the two apps, no baseline |
 
 **A baseline is exact.** The test fails when a file that is not listed violates a rule, and it
 also fails when a listed file no longer does ("remove it from the baseline"). So a baseline can
 only shrink, a cleanup PR shows its progress as deleted lines, and nobody can add an entry
-without a reviewer seeing it in the diff. `main` stays green throughout; "red turning green" is
-the baseline going from 56 lines to none, after which the file and the exception for it are
-deleted.
+without a reviewer seeing it in the diff. `main` stayed green throughout; "red turning green" was
+the baselines going from 56 lines to none, after which #768 deleted the files and the exceptions
+for them. `dao-imports.txt` (R4) is the only baseline left.
 
 The "adapter" in R1 and R2 narrows as the work goes on: the whole `data` module at first; from
 #753 the packages `dev.jdtech.jellyfin.server.jellyfin` and `dev.jdtech.jellyfin.api` inside
