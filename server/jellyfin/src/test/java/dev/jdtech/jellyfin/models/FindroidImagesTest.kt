@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.models
 import android.app.Application
 import android.net.Uri
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidImages
+import dev.jdtech.jellyfin.server.jellyfin.toItemId
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -157,8 +158,14 @@ class FindroidImagesTest {
 
     @Test
     fun `a downloaded episode names its show's images by the series id`() {
-        assertEquals(oldLocalUri("images/$seriesId/primary"), localImagePath(seriesId, "primary"))
-        assertEquals(oldLocalUri("images/$seriesId/backdrop"), localImagePath(seriesId, "backdrop"))
+        assertEquals(
+            oldLocalUri("images/$seriesId/primary"),
+            localImagePath(seriesId.toItemId(), "primary"),
+        )
+        assertEquals(
+            oldLocalUri("images/$seriesId/backdrop"),
+            localImagePath(seriesId.toItemId(), "backdrop"),
+        )
     }
 
     /** How the local images were built before #754. */

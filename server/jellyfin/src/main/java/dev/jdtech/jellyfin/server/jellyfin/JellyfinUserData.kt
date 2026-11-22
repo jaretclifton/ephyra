@@ -12,15 +12,15 @@ import dev.jdtech.jellyfin.models.ItemId
 class JellyfinUserData(private val api: JellyfinApi) : UserDataPort {
     override suspend fun setFavorite(itemId: ItemId, favorite: Boolean) {
         call {
-            if (favorite) api.userDataApi.markFavoriteItem(itemId)
-            else api.userDataApi.unmarkFavoriteItem(itemId)
+            if (favorite) api.userDataApi.markFavoriteItem(itemId.toUuid())
+            else api.userDataApi.unmarkFavoriteItem(itemId.toUuid())
         }
     }
 
     override suspend fun setPlayed(itemId: ItemId, played: Boolean) {
         call {
-            if (played) api.userDataApi.markPlayedItem(itemId)
-            else api.userDataApi.markUnplayedItem(itemId)
+            if (played) api.userDataApi.markPlayedItem(itemId.toUuid())
+            else api.userDataApi.markUnplayedItem(itemId.toUuid())
         }
     }
 }

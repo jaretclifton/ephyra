@@ -1,8 +1,9 @@
 package dev.jdtech.jellyfin.repository
 
 import android.app.Application
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
 import java.util.Collections
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlinx.coroutines.runBlocking
@@ -27,7 +28,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class PlaySessionOfPlayingStreamTest {
-    private val itemId = UUID.fromString("00000000-0000-0000-0000-000000000040")
+    private val itemId = "00000000-0000-0000-0000-000000000040".toItemId()
     private val answers = Collections.synchronizedList(mutableListOf<String>())
     private val server = StandInServer { request ->
         if (request.path.contains("/PlaybackInfo")) answers.removeAt(0) else null
@@ -49,7 +50,7 @@ class PlaySessionOfPlayingStreamTest {
         val transcoding =
             if (session == null) """"TranscodingSubProtocol":"http","""
             else
-                """"TranscodingUrl":"/videos/$itemId/master.m3u8?PlaySessionId=$session",""" +
+                """"TranscodingUrl":"/videos/${itemId.asString()}/master.m3u8?PlaySessionId=$session",""" +
                     """"TranscodingSubProtocol":"hls","""
         return """{"MediaSources":[{"Id":"source","Protocol":"Http","Path":"http://file",""" +
             """"Type":"Default",$transcoding"IsRemote":false,"ReadAtNativeFramerate":false,""" +

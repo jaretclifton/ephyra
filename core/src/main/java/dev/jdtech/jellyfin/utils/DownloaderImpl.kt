@@ -898,6 +898,9 @@ class DownloaderImpl(
      * index, the name the player asks for. A sheet the server did not give is left out, so the
      * sheets after it keep their index; the player gets no preview for that one sheet offline.
      * Internal for its tests.
+     *
+     * CE (#860): the sheets are asked for [sourceId], the version downloaded, whose layout
+     * [trickplayInfo] is.
      */
     internal suspend fun downloadTrickplayData(
         itemId: UUID,
@@ -906,7 +909,7 @@ class DownloaderImpl(
     ) {
         val sheets = mutableMapOf<Int, ByteArray>()
         for (index in 0 until trickplaySheetCount(trickplayInfo)) {
-            jellyfinRepository.getTrickplayData(itemId, trickplayInfo.width, index)?.let {
+            jellyfinRepository.getTrickplayData(itemId, trickplayInfo.width, index, sourceId)?.let {
                 sheets[index] = it
             }
         }

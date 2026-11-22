@@ -84,6 +84,12 @@ constructor(
     /** Exponential moving average of each active download's transfer rate. */
     private val speedAverages = mutableMapOf<UUID, Double>()
 
+    /** CE (#866): the user the last load started for. */
+    private var loadingFor: UUID? = null
+
+    /** CE (#866): the user the client acts for now. */
+    private fun sessionUser(): UUID? = runCatching { repository.getUserId() }.getOrNull()
+
     /** The screen's first ON_RESUME comes right after [init]'s load, so it doesn't load again. */
     private var skipNextResume = true
 
@@ -158,6 +164,18 @@ constructor(
 
     fun loadItems() {
         loadJob?.cancel()
+        // CE (#866): the screen stays on its stack across a user switch. The items it shows carry
+        // the previous user's played state and progress, so they go at once, and the new user's
+        // load shows that it runs. What was read for the previous user is not sorted again.
+        val user = sessionUser()
+        if (user != null && loadingFor != null && user != loadingFor) {
+            loaded = null
+            _state.update {
+                it.copy(sections = emptyList(), isLoading = true, error = null, userId = user)
+            }
+        }
+        // A load while no one is signed in keeps the last user, or the next switch goes unseen.
+        if (user != null) loadingFor = user
         loadJob = viewModelScope.launch {
             // Only the very first load shows the spinner; later ones refresh in place.
             _state.update { it.copy(isLoading = loaded == null, error = null) }
@@ -167,7 +185,7 @@ constructor(
                 loaded = library
                 val sections =
                     withContext(Dispatchers.IO) { buildSections(library, _state.value.sortOrder) }
-                _state.update { it.withLibrary(library, sections) }
+                _state.update { it.withLibrary(library, sections).copy(userId = user) }
 
                 // The directory walk is the slow part, so the list goes out first.
                 val storageInfo = calculateStorageInfo(library.sizeSignature)
@@ -246,7 +264,8 @@ constructor(
         }
         viewModelScope.launch {
             val sections = withContext(Dispatchers.IO) { buildSections(library, order) }
-            _state.update { it.withLibrary(library, sections) }
+            // CE (#866): not when a switch or a newer load replaced what was sorted.
+            _state.update { if (loaded === library) it.withLibrary(library, sections) else it }
         }
     }
 

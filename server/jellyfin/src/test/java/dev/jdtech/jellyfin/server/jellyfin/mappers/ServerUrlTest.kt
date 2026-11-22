@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.server.jellyfin.mappers
 
-import java.util.UUID
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlinx.coroutines.runBlocking
@@ -21,7 +22,7 @@ import org.junit.jupiter.api.Test
  * server answers with 404 (#444).
  */
 class ServerUrlTest {
-    private val itemId = UUID.fromString("11111111-1111-1111-1111-111111111111")
+    private val itemId = "11111111-1111-1111-1111-111111111111".toItemId()
 
     private fun context(base: String) =
         MapperContext(base) { _, _ -> throw NotImplementedError("streamUrl") }
@@ -70,14 +71,14 @@ class ServerUrlTest {
         )
 
     private fun transcodePath(base: String) = runBlocking {
-        source("/videos/$itemId/master.m3u8?VideoCodec=h264")
+        source("/videos/${itemId.asString()}/master.m3u8?VideoCodec=h264")
             .toFindroidSource(context(base), itemId)
             .path
     }
 
     private fun subtitlePath(
         base: String,
-        deliveryUrl: String? = "/Videos/$itemId/source/Subtitles/2/0/Stream.srt",
+        deliveryUrl: String? = "/Videos/${itemId.asString()}/source/Subtitles/2/0/Stream.srt",
     ) = subtitle(deliveryUrl).toFindroidMediaStream(base).path
 
     @Test
@@ -104,7 +105,7 @@ class ServerUrlTest {
     fun `transcode url on a server under a path has one slash after the path`() {
         // The address as the SDK's discovery stores it: with a trailing slash.
         assertEquals(
-            "https://demo.jellyfin.org/stable/videos/$itemId/master.m3u8?VideoCodec=h264",
+            "https://demo.jellyfin.org/stable/videos/${itemId.asString()}/master.m3u8?VideoCodec=h264",
             transcodePath("https://demo.jellyfin.org/stable/"),
         )
     }
@@ -112,7 +113,7 @@ class ServerUrlTest {
     @Test
     fun `transcode url on a server at the root of a host is unchanged`() {
         assertEquals(
-            "https://jf.example/videos/$itemId/master.m3u8?VideoCodec=h264",
+            "https://jf.example/videos/${itemId.asString()}/master.m3u8?VideoCodec=h264",
             transcodePath("https://jf.example"),
         )
     }
@@ -120,7 +121,7 @@ class ServerUrlTest {
     @Test
     fun `subtitle url on a server under a path has one slash after the path`() {
         assertEquals(
-            "https://demo.jellyfin.org/stable/Videos/$itemId/source/Subtitles/2/0/Stream.srt",
+            "https://demo.jellyfin.org/stable/Videos/${itemId.asString()}/source/Subtitles/2/0/Stream.srt",
             subtitlePath("https://demo.jellyfin.org/stable/"),
         )
     }
@@ -128,7 +129,7 @@ class ServerUrlTest {
     @Test
     fun `subtitle url on a server at the root of a host is unchanged`() {
         assertEquals(
-            "https://jf.example/Videos/$itemId/source/Subtitles/2/0/Stream.srt",
+            "https://jf.example/Videos/${itemId.asString()}/source/Subtitles/2/0/Stream.srt",
             subtitlePath("https://jf.example"),
         )
     }
@@ -142,15 +143,15 @@ class ServerUrlTest {
     fun `subtitle streams of a transcoded source get the same join`() {
         val mapped = runBlocking {
             source(
-                    "/videos/$itemId/stream.mp4",
-                    listOf(subtitle("/Videos/$itemId/source/Subtitles/2/0/Stream.srt")),
+                    "/videos/${itemId.asString()}/stream.mp4",
+                    listOf(subtitle("/Videos/${itemId.asString()}/source/Subtitles/2/0/Stream.srt")),
                 )
                 .toFindroidSource(context("https://host/jellyfin/"), itemId)
         }
 
-        assertEquals("https://host/jellyfin/videos/$itemId/stream.mp4", mapped.path)
+        assertEquals("https://host/jellyfin/videos/${itemId.asString()}/stream.mp4", mapped.path)
         assertEquals(
-            "https://host/jellyfin/Videos/$itemId/source/Subtitles/2/0/Stream.srt",
+            "https://host/jellyfin/Videos/${itemId.asString()}/source/Subtitles/2/0/Stream.srt",
             mapped.mediaStreams.single().path,
         )
     }

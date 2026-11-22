@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.server.jellyfin.cast
 
-import java.util.UUID
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import org.junit.jupiter.api.Test
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test
 class ReceiverUrlsTest {
 
     private val base = "https://jellyfin.example"
-    private val itemId = UUID.fromString("0b0e8b2c-52b5-4c0e-9d5a-6a1c7c1f3a10")
+    private val itemId = "0b0e8b2c-52b5-4c0e-9d5a-6a1c7c1f3a10".toItemId()
 
     @Test
     fun `a path on the server becomes an absolute URL`() {
@@ -127,16 +128,16 @@ class ReceiverUrlsTest {
     @Test
     fun `a file that plays as it is gets a static stream URL with the access token`() {
         assertEquals(
-            "$base/Videos/$itemId/stream?static=true&mediaSourceId=abc123&api_key=token",
+            "$base/Videos/${itemId.asString()}/stream?static=true&mediaSourceId=abc123&api_key=token",
             castStreamUrl(base, itemId, "abc123", transcodingUrl = null, accessToken = "token"),
         )
         // A blank transcoding URL is none.
         assertEquals(
-            "$base/Videos/$itemId/stream?static=true&mediaSourceId=abc123&api_key=token",
+            "$base/Videos/${itemId.asString()}/stream?static=true&mediaSourceId=abc123&api_key=token",
             castStreamUrl(base, itemId, "abc123", transcodingUrl = " ", accessToken = "token"),
         )
         assertEquals(
-            "https://example.org/jellyfin/Videos/$itemId/stream?static=true&mediaSourceId=abc123",
+            "https://example.org/jellyfin/Videos/${itemId.asString()}/stream?static=true&mediaSourceId=abc123",
             directPlayUrl("https://example.org/jellyfin/", itemId, "abc123", accessToken = null),
         )
     }
@@ -144,7 +145,7 @@ class ReceiverUrlsTest {
     @Test
     fun `what goes into the static stream URL is encoded`() {
         assertEquals(
-            "$base/Videos/$itemId/stream?static=true&mediaSourceId=a%26b%3Dc%20d&api_key=t%2Fk",
+            "$base/Videos/${itemId.asString()}/stream?static=true&mediaSourceId=a%26b%3Dc%20d&api_key=t%2Fk",
             directPlayUrl(base, itemId, "a&b=c d", accessToken = "t/k"),
         )
     }
@@ -153,14 +154,15 @@ class ReceiverUrlsTest {
     fun `a source without an id is not asked for by the name null`() {
         // Uri.Builder wrote "mediaSourceId=null".
         assertEquals(
-            "$base/Videos/$itemId/stream?static=true&api_key=token",
+            "$base/Videos/${itemId.asString()}/stream?static=true&api_key=token",
             directPlayUrl(base, itemId, mediaSourceId = null, accessToken = "token"),
         )
     }
 
     @Test
     fun `a transcode is the server's URL behind the server's address`() {
-        val transcodingUrl = "/videos/$itemId/master.m3u8?MediaSourceId=abc&api_key=token"
+        val transcodingUrl =
+            "/videos/${itemId.asString()}/master.m3u8?MediaSourceId=abc&api_key=token"
 
         assertEquals(
             base + transcodingUrl,

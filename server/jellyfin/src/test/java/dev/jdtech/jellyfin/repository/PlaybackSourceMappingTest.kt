@@ -5,7 +5,7 @@ import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.SubtitleDeliveryMethod
-import java.util.UUID
+import dev.jdtech.jellyfin.models.toItemId
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -28,7 +28,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class PlaybackSourceMappingTest {
-    private val itemId = UUID.fromString("8f086228-6a92-020d-0cb7-35d734765afe")
+    private val itemId = "8f086228-6a92-020d-0cb7-35d734765afe".toItemId()
     // Set on the test thread, read on the server thread.
     @Volatile private var answer = ""
     private val server = StandInServer { request ->

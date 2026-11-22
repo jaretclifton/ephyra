@@ -6,11 +6,13 @@ import dev.jdtech.jellyfin.domain.ports.PlaybackRequest
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.PlaybackTarget
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.DeviceCodecProbe
 import dev.jdtech.jellyfin.repository.StandInServer
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
-import java.util.UUID
+import dev.jdtech.jellyfin.server.jellyfin.toUuid
 import kotlin.test.assertEquals
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -30,7 +32,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class CastPlaybackRequestTest {
-    private val itemId = UUID.fromString("8f086228-6a92-020d-0cb7-35d734765afe")
+    private val itemId = "8f086228-6a92-020d-0cb7-35d734765afe".toItemId()
     private var answer = "playback/cast-direct.json"
     private val server = StandInServer { request ->
         if (request.path.endsWith("/PlaybackInfo")) StandInServer.resource(answer) else null
@@ -40,7 +42,7 @@ class CastPlaybackRequestTest {
         val api =
             JellyfinApi(context).apply {
                 api.update(baseUrl = server.baseUrl, accessToken = "token")
-                userId = StandInServer.USER_ID
+                userId = StandInServer.USER_ID.toUuid()
             }
         JellyfinMediaServer(api, JellyfinDeviceProfiles(DeviceCodecProbe(context))).playback
     }
@@ -52,7 +54,10 @@ class CastPlaybackRequestTest {
 
     private fun sentBody(): String {
         val request = server.requests.single { it.path.endsWith("/PlaybackInfo") }
-        assertEquals("POST /Items/$itemId/PlaybackInfo", "${request.method} ${request.path}")
+        assertEquals(
+            "POST /Items/${itemId.asString()}/PlaybackInfo",
+            "${request.method} ${request.path}",
+        )
         return request.body
     }
 
@@ -88,7 +93,7 @@ class CastPlaybackRequestTest {
         get() =
             listOf(
                 "SUBTITLE 3 English - SUBRIP - External eng subrip external=true forced=false " +
-                    "hi=true default=false null ${server.baseUrl}/Videos/$itemId/$SOURCE_ID" +
+                    "hi=true default=false null ${server.baseUrl}/Videos/${itemId.asString()}/$SOURCE_ID" +
                     "/Subtitles/3/0/Stream.vtt?ApiKey=token",
                 "SUBTITLE 4 Signs nld PGSSUB external=false forced=true hi=false default=false " +
                     "null null",
@@ -119,7 +124,7 @@ class CastPlaybackRequestTest {
         assertEquals(
             Seen(
                 path =
-                    "${server.baseUrl}/Videos/$itemId/stream?static=true" +
+                    "${server.baseUrl}/Videos/${itemId.asString()}/stream?static=true" +
                         "&mediaSourceId=$SOURCE_ID&api_key=token",
                 transcoded = false,
                 // A file has no transcode to end.
@@ -154,7 +159,7 @@ class CastPlaybackRequestTest {
         assertEquals(
             Seen(
                 path =
-                    "${server.baseUrl}/videos/$itemId/master.m3u8?DeviceId=test" +
+                    "${server.baseUrl}/videos/${itemId.asString()}/master.m3u8?DeviceId=test" +
                         "&MediaSourceId=$SOURCE_ID&VideoCodec=h264&AudioCodec=aac" +
                         "&AudioStreamIndex=2&VideoBitrate=7808000&AudioBitrate=192000" +
                         "&SegmentContainer=ts&PlaySessionId=51c3f794f3da47dcb92c5c42f43f8c88" +

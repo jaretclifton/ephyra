@@ -6,6 +6,7 @@ import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.domain.ports.UserImage
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.asString
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import org.jellyfin.sdk.api.sockets.subscribe
@@ -22,7 +23,7 @@ class JellyfinServerSession(private val api: JellyfinApi) : ServerSession {
         get() = api.api.baseUrl
 
     override val userId: UserId?
-        get() = api.userId
+        get() = api.userId?.toUserId()
 
     override val accessToken: String?
         get() = api.api.accessToken
@@ -45,7 +46,7 @@ class JellyfinServerSession(private val api: JellyfinApi) : ServerSession {
 
     override fun use(baseUrl: String?, accessToken: String?, userId: UserId?) {
         api.api.update(baseUrl = baseUrl, accessToken = accessToken)
-        api.userId = userId
+        api.userId = userId?.toUuid()
     }
 
     override suspend fun probe(): Boolean? = api.probeServer()
@@ -73,7 +74,7 @@ class JellyfinServerSession(private val api: JellyfinApi) : ServerSession {
     /** The server hands the picture out without authentication. */
     override fun userImageUrl(userId: UserId, tag: String): String? {
         val base = baseUrl?.trimEnd('/') ?: return null
-        return "$base/Users/$userId/Images/Primary?tag=$tag"
+        return "$base/Users/${userId.asString()}/Images/Primary?tag=$tag"
     }
 
     /** Nothing is sent when the client has no device id. */
@@ -93,7 +94,7 @@ class JellyfinServerSession(private val api: JellyfinApi) : ServerSession {
 
     override suspend fun currentUserImage(): UserImage = call {
         val user = api.userApi.getCurrentUser().content
-        UserImage(user.id, user.primaryImageTag)
+        UserImage(user.id.toUserId(), user.primaryImageTag)
     }
 
     private companion object {

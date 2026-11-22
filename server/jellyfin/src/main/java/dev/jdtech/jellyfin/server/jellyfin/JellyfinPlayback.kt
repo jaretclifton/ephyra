@@ -14,6 +14,7 @@ import dev.jdtech.jellyfin.repository.ResumeThresholds
 import dev.jdtech.jellyfin.server.jellyfin.cast.toReceiverSource
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSegment
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSource
+import java.util.UUID
 import org.jellyfin.sdk.model.api.GeneralCommandType
 import org.jellyfin.sdk.model.api.MediaType
 import org.jellyfin.sdk.model.api.PlayMethod
@@ -23,6 +24,7 @@ import org.jellyfin.sdk.model.api.PlaybackProgressInfo
 import org.jellyfin.sdk.model.api.PlaybackStartInfo
 import org.jellyfin.sdk.model.api.PlaybackStopInfo
 import org.jellyfin.sdk.model.api.RepeatMode
+import org.jellyfin.sdk.model.serializer.toUUIDOrNull
 
 /**
  * [PlaybackPort] over the Jellyfin SDK (#757). No Room: the repository answers with a download
@@ -36,7 +38,9 @@ class JellyfinPlayback(
 
     override suspend fun sources(request: PlaybackRequest): List<FindroidSource> = call {
         val playbackInfo =
-            api.mediaInfoApi.getPostedPlaybackInfo(request.itemId, playbackInfoOf(request)).content
+            api.mediaInfoApi
+                .getPostedPlaybackInfo(request.itemId.toUuid(), playbackInfoOf(request))
+                .content
         // CE (#728): each transcode carries its play session; the player records it when it loads
         // the stream (setPlaySession), not here: a switch that fails keeps the old one. A download
         // is fetched once and has no session to end.
@@ -128,15 +132,33 @@ class JellyfinPlayback(
     }
 
     override suspend fun streamUrl(itemId: ItemId, mediaSourceId: MediaSourceId): String = call {
-        api.videoApi.getVideoStreamUrl(itemId, static = true, mediaSourceId = mediaSourceId)
+        api.videoApi.getVideoStreamUrl(
+            itemId.toUuid(),
+            static = true,
+            mediaSourceId = mediaSourceId,
+        )
     }
 
     override suspend fun segments(itemId: ItemId): List<FindroidSegment> = call {
-        api.mediaSegmentApi.getItemSegments(itemId).content.items.map { it.toFindroidSegment() }
+        api.mediaSegmentApi.getItemSegments(itemId.toUuid()).content.items.map {
+            it.toFindroidSegment()
+        }
     }
 
-    override suspend fun trickplayTile(itemId: ItemId, width: Int, index: Int): ByteArray? = call {
-        api.trickPlayApi.getTrickplayTileImage(itemId, width, index).content
+    override suspend fun trickplayTile(
+        itemId: ItemId,
+        width: Int,
+        index: Int,
+        mediaSourceId: MediaSourceId?,
+    ): ByteArray? = call {
+        api.trickplaySheetApi
+            .getTrickplayTileImage(
+                itemId.toUuid(),
+                width,
+                index,
+                trickplayVersion(itemId, mediaSourceId),
+            )
+            .content
     }
 
     override fun chapterImageUrl(itemId: ItemId, chapterIndex: Int, tag: String): String? =
@@ -149,7 +171,7 @@ class JellyfinPlayback(
         call {
             api.sessionApi.reportPlaybackStart(
                 PlaybackStartInfo(
-                    itemId = report.itemId,
+                    itemId = report.itemId.toUuid(),
                     canSeek = true,
                     isPaused = report.isPaused,
                     isMuted = false,
@@ -166,7 +188,7 @@ class JellyfinPlayback(
         call {
             api.sessionApi.reportPlaybackProgress(
                 PlaybackProgressInfo(
-                    itemId = report.itemId,
+                    itemId = report.itemId.toUuid(),
                     canSeek = true,
                     isPaused = report.isPaused,
                     isMuted = false,
@@ -184,7 +206,7 @@ class JellyfinPlayback(
         call {
             api.sessionApi.reportPlaybackStopped(
                 PlaybackStopInfo(
-                    itemId = report.itemId,
+                    itemId = report.itemId.toUuid(),
                     positionTicks = report.positionTicks,
                     failed = false,
                     // With it the server ends the item's transcode now, not a minute later.
@@ -229,6 +251,16 @@ class JellyfinPlayback(
         const val DOWNLOAD_MAX_BITRATE = 1_000_000_000
     }
 }
+
+/**
+ * CE (#860): the `mediaSourceId` of a trickplay request for [mediaSourceId] of [itemId]. Jellyfin
+ * (`TrickplayController`) looks the images up under `mediaSourceId ?? itemId`: an alternate version
+ * is an item of its own, and the item's own version has the item's id as its source id. So the
+ * parameter is sent only for another version, and the request for an item's own version stays the
+ * one it always was. A source id that is not an id sends none either.
+ */
+internal fun trickplayVersion(itemId: ItemId, mediaSourceId: MediaSourceId?): UUID? =
+    mediaSourceId?.toUUIDOrNull()?.takeIf { it.toItemId() != itemId }
 
 /** CE (#599): Transcode with the transcode's play session, else DirectPlay (see PlaySessions). */
 private fun PlaybackReport.playMethod(): PlayMethod =

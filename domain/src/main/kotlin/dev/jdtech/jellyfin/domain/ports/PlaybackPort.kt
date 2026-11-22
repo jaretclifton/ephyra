@@ -57,7 +57,16 @@ interface PlaybackPort {
 
     suspend fun segments(itemId: ItemId): List<FindroidSegment>
 
-    suspend fun trickplayTile(itemId: ItemId, width: Int, index: Int): ByteArray?
+    /**
+     * Sheet [index] of the trickplay images [width] wide of [mediaSourceId], the version that is
+     * played (#860). Null asks for the item's own version. Null when the server has no such sheet.
+     */
+    suspend fun trickplayTile(
+        itemId: ItemId,
+        width: Int,
+        index: Int,
+        mediaSourceId: MediaSourceId?,
+    ): ByteArray?
 
     /** Null when no server is set. */
     fun chapterImageUrl(itemId: ItemId, chapterIndex: Int, tag: String): String?

@@ -171,7 +171,7 @@ class JellyfinServerConnectorMappingTest {
 
         assertEquals(
             AuthenticatedUser(
-                id = id,
+                id = id.toUserId(),
                 name = "alice",
                 serverId = "abc123",
                 accessToken = "token",

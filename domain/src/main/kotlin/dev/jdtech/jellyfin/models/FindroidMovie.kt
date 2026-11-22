@@ -1,10 +1,9 @@
 package dev.jdtech.jellyfin.models
 
 import java.time.LocalDateTime
-import java.util.UUID
 
 data class FindroidMovie(
-    override val id: UUID,
+    override val id: ItemId,
     override val name: String,
     override val originalTitle: String?,
     override val overview: String,

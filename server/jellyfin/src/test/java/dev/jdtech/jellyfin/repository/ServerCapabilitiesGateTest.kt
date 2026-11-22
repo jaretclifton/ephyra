@@ -5,7 +5,7 @@ import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.models.ServerCapabilities
-import java.util.UUID
+import dev.jdtech.jellyfin.models.toItemId
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -25,7 +25,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class ServerCapabilitiesGateTest {
-    private val itemId = UUID.fromString("8f086228-6a92-020d-0cb7-35d734765afe")
+    private val itemId = "8f086228-6a92-020d-0cb7-35d734765afe".toItemId()
     private val server = StandInServer()
     private val context = StandInServer.context()
     private val preferences =

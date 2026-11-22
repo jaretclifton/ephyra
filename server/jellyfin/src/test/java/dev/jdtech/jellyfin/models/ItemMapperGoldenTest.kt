@@ -67,7 +67,7 @@ class ItemMapperGoldenTest {
 
     private val context =
         MapperContext(BASE_URL) { itemId, mediaSourceId ->
-            "$BASE_URL/Videos/$itemId/stream?mediaSourceId=$mediaSourceId"
+            "$BASE_URL/Videos/${itemId.asString()}/stream?mediaSourceId=$mediaSourceId"
         }
 
     private fun item(name: String): BaseItemDto =
@@ -144,7 +144,7 @@ class ItemMapperGoldenTest {
 
     @Test
     fun source() {
-        val itemId = UUID.fromString("7cfc27a5-0818-7be5-210c-6df99c9d6102")
+        val itemId = "7cfc27a5-0818-7be5-210c-6df99c9d6102".toItemId()
         val parts =
             listOf("source" to "direct", "source-transcode" to "transcode").flatMap { (file, title)
                 ->

@@ -3,7 +3,8 @@ package dev.jdtech.jellyfin.repository
 import android.app.Application
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
-import java.util.UUID
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
 import kotlin.test.assertEquals
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonNull
@@ -30,7 +31,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class PlaybackInfoRequestTest {
-    private val itemId = UUID.fromString("8f086228-6a92-020d-0cb7-35d734765afe")
+    private val itemId = "8f086228-6a92-020d-0cb7-35d734765afe".toItemId()
     private val server = StandInServer { request ->
         if (request.path.endsWith("/PlaybackInfo")) StandInServer.resource(ANSWER) else null
     }
@@ -68,7 +69,10 @@ class PlaybackInfoRequestTest {
 
     private fun sentDecision(): Decision {
         val request = server.requests.single { it.path.endsWith("/PlaybackInfo") }
-        assertEquals("POST /Items/$itemId/PlaybackInfo", "${request.method} ${request.path}")
+        assertEquals(
+            "POST /Items/${itemId.asString()}/PlaybackInfo",
+            "${request.method} ${request.path}",
+        )
         val body = request.json()
         val profile = body.getValue("DeviceProfile").jsonObject
         return Decision(

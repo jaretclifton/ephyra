@@ -1,11 +1,9 @@
 package dev.jdtech.jellyfin.models
 
-import java.util.UUID
-
 data class FindroidItemPersonImage(val uri: String?, val blurHash: String?)
 
 data class FindroidItemPerson(
-    val id: UUID,
+    val id: ItemId,
     val name: String,
     val type: PersonKind,
     val role: String,

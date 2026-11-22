@@ -75,29 +75,29 @@ class JellyfinCatalog(private val api: JellyfinApi) : CatalogPort {
 
     override suspend fun item(id: ItemId): FindroidItem? = call {
         api.libraryApi
-            .getItem(itemId = id, userId = currentUserId)
+            .getItem(itemId = id.toUuid(), userId = currentUserId)
             .content
             .toFindroidItem(mapperContext(), emptyMap())
     }
 
     override suspend fun movie(id: ItemId): FindroidMovie = call {
         api.libraryApi
-            .getItem(id, currentUserId)
+            .getItem(id.toUuid(), currentUserId)
             .content
             .toFindroidMovie(mapperContext(), emptyMap())
     }
 
     override suspend fun show(id: ItemId): FindroidShow = call {
-        api.libraryApi.getItem(id, currentUserId).content.toFindroidShow(baseUrl())
+        api.libraryApi.getItem(id.toUuid(), currentUserId).content.toFindroidShow(baseUrl())
     }
 
     override suspend fun season(id: ItemId): FindroidSeason = call {
-        api.libraryApi.getItem(id, currentUserId).content.toFindroidSeason(baseUrl())
+        api.libraryApi.getItem(id.toUuid(), currentUserId).content.toFindroidSeason(baseUrl())
     }
 
     override suspend fun episode(id: ItemId): FindroidEpisode = call {
         api.libraryApi
-            .getItem(id, currentUserId)
+            .getItem(id.toUuid(), currentUserId)
             .content
             .toFindroidEpisode(mapperContext(), emptyMap())!!
     }
@@ -107,7 +107,7 @@ class JellyfinCatalog(private val api: JellyfinApi) : CatalogPort {
             api.libraryApi
                 .getItems(
                     currentUserId,
-                    parentId = query.parentId,
+                    parentId = query.parentId?.toUuid(),
                     includeItemTypes = query.kinds?.toSdk(),
                     recursive = query.recursive,
                     sortBy = listOf(ItemSortBy.fromName(query.sortBy.sortString)),
@@ -132,7 +132,7 @@ class JellyfinCatalog(private val api: JellyfinApi) : CatalogPort {
         api.libraryApi
             .getItems(
                 currentUserId,
-                parentId = query.parentId,
+                parentId = query.parentId?.toUuid(),
                 includeItemTypes = query.kinds?.toSdk(),
                 recursive = query.recursive,
                 filters = query.filters.toSdkFilters(),
@@ -165,7 +165,7 @@ class JellyfinCatalog(private val api: JellyfinApi) : CatalogPort {
     }
 
     override suspend fun person(id: ItemId): FindroidPerson = call {
-        api.libraryApi.getItem(id, currentUserId).content.toFindroidPerson(baseUrl())
+        api.libraryApi.getItem(id.toUuid(), currentUserId).content.toFindroidPerson(baseUrl())
     }
 
     override suspend fun personItems(
@@ -177,7 +177,7 @@ class JellyfinCatalog(private val api: JellyfinApi) : CatalogPort {
         api.libraryApi
             .getItems(
                 currentUserId,
-                personIds = personIds,
+                personIds = personIds.map { it.toUuid() },
                 includeItemTypes = kinds?.toSdk(),
                 recursive = recursive,
                 limit = limit,
@@ -275,7 +275,7 @@ class JellyfinCatalog(private val api: JellyfinApi) : CatalogPort {
             api.libraryApi
                 .getLatestMedia(
                     currentUserId,
-                    parentId = parentId,
+                    parentId = parentId.toUuid(),
                     includeItemTypes = kinds?.toSdk(),
                     fields = listOf(ItemFields.OVERVIEW),
                     limit = 16,
@@ -287,7 +287,7 @@ class JellyfinCatalog(private val api: JellyfinApi) : CatalogPort {
         }
 
     override suspend fun seasons(seriesId: ItemId): List<FindroidSeason> = call {
-        api.showApi.getSeasons(seriesId, currentUserId).content.items.map {
+        api.showApi.getSeasons(seriesId.toUuid(), currentUserId).content.items.map {
             it.toFindroidSeason(baseUrl())
         }
     }
@@ -300,7 +300,7 @@ class JellyfinCatalog(private val api: JellyfinApi) : CatalogPort {
             .getNextUp(
                 currentUserId,
                 limit = 24,
-                seriesId = seriesId,
+                seriesId = seriesId?.toUuid(),
                 fields = listOf(ItemFields.OVERVIEW),
                 imageTypeLimit = 1,
                 enableImageTypes = WIDE_ROW_IMAGE_TYPES,
@@ -322,11 +322,11 @@ class JellyfinCatalog(private val api: JellyfinApi) : CatalogPort {
     ): List<FindroidEpisode> = call {
         api.showApi
             .getEpisodes(
-                seriesId,
+                seriesId.toUuid(),
                 currentUserId,
-                seasonId = seasonId,
+                seasonId = seasonId?.toUuid(),
                 fields = fields?.map { it.toSdk() },
-                startItemId = startItemId,
+                startItemId = startItemId?.toUuid(),
                 limit = limit,
             )
             .content
@@ -336,10 +336,10 @@ class JellyfinCatalog(private val api: JellyfinApi) : CatalogPort {
 
     override suspend fun similar(itemId: ItemId, limit: Int): List<FindroidItem> = call {
         api.libraryApi
-            .getSimilarItems(itemId, userId = currentUserId, limit = limit)
+            .getSimilarItems(itemId.toUuid(), userId = currentUserId, limit = limit)
             .content
             .items
-            .filter { it.id != itemId }
+            .filter { it.id.toItemId() != itemId }
             .toFindroidItems()
     }
 
@@ -350,12 +350,12 @@ class JellyfinCatalog(private val api: JellyfinApi) : CatalogPort {
     ): List<FindroidMovie> = call {
         val trailersAsync = async {
             if (localTrailers) {
-                api.libraryApi.getLocalTrailers(itemId, currentUserId).content
+                api.libraryApi.getLocalTrailers(itemId.toUuid(), currentUserId).content
             } else emptyList()
         }
         val featuresAsync = async {
             if (specialFeatures) {
-                api.libraryApi.getSpecialFeatures(itemId, currentUserId).content
+                api.libraryApi.getSpecialFeatures(itemId.toUuid(), currentUserId).content
             } else emptyList()
         }
         (trailersAsync.await() + featuresAsync.await())
@@ -365,7 +365,7 @@ class JellyfinCatalog(private val api: JellyfinApi) : CatalogPort {
 
     override suspend fun collectionsOf(itemId: ItemId): List<FindroidItem> = call {
         api.libraryApi
-            .getItemCollections(itemId, userId = currentUserId)
+            .getItemCollections(itemId.toUuid(), userId = currentUserId)
             .content
             .items
             .toFindroidItems()
@@ -374,7 +374,7 @@ class JellyfinCatalog(private val api: JellyfinApi) : CatalogPort {
     override suspend fun themeSongUrl(itemId: ItemId): String? = call {
         val song =
             api.libraryApi
-                .getThemeSongs(itemId, currentUserId, inheritFromParent = true)
+                .getThemeSongs(itemId.toUuid(), currentUserId, inheritFromParent = true)
                 .content
                 .items
                 .firstOrNull() ?: return@call null

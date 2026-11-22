@@ -218,7 +218,17 @@ interface JellyfinRepository {
      */
     suspend fun getServerSegments(itemId: UUID): List<FindroidSegment> = getSegments(itemId)
 
-    suspend fun getTrickplayData(itemId: UUID, width: Int, index: Int): ByteArray?
+    /**
+     * Sheet [index] of the trickplay images [width] wide of [itemId]. CE (#860): [mediaSourceId] is
+     * the version that is played, whose sheets these are, from a download or the server; null keeps
+     * what it did before: any downloaded version's sheets, else the server's for the item.
+     */
+    suspend fun getTrickplayData(
+        itemId: UUID,
+        width: Int,
+        index: Int,
+        mediaSourceId: String? = null,
+    ): ByteArray?
 
     /**
      * CE (#141): a stream URL for the first theme song of [itemId] (a series), or null when the

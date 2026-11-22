@@ -50,6 +50,7 @@ import dev.jdtech.jellyfin.core.Constants
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisodes
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovies
+import dev.jdtech.jellyfin.core.presentation.session.LocalServerSession
 import dev.jdtech.jellyfin.film.presentation.collection.CollectionState
 import dev.jdtech.jellyfin.film.presentation.favorites.FavoritesViewModel
 import dev.jdtech.jellyfin.models.CollectionSection
@@ -95,7 +96,8 @@ fun FavoritesScreen(
     }
 
     FavoritesScreenLayout(
-        state = state,
+        // CE (#866): never a frame of the previous user's favourites after a switch.
+        state = state.shownTo(LocalServerSession.current.userId),
         loaded = loaded,
         onItemClick = { item ->
             when (item) {

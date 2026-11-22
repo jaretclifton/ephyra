@@ -4,6 +4,7 @@ import dev.jdtech.jellyfin.domain.ports.PlaybackPort
 import dev.jdtech.jellyfin.domain.ports.PlaybackReport
 import dev.jdtech.jellyfin.domain.ports.PlaybackRequest
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
@@ -172,7 +173,7 @@ abstract class PlaybackContract : MediaServerContract() {
         val episode = library.season1Episodes.first()
         val info = assertNotNull(episode.trickplayInfo?.values?.firstOrNull())
 
-        val tile = server.playback.trickplayTile(episode.id, info.width, 0)
+        val tile = server.playback.trickplayTile(episode.id, info.width, 0, mediaSourceId = null)
 
         assertTrue(tile != null && tile.isNotEmpty(), "no tile")
     }
@@ -201,7 +202,7 @@ abstract class PlaybackContract : MediaServerContract() {
         assumeFalse(server.capabilities.trickplay)
         val episode = library.season1Episodes.first()
 
-        assertNull(server.playback.trickplayTile(episode.id, 320, 0))
+        assertNull(server.playback.trickplayTile(episode.id, 320, 0, mediaSourceId = null))
     }
 
     @Test
@@ -246,7 +247,7 @@ abstract class PlaybackContract : MediaServerContract() {
         assertCancellable { playback.sources(PlaybackRequest(library.movieWithResume.id, player)) }
     }
 
-    private fun report(id: java.util.UUID, positionTicks: Long) =
+    private fun report(id: ItemId, positionTicks: Long) =
         PlaybackReport(
             itemId = id,
             positionTicks = positionTicks,

@@ -6,7 +6,8 @@ import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.User
-import java.util.UUID
+import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toUserId
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlinx.coroutines.runBlocking
@@ -55,7 +56,7 @@ class CurrentUserImageTest {
 
     private companion object {
         const val SERVER = "server"
-        val OTHER: UUID = UUID.fromString("00000000-0000-0000-0000-000000000002")
+        val OTHER: UserId = "00000000-0000-0000-0000-000000000002".toUserId()
         const val ANSWER =
             "{\"Id\":\"00000000-0000-0000-0000-000000000002\",\"Name\":\"Token\"," +
                 "\"PrimaryImageTag\":\"tag-of-other\"," +

@@ -1,7 +1,7 @@
 package dev.jdtech.jellyfin.repository
 
 import android.app.Application
-import java.util.UUID
+import dev.jdtech.jellyfin.models.toItemId
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -53,7 +53,7 @@ class HomeRowFieldsTest {
 
     @Test
     fun `Latest asks for the overview`() = runBlocking {
-        repository().getLatestMedia(UUID.fromString("22222222-2222-2222-2222-222222222222"))
+        repository().getLatestMedia("22222222-2222-2222-2222-222222222222".toItemId())
         assertAsksForOverview("/Items/Latest")
     }
 }

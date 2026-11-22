@@ -1,7 +1,7 @@
 package dev.jdtech.jellyfin.models
 
 data class FindroidSource(
-    val id: String,
+    val id: MediaSourceId,
     val name: String,
     val type: FindroidSourceType,
     val path: String,

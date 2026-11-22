@@ -2,8 +2,9 @@ package dev.jdtech.jellyfin.server.jellyfin.mappers
 
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.firstTagline
-import java.util.UUID
+import dev.jdtech.jellyfin.server.jellyfin.toItemId
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.BaseItemKind
 import org.jellyfin.sdk.model.api.PlayAccess
@@ -14,13 +15,13 @@ import org.jellyfin.sdk.model.api.PlayAccess
  */
 internal suspend fun BaseItemDto.toFindroidMovie(
     context: MapperContext,
-    localSources: Map<UUID, List<FindroidSource>>,
+    localSources: Map<ItemId, List<FindroidSource>>,
 ): FindroidMovie {
     val sources = mutableListOf<FindroidSource>()
-    sources.addAll(mediaSources?.map { it.toFindroidSource(context, id) } ?: emptyList())
-    sources.addAll(localSources[id].orEmpty())
+    sources.addAll(mediaSources?.map { it.toFindroidSource(context, id.toItemId()) } ?: emptyList())
+    sources.addAll(localSources[id.toItemId()].orEmpty())
     return FindroidMovie(
-        id = id,
+        id = id.toItemId(),
         name = name.orEmpty(),
         originalTitle = originalTitle,
         overview = overview.orEmpty(),
@@ -54,16 +55,6 @@ internal suspend fun BaseItemDto.toFindroidMovie(
         specialFeatureCount = specialFeatureCount,
         images = toFindroidImages(context.baseUrl),
         chapters = toFindroidChapters(),
-        trickplayInfo =
-            trickplay
-                ?.mapNotNull { (width, info) ->
-                    info
-                        ?.keys
-                        ?.maxOrNull()
-                        ?.let { info[it] }
-                        ?.toFindroidTrickplayInfo()
-                        ?.let { width to it }
-                }
-                ?.toMap(),
+        trickplayInfo = toFindroidTrickplayInfo(),
     )
 }

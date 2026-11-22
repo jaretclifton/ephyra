@@ -1,9 +1,11 @@
 package dev.jdtech.jellyfin.server.jellyfin.cast
 
+import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.MediaSourceId
+import dev.jdtech.jellyfin.models.asString
 import java.net.URI
 import java.net.URISyntaxException
 import java.net.URLEncoder
-import java.util.UUID
 
 private val SCHEME = Regex("^[A-Za-z][A-Za-z0-9+.-]*:")
 
@@ -68,8 +70,8 @@ private fun encode(value: String): String = URLEncoder.encode(value, "UTF-8").re
 /** The file of [itemId] as it is, with the access token the receiver needs to fetch it. */
 internal fun directPlayUrl(
     baseUrl: String,
-    itemId: UUID,
-    mediaSourceId: String?,
+    itemId: ItemId,
+    mediaSourceId: MediaSourceId?,
     accessToken: String?,
 ): String {
     val query =
@@ -79,7 +81,7 @@ internal fun directPlayUrl(
                 accessToken?.let { "api_key" to it },
             )
             .joinToString("&") { (name, value) -> "$name=${encode(value)}" }
-    return "${baseUrl.removeSuffix("/")}/Videos/$itemId/stream?$query"
+    return "${baseUrl.removeSuffix("/")}/Videos/${itemId.asString()}/stream?$query"
 }
 
 /**
@@ -88,8 +90,8 @@ internal fun directPlayUrl(
  */
 internal fun castStreamUrl(
     baseUrl: String,
-    itemId: UUID,
-    mediaSourceId: String?,
+    itemId: ItemId,
+    mediaSourceId: MediaSourceId?,
     transcodingUrl: String?,
     accessToken: String?,
 ): String =
