@@ -5,10 +5,10 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.isDownloading
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
-import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -28,7 +28,7 @@ constructor(private val downloader: Downloader, private val downloadQueue: Downl
     private val eventsChannel = Channel<DownloaderEvent>()
     val events = eventsChannel.receiveAsFlow()
 
-    private var trackedItemId: UUID? = null
+    private var trackedItemId: ItemId? = null
     private var observerJob: Job? = null
     private var wasCompleted = false
     private var wasFailed = false
@@ -51,7 +51,7 @@ constructor(private val downloader: Downloader, private val downloadQueue: Downl
         startObserving(item.id)
     }
 
-    private fun startObserving(itemId: UUID) {
+    private fun startObserving(itemId: ItemId) {
         observerJob?.cancel()
         observerJob = viewModelScope.launch {
             downloadQueue.entries.collect { entries ->

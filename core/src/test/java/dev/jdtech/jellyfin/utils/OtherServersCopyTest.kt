@@ -15,14 +15,18 @@ import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
+import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toFindroidEpisode
 import dev.jdtech.jellyfin.models.toFindroidMovie
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
 import java.io.File
 import java.lang.reflect.Proxy
-import java.util.UUID
 import javax.inject.Provider
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -47,13 +51,13 @@ import org.robolectric.shadows.ShadowEnvironment
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class OtherServersCopyTest {
-    private val userA = UUID.fromString("00000000-0000-0000-0000-0000000000a1")
-    private val userB = UUID.fromString("00000000-0000-0000-0000-0000000000b1")
-    private val movieId = UUID.fromString("00000000-0000-0000-0000-000000000040")
-    private val showId = UUID.fromString("00000000-0000-0000-0000-000000000020")
-    private val seasonId = UUID.fromString("00000000-0000-0000-0000-000000000021")
-    private val episodeId = UUID.fromString("00000000-0000-0000-0000-000000000022")
-    private val otherEpisodeId = UUID.fromString("00000000-0000-0000-0000-000000000023")
+    private val userA = "00000000-0000-0000-0000-0000000000a1".toUserId()
+    private val userB = "00000000-0000-0000-0000-0000000000b1".toUserId()
+    private val movieId = "00000000-0000-0000-0000-000000000040".toItemId()
+    private val showId = "00000000-0000-0000-0000-000000000020".toItemId()
+    private val seasonId = "00000000-0000-0000-0000-000000000021".toItemId()
+    private val episodeId = "00000000-0000-0000-0000-000000000022".toItemId()
+    private val otherEpisodeId = "00000000-0000-0000-0000-000000000023".toItemId()
 
     private val context: Context = RuntimeEnvironment.getApplication()
     private val room =
@@ -95,13 +99,14 @@ class OtherServersCopyTest {
     private fun current(serverId: String) =
         preferences.setValue(preferences.currentServer, serverId)
 
-    private fun file(itemId: UUID) = File(dir, "$itemId.mkv").apply { writeText("video") }
+    private fun file(itemId: ItemId) =
+        File(dir, "${itemId.asString()}.mkv").apply { writeText("video") }
 
-    private suspend fun storeSource(itemId: UUID): File {
+    private suspend fun storeSource(itemId: ItemId): File {
         val file = file(itemId)
         database.insertSource(
             FindroidSourceDto(
-                id = "source-$itemId",
+                id = "source-${itemId.asString()}",
                 itemId = itemId,
                 name = "Original",
                 type = FindroidSourceType.LOCAL,
@@ -132,7 +137,7 @@ class OtherServersCopyTest {
         return storeSource(movieId)
     }
 
-    private suspend fun storeEpisode(serverId: String, id: UUID, index: Int): File {
+    private suspend fun storeEpisode(serverId: String, id: ItemId, index: Int): File {
         database.insertShow(
             FindroidShowDto(
                 id = showId,
@@ -179,7 +184,7 @@ class OtherServersCopyTest {
         return storeSource(id)
     }
 
-    private suspend fun userData(userId: UUID, itemId: UUID, toBeSynced: Boolean) =
+    private suspend fun userData(userId: UserId, itemId: ItemId, toBeSynced: Boolean) =
         database.insertUserData(
             FindroidUserDataDto(
                 userId = userId,
@@ -242,10 +247,10 @@ class OtherServersCopyTest {
     /** The server's source of the movie, [size] bytes. */
     private fun serverSource(size: Long) =
         FindroidSource(
-            id = "source-$movieId",
+            id = "source-${movieId.asString()}",
             name = "Original",
             type = FindroidSourceType.REMOTE,
-            path = "http://server.invalid/Videos/$movieId/stream",
+            path = "http://server.invalid/Videos/${movieId.asString()}/stream",
             size = size,
             mediaStreams = emptyList(),
         )
@@ -274,7 +279,8 @@ class OtherServersCopyTest {
             }
 
             current(SERVER_B)
-            val (downloadId, error) = downloader.downloadItem(movie, "source-$movieId", 0, null)
+            val (downloadId, error) =
+                downloader.downloadItem(movie, "source-${movieId.asString()}", 0, null)
 
             assertEquals(-1L, downloadId)
             assertNotNull(error, "the refusal")
@@ -294,7 +300,8 @@ class OtherServersCopyTest {
         }
 
         current(SERVER_B)
-        val (downloadId, _) = downloader.downloadItem(movie, "source-$movieId", 0, null)
+        val (downloadId, _) =
+            downloader.downloadItem(movie, "source-${movieId.asString()}", 0, null)
 
         assertEquals(-1L, downloadId)
         assertMovieKept(file)

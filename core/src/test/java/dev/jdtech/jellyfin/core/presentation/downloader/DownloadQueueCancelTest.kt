@@ -9,6 +9,7 @@ import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
@@ -138,7 +139,7 @@ class DownloadQueueCancelTest {
         var active = emptyList<Downloader.ActiveDownload>()
         var startResult: Pair<Long, UiText?> = -1L to null
         var progressStatus = DownloadStatus.RUNNING
-        val cancelled = CopyOnWriteArrayList<Pair<UUID, Long>>()
+        val cancelled = CopyOnWriteArrayList<Pair<ItemId, Long>>()
 
         override suspend fun downloadItem(
             item: FindroidItem,
@@ -178,7 +179,7 @@ class DownloadQueueCancelTest {
             smartQueued: Boolean,
         ) = Unit
 
-        override suspend fun removePendingDownload(itemId: UUID) = Unit
+        override suspend fun removePendingDownload(itemId: ItemId) = Unit
 
         override suspend fun getPendingDownloads() = emptyList<Downloader.PendingDownload>()
 

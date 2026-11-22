@@ -4,7 +4,6 @@ import androidx.room3.ColumnInfo
 import androidx.room3.Entity
 import androidx.room3.ForeignKey
 import androidx.room3.PrimaryKey
-import java.util.UUID
 
 @Entity(
     tableName = "users",
@@ -19,7 +18,7 @@ import java.util.UUID
         ],
 )
 data class User(
-    @PrimaryKey val id: UUID,
+    @PrimaryKey val id: UserId,
     val name: String,
     @ColumnInfo(index = true) val serverId: String,
     val accessToken: String? = null,

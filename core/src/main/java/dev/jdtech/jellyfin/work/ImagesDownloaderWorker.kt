@@ -7,10 +7,12 @@ import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dev.jdtech.jellyfin.di.DownloadHttpClient
+import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import java.io.File
 import java.io.IOException
-import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -27,15 +29,15 @@ constructor(
     @DownloadHttpClient private val client: OkHttpClient,
 ) : CoroutineWorker(appContext, params) {
     override suspend fun doWork(): Result {
-        val itemId = UUID.fromString(params.inputData.getString(KEY_ITEM_ID))
+        val itemId = params.inputData.getString(KEY_ITEM_ID)!!.toItemId()
         return downloadImages(itemId = itemId)
     }
 
-    private suspend fun downloadImages(itemId: UUID): Result =
+    private suspend fun downloadImages(itemId: ItemId): Result =
         withContext(Dispatchers.IO) {
             val item = repository.getItem(itemId) ?: return@withContext Result.success()
 
-            val basePath = "images/${item.id}"
+            val basePath = "images/${item.id.asString()}"
             val baseDir = File(appContext.filesDir, basePath)
 
             val uris =

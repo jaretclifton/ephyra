@@ -12,9 +12,12 @@ import dev.jdtech.jellyfin.models.FindroidShowDto
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
+import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.lang.reflect.Proxy
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
@@ -34,12 +37,12 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class StoredItemFallbackTest {
-    private val userId = UUID.fromString("00000000-0000-0000-0000-000000000001")
-    private val showId = UUID.fromString("11111111-1111-1111-1111-111111111111")
-    private val seasonId = UUID.fromString("22222222-2222-2222-2222-222222222222")
-    private val episodeId = UUID.fromString("33333333-3333-3333-3333-333333333333")
-    private val movieId = UUID.fromString("44444444-4444-4444-4444-444444444444")
-    private val unknownId = UUID.fromString("55555555-5555-5555-5555-555555555555")
+    private val userId = "00000000-0000-0000-0000-000000000001".toUserId()
+    private val showId = "11111111-1111-1111-1111-111111111111".toItemId()
+    private val seasonId = "22222222-2222-2222-2222-222222222222".toItemId()
+    private val episodeId = "33333333-3333-3333-3333-333333333333".toItemId()
+    private val movieId = "44444444-4444-4444-4444-444444444444".toItemId()
+    private val unknownId = "55555555-5555-5555-5555-555555555555".toItemId()
 
     private val show =
         FindroidShowDto(
@@ -98,13 +101,13 @@ class StoredItemFallbackTest {
             chapters = null,
         )
 
-    private fun localSource(itemId: UUID) =
+    private fun localSource(itemId: ItemId) =
         FindroidSourceDto(
-            id = "source-$itemId",
+            id = "source-${itemId.asString()}",
             itemId = itemId,
             name = "Original",
             type = FindroidSourceType.LOCAL,
-            path = "/storage/downloads/$itemId.mkv",
+            path = "/storage/downloads/${itemId.asString()}.mkv",
         )
 
     private val database =
@@ -112,7 +115,7 @@ class StoredItemFallbackTest {
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
-            val id = args?.firstOrNull() as? UUID
+            val id = args?.firstOrNull() as? ItemId
             when (method.name) {
                 "observeHasSources" -> flowOf(true)
                 "getEpisodeOfServer" -> episode.takeIf { it.id == id }
@@ -130,7 +133,7 @@ class StoredItemFallbackTest {
                 "getSourcesForItems",
                 "getSourcesForItemsOfServer" ->
                     @Suppress("UNCHECKED_CAST")
-                    (args!![0] as List<UUID>)
+                    (args!![0] as List<ItemId>)
                         .filter { it == episodeId || it == movieId }
                         .map { localSource(it) }
                 "getMediaStreamsForSources" -> emptyList<Any>()
@@ -160,7 +163,7 @@ class StoredItemFallbackTest {
         assertEquals(seasonId, result.seasonId)
         assertEquals(1_200_000_000L, result.playbackPositionTicks)
         assertEquals(listOf(FindroidSourceType.LOCAL), result.sources.map { it.type })
-        assertEquals("/storage/downloads/$episodeId.mkv", result.sources.single().path)
+        assertEquals("/storage/downloads/${episodeId.asString()}.mkv", result.sources.single().path)
     }
 
     @Test

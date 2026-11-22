@@ -8,8 +8,10 @@ import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidMovieDto
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
+import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toUserId
 import java.io.IOException
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -28,9 +30,9 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class UserDataReportTest {
-    private val userId = UUID.fromString("00000000-0000-0000-0000-000000000001")
-    private val movieId = UUID.fromString("00000000-0000-0000-0000-000000000040")
-    private val notStoredId = UUID.fromString("00000000-0000-0000-0000-000000000099")
+    private val userId = "00000000-0000-0000-0000-000000000001".toUserId()
+    private val movieId = "00000000-0000-0000-0000-000000000040".toItemId()
+    private val notStoredId = "00000000-0000-0000-0000-000000000099".toItemId()
 
     private val context: Context = RuntimeEnvironment.getApplication()
     private val room =
@@ -78,7 +80,7 @@ class UserDataReportTest {
 
     private suspend fun report(
         positionTicks: Long,
-        itemId: UUID = movieId,
+        itemId: ItemId = movieId,
         request: suspend () -> Unit = {},
     ): Boolean =
         writeAndReport(

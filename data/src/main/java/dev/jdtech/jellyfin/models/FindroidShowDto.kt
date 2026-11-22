@@ -4,11 +4,10 @@ import androidx.room3.Entity
 import androidx.room3.PrimaryKey
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import java.time.LocalDateTime
-import java.util.UUID
 
 @Entity(tableName = "shows")
 data class FindroidShowDto(
-    @PrimaryKey val id: UUID,
+    @PrimaryKey val id: ItemId,
     val serverId: String?,
     val name: String,
     val originalTitle: String?,
@@ -41,7 +40,7 @@ fun FindroidShow.toFindroidShowDto(serverId: String? = null): FindroidShowDto {
 
 suspend fun FindroidShowDto.toFindroidShow(
     database: ServerDatabaseDao,
-    userId: UUID,
+    userId: UserId,
 ): FindroidShow {
     val userData = database.getUserDataOrCreateNew(id, userId)
     return FindroidShow(
@@ -69,7 +68,7 @@ suspend fun FindroidShowDto.toFindroidShow(
     )
 }
 
-fun FindroidShowDto.toLocalFindroidImages(itemId: UUID): FindroidImages {
+fun FindroidShowDto.toLocalFindroidImages(itemId: ItemId): FindroidImages {
     return FindroidImages(
         primary = localImagePath(itemId, "primary"),
         backdrop = localImagePath(itemId, "backdrop"),

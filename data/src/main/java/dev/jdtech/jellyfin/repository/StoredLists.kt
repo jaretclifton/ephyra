@@ -10,17 +10,19 @@ import dev.jdtech.jellyfin.models.FindroidMovieDto
 import dev.jdtech.jellyfin.models.FindroidShowDto
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
 import dev.jdtech.jellyfin.models.ItemFilter
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
+import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
 import dev.jdtech.jellyfin.models.localImagePath
 import dev.jdtech.jellyfin.models.toFindroidEpisode
 import dev.jdtech.jellyfin.models.toFindroidMovie
 import dev.jdtech.jellyfin.models.toFindroidShow
+import dev.jdtech.jellyfin.models.toItemId
 import java.time.LocalDateTime
 import java.util.Locale
-import java.util.UUID
 
 /**
  * CE (#775): the two libraries the Media tab shows while the server is away, holding the downloaded
@@ -28,10 +30,10 @@ import java.util.UUID
  * not know these ids, so whatever asks for their contents gets Room's answer.
  */
 object StoredLibraries {
-    val MOVIES: UUID = UUID.fromString("a1b2c3d4-0000-0000-0000-000000000001")
-    val SHOWS: UUID = UUID.fromString("a1b2c3d4-0000-0000-0000-000000000002")
+    val MOVIES: ItemId = "a1b2c3d4-0000-0000-0000-000000000001".toItemId()
+    val SHOWS: ItemId = "a1b2c3d4-0000-0000-0000-000000000002".toItemId()
 
-    fun isStored(id: UUID?): Boolean = id == MOVIES || id == SHOWS
+    fun isStored(id: ItemId?): Boolean = id == MOVIES || id == SHOWS
 }
 
 /** CE (#775): the names of [StoredLibraries], from the app's strings (the data module has none). */
@@ -52,7 +54,7 @@ fun interface StoredLibraryNames {
  * downloaded, so they are sorted and filtered in memory, on the rows before they are mapped.
  */
 internal class StoredLists(private val database: ServerDatabaseDao) {
-    suspend fun favorites(serverId: String, userId: UUID): List<Any> =
+    suspend fun favorites(serverId: String, userId: UserId): List<Any> =
         database.getFavoriteMoviesOfServer(serverId, userId) +
             database.getFavoriteShowsOfServer(serverId, userId) +
             database.getFavoriteEpisodesOfServer(serverId, userId)
@@ -93,14 +95,14 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
     suspend fun libraries(
         serverId: String,
         names: StoredLibraryNames,
-        storedImage: (itemId: UUID, image: String) -> Boolean = { _, _ -> false },
+        storedImage: (itemId: ItemId, image: String) -> Boolean = { _, _ -> false },
     ): List<FindroidCollection> {
         val movies = database.getDownloadedMoviesOfServer(serverId).map { it.id }
         val shows = database.getDownloadedShowsOfServer(serverId).map { it.id }
         if (movies.isEmpty() && shows.isEmpty()) return emptyList()
         val downloaded =
             database.getDownloadDatesOfServer(serverId).associate { it.itemId to it.date }
-        fun artwork(ids: List<UUID>): FindroidImages {
+        fun artwork(ids: List<ItemId>): FindroidImages {
             val newestFirst = ids.sortedByDescending { downloaded[it] ?: Long.MIN_VALUE }
             val image = STORED_IMAGES.firstNotNullOfOrNull { image ->
                 newestFirst
@@ -120,7 +122,7 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
     }
 
     private fun library(
-        id: UUID,
+        id: ItemId,
         type: CollectionType,
         names: StoredLibraryNames,
         images: FindroidImages,
@@ -133,8 +135,8 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
      */
     suspend fun libraryContents(
         serverId: String,
-        userId: UUID,
-        libraryId: UUID,
+        userId: UserId,
+        libraryId: ItemId,
         sortBy: SortBy,
         sortOrder: SortOrder,
         filters: Set<ItemFilter>,
@@ -146,8 +148,8 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
     /** How many rows of [libraryId] sort before [nameLessThan], for the A–Z bar. */
     suspend fun libraryCount(
         serverId: String,
-        userId: UUID,
-        libraryId: UUID,
+        userId: UserId,
+        libraryId: ItemId,
         filters: Set<ItemFilter>,
         nameLessThan: String?,
     ): Int {
@@ -157,7 +159,7 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
         return entries.count { it.sortName < boundary }
     }
 
-    suspend fun toItems(dtos: List<Any>, serverId: String, userId: UUID): List<FindroidItem> {
+    suspend fun toItems(dtos: List<Any>, serverId: String, userId: UserId): List<FindroidItem> {
         val local =
             database.getLocalSourcesForItems(
                 dtos.mapNotNull {
@@ -182,7 +184,7 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
     /** A row with what sorting and filtering read. */
     private class Entry(
         val dto: Any,
-        val id: UUID,
+        val id: ItemId,
         name: String,
         val rating: Float?,
         val released: LocalDateTime?,
@@ -193,8 +195,8 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
 
     private suspend fun entries(
         serverId: String,
-        userId: UUID,
-        libraryId: UUID,
+        userId: UserId,
+        libraryId: ItemId,
         filters: Set<ItemFilter>,
     ): List<Entry> {
         val userData = database.getUserDataOfUser(userId).associateBy { it.itemId }
@@ -228,7 +230,7 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
     private suspend fun sorted(
         entries: List<Entry>,
         serverId: String,
-        userId: UUID,
+        userId: UserId,
         sortBy: SortBy,
     ): List<Entry> {
         val byName = compareBy<Entry>({ it.sortName }, { it.id })

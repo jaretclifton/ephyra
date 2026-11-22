@@ -13,15 +13,17 @@ import dev.jdtech.jellyfin.domain.ports.ServerUserData
 import dev.jdtech.jellyfin.domain.ports.UserDataSyncPort
 import dev.jdtech.jellyfin.domain.ports.UserDataSyncPorts
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.ServerType
+import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.serverExceptionOrNull
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.util.UUID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -146,7 +148,7 @@ constructor(
     private suspend fun refreshFromServer(
         port: UserDataSyncPort,
         serverId: String,
-        userId: UUID,
+        userId: UserId,
     ): Int {
         val itemIds = database.getSyncedUserDataItemIds(serverId, userId)
         if (itemIds.isEmpty()) return 0
@@ -187,12 +189,14 @@ constructor(
      */
     private suspend fun keepServerProgress(
         port: UserDataSyncPort,
-        userId: UUID,
+        userId: UserId,
         row: FindroidUserDataDto,
         server: ServerUserData,
-        leftPlaying: UUID?,
+        leftPlaying: ItemId?,
     ): Boolean {
-        Timber.d("Item ${row.itemId} was played later elsewhere, keeping the server's progress")
+        Timber.d(
+            "Item ${row.itemId.asString()} was played later elsewhere, keeping the server's progress"
+        )
         if (endsStaleSession(row.itemId, leftPlaying, playbackEvents.playingItemId.value)) {
             port.reportStopped(row.itemId, server.playbackPositionTicks)
         }
@@ -217,7 +221,7 @@ constructor(
 
     private suspend fun syncUserData(
         port: UserDataSyncPort,
-        userId: UUID,
+        userId: UserId,
         items: List<FindroidUserDataDto>,
     ): SyncOutcome {
         // The item the server still has "playing" for this device: its stop report did not get
@@ -276,7 +280,9 @@ constructor(
                 ) {
                     // End it with the real position, or the server's idle check ends it minutes
                     // later with the last position it heard, over what is written below (#584).
-                    Timber.d("Ending the server's playback session of ${userData.itemId}")
+                    Timber.d(
+                        "Ending the server's playback session of ${userData.itemId.asString()}"
+                    )
                     port.reportStopped(userData.itemId, userData.playbackPositionTicks)
                 }
 
@@ -320,14 +326,16 @@ constructor(
                     AfterStatus.DROP -> {
                         // The item is gone from the server: there is nothing to send, ever.
                         // Without this the row of a deleted download would be retried for good.
-                        Timber.w("Item ${userData.itemId} is gone from the server, dropping it")
+                        Timber.w(
+                            "Item ${userData.itemId.asString()} is gone from the server, dropping it"
+                        )
                         database.setUserDataToBeSynced(userId, userData.itemId, false)
                         database.deleteUserDataIfOrphaned(userId, userData.itemId)
                     }
                     AfterStatus.LEAVE ->
                         // Refused, and a retry in 30 seconds would be refused again. The row
                         // stays marked for the next sync: app start, foreground, the next write.
-                        Timber.w("The server refused ${userData.itemId} with $status")
+                        Timber.w("The server refused ${userData.itemId.asString()} with $status")
                     AfterStatus.RETRY -> {
                         Timber.e(e, "Failed to sync user data")
                         allOk = false
@@ -384,8 +392,8 @@ internal fun epochMillisOf(dateTime: LocalDateTime, zone: ZoneId = ZoneId.system
  * may be a few seconds behind them.
  */
 internal fun serverUserDataToStore(
-    onServer: Map<UUID, ServerUserData>,
-    playingHere: UUID?,
+    onServer: Map<ItemId, ServerUserData>,
+    playingHere: ItemId?,
 ): List<ServerUserData> = onServer.values.filter { it.itemId != playingHere }
 
 /**
@@ -394,7 +402,7 @@ internal fun serverUserDataToStore(
  * current, and a refresh would read the server for nothing. The player is closed before it reports
  * the stop, so the run that sends the stop refreshes.
  */
-internal fun refreshesDownloads(hasDownloads: Boolean, playingHere: UUID?): Boolean =
+internal fun refreshesDownloads(hasDownloads: Boolean, playingHere: ItemId?): Boolean =
     hasDownloads && playingHere == null
 
 /**
@@ -403,9 +411,9 @@ internal fun refreshesDownloads(hasDownloads: Boolean, playingHere: UUID?): Bool
  * the item open in the player here ([playingHere]) the session is alive and reports for itself.
  */
 internal fun endsStaleSession(
-    rowItemId: UUID,
-    leftPlayingOnServer: UUID?,
-    playingHere: UUID?,
+    rowItemId: ItemId,
+    leftPlayingOnServer: ItemId?,
+    playingHere: ItemId?,
 ): Boolean = leftPlayingOnServer == rowItemId && playingHere != rowItemId
 
 internal enum class AfterStatus {

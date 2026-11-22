@@ -6,8 +6,9 @@ import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
@@ -25,10 +26,10 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class SeriesTrackPreferenceTest {
-    private val userId = UUID.fromString("00000000-0000-0000-0000-000000000001")
-    private val otherUserId = UUID.fromString("00000000-0000-0000-0000-000000000002")
-    private val seriesId = UUID.fromString("00000000-0000-0000-0000-000000000020")
-    private val otherSeriesId = UUID.fromString("00000000-0000-0000-0000-000000000021")
+    private val userId = "00000000-0000-0000-0000-000000000001".toUserId()
+    private val otherUserId = "00000000-0000-0000-0000-000000000002".toUserId()
+    private val seriesId = "00000000-0000-0000-0000-000000000020".toItemId()
+    private val otherSeriesId = "00000000-0000-0000-0000-000000000021".toItemId()
 
     private val context: Context = RuntimeEnvironment.getApplication()
     private val room =

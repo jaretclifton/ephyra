@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.utils
 
-import java.util.UUID
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import org.junit.jupiter.api.Test
@@ -138,23 +139,23 @@ class OrphanSweepHelpersTest {
 
     // ── shouldDeleteOrphanArtwork ─────────────────────────────────────────────
 
-    private val itemId = UUID.fromString("158fe3fa-2f4f-73fa-c381-57483068d1c1")
+    private val itemId = "158fe3fa-2f4f-73fa-c381-57483068d1c1".toItemId()
 
     @Test
     fun `artwork of an item without a row is deleted once a day old`() {
-        assertTrue(shouldDeleteOrphanArtwork(itemId.toString(), old, now, emptySet()))
+        assertTrue(shouldDeleteOrphanArtwork(itemId.asString(), old, now, emptySet()))
     }
 
     @Test
     fun `artwork of a stored item is kept`() {
-        assertFalse(shouldDeleteOrphanArtwork(itemId.toString(), old, now, setOf(itemId)))
+        assertFalse(shouldDeleteOrphanArtwork(itemId.asString(), old, now, setOf(itemId)))
     }
 
     @Test
     fun `artwork with a fresh, missing or future newest file is kept`() {
-        assertFalse(shouldDeleteOrphanArtwork(itemId.toString(), fresh, now, emptySet()))
-        assertFalse(shouldDeleteOrphanArtwork(itemId.toString(), 0L, now, emptySet()))
-        assertFalse(shouldDeleteOrphanArtwork(itemId.toString(), now + 1, now, emptySet()))
+        assertFalse(shouldDeleteOrphanArtwork(itemId.asString(), fresh, now, emptySet()))
+        assertFalse(shouldDeleteOrphanArtwork(itemId.asString(), 0L, now, emptySet()))
+        assertFalse(shouldDeleteOrphanArtwork(itemId.asString(), now + 1, now, emptySet()))
     }
 
     @Test

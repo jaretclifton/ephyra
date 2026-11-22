@@ -8,6 +8,7 @@ import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
@@ -183,7 +184,7 @@ class DownloadQueueNetworkTest {
             smartQueued: Boolean,
         ) = Unit
 
-        override suspend fun removePendingDownload(itemId: UUID) = Unit
+        override suspend fun removePendingDownload(itemId: ItemId) = Unit
 
         override suspend fun getPendingDownloads() = emptyList<Downloader.PendingDownload>()
 

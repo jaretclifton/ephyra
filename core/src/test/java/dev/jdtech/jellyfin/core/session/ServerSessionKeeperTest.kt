@@ -15,6 +15,9 @@ import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.time.Duration
 import java.util.UUID
@@ -180,7 +183,7 @@ class ServerSessionKeeperTest {
 
     @Test
     fun `no sign-out when Room has another current user meanwhile`() = runBlocking {
-        val other = UUID.fromString("00000000-0000-0000-0000-000000000002")
+        val other = "00000000-0000-0000-0000-000000000002".toItemId()
         database.insertUser(
             User(id = other, name = "Other", serverId = SERVER, accessToken = "other-token")
         )
@@ -301,6 +304,6 @@ class ServerSessionKeeperTest {
         const val ADDRESS = "http://127.0.0.1:8096"
         const val TOKEN = "token"
         val ADDRESS_ID: UUID = UUID.fromString("00000000-0000-0000-0000-0000000000ad")
-        val USER_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
+        val USER_ID: UserId = "00000000-0000-0000-0000-000000000001".toUserId()
     }
 }

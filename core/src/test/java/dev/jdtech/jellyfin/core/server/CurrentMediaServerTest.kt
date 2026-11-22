@@ -7,10 +7,11 @@ import dev.jdtech.jellyfin.domain.ports.PlaybackPort
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.domain.ports.UnsupportedServerTypeException
 import dev.jdtech.jellyfin.domain.ports.UserDataPort
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerType
+import dev.jdtech.jellyfin.models.toItemId
 import java.lang.reflect.Proxy
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
@@ -111,7 +112,7 @@ class CurrentMediaServerTest {
     }
 
     private companion object {
-        val ITEM: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
+        val ITEM: ItemId = "00000000-0000-0000-0000-000000000001".toItemId()
 
         inline fun <reified T> uncalled(): T =
             Proxy.newProxyInstance(T::class.java.classLoader, arrayOf(T::class.java)) {

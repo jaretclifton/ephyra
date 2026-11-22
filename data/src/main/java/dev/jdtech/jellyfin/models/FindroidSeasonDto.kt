@@ -5,7 +5,6 @@ import androidx.room3.ForeignKey
 import androidx.room3.Index
 import androidx.room3.PrimaryKey
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import java.util.UUID
 
 @Entity(
     tableName = "seasons",
@@ -21,8 +20,8 @@ import java.util.UUID
     indices = [Index("seriesId")],
 )
 data class FindroidSeasonDto(
-    @PrimaryKey val id: UUID,
-    val seriesId: UUID,
+    @PrimaryKey val id: ItemId,
+    val seriesId: ItemId,
     val name: String,
     val seriesName: String,
     val overview: String,
@@ -42,7 +41,7 @@ fun FindroidSeason.toFindroidSeasonDto(): FindroidSeasonDto {
 
 suspend fun FindroidSeasonDto.toFindroidSeason(
     database: ServerDatabaseDao,
-    userId: UUID,
+    userId: UserId,
 ): FindroidSeason {
     val userData = database.getUserDataOrCreateNew(id, userId)
     return FindroidSeason(
@@ -64,7 +63,7 @@ suspend fun FindroidSeasonDto.toFindroidSeason(
     )
 }
 
-fun FindroidSeasonDto.toLocalFindroidImages(itemId: UUID): FindroidImages {
+fun FindroidSeasonDto.toLocalFindroidImages(itemId: ItemId): FindroidImages {
     return FindroidImages(
         primary = localImagePath(itemId, "primary"),
         backdrop = localImagePath(itemId, "backdrop"),

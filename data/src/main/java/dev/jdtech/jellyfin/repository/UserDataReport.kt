@@ -2,7 +2,8 @@ package dev.jdtech.jellyfin.repository
 
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
-import java.util.UUID
+import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.UserId
 import kotlinx.coroutines.CancellationException
 
 /**
@@ -25,8 +26,8 @@ import kotlinx.coroutines.CancellationException
 internal suspend fun writeAndReport(
     database: ServerDatabaseDao,
     syncRequester: UserDataSyncRequester,
-    userId: UUID,
-    itemId: UUID,
+    userId: UserId,
+    itemId: ItemId,
     write: suspend ServerDatabaseDao.() -> Unit,
     report: suspend () -> Unit,
 ): Boolean {

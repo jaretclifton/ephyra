@@ -18,8 +18,11 @@ import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSources
 import dev.jdtech.jellyfin.models.FindroidTrickplayInfo
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toFindroidEpisode
 import dev.jdtech.jellyfin.models.toFindroidEpisodeDto
 import dev.jdtech.jellyfin.models.toFindroidMediaStreamDto
@@ -32,6 +35,7 @@ import dev.jdtech.jellyfin.models.toFindroidSource
 import dev.jdtech.jellyfin.models.toFindroidSourceDto
 import dev.jdtech.jellyfin.models.toFindroidTrickplayInfoDto
 import dev.jdtech.jellyfin.models.toFindroidUserDataDto
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -110,11 +114,11 @@ internal fun shouldDeleteOrphanArtwork(
     dirName: String,
     newestModified: Long,
     now: Long,
-    knownItemIds: Set<UUID>,
+    knownItemIds: Set<ItemId>,
     minAgeMs: Long = ORPHAN_MIN_AGE_MS,
 ): Boolean {
-    val id = runCatching { UUID.fromString(dirName) }.getOrNull() ?: return false
-    if (id.toString() != dirName.lowercase()) return false
+    val id = runCatching { dirName.toItemId() }.getOrNull() ?: return false
+    if (id.asString() != dirName.lowercase()) return false
     if (id in knownItemIds) return false
     return isOldEnough(newestModified, now, minAgeMs)
 }
@@ -531,7 +535,7 @@ class DownloaderImpl(
      */
     internal suspend fun releaseOtherServersCopy(item: FindroidItem, serverId: String?) {
         if (!isStoredForAnotherServer(item, serverId)) return
-        Timber.i("Replacing the copy of ${item.id} stored for another server")
+        Timber.i("Replacing the copy of ${item.id.asString()} stored for another server")
         val sources = database.getSources(item.id)
         for (source in sources) {
             source.downloadId?.let { engine.cancel(it) }
@@ -566,14 +570,17 @@ class DownloaderImpl(
                 if (remainingEpisodes.isEmpty()) {
                     database.deleteSeason(item.seasonId)
                     database.deleteUserData(item.seasonId)
-                    File(context.filesDir, "trickplay/${item.seasonId}").deleteRecursively()
-                    File(context.filesDir, "images/${item.seasonId}").deleteRecursively()
+                    File(context.filesDir, "trickplay/${item.seasonId.asString()}")
+                        .deleteRecursively()
+                    File(context.filesDir, "images/${item.seasonId.asString()}").deleteRecursively()
                     val remainingSeasons = database.getSeasonsByShowId(item.seriesId)
                     if (remainingSeasons.isEmpty()) {
                         database.deleteShow(item.seriesId)
                         database.deleteUserData(item.seriesId)
-                        File(context.filesDir, "trickplay/${item.seriesId}").deleteRecursively()
-                        File(context.filesDir, "images/${item.seriesId}").deleteRecursively()
+                        File(context.filesDir, "trickplay/${item.seriesId.asString()}")
+                            .deleteRecursively()
+                        File(context.filesDir, "images/${item.seriesId.asString()}")
+                            .deleteRecursively()
                     }
                 }
             }
@@ -600,8 +607,8 @@ class DownloaderImpl(
         database.deleteSyncedUserData(item.id)
         database.deleteSegments(item.id)
 
-        File(context.filesDir, "trickplay/${item.id}").deleteRecursively()
-        File(context.filesDir, "images/${item.id}").deleteRecursively()
+        File(context.filesDir, "trickplay/${item.id.asString()}").deleteRecursively()
+        File(context.filesDir, "images/${item.id.asString()}").deleteRecursively()
     }
 
     /**
@@ -903,7 +910,7 @@ class DownloaderImpl(
      * [trickplayInfo] is.
      */
     internal suspend fun downloadTrickplayData(
-        itemId: UUID,
+        itemId: ItemId,
         sourceId: String,
         trickplayInfo: FindroidTrickplayInfo,
     ) {
@@ -917,12 +924,12 @@ class DownloaderImpl(
     }
 
     private suspend fun saveTrickplayData(
-        itemId: UUID,
+        itemId: ItemId,
         sourceId: String,
         trickplayInfo: FindroidTrickplayInfo,
         sheets: Map<Int, ByteArray>,
     ) {
-        val basePath = "trickplay/$itemId/$sourceId"
+        val basePath = "trickplay/${itemId.asString()}/$sourceId"
         database.insertTrickplayInfo(trickplayInfo.toFindroidTrickplayInfoDto(sourceId))
         File(context.filesDir, basePath).mkdirs()
         for ((index, bytes) in sheets) {
@@ -953,7 +960,7 @@ class DownloaderImpl(
             )
         }
 
-    override suspend fun removePendingDownload(itemId: UUID) =
+    override suspend fun removePendingDownload(itemId: ItemId) =
         withContext(Dispatchers.IO) { database.deletePendingDownload(itemId) }
 
     override suspend fun getPendingDownloads(): List<Downloader.PendingDownload> =
@@ -978,7 +985,7 @@ class DownloaderImpl(
                         // it has been failing for so long it's clearly dead.
                         Timber.w(
                             e,
-                            "Failed to resolve pending download ${row.itemId}; keeping for retry",
+                            "Failed to resolve pending download ${row.itemId.asString()}; keeping for retry",
                         )
                         null
                     }
@@ -994,7 +1001,7 @@ class DownloaderImpl(
                         )
                     row.addedAt < cutoff -> {
                         Timber.i(
-                            "Dropping stale pending download ${row.itemId} (>30 days unresolvable)"
+                            "Dropping stale pending download ${row.itemId.asString()} (>30 days unresolvable)"
                         )
                         database.deletePendingDownload(row.itemId)
                     }
@@ -1476,7 +1483,7 @@ class DownloaderImpl(
         }
     }
 
-    private suspend fun cleanupOrphanSource(itemId: UUID, userId: UUID) {
+    private suspend fun cleanupOrphanSource(itemId: ItemId, userId: UserId) {
         val item: FindroidItem? =
             try {
                 database.getMovieOrNull(itemId)?.toFindroidMovie(database, userId)
@@ -1526,7 +1533,7 @@ class DownloaderImpl(
                 val folder = if (year != null) "$title ($year)" else title
                 "$folder/$folder.$extension"
             }
-            else -> "${item.id}.$sourceId.$extension"
+            else -> "${item.id.asString()}.$sourceId.$extension"
         }
     }
 
@@ -1545,7 +1552,7 @@ class DownloaderImpl(
     private fun startImagesDownloader(item: FindroidItem) {
         val downloadImagesRequest =
             OneTimeWorkRequestBuilder<ImagesDownloaderWorker>()
-                .setInputData(workDataOf(ImagesDownloaderWorker.KEY_ITEM_ID to item.id.toString()))
+                .setInputData(workDataOf(ImagesDownloaderWorker.KEY_ITEM_ID to item.id.asString()))
                 .build()
 
         // Episode downloads trigger image fetches for episode + season + show,
@@ -1554,7 +1561,7 @@ class DownloaderImpl(
         workManagerProvider
             .get()
             .enqueueUniqueWork(
-                "image-download-${item.id}",
+                "image-download-${item.id.asString()}",
                 ExistingWorkPolicy.KEEP,
                 downloadImagesRequest,
             )

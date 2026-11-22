@@ -23,6 +23,10 @@ import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
@@ -63,7 +67,7 @@ class SyncWorkerRunTest {
     private val preferences =
         AppPreferences(context.getSharedPreferences("sync-worker-run", Context.MODE_PRIVATE))
     private val port = FakeUserDataSyncPort()
-    private val opened = mutableListOf<Triple<String, String?, UUID>>()
+    private val opened = mutableListOf<Triple<String, String?, UserId>>()
 
     @After fun close() = room.close()
 
@@ -193,8 +197,11 @@ class SyncWorkerRunTest {
 
         assertEquals(ListenableWorker.Result.success(), run())
 
-        assertEquals(listOf<Triple<String, String?, UUID>>(Triple(ADDRESS, TOKEN, USER_ID)), opened)
-        assertEquals(listOf("itemLeftPlaying", "userDataOf [$ITEM_ID]"), port.calls)
+        assertEquals(
+            listOf<Triple<String, String?, UserId>>(Triple(ADDRESS, TOKEN, USER_ID)),
+            opened,
+        )
+        assertEquals(listOf("itemLeftPlaying", "userDataOf [${ITEM_ID.asString()}]"), port.calls)
         val row = assertNotNull(database.getUserData(ITEM_ID, USER_ID))
         assertEquals(SERVER_POSITION, row.playbackPositionTicks)
         assertEquals(epochMillisOf(LOCAL_PLAYED.plusHours(1)), row.lastPlayedDate)
@@ -213,7 +220,7 @@ class SyncWorkerRunTest {
         assertEquals(
             listOf(
                 "itemLeftPlaying",
-                "userDataOf [$ITEM_ID]",
+                "userDataOf [${ITEM_ID.asString()}]",
                 "putUserData " +
                     ServerUserData(
                         itemId = ITEM_ID,
@@ -294,7 +301,7 @@ class SyncWorkerRunTest {
         val calls = mutableListOf<String>()
 
         override suspend fun userDataOf(itemIds: List<ItemId>): Map<ItemId, ServerUserData> {
-            calls += "userDataOf $itemIds"
+            calls += "userDataOf ${itemIds.map { it.asString() }}"
             return userData.filterKeys { it in itemIds }
         }
 
@@ -304,11 +311,11 @@ class SyncWorkerRunTest {
         }
 
         override suspend fun setFavorite(itemId: ItemId, favorite: Boolean) {
-            calls += "setFavorite $itemId $favorite"
+            calls += "setFavorite ${itemId.asString()} $favorite"
         }
 
         override suspend fun reportStopped(itemId: ItemId, positionTicks: Long) {
-            calls += "reportStopped $itemId $positionTicks"
+            calls += "reportStopped ${itemId.asString()} $positionTicks"
         }
 
         override suspend fun itemLeftPlaying(): ItemId? {
@@ -323,8 +330,8 @@ class SyncWorkerRunTest {
         const val ADDRESS = "http://jellyfin.test:8096"
         const val TOKEN = "token"
         val ADDRESS_ID: UUID = UUID.fromString("00000000-0000-0000-0000-0000000000ad")
-        val USER_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
-        val ITEM_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000040")
+        val USER_ID: UserId = "00000000-0000-0000-0000-000000000001".toUserId()
+        val ITEM_ID: ItemId = "00000000-0000-0000-0000-000000000040".toItemId()
         const val LOCAL_POSITION = 1_800_000_000L
         const val SERVER_POSITION = 3_600_000_000L
         val LOCAL_PLAYED: LocalDateTime = LocalDateTime.of(2026, 11, 20, 20, 15, 0)

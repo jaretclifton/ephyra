@@ -6,12 +6,11 @@ import androidx.room3.Index
 import androidx.room3.PrimaryKey
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import java.io.File
-import java.util.UUID
 
 @Entity(tableName = "sources", indices = [Index("itemId")])
 data class FindroidSourceDto(
     @PrimaryKey val id: String,
-    val itemId: UUID,
+    val itemId: ItemId,
     val name: String,
     val type: FindroidSourceType,
     val path: String,
@@ -32,7 +31,7 @@ data class FindroidSourceDto(
     @ColumnInfo(defaultValue = "0") val smartQueued: Boolean = false,
 )
 
-fun FindroidSource.toFindroidSourceDto(itemId: UUID, path: String): FindroidSourceDto {
+fun FindroidSource.toFindroidSourceDto(itemId: ItemId, path: String): FindroidSourceDto {
     return FindroidSourceDto(
         id = id,
         itemId = itemId,
@@ -64,8 +63,8 @@ fun FindroidSourceDto.toFindroidSource(streams: List<FindroidMediaStreamDto>): F
  * however long the list is (none when it is empty). Items without a download are absent.
  */
 suspend fun ServerDatabaseDao.getLocalSourcesForItems(
-    itemIds: Collection<UUID>
-): Map<UUID, List<FindroidSource>> =
+    itemIds: Collection<ItemId>
+): Map<ItemId, List<FindroidSource>> =
     localSourcesForItems(itemIds) { ids -> getSourcesForItems(ids) }
 
 /**
@@ -73,15 +72,15 @@ suspend fun ServerDatabaseDao.getLocalSourcesForItems(
  * download of the same item id is not this server's item downloaded.
  */
 suspend fun ServerDatabaseDao.getLocalSourcesForItems(
-    itemIds: Collection<UUID>,
+    itemIds: Collection<ItemId>,
     serverId: String,
-): Map<UUID, List<FindroidSource>> =
+): Map<ItemId, List<FindroidSource>> =
     localSourcesForItems(itemIds) { ids -> getSourcesForItemsOfServer(ids, serverId) }
 
 private suspend fun ServerDatabaseDao.localSourcesForItems(
-    itemIds: Collection<UUID>,
-    read: suspend (List<UUID>) -> List<FindroidSourceDto>,
-): Map<UUID, List<FindroidSource>> {
+    itemIds: Collection<ItemId>,
+    read: suspend (List<ItemId>) -> List<FindroidSourceDto>,
+): Map<ItemId, List<FindroidSource>> {
     if (itemIds.isEmpty()) return emptyMap()
     val dtos = itemIds.distinct().chunked(SQL_CHUNK).flatMap { read(it) }
     if (dtos.isEmpty()) return emptyMap()

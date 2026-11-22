@@ -21,6 +21,7 @@ import dev.jdtech.jellyfin.models.FindroidSegment
 import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.ItemFilter
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
@@ -28,6 +29,8 @@ import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
+import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
 import dev.jdtech.jellyfin.models.toFindroidEpisode
 import dev.jdtech.jellyfin.models.toFindroidMovie
@@ -38,7 +41,6 @@ import dev.jdtech.jellyfin.models.toFindroidSource
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.File
 import java.time.LocalDateTime
-import java.util.UUID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -106,8 +108,8 @@ class JellyfinRepositoryImpl(
     }
 
     /** CE (#781): whether a download saved [image] of [itemId] (ImagesDownloaderWorker). */
-    private fun hasStoredImage(itemId: UUID, image: String): Boolean =
-        File(context.filesDir, "images/$itemId/$image").length() > 0
+    private fun hasStoredImage(itemId: ItemId, image: String): Boolean =
+        File(context.filesDir, "images/${itemId.asString()}/$image").length() > 0
 
     /**
      * CE (#775): maps stored rows only when they are needed; null when there are none, so the
@@ -144,7 +146,7 @@ class JellyfinRepositoryImpl(
         }
     }
 
-    private val currentUserId: UUID
+    private val currentUserId: UserId
         get() =
             server.session.userId
                 ?: throw IllegalStateException(
@@ -159,7 +161,7 @@ class JellyfinRepositoryImpl(
     // of a downloaded episode) when the server fails or is slow, see serverOrStored. CE (#718):
     // only
     // a copy stored for the current server: another server can have the same item ids.
-    override suspend fun getEpisode(itemId: UUID): FindroidEpisode =
+    override suspend fun getEpisode(itemId: ItemId): FindroidEpisode =
         withContext(Dispatchers.IO) {
             val stored = currentServerId()?.let { database.getEpisodeOfServer(itemId, it) }
             serverOrStored(
@@ -169,7 +171,7 @@ class JellyfinRepositoryImpl(
             }
         }
 
-    override suspend fun getMovie(itemId: UUID): FindroidMovie =
+    override suspend fun getMovie(itemId: ItemId): FindroidMovie =
         withContext(Dispatchers.IO) {
             val stored = currentServerId()?.let { database.getMovieOfServer(itemId, it) }
             serverOrStored(
@@ -179,7 +181,7 @@ class JellyfinRepositoryImpl(
             }
         }
 
-    override suspend fun getShow(itemId: UUID): FindroidShow =
+    override suspend fun getShow(itemId: ItemId): FindroidShow =
         withContext(Dispatchers.IO) {
             val stored = currentServerId()?.let { database.getShowOfServer(itemId, it) }
             serverOrStored(
@@ -189,7 +191,7 @@ class JellyfinRepositoryImpl(
             }
         }
 
-    override suspend fun getSeason(itemId: UUID): FindroidSeason =
+    override suspend fun getSeason(itemId: ItemId): FindroidSeason =
         withContext(Dispatchers.IO) {
             val stored = currentServerId()?.let { database.getSeasonOfServer(itemId, it) }
             serverOrStored(
@@ -210,14 +212,14 @@ class JellyfinRepositoryImpl(
             serverOrStoredItems(stored) { catalog.libraries() }
         }
 
-    override suspend fun getItem(itemId: UUID): FindroidItem? =
+    override suspend fun getItem(itemId: ItemId): FindroidItem? =
         withContext(Dispatchers.IO) { serverOrStored(storedItem(itemId)) { catalog.item(itemId) } }
 
     /**
      * CE (#281): builds [itemId] from Room, or null when Room doesn't have it for the current
      * server (#718).
      */
-    private suspend fun storedItem(itemId: UUID): (suspend () -> FindroidItem)? {
+    private suspend fun storedItem(itemId: ItemId): (suspend () -> FindroidItem)? {
         val serverId = currentServerId() ?: return null
         database.getMovieOfServer(itemId, serverId)?.let {
             return suspend { it.toFindroidMovie(database, currentUserId) }
@@ -235,7 +237,7 @@ class JellyfinRepositoryImpl(
     }
 
     override suspend fun getItems(
-        parentId: UUID?,
+        parentId: ItemId?,
         includeTypes: List<ItemKind>?,
         recursive: Boolean,
         sortBy: SortBy,
@@ -258,7 +260,7 @@ class JellyfinRepositoryImpl(
             .items
 
     override suspend fun getItemsPage(
-        parentId: UUID?,
+        parentId: ItemId?,
         includeTypes: List<ItemKind>?,
         recursive: Boolean,
         sortBy: SortBy,
@@ -303,7 +305,7 @@ class JellyfinRepositoryImpl(
      * these ids. Only the page is mapped to items.
      */
     private suspend fun storedLibraryPage(
-        libraryId: UUID,
+        libraryId: ItemId,
         sortBy: SortBy,
         sortOrder: SortOrder,
         filters: Set<ItemFilter>,
@@ -331,7 +333,7 @@ class JellyfinRepositoryImpl(
         }
 
     override suspend fun getItemsPaging(
-        parentId: UUID?,
+        parentId: ItemId?,
         includeTypes: List<ItemKind>?,
         recursive: Boolean,
         sortBy: SortBy,
@@ -362,7 +364,7 @@ class JellyfinRepositoryImpl(
     }
 
     override suspend fun getItemCount(
-        parentId: UUID?,
+        parentId: ItemId?,
         includeTypes: List<ItemKind>?,
         recursive: Boolean,
         filters: Set<ItemFilter>,
@@ -391,10 +393,10 @@ class JellyfinRepositoryImpl(
             )
         }
 
-    override suspend fun getPerson(personId: UUID): FindroidPerson = catalog.person(personId)
+    override suspend fun getPerson(personId: ItemId): FindroidPerson = catalog.person(personId)
 
     override suspend fun getPersonItems(
-        personIds: List<UUID>,
+        personIds: List<ItemId>,
         includeTypes: List<ItemKind>?,
         recursive: Boolean,
         limit: Int?,
@@ -449,14 +451,14 @@ class JellyfinRepositoryImpl(
         withContext(Dispatchers.IO) { catalog.resumeItems().withLocalSources() }
 
     override suspend fun getLatestMedia(
-        parentId: UUID,
+        parentId: ItemId,
         includeItemTypes: List<ItemKind>?,
     ): List<FindroidItem> =
         withContext(Dispatchers.IO) {
             catalog.latest(parentId, includeItemTypes).withLocalSources()
         }
 
-    override suspend fun getSeasons(seriesId: UUID, offline: Boolean): List<FindroidSeason> =
+    override suspend fun getSeasons(seriesId: ItemId, offline: Boolean): List<FindroidSeason> =
         withContext(Dispatchers.IO) {
             if (!offline) {
                 catalog.seasons(seriesId)
@@ -469,7 +471,7 @@ class JellyfinRepositoryImpl(
             }
         }
 
-    override suspend fun getNextUp(seriesId: UUID?): List<FindroidEpisode> =
+    override suspend fun getNextUp(seriesId: ItemId?): List<FindroidEpisode> =
         withContext(Dispatchers.IO) {
             catalog.nextUp(
                 seriesId,
@@ -483,10 +485,10 @@ class JellyfinRepositoryImpl(
         }
 
     override suspend fun getEpisodes(
-        seriesId: UUID,
-        seasonId: UUID?,
+        seriesId: ItemId,
+        seasonId: ItemId?,
         fields: Set<EpisodeField>?,
-        startItemId: UUID?,
+        startItemId: ItemId?,
         limit: Int?,
         offline: Boolean,
     ): List<FindroidEpisode> =
@@ -506,7 +508,7 @@ class JellyfinRepositoryImpl(
         }
 
     override suspend fun getMediaSources(
-        itemId: UUID,
+        itemId: ItemId,
         includePath: Boolean,
         transcodeDolbyVision: Boolean,
         maxBitrate: Int?,
@@ -537,7 +539,7 @@ class JellyfinRepositoryImpl(
         }
 
     override suspend fun getPlaybackSources(
-        itemId: UUID,
+        itemId: ItemId,
         target: PlaybackTarget,
         mediaSourceId: String?,
         audioStreamIndex: Int?,
@@ -578,7 +580,9 @@ class JellyfinRepositoryImpl(
             sources
         }
 
-    override suspend fun getSeriesTrackPreferences(seriesId: UUID): List<SeriesTrackPreferenceDto> =
+    override suspend fun getSeriesTrackPreferences(
+        seriesId: ItemId
+    ): List<SeriesTrackPreferenceDto> =
         withContext(Dispatchers.IO) { database.getSeriesTrackPreferences(currentUserId, seriesId) }
 
     override suspend fun saveSeriesTrackPreference(preference: SeriesTrackPreferenceDto) =
@@ -586,7 +590,7 @@ class JellyfinRepositoryImpl(
             database.insertSeriesTrackPreference(preference.copy(userId = currentUserId))
         }
 
-    override suspend fun getStreamUrl(itemId: UUID, mediaSourceId: String): String =
+    override suspend fun getStreamUrl(itemId: ItemId, mediaSourceId: String): String =
         withContext(Dispatchers.IO) {
             try {
                 server.playback.streamUrl(itemId, mediaSourceId)
@@ -598,7 +602,7 @@ class JellyfinRepositoryImpl(
             }
         }
 
-    override suspend fun getSegments(itemId: UUID): List<FindroidSegment> =
+    override suspend fun getSegments(itemId: ItemId): List<FindroidSegment> =
         withContext(Dispatchers.IO) {
             val databaseSegments = database.getSegments(itemId).map { it.toFindroidSegment() }
 
@@ -609,7 +613,7 @@ class JellyfinRepositoryImpl(
             getServerSegments(itemId)
         }
 
-    override suspend fun getServerSegments(itemId: UUID): List<FindroidSegment> =
+    override suspend fun getServerSegments(itemId: ItemId): List<FindroidSegment> =
         withContext(Dispatchers.IO) {
             // #769: the player and the downloads ask here; without segments they get none.
             if (!capabilities.mediaSegments) return@withContext emptyList()
@@ -624,7 +628,7 @@ class JellyfinRepositoryImpl(
         }
 
     override suspend fun getTrickplayData(
-        itemId: UUID,
+        itemId: ItemId,
         width: Int,
         index: Int,
         mediaSourceId: String?,
@@ -636,11 +640,12 @@ class JellyfinRepositoryImpl(
                     // version the folder lists first; a version not downloaded goes to the server.
                     val source =
                         if (mediaSourceId != null) {
-                            File(context.filesDir, "trickplay/$itemId/$mediaSourceId").takeIf {
-                                it.isDirectory
-                            }
+                            File(context.filesDir, "trickplay/${itemId.asString()}/$mediaSourceId")
+                                .takeIf { it.isDirectory }
                         } else {
-                            File(context.filesDir, "trickplay/$itemId").listFiles()?.first()
+                            File(context.filesDir, "trickplay/${itemId.asString()}")
+                                .listFiles()
+                                ?.first()
                         }
                     if (source != null) {
                         return@withContext File(source, index.toString()).readBytes()
@@ -664,7 +669,7 @@ class JellyfinRepositoryImpl(
             }
         }
 
-    override suspend fun getThemeSongUrl(itemId: UUID): String? =
+    override suspend fun getThemeSongUrl(itemId: ItemId): String? =
         withContext(Dispatchers.IO) {
             try {
                 catalog.themeSongUrl(itemId)
@@ -676,16 +681,16 @@ class JellyfinRepositoryImpl(
             }
         }
 
-    override suspend fun getSimilarItems(itemId: UUID, limit: Int): List<FindroidItem> =
+    override suspend fun getSimilarItems(itemId: ItemId, limit: Int): List<FindroidItem> =
         withContext(Dispatchers.IO) { catalog.similar(itemId, limit).withLocalSources() }
 
     override suspend fun getExtras(
-        itemId: UUID,
+        itemId: ItemId,
         localTrailers: Boolean,
         specialFeatures: Boolean,
     ): List<FindroidMovie> = catalog.extras(itemId, localTrailers, specialFeatures)
 
-    override suspend fun getItemCollections(itemId: UUID): List<FindroidItem> =
+    override suspend fun getItemCollections(itemId: ItemId): List<FindroidItem> =
         withContext(Dispatchers.IO) { catalog.collectionsOf(itemId).withLocalSources() }
 
     override suspend fun postCapabilities() {
@@ -693,13 +698,13 @@ class JellyfinRepositoryImpl(
         server.playback.announceCapabilities()
     }
 
-    override fun setPlaySession(itemId: UUID, playSessionId: String?, transcodes: Boolean) =
+    override fun setPlaySession(itemId: ItemId, playSessionId: String?, transcodes: Boolean) =
         playSessions.onPlaybackInfo(itemId, playSessionId, transcodes)
 
-    override suspend fun postPlaybackStart(itemId: UUID, transcoded: Boolean) {
+    override suspend fun postPlaybackStart(itemId: ItemId, transcoded: Boolean) {
         // CE (#599): Transcode with the transcode's play session, see PlaySessions.playReport.
         val report = playSessions.playReport(itemId, transcoded)
-        Timber.d("Sending start $itemId, transcoded: ${report.transcoded}")
+        Timber.d("Sending start ${itemId.asString()}, transcoded: ${report.transcoded}")
         withContext(Dispatchers.IO) {
             // CE (#637): read alongside the start report, not before it, so a slow or failing read
             // does not hold up the start. The player waits for this call before it reports the
@@ -721,11 +726,11 @@ class JellyfinRepositoryImpl(
     }
 
     override suspend fun postPlaybackStop(
-        itemId: UUID,
+        itemId: ItemId,
         positionTicks: Long,
         playedPercentage: Int?,
     ) {
-        Timber.d("Sending stop $itemId")
+        Timber.d("Sending stop ${itemId.asString()}")
         withContext(Dispatchers.IO) {
             // CE (#637): the server applies its resume settings to this stop; the local copy
             // follows them.
@@ -767,12 +772,12 @@ class JellyfinRepositoryImpl(
     }
 
     override suspend fun postPlaybackProgress(
-        itemId: UUID,
+        itemId: ItemId,
         positionTicks: Long,
         isPaused: Boolean,
         transcoded: Boolean,
     ) {
-        Timber.d("Posting progress of $itemId, position: $positionTicks")
+        Timber.d("Posting progress of ${itemId.asString()}, position: $positionTicks")
         val report = playSessions.playReport(itemId, transcoded)
         withContext(Dispatchers.IO) {
             reportUserData(
@@ -796,7 +801,7 @@ class JellyfinRepositoryImpl(
         }
     }
 
-    override suspend fun markAsFavorite(itemId: UUID) {
+    override suspend fun markAsFavorite(itemId: ItemId) {
         withContext(Dispatchers.IO) {
             reportUserData(itemId, report = { server.userData.setFavorite(itemId, true) }) { userId
                 ->
@@ -805,7 +810,7 @@ class JellyfinRepositoryImpl(
         }
     }
 
-    override suspend fun unmarkAsFavorite(itemId: UUID) {
+    override suspend fun unmarkAsFavorite(itemId: ItemId) {
         withContext(Dispatchers.IO) {
             reportUserData(itemId, report = { server.userData.setFavorite(itemId, false) }) { userId
                 ->
@@ -814,7 +819,7 @@ class JellyfinRepositoryImpl(
         }
     }
 
-    override suspend fun markAsPlayed(itemId: UUID) {
+    override suspend fun markAsPlayed(itemId: ItemId) {
         withContext(Dispatchers.IO) {
             reportUserData(itemId, report = { server.userData.setPlayed(itemId, true) }) { userId ->
                 setPlayed(userId, itemId, true)
@@ -824,7 +829,7 @@ class JellyfinRepositoryImpl(
         }
     }
 
-    override suspend fun markAsUnplayed(itemId: UUID) {
+    override suspend fun markAsUnplayed(itemId: ItemId) {
         withContext(Dispatchers.IO) {
             // CE (#635): the time of the mark, taken before the request: a request that fails only
             // after a timeout must not make the mark look later than a play elsewhere meanwhile.
@@ -846,9 +851,9 @@ class JellyfinRepositoryImpl(
 
     /** See the top-level [writeAndReport]: the change is written and marked before [report]. */
     private suspend fun reportUserData(
-        itemId: UUID,
+        itemId: ItemId,
         report: suspend () -> Unit,
-        write: suspend ServerDatabaseDao.(userId: UUID) -> Unit,
+        write: suspend ServerDatabaseDao.(userId: UserId) -> Unit,
     ): Boolean {
         val userId = currentUserId
         return writeAndReport(database, syncRequester, userId, itemId, { write(userId) }, report)
@@ -856,10 +861,10 @@ class JellyfinRepositoryImpl(
 
     override fun getBaseUrl() = server.session.baseUrl.orEmpty()
 
-    override fun chapterImageUrl(itemId: UUID, chapterIndex: Int, tag: String) =
+    override fun chapterImageUrl(itemId: ItemId, chapterIndex: Int, tag: String) =
         server.playback.chapterImageUrl(itemId, chapterIndex, tag)
 
-    override fun seasonBackdropUrl(seasonId: UUID) = server.playback.seasonBackdropUrl(seasonId)
+    override fun seasonBackdropUrl(seasonId: ItemId) = server.playback.seasonBackdropUrl(seasonId)
 
     override suspend fun updateDeviceName(name: String) {
         // #769: nothing in the app renames the device yet; a server that cannot is not asked.
@@ -897,7 +902,7 @@ class JellyfinRepositoryImpl(
             items
         }
 
-    override fun getUserId(): UUID {
+    override fun getUserId(): UserId {
         return currentUserId
     }
 
@@ -918,7 +923,7 @@ class JellyfinRepositoryImpl(
      * at all (the usual case for a user who doesn't download). CE (#718): only the current server's
      * downloads.
      */
-    private suspend fun localSourcesFor(itemIds: List<UUID>): Map<UUID, List<FindroidSource>> {
+    private suspend fun localSourcesFor(itemIds: List<ItemId>): Map<ItemId, List<FindroidSource>> {
         val serverId = currentServerId() ?: return emptyMap()
         val any = hasLocalSources.value ?: database.hasSources()
         return if (any) database.getLocalSourcesForItems(itemIds, serverId) else emptyMap()
@@ -951,12 +956,13 @@ class JellyfinRepositoryImpl(
  * CE (#756): the movie with its downloads of [local] after the server's sources, the order the
  * mappers kept before the catalog moved out (the player picks the local one, not the first).
  */
-private fun FindroidMovie.withLocalSources(local: Map<UUID, List<FindroidSource>>): FindroidMovie =
-    local[id]?.let { copy(sources = sources + it) } ?: this
+private fun FindroidMovie.withLocalSources(
+    local: Map<ItemId, List<FindroidSource>>
+): FindroidMovie = local[id]?.let { copy(sources = sources + it) } ?: this
 
 /** CE (#756): as for a movie, the server's sources first, then the downloads of [local]. */
 private fun FindroidEpisode.withLocalSources(
-    local: Map<UUID, List<FindroidSource>>
+    local: Map<ItemId, List<FindroidSource>>
 ): FindroidEpisode = local[id]?.let { copy(sources = sources + it) } ?: this
 
 /**
@@ -964,5 +970,5 @@ private fun FindroidEpisode.withLocalSources(
  * in Next Up" does. 0 is no limit. A single series has no cutoff: a show last watched years ago
  * still has a next episode.
  */
-internal fun nextUpDateCutoff(seriesId: UUID?, maxDays: Int, now: LocalDateTime): LocalDateTime? =
+internal fun nextUpDateCutoff(seriesId: ItemId?, maxDays: Int, now: LocalDateTime): LocalDateTime? =
     if (seriesId == null && maxDays > 0) now.minusDays(maxDays.toLong()) else null

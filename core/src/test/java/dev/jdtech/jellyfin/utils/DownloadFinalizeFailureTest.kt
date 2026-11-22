@@ -13,6 +13,8 @@ import dev.jdtech.jellyfin.models.FindroidMovieDto
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.MediaStreamType
+import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
@@ -366,7 +368,7 @@ class DownloadFinalizeFailureTest {
     private companion object {
         const val VIDEO_ID = 1L
         const val SUBTITLE_ID = 2L
-        val USER_ID: UUID = UUID.fromString("00000000-0000-0000-0000-0000000000a1")
+        val USER_ID: UserId = "00000000-0000-0000-0000-0000000000a1".toUserId()
         val VIDEO = ByteArray(64) { it.toByte() }
     }
 }

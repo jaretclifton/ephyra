@@ -6,8 +6,9 @@ import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.models.ServerException
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
@@ -29,8 +30,8 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class CancellationNotSwallowedTest {
-    private val userId = UUID.fromString("00000000-0000-0000-0000-000000000001")
-    private val itemId = UUID.fromString("00000000-0000-0000-0000-000000000030")
+    private val userId = "00000000-0000-0000-0000-000000000001".toUserId()
+    private val itemId = "00000000-0000-0000-0000-000000000030".toItemId()
 
     private val context: Context = RuntimeEnvironment.getApplication()
     private val room =
