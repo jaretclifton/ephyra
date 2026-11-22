@@ -1,9 +1,9 @@
 package dev.jdtech.jellyfin.server.jellyfin.cast
 
 import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.server.jellyfin.mappers.MapperContext
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSource
-import java.util.UUID
 import org.jellyfin.sdk.model.api.MediaSourceInfo
 
 /**
@@ -16,7 +16,7 @@ import org.jellyfin.sdk.model.api.MediaSourceInfo
  */
 internal suspend fun MediaSourceInfo.toReceiverSource(
     context: MapperContext,
-    itemId: UUID,
+    itemId: ItemId,
     accessToken: String?,
 ): FindroidSource {
     val source = toFindroidSource(context, itemId)

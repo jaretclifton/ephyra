@@ -35,6 +35,7 @@ import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.repository.ItemsPage
 import dev.jdtech.jellyfin.repository.ResumeThresholds
 import dev.jdtech.jellyfin.repository.stopUserData
@@ -498,7 +499,7 @@ class FakeMediaServer(
                             path =
                                 when {
                                     transcoded ->
-                                        "${library.address}/videos/${item.id}/master.m3u8" +
+                                        "${library.address}/videos/${item.id.asString()}/master.m3u8" +
                                             "?MediaSourceId=${source.id}"
                                     request.includePath || target is PlaybackTarget.CastReceiver ->
                                         streamUrlOf(item.id, source.id)
@@ -530,11 +531,13 @@ class FakeMediaServer(
 
         override fun chapterImageUrl(itemId: ItemId, chapterIndex: Int, tag: String): String? =
             answer("chapterImageUrl") {
-                "${library.address}/Items/$itemId/Images/Chapter/$chapterIndex?tag=$tag"
+                "${library.address}/Items/${itemId.asString()}/Images/Chapter/$chapterIndex?tag=$tag"
             }
 
         override fun seasonBackdropUrl(seasonId: ItemId): String? =
-            answer("seasonBackdropUrl") { "${library.address}/Items/$seasonId/Images/Backdrop" }
+            answer("seasonBackdropUrl") {
+                "${library.address}/Items/${seasonId.asString()}/Images/Backdrop"
+            }
 
         override suspend fun reportStart(report: PlaybackReport) {
             call("reportStart") { reportLog += ReportKind.START to report }
@@ -580,7 +583,7 @@ class FakeMediaServer(
     }
 
     private fun streamUrlOf(itemId: ItemId, mediaSourceId: MediaSourceId) =
-        "${library.address}/Videos/$itemId/stream?static=true&mediaSourceId=$mediaSourceId"
+        "${library.address}/Videos/${itemId.asString()}/stream?static=true&mediaSourceId=$mediaSourceId"
 
     private inner class Session : ServerSession {
         @Volatile override var baseUrl: String? = library.address
@@ -613,7 +616,7 @@ class FakeMediaServer(
         override fun keepAlive(): Flow<Nothing> = emptyFlow()
 
         override fun userImageUrl(userId: UserId, tag: String): String? = baseUrl?.let {
-            "$it/Users/$userId/Images/Primary?tag=$tag"
+            "$it/Users/${userId.asString()}/Images/Primary?tag=$tag"
         }
 
         override suspend fun updateDeviceName(name: String) {

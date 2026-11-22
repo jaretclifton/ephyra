@@ -31,7 +31,7 @@ class NoAddressTest {
             Settings.Secure.putString(it.contentResolver, Settings.Secure.ANDROID_ID, "test")
         }
     private val api = JellyfinApi(context).apply { userId = UUID.randomUUID() }
-    private val itemId = UUID.randomUUID()
+    private val itemId = UUID.randomUUID().toItemId()
 
     @Test
     fun `every request fails as Unreachable`() = runBlocking {

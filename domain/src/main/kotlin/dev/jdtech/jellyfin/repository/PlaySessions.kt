@@ -1,6 +1,6 @@
 package dev.jdtech.jellyfin.repository
 
-import java.util.UUID
+import dev.jdtech.jellyfin.models.ItemId
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
  * timer ends it, a minute after the last segment was fetched.
  */
 class PlaySessions {
-    private val sessions = ConcurrentHashMap<UUID, String>()
+    private val sessions = ConcurrentHashMap<ItemId, String>()
 
     /**
      * Records the session of the stream that plays [itemId] now (see the repository's
@@ -17,7 +17,7 @@ class PlaySessions {
      * not kept. A new stream for the same item (a quality switch) replaces the session: the stream
      * it replaces is left to the server's timer, the server has no call to end it.
      */
-    fun onPlaybackInfo(itemId: UUID, playSessionId: String?, transcodes: Boolean) {
+    fun onPlaybackInfo(itemId: ItemId, playSessionId: String?, transcodes: Boolean) {
         val session = playSessionId?.takeIf { transcodes && it.isNotBlank() }
         if (session != null) sessions[itemId] = session else sessions.remove(itemId)
     }
@@ -26,7 +26,7 @@ class PlaySessions {
      * The transcode session of [itemId], or `null` when it plays directly. Kept after a stop: the
      * player can go back to an item it left, on the stream it already has.
      */
-    fun sessionOf(itemId: UUID): String? = sessions[itemId]
+    fun sessionOf(itemId: ItemId): String? = sessions[itemId]
 
     /**
      * CE (#599): what a start or progress report of [itemId] says it plays. [transcoded] is whether
@@ -39,7 +39,7 @@ class PlaySessions {
      * of a running transcode job, and takes it for DirectPlay otherwise; a start sent before the
      * player fetched the stream is therefore DirectPlay until the first progress report.
      */
-    fun playReport(itemId: UUID, transcoded: Boolean): PlayReport {
+    fun playReport(itemId: ItemId, transcoded: Boolean): PlayReport {
         val session = sessionOf(itemId)
         return if (transcoded && session != null) PlayReport(transcoded = true, session)
         else PlayReport(transcoded = false, null)

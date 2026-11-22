@@ -1,11 +1,9 @@
 package dev.jdtech.jellyfin.models
 
-import java.util.UUID
-
 data class FindroidSeason(
-    override val id: UUID,
+    override val id: ItemId,
     override val name: String,
-    val seriesId: UUID,
+    val seriesId: ItemId,
     val seriesName: String,
     override val originalTitle: String?,
     override val overview: String,

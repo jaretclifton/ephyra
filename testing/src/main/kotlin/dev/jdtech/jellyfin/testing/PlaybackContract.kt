@@ -4,6 +4,7 @@ import dev.jdtech.jellyfin.domain.ports.PlaybackPort
 import dev.jdtech.jellyfin.domain.ports.PlaybackReport
 import dev.jdtech.jellyfin.domain.ports.PlaybackRequest
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
@@ -246,7 +247,7 @@ abstract class PlaybackContract : MediaServerContract() {
         assertCancellable { playback.sources(PlaybackRequest(library.movieWithResume.id, player)) }
     }
 
-    private fun report(id: java.util.UUID, positionTicks: Long) =
+    private fun report(id: ItemId, positionTicks: Long) =
         PlaybackReport(
             itemId = id,
             positionTicks = positionTicks,

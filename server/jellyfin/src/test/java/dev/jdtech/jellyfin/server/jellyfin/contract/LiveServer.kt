@@ -1,5 +1,6 @@
 package dev.jdtech.jellyfin.server.jellyfin.contract
 
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.repository.StandInServer.Request
 import dev.jdtech.jellyfin.repository.StandInServer.Response
 import dev.jdtech.jellyfin.testing.ContractLibrary
@@ -8,7 +9,6 @@ import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URLEncoder
 import java.security.MessageDigest
-import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
@@ -60,20 +60,20 @@ private constructor(
             )
         token = login.text("AccessToken")
         userId = login.getValue("User").jsonObject.text("Id")
-        link(ContractLibrary.userId.n(), userId)
+        link(ContractLibrary.userId.asString().n(), userId)
         link(ContractLibrary.server.id, json(get("/System/Info/Public")).text("Id"))
 
         val library = ContractLibrary
         library.movies.forEach { movie ->
-            find("Movie", movie.name)?.let { link(movie.id.n(), it) }
+            find("Movie", movie.name)?.let { link(movie.id.asString().n(), it) }
         }
         val series = checkNotNull(find("Series", library.series.name)) { "no Test Show" }
-        link(library.series.id.n(), series)
+        link(library.series.id.asString().n(), series)
         val seasons = json(get("/Shows/$series/Seasons?userId=$userId")).items()
         for (season in library.seasons) {
             seasons
                 .firstOrNull { it["IndexNumber"]?.jsonPrimitive?.int == season.indexNumber }
-                ?.let { link(season.id.n(), it.text("Id")) }
+                ?.let { link(season.id.asString().n(), it.text("Id")) }
         }
         val episodes = json(get("/Shows/$series/Episodes?userId=$userId")).items()
         for (episode in library.episodes) {
@@ -82,29 +82,30 @@ private constructor(
                     it["ParentIndexNumber"]?.jsonPrimitive?.int == episode.parentIndexNumber &&
                         it["IndexNumber"]?.jsonPrimitive?.int == episode.indexNumber
                 }
-                ?.let { link(episode.id.n(), it.text("Id")) }
+                ?.let { link(episode.id.asString().n(), it.text("Id")) }
         }
         val person =
             json(get("/Persons?userId=$userId&searchTerm=${encode(library.person.name)}"))
                 .items()
                 .firstOrNull { it.text("Name") == library.person.name }
-        person?.let { link(library.person.id.n(), it.text("Id")) }
+        person?.let { link(library.person.id.asString().n(), it.text("Id")) }
         val boxSet = find("BoxSet", library.boxSet.name)
-        boxSet?.let { link(library.boxSet.id.n(), it) }
+        boxSet?.let { link(library.boxSet.id.asString().n(), it) }
         val segments =
-            fakeToReal[library.episodeWithSegments.id.n()]?.let {
+            fakeToReal[library.episodeWithSegments.id.asString().n()]?.let {
                 json(get("/MediaSegments/$it")).items()
             }
-        val realSeries = fakeToReal.getValue(library.series.id.n())
+        val realSeries = fakeToReal.getValue(library.series.id.asString().n())
         val themeSongs = json(get("/Items/$realSeries/ThemeSongs?userId=$userId")).items()
-        val movie = fakeToReal[library.movieWithResume.id.n()]
+        val movie = fakeToReal[library.movieWithResume.id.asString().n()]
         val similar = movie?.let { id ->
             json(get("/Items/$id/Similar?userId=$userId&limit=12")).items().filterNot {
                 it.text("Id") == id
             }
         }
 
-        userDataItems = (library.movies + library.episodes).mapNotNull { fakeToReal[it.id.n()] }
+        userDataItems =
+            (library.movies + library.episodes).mapNotNull { fakeToReal[it.id.asString().n()] }
         check(userDataItems.size == library.movies.size + library.episodes.size) {
             "the test server does not have every item of ContractLibrary"
         }
@@ -144,7 +145,7 @@ private constructor(
             call("DELETE", "/UserPlayedItems/$id$user")
         }
         for (item in ContractLibrary.items) {
-            val id = fakeToReal[item.id.n()] ?: continue
+            val id = fakeToReal[item.id.asString().n()] ?: continue
             if (item.favorite) call("POST", "/UserFavoriteItems/$id$user")
             if (item.played) call("POST", "/UserPlayedItems/$id$user")
             if (item.playbackPositionTicks > 0) {
@@ -325,7 +326,7 @@ private constructor(
 
         private val REMOTE_END_POINT = Regex("\"RemoteEndPoint\":\"[^\"]*\"")
 
-        private fun UUID.n(): String = toString().replace("-", "")
+        private fun String.n(): String = replace("-", "")
 
         private fun dashed(n: String) =
             "${n.substring(0, 8)}-${n.substring(8, 12)}-${n.substring(12, 16)}-" +

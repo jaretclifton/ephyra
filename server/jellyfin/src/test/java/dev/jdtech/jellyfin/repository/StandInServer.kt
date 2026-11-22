@@ -6,9 +6,12 @@ import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.MediaServer
 import dev.jdtech.jellyfin.models.ServerCapabilities
+import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.player.DeviceCodecProbe
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
+import dev.jdtech.jellyfin.server.jellyfin.toUuid
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.Closeable
 import java.io.InputStream
@@ -18,7 +21,6 @@ import java.net.ServerSocket
 import java.net.Socket
 import java.net.URLDecoder
 import java.util.Collections
-import java.util.UUID
 import kotlin.concurrent.thread
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.serialization.json.Json
@@ -160,7 +162,7 @@ internal class StandInServer(
     override fun close() = socket.close()
 
     companion object {
-        val USER_ID: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
+        val USER_ID: UserId = "00000000-0000-0000-0000-000000000001".toUserId()
 
         /** The test application, with the device id the SDK names the device after. */
         fun context(): Context =
@@ -205,7 +207,7 @@ internal fun StandInServer.repository(
     val api =
         JellyfinApi(context).apply {
             api.update(baseUrl = baseUrl, accessToken = "token")
-            userId = StandInServer.USER_ID
+            userId = StandInServer.USER_ID.toUuid()
         }
     val jellyfin = JellyfinMediaServer(api, JellyfinDeviceProfiles(DeviceCodecProbe(context)))
     return JellyfinRepositoryImpl(

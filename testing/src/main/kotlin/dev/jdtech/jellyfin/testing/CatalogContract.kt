@@ -10,6 +10,7 @@ import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.testing.ContractLibrary.Part
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -314,7 +315,7 @@ abstract class CatalogContract : MediaServerContract() {
         val url = assertNotNull(server.catalog.themeSongUrl(library.series.id))
 
         assertTrue(url.startsWith("http"), url)
-        assertTrue(library.seriesThemeSongId.toString() in url, url)
+        assertTrue(library.seriesThemeSongId.asString() in url, url)
     }
 
     @Test
