@@ -46,9 +46,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -746,13 +749,16 @@ private fun ThinSlider(
         )
     val glowOn = glow && enabled && glowEnabled(MaterialTheme.colorScheme.surface)
     val glowColor = MaterialTheme.colorScheme.primary.copy(alpha = EphyraColor.glow.alpha)
+    // Material 3 1.5 takes a custom thumb and track only with a SliderState. The value stays the
+    // caller's: the state follows it, and a new range (the duration arriving) makes a new state.
+    val sliderState = key(valueRange) { rememberSliderState(value, 0, valueRange) }
+    SideEffect { if (sliderState.value != value) sliderState.value = value }
     Slider(
-        value = value,
+        state = sliderState,
         onValueChange = onValueChange,
         onValueChangeFinished = onValueChangeFinished,
         modifier = modifier,
         enabled = enabled,
-        valueRange = valueRange,
         colors = colors,
         thumb = {
             Box(

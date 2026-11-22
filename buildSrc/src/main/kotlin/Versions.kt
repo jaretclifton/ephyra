@@ -5,6 +5,7 @@ object Versions {
     const val APP_NAME = "1.2.0"
 
     const val COMPILE_SDK = 37
+    const val COMPILE_SDK_MINOR = 1
     const val TARGET_SDK = 37
     // CE-owned: the TV app and the library modules go down to Android 9 (API 28) for Fire OS 7
     // sticks; the phone app stays on Android 10.

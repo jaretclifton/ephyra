@@ -1,11 +1,12 @@
 package dev.jdtech.jellyfin.core.presentation.ephyra
 
 import android.graphics.BlurMaskFilter
+import android.graphics.Paint as AndroidPaint
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.asComposePaint
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.luminance
@@ -25,11 +26,10 @@ fun Modifier.ephyraGlow(shape: Shape, color: Color, blur: Dp, enabled: Boolean =
         drawWithCache {
             val outline = shape.createOutline(size, layoutDirection, this)
             val paint =
-                Paint().apply {
-                    this.color = color
-                    asFrameworkPaint().maskFilter =
-                        BlurMaskFilter(blur.toPx(), BlurMaskFilter.Blur.NORMAL)
-                }
+                AndroidPaint(AndroidPaint.ANTI_ALIAS_FLAG)
+                    .apply { maskFilter = BlurMaskFilter(blur.toPx(), BlurMaskFilter.Blur.NORMAL) }
+                    .asComposePaint()
+                    .apply { this.color = color }
             onDrawBehind { drawIntoCanvas { it.drawOutline(outline, paint) } }
         }
 

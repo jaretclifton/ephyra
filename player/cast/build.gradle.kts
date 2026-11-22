@@ -10,6 +10,7 @@ java { toolchain { languageVersion = Versions.JAVA } }
 android {
     namespace = "dev.jdtech.jellyfin.player.cast"
     compileSdk = Versions.COMPILE_SDK
+    compileSdkMinor = Versions.COMPILE_SDK_MINOR
 
     defaultConfig { minSdk = Versions.MIN_SDK }
 
