@@ -1,7 +1,5 @@
-package dev.jdtech.jellyfin.player.cast
+package dev.jdtech.jellyfin.server.jellyfin.cast
 
-import dev.jdtech.jellyfin.player.cast.devices.Chromecast
-import dev.jdtech.jellyfin.player.cast.devices.ChromecastH265
 import kotlin.test.assertTrue
 import org.jellyfin.sdk.model.api.MediaStreamProtocol
 import org.junit.jupiter.api.Test

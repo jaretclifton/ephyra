@@ -17,12 +17,13 @@ import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.media.RemoteMediaClient
 import com.google.android.gms.common.images.WebImage
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dev.jdtech.jellyfin.api.JellyfinApi
+import dev.jdtech.jellyfin.domain.ports.MediaServer
+import dev.jdtech.jellyfin.domain.ports.PlaybackRequest
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidMovie
+import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.ItemKind
-import dev.jdtech.jellyfin.player.cast.devices.Chromecast
-import dev.jdtech.jellyfin.player.cast.devices.ChromecastH265
+import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.player.cast.models.CastConnectionState
 import dev.jdtech.jellyfin.player.cast.models.CastError
 import dev.jdtech.jellyfin.player.cast.models.CastMediaItem
@@ -55,20 +56,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
-import org.jellyfin.sdk.model.api.MediaSourceInfo
-import org.jellyfin.sdk.model.api.PlaybackInfoDto
-import org.jellyfin.sdk.model.api.PlaybackInfoResponse
 import org.json.JSONObject
 import timber.log.Timber
 
 /**
  * Plays on the connected Cast receiver (Google's Default Media Receiver).
  *
- * The receiver fetches the stream itself, so every URL it gets carries what it needs: the server's
- * transcoding URL has the access token in it, a direct-play URL gets one added. Each queue item
- * also carries its Jellyfin item id and playback info as custom data, which is all this class needs
- * to pick a session up again after the app's process was gone.
+ * The receiver fetches the stream itself, so every URL it gets carries what it needs; the server
+ * adapter makes them so for a [PlaybackTarget.CastReceiver]. Each queue item also carries its
+ * Jellyfin item id and a [CastCustomData] as custom data, which is all this class needs to pick a
+ * session up again after the app's process was gone.
  *
  * All state is touched on the main thread only: the Cast SDK calls back there, and [scope] runs
  * there.
@@ -78,7 +75,7 @@ class CastPlayerControllerImpl
 @Inject
 constructor(
     @param:ApplicationContext private val context: Context,
-    private val jellyfinApi: JellyfinApi,
+    private val mediaServer: MediaServer,
     private val repository: JellyfinRepository,
     private val sessionManager: CastSessionManager,
     private val playlistManagers: Provider<PlaylistManager>,
@@ -112,7 +109,6 @@ constructor(
     private var remoteMediaClient: RemoteMediaClient? = null
     private var castSession: CastSession? = null
 
-    private val json = Json { ignoreUnknownKeys = true }
     private val queueMutex = Mutex()
     private val scope = CoroutineScope(mainDispatcher + SupervisorJob())
 
@@ -327,8 +323,7 @@ constructor(
             null
         }
 
-    private fun CastMediaItem.isTranscoded(): Boolean =
-        !playbackInfo?.mediaSources?.firstOrNull()?.transcodingUrl.isNullOrBlank()
+    private fun CastMediaItem.isTranscoded(): Boolean = source?.transcoded == true
 
     private fun mapPlaybackStatus(client: RemoteMediaClient): CastPlaybackStatus {
         return when (client.playerState) {
@@ -514,18 +509,9 @@ constructor(
         val client = remoteMediaClient ?: return
         val media = client.currentItem?.media ?: return
         val itemId = media.customData?.optString("itemId")?.toUuidOrNull() ?: return
-        val playbackInfo =
-            media.customData
-                ?.optString("playbackInfo")
-                ?.takeIf { it.isNotEmpty() }
-                ?.let {
-                    try {
-                        json.decodeFromString<PlaybackInfoResponse>(it)
-                    } catch (e: Exception) {
-                        Timber.e(e, "Failed to decode playbackInfo")
-                        null
-                    }
-                }
+        // Null too for an item an older version of the app loaded: the item comes back without
+        // its tracks.
+        val playback = CastCustomData.decode(media.customData?.optString(CastCustomData.KEY))
         // The audio track is part of the stream the server was asked for; the subtitle is
         // whichever text track the receiver shows.
         val audioIndex = media.contentId?.let { audioStreamIndexOf(it) }
@@ -546,23 +532,22 @@ constructor(
                 // else, while this was loading.
                 if (item == null || loadPending || remoteItemId() != itemId) return@launch
 
-                val mediaSource = playbackInfo?.mediaSources?.firstOrNull()
-                if (playbackInfo != null && mediaSource != null) {
+                if (playback != null) {
                     // The receiver's stream plays, so its play session is the one the reports
                     // name, whatever the phone's own player recorded for this item before.
                     repository.setPlaySession(
                         itemId,
-                        playbackInfo.playSessionId,
-                        transcodes = !mediaSource.transcodingUrl.isNullOrBlank(),
+                        playback.playSessionId,
+                        transcodes = playback.transcoded,
                     )
                 }
-                val tracks = mediaSource?.let { getTracks(it, audioIndex, subtitleTrackId) }
+                val tracks = playback?.tracks(audioIndex, subtitleTrackId)
                 val castItem =
                     CastMediaItem(
                         item = item,
-                        playbackInfo = playbackInfo,
-                        subtitleTracks = tracks?.subtitles.orEmpty(),
-                        audioTracks = tracks?.audio.orEmpty(),
+                        source = playback?.source(),
+                        subtitleTracks = tracks?.first.orEmpty(),
+                        audioTracks = tracks?.second.orEmpty(),
                     )
 
                 playlistManager = manager
@@ -578,10 +563,12 @@ constructor(
         }
     }
 
-    private suspend fun getPlaybackInfo(
-        item: PlayerItem,
-        audioStreamIndex: Int?,
-    ): PlaybackInfoResponse =
+    /**
+     * The server's source for the receiver: straight from the server, never a download, which the
+     * receiver cannot read. Its URLs are ready for the receiver (see `toReceiverSource` in the
+     * Jellyfin adapter).
+     */
+    private suspend fun receiverSource(item: PlayerItem, audioStreamIndex: Int?): FindroidSource? =
         withContext(ioDispatcher) {
             // A model known to play HEVC, or the user saying theirs does: the receiver itself
             // tells a sender nothing about its codecs.
@@ -590,14 +577,17 @@ constructor(
                     appPreferences.getValue(appPreferences.castReceiverHevc)
             val maxBitrateMbps = appPreferences.getValue(appPreferences.castMaxBitrateMbps)
 
-            requestCastPlaybackInfo(
-                jellyfinApi,
-                item.itemId,
-                item.mediaSourceId,
-                audioStreamIndex,
-                hevc,
-                maxBitrateMbps,
-            )
+            mediaServer.playback
+                .sources(
+                    PlaybackRequest(
+                        itemId = item.itemId,
+                        target = PlaybackTarget.CastReceiver(supportsHevc = hevc),
+                        mediaSourceId = item.mediaSourceId,
+                        audioStreamIndex = audioStreamIndex,
+                        maxBitrate = maxBitrateMbps.takeIf { it > 0 }?.let { it * 1_000_000 },
+                    )
+                )
+                .firstOrNull()
         }
 
     private fun Uri.toCastOptimizeImageUri(isEpisodeOrBackdrop: Boolean = false): Uri {
@@ -622,14 +612,11 @@ constructor(
         subtitleTrackId: Int? = null,
         defaultSubtitle: Boolean = true,
     ): BuiltMedia? {
-        val baseUrl = jellyfinApi.api.baseUrl?.removeSuffix("/").orEmpty()
-        if (baseUrl.isEmpty()) return null
+        if (mediaServer.session.baseUrl.isNullOrEmpty()) return null
 
-        val playbackInfo = getPlaybackInfo(item, audioStreamIndex)
-        val mediaSource = playbackInfo.mediaSources.firstOrNull() ?: return null
-        val transcodingUrl = mediaSource.transcodingUrl
-        val isTranscoded = !transcodingUrl.isNullOrBlank()
-        repository.setPlaySession(item.itemId, playbackInfo.playSessionId, isTranscoded)
+        val source = receiverSource(item, audioStreamIndex) ?: return null
+        val isTranscoded = source.transcoded
+        repository.setPlaySession(item.itemId, source.playSessionId, isTranscoded)
 
         val isEpisode = item.seriesName != null
         val mediaMetadata =
@@ -649,18 +636,8 @@ constructor(
                     }
                 }
 
-        val streamUrl =
-            castStreamUrl(
-                baseUrl = baseUrl,
-                itemId = item.itemId,
-                mediaSourceId = mediaSource.id,
-                transcodingUrl = transcodingUrl,
-                accessToken = jellyfinApi.api.accessToken,
-            )
-
-        val subtitleId =
-            if (defaultSubtitle) defaultSubtitleTrackId(mediaSource) else subtitleTrackId
-        val tracks = getTracks(mediaSource, audioStreamIndex, subtitleId)
+        val subtitleId = if (defaultSubtitle) defaultSubtitleTrackId(source) else subtitleTrackId
+        val tracks = castTracks(source, audioStreamIndex, subtitleId)
         val mediaTracks =
             tracks.receiverTracks.map {
                 MediaTrack.Builder(it.id, MediaTrack.TYPE_TEXT)
@@ -675,10 +652,10 @@ constructor(
         val customData =
             JSONObject().apply {
                 put("itemId", item.itemId.toString())
-                put("playbackInfo", json.encodeToString(playbackInfo))
+                put(CastCustomData.KEY, CastCustomData.of(source, tracks).encode())
             }
         val mediaInfo =
-            MediaInfo.Builder(streamUrl)
+            MediaInfo.Builder(source.path)
                 .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
                 .setContentType(castContentType(isTranscoded))
                 .setMetadata(mediaMetadata)
@@ -691,25 +668,13 @@ constructor(
             castItem =
                 CastMediaItem(
                     item = item,
-                    playbackInfo = playbackInfo,
+                    source = source,
                     subtitleTracks = tracks.subtitles,
                     audioTracks = tracks.audio,
                 ),
             activeTrackIds = tracks.activeTrackIds.toLongArray(),
         )
     }
-
-    private fun getTracks(
-        mediaSource: MediaSourceInfo,
-        audioStreamIndex: Int?,
-        subtitleTrackId: Int?,
-    ): CastTracks =
-        castTracks(
-            mediaSource = mediaSource,
-            baseUrl = jellyfinApi.api.baseUrl?.removeSuffix("/").orEmpty(),
-            audioStreamIndex = audioStreamIndex,
-            subtitleTrackId = subtitleTrackId,
-        )
 
     private fun fail(e: Exception? = null, message: String) {
         pendingLoad = null
@@ -1035,43 +1000,4 @@ constructor(
         _currentItem.value = null
         forgetPlaylist()
     }
-}
-
-/**
- * Asks the server how the receiver can play [itemId]. [hevc] picks the profile with HEVC,
- * [maxBitrateMbps] is the user's cap (0: none), [audioStreamIndex] the audio track the user chose.
- */
-internal suspend fun requestCastPlaybackInfo(
-    jellyfinApi: JellyfinApi,
-    itemId: UUID,
-    mediaSourceId: String?,
-    audioStreamIndex: Int?,
-    hevc: Boolean,
-    maxBitrateMbps: Int,
-): PlaybackInfoResponse {
-    val profile =
-        if (hevc) {
-            ChromecastH265.deviceProfile
-        } else {
-            Chromecast.deviceProfile
-        }
-    return jellyfinApi.mediaInfoApi
-        .getPostedPlaybackInfo(
-            itemId,
-            PlaybackInfoDto(
-                userId = jellyfinApi.userId,
-                mediaSourceId = mediaSourceId,
-                deviceProfile = profile,
-                maxStreamingBitrate = maxBitrateMbps.takeIf { it > 0 }?.let { it * 1_000_000 },
-                audioStreamIndex = audioStreamIndex,
-                // The receiver plays a file's own default audio track and cannot be told
-                // to play another, so a chosen track has to come out of the server.
-                enableDirectPlay = audioStreamIndex == null,
-                enableDirectStream = true,
-                enableTranscoding = true,
-                allowAudioStreamCopy = true,
-                allowVideoStreamCopy = true,
-            ),
-        )
-        .content
 }

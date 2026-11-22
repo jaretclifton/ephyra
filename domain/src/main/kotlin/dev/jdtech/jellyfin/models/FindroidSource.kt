@@ -24,6 +24,8 @@ data class FindroidSource(
      * name once the player loads it. Null for anything else.
      */
     val playSessionId: String? = null,
+    /** CE (#767): the subtitle stream the server picks for this user, -1 or null for none. */
+    val defaultSubtitleStreamIndex: Int? = null,
 )
 
 enum class FindroidSourceType {

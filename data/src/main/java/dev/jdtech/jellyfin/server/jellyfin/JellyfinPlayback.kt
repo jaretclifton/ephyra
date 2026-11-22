@@ -11,6 +11,7 @@ import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.repository.ResumeThresholds
+import dev.jdtech.jellyfin.server.jellyfin.cast.toReceiverSource
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSegment
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSource
 import org.jellyfin.sdk.model.api.GeneralCommandType
@@ -45,7 +46,11 @@ class JellyfinPlayback(
                 ?.takeIf { request.target !is PlaybackTarget.Download }
         playbackInfo.mediaSources.map {
             val source =
-                it.toFindroidSource(api.mapperContext(), request.itemId, request.includePath)
+                if (request.target is PlaybackTarget.CastReceiver) {
+                    it.toReceiverSource(api.mapperContext(), request.itemId, api.api.accessToken)
+                } else {
+                    it.toFindroidSource(api.mapperContext(), request.itemId, request.includePath)
+                }
             if (source.transcoded && playSessionId != null) {
                 source.copy(playSessionId = playSessionId)
             } else {
@@ -104,8 +109,7 @@ class JellyfinPlayback(
                 )
             is PlaybackTarget.CastReceiver ->
                 // As the Cast controller asks today: the source with or without an audio index, and
-                // no maximum bitrate when uncapped. JellyfinDeviceProfiles has no Cast profile yet,
-                // so this throws until #767 moves Cast's request here.
+                // no maximum bitrate when uncapped (#767).
                 PlaybackInfoDto(
                     userId = api.currentUserId,
                     mediaSourceId = request.mediaSourceId,
