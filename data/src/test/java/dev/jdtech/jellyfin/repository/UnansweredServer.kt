@@ -175,8 +175,12 @@ internal class UnansweredServer(
 
             override suspend fun segments(itemId: ItemId): List<FindroidSegment> = fail()
 
-            override suspend fun trickplayTile(itemId: ItemId, width: Int, index: Int): ByteArray? =
-                fail()
+            override suspend fun trickplayTile(
+                itemId: ItemId,
+                width: Int,
+                index: Int,
+                mediaSourceId: MediaSourceId?,
+            ): ByteArray? = fail()
 
             override fun chapterImageUrl(itemId: ItemId, chapterIndex: Int, tag: String): String? =
                 null

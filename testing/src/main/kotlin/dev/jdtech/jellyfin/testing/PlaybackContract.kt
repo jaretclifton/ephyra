@@ -172,7 +172,7 @@ abstract class PlaybackContract : MediaServerContract() {
         val episode = library.season1Episodes.first()
         val info = assertNotNull(episode.trickplayInfo?.values?.firstOrNull())
 
-        val tile = server.playback.trickplayTile(episode.id, info.width, 0)
+        val tile = server.playback.trickplayTile(episode.id, info.width, 0, mediaSourceId = null)
 
         assertTrue(tile != null && tile.isNotEmpty(), "no tile")
     }
@@ -201,7 +201,7 @@ abstract class PlaybackContract : MediaServerContract() {
         assumeFalse(server.capabilities.trickplay)
         val episode = library.season1Episodes.first()
 
-        assertNull(server.playback.trickplayTile(episode.id, 320, 0))
+        assertNull(server.playback.trickplayTile(episode.id, 320, 0, mediaSourceId = null))
     }
 
     @Test

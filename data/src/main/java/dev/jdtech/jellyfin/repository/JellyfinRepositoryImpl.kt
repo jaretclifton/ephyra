@@ -637,13 +637,27 @@ class JellyfinRepositoryImpl(
             }
         }
 
-    override suspend fun getTrickplayData(itemId: UUID, width: Int, index: Int): ByteArray? =
+    override suspend fun getTrickplayData(
+        itemId: UUID,
+        width: Int,
+        index: Int,
+        mediaSourceId: String?,
+    ): ByteArray? =
         withContext(Dispatchers.IO) {
             try {
                 try {
-                    val sources = File(context.filesDir, "trickplay/$itemId").listFiles()
-                    if (sources != null) {
-                        return@withContext File(sources.first(), index.toString()).readBytes()
+                    // CE (#860): the sheets of the version asked for, not those of whichever
+                    // version the folder lists first; a version not downloaded goes to the server.
+                    val source =
+                        if (mediaSourceId != null) {
+                            File(context.filesDir, "trickplay/$itemId/$mediaSourceId").takeIf {
+                                it.isDirectory
+                            }
+                        } else {
+                            File(context.filesDir, "trickplay/$itemId").listFiles()?.first()
+                        }
+                    if (source != null) {
+                        return@withContext File(source, index.toString()).readBytes()
                     }
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to read local trickplay data")
@@ -651,7 +665,12 @@ class JellyfinRepositoryImpl(
 
                 // #769: the player and the downloads ask here; without trickplay they get none.
                 if (!capabilities.trickplay) return@withContext null
-                return@withContext server.playback.trickplayTile(itemId, width, index)
+                return@withContext server.playback.trickplayTile(
+                    itemId,
+                    width,
+                    index,
+                    mediaSourceId,
+                )
             } catch (e: CancellationException) {
                 throw e
             } catch (_: Exception) {
