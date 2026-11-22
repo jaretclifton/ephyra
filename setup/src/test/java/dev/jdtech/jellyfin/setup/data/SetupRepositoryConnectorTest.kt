@@ -3,15 +3,20 @@ package dev.jdtech.jellyfin.setup.data
 import android.app.Application
 import android.content.Context
 import dev.jdtech.jellyfin.core.R as CoreR
+import dev.jdtech.jellyfin.core.server.CurrentServerType
+import dev.jdtech.jellyfin.core.server.ServerConnectors
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.AuthenticatedUser
 import dev.jdtech.jellyfin.domain.ports.PublicUser
 import dev.jdtech.jellyfin.domain.ports.ServerConnectException
 import dev.jdtech.jellyfin.domain.ports.ServerIssue
+import dev.jdtech.jellyfin.domain.ports.UnsupportedServerTypeException
 import dev.jdtech.jellyfin.models.ExceptionUiText
 import dev.jdtech.jellyfin.models.ExceptionUiTexts
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.ServerCapabilities
+import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.ServerWithAddressAndUser
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.UiText
@@ -116,8 +121,16 @@ class SetupRepositoryConnectorTest {
         }
     }
 
+    private val currentType = CurrentServerType()
+
     private val repository by lazy {
-        SetupRepositoryImpl(connector, session, database, preferences)
+        SetupRepositoryImpl(
+            ServerConnectors(mapOf(ServerType.JELLYFIN to connector)),
+            session,
+            database,
+            preferences,
+            currentType,
+        )
     }
 
     /** A message as its string resource and arguments; one thrown as ExceptionUiText is single. */
@@ -269,6 +282,33 @@ class SetupRepositoryConnectorTest {
             listOf(RecordingServerSession.Use(inRoom.address, "token-a", alice.id)),
             session.uses.toList(),
         )
+    }
+
+    @Test
+    fun `switching server puts its type on the client's`() = runBlocking {
+        // CE (#770): any stored type, also one this build has no adapter for.
+        server = server.copy(type = "emby")
+        currentType.stored = "jellyfin"
+
+        repository.setCurrentServer("a")
+
+        assertEquals("emby", currentType.stored)
+    }
+
+    @Test
+    fun `the login screens get nothing for a type without an adapter`() = runBlocking {
+        server = server.copy(type = "emby")
+        currentType.stored = "emby"
+
+        assertEquals(ServerCapabilities.NONE, repository.capabilities)
+        assertEquals(
+            "emby",
+            assertFailsWith<UnsupportedServerTypeException> { repository.loadDisclaimer() }
+                .storedType,
+        )
+        // Removing its login still works, without signing it out on the server.
+        repository.deleteUser(alice.id)
+        assertEquals(listOf("clearServerCurrentUser a", "deleteUser"), writes.toList())
     }
 
     @Test

@@ -11,11 +11,13 @@ include(":player:core")
 include(":player:local")
 include(":setup")
 include(":modes:film")
+include(":server:jellyfin")
 include(":settings")
 include(":baselineprofile")
 include(":baselineprofile-tv")
 include(":architecture")
 include(":domain")
+include(":testing")
 
 pluginManagement {
     repositories {

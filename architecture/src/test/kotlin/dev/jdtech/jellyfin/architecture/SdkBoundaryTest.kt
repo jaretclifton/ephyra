@@ -3,13 +3,13 @@ package dev.jdtech.jellyfin.architecture
 import com.lemonappdev.konsist.api.Konsist
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 /**
  * Only the Jellyfin adapter may see the Jellyfin SDK
- * (docs/architecture/2-enforcement-and-tests.md, #733). The adapter is the packages
- * `dev.jdtech.jellyfin.server.jellyfin` and `dev.jdtech.jellyfin.api` of the `data` module (#753);
- * R4, about Room rather than the SDK, still allows the whole module. Each rule has a baseline of
- * today's violations that may only shrink.
+ * (docs/architecture/2-enforcement-and-tests.md, #733). The adapter is the module `server/jellyfin`
+ * (#758), and only the apps depend on it (R7). R1 to R3 and R7 have no exceptions (#768). R4, about
+ * Room rather than the SDK, allows the whole `data` module and keeps a frozen baseline.
  *
  * Test sources of every module are out of scope.
  */
@@ -49,24 +49,16 @@ class SdkBoundaryTest {
     /** R1. A text check: a type can be used by its full name without an import (`InfoText.kt`). */
     @Test
     fun `R1 no production file outside the adapter mentions the SDK`() {
-        val baseline = Baseline("sdk-mentions.txt")
         val violations =
             ProjectTree.productionKotlinFiles
                 .filter { (path, file) ->
                     !ProjectTree.inJellyfinAdapter(path) && SDK_PACKAGE in file.readText()
                 }
                 .keys
-        baseline.assertExactly(
-            violations,
-            unlisted = {
-                "$it mentions $SDK outside the Jellyfin adapter. Map the type to one of ours " +
-                    "(docs/architecture/3-target.md); do not add the file to ${baseline.path}."
-            },
-            stale = {
-                "$it is in the baseline but no longer mentions the SDK: delete its line from " +
-                    "${baseline.path}."
-            },
-        )
+        assertNone(violations) {
+            "$it mentions $SDK outside the Jellyfin adapter (${ProjectTree.JELLYFIN_ADAPTER_MODULE})." +
+                " Map the type to one of ours ($TARGET_DOC)."
+        }
     }
 
     /**
@@ -74,46 +66,66 @@ class SdkBoundaryTest {
      */
     @Test
     fun `R2 no production file outside the adapter imports JellyfinApi`() {
-        val baseline = Baseline("jellyfin-api-imports.txt")
-        baseline.assertExactly(
-            filesImporting(JELLYFIN_API, allowed = ProjectTree::inJellyfinAdapter),
-            unlisted = {
-                "$it imports $JELLYFIN_API outside the Jellyfin adapter. Use a port instead " +
-                    "(docs/architecture/3-target.md); do not add the file to ${baseline.path}."
-            },
-            stale = {
-                "$it is in the baseline but no longer imports $JELLYFIN_API: delete its line " +
-                    "from ${baseline.path}."
-            },
-        )
+        assertNone(filesImporting(JELLYFIN_API, allowed = ProjectTree::inJellyfinAdapter)) {
+            "$it imports $JELLYFIN_API outside the Jellyfin adapter " +
+                "(${ProjectTree.JELLYFIN_ADAPTER_MODULE}). Use a port instead ($TARGET_DOC)."
+        }
     }
 
     /**
      * R3. A module without the dependency cannot compile against an SDK type at all. A build file
-     * declares it through any catalog alias of an SDK library or the Maven group itself; the root
-     * build file (`.`) is read too, since it can add the dependency to every module.
+     * declares it through any catalog alias of an SDK library or the Maven group itself, in any
+     * configuration (`debugImplementation` too); the root build file (`.`) is read as well, since
+     * it can add the dependency to every module. Exactly the adapter module declares it.
      */
     @Test
-    fun `R3 only listed modules declare the SDK dependency`() {
-        val baseline = Baseline("sdk-modules.txt")
-        val violations =
+    fun `R3 only the Jellyfin adapter module declares the SDK dependency`() {
+        val declaring =
             ProjectTree.moduleBuildFiles
                 .filter { (_, file) ->
                     val text = file.readText()
                     sdkDependencyMarkers.any { it in text }
                 }
                 .keys
-        baseline.assertExactly(
-            violations,
-            unlisted = {
-                "$it/build.gradle.kts declares the SDK ($SDK). Only the Jellyfin adapter may " +
-                    "depend on the SDK (docs/architecture/3-target.md); do not add the module " +
-                    "to ${baseline.path}."
+        assertNone(declaring - ProjectTree.JELLYFIN_ADAPTER_MODULE) {
+            "${if (it == ".") "The root build file" else "$it/build.gradle.kts"} declares the " +
+                "SDK ($SDK). Only ${ProjectTree.JELLYFIN_ADAPTER_MODULE} may depend on it: use a " +
+                "port from domain instead ($TARGET_DOC)."
+        }
+        assertTrue(
+            ProjectTree.JELLYFIN_ADAPTER_MODULE in declaring,
+            "${ProjectTree.JELLYFIN_ADAPTER_MODULE}/build.gradle.kts does not declare the SDK, " +
+                "so the check looks for the wrong text: $sdkDependencyMarkers",
+        )
+    }
+
+    /**
+     * R7 (#758). The apps are the composition root: no other module depends on the adapter module,
+     * so no feature module reaches into it and an Emby adapter can sit next to it. No baseline.
+     */
+    @Test
+    fun `R7 only the apps depend on the Jellyfin adapter module`() {
+        val markers = adapterDependencyMarkers(ProjectTree.JELLYFIN_ADAPTER_MODULE)
+        val dependents =
+            ProjectTree.moduleBuildFiles
+                .filter { (_, file) ->
+                    val text = file.readText()
+                    markers.any { it in text }
+                }
+                .keys
+        val others = (dependents - APP_MODULES).sorted()
+        assertTrue(
+            others.isEmpty(),
+            others.joinToString("\n") {
+                "$it/build.gradle.kts depends on ${ProjectTree.JELLYFIN_ADAPTER_MODULE}. Only " +
+                    "${APP_MODULES.sorted().joinToString(" and ")} may: use a port from domain " +
+                    "instead (docs/architecture/3-target.md)."
             },
-            stale = {
-                "$it is in the baseline but its build file no longer declares the SDK: delete " +
-                    "its line from ${baseline.path}."
-            },
+        )
+        assertTrue(
+            APP_MODULES.all { it in dependents },
+            "Not every app depends on ${ProjectTree.JELLYFIN_ADAPTER_MODULE}, so the check " +
+                "looks for the wrong text: ${dependents.sorted()}",
         )
     }
 
@@ -132,6 +144,12 @@ class SdkBoundaryTest {
                     "from ${baseline.path}."
             },
         )
+    }
+
+    /** Fails with one [message] line per violation, sorted, when there is any. */
+    private fun assertNone(violations: Set<String>, message: (String) -> String) {
+        if (violations.isNotEmpty())
+            fail(violations.sorted().joinToString("\n", transform = message))
     }
 
     /**
@@ -157,6 +175,17 @@ class SdkBoundaryTest {
         private const val SDK_PACKAGE = "$SDK."
         private const val JELLYFIN_API = "dev.jdtech.jellyfin.api.JellyfinApi"
         private const val SERVER_DAO = "dev.jdtech.jellyfin.database.ServerDatabaseDao"
+        private const val TARGET_DOC = "docs/architecture/3-target.md"
+
+        /** The composition roots, the only modules that may depend on a server adapter (R7). */
+        private val APP_MODULES = setOf("app/phone", "app/tv")
+
+        /**
+         * How a build file names the module at [path] (`server/jellyfin`): the type-safe accessor
+         * (`projects.server.jellyfin`) or the project path (`project(":server:jellyfin")`).
+         */
+        private fun adapterDependencyMarkers(path: String): Set<String> =
+            setOf("projects." + path.replace('/', '.'), "\":" + path.replace('/', ':') + "\"")
 
         /**
          * What marks an SDK dependency in a build file: the Maven group, and the accessor of every

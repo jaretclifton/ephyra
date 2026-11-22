@@ -175,6 +175,7 @@ dependencies {
     implementation(projects.modes.film)
     implementation(projects.player.core)
     implementation(projects.player.local)
+    implementation(projects.server.jellyfin)
     implementation(projects.settings)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.foundation)

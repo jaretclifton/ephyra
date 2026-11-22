@@ -1,13 +1,8 @@
 package dev.jdtech.jellyfin.repository
 
-import java.io.IOException
+import dev.jdtech.jellyfin.models.isUnanswered
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withTimeoutOrNull
-import org.jellyfin.sdk.api.client.exception.InvalidContentException
-import org.jellyfin.sdk.api.client.exception.InvalidStatusException
-import org.jellyfin.sdk.api.client.exception.MissingBaseUrlException
-import org.jellyfin.sdk.api.client.exception.SecureConnectionException
-import org.jellyfin.sdk.api.client.exception.TimeoutException
 import timber.log.Timber
 
 /**
@@ -80,26 +75,6 @@ suspend fun <T> serverOrStoredWhenUnanswered(
         if (!e.isUnanswered()) throw e
         Timber.w(e, "Server unavailable, using the stored list")
         stored()
-    }
-}
-
-/**
- * CE (#775): whether [this] means the request got no answer, as `JellyfinApi.watchResponses` tells
- * the reachability. The SDK's client turns an unknown host, a refused connection and any timeout
- * into its [TimeoutException], a TLS failure into [SecureConnectionException], and any other I/O
- * failure (a reset connection) into a plain `ApiClientException` around the [IOException]. An error
- * status ([InvalidStatusException]) or a body it could not read (`InvalidContentException`) came
- * from a server that answered, and a mapping failure is a bug: those surface. No address
- * ([MissingBaseUrlException]) has no server to ask either.
- */
-internal fun Throwable.isUnanswered(): Boolean {
-    val causes = generateSequence(this) { it.cause.takeIf { cause -> cause !== it } }.take(16)
-    if (causes.any { it is InvalidStatusException || it is InvalidContentException }) return false
-    return causes.any {
-        it is TimeoutException ||
-            it is SecureConnectionException ||
-            it is MissingBaseUrlException ||
-            it is IOException
     }
 }
 

@@ -2,8 +2,6 @@ package dev.jdtech.jellyfin.repository
 
 import android.app.Application
 import android.content.Context
-import android.provider.Settings
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidEpisodeDto
@@ -14,9 +12,6 @@ import dev.jdtech.jellyfin.models.FindroidShowDto
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
-import dev.jdtech.jellyfin.player.DeviceCodecProbe
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.lang.reflect.Proxy
 import java.util.UUID
@@ -146,13 +141,10 @@ class StoredItemFallbackTest {
 
     private val repository: JellyfinRepository by lazy {
         val context = RuntimeEnvironment.getApplication()
-        // The SDK names the device after it; Robolectric has none.
-        Settings.Secure.putString(context.contentResolver, Settings.Secure.ANDROID_ID, "test")
-        // No base URL: every request to the server fails, as with the server unreachable.
-        val api = JellyfinApi(context).apply { userId = this@StoredItemFallbackTest.userId }
+        // Every request to the server fails, as with the server unreachable.
         JellyfinRepositoryImpl(
             context,
-            JellyfinMediaServer(api, JellyfinDeviceProfiles(DeviceCodecProbe(context))),
+            UnansweredServer(userId),
             database,
             AppPreferences(context.getSharedPreferences("test", Context.MODE_PRIVATE)).apply {
                 setValue(currentServer, "server")

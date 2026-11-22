@@ -152,4 +152,5 @@
     <string name="ce_spoiler_title_hidden">Título oculto</string>
     <string name="ce_spoiler_overview_hidden">Oculto até ver este episódio. Mantenha premido para mostrar.</string>
     <string name="ce_spoiler_reveal">Mostrar</string>
+    <string name="ce_cast_amp_crew">Elenco &amp; Equipa</string>
 </resources>

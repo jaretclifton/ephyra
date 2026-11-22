@@ -1,5 +1,6 @@
 package dev.jdtech.jellyfin.repository
 
+import dev.jdtech.jellyfin.models.ServerException
 import java.io.IOException
 import java.net.ConnectException
 import java.net.SocketTimeoutException
@@ -14,11 +15,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.SerializationException
-import org.jellyfin.sdk.api.client.exception.ApiClientException
-import org.jellyfin.sdk.api.client.exception.InvalidContentException
-import org.jellyfin.sdk.api.client.exception.InvalidStatusException
-import org.jellyfin.sdk.api.client.exception.SecureConnectionException
-import org.jellyfin.sdk.api.client.exception.TimeoutException
 import org.junit.jupiter.api.Test
 
 /** CE (#281): the server's answer when it comes, Room's copy when it doesn't. */
@@ -93,25 +89,27 @@ class StoredFallbackTest {
     fun `an error the server answered with surfaces instead of the stored list`() = runTest {
         for (status in listOf(401, 500, 503)) {
             try {
-                serverOrStoredWhenUnanswered(stored) { throw InvalidStatusException(status, null) }
+                serverOrStoredWhenUnanswered(stored) { throw ServerException.HttpStatus(status) }
                 fail("expected the server's $status")
-            } catch (e: InvalidStatusException) {
+            } catch (e: ServerException.HttpStatus) {
                 assertEquals(status, e.status)
             }
         }
         assertTrue(!storedBuilt)
     }
 
-    // What the SDK's OkHttp client throws, see isUnanswered.
+    // What an adapter throws for a request that got no answer, see isUnanswered in domain. The
+    // Jellyfin adapter's SdkErrorsTest checks that the SDK's client failures come out as these.
     @Test
     fun `a list falls back on a connection failure or a timeout of the client`() = runTest {
         for (failure in
             listOf(
-                TimeoutException("refused", ConnectException("Connection refused")),
-                TimeoutException("unknown host", UnknownHostException("jellyfin.home")),
-                TimeoutException("timeout", SocketTimeoutException("timeout")),
-                SecureConnectionException("tls", SSLHandshakeException("handshake")),
-                ApiClientException("reset", IOException("Connection reset")),
+                ServerException.Timeout(ConnectException("Connection refused")),
+                ServerException.Timeout(UnknownHostException("jellyfin.home")),
+                ServerException.Timeout(SocketTimeoutException("timeout")),
+                ServerException.Tls(SSLHandshakeException("handshake")),
+                ServerException.Unreachable(),
+                RuntimeException("reset", IOException("Connection reset")),
             )) {
             assertEquals("room", serverOrStoredWhenUnanswered(stored) { throw failure }, "$failure")
         }
@@ -121,7 +119,8 @@ class StoredFallbackTest {
     fun `a body that could not be read or a mapping failure surfaces`() = runTest {
         for (failure in
             listOf(
-                InvalidContentException("bad body", SerializationException("missing field")),
+                // What the SDK's InvalidContentException is: a body that did not decode.
+                RuntimeException("bad body", SerializationException("missing field")),
                 IllegalStateException("mapping failed"),
                 NullPointerException(),
             )) {

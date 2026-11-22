@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
+import dev.jdtech.jellyfin.core.server.CurrentServerType
 import dev.jdtech.jellyfin.core.session.FakeServerSession
 import dev.jdtech.jellyfin.core.session.FakeServerSession.Use
 import dev.jdtech.jellyfin.database.ServerDatabase
@@ -14,6 +15,7 @@ import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.util.UUID
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -42,17 +44,19 @@ class SavedSessionRestorerTest {
     private val preferences =
         AppPreferences(context.getSharedPreferences("session-restorer", Context.MODE_PRIVATE))
     private val session = FakeServerSession()
-    private val restorer = SavedSessionRestorer(preferences, database)
+    private val currentType = CurrentServerType()
+    private val restorer = SavedSessionRestorer(preferences, database, currentType)
 
     @After fun close() = room.close()
 
-    private fun storeServer(token: String = TOKEN) = runBlocking {
+    private fun storeServer(token: String = TOKEN, type: String = "jellyfin") = runBlocking {
         database.insertServer(
             Server(
                 id = SERVER,
                 name = "Home",
                 currentServerAddressId = ADDRESS_ID,
                 currentUserId = USER_ID,
+                type = type,
             )
         )
         database.insertServerAddress(ServerAddress(ADDRESS_ID, SERVER, ADDRESS))
@@ -130,6 +134,49 @@ class SavedSessionRestorerTest {
 
         eventually { preferences.savedApiSession() == null }
         assertTrue(session.uses.isEmpty())
+        assertNull(currentType.stored)
+    }
+
+    @Test
+    fun `the server type comes with the copy, before restore returns`() {
+        // CE (#770): any stored type, also one this build has no adapter for.
+        storeServer(type = "emby")
+        preferences.saveApiSession(ApiSession(SERVER, ADDRESS, TOKEN, USER_ID, "emby"))
+
+        restorer.restore(session)
+
+        assertEquals("emby", currentType.stored)
+    }
+
+    @Test
+    fun `without a copy for this server the type is read from Room and copied`() {
+        storeServer(type = "emby")
+        preferences.saveApiSession(ApiSession("other-server", "http://other", "x", null))
+
+        restorer.restore(session)
+
+        assertEquals("emby", currentType.stored)
+        eventually { preferences.savedApiSession()?.serverId == SERVER }
+        assertEquals(
+            ApiSession(SERVER, ADDRESS, TOKEN, USER_ID, "emby"),
+            preferences.savedApiSession(),
+        )
+    }
+
+    @Test
+    fun `a copy saved before servers had a type is a Jellyfin server's`() {
+        storeServer()
+        preferences.saveApiSession(ApiSession(SERVER, ADDRESS, TOKEN, USER_ID))
+        // As a version before #770 left it: no type at all.
+        preferences.sharedPreferences
+            .edit()
+            .remove(preferences.sessionServerType.backendName)
+            .commit()
+
+        restorer.restore(session)
+
+        assertEquals("jellyfin", currentType.stored)
+        assertEquals(listOf(Use(ADDRESS, TOKEN, USER_ID)), session.uses.toList())
     }
 
     private companion object {

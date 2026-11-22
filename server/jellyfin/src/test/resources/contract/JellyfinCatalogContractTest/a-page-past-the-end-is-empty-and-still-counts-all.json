@@ -1,0 +1,12 @@
+[
+    {
+        "request": "GET /Items?userId=00000000-0000-0000-0000-000000000001&startIndex=10&recursive=false&sortOrder=Ascending&parentId=00000000-0000-0000-0000-000000000211&includeItemTypes=Episode&sortBy=SortName&imageTypeLimit=1&enableImageTypes=Primary&enableImageTypes=Backdrop&enableTotalRecordCount=true&enableImages=true",
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "json": {
+            "Items": [],
+            "TotalRecordCount": 5,
+            "StartIndex": 10
+        }
+    }
+]

@@ -2,14 +2,9 @@ package dev.jdtech.jellyfin.repository
 
 import android.app.Application
 import android.content.Context
-import android.provider.Settings
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
-import dev.jdtech.jellyfin.player.DeviceCodecProbe
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.lang.reflect.Proxy
 import java.util.UUID
@@ -59,15 +54,7 @@ class UnfinishedDownloadPlaybackTest {
             }
         } as ServerDatabaseDao
 
-    private val context: Context by lazy {
-        RuntimeEnvironment.getApplication().also {
-            // The SDK names the device after it; Robolectric has none.
-            Settings.Secure.putString(it.contentResolver, Settings.Secure.ANDROID_ID, "test")
-        }
-    }
-
-    private fun api() =
-        JellyfinApi(context).apply { userId = this@UnfinishedDownloadPlaybackTest.userId }
+    private val context: Context by lazy { RuntimeEnvironment.getApplication() }
 
     private fun preferences() =
         AppPreferences(context.getSharedPreferences("test", Context.MODE_PRIVATE)).apply {
@@ -78,12 +65,7 @@ class UnfinishedDownloadPlaybackTest {
     fun `online, an unfinished download is not played and the server is asked instead`() =
         runBlocking {
             val repository =
-                JellyfinRepositoryImpl(
-                    context,
-                    JellyfinMediaServer(api(), JellyfinDeviceProfiles(DeviceCodecProbe(context))),
-                    database,
-                    preferences(),
-                )
+                JellyfinRepositoryImpl(context, UnansweredServer(userId), database, preferences())
 
             val result = runCatching { repository.getPlaybackSources(episodeId, null) }
 

@@ -1,42 +1,57 @@
 package dev.jdtech.jellyfin.player.local.domain
 
+import android.content.ContextWrapper
+import android.content.SharedPreferences
+import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidChapter
 import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
-import dev.jdtech.jellyfin.models.FindroidTrickplayInfo
 import dev.jdtech.jellyfin.models.ItemKind
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.models.ServerException
+import dev.jdtech.jellyfin.repository.JellyfinRepositoryImpl
+import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.ContractLibrary
+import dev.jdtech.jellyfin.testing.FakeLibrary
+import dev.jdtech.jellyfin.testing.FakeMediaServer
 import java.lang.reflect.Proxy
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
 /**
  * CE (#594): the episode a show's Play starts is the next-up one, which the server sends without
  * trickplay and chapters. The player gets the episode as its own page has it.
+ *
+ * #771: over the real repository and a [FakeMediaServer], which sends next up the way Jellyfin
+ * does, instead of a reflection fake of the repository. The contract library's next-up episode is
+ * given chapters here; its trickplay is the library's.
  */
 class PlaylistManagerNextUpTest {
-    private val seriesId = UUID.randomUUID()
-    private val seasonId = UUID.randomUUID()
-    private val episodeId = UUID.randomUUID()
-    private val calls = mutableListOf<String>()
+    private val seriesId = ContractLibrary.series.id
+    private val episodeId = ContractLibrary.nextUp.id
 
-    private val nextUp = episode(trickplay = null, chapters = emptyList())
-    private val full =
-        episode(
-            trickplay =
-                mapOf(SOURCE to FindroidTrickplayInfo(320, 180, 10, 10, 72, 10_000, 100_000)),
-            chapters = listOf(FindroidChapter(0L, "Opening"), FindroidChapter(60_000L, "Part One")),
-        )
+    private val library =
+        object : FakeLibrary by ContractLibrary {
+            override val items =
+                ContractLibrary.items.map {
+                    if (it.id == episodeId) {
+                        (it as FindroidEpisode).copy(
+                            chapters =
+                                listOf(
+                                    FindroidChapter(0L, "Opening"),
+                                    FindroidChapter(60_000L, "Part One"),
+                                )
+                        )
+                    } else it
+                }
+        }
+    private val server = FakeMediaServer(library)
 
     @Test
     fun `the show's next-up episode starts with its trickplay and chapters`() {
-        val manager = PlaylistManager(fakeRepository { full })
+        val manager = PlaylistManager(repository())
 
         val item = runBlocking { manager.getInitialItem(seriesId, ItemKind.SERIES) }
 
@@ -45,12 +60,13 @@ class PlaylistManagerNextUpTest {
         assertEquals(320, item.trickplayInfo?.width)
         assertEquals(listOf("Opening", "Part One"), item.chapters.map { it.name })
         // The sources fetched next to the episode are the ones used.
-        assertEquals(1, calls.count { it == "getPlaybackSources" })
+        assertEquals(1, server.calls.count { it == "sources" })
     }
 
     @Test
     fun `the next-up episode still plays when the full episode cannot be fetched`() {
-        val manager = PlaylistManager(fakeRepository { error("server error") })
+        server.failWith(ServerException.HttpStatus(500), only = setOf("episode"))
+        val manager = PlaylistManager(repository())
 
         val item = runBlocking { manager.getInitialItem(seriesId, ItemKind.SERIES) }
 
@@ -59,63 +75,42 @@ class PlaylistManagerNextUpTest {
         assertNull(item.trickplayInfo)
     }
 
-    private fun fakeRepository(getEpisode: () -> FindroidEpisode) =
+    private fun repository() =
+        JellyfinRepositoryImpl(
+            context = ContextWrapper(null),
+            server = server,
+            database = noDownloads(),
+            appPreferences = defaultPreferences(),
+        )
+
+    /** No downloads: with no current server set, the repository only asks whether there are any. */
+    private fun noDownloads(): ServerDatabaseDao =
         Proxy.newProxyInstance(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
+            ServerDatabaseDao::class.java.classLoader,
+            arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, _ ->
-            calls.add(method.name)
             when (method.name) {
-                "getNextUp" -> listOf(nextUp)
-                "getEpisode" -> getEpisode()
-                "getPlaybackSources" -> listOf(source())
-                else -> error("Unexpected call to ${method.name}")
+                "observeHasSources" -> flowOf(false)
+                else -> throw NotImplementedError("ServerDatabaseDao.${method.name}")
             }
-        } as JellyfinRepository
+        } as ServerDatabaseDao
 
-    private fun episode(
-        trickplay: Map<String, FindroidTrickplayInfo>?,
-        chapters: List<FindroidChapter>,
-    ) =
-        FindroidEpisode(
-            id = episodeId,
-            name = "Episode 1",
-            originalTitle = null,
-            overview = "",
-            indexNumber = 1,
-            indexNumberEnd = null,
-            parentIndexNumber = 1,
-            sources = emptyList(),
-            played = false,
-            favorite = false,
-            canPlay = true,
-            canDownload = false,
-            runtimeTicks = 0L,
-            playbackPositionTicks = 0L,
-            premiereDate = null,
-            seriesId = seriesId,
-            seriesName = "Show",
-            seasonId = seasonId,
-            seasonName = "Season 1",
-            communityRating = null,
-            people = emptyList(),
-            missing = false,
-            images = FindroidImages(),
-            chapters = chapters,
-            trickplayInfo = trickplay,
+    /** Every preference at its default. */
+    private fun defaultPreferences(): AppPreferences =
+        AppPreferences(
+            Proxy.newProxyInstance(
+                SharedPreferences::class.java.classLoader,
+                arrayOf(SharedPreferences::class.java),
+            ) { _, method, args ->
+                when (method.name) {
+                    "getBoolean",
+                    "getString",
+                    "getInt",
+                    "getLong",
+                    "getFloat",
+                    "getStringSet" -> args!![1]
+                    else -> throw UnsupportedOperationException("SharedPreferences.${method.name}")
+                }
+            } as SharedPreferences
         )
-
-    private fun source() =
-        FindroidSource(
-            id = SOURCE,
-            name = "Source",
-            type = FindroidSourceType.REMOTE,
-            path = "http://server/video",
-            size = 0L,
-            mediaStreams = emptyList(),
-        )
-
-    private companion object {
-        const val SOURCE = "source"
-    }
 }

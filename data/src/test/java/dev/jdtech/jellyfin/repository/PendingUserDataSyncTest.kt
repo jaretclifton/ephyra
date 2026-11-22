@@ -2,18 +2,13 @@ package dev.jdtech.jellyfin.repository
 
 import android.app.Application
 import android.content.Context
-import android.provider.Settings
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidMovieDto
 import dev.jdtech.jellyfin.models.FindroidShowDto
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
-import dev.jdtech.jellyfin.player.DeviceCodecProbe
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -52,12 +47,9 @@ class PendingUserDataSyncTest {
     private var syncRequests = 0
 
     private val repository: JellyfinRepository by lazy {
-        // The SDK names the device after it; Robolectric has none.
-        Settings.Secure.putString(context.contentResolver, Settings.Secure.ANDROID_ID, "test")
-        val api = JellyfinApi(context).apply { userId = this@PendingUserDataSyncTest.userId }
         JellyfinRepositoryImpl(
             context,
-            JellyfinMediaServer(api, JellyfinDeviceProfiles(DeviceCodecProbe(context))),
+            UnansweredServer(userId),
             database,
             AppPreferences(context.getSharedPreferences("test", Context.MODE_PRIVATE)),
             UserDataSyncRequester { syncRequests++ },

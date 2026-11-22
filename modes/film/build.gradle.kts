@@ -38,5 +38,7 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    // #771: FakeMediaServer.
+    testImplementation(projects.testing)
     implementation(libs.kotlinx.coroutines.android)
 }

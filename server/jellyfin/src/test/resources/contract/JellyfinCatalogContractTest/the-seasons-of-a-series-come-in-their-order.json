@@ -1,0 +1,116 @@
+[
+    {
+        "request": "GET /Shows/00000000-0000-0000-0000-000000000201/Seasons?userId=00000000-0000-0000-0000-000000000001",
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "json": {
+            "Items": [
+                {
+                    "Name": "Specials",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "00000000000000000000000000000210",
+                    "ChannelId": null,
+                    "IndexNumber": 0,
+                    "IsFolder": true,
+                    "Type": "Season",
+                    "UserData": {
+                        "PlayedPercentage": 0,
+                        "UnplayedItemCount": 1,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-0000-0000-000000000201000",
+                        "ItemId": "00000000000000000000000000000210"
+                    },
+                    "SeriesName": "Test Show",
+                    "SeriesId": "00000000000000000000000000000201",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Season 1",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "00000000000000000000000000000211",
+                    "ChannelId": null,
+                    "IndexNumber": 1,
+                    "IsFolder": true,
+                    "Type": "Season",
+                    "UserData": {
+                        "PlayedPercentage": 20,
+                        "UnplayedItemCount": 4,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-0000-0000-000000000201001",
+                        "ItemId": "00000000000000000000000000000211"
+                    },
+                    "SeriesName": "Test Show",
+                    "SeriesId": "00000000000000000000000000000201",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Season 2",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "00000000000000000000000000000212",
+                    "ChannelId": null,
+                    "IndexNumber": 2,
+                    "IsFolder": true,
+                    "Type": "Season",
+                    "UserData": {
+                        "PlayedPercentage": 0,
+                        "UnplayedItemCount": 2,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-0000-0000-000000000201002",
+                        "ItemId": "00000000000000000000000000000212"
+                    },
+                    "SeriesName": "Test Show",
+                    "SeriesId": "00000000000000000000000000000201",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Season 3",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "00000000000000000000000000000213",
+                    "ChannelId": null,
+                    "IndexNumber": 3,
+                    "IsFolder": true,
+                    "Type": "Season",
+                    "UserData": {
+                        "UnplayedItemCount": 0,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": true,
+                        "Key": "00000000-0000-0000-0000-000000000201003",
+                        "ItemId": "00000000000000000000000000000213"
+                    },
+                    "SeriesName": "Test Show",
+                    "SeriesId": "00000000000000000000000000000201",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                }
+            ],
+            "TotalRecordCount": 4,
+            "StartIndex": 0
+        }
+    }
+]

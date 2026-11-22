@@ -1,0 +1,1063 @@
+[
+    {
+        "request": "GET /Items?userId=00000000-0000-0000-0000-000000000001&limit=20&recursive=true&sortOrder=Ascending&includeItemTypes=Movie&sortBy=SortName&imageTypeLimit=1&enableImageTypes=Primary&enableImageTypes=Backdrop&enableTotalRecordCount=false&enableImages=true",
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "json": {
+            "Items": [
+                {
+                    "Name": "!Bang Big (2014)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000dde2f105edc32596dc92",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 50230000,
+                    "ProductionYear": 2014,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-dde2-f105-edc32596dc92",
+                        "ItemId": "000000000000dde2f105edc32596dc92"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                },
+                {
+                    "Name": "2 Big Fast (2003)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000c4ae1855e49cda55caf2",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 50230000,
+                    "ProductionYear": 2003,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-c4ae-1855-e49cda55caf2",
+                        "ItemId": "000000000000c4ae1855e49cda55caf2"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                },
+                {
+                    "Name": "007 Big (1962)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "00000000000069957175393e82819376",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 50230000,
+                    "ProductionYear": 1962,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-6995-7175-393e82819376",
+                        "ItemId": "00000000000069957175393e82819376"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                },
+                {
+                    "Name": "12 Big Monkeys (1995)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000b1ebf4efcb439cf17d6c",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 50230000,
+                    "ProductionYear": 1995,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-b1eb-f4ef-cb439cf17d6c",
+                        "ItemId": "000000000000b1ebf4efcb439cf17d6c"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                },
+                {
+                    "Name": "1917 Big (2019)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000643ad9260b51c26d7202",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 50230000,
+                    "ProductionYear": 2019,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-643a-d926-0b51c26d7202",
+                        "ItemId": "000000000000643ad9260b51c26d7202"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                },
+                {
+                    "Name": "The Aast Movie (2000)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "00000000000082d3dfa6a69b75134586",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 50230000,
+                    "ProductionYear": 2000,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-82d3-dfa6-a69b75134586",
+                        "ItemId": "00000000000082d3dfa6a69b75134586"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                },
+                {
+                    "Name": "Able Movie 01 (1951)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "00000000000041068f685e68b17baeaf",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 50230000,
+                    "ProductionYear": 1951,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-4106-8f68-5e68b17baeaf",
+                        "ItemId": "00000000000041068f685e68b17baeaf"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                },
+                {
+                    "Name": "Able Movie 02 (1952)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000d8b098347a742246eb4d",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 50230000,
+                    "ProductionYear": 1952,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-d8b0-9834-7a742246eb4d",
+                        "ItemId": "000000000000d8b098347a742246eb4d"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                },
+                {
+                    "Name": "Able Movie 03 (1953)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000025236325ab3b340fa6b",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 50230000,
+                    "ProductionYear": 1953,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-0252-3632-5ab3b340fa6b",
+                        "ItemId": "000000000000025236325ab3b340fa6b"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                },
+                {
+                    "Name": "Able Movie 04 (1954)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "0000000000006bf6227e8075a0a89655",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 50230000,
+                    "ProductionYear": 1954,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-6bf6-227e-8075a0a89655",
+                        "ItemId": "0000000000006bf6227e8075a0a89655"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                },
+                {
+                    "Name": "Able Movie 05 (1955)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "00000000000051f49566a5af5a7c5e74",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 50230000,
+                    "ProductionYear": 1955,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-51f4-9566-a5af5a7c5e74",
+                        "ItemId": "00000000000051f49566a5af5a7c5e74"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                },
+                {
+                    "Name": "Able Movie 06 (1956)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "00000000000073175893ceb3fa1af763",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 50230000,
+                    "ProductionYear": 1956,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-7317-5893-ceb3fa1af763",
+                        "ItemId": "00000000000073175893ceb3fa1af763"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                },
+                {
+                    "Name": "Able Movie 07 (1957)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000dd24163bbe3090e2b636",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 50230000,
+                    "ProductionYear": 1957,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-dd24-163b-be3090e2b636",
+                        "ItemId": "000000000000dd24163bbe3090e2b636"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                },
+                {
+                    "Name": "Able Movie 08 (1958)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000c46c8140de8aeded1dda",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 50230000,
+                    "ProductionYear": 1958,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-c46c-8140-de8aeded1dda",
+                        "ItemId": "000000000000c46c8140de8aeded1dda"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                },
+                {
+                    "Name": "Able Movie 09 (1959)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "0000000000008e337de57f0ad2305092",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 50230000,
+                    "ProductionYear": 1959,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-8e33-7de5-7f0ad2305092",
+                        "ItemId": "0000000000008e337de57f0ad2305092"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                },
+                {
+                    "Name": "Able Movie 10 (1960)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "0000000000006c98001107b229dca96d",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 50230000,
+                    "ProductionYear": 1960,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-6c98-0011-07b229dca96d",
+                        "ItemId": "0000000000006c98001107b229dca96d"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                },
+                {
+                    "Name": "Ångström Big (2012)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "0000000000003c4097e2864d93c499e3",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 50230000,
+                    "ProductionYear": 2012,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-3c40-97e2-864d93c499e3",
+                        "ItemId": "0000000000003c4097e2864d93c499e3"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                },
+                {
+                    "Name": "The Bast Movie (2000)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000473a773b269b6f8e631d",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 50230000,
+                    "ProductionYear": 2000,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-473a-773b-269b6f8e631d",
+                        "ItemId": "000000000000473a773b269b6f8e631d"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                },
+                {
+                    "Name": "Bble Movie 01 (1951)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000a001cac833690b8d26be",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 50230000,
+                    "ProductionYear": 1951,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-a001-cac8-33690b8d26be",
+                        "ItemId": "000000000000a001cac833690b8d26be"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                },
+                {
+                    "Name": "Bble Movie 02 (1952)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "0000000000004b9d9275c7b1d6bbcb81",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 50230000,
+                    "ProductionYear": 1952,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-4b9d-9275-c7b1d6bbcb81",
+                        "ItemId": "0000000000004b9d9275c7b1d6bbcb81"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                }
+            ],
+            "TotalRecordCount": 20,
+            "StartIndex": 0
+        }
+    },
+    {
+        "request": "GET /Items?userId=00000000-0000-0000-0000-000000000001&limit=20&recursive=true&sortOrder=Ascending&includeItemTypes=Series&sortBy=SortName&imageTypeLimit=1&enableImageTypes=Primary&enableImageTypes=Backdrop&enableTotalRecordCount=false&enableImages=true",
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "json": {
+            "Items": [
+                {
+                    "Name": "Bluey",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000894d07217d4bbea8a9b3",
+                    "PremiereDate": "2018-10-01T00:00:00.0000000Z",
+                    "OfficialRating": "TV-Y",
+                    "ChannelId": null,
+                    "CommunityRating": 8.6,
+                    "RunTimeTicks": 4200000000,
+                    "ProductionYear": 2018,
+                    "IsFolder": true,
+                    "Type": "Series",
+                    "UserData": {
+                        "PlayedPercentage": 0,
+                        "UnplayedItemCount": 10,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-894d-0721-7d4bbea8a9b3",
+                        "ItemId": "000000000000894d07217d4bbea8a9b3"
+                    },
+                    "Status": "Continuing",
+                    "AirDays": [],
+                    "ImageTags": {
+                        "Primary": "000000000000d1050eceddf7b38e5ae0"
+                    },
+                    "BackdropImageTags": [
+                        "000000000000d1050eceddf7b38e5ae0"
+                    ],
+                    "ImageBlurHashes": {
+                        "Backdrop": {
+                            "000000000000d1050eceddf7b38e5ae0": "W~K2|go#OFo~ogt7I$a#R:Wtoda#Emf5s9jFjXaykqbJt1slafWX"
+                        },
+                        "Primary": {
+                            "000000000000d1050eceddf7b38e5ae0": "d=KVEutRNy%MOLofWFW@Xlozngaw$+j[jYsmR%jYogX9"
+                        }
+                    },
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown",
+                    "EndDate": "2024-04-21T00:00:00.0000000Z",
+                    "OriginalLanguage": "en"
+                },
+                {
+                    "Name": "Breaking Bad",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000be70792f898c36a13ebb",
+                    "PremiereDate": "2008-01-20T00:00:00.0000000Z",
+                    "CriticRating": 96,
+                    "OfficialRating": "TV-MA",
+                    "ChannelId": null,
+                    "CommunityRating": 8.959,
+                    "RunTimeTicks": 0,
+                    "ProductionYear": 2008,
+                    "IsFolder": true,
+                    "Type": "Series",
+                    "UserData": {
+                        "PlayedPercentage": 0,
+                        "UnplayedItemCount": 20,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-be70-792f-898c36a13ebb",
+                        "ItemId": "000000000000be70792f898c36a13ebb"
+                    },
+                    "Status": "Ended",
+                    "AirDays": [],
+                    "ImageTags": {
+                        "Primary": "0000000000001b59feed7707eb09fef9"
+                    },
+                    "BackdropImageTags": [
+                        "0000000000001b59feed7707eb09fef9"
+                    ],
+                    "ImageBlurHashes": {
+                        "Backdrop": {
+                            "0000000000001b59feed7707eb09fef9": "WSF?C5tRs8%fkVnhUH-:%Ls:ofoz9|tQN{WBt6xuIVIpe-WER-Rk"
+                        },
+                        "Primary": {
+                            "0000000000001b59feed7707eb09fef9": "dC9j=Fxt02M|_KawD*ohIHaxjEj]9Iai-ooH8_Mz?a%J"
+                        }
+                    },
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown",
+                    "EndDate": "2013-09-29T00:00:00.0000000Z",
+                    "OriginalLanguage": "en"
+                },
+                {
+                    "Name": "Chapters Show",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000c8267651255d8ea54e6d",
+                    "ChannelId": null,
+                    "ProductionYear": 2025,
+                    "IsFolder": true,
+                    "Type": "Series",
+                    "UserData": {
+                        "PlayedPercentage": 0,
+                        "UnplayedItemCount": 2,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-c826-7651-255d8ea54e6d",
+                        "ItemId": "000000000000c8267651255d8ea54e6d"
+                    },
+                    "AirDays": [],
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Chernobyl",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000dfc8063a15357065d3ec",
+                    "PremiereDate": "2019-05-06T00:00:00.0000000Z",
+                    "OfficialRating": "TV-MA",
+                    "ChannelId": null,
+                    "CommunityRating": 8.731,
+                    "RunTimeTicks": 0,
+                    "ProductionYear": 2019,
+                    "IsFolder": true,
+                    "Type": "Series",
+                    "UserData": {
+                        "PlayedPercentage": 0,
+                        "UnplayedItemCount": 5,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-dfc8-063a-15357065d3ec",
+                        "ItemId": "000000000000dfc8063a15357065d3ec"
+                    },
+                    "Status": "Ended",
+                    "AirDays": [],
+                    "ImageTags": {
+                        "Primary": "000000000000234882bc3456064fbfbb"
+                    },
+                    "BackdropImageTags": [
+                        "000000000000234882bc3456064fbfbb"
+                    ],
+                    "ImageBlurHashes": {
+                        "Backdrop": {
+                            "000000000000234882bc3456064fbfbb": "WSGT7,-;x[%fIUS2_NxuWBkCWpWqxuoLWBWBt6of.7t7bHayaeof"
+                        },
+                        "Primary": {
+                            "000000000000234882bc3456064fbfbb": "dYJIUz_3o|%f~q%3M{WBM{R%a{WBbHWVoft7NGoLafoM"
+                        }
+                    },
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown",
+                    "EndDate": "2019-06-03T00:00:00.0000000Z",
+                    "OriginalLanguage": "en"
+                },
+                {
+                    "Name": "Empty Season Show",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "0000000000005d135cd9551a13346bea",
+                    "ChannelId": null,
+                    "ProductionYear": 2022,
+                    "IsFolder": true,
+                    "Type": "Series",
+                    "UserData": {
+                        "UnplayedItemCount": 0,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": true,
+                        "Key": "00000000-0000-5d13-5cd9-551a13346bea",
+                        "ItemId": "0000000000005d135cd9551a13346bea"
+                    },
+                    "AirDays": [],
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Empty Show",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000900d8376a3ae5b7e6a6b",
+                    "ChannelId": null,
+                    "ProductionYear": 2021,
+                    "IsFolder": true,
+                    "Type": "Series",
+                    "UserData": {
+                        "UnplayedItemCount": 0,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": true,
+                        "Key": "00000000-0000-900d-8376-a3ae5b7e6a6b",
+                        "ItemId": "000000000000900d8376a3ae5b7e6a6b"
+                    },
+                    "AirDays": [],
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Long Season Show",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "0000000000002aff9b8f918fb8cf5d30",
+                    "ChannelId": null,
+                    "ProductionYear": 2019,
+                    "IsFolder": true,
+                    "Type": "Series",
+                    "UserData": {
+                        "PlayedPercentage": 0,
+                        "UnplayedItemCount": 30,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-2aff-9b8f-918fb8cf5d30",
+                        "ItemId": "0000000000002aff9b8f918fb8cf5d30"
+                    },
+                    "AirDays": [],
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "The Office",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "0000000000005941cb8375f35bb2fcb7",
+                    "PremiereDate": "2005-03-24T00:00:00.0000000Z",
+                    "OfficialRating": "TV-14",
+                    "ChannelId": null,
+                    "CommunityRating": 8.582,
+                    "RunTimeTicks": 0,
+                    "ProductionYear": 2005,
+                    "IsFolder": true,
+                    "Type": "Series",
+                    "UserData": {
+                        "PlayedPercentage": 0,
+                        "UnplayedItemCount": 28,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-5941-cb83-75f35bb2fcb7",
+                        "ItemId": "0000000000005941cb8375f35bb2fcb7"
+                    },
+                    "Status": "Ended",
+                    "AirDays": [],
+                    "ImageTags": {
+                        "Primary": "000000000000b6cc39d97b9b4919858f"
+                    },
+                    "BackdropImageTags": [
+                        "000000000000b6cc39d97b9b4919858f"
+                    ],
+                    "ImageBlurHashes": {
+                        "Backdrop": {
+                            "000000000000b6cc39d97b9b4919858f": "WSC%UO?bNLD$M{NNOeM{ai%Lxuo$9HIURjxvn#jFxujYaxogaxNF"
+                        },
+                        "Primary": {
+                            "000000000000b6cc39d97b9b4919858f": "ddM%[*_3t6-;00ofRPM{xtM{oMRj?bWBt7ogaeoykCWV"
+                        }
+                    },
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown",
+                    "EndDate": "2013-05-16T00:00:00.0000000Z",
+                    "OriginalLanguage": "en"
+                },
+                {
+                    "Name": "One Episode Show",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000f9fd4bda819da16834f7",
+                    "ChannelId": null,
+                    "ProductionYear": 2023,
+                    "IsFolder": true,
+                    "Type": "Series",
+                    "UserData": {
+                        "PlayedPercentage": 0,
+                        "UnplayedItemCount": 1,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-f9fd-4bda-819da16834f7",
+                        "ItemId": "000000000000f9fd4bda819da16834f7"
+                    },
+                    "AirDays": [],
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Other Show",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000d5e684ec8d0fd0754aca",
+                    "ChannelId": null,
+                    "ProductionYear": 2026,
+                    "IsFolder": true,
+                    "Type": "Series",
+                    "UserData": {
+                        "PlayedPercentage": 0,
+                        "UnplayedItemCount": 2,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-d5e6-84ec-8d0fd0754aca",
+                        "ItemId": "000000000000d5e684ec8d0fd0754aca"
+                    },
+                    "AirDays": [],
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Pioneer One",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000619dc37ece52fe8cb01f",
+                    "PremiereDate": "2010-06-16T00:00:00.0000000Z",
+                    "OfficialRating": "NR",
+                    "ChannelId": null,
+                    "CommunityRating": 6.3,
+                    "RunTimeTicks": 21000000000,
+                    "ProductionYear": 2010,
+                    "IsFolder": true,
+                    "Type": "Series",
+                    "UserData": {
+                        "PlayedPercentage": 0,
+                        "UnplayedItemCount": 6,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-619d-c37e-ce52fe8cb01f",
+                        "ItemId": "000000000000619dc37ece52fe8cb01f"
+                    },
+                    "Status": "Ended",
+                    "AirDays": [],
+                    "ImageTags": {
+                        "Primary": "000000000000755b84b938e41c8d1094"
+                    },
+                    "BackdropImageTags": [
+                        "000000000000755b84b938e41c8d1094"
+                    ],
+                    "ImageBlurHashes": {
+                        "Backdrop": {
+                            "000000000000755b84b938e41c8d1094": "W54xuaoN4nkljFIB%MWCM{t6oLRj4TWU.8i{ozx]4ot6.7IVRj%M"
+                        },
+                        "Primary": {
+                            "000000000000755b84b938e41c8d1094": "dQMgVV-p+^}FTcO?wKv~-ot7M{aK}t$iR6V@Syniv~RQ"
+                        }
+                    },
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown",
+                    "EndDate": "2011-12-13T00:00:00.0000000Z",
+                    "OriginalLanguage": "en"
+                },
+                {
+                    "Name": "Resume Show",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000b302686f21467d3de9c3",
+                    "ChannelId": null,
+                    "ProductionYear": 2015,
+                    "IsFolder": true,
+                    "Type": "Series",
+                    "UserData": {
+                        "PlayedPercentage": 0,
+                        "UnplayedItemCount": 4,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-b302-686f-21467d3de9c3",
+                        "ItemId": "000000000000b302686f21467d3de9c3"
+                    },
+                    "AirDays": [],
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Subs Show",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000bfbfeb0a2388bd3b7f33",
+                    "ChannelId": null,
+                    "ProductionYear": 2024,
+                    "IsFolder": true,
+                    "Type": "Series",
+                    "UserData": {
+                        "PlayedPercentage": 0,
+                        "UnplayedItemCount": 2,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-bfbf-eb0a-2388bd3b7f33",
+                        "ItemId": "000000000000bfbfeb0a2388bd3b7f33"
+                    },
+                    "AirDays": [],
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Subtitle Style Test",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "00000000000059186d2dfe390b7d432b",
+                    "ChannelId": null,
+                    "ProductionYear": 2026,
+                    "IsFolder": true,
+                    "Type": "Series",
+                    "UserData": {
+                        "PlayedPercentage": 0,
+                        "UnplayedItemCount": 1,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-5918-6d2d-fe390b7d432b",
+                        "ItemId": "00000000000059186d2dfe390b7d432b"
+                    },
+                    "AirDays": [],
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Test Show",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "00000000000000000000000000000201",
+                    "ChannelId": null,
+                    "ProductionYear": 2020,
+                    "IsFolder": true,
+                    "Type": "Series",
+                    "UserData": {
+                        "PlayedPercentage": 12.5,
+                        "UnplayedItemCount": 7,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-0000-0000-000000000201",
+                        "ItemId": "00000000000000000000000000000201"
+                    },
+                    "AirDays": [],
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Track Test",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "0000000000001c73f5fa96797f2b3c6d",
+                    "ChannelId": null,
+                    "ProductionYear": 2026,
+                    "IsFolder": true,
+                    "Type": "Series",
+                    "UserData": {
+                        "PlayedPercentage": 0,
+                        "UnplayedItemCount": 4,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-1c73-f5fa-96797f2b3c6d",
+                        "ItemId": "0000000000001c73f5fa96797f2b3c6d"
+                    },
+                    "AirDays": [],
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Tracks Show",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000fc03db2ab6c961c09300",
+                    "ChannelId": null,
+                    "ProductionYear": 2025,
+                    "IsFolder": true,
+                    "Type": "Series",
+                    "UserData": {
+                        "PlayedPercentage": 0,
+                        "UnplayedItemCount": 3,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-fc03-db2a-b6c961c09300",
+                        "ItemId": "000000000000fc03db2ab6c961c09300"
+                    },
+                    "AirDays": [],
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Und Audio Show",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "00000000000072b6a5948ecfac2dfc52",
+                    "ChannelId": null,
+                    "ProductionYear": 2024,
+                    "IsFolder": true,
+                    "Type": "Series",
+                    "UserData": {
+                        "PlayedPercentage": 0,
+                        "UnplayedItemCount": 1,
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-72b6-a594-8ecfac2dfc52",
+                        "ItemId": "00000000000072b6a5948ecfac2dfc52"
+                    },
+                    "AirDays": [],
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                }
+            ],
+            "TotalRecordCount": 18,
+            "StartIndex": 0
+        }
+    }
+]

@@ -152,4 +152,5 @@
     <string name="ce_spoiler_title_hidden">Títol amagat</string>
     <string name="ce_spoiler_overview_hidden">Amagat fins que vegis aquest episodi. Mantén premut per mostrar-lo.</string>
     <string name="ce_spoiler_reveal">Mostra</string>
+    <string name="ce_cast_amp_crew">Repartiment i equip</string>
 </resources>

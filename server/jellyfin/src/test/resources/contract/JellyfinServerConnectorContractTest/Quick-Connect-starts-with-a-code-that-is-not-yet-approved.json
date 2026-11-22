@@ -1,0 +1,38 @@
+[
+    {
+        "request": "GET /QuickConnect/Enabled",
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "json": true
+    },
+    {
+        "request": "POST /QuickConnect/Initiate",
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "json": {
+            "Authenticated": false,
+            "Secret": "0000000000007f5627acd8394e6c971f5ac9d8c4cda760ef6c788c3084d86d73",
+            "Code": "620768",
+            "DeviceId": "ephyra-contract-login",
+            "DeviceName": "contract",
+            "AppName": "Ephyra contract tests",
+            "AppVersion": "1",
+            "DateAdded": "2026-11-22T09:23:21.6494297Z"
+        }
+    },
+    {
+        "request": "GET /QuickConnect/Connect?secret=0000000000007f5627acd8394e6c971f5ac9d8c4cda760ef6c788c3084d86d73",
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "json": {
+            "Authenticated": false,
+            "Secret": "0000000000007f5627acd8394e6c971f5ac9d8c4cda760ef6c788c3084d86d73",
+            "Code": "620768",
+            "DeviceId": "ephyra-contract-login",
+            "DeviceName": "contract",
+            "AppName": "Ephyra contract tests",
+            "AppVersion": "1",
+            "DateAdded": "2026-11-22T09:23:21.6494297Z"
+        }
+    }
+]
