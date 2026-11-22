@@ -573,6 +573,7 @@ fun TvPlayerScreen(
                 ) {
                     TvUpNextCard(
                         state = state,
+                        queue = queue,
                         playNowFocus = upNextFocus,
                         onPlayNow = viewModel::playUpNextNow,
                         onCancel = viewModel::cancelUpNext,
@@ -607,6 +608,7 @@ fun TvPlayerScreen(
                 upNext?.let { state ->
                     TvUpNextCard(
                         state = state,
+                        queue = queue,
                         playNowFocus = upNextFocus,
                         onPlayNow = viewModel::playUpNextNow,
                         onCancel = {

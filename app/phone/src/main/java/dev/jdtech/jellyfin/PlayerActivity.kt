@@ -773,12 +773,20 @@ class PlayerActivity : BasePlayerActivity() {
         binding.upNextCard.setContent {
             FindroidTheme(darkTheme = true) {
                 val upNext by viewModel.upNext.collectAsStateWithLifecycle()
-                PlayerUpNextCard(
-                    state = upNext,
-                    visible = upNextCardAllowed.value,
-                    onPlayNow = viewModel::playUpNextNow,
-                    onCancel = viewModel::cancelUpNext,
-                )
+                val queue by viewModel.queue.collectAsStateWithLifecycle()
+                // CE (#856): the card hides the next episode as the episode list does.
+                CompositionLocalProvider(
+                    LocalSpoilers provides
+                        Spoilers(appPreferences.getValue(appPreferences.hideSpoilers))
+                ) {
+                    PlayerUpNextCard(
+                        state = upNext,
+                        queue = queue,
+                        visible = upNextCardAllowed.value,
+                        onPlayNow = viewModel::playUpNextNow,
+                        onCancel = viewModel::cancelUpNext,
+                    )
+                }
             }
         }
 

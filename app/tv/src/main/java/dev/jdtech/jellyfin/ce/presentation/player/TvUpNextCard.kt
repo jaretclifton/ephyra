@@ -39,6 +39,11 @@ import coil3.compose.AsyncImage
 import dev.jdtech.jellyfin.ce.ui.focus.ephyraButtonBorder
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.ephyra.EphyraMotion
+import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
+import dev.jdtech.jellyfin.core.presentation.spoiler.spoilerImage
+import dev.jdtech.jellyfin.core.presentation.spoiler.upNext
+import dev.jdtech.jellyfin.core.presentation.spoiler.upNextTitle
+import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.player.local.R as PlayerR
 import dev.jdtech.jellyfin.player.local.presentation.PlayerViewModel.UpNextState
 import dev.jdtech.jellyfin.presentation.theme.spacings
@@ -54,11 +59,14 @@ import dev.jdtech.jellyfin.presentation.theme.spacings
 @Composable
 internal fun TvUpNextCard(
     state: UpNextState,
+    queue: List<FindroidItem>,
     playNowFocus: FocusRequester,
     onPlayNow: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // CE (#856): hidden like an episode of the player's list while Hide spoilers is on.
+    val spoiler = LocalSpoilers.current.upNext(state.itemId, queue)
     Surface(
         modifier = modifier.width(560.dp),
         shape = RoundedCornerShape(16.dp),
@@ -79,7 +87,13 @@ internal fun TvUpNextCard(
                         model = state.imageUri,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize(),
+                        modifier =
+                            Modifier.fillMaxSize()
+                                .spoilerImage(
+                                    hidden = spoiler.hidden,
+                                    fallback = MaterialTheme.colorScheme.surfaceVariant,
+                                    iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                ),
                     )
                     state.fractionLeft?.let { fraction ->
                         CountdownBar(fraction, Modifier.align(Alignment.BottomStart))
@@ -98,13 +112,15 @@ internal fun TvUpNextCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                     )
-                    Text(
-                        text = state.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    upNextTitle(state.title, spoiler)?.let { title ->
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                     state.secondsLeft?.let { seconds ->
                         Text(
                             text =
