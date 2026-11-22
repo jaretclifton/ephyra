@@ -18,7 +18,10 @@ class DataChangeEvents {
     private val _version = MutableStateFlow(0L)
     val version: StateFlow<Long> = _version.asStateFlow()
 
-    /** True from the moment the player opens an item until its stop has been reported. */
+    /**
+     * True from the moment the player opens an item until its stop has been reported, or until it
+     * is left without one owed (CE #846, [PlaybackEvents.onLeftWithoutStop]).
+     */
     @Volatile
     var playbackPending: Boolean = false
         internal set
