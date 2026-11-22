@@ -1,6 +1,6 @@
 # ADR 0002: Further towards hexagonal, with DDD only where there are rules
 
-**Status:** Proposed (2026-11-22). Amends ADR 0001, decisions 1, D1 and D2.
+**Status:** Accepted (2026-11-22, the owner's answers below; proposed the same day). Amends ADR 0001, decisions 1, D1 and D2.
 
 ## Context
 
@@ -38,15 +38,15 @@ now. [5-hexagonal-ddd.md](../5-hexagonal-ddd.md) measures the code:
 
 ## Questions for the owner
 
-Answers to be recorded here.
+Answered by the owner on 2026-11-22, through the overseer session. Their own words, in Dutch, where they added some.
 
 | | Question | Recommendation | Answer |
 |---|---|---|---|
-| Q1 | Do T1 to T8 and T10; file T9 (a `downloads` module) for later | yes | |
-| Q2 | Names: (a) the repository only, (b) also the `Findroid*` models, (c) also the packages | (b) | |
-| Q3 | The repository interface in a new `application` module, or in `domain` | `application` | |
-| Q4 | One `ItemId`, or one id type per kind | one `ItemId` | |
-| Q5 | Device tests on emulators with throwaway users only, no check by the owner | yes | |
+| Q1 | Do T1 to T8 and T10; file T9 (a `downloads` module) for later | yes | **Everything, T9 included**, as the last of the series after the ports it needs: "Ik zie het nadeel niet van gewoon maar meteen alles doen." |
+| Q2 | Names: (a) the repository only, (b) also the `Findroid*` models, (c) also the packages | (b) | **(b).** Renaming the packages is a possible follow-up, not a task: "levert nu niks op." The application id never changes |
+| Q3 | The repository interface in a new `application` module, or in `domain` | `application` | **`application`** |
+| Q4 | One `ItemId`, or one id type per kind | one `ItemId` | **One `ItemId`**, with their own types for what is something else (user, server): "Mogelijk kunnen we dit later nog aanpassen mochten er weer bugs komen." |
+| Q5 | Device tests on emulators with throwaway users only, no check by the owner | yes | **Yes**, with the thoroughness of the #770 check (upgrade from the previous build with rich data, the database compared before and after, switching users and servers). At the end of the series one beta from `main`, which the owner installs over their own install: "Na dit hele gebeuren ga ik m sowieso nog even zelf testen in bèta." |
 
 ## Consequences
 

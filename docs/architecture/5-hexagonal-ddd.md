@@ -230,7 +230,7 @@ Each task is one PR (or a few, where it says) that leaves the app working.
 | T9 | `downloads` module out of `core` | ~20 files moved | `core` shrinks to wiring and UI | downloads |
 | T10 | #772: `CLAUDE.md`, upstream-sync skill, this folder | docs | the docs describe the end state | no |
 
-Order: T1 → T2 → T4 → T3 → T5 → T6 → T7 → T8 → (T9) → T10. T1, T2 and T4 touch most files and go
+Order: T1 → T2 → T4 → T3 → T5 → T6 → T7 → T8 → T9 → T10 (the owner chose to do T9 too, Q1). T1, T2 and T4 touch most files and go
 one after the other, each when few PRs are open. T4 before T3 so the moved interface already has
 its new name. T5 and T6 are independent of each other after T3.
 
@@ -295,7 +295,7 @@ same package. Then the question the owner asked to have put to them (Q2):
 
 ## 5.4 Questions for the owner
 
-Asked on 2026-11-22; the answers go into ADR 0002.
+Asked and answered on 2026-11-22; the answers are in ADR 0002. In short: everything including T9, (b), `application`, one `ItemId`, emulators only and one beta for the owner at the end. Renaming the packages is a possible later follow-up.
 
 1. **Q1, scope.** Do T1 to T8 and T10, and file T9 (a `downloads` module) as an issue for later?
    *Recommended: yes.*
