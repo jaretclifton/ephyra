@@ -3,12 +3,13 @@ package dev.jdtech.jellyfin.server.jellyfin
 import android.app.Application
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.models.ServerException
+import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.StandInServer
 import java.io.Closeable
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.util.Collections
-import java.util.UUID
 import kotlin.concurrent.thread
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -154,7 +155,7 @@ class JellyfinServerSessionRequestTest {
         }
 
         const val TOKEN = "token"
-        val USER: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
+        val USER: UserId = "00000000-0000-0000-0000-000000000001".toUserId()
         const val USER_JSON =
             "{\"Id\":\"00000000-0000-0000-0000-000000000001\",\"Name\":\"User\"," +
                 "\"HasPassword\":false,\"HasConfiguredPassword\":false," +

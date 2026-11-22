@@ -38,7 +38,9 @@ class JellyfinPlayback(
 
     override suspend fun sources(request: PlaybackRequest): List<FindroidSource> = call {
         val playbackInfo =
-            api.mediaInfoApi.getPostedPlaybackInfo(request.itemId, playbackInfoOf(request)).content
+            api.mediaInfoApi
+                .getPostedPlaybackInfo(request.itemId.toUuid(), playbackInfoOf(request))
+                .content
         // CE (#728): each transcode carries its play session; the player records it when it loads
         // the stream (setPlaySession), not here: a switch that fails keeps the old one. A download
         // is fetched once and has no session to end.
@@ -130,11 +132,17 @@ class JellyfinPlayback(
     }
 
     override suspend fun streamUrl(itemId: ItemId, mediaSourceId: MediaSourceId): String = call {
-        api.videoApi.getVideoStreamUrl(itemId, static = true, mediaSourceId = mediaSourceId)
+        api.videoApi.getVideoStreamUrl(
+            itemId.toUuid(),
+            static = true,
+            mediaSourceId = mediaSourceId,
+        )
     }
 
     override suspend fun segments(itemId: ItemId): List<FindroidSegment> = call {
-        api.mediaSegmentApi.getItemSegments(itemId).content.items.map { it.toFindroidSegment() }
+        api.mediaSegmentApi.getItemSegments(itemId.toUuid()).content.items.map {
+            it.toFindroidSegment()
+        }
     }
 
     override suspend fun trickplayTile(
@@ -144,7 +152,12 @@ class JellyfinPlayback(
         mediaSourceId: MediaSourceId?,
     ): ByteArray? = call {
         api.trickplaySheetApi
-            .getTrickplayTileImage(itemId, width, index, trickplayVersion(itemId, mediaSourceId))
+            .getTrickplayTileImage(
+                itemId.toUuid(),
+                width,
+                index,
+                trickplayVersion(itemId, mediaSourceId),
+            )
             .content
     }
 
@@ -158,7 +171,7 @@ class JellyfinPlayback(
         call {
             api.sessionApi.reportPlaybackStart(
                 PlaybackStartInfo(
-                    itemId = report.itemId,
+                    itemId = report.itemId.toUuid(),
                     canSeek = true,
                     isPaused = report.isPaused,
                     isMuted = false,
@@ -175,7 +188,7 @@ class JellyfinPlayback(
         call {
             api.sessionApi.reportPlaybackProgress(
                 PlaybackProgressInfo(
-                    itemId = report.itemId,
+                    itemId = report.itemId.toUuid(),
                     canSeek = true,
                     isPaused = report.isPaused,
                     isMuted = false,
@@ -193,7 +206,7 @@ class JellyfinPlayback(
         call {
             api.sessionApi.reportPlaybackStopped(
                 PlaybackStopInfo(
-                    itemId = report.itemId,
+                    itemId = report.itemId.toUuid(),
                     positionTicks = report.positionTicks,
                     failed = false,
                     // With it the server ends the item's transcode now, not a minute later.
@@ -247,7 +260,7 @@ class JellyfinPlayback(
  * one it always was. A source id that is not an id sends none either.
  */
 internal fun trickplayVersion(itemId: ItemId, mediaSourceId: MediaSourceId?): UUID? =
-    mediaSourceId?.toUUIDOrNull()?.takeIf { it != itemId }
+    mediaSourceId?.toUUIDOrNull()?.takeIf { it.toItemId() != itemId }
 
 /** CE (#599): Transcode with the transcode's play session, else DirectPlay (see PlaySessions). */
 private fun PlaybackReport.playMethod(): PlayMethod =

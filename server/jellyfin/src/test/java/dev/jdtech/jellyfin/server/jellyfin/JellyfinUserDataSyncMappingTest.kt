@@ -26,18 +26,18 @@ class JellyfinUserDataSyncMappingTest {
 
         val read = serverUserDataOf(listOf(withDate, withoutDate, withoutUserData))
 
-        assertEquals(setOf(withDate.id, withoutDate.id), read.keys)
+        assertEquals(setOf(withDate.id.toItemId(), withoutDate.id.toItemId()), read.keys)
         assertEquals(
             ServerUserData(
-                itemId = withDate.id,
+                itemId = withDate.id.toItemId(),
                 played = false,
                 favorite = true,
                 playbackPositionTicks = 1_270_000_000L,
                 lastPlayedDate = played,
             ),
-            read[withDate.id],
+            read[withDate.id.toItemId()],
         )
-        assertEquals(null, read[withoutDate.id]!!.lastPlayedDate)
+        assertEquals(null, read[withoutDate.id.toItemId()]!!.lastPlayedDate)
     }
 
     private fun item(

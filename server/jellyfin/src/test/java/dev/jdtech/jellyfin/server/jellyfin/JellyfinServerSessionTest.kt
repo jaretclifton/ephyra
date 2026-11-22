@@ -5,7 +5,7 @@ import android.provider.Settings
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.domain.ports.RequestWatcher
 import dev.jdtech.jellyfin.domain.ports.ServerSession
-import java.util.UUID
+import dev.jdtech.jellyfin.models.toUserId
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertSame
@@ -25,7 +25,7 @@ import org.robolectric.annotation.Config
 @Config(sdk = [34], application = Application::class)
 class JellyfinServerSessionTest {
     private val context = RuntimeEnvironment.getApplication()
-    private val userId = UUID.fromString("0b3c8f8e-6a1d-4c39-9a3e-2f4f6a1b2c3d")
+    private val userId = "0b3c8f8e-6a1d-4c39-9a3e-2f4f6a1b2c3d".toUserId()
 
     private lateinit var api: JellyfinApi
     private lateinit var session: JellyfinServerSession
@@ -70,13 +70,13 @@ class JellyfinServerSessionTest {
         assertNull(session.userId)
 
         api.api.update(baseUrl = "https://one.example")
-        api.userId = userId
+        api.userId = userId.toUuid()
         assertEquals("https://one.example", session.baseUrl)
         assertEquals(userId, session.userId)
 
-        val other = UUID.fromString("11111111-2222-3333-4444-555555555555")
+        val other = "11111111-2222-3333-4444-555555555555".toUserId()
         api.api.update(baseUrl = "https://two.example")
-        api.userId = other
+        api.userId = other.toUuid()
         assertEquals("https://two.example", session.baseUrl)
         assertEquals(other, session.userId)
     }
@@ -87,7 +87,7 @@ class JellyfinServerSessionTest {
 
         assertEquals("https://one.example", api.api.baseUrl)
         assertEquals("token", api.api.accessToken)
-        assertEquals(userId, api.userId)
+        assertEquals(userId.toUuid(), api.userId)
         assertEquals("token", session.accessToken)
     }
 

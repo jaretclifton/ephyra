@@ -27,7 +27,7 @@ class JellyfinUserDataSyncPorts(private val jellyfinApi: JellyfinApi) : UserData
     override fun forUser(baseUrl: String, accessToken: String?, userId: UserId): UserDataSyncPort {
         val current = jellyfinApi.api
         if (
-            jellyfinApi.userId == userId &&
+            jellyfinApi.userId?.toUserId() == userId &&
                 current.baseUrl == baseUrl &&
                 current.accessToken == accessToken
         ) {
@@ -58,7 +58,11 @@ internal class JellyfinUserDataSync(
         itemIds.chunked(USER_DATA_BATCH_SIZE).fold(emptyMap()) { found, batch ->
             val items = serverCall {
                 api.libraryApi
-                    .getItems(userId = userId, ids = batch, enableUserData = true)
+                    .getItems(
+                        userId = userId.toUuid(),
+                        ids = batch.map { it.toUuid() },
+                        enableUserData = true,
+                    )
                     .content
                     .items
             }
@@ -68,8 +72,8 @@ internal class JellyfinUserDataSync(
     override suspend fun putUserData(data: ServerUserData) {
         serverCall {
             api.userDataApi.updateItemUserData(
-                itemId = data.itemId,
-                userId = userId,
+                itemId = data.itemId.toUuid(),
+                userId = userId.toUuid(),
                 data =
                     UpdateUserItemDataDto(
                         playbackPositionTicks = data.playbackPositionTicks,
@@ -85,8 +89,8 @@ internal class JellyfinUserDataSync(
     override suspend fun setFavorite(itemId: ItemId, favorite: Boolean) {
         serverCall {
             api.userDataApi.updateItemUserData(
-                itemId = itemId,
-                userId = userId,
+                itemId = itemId.toUuid(),
+                userId = userId.toUuid(),
                 data = UpdateUserItemDataDto(isFavorite = favorite),
             )
         }
@@ -95,7 +99,11 @@ internal class JellyfinUserDataSync(
     override suspend fun reportStopped(itemId: ItemId, positionTicks: Long) {
         serverCall {
             api.sessionApi.reportPlaybackStopped(
-                PlaybackStopInfo(itemId = itemId, positionTicks = positionTicks, failed = false)
+                PlaybackStopInfo(
+                    itemId = itemId.toUuid(),
+                    positionTicks = positionTicks,
+                    failed = false,
+                )
             )
         }
     }
@@ -106,9 +114,10 @@ internal class JellyfinUserDataSync(
             api.sessionApi
                 .getSessions(deviceId = api.deviceInfo.id)
                 .content
-                .firstOrNull { it.userId == userId }
+                .firstOrNull { it.userId.toUserId() == userId }
                 ?.nowPlayingItem
                 ?.id
+                ?.toItemId()
         }
     }
 }
@@ -133,7 +142,7 @@ internal fun serverUserDataOf(items: List<BaseItemDto>): Map<ItemId, ServerUserD
         .mapNotNull { item ->
             val userData = item.userData ?: return@mapNotNull null
             ServerUserData(
-                itemId = item.id,
+                itemId = item.id.toItemId(),
                 played = userData.played,
                 favorite = userData.isFavorite,
                 playbackPositionTicks = userData.playbackPositionTicks,

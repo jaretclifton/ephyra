@@ -1,9 +1,7 @@
 package dev.jdtech.jellyfin.models
 
-import java.util.UUID
-
 interface FindroidItem {
-    val id: UUID
+    val id: ItemId
     val name: String
     val originalTitle: String?
     val overview: String

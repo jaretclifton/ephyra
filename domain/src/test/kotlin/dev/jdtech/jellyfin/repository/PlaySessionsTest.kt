@@ -1,13 +1,13 @@
 package dev.jdtech.jellyfin.repository
 
-import java.util.UUID
+import dev.jdtech.jellyfin.models.toItemId
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import org.junit.jupiter.api.Test
 
 class PlaySessionsTest {
-    private val item = UUID.fromString("00000000-0000-0000-0000-000000000001")
-    private val other = UUID.fromString("00000000-0000-0000-0000-000000000002")
+    private val item = "00000000-0000-0000-0000-000000000001".toItemId()
+    private val other = "00000000-0000-0000-0000-000000000002".toItemId()
     private val sessions = PlaySessions()
 
     @Test

@@ -91,7 +91,7 @@ class JellyfinServerConnector(private val api: JellyfinApi) : ServerConnector {
         call(address) { client ->
             client.userApi.getPublicUsers().content.mapNotNull {
                 PublicUser(
-                    id = it.id,
+                    id = it.id.toUserId(),
                     name = it.name ?: return@mapNotNull null,
                     primaryImageTag = it.primaryImageTag,
                 )
@@ -199,7 +199,7 @@ internal fun RecommendedServerIssue.toServerIssue(): ServerIssue =
 /** The `!!` are the repository's from before #761: a result without them fails the login. */
 internal fun AuthenticationResult.toAuthenticatedUser() =
     AuthenticatedUser(
-        id = user!!.id,
+        id = user!!.id.toUserId(),
         name = user!!.name!!,
         serverId = serverId!!,
         accessToken = accessToken!!,

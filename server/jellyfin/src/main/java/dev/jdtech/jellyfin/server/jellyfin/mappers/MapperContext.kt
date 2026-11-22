@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.server.jellyfin.mappers
 
-import java.util.UUID
+import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.MediaSourceId
 
 /**
  * What the mappers need from the server they map for. Build one per call: the base URL changes when
@@ -11,5 +12,5 @@ internal class MapperContext(
     /**
      * The static stream URL of a file source; only called when a mapper is asked to include paths.
      */
-    val streamUrl: suspend (itemId: UUID, mediaSourceId: String) -> String,
+    val streamUrl: suspend (itemId: ItemId, mediaSourceId: MediaSourceId) -> String,
 )

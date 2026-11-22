@@ -3,10 +3,10 @@ package dev.jdtech.jellyfin.repository
 import android.app.Application
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.models.ServerException
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.DeviceCodecProbe
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
-import java.util.UUID
 import kotlin.test.assertContentEquals
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.runBlocking
@@ -24,7 +24,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class TrickplaySheetTimeoutTest {
-    private val itemId = UUID.fromString("8f086228-6a92-020d-0cb7-35d734765afe")
+    private val itemId = "8f086228-6a92-020d-0cb7-35d734765afe".toItemId()
     private val sheet = byteArrayOf(1, 2, 3)
     private val server =
         StandInServer(concurrent = true) {

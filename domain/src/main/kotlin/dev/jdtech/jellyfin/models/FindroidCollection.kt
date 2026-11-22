@@ -1,9 +1,7 @@
 package dev.jdtech.jellyfin.models
 
-import java.util.UUID
-
 data class FindroidCollection(
-    override val id: UUID,
+    override val id: ItemId,
     override val name: String,
     override val originalTitle: String? = null,
     override val overview: String = "",

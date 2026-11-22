@@ -20,7 +20,10 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.SubtitleDeliveryMethod
-import java.util.UUID
+import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toUserId
 
 /**
  * The library every implementation of the server ports presents to the contract suites (#771).
@@ -52,12 +55,14 @@ object ContractLibrary : FakeLibrary {
     }
 
     /** Ids start with twelve zeros, the mark of a fake id in the recordings. */
-    private fun id(n: Int): UUID = UUID.fromString("00000000-0000-0000-0000-%012d".format(n))
+    private fun id(n: Int): ItemId = idText(n).toItemId()
+
+    private fun idText(n: Int): String = "00000000-0000-0000-0000-%012d".format(n)
 
     /** No item of any server has it. */
-    val unknownId: ItemId = UUID.fromString("00000000-0000-0000-0000-00000000dead")
+    val unknownId: ItemId = "00000000-0000-0000-0000-00000000dead".toItemId()
 
-    override val userId: UUID = id(1)
+    override val userId: UserId = idText(1).toUserId()
 
     const val USER_NAME = "contract"
 
@@ -235,16 +240,16 @@ object ContractLibrary : FakeLibrary {
     override val segments = mapOf(episodeWithSegments.id to listOf(introOfEpisodeWithSegments))
 
     /** The theme song of [series]. */
-    val seriesThemeSongId: UUID = id(602)
+    val seriesThemeSongId: ItemId = id(602)
 
     override val themeSongs: Map<ItemId, String> =
-        mapOf(series.id to "$address/Audio/$seriesThemeSongId/stream?static=true")
+        mapOf(series.id to "$address/Audio/${seriesThemeSongId.asString()}/stream?static=true")
 
     /** The form of an id in a server's JSON and in a source id: no dashes. */
-    fun UUID.toN(): String = toString().replace("-", "")
+    fun ItemId.toN(): String = asString().replace("-", "")
 
     private fun movie(
-        id: UUID,
+        id: ItemId,
         name: String,
         runtimeTicks: Long,
         playbackPositionTicks: Long = 0L,
@@ -277,7 +282,7 @@ object ContractLibrary : FakeLibrary {
             trickplayInfo = trickplay(id),
         )
 
-    private fun season(id: UUID, name: String, index: Int) =
+    private fun season(id: ItemId, name: String, index: Int) =
         FindroidSeason(
             id = id,
             name = name,
@@ -297,7 +302,7 @@ object ContractLibrary : FakeLibrary {
         )
 
     private fun episode(
-        id: UUID,
+        id: ItemId,
         season: FindroidSeason,
         index: Int,
         title: String,
@@ -369,6 +374,6 @@ object ContractLibrary : FakeLibrary {
         )
 
     /** The test server makes trickplay images 320 wide, ten seconds apart. */
-    private fun trickplay(id: UUID) =
+    private fun trickplay(id: ItemId) =
         mapOf(id.toN() to FindroidTrickplayInfo(320, 180, 10, 10, 9, 10_000, 892))
 }

@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.server.jellyfin
 
-import java.util.UUID
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import org.junit.jupiter.api.Test
@@ -10,13 +11,13 @@ import org.junit.jupiter.api.Test
  * moved behind the repository (#749).
  */
 class ServerImageUrlsTest {
-    private val itemId = UUID.fromString("11111111-1111-1111-1111-111111111111")
-    private val seasonId = UUID.fromString("22222222-2222-2222-2222-222222222222")
+    private val itemId = "11111111-1111-1111-1111-111111111111".toItemId()
+    private val seasonId = "22222222-2222-2222-2222-222222222222".toItemId()
 
     @Test
     fun `a chapter image is the item's chapter picture with its tag`() {
         assertEquals(
-            "https://jf.example/Items/$itemId/Images/Chapter/3?tag=abc",
+            "https://jf.example/Items/${itemId.asString()}/Images/Chapter/3?tag=abc",
             chapterImageUrl("https://jf.example", itemId, 3, "abc"),
         )
     }
@@ -24,7 +25,7 @@ class ServerImageUrlsTest {
     @Test
     fun `a chapter image drops the trailing slash and keeps a path`() {
         assertEquals(
-            "https://jf.example/stable/Items/$itemId/Images/Chapter/0?tag=t",
+            "https://jf.example/stable/Items/${itemId.asString()}/Images/Chapter/0?tag=t",
             chapterImageUrl("https://jf.example/stable//", itemId, 0, "t"),
         )
     }
@@ -38,7 +39,7 @@ class ServerImageUrlsTest {
     @Test
     fun `a season backdrop is the first backdrop without a tag`() {
         assertEquals(
-            "https://jf.example/items/$seasonId/Images/Backdrop/0",
+            "https://jf.example/items/${seasonId.asString()}/Images/Backdrop/0",
             seasonBackdropUrl("https://jf.example", seasonId),
         )
     }
@@ -46,7 +47,7 @@ class ServerImageUrlsTest {
     @Test
     fun `a season backdrop drops the trailing slash and keeps a path`() {
         assertEquals(
-            "https://jf.example/jf/items/$seasonId/Images/Backdrop/0",
+            "https://jf.example/jf/items/${seasonId.asString()}/Images/Backdrop/0",
             seasonBackdropUrl("https://jf.example/jf/", seasonId),
         )
     }

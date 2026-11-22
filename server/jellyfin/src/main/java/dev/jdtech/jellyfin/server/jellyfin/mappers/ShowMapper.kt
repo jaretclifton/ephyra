@@ -2,12 +2,13 @@ package dev.jdtech.jellyfin.server.jellyfin.mappers
 
 import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.firstTagline
+import dev.jdtech.jellyfin.server.jellyfin.toItemId
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.PlayAccess
 
 internal fun BaseItemDto.toFindroidShow(baseUrl: String): FindroidShow {
     return FindroidShow(
-        id = id,
+        id = id.toItemId(),
         name = name.orEmpty(),
         originalTitle = originalTitle,
         overview = overview.orEmpty(),

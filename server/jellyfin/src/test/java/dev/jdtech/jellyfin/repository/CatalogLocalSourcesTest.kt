@@ -7,9 +7,11 @@ import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
 import java.lang.reflect.Proxy
 import java.util.Collections
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -26,9 +28,9 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class CatalogLocalSourcesTest {
-    private val movieId = UUID.fromString("d10943c9-a35f-58d6-1542-dc562fdabcf2")
-    private val episodeId = UUID.fromString("4e38ea74-3dcd-9230-7b5a-9b05e5d57312")
-    private val seriesId = UUID.fromString("332758e9-c2da-4fb5-cf9f-7e1efffc9d37")
+    private val movieId = "d10943c9-a35f-58d6-1542-dc562fdabcf2".toItemId()
+    private val episodeId = "4e38ea74-3dcd-9230-7b5a-9b05e5d57312".toItemId()
+    private val seriesId = "332758e9-c2da-4fb5-cf9f-7e1efffc9d37".toItemId()
 
     private val movie = StandInServer.resource("golden/movie.json")
     private val episode = StandInServer.resource("golden/episode.json")
@@ -41,13 +43,13 @@ class CatalogLocalSourcesTest {
         when {
             request.path == "/Items" -> page(movie, show, episode)
             request.path.endsWith("/Episodes") -> page(episode)
-            request.path.replace("-", "").contains(movieId.toString().replace("-", "")) -> movie
+            request.path.replace("-", "").contains(movieId.asString().replace("-", "")) -> movie
             else -> null
         }
     }
 
     /** The item ids of each lookup of downloads. */
-    private val lookups: MutableList<List<UUID>> = Collections.synchronizedList(mutableListOf())
+    private val lookups: MutableList<List<ItemId>> = Collections.synchronizedList(mutableListOf())
 
     private val database =
         Proxy.newProxyInstance(
@@ -59,7 +61,7 @@ class CatalogLocalSourcesTest {
                 "getMovieOfServer",
                 "getEpisodeOfServer" -> null
                 "getSourcesForItemsOfServer" -> {
-                    @Suppress("UNCHECKED_CAST") val ids = args!![0] as List<UUID>
+                    @Suppress("UNCHECKED_CAST") val ids = args!![0] as List<ItemId>
                     lookups += ids
                     ids.filter { it == movieId || it == episodeId }.map { localSource(it) }
                 }
@@ -68,13 +70,13 @@ class CatalogLocalSourcesTest {
             }
         } as ServerDatabaseDao
 
-    private fun localSource(itemId: UUID) =
+    private fun localSource(itemId: ItemId) =
         FindroidSourceDto(
-            id = "download-$itemId",
+            id = "download-${itemId.asString()}",
             itemId = itemId,
             name = "Original",
             type = FindroidSourceType.LOCAL,
-            path = "/storage/downloads/$itemId.mkv",
+            path = "/storage/downloads/${itemId.asString()}.mkv",
         )
 
     private val repository by lazy {
@@ -100,7 +102,7 @@ class CatalogLocalSourcesTest {
             listOf(FindroidSourceType.REMOTE, FindroidSourceType.LOCAL),
             result.sources.map { it.type },
         )
-        assertEquals("download-$movieId", result.sources.last().id)
+        assertEquals("download-${movieId.asString()}", result.sources.last().id)
     }
 
     @Test

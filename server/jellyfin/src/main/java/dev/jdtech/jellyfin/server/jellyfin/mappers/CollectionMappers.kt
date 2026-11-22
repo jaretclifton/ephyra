@@ -4,12 +4,17 @@ import dev.jdtech.jellyfin.models.CollectionType
 import dev.jdtech.jellyfin.models.FindroidBoxSet
 import dev.jdtech.jellyfin.models.FindroidCollection
 import dev.jdtech.jellyfin.models.FindroidFolder
+import dev.jdtech.jellyfin.server.jellyfin.toItemId
 import org.jellyfin.sdk.model.api.BaseItemDto
 
 // The items that hold other items: a name and images, little else.
 
 internal fun BaseItemDto.toFindroidBoxSet(baseUrl: String): FindroidBoxSet {
-    return FindroidBoxSet(id = id, name = name.orEmpty(), images = toFindroidImages(baseUrl))
+    return FindroidBoxSet(
+        id = id.toItemId(),
+        name = name.orEmpty(),
+        images = toFindroidImages(baseUrl),
+    )
 }
 
 internal fun BaseItemDto.toFindroidCollection(baseUrl: String): FindroidCollection? {
@@ -20,7 +25,7 @@ internal fun BaseItemDto.toFindroidCollection(baseUrl: String): FindroidCollecti
     }
 
     return FindroidCollection(
-        id = id,
+        id = id.toItemId(),
         name = name.orEmpty(),
         type = type,
         images = toFindroidImages(baseUrl),
@@ -29,7 +34,7 @@ internal fun BaseItemDto.toFindroidCollection(baseUrl: String): FindroidCollecti
 
 internal fun BaseItemDto.toFindroidFolder(baseUrl: String): FindroidFolder {
     return FindroidFolder(
-        id = id,
+        id = id.toItemId(),
         name = name.orEmpty(),
         played = userData?.played == true,
         favorite = userData?.isFavorite == true,

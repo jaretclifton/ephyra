@@ -48,7 +48,7 @@ internal fun JellyfinApi.mapperContext() =
         baseUrl = baseUrl(),
         streamUrl = { id, source ->
             try {
-                videoApi.getVideoStreamUrl(id, static = true, mediaSourceId = source)
+                videoApi.getVideoStreamUrl(id.toUuid(), static = true, mediaSourceId = source)
             } catch (e: Exception) {
                 Timber.e(e)
                 ""

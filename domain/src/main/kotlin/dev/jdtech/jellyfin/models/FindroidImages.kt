@@ -1,7 +1,5 @@
 package dev.jdtech.jellyfin.models
 
-import java.util.UUID
-
 /**
  * The images of an item: a server URL, or for a download a path relative to the app's files
  * directory ([localImagePath]). A missing image is null, never an empty string.
@@ -25,4 +23,4 @@ data class FindroidImages(
  * `Uri.Builder().appendEncodedPath("images/<id>/<image>")` gave before #754. It has no scheme,
  * which is how the screens and the player tell it from a server URL.
  */
-fun localImagePath(itemId: UUID, image: String): String = "/images/$itemId/$image"
+fun localImagePath(itemId: ItemId, image: String): String = "/images/${itemId.asString()}/$image"

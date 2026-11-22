@@ -1,6 +1,8 @@
 package dev.jdtech.jellyfin.repository
 
 import android.app.Application
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlinx.coroutines.runBlocking
@@ -19,7 +21,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
 class TrickplayTileRequestTest {
-    private val itemId = UUID.fromString("8f086228-6a92-020d-0cb7-35d734765afe")
+    private val itemId = "8f086228-6a92-020d-0cb7-35d734765afe".toItemId()
     private val otherVersion = UUID.fromString("0b1c2d3e-4f50-6172-8394-a5b6c7d8e9f0")
     private val server = StandInServer { null }
     private val repository by lazy { server.repository() }
@@ -35,7 +37,7 @@ class TrickplayTileRequestTest {
     fun `a sheet without a version asks for the item's images`() = runBlocking {
         repository.getTrickplayData(itemId, 320, 4)
 
-        assertEquals("/Videos/$itemId/Trickplay/320/4.jpg", sentTarget())
+        assertEquals("/Videos/${itemId.asString()}/Trickplay/320/4.jpg", sentTarget())
     }
 
     @Test
@@ -44,10 +46,10 @@ class TrickplayTileRequestTest {
             itemId,
             320,
             4,
-            mediaSourceId = itemId.toString().replace("-", ""),
+            mediaSourceId = itemId.asString().replace("-", ""),
         )
 
-        assertEquals("/Videos/$itemId/Trickplay/320/4.jpg", sentTarget())
+        assertEquals("/Videos/${itemId.asString()}/Trickplay/320/4.jpg", sentTarget())
     }
 
     @Test
@@ -60,7 +62,7 @@ class TrickplayTileRequestTest {
         )
 
         assertEquals(
-            "/Videos/$itemId/Trickplay/320/4.jpg?mediaSourceId=$otherVersion",
+            "/Videos/${itemId.asString()}/Trickplay/320/4.jpg?mediaSourceId=$otherVersion",
             sentTarget(),
         )
     }
@@ -69,6 +71,6 @@ class TrickplayTileRequestTest {
     fun `a source id that is not an id asks for the item's images`() = runBlocking {
         repository.getTrickplayData(itemId, 320, 4, mediaSourceId = "not-an-id")
 
-        assertEquals("/Videos/$itemId/Trickplay/320/4.jpg", sentTarget())
+        assertEquals("/Videos/${itemId.asString()}/Trickplay/320/4.jpg", sentTarget())
     }
 }

@@ -2,7 +2,7 @@ package dev.jdtech.jellyfin.server.jellyfin.mappers
 
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidSource
-import java.util.UUID
+import dev.jdtech.jellyfin.models.ItemId
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.BaseItemKind
 
@@ -12,7 +12,7 @@ import org.jellyfin.sdk.model.api.BaseItemKind
  */
 internal suspend fun BaseItemDto.toFindroidItem(
     context: MapperContext,
-    localSources: Map<UUID, List<FindroidSource>>,
+    localSources: Map<ItemId, List<FindroidSource>>,
 ): FindroidItem? {
     return when (type) {
         BaseItemKind.MOVIE -> toFindroidMovie(context, localSources)
