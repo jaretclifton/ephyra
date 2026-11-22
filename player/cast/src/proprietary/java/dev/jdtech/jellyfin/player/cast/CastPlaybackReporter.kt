@@ -1,25 +1,27 @@
 package dev.jdtech.jellyfin.player.cast
 
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.player.cast.models.CastPlaybackStatus
-import java.util.UUID
 import kotlin.math.abs
 
 /** A report the server is owed. */
 internal sealed interface CastReport {
-    data class Start(val itemId: UUID) : CastReport
+    data class Start(val itemId: ItemId) : CastReport
 
-    data class Progress(val itemId: UUID, val positionMs: Long, val isPaused: Boolean) : CastReport
+    data class Progress(val itemId: ItemId, val positionMs: Long, val isPaused: Boolean) :
+        CastReport
 
-    data class Stop(val itemId: UUID, val positionMs: Long, val playedPercentage: Int?) : CastReport
+    data class Stop(val itemId: ItemId, val positionMs: Long, val playedPercentage: Int?) :
+        CastReport
 }
 
 /** What the receiver and the controller say at one moment. */
 internal data class CastReceiverState(
     val status: CastPlaybackStatus,
     /** The Jellyfin item the receiver has loaded, `null` when it has none. */
-    val receiverItemId: UUID?,
+    val receiverItemId: ItemId?,
     /** The item the controller holds as the current one. */
-    val currentItemId: UUID?,
+    val currentItemId: ItemId?,
     val positionMs: Long,
     /** A load is on its way to the receiver, which still shows what it played before. */
     val loadPending: Boolean = false,
@@ -46,7 +48,7 @@ internal class CastPlaybackReporter(
     private val intervalMs: Long = PROGRESS_INTERVAL_MS,
 ) {
     /** The item whose start was reported and whose stop is still owed, if any. */
-    private var reportingItemId: UUID? = null
+    private var reportingItemId: ItemId? = null
     /** The last position the receiver gave for [reportingItemId], for its stop report. */
     private var positionMs = 0L
     private var paused = false
@@ -57,7 +59,7 @@ internal class CastPlaybackReporter(
     private var heardAt = 0L
     private var heardPlaying = false
 
-    private val durations = HashMap<UUID, Long>()
+    private val durations = HashMap<ItemId, Long>()
 
     val isReporting: Boolean
         get() = reportingItemId != null
@@ -85,19 +87,19 @@ internal class CastPlaybackReporter(
      * The receiver's queue changed. If it moved on, the item that was playing is done, wherever the
      * reports for the new one stand.
      */
-    fun queueChanged(receiverItemId: UUID?): List<CastReport> =
+    fun queueChanged(receiverItemId: ItemId?): List<CastReport> =
         if (reportingItemId != null && receiverItemId != reportingItemId) stop() else emptyList()
 
     /** The interval timer fired. */
     fun tick(state: CastReceiverState): List<CastReport> = progress(state, tick = true)
 
     /** The receiver's position and duration for [itemId], as they come in while it plays. */
-    fun positionChanged(itemId: UUID, positionMs: Long, durationMs: Long) {
+    fun positionChanged(itemId: ItemId, positionMs: Long, durationMs: Long) {
         durationChanged(itemId, durationMs)
         if (itemId == reportingItemId) this.positionMs = positionMs.coerceAtLeast(0L)
     }
 
-    fun durationChanged(itemId: UUID, durationMs: Long) {
+    fun durationChanged(itemId: ItemId, durationMs: Long) {
         if (durationMs > 0L) durations[itemId] = durationMs
     }
 

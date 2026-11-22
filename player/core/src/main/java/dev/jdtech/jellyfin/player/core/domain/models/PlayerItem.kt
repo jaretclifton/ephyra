@@ -2,13 +2,13 @@ package dev.jdtech.jellyfin.player.core.domain.models
 
 import android.net.Uri
 import android.os.Parcelable
-import java.util.UUID
+import dev.jdtech.jellyfin.models.ItemId
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class PlayerItem(
     val name: String,
-    val itemId: UUID,
+    val itemId: ItemId,
     val mediaSourceId: String,
     val playbackPosition: Long,
     val mediaSourceUri: String = "",
@@ -32,9 +32,9 @@ data class PlayerItem(
     /** Show name for episodes, shown in the media notification. */
     val seriesName: String? = null,
     /** Series of an episode, the key for remembering the audio and subtitle choice. */
-    val seriesId: UUID? = null,
+    val seriesId: ItemId? = null,
     /** CE (R10): season of an episode, for the phone player's episode sheet. */
-    val seasonId: UUID? = null,
+    val seasonId: ItemId? = null,
     /** Server URL, or a path relative to filesDir for downloaded items. */
     val artworkUri: Uri? = null,
 ) : Parcelable

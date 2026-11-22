@@ -9,7 +9,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.jdtech.jellyfin.models.FindroidSegment
 import dev.jdtech.jellyfin.models.FindroidSegmentType
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.player.cast.CastPlayerController
 import dev.jdtech.jellyfin.player.cast.CastSessionManager
 import dev.jdtech.jellyfin.player.cast.models.CastAvailability
@@ -24,7 +26,6 @@ import dev.jdtech.jellyfin.player.local.R as PlayerLocalR
 import dev.jdtech.jellyfin.player.local.domain.DebugSegments
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -43,7 +44,7 @@ import timber.log.Timber
 
 /** What the receiver plays, or played last, as the Cast surfaces show it. */
 data class CastNowPlaying(
-    val itemId: UUID,
+    val itemId: ItemId,
     val kind: ItemKind,
     /** The film's or the episode's own name. */
     val title: String,
@@ -121,7 +122,7 @@ constructor(
 ) : ViewModel() {
 
     private class PlayRequest(
-        val itemId: UUID,
+        val itemId: ItemId,
         val kind: ItemKind,
         val mediaSourceId: String?,
         val shuffle: Boolean = false,
@@ -144,7 +145,7 @@ constructor(
 
     private var segments: List<FindroidSegment> = emptyList()
     /** The item [segments] belongs to, or is being loaded for. */
-    private var segmentsItemId: UUID? = null
+    private var segmentsItemId: ItemId? = null
     private var segmentsJob: Job? = null
     private var discoveryJob: Job? = null
 
@@ -254,7 +255,7 @@ constructor(
     }
 
     private fun onItem(item: PlayerItem) {
-        Timber.d("Cast item: ${item.itemId}")
+        Timber.d("Cast item: ${item.itemId.asString()}")
         lastPlaying = item.toNowPlaying()
         _state.update {
             it.copy(
@@ -279,7 +280,7 @@ constructor(
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    Timber.e(e, "Failed to load segments for item ${item.itemId}")
+                    Timber.e(e, "Failed to load segments for item ${item.itemId.asString()}")
                     emptyList()
                 }
             // Another item took over, or the session ended, while these were loading.
@@ -336,7 +337,7 @@ constructor(
     private fun Int.pad(): String = toString().padStart(2, '0')
 
     /** The chapters with the URL of their thumbnail, where the server made one. */
-    private fun List<PlayerChapter>.withImages(itemId: UUID): List<PlayerChapter> {
+    private fun List<PlayerChapter>.withImages(itemId: ItemId): List<PlayerChapter> {
         return mapIndexed { index, chapter ->
             val tag = chapter.imageTag ?: return@mapIndexed chapter
             val url = repository.chapterImageUrl(itemId, index, tag) ?: return@mapIndexed chapter
@@ -414,7 +415,7 @@ constructor(
      * `false` when there is no receiver, and the caller plays the item on the device.
      */
     fun playItem(
-        itemId: UUID,
+        itemId: ItemId,
         kind: ItemKind,
         startFromBeginning: Boolean,
         mediaSourceId: String?,
@@ -423,7 +424,7 @@ constructor(
         play(itemId, kind, startFromBeginning, mediaSourceId, known = null, shuffle = shuffle)
 
     private fun play(
-        itemId: UUID,
+        itemId: ItemId,
         kind: ItemKind,
         startFromBeginning: Boolean,
         mediaSourceId: String?,

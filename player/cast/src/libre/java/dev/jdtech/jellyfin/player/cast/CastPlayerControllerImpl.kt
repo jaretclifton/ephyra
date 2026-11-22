@@ -1,10 +1,10 @@
 package dev.jdtech.jellyfin.player.cast
 
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.player.cast.models.CastError
 import dev.jdtech.jellyfin.player.cast.models.CastMediaItem
 import dev.jdtech.jellyfin.player.cast.models.CastPlayerState
 import dev.jdtech.jellyfin.player.core.domain.models.Track
-import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -24,7 +24,7 @@ class CastPlayerControllerImpl @Inject constructor() : CastPlayerController {
     override val errors: Flow<CastError> = emptyFlow()
 
     override fun playItem(
-        itemId: UUID,
+        itemId: ItemId,
         itemKind: String,
         startFromBeginning: Boolean,
         mediaSourceId: String?,
@@ -43,7 +43,7 @@ class CastPlayerControllerImpl @Inject constructor() : CastPlayerController {
 
     override fun setVolume(volume: Float) {}
 
-    override fun setAudioTrack(track: Track?, itemId: UUID?) {}
+    override fun setAudioTrack(track: Track?, itemId: ItemId?) {}
 
     override fun setSubtitleTrack(track: Track?) {}
 

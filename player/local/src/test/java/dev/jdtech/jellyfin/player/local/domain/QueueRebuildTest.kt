@@ -4,6 +4,7 @@ import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.repository.JellyfinRepository
@@ -36,13 +37,13 @@ class QueueRebuildTest {
     private val e4 = episodes[3].id
 
     /** Every stream request, by item id, to tell the rebuilt items from the first ones. */
-    private val streamRequests = mutableListOf<UUID>()
+    private val streamRequests = mutableListOf<ItemId>()
 
     /** Requests to hold, as the method name and the item id it asks about. */
-    private val slow = mutableListOf<Pair<String, UUID>>()
+    private val slow = mutableListOf<Pair<String, ItemId>>()
 
     /** The held requests, oldest first, by the item id they ask about. */
-    private val held = mutableListOf<Pair<UUID, () -> Unit>>()
+    private val held = mutableListOf<Pair<ItemId, () -> Unit>>()
 
     private val manager = playlistManager(fakeRepository())
     private val loader = NeighbourLoader(manager)
@@ -110,13 +111,13 @@ class QueueRebuildTest {
     }
 
     /** The player opened at [id], before its neighbours are queued. */
-    private suspend fun open(id: UUID): FakePlaylist {
+    private suspend fun open(id: ItemId): FakePlaylist {
         val first = manager.getInitialItem(id, ItemKind.EPISODE)!!
         manager.setCurrentMediaItemIndex(id)
         return FakePlaylist(first)
     }
 
-    private suspend fun awaitHeld(id: UUID) {
+    private suspend fun awaitHeld(id: ItemId) {
         repeat(1000) {
             if (held.any { it.first == id }) return
             yield()
@@ -124,7 +125,7 @@ class QueueRebuildTest {
         error("No request for $id was held")
     }
 
-    private fun release(id: UUID) {
+    private fun release(id: ItemId) {
         val request = held.first { it.first == id }
         held.remove(request)
         request.second()
@@ -140,7 +141,7 @@ class QueueRebuildTest {
         val ids
             get() = items.map { it.itemId }
 
-        override fun itemIds(): List<UUID> = ids
+        override fun itemIds(): List<ItemId> = ids
 
         override fun insert(index: Int, item: PlayerItem) {
             items.add(index, item)
@@ -165,7 +166,7 @@ class QueueRebuildTest {
                     "getEpisode" -> episodes.first { it.id == args[0] }
                     "getEpisodes" -> episodes
                     "getPlaybackSources" -> {
-                        streamRequests += args[0] as UUID
+                        streamRequests += args[0] as ItemId
                         listOf(source())
                     }
                     else -> error("Unexpected call to ${method.name}")
@@ -174,7 +175,7 @@ class QueueRebuildTest {
             if (request in slow) {
                 slow.remove(request)
                 val continuation = args.last() as Continuation<Any?>
-                held += (args[0] as UUID) to { continuation.intercepted().resume(answer) }
+                held += (args[0] as ItemId) to { continuation.intercepted().resume(answer) }
                 COROUTINE_SUSPENDED
             } else {
                 answer

@@ -1,9 +1,9 @@
 package dev.jdtech.jellyfin.player.local.domain
 
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.utils.LoadErrorText
-import java.util.UUID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -39,7 +39,7 @@ class StreamSwitches(
         fun playing(): Playing
 
         /** Forgets an item that left the queue while it got new streams ([rebuildQueue]). */
-        fun forget(itemId: UUID)
+        fun forget(itemId: ItemId)
 
         /**
          * [item] with new streams, under the cap in the setting. [pickedAudio] is the audio stream
@@ -62,11 +62,11 @@ class StreamSwitches(
     }
 
     /** The item that plays when a switch starts, and its audio track (null: unnamed or none). */
-    data class Playing(val itemId: UUID?, val audio: StoredChoice?)
+    data class Playing(val itemId: ItemId?, val audio: StoredChoice?)
 
     /** An audio stream picked for [itemId] that is not in the player yet. */
     private class AudioPick(
-        val itemId: UUID,
+        val itemId: ItemId,
         val streamIndex: Int,
         /** Waits for what the pick needs first (the series' choice to be saved). */
         val before: suspend () -> Unit,
@@ -90,7 +90,7 @@ class StreamSwitches(
      * [before] runs in the switch before the streams are requested.
      */
     fun selectAudio(
-        itemId: UUID,
+        itemId: ItemId,
         streamIndex: Int,
         playingIndex: Int?,
         before: suspend () -> Unit = {},

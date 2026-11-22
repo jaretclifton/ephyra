@@ -5,6 +5,7 @@ import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidSeason
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.repository.JellyfinRepository
@@ -43,10 +44,10 @@ class NeighbourLoaderTest {
     private var seasons: List<FindroidSeason> = emptyList()
 
     /** Requests to hold, as the method name and the item id it asks about. */
-    private val slow = mutableListOf<Pair<String, UUID>>()
+    private val slow = mutableListOf<Pair<String, ItemId>>()
 
     /** The held requests, oldest first, by the item id they ask about. */
-    private val held = mutableListOf<Pair<UUID, () -> Unit>>()
+    private val held = mutableListOf<Pair<ItemId, () -> Unit>>()
 
     private val manager = playlistManager(fakeRepository())
     private val loader = NeighbourLoader(manager)
@@ -199,12 +200,12 @@ class NeighbourLoaderTest {
     }
 
     /** What the player view model does when the player moves to [id]. */
-    private fun moveTo(playlist: FakePlaylist, id: UUID) {
+    private fun moveTo(playlist: FakePlaylist, id: ItemId) {
         playlist.current = playlist.ids.indexOf(id)
         manager.setCurrentMediaItemIndex(id)
     }
 
-    private suspend fun awaitHeld(id: UUID, count: Int = 1) {
+    private suspend fun awaitHeld(id: ItemId, count: Int = 1) {
         repeat(1000) {
             if (held.count { it.first == id } >= count) return
             yield()
@@ -212,25 +213,25 @@ class NeighbourLoaderTest {
         error("No request for $id was held")
     }
 
-    private fun release(id: UUID) {
+    private fun release(id: ItemId) {
         val request = held.first { it.first == id }
         held.remove(request)
         request.second()
     }
 
     /** The player's playlist, by item id, and the index it plays. */
-    private class FakePlaylist(vararg start: UUID) : NeighbourLoader.Playlist {
+    private class FakePlaylist(vararg start: ItemId) : NeighbourLoader.Playlist {
         val ids = start.toMutableList()
         var current = 0
 
-        override fun itemIds(): List<UUID> = ids.toList()
+        override fun itemIds(): List<ItemId> = ids.toList()
 
         override fun insert(index: Int, item: PlayerItem) {
             ids.add(index, item.itemId)
             if (index <= current) current++
         }
 
-        fun replace(id: UUID) {
+        fun replace(id: ItemId) {
             ids.clear()
             ids.add(id)
             current = 0
@@ -256,14 +257,14 @@ class NeighbourLoaderTest {
             if (request in slow) {
                 slow.remove(request)
                 val continuation = args.last() as Continuation<Any?>
-                held += (args[0] as UUID) to { continuation.intercepted().resume(answer) }
+                held += (args[0] as ItemId) to { continuation.intercepted().resume(answer) }
                 COROUTINE_SUSPENDED
             } else {
                 answer
             }
         } as JellyfinRepository
 
-    private fun episode(number: Int, season: UUID = seasonId, seasonNumber: Int = 1) =
+    private fun episode(number: Int, season: ItemId = seasonId, seasonNumber: Int = 1) =
         FindroidEpisode(
             id = UUID.randomUUID(),
             name = "Episode $number",
@@ -292,7 +293,7 @@ class NeighbourLoaderTest {
             trickplayInfo = null,
         )
 
-    private fun season(id: UUID, number: Int) =
+    private fun season(id: ItemId, number: Int) =
         FindroidSeason(
             id = id,
             name = "Season $number",

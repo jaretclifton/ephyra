@@ -1,10 +1,12 @@
 package dev.jdtech.jellyfin.player.local.domain
 
 import androidx.media3.common.C
+import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
-import java.util.UUID
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -28,7 +30,7 @@ import timber.log.Timber
  * known, [positionMs] is the position playback was asked to start at (#461).
  */
 data class PlayingSnapshot(
-    val itemId: UUID,
+    val itemId: ItemId,
     val positionMs: Long,
     val durationMs: Long,
     val startJob: Job? = null,
@@ -61,7 +63,7 @@ class PlaybackReporter(
         fun currentMediaId(): String?
 
         /** Whether the stream of [itemId] that plays now is the server's transcode (#599). */
-        fun isTranscoded(itemId: UUID): Boolean
+        fun isTranscoded(itemId: ItemId): Boolean
 
         fun isPlaying(): Boolean
 
@@ -125,7 +127,7 @@ class PlaybackReporter(
      *
      * @return the stop report of the item left, for the next item's start to wait for.
      */
-    fun onItemTransition(newId: UUID?): Job? {
+    fun onItemTransition(newId: ItemId?): Job? {
         val previous = playing
         val stopJob =
             if (previous != null && previous.itemId != newId) reportStopped(previous) else null
@@ -168,7 +170,7 @@ class PlaybackReporter(
         // pressed while this item was loading). A start now would arrive after the next item's,
         // and nothing would stop it.
         if (playing?.itemId != item.itemId) {
-            Timber.d("No playback start for ${item.itemId}: left before it was sent")
+            Timber.d("No playback start for ${item.itemId.asString()}: left before it was sent")
             return
         }
         val start =
@@ -210,7 +212,7 @@ class PlaybackReporter(
                 finished = finished,
             )
         if (report == null) {
-            Timber.d("No playback stop for $itemId: neither loaded nor started")
+            Timber.d("No playback stop for ${itemId.asString()}: neither loaded nor started")
             // CE (#846): every way out of an item ends here (item change, release, the
             // still-watching prompt), so this is where the stop that will not come is called off.
             playbackEvents.onLeftWithoutStop()
@@ -220,10 +222,14 @@ class PlaybackReporter(
             try {
                 if (startJob != null && !startJob.isCompleted) {
                     withTimeoutOrNull(START_REPORT_WAIT_MS) { startJob.join() }
-                        ?: Timber.w("Start report for $itemId still running, sending stop anyway")
+                        ?: Timber.w(
+                            "Start report for ${itemId.asString()} still running, sending stop anyway"
+                        )
                 }
                 if (report.playedPercentage == null) {
-                    Timber.d("Sending playback stop for $itemId at its start, $position ms")
+                    Timber.d(
+                        "Sending playback stop for ${itemId.asString()} at its start, $position ms"
+                    )
                 } else {
                     Timber.d(
                         "Sending playback stop for $itemId at $position / $duration ms" +
@@ -285,7 +291,7 @@ class PlaybackReporter(
         }
         val mediaId = player.currentMediaId() ?: return
         if (mediaId.isNotEmpty()) {
-            val itemId = UUID.fromString(mediaId)
+            val itemId = mediaId.toItemId()
             // CE (#599): the item as it plays now; a quality switch replaces it in items.
             val transcoded = player.isTranscoded(itemId)
             // CE (#674): a pause and a resume are reported as they happen, so two reports can

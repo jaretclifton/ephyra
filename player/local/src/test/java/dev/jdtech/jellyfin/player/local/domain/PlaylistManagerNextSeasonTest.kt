@@ -5,6 +5,7 @@ import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidSeason
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import java.lang.reflect.Proxy
@@ -129,7 +130,7 @@ class PlaylistManagerNextSeasonTest {
         return manager
     }
 
-    private fun PlaylistManager.nextAfter(episode: FindroidEpisode): UUID? {
+    private fun PlaylistManager.nextAfter(episode: FindroidEpisode): ItemId? {
         setCurrentMediaItemIndex(episode.id)
         return runBlocking { getNextPlayerItem() }?.itemId
     }

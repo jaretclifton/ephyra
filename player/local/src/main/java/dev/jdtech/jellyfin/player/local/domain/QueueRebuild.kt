@@ -1,7 +1,7 @@
 package dev.jdtech.jellyfin.player.local.domain
 
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
-import java.util.UUID
 
 /**
  * The items of [queue] with new streams, as [recreate] makes them, for a quality or audio switch.
@@ -23,10 +23,10 @@ import java.util.UUID
  */
 suspend fun rebuildQueue(
     queue: () -> List<PlayerItem>,
-    forget: (UUID) -> Unit,
+    forget: (ItemId) -> Unit,
     recreate: suspend (PlayerItem) -> PlayerItem,
 ): List<PlayerItem> {
-    val rebuilt = mutableMapOf<UUID, PlayerItem>()
+    val rebuilt = mutableMapOf<ItemId, PlayerItem>()
     try {
         while (true) {
             // A copy: the queue can change while a stream is fetched.

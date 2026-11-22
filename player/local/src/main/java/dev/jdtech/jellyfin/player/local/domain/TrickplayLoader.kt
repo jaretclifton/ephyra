@@ -3,9 +3,9 @@ package dev.jdtech.jellyfin.player.local.domain
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.LruCache
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.player.core.domain.models.TrickplayTileLoader
 import dev.jdtech.jellyfin.repository.JellyfinRepository
-import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -32,7 +32,7 @@ import timber.log.Timber
  */
 class TrickplayLoader(
     private val repository: JellyfinRepository,
-    private val itemId: UUID,
+    private val itemId: ItemId,
     private val width: Int,
     private val height: Int,
     tileWidth: Int,
