@@ -1,5 +1,6 @@
 package dev.jdtech.jellyfin.presentation.film.components
 
+import dev.jdtech.jellyfin.core.presentation.dummy.randomItemId
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -133,7 +134,7 @@ private val MaxLabelColumnWidth = 140.dp
 private fun InfoTextPreview() {
     fun person(name: String) =
         FindroidItemPerson(
-            id = java.util.UUID.randomUUID(),
+            id = randomItemId(),
             name = name,
             type = PersonKind.DIRECTOR,
             role = "",

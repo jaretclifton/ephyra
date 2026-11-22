@@ -3,11 +3,10 @@ package dev.jdtech.jellyfin.core.presentation.dummy
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidShow
 import java.time.LocalDateTime
-import java.util.UUID
 
 val dummyShow =
     FindroidShow(
-        id = UUID.randomUUID(),
+        id = randomItemId(),
         name = "Attack on Titan",
         originalTitle = null,
         overview =

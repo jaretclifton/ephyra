@@ -1,5 +1,6 @@
 package dev.jdtech.jellyfin.utils
 
+import dev.jdtech.jellyfin.models.looksLikeJellyfinId
 import android.content.Context
 import android.os.Environment
 import android.os.StatFs
@@ -117,8 +118,9 @@ internal fun shouldDeleteOrphanArtwork(
     knownItemIds: Set<ItemId>,
     minAgeMs: Long = ORPHAN_MIN_AGE_MS,
 ): Boolean {
-    val id = runCatching { dirName.toItemId() }.getOrNull() ?: return false
-    if (id.asString() != dirName.lowercase()) return false
+    val name = dirName.lowercase()
+    if (!name.looksLikeJellyfinId()) return false
+    val id = name.toItemId()
     if (id in knownItemIds) return false
     return isOldEnough(newestModified, now, minAgeMs)
 }

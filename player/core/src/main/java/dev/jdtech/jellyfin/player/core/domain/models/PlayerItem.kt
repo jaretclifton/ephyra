@@ -4,8 +4,11 @@ import android.net.Uri
 import android.os.Parcelable
 import dev.jdtech.jellyfin.models.ItemId
 import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.TypeParceler
 
 @Parcelize
+@TypeParceler<ItemId, ItemIdParceler>
+@TypeParceler<ItemId?, NullableItemIdParceler>
 data class PlayerItem(
     val name: String,
     val itemId: ItemId,

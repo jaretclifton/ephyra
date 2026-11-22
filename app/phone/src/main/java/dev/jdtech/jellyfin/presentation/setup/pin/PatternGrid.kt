@@ -46,7 +46,7 @@ import dev.jdtech.jellyfin.profilelock.ProfilePattern
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.presentation.pin.PinError
 import dev.jdtech.jellyfin.setup.presentation.pin.PinPrompt
-import java.util.UUID
+import dev.jdtech.jellyfin.core.presentation.dummy.randomUserId
 
 /** CE (#330): the message for a rejected pattern. */
 @Composable
@@ -278,7 +278,7 @@ private fun PatternDialogPreview() {
         PatternDialog(
             prompt =
                 PinPrompt(
-                    UUID.randomUUID(),
+                    randomUserId(),
                     "Midas",
                     PinError.WRONG,
                     1,

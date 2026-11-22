@@ -45,7 +45,9 @@ constructor(
     private val _state = MutableStateFlow(MovieState())
     val state = _state.asStateFlow()
 
-    private lateinit var movieId: ItemId
+    private var movieIdOrNull: ItemId? = null
+    private val movieId: ItemId
+        get() = checkNotNull(movieIdOrNull) { "movieId is read before it is loaded" }
     private val reloadPolicy = ReloadPolicy(dataChanges)
     private var loadJob: Job? = null
     private var relatedJob: Job? = null
@@ -54,12 +56,12 @@ constructor(
 
     /** Whether coming back to the screen needs a load (#251), see [ReloadPolicy]. */
     fun shouldReload(movieId: ItemId, stopEventFollows: Boolean = false): Boolean =
-        !::movieId.isInitialized ||
+        movieIdOrNull == null ||
             this.movieId != movieId ||
             reloadPolicy.shouldReload(stopEventFollows)
 
     fun loadMovie(movieId: ItemId) {
-        this.movieId = movieId
+        movieIdOrNull = movieId
         if (relatedFor != null && relatedFor != movieId) {
             relatedJob?.cancel()
             relatedFor = null

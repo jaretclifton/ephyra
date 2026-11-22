@@ -32,7 +32,7 @@ import dev.jdtech.jellyfin.profilelock.ProfilePinHasher
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.presentation.pin.PinError
 import dev.jdtech.jellyfin.setup.presentation.pin.PinPrompt
-import java.util.UUID
+import dev.jdtech.jellyfin.core.presentation.dummy.randomUserId
 
 /** The message for a rejected PIN. */
 @Composable
@@ -149,7 +149,7 @@ fun PinDialog(
 private fun PinDialogPreview() {
     FindroidTheme {
         PinDialog(
-            prompt = PinPrompt(UUID.randomUUID(), "Midas", PinError.WRONG, 1),
+            prompt = PinPrompt(randomUserId(), "Midas", PinError.WRONG, 1),
             title = "Enter the PIN for Midas",
             footnote = "Forgot the PIN? Remove this user and sign in again.",
             onSubmit = {},

@@ -13,7 +13,7 @@ val dummyServer =
         id = "",
         name = "Demo server",
         currentServerAddressId = UUID.fromString("6f048d8b-aab4-4c97-9b05-8e7de4e6d604"),
-        currentUserId = UUID.randomUUID(),
+        currentUserId = randomUserId(),
     )
 
 val dummyServerAddress =

@@ -49,7 +49,7 @@ import dev.jdtech.jellyfin.setup.presentation.users.UsersEvent
 import dev.jdtech.jellyfin.setup.presentation.users.UsersState
 import dev.jdtech.jellyfin.setup.presentation.users.UsersViewModel
 import dev.jdtech.jellyfin.utils.ObserveAsEvents
-import java.util.UUID
+import dev.jdtech.jellyfin.core.presentation.dummy.randomUserId
 
 @Composable
 fun UsersScreen(
@@ -248,10 +248,10 @@ private fun UsersScreenLayoutPreview() {
                     users =
                         listOf(
                             dummyUser,
-                            User(id = UUID.randomUUID(), name = "Bob", serverId = ""),
+                            User(id = randomUserId(), name = "Bob", serverId = ""),
                         ),
                     publicUsers =
-                        listOf(User(id = UUID.randomUUID(), name = "Alice", serverId = "")),
+                        listOf(User(id = randomUserId(), name = "Alice", serverId = "")),
                     serverName = "Jellyfin",
                     currentUserId = dummyUser.id,
                 ),

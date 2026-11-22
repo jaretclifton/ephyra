@@ -13,7 +13,7 @@ import dev.jdtech.jellyfin.player.cast.presentation.CastNowPlaying
 import dev.jdtech.jellyfin.player.cast.presentation.CastUiState
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerChapter
 import dev.jdtech.jellyfin.player.core.domain.models.Track
-import java.util.UUID
+import dev.jdtech.jellyfin.models.toItemId
 
 /** States for the Cast surfaces' previews: one per thing a surface can say. */
 internal object CastPreviews {
@@ -22,7 +22,7 @@ internal object CastPreviews {
 
     private val episode =
         CastNowPlaying(
-            itemId = UUID(0, 1),
+            itemId = "00000000-0000-0000-0000-000000000001".toItemId(),
             kind = ItemKind.EPISODE,
             title = "The Man From Mars",
             seriesName = "Pioneer One",

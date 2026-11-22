@@ -101,7 +101,7 @@ import dev.jdtech.jellyfin.presentation.utils.Layout
 import dev.jdtech.jellyfin.presentation.utils.WidthClass
 import dev.jdtech.jellyfin.presentation.utils.currentWidthClass
 import dev.jdtech.jellyfin.presentation.utils.topAndSideInsets
-import java.util.UUID
+import dev.jdtech.jellyfin.core.presentation.dummy.randomItemId
 
 /** Queues longer than this collapse behind a "Show all" toggle. */
 private const val COLLAPSED_QUEUE_SIZE = 3
@@ -763,7 +763,7 @@ private fun DownloadsScreenLayoutEmptyPreview() {
 @Composable
 private fun DownloadsScreenLayoutTabletPreview() {
     val movies =
-        List(6) { index -> dummyMovie.copy(id = UUID.randomUUID(), name = "Movie ${index + 1}") }
+        List(6) { index -> dummyMovie.copy(id = randomItemId(), name = "Movie ${index + 1}") }
     FindroidTheme {
         DownloadsScreenLayout(
             state =

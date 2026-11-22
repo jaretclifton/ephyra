@@ -49,7 +49,7 @@ import dev.jdtech.jellyfin.setup.presentation.users.UsersEvent
 import dev.jdtech.jellyfin.setup.presentation.users.UsersState
 import dev.jdtech.jellyfin.setup.presentation.users.UsersViewModel
 import dev.jdtech.jellyfin.utils.ObserveAsEvents
-import java.util.UUID
+import dev.jdtech.jellyfin.core.presentation.dummy.randomUserId
 
 /** The profile sheet (#245): who is signed in, one tap to another user, add user, settings. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -214,13 +214,13 @@ private fun ProfileSheetUser(user: User, onClick: () -> Unit, subtitle: String? 
 @Composable
 @Preview
 private fun ProfileBottomSheetPreview() {
-    val other = User(id = UUID.randomUUID(), name = "Alice", serverId = "")
+    val other = User(id = randomUserId(), name = "Alice", serverId = "")
     FindroidTheme {
         ProfileBottomSheetLayout(
             state =
                 UsersState(
                     users = listOf(dummyUser, other),
-                    publicUsers = listOf(User(id = UUID.randomUUID(), name = "Bob", serverId = "")),
+                    publicUsers = listOf(User(id = randomUserId(), name = "Bob", serverId = "")),
                     serverName = "Jellyfin",
                     currentUserId = dummyUser.id,
                 ),

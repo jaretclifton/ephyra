@@ -55,7 +55,9 @@ constructor(
     private val eventsChannel = Channel<SeasonEvent>()
     val events = eventsChannel.receiveAsFlow()
 
-    private lateinit var seasonId: ItemId
+    private var seasonIdOrNull: ItemId? = null
+    private val seasonId: ItemId
+        get() = checkNotNull(seasonIdOrNull) { "seasonId is read before it is loaded" }
     private var downloadsOnly: Boolean = false
     private var includeSeriesSeasons: Boolean = false
 
@@ -69,7 +71,7 @@ constructor(
         downloadsOnly: Boolean = this.downloadsOnly,
         stopEventFollows: Boolean = false,
     ): Boolean =
-        !::seasonId.isInitialized ||
+        seasonIdOrNull == null ||
             this.seasonId != seasonId ||
             this.downloadsOnly != downloadsOnly ||
             reloadPolicy.shouldReload(stopEventFollows)
@@ -110,7 +112,7 @@ constructor(
                     }
                     if (isBusy) {
                         wasBusy = true
-                    } else if (wasBusy && ::seasonId.isInitialized) {
+                    } else if (wasBusy && seasonIdOrNull != null) {
                         wasBusy = false
                         loadSeason(seasonId)
                     }
@@ -131,7 +133,7 @@ constructor(
         includeSeriesSeasons: Boolean = this.includeSeriesSeasons,
         seriesId: ItemId? = null,
     ) {
-        this.seasonId = seasonId
+        seasonIdOrNull = seasonId
         this.downloadsOnly = downloadsOnly
         this.includeSeriesSeasons = includeSeriesSeasons
         loadJob?.cancel()

@@ -60,7 +60,7 @@ import dev.jdtech.jellyfin.player.local.R as PlayerR
 import dev.jdtech.jellyfin.player.local.presentation.PlayerViewModel.UpNextState
 import dev.jdtech.jellyfin.presentation.film.components.ArtworkImage
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
-import java.util.UUID
+import dev.jdtech.jellyfin.core.presentation.dummy.randomItemId
 
 /**
  * CE (#272): the "Up next" card, bottom right over the video at the end of an episode, whether or
@@ -254,7 +254,7 @@ private fun PlayerUpNextCardPreview() {
     FindroidTheme(darkTheme = true) {
         UpNextCardContent(
             UpNextState(
-                itemId = UUID.randomUUID(),
+                itemId = randomItemId(),
                 title = "The Pilot of a show with a rather long episode title",
                 episodeLabel = "S01E02",
                 imageUri = null,

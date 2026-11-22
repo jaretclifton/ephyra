@@ -8,11 +8,10 @@ import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.MediaStreamType
 import java.time.LocalDateTime
-import java.util.UUID
 
 val dummyMovie =
     FindroidMovie(
-        id = UUID.randomUUID(),
+        id = randomItemId(),
         name = "Alita: Battle Angel",
         originalTitle = null,
         overview =

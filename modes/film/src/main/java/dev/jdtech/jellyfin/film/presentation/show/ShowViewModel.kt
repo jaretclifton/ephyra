@@ -71,7 +71,9 @@ constructor(
     private val eventsChannel = Channel<ShowEvent>()
     val events = eventsChannel.receiveAsFlow()
 
-    private lateinit var showId: ItemId
+    private var showIdOrNull: ItemId? = null
+    private val showId: ItemId
+        get() = checkNotNull(showIdOrNull) { "showId is read before it is loaded" }
     private var downloadsOnly: Boolean = false
     private val reloadPolicy = ReloadPolicy(dataChanges)
     private var loadJob: Job? = null
@@ -85,7 +87,7 @@ constructor(
         downloadsOnly: Boolean = this.downloadsOnly,
         stopEventFollows: Boolean = false,
     ): Boolean =
-        !::showId.isInitialized ||
+        showIdOrNull == null ||
             this.showId != showId ||
             this.downloadsOnly != downloadsOnly ||
             reloadPolicy.shouldReload(stopEventFollows)
@@ -96,7 +98,7 @@ constructor(
      * request for the series' episodes, not one request per season.
      */
     fun loadShow(showId: ItemId, downloadsOnly: Boolean = this.downloadsOnly) {
-        this.showId = showId
+        showIdOrNull = showId
         this.downloadsOnly = downloadsOnly
         if (relatedFor != null && relatedFor != showId) {
             relatedJob?.cancel()

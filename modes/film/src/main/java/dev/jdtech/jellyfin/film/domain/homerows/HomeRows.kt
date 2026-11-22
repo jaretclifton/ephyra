@@ -1,5 +1,6 @@
 package dev.jdtech.jellyfin.film.domain.homerows
 
+import dev.jdtech.jellyfin.models.looksLikeJellyfinId
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
@@ -116,7 +117,8 @@ object HomeRows {
                 HomeRowType.entries.firstOrNull { it.id == parts[0] } ?: return@mapNotNull null
             val libraryId =
                 if (parts[1].isEmpty()) null
-                else runCatching { parts[1].toItemId() }.getOrNull() ?: return@mapNotNull null
+                else if (parts[1].looksLikeJellyfinId()) parts[1].toItemId()
+                else return@mapNotNull null
             if ((type == HomeRowType.LATEST) != (libraryId != null)) return@mapNotNull null
             HomeRowConfig(type, libraryId, parts[2] == "1")
         }
