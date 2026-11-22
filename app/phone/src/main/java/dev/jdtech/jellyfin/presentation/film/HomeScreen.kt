@@ -170,12 +170,15 @@ internal fun HomeScreenLayout(
     val userFade = remember { Animatable(1f) }
     var shownUserId by remember { mutableStateOf(state.user?.id) }
     LaunchedEffect(state.user?.id) {
+        // CE (#810): no user is no one to switch to. During a switch Home can show no user for a
+        // moment (HomeState.shownTo); the switch is from the previous user to the next one.
+        val userId = state.user?.id ?: return@LaunchedEffect
         if (shownUserId == null) {
             // The first user of this screen isn't a switch: a cold start arrives with no user and
             // gets one a moment later, and the rows must not dip for that.
-            shownUserId = state.user?.id
-        } else if (state.user?.id != shownUserId) {
-            shownUserId = state.user?.id
+            shownUserId = userId
+        } else if (userId != shownUserId) {
+            shownUserId = userId
             userFade.animateTo(
                 0f,
                 tween(EphyraMotion.DURATION_SHORT, easing = EphyraMotion.EasingExit),

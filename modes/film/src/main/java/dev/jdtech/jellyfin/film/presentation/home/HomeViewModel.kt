@@ -313,7 +313,11 @@ constructor(
         logFailure("user image") {
             repository.refreshCurrentUserImage()
             database.getServerCurrentUser(serverId)?.let { user ->
-                updateState { it.copy(user = user) }
+                // CE (#810): a new picture of the same user. Another user is a switch, which
+                // onCurrentUser handles, rows and all.
+                updateState {
+                    if (it.user == null || it.user.id == user.id) it.copy(user = user) else it
+                }
             }
         }
     }
