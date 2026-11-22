@@ -162,4 +162,5 @@
     <string name="ce_spoiler_title_hidden">Назву приховано</string>
     <string name="ce_spoiler_overview_hidden">Приховано, доки ви не переглянете цю серію. Натисніть і утримуйте, щоб показати.</string>
     <string name="ce_spoiler_reveal">Показати</string>
+    <string name="ce_cast_amp_crew">Актори та команда</string>
 </resources>

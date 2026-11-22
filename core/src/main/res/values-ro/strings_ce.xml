@@ -157,4 +157,5 @@
     <string name="ce_spoiler_title_hidden">Titlu ascuns</string>
     <string name="ce_spoiler_overview_hidden">Ascuns până când vezi acest episod. Ține apăsat pentru a-l afișa.</string>
     <string name="ce_spoiler_reveal">Afișează</string>
+    <string name="ce_cast_amp_crew">Distribuție &amp; Echipă tehnică</string>
 </resources>

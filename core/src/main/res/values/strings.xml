@@ -281,4 +281,5 @@
     <string name="ce_spoiler_title_hidden">Title hidden</string>
     <string name="ce_spoiler_overview_hidden">Hidden until you watch this episode. Press and hold to reveal it.</string>
     <string name="ce_spoiler_reveal">Reveal</string>
+    <string name="ce_cast_amp_crew">Cast &amp; Crew</string>
 </resources>

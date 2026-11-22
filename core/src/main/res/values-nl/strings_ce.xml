@@ -152,4 +152,5 @@
     <string name="ce_spoiler_title_hidden">Titel verborgen</string>
     <string name="ce_spoiler_overview_hidden">Verborgen tot je deze aflevering hebt gezien. Houd ingedrukt om hem te tonen.</string>
     <string name="ce_spoiler_reveal">Tonen</string>
+    <string name="ce_cast_amp_crew">Cast &amp; Bemanning</string>
 </resources>

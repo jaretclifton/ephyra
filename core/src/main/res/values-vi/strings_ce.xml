@@ -147,4 +147,5 @@
     <string name="ce_spoiler_title_hidden">Đã ẩn tên</string>
     <string name="ce_spoiler_overview_hidden">Được ẩn cho đến khi bạn xem tập này. Nhấn giữ để hiện.</string>
     <string name="ce_spoiler_reveal">Hiện</string>
+    <string name="ce_cast_amp_crew">Diễn viên &amp; Êkíp</string>
 </resources>

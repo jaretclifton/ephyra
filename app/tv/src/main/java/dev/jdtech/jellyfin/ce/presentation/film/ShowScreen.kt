@@ -491,7 +491,7 @@ private fun ShowScreenContent(
                             Column {
                                 Spacer(modifier = Modifier.height(MaterialTheme.spacings.medium))
                                 Text(
-                                    text = stringResource(id = CoreR.string.cast_amp_crew),
+                                    text = stringResource(id = CoreR.string.ce_cast_amp_crew),
                                     style = MaterialTheme.typography.headlineMedium,
                                     modifier =
                                         Modifier.padding(
