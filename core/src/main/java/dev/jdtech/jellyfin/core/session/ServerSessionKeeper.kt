@@ -9,6 +9,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.jdtech.jellyfin.core.R
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.domain.ports.CurrentServerCapabilities
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
@@ -44,6 +45,7 @@ constructor(
     private val serverSession: ServerSession,
     private val appPreferences: AppPreferences,
     private val database: ServerDatabaseDao,
+    private val capabilities: CurrentServerCapabilities,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var started = false
@@ -63,6 +65,8 @@ constructor(
         val lifecycle = ProcessLifecycleOwner.get().lifecycle
         scope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // #769: asked on every return to the foreground, as the server may have changed.
+                if (!capabilities.get().sessionSocket) return@repeatOnLifecycle
                 serverSession
                     .keepAlive()
                     .catch { e -> Timber.w(e, "Session socket failed") }

@@ -14,4 +14,9 @@ data class MovieState(
     // CE (#332): loaded after the page is shown, see MovieViewModel.loadRelated.
     val related: RelatedItems = RelatedItems(),
     val error: Exception? = null,
+    /**
+     * #769: whether a download can be transcoded down to a chosen quality. Without it the quality
+     * dialog offers the original only.
+     */
+    val cappedDownloads: Boolean = true,
 )

@@ -9,6 +9,7 @@ import dev.jdtech.jellyfin.domain.ports.ServerConnector
 import dev.jdtech.jellyfin.domain.ports.ServerIssue
 import dev.jdtech.jellyfin.models.DiscoveredServer
 import dev.jdtech.jellyfin.models.QuickConnectState
+import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerInfo
 import kotlinx.coroutines.CancellationException
@@ -37,6 +38,9 @@ import org.jellyfin.sdk.model.api.ServerDiscoveryInfo
  * ([JellyfinApi]). The connector never changes that client.
  */
 class JellyfinServerConnector(private val api: JellyfinApi) : ServerConnector {
+    /** #769: Jellyfin has every feature the app knows. */
+    override val capabilities: ServerCapabilities = ServerCapabilities.ALL
+
     override fun discover(): Flow<DiscoveredServer> =
         api.jellyfin.discovery.discoverLocalServers().map { it.toDiscoveredServer() }
 

@@ -16,6 +16,7 @@ import dev.jdtech.jellyfin.models.FindroidItemPersonImage
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.PersonKind
+import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.lang.reflect.Proxy
@@ -173,6 +174,8 @@ class CastAndCrewPreferenceTest {
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, _ ->
+            // #769: Jellyfin can do everything.
+            if (method.name == "getCapabilities") return@newProxyInstance ServerCapabilities.ALL
             when (method.name) {
                 "getMovie" -> movie()
                 "getShow" -> show()

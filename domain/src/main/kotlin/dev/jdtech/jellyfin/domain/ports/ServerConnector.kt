@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.domain.ports
 
 import dev.jdtech.jellyfin.models.DiscoveredServer
 import dev.jdtech.jellyfin.models.QuickConnectState
+import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.UserId
@@ -54,6 +55,13 @@ data class PublicUser(val id: UserId, val name: String, val primaryImageTag: Str
  * [dev.jdtech.jellyfin.models.ServerException] where the implementation can tell what they are.
  */
 interface ServerConnector {
+    /**
+     * #769: what servers of this type can do. The login screens need
+     * [ServerCapabilities.quickConnect], [ServerCapabilities.publicUsers] and
+     * [ServerCapabilities.loginDisclaimer] before there is a session.
+     */
+    val capabilities: ServerCapabilities
+
     /** The servers that answer the search on the local network. */
     fun discover(): Flow<DiscoveredServer>
 

@@ -9,9 +9,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.jdtech.jellyfin.domain.ports.CurrentServerCapabilities
+import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.settings.R
 import dev.jdtech.jellyfin.settings.domain.AppCaches
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.settings.domain.Constants
 import dev.jdtech.jellyfin.settings.domain.KeepPlayerLandscape
 import dev.jdtech.jellyfin.settings.domain.WideWindow
 import dev.jdtech.jellyfin.settings.domain.bounded
@@ -31,6 +34,8 @@ import dev.jdtech.jellyfin.settings.presentation.models.PreferenceMultiSelect
 import dev.jdtech.jellyfin.settings.presentation.models.PreferencePermission
 import dev.jdtech.jellyfin.settings.presentation.models.PreferenceSelect
 import dev.jdtech.jellyfin.settings.presentation.models.PreferenceSwitch
+import dev.jdtech.jellyfin.settings.presentation.models.ServerFeature
+import dev.jdtech.jellyfin.settings.presentation.models.isShownFor
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -48,6 +53,10 @@ constructor(
     private val appPreferences: AppPreferences,
     private val appVariant: AppVariant = AppVariant.PHONE,
     private val appCaches: AppCaches = AppCaches.None,
+    /** #769: read on every load, as the server may have changed since the last one. */
+    private val serverCapabilities: CurrentServerCapabilities = CurrentServerCapabilities {
+        ServerCapabilities.ALL
+    },
 ) : ViewModel() {
     private val _state = MutableStateFlow(SettingsState())
     val state = _state.asStateFlow()
@@ -230,6 +239,7 @@ constructor(
                                                         R.string.pref_tv_theme_music_summary,
                                                     supportedDeviceTypes = listOf(DeviceType.TV),
                                                     backendPreference = appPreferences.tvThemeMusic,
+                                                    serverFeature = ServerFeature.THEME_SONGS,
                                                 ),
                                             ),
                                     ),
@@ -943,6 +953,7 @@ constructor(
                                     ),
                                     PreferenceGroup(
                                         nameStringResource = R.string.media_segments,
+                                        serverFeature = ServerFeature.MEDIA_SEGMENTS,
                                         preferences =
                                             listOf(
                                                 // CE (#681): the segments on the seek bar.
@@ -1022,6 +1033,7 @@ constructor(
                                     ),
                                     PreferenceGroup(
                                         nameStringResource = R.string.trickplay,
+                                        serverFeature = ServerFeature.TRICKPLAY,
                                         preferences =
                                             listOf(
                                                 PreferenceSwitch(
@@ -1545,14 +1557,18 @@ constructor(
                     emptyList()
                 }
 
+            val capabilities = serverCapabilities.get()
+
             // Update all (visible) preferences with there current values
             preferences =
                 preferences
+                    .filter { it.serverFeature.isShownFor(capabilities) }
                     .map { preferenceGroup ->
                         preferenceGroup.copy(
                             preferences =
                                 preferenceGroup.preferences
                                     .filter { it.supportedDeviceTypes.contains(deviceType) }
+                                    .filter { it.serverFeature.isShownFor(capabilities) }
                                     .filter { preference ->
                                         preference.minSdk?.let { sdk ->
                                             Build.VERSION.SDK_INT >= sdk
@@ -1574,17 +1590,29 @@ constructor(
                                                 )
                                             }
                                             is PreferenceSelect -> {
-                                                preference.copy(
-                                                    enabled =
-                                                        preference.enabled &&
-                                                            preference.dependencies.all {
-                                                                appPreferences.getValue(it)
-                                                            },
-                                                    value =
-                                                        appPreferences.getValue(
-                                                            preference.backendPreference
-                                                        ),
-                                                )
+                                                preference
+                                                    .copy(
+                                                        enabled =
+                                                            preference.enabled &&
+                                                                preference.dependencies.all {
+                                                                    appPreferences.getValue(it)
+                                                                },
+                                                        value =
+                                                            appPreferences.getValue(
+                                                                preference.backendPreference
+                                                            ),
+                                                    )
+                                                    .let {
+                                                        if (
+                                                            it.backendPreference ==
+                                                                appPreferences.playerAutoPlayNext &&
+                                                                !capabilities.autoPlayNextSetting
+                                                        ) {
+                                                            it.withoutServerChoice()
+                                                        } else {
+                                                            it
+                                                        }
+                                                    }
                                             }
                                             is PreferenceMultiSelect -> {
                                                 preference.copy(
@@ -1707,6 +1735,22 @@ constructor(
             else -> Unit
         }
     }
+
+    /**
+     * #769: the "Play next episode automatically" select for a server without the setting: Always
+     * and Never only, without the summary that explains "Use server setting". A stored "server"
+     * shows as Always, which is what the player does when the server has no setting to follow
+     * (`resolveAutoPlayNext`). Nothing is written until the user picks one.
+     */
+    private fun PreferenceSelect.withoutServerChoice() =
+        copy(
+            descriptionStringRes = null,
+            options = R.array.ce_player_autoplay_next_local,
+            optionValues = R.array.ce_player_autoplay_next_local_values,
+            value =
+                if (value == Constants.PlayerAutoPlayNext.OFF) Constants.PlayerAutoPlayNext.OFF
+                else Constants.PlayerAutoPlayNext.ON,
+        )
 
     /** A Skip automatically / Ask to skip / Do nothing select for one media segment type. */
     private fun mediaSegmentActionSelect(

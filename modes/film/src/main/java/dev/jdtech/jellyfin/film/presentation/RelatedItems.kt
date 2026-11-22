@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.film.presentation
 
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
+import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
@@ -43,6 +44,18 @@ data class RelatedItemsRequest(
             )
     }
 }
+
+/**
+ * #769: without the rows the server cannot fill. An empty answer still hides a row it can fill (see
+ * [launchRelatedItems]).
+ */
+fun RelatedItemsRequest.within(capabilities: ServerCapabilities) =
+    copy(
+        localTrailers = localTrailers && capabilities.extras,
+        specialFeatures = specialFeatures && capabilities.extras,
+        collections = collections && capabilities.itemCollections,
+        similar = similar && capabilities.similarItems,
+    )
 
 /** Without the rows [request] doesn't ask for. */
 fun RelatedItems.keeping(request: RelatedItemsRequest) =

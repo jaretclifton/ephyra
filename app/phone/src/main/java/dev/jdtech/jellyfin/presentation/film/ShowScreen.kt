@@ -152,6 +152,7 @@ fun ShowScreen(
             )
         DownloadPrompt.Quality ->
             DownloadQualityDialog(
+                capped = state.cappedDownloads,
                 onSelect = { maxBitrate -> viewModel.chooseQuality(maxBitrate) },
                 onDismiss = { viewModel.dismissDownloadPrompt() },
             )

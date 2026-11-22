@@ -419,6 +419,7 @@ private fun EpisodeScreenLayout(
 
         if (downloadQualityDialogOpen) {
             DownloadQualityDialog(
+                capped = state.cappedDownloads,
                 onSelect = { maxBitrate ->
                     state.episode?.let { episode ->
                         onDownloaderAction(DownloaderAction.Download(episode, maxBitrate))

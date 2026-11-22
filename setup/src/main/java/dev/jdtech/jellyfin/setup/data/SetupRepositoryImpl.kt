@@ -14,6 +14,7 @@ import dev.jdtech.jellyfin.models.ExceptionUiTexts
 import dev.jdtech.jellyfin.models.QuickConnectState
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.User
@@ -40,6 +41,9 @@ class SetupRepositoryImpl(
     private val database: ServerDatabaseDao,
     private val appPreferences: AppPreferences,
 ) : SetupRepository {
+    override val capabilities: ServerCapabilities
+        get() = connector.capabilities
+
     override fun discoverServers(): Flow<DiscoveredServer> {
         return connector.discover()
     }

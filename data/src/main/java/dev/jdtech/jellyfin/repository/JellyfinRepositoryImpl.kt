@@ -25,6 +25,7 @@ import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
+import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
@@ -66,6 +67,9 @@ class JellyfinRepositoryImpl(
     private val resumeThresholds: ResumeThresholdsStore =
         ResumeThresholdsStore(appPreferences.sharedPreferences),
 ) : JellyfinRepository {
+    override val capabilities: ServerCapabilities
+        get() = server.capabilities
+
     private val catalog: CatalogPort
         get() = server.catalog
 
@@ -128,6 +132,8 @@ class JellyfinRepositoryImpl(
      * follow them. A failure keeps the last ones read, or Jellyfin's defaults.
      */
     private suspend fun readResumeThresholds() {
+        // #769: a server without its own thresholds leaves the defaults.
+        if (!capabilities.serverResumeThresholds) return
         val serverId = currentServerId() ?: return
         if (resumeThresholds.isFresh(serverId)) return
         try {
@@ -617,6 +623,8 @@ class JellyfinRepositoryImpl(
 
     override suspend fun getServerSegments(itemId: UUID): List<FindroidSegment> =
         withContext(Dispatchers.IO) {
+            // #769: the player and the downloads ask here; without segments they get none.
+            if (!capabilities.mediaSegments) return@withContext emptyList()
             try {
                 return@withContext server.playback.segments(itemId)
             } catch (e: Exception) {
@@ -637,6 +645,8 @@ class JellyfinRepositoryImpl(
                     Timber.e(e, "Failed to read local trickplay data")
                 }
 
+                // #769: the player and the downloads ask here; without trickplay they get none.
+                if (!capabilities.trickplay) return@withContext null
                 return@withContext server.playback.trickplayTile(itemId, width, index)
             } catch (_: Exception) {
                 return@withContext null
@@ -838,7 +848,11 @@ class JellyfinRepositoryImpl(
 
     override fun seasonBackdropUrl(seasonId: UUID) = server.playback.seasonBackdropUrl(seasonId)
 
-    override suspend fun updateDeviceName(name: String) = server.session.updateDeviceName(name)
+    override suspend fun updateDeviceName(name: String) {
+        // #769: nothing in the app renames the device yet; a server that cannot is not asked.
+        if (!capabilities.deviceRename) return
+        server.session.updateDeviceName(name)
+    }
 
     override suspend fun refreshCurrentUserImage() {
         // The row of the user the server answered for, which is the one whose token went out: a
@@ -847,7 +861,9 @@ class JellyfinRepositoryImpl(
         withContext(Dispatchers.IO) { database.updateUserPrimaryImageTag(image.userId, image.tag) }
     }
 
-    override suspend fun autoPlayNextEpisode(): Boolean? = server.session.autoPlayNextEpisode()
+    // #769: the player asks here; a server without the setting has none, as the interface says.
+    override suspend fun autoPlayNextEpisode(): Boolean? =
+        if (capabilities.autoPlayNextSetting) server.session.autoPlayNextEpisode() else null
 
     override suspend fun getDownloads(): List<FindroidItem> =
         withContext(Dispatchers.IO) {

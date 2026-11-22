@@ -6,6 +6,7 @@ import dev.jdtech.jellyfin.film.presentation.favorites.FavoritesViewModel
 import dev.jdtech.jellyfin.film.presentation.media.MediaViewModel
 import dev.jdtech.jellyfin.film.presentation.search.SearchAction
 import dev.jdtech.jellyfin.film.presentation.search.SearchViewModel
+import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.ItemsResult
 import dev.jdtech.jellyfin.repository.JellyfinRepository
@@ -632,6 +633,8 @@ class ServerAwayReloadTest {
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
+            // #769: Jellyfin can do everything.
+            if (method.name == "getCapabilities") return@newProxyInstance ServerCapabilities.ALL
             if (fail) throw java.net.ConnectException("Failed to connect")
             if (holdNext) {
                 // A slow answer: the test resumes it later.

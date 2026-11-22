@@ -55,7 +55,13 @@ constructor(
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             val token = reloadPolicy.begin()
-            _state.emit(_state.value.copy(error = null))
+            // #769: read on every load, as the server may have changed since.
+            _state.emit(
+                _state.value.copy(
+                    error = null,
+                    cappedDownloads = repository.capabilities.cappedDownloadTranscode,
+                )
+            )
             try {
                 // The preference doesn't depend on the episode, so it is read while it loads.
                 val (episode, displayCastAndCrew, useEpisodeImages) =
