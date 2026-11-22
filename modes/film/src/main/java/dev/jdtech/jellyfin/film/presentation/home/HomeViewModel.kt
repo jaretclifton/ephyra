@@ -79,8 +79,12 @@ constructor(
 
     private val reloadPolicy = ReloadPolicy(dataChanges)
     private var loadJob: Job? = null
-    private var cachedLibraries: List<FindroidCollection>? = null
-    private var cachedLibrariesKey: Pair<String?, UUID?>? = null
+    /**
+     * The last library list, with the server and user it is for. CE (#810): one value, so a load a
+     * switch overtook cannot pair one user's list with another user's key.
+     */
+    @Volatile
+    private var cachedLibraries: Pair<Pair<String?, UUID?>, List<FindroidCollection>>? = null
     private var cacheChecked = false
 
     /**
@@ -493,17 +497,16 @@ constructor(
         // The library list rarely changes: later loads start the Latest rows from the last list
         // right away and check the list alongside (#251).
         val key = _state.value.server?.id to _state.value.user?.id
-        val known = cachedLibraries?.takeIf { cachedLibrariesKey == key }
+        val known = cachedLibraries?.takeIf { it.first == key }?.second
         coroutineScope {
             val fresh = async { logFailure("libraries") { repository.homeLibraries() } }
             val libraries = known ?: fresh.await().getOrThrow()
-            cachedLibraries = libraries
-            cachedLibrariesKey = key
+            cachedLibraries = key to libraries
             loadLatest(libraries, stored, legacy)
             if (known != null) {
                 val now = fresh.await().getOrNull()
                 if (now != null && now.map { it.id } != known.map { it.id }) {
-                    cachedLibraries = now
+                    cachedLibraries = key to now
                     loadLatest(now, stored, legacy)
                 }
             }
