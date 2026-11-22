@@ -1095,6 +1095,17 @@ class DownloaderImpl(
                 remember(source)
                 if (!isUnderMountedRoot(source.path, mountedRoots)) continue
                 val engineAlive = source.downloadId != null && source.downloadId in liveTaskIds
+                // CE (#848): renamed when the app stopped, before its row was updated. The file is
+                // complete, so the sweep finishes the finalize, as the start does, if it comes
+                // first. Should that fail, the row stays for the next start.
+                if (source.downloadId?.let { renamedBeforeStop(source, it) } == true) {
+                    try {
+                        finalizeSource(source)
+                    } catch (e: Exception) {
+                        Timber.w(e, "Failed to finalize the download at ${source.path}")
+                    }
+                    continue
+                }
                 if (!engineAlive && !File(source.path).exists()) {
                     Timber.i("Sweeping dead active source: ${source.path}")
                     cleanupOrphanSource(source.itemId, userId)

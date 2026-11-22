@@ -178,6 +178,17 @@ class DownloadFinalizeFailureTest {
     }
 
     @Test
+    fun `the orphan sweep finalizes a download renamed when the app stopped, if it runs first`() {
+        val source = downloadingSource()
+        File(final(source)).writeBytes(VIDEO)
+
+        runBlocking { downloader().sweepOrphans() }
+
+        assertFinalized(source)
+        assertNotNull(runBlocking { database().getMovieOrNull(itemId) }, "the item was deleted")
+    }
+
+    @Test
     fun `a download stopped during its transfer is still resumed at the next start`() {
         val source = downloadingSource()
         File(source.path).writeBytes(VIDEO.copyOf(4))
