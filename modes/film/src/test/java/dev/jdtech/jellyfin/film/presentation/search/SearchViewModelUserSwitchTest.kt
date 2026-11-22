@@ -7,6 +7,8 @@ import dev.jdtech.jellyfin.repository.JellyfinRepository
 import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,6 +37,9 @@ class SearchViewModelUserSwitchTest {
 
     /** The user the client acts for. */
     private var sessionUser: UUID = alice
+
+    /** Whether the server fails the search. */
+    private var searchFails = false
 
     @BeforeEach
     fun setUp() {
@@ -71,6 +76,23 @@ class SearchViewModelUserSwitchTest {
             assertEquals(bobResults, viewModel.state.value.items)
             assertEquals("movie", viewModel.state.value.query)
             assertEquals(bob, viewModel.state.value.userId)
+        }
+
+    @Test
+    fun `a failed first search is the previous user's, so a switch hides its error`() =
+        runTest(dispatcher) {
+            searchFails = true
+            val viewModel = SearchViewModel(repository())
+            viewModel.onAction(SearchAction.Search("movie"))
+            advanceUntilIdle()
+            assertNotNull(viewModel.state.value.error)
+            assertEquals(alice, viewModel.state.value.userId)
+
+            // The screen, after the client switched to Bob and before the search runs again.
+            val forBob = viewModel.state.value.shownTo(bob)
+
+            assertNull(forBob.error)
+            assertTrue(forBob.loading)
         }
 
     @Test
@@ -111,7 +133,8 @@ class SearchViewModelUserSwitchTest {
                 "getCapabilities" -> ServerCapabilities.ALL
                 "getUserId" -> sessionUser
                 "getSearchItems" ->
-                    ItemsResult(if (sessionUser == bob) bobResults else aliceResults)
+                    if (searchFails) throw IllegalStateException("No connection")
+                    else ItemsResult(if (sessionUser == bob) bobResults else aliceResults)
                 else -> throw NotImplementedError("JellyfinRepository.${method.name}")
             }
         } as JellyfinRepository

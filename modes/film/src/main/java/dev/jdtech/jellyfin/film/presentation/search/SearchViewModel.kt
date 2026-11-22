@@ -99,7 +99,9 @@ class SearchViewModel @Inject constructor(private val repository: JellyfinReposi
                 }
             } catch (_: CancellationException) {} catch (e: Exception) {
                 Timber.e(e)
-                _state.emit(_state.value.copy(query = query, loading = false, error = e))
+                _state.emit(
+                    _state.value.copy(query = query, loading = false, error = e, userId = user)
+                )
             }
         }
     }
