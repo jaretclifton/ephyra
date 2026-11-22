@@ -1,6 +1,8 @@
 package dev.jdtech.jellyfin.repository
 
 import android.app.Application
+import dev.jdtech.jellyfin.models.PlaybackTarget
+import dev.jdtech.jellyfin.models.PlayerEngineId
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlinx.coroutines.runBlocking
@@ -88,9 +90,27 @@ class PlaybackInfoRequestTest {
         )
     }
 
-    private fun mpv() = preferences.setValue(preferences.playerBackend, "mpv")
+    // CE (#766): the player decides the target and the cap; the defaults are its defaults.
+    private var engine = PlayerEngineId.EXOPLAYER
+    private var maxBitrate: Int? = null
 
-    private fun cap(bitrate: Int) = preferences.setValue(preferences.playerMaxBitrate, bitrate)
+    private fun mpv() {
+        engine = PlayerEngineId.MPV
+    }
+
+    private fun cap(bitrate: Int) {
+        maxBitrate = bitrate
+    }
+
+    /** Asks for the item's playback sources as the local player does. */
+    private suspend fun play(mediaSourceId: String? = null, audioStreamIndex: Int? = null) =
+        repository.getPlaybackSources(
+            itemId,
+            PlaybackTarget.LocalPlayer(engine, directPlayDolbyVision = true),
+            mediaSourceId = mediaSourceId,
+            audioStreamIndex = audioStreamIndex,
+            maxBitrate = maxBitrate,
+        )
 
     // ExoPlayer: the probed profile, which carries the HLS and audio transcoding profiles.
     private val exoPlayer =
@@ -107,7 +127,7 @@ class PlaybackInfoRequestTest {
 
     @Test
     fun `ExoPlayer sends the probed profile`() = runBlocking {
-        repository.getPlaybackSources(itemId)
+        play()
 
         assertEquals(exoPlayer, sentDecision())
     }
@@ -116,7 +136,7 @@ class PlaybackInfoRequestTest {
     fun `ExoPlayer with a cap sends the cap as the maximum bitrate`() = runBlocking {
         cap(CAP)
 
-        repository.getPlaybackSources(itemId)
+        play()
 
         assertEquals(exoPlayer.copy(maxStreamingBitrate = "$CAP"), sentDecision())
     }
@@ -125,7 +145,7 @@ class PlaybackInfoRequestTest {
     fun `mpv sends the direct play profile without transcoding`() = runBlocking {
         mpv()
 
-        repository.getPlaybackSources(itemId)
+        play()
 
         assertEquals(
             Decision(
@@ -147,7 +167,7 @@ class PlaybackInfoRequestTest {
         mpv()
         cap(CAP)
 
-        repository.getPlaybackSources(itemId)
+        play()
 
         assertEquals(
             Decision(
@@ -166,7 +186,7 @@ class PlaybackInfoRequestTest {
 
     @Test
     fun `an audio stream is sent together with its source`() = runBlocking {
-        repository.getPlaybackSources(itemId, mediaSourceId = SOURCE_ID, audioStreamIndex = 2)
+        play(mediaSourceId = SOURCE_ID, audioStreamIndex = 2)
 
         assertEquals(
             exoPlayer.copy(mediaSourceId = SOURCE_ID, audioStreamIndex = "2"),
@@ -176,14 +196,14 @@ class PlaybackInfoRequestTest {
 
     @Test
     fun `an audio stream without its source is not sent`() = runBlocking {
-        repository.getPlaybackSources(itemId, mediaSourceId = null, audioStreamIndex = 2)
+        play(mediaSourceId = null, audioStreamIndex = 2)
 
         assertEquals(exoPlayer, sentDecision(), message = "the server ignores the index alone")
     }
 
     @Test
     fun `a source without an audio stream is not sent`() = runBlocking {
-        repository.getPlaybackSources(itemId, mediaSourceId = SOURCE_ID, audioStreamIndex = null)
+        play(mediaSourceId = SOURCE_ID, audioStreamIndex = null)
 
         assertEquals(exoPlayer, sentDecision(), message = "sent only as a pair")
     }

@@ -5,6 +5,8 @@ import android.content.Context
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.PlaybackTarget
+import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.lang.reflect.Proxy
 import java.util.UUID
@@ -67,9 +69,16 @@ class UnfinishedDownloadPlaybackTest {
             val repository =
                 JellyfinRepositoryImpl(context, UnansweredServer(userId), database, preferences())
 
-            val result = runCatching { repository.getPlaybackSources(episodeId, null) }
+            val result = runCatching {
+                repository.getPlaybackSources(episodeId, LOCAL_PLAYER, null)
+            }
 
             // Asking the server is what fails here; the partial file must not be the answer.
             assertTrue(result.isFailure, message = "Got ${result.getOrNull()?.map { it.path }}")
         }
+
+    private companion object {
+        // CE (#766): the local player with every player preference at its default.
+        val LOCAL_PLAYER = PlaybackTarget.LocalPlayer(PlayerEngineId.EXOPLAYER, true)
+    }
 }

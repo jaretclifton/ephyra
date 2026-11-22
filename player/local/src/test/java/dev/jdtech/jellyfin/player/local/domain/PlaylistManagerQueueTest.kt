@@ -23,7 +23,7 @@ class PlaylistManagerQueueTest {
 
     @Test
     fun `the first episode is returned without fetching the season`() {
-        val manager = PlaylistManager(fakeRepository())
+        val manager = playlistManager(fakeRepository())
 
         val item = runBlocking { manager.getInitialItem(first.id, ItemKind.EPISODE) }
 
@@ -34,7 +34,7 @@ class PlaylistManagerQueueTest {
 
     @Test
     fun `loading the queue fills in the upcoming episodes once`() {
-        val manager = PlaylistManager(fakeRepository())
+        val manager = playlistManager(fakeRepository())
         runBlocking {
             manager.getInitialItem(first.id, ItemKind.EPISODE)
             manager.loadQueue()
@@ -47,7 +47,7 @@ class PlaylistManagerQueueTest {
 
     @Test
     fun `the next item waits for the queue`() {
-        val manager = PlaylistManager(fakeRepository())
+        val manager = playlistManager(fakeRepository())
         val next = runBlocking {
             manager.getInitialItem(first.id, ItemKind.EPISODE)
             manager.getNextPlayerItem()

@@ -13,6 +13,8 @@ import dev.jdtech.jellyfin.models.FindroidShowDto
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
+import dev.jdtech.jellyfin.models.PlaybackTarget
+import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.util.UUID
@@ -236,13 +238,13 @@ class StoredItemsByServerTest {
 
             current(SERVER_B)
             // Asking the server is what fails here; A's file must not be the answer.
-            val onB = runCatching { repository.getPlaybackSources(movieId, null) }
+            val onB = runCatching { repository.getPlaybackSources(movieId, LOCAL_PLAYER, null) }
             assertTrue(onB.isFailure, "Got ${onB.getOrNull()?.map { it.path }}")
 
             current(SERVER_A)
             assertEquals(
                 listOf("/storage/downloads/$movieId.mkv"),
-                repository.getPlaybackSources(movieId, null).map { it.path },
+                repository.getPlaybackSources(movieId, LOCAL_PLAYER, null).map { it.path },
             )
         }
 
@@ -260,7 +262,7 @@ class StoredItemsByServerTest {
         )
         assertEquals(
             listOf("/storage/downloads/$movieId.mkv"),
-            repository.getPlaybackSources(movieId, null).map { it.path },
+            repository.getPlaybackSources(movieId, LOCAL_PLAYER, null).map { it.path },
         )
     }
 
@@ -306,5 +308,8 @@ class StoredItemsByServerTest {
     private companion object {
         const val SERVER_A = "server-a"
         const val SERVER_B = "server-b"
+
+        // CE (#766): the local player with every player preference at its default.
+        val LOCAL_PLAYER = PlaybackTarget.LocalPlayer(PlayerEngineId.EXOPLAYER, true)
     }
 }

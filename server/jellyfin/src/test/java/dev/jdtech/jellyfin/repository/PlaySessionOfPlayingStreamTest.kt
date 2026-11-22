@@ -65,7 +65,7 @@ class PlaySessionOfPlayingStreamTest {
     /** Asks for the item's stream, as a switch does, and loads it in the player if [load]. */
     private suspend fun request(session: String?, load: Boolean) {
         answers += answer(session)
-        val source = repository.getPlaybackSources(itemId).single()
+        val source = repository.getPlaybackSources(itemId, StandInServer.LOCAL_PLAYER).single()
         assertEquals(session, source.playSessionId, message = "the source carries its session")
         if (load) repository.setPlaySession(itemId, source.playSessionId, source.transcoded)
     }

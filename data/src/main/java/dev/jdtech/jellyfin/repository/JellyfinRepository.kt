@@ -13,6 +13,7 @@ import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerInfo
@@ -186,11 +187,16 @@ interface JellyfinRepository {
      * CE (#580): [audioStreamIndex] names the audio stream of [mediaSourceId] that a transcode has
      * to carry, as a transcode carries one. The server only takes it together with the source's id.
      * It means nothing for a source that plays directly or from a download.
+     *
+     * CE (#766): [target] is who plays the stream and [maxBitrate] the cap in bits per second (null
+     * is none). The caller decides both; the repository reads no player preference.
      */
     suspend fun getPlaybackSources(
         itemId: UUID,
+        target: PlaybackTarget,
         mediaSourceId: String? = null,
         audioStreamIndex: Int? = null,
+        maxBitrate: Int? = null,
     ): List<FindroidSource>
 
     /** CE (#580): the tracks the user last picked by hand in [seriesId], one per track type. */
