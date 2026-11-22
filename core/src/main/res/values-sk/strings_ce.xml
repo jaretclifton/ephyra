@@ -157,4 +157,5 @@
     <string name="ce_spoiler_title_hidden">Názov je skrytý</string>
     <string name="ce_spoiler_overview_hidden">Skryté, kým túto epizódu neuvidíte. Podržaním odkryjete.</string>
     <string name="ce_spoiler_reveal">Odkryť</string>
+    <string name="ce_cast_amp_crew">Obsadenie &amp; štáb</string>
 </resources>

@@ -26,7 +26,7 @@ fun ActorsRow(
 ) {
     Column(modifier = Modifier.padding(contentPadding)) {
         Text(
-            text = stringResource(CoreR.string.cast_amp_crew),
+            text = stringResource(CoreR.string.ce_cast_amp_crew),
             style = MaterialTheme.typography.titleMedium,
         )
         Spacer(Modifier.height(MaterialTheme.spacings.small))

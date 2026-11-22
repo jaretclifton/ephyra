@@ -152,4 +152,5 @@
     <string name="ce_spoiler_title_hidden">Заглавието е скрито</string>
     <string name="ce_spoiler_overview_hidden">Скрито, докато не гледате този епизод. Задръжте, за да го покажете.</string>
     <string name="ce_spoiler_reveal">Показване</string>
+    <string name="ce_cast_amp_crew">Актьори и снимачен екип</string>
 </resources>
