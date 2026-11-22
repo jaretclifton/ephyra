@@ -2,9 +2,6 @@ package dev.jdtech.jellyfin.setup.presentation
 
 import android.app.Application
 import android.content.Context
-import android.provider.Settings
-import com.sun.net.httpserver.HttpServer
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Server
@@ -13,15 +10,15 @@ import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.R as SetupR
+import dev.jdtech.jellyfin.setup.data.FakeServerConnector
+import dev.jdtech.jellyfin.setup.data.RecordingServerSession
 import dev.jdtech.jellyfin.setup.data.SetupRepositoryImpl
 import dev.jdtech.jellyfin.setup.domain.FakeLocalNetworkAccess
 import dev.jdtech.jellyfin.setup.presentation.addresses.ServerAddressesAction
 import dev.jdtech.jellyfin.setup.presentation.addresses.ServerAddressesViewModel
 import java.lang.reflect.Proxy
-import java.net.InetSocketAddress
 import java.util.Collections
 import java.util.UUID
-import java.util.concurrent.Executors
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -43,7 +40,9 @@ import org.robolectric.annotation.Config
 
 /**
  * CE (#390): removing the address in use and adding an address that is already there were dropped
- * without a word, so the dialog closed and nothing happened. The screen now says why.
+ * without a word, so the dialog closed and nothing happened. The screen now says why. #761: the
+ * address check is a fake connector; the connector's own check against a stand-in server is
+ * `AddAddressUnwatchedTest` in `data`.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -84,6 +83,17 @@ class ServerAddressesFeedbackTest {
             }
         } as ServerDatabaseDao
 
+    /** The address the saved server answers at; nothing answers anywhere else. */
+    private val stubAddress = "http://127.0.0.1:8096"
+
+    // Like the SDK, the connector drops a trailing slash.
+    private val connector =
+        FakeServerConnector(
+            onFindAddress = { address, id ->
+                address.trimEnd('/').takeIf { it == stubAddress && id == serverId }
+            }
+        )
+
     private val localNetworkAccess = FakeLocalNetworkAccess()
     private lateinit var viewModel: ServerAddressesViewModel
 
@@ -91,11 +101,10 @@ class ServerAddressesFeedbackTest {
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         val application = RuntimeEnvironment.getApplication()
-        // The SDK names the device after it; Robolectric has none.
-        Settings.Secure.putString(application.contentResolver, Settings.Secure.ANDROID_ID, "test")
         val repository =
             SetupRepositoryImpl(
-                JellyfinApi(application),
+                connector,
+                RecordingServerSession(),
                 database,
                 AppPreferences(application.getSharedPreferences("test", Context.MODE_PRIVATE)),
             )
@@ -130,75 +139,37 @@ class ServerAddressesFeedbackTest {
 
     @Test
     fun `adding an address that is already there says so`() = runBlocking {
-        // A local stand-in for the server: the SDK only reads its public system info.
-        val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
-        server.createContext("/System/Info/Public") { exchange ->
-            val body =
-                """{"Id":"$serverId","ServerName":"Ephyra Test","Version":"10.11.0",""" +
-                    """"ProductName":"Jellyfin Server","StartupWizardCompleted":true}"""
-            exchange.responseHeaders.add("Content-Type", "application/json")
-            exchange.sendResponseHeaders(200, body.toByteArray().size.toLong())
-            exchange.responseBody.use { it.write(body.toByteArray()) }
-        }
-        // The SDK also tries https on the same port. On the default executor that handshake
-        // blocks the server's only thread until it times out, and the http request with it.
-        val executor = Executors.newCachedThreadPool()
-        server.executor = executor
-        server.start()
-        try {
-            val stubAddress = "http://127.0.0.1:${server.address.port}"
-            addresses.add(ServerAddress(UUID.randomUUID(), serverId, stubAddress))
+        addresses.add(ServerAddress(UUID.randomUUID(), serverId, stubAddress))
 
-            viewModel.onAction(ServerAddressesAction.AddAddress("$stubAddress/"))
+        viewModel.onAction(ServerAddressesAction.AddAddress("$stubAddress/"))
 
-            val error = withTimeout(15_000) { viewModel.state.first { it.error != null } }.error!!
-            val message = error.single() as UiText.StringResource
-            assertEquals(SetupR.string.ce_server_address_already_added, message.resId)
-            assertEquals(3, addresses.size)
-        } finally {
-            server.stop(0)
-            executor.shutdownNow()
-        }
+        val error = withTimeout(5_000) { viewModel.state.first { it.error != null } }.error!!
+        val message = error.single() as UiText.StringResource
+        assertEquals(SetupR.string.ce_server_address_already_added, message.resId)
+        assertEquals(3, addresses.size)
+        assertEquals(listOf("$stubAddress/"), connector.findAddressCalls.toList())
     }
 
     @Test
     fun `any other failure is told in plain words, not the exception's text`() = runBlocking {
-        // CE (#606): the same stand-in server, then the address list cannot be read.
-        val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
-        server.createContext("/System/Info/Public") { exchange ->
-            val body =
-                """{"Id":"$serverId","ServerName":"Ephyra Test","Version":"10.11.0",""" +
-                    """"ProductName":"Jellyfin Server","StartupWizardCompleted":true}"""
-            exchange.responseHeaders.add("Content-Type", "application/json")
-            exchange.sendResponseHeaders(200, body.toByteArray().size.toLong())
-            exchange.responseBody.use { it.write(body.toByteArray()) }
-        }
-        val executor = Executors.newCachedThreadPool()
-        server.executor = executor
-        server.start()
-        try {
-            failure = IllegalStateException("Cannot access database on the main thread")
+        // CE (#606): the server answers, then the address list cannot be read.
+        failure = IllegalStateException("Cannot access database on the main thread")
 
-            val stubAddress = "http://127.0.0.1:${server.address.port}"
-            viewModel.onAction(ServerAddressesAction.AddAddress(stubAddress))
+        viewModel.onAction(ServerAddressesAction.AddAddress(stubAddress))
 
-            val error = withTimeout(15_000) { viewModel.state.first { it.error != null } }.error!!
-            val message = error.single() as UiText.StringResource
-            assertEquals(CoreR.string.unknown_error, message.resId)
-        } finally {
-            server.stop(0)
-            executor.shutdownNow()
-        }
+        val error = withTimeout(5_000) { viewModel.state.first { it.error != null } }.error!!
+        val message = error.single() as UiText.StringResource
+        assertEquals(CoreR.string.unknown_error, message.resId)
     }
 
-    // CE (#376): nothing listens on these, so the SDK finds no server either way.
+    // CE (#376): nothing answers at these, so no server is found either way.
     @Test
     fun `a local address that fails while access is denied names the permission`() = runBlocking {
         localNetworkAccess.denied = true
 
         viewModel.onAction(ServerAddressesAction.AddAddress("http://[fd00::1]:9"))
 
-        val error = withTimeout(60_000) { viewModel.state.first { it.error != null } }.error!!
+        val error = withTimeout(5_000) { viewModel.state.first { it.error != null } }.error!!
         val message = error.single() as UiText.StringResource
         assertEquals(SetupR.string.ce_add_server_error_local_network, message.resId)
     }
@@ -210,7 +181,7 @@ class ServerAddressesFeedbackTest {
 
             viewModel.onAction(ServerAddressesAction.AddAddress("http://127.0.0.1:9"))
 
-            val error = withTimeout(60_000) { viewModel.state.first { it.error != null } }.error!!
+            val error = withTimeout(5_000) { viewModel.state.first { it.error != null } }.error!!
             val message = error.single() as UiText.StringResource
             assertEquals(SetupR.string.add_server_error_not_found, message.resId)
         }
@@ -219,7 +190,7 @@ class ServerAddressesFeedbackTest {
     fun `a local address that fails with access granted keeps server not found`() = runBlocking {
         viewModel.onAction(ServerAddressesAction.AddAddress("http://[fd00::1]:9"))
 
-        val error = withTimeout(60_000) { viewModel.state.first { it.error != null } }.error!!
+        val error = withTimeout(5_000) { viewModel.state.first { it.error != null } }.error!!
         val message = error.single() as UiText.StringResource
         assertEquals(SetupR.string.add_server_error_not_found, message.resId)
     }
