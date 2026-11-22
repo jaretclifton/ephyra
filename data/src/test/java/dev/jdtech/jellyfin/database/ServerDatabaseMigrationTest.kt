@@ -72,58 +72,59 @@ class ServerDatabaseMigrationTest {
      * only change: every table keeps its columns, keys, foreign keys and indexes.
      */
     @Test
-    fun `schema 20 with two servers migrates, both typed jellyfin`() = runBlocking<Unit> {
-        val before =
-            helper.createDatabase(20).run {
-                insertRows(20)
-                insertSecondServer()
-                val described = describeSchema()
+    fun `schema 20 with two servers migrates, both typed jellyfin`() =
+        runBlocking<Unit> {
+            val before =
+                helper.createDatabase(20).run {
+                    insertRows(20)
+                    insertSecondServer()
+                    val described = describeSchema()
+                    close()
+                    described
+                }
+
+            helper.runMigrationsAndValidate(latest, MIGRATIONS).apply {
+                assertEquals(
+                    listOf(SERVER to "jellyfin", SECOND_SERVER to "jellyfin"),
+                    rows("SELECT id, type FROM servers ORDER BY id"),
+                )
+                assertEquals(
+                    listOf(ADDRESS_ID to SERVER, SECOND_ADDRESS_ID to SECOND_SERVER),
+                    rows("SELECT id, serverId FROM serverAddresses ORDER BY id"),
+                )
+                assertEquals(
+                    listOf(USER to TOKEN, SECOND_USER to SECOND_TOKEN),
+                    rows("SELECT id, accessToken FROM users ORDER BY id"),
+                )
+                assertEquals(
+                    listOf(USER to ADDRESS_ID, SECOND_USER to SECOND_ADDRESS_ID),
+                    rows(
+                        "SELECT currentUserId, currentServerAddressId FROM servers ORDER BY currentUserId"
+                    ),
+                )
+                assertEquals(
+                    listOf(MOVIE to SERVER, SECOND_MOVIE to SECOND_SERVER),
+                    rows("SELECT id, serverId FROM movies ORDER BY id"),
+                )
+                assertEquals(
+                    listOf("second-source" to SECOND_MOVIE, "source" to MOVIE),
+                    rows("SELECT id, itemId FROM sources ORDER BY id"),
+                )
+                assertEquals(2L, long("SELECT COUNT(*) FROM userdata WHERE toBeSynced = 1"))
+
+                val after = describeSchema()
+                // The description does see the foreign keys and indexes it is compared on.
+                assertTrue(before.any { "users foreign key servers serverId id" in it }, "$before")
+                assertTrue(before.any { "users index index_users_serverId" in it }, "$before")
+                assertEquals(
+                    before,
+                    after - SERVER_TYPE_COLUMN,
+                    message = "the migration changed more than the servers table's new column",
+                )
+                assertTrue(SERVER_TYPE_COLUMN in after, message = "no type column: $after")
                 close()
-                described
             }
-
-        helper.runMigrationsAndValidate(latest, MIGRATIONS).apply {
-            assertEquals(
-                listOf(SERVER to "jellyfin", SECOND_SERVER to "jellyfin"),
-                rows("SELECT id, type FROM servers ORDER BY id"),
-            )
-            assertEquals(
-                listOf(ADDRESS_ID to SERVER, SECOND_ADDRESS_ID to SECOND_SERVER),
-                rows("SELECT id, serverId FROM serverAddresses ORDER BY id"),
-            )
-            assertEquals(
-                listOf(USER to TOKEN, SECOND_USER to SECOND_TOKEN),
-                rows("SELECT id, accessToken FROM users ORDER BY id"),
-            )
-            assertEquals(
-                listOf(USER to ADDRESS_ID, SECOND_USER to SECOND_ADDRESS_ID),
-                rows(
-                    "SELECT currentUserId, currentServerAddressId FROM servers ORDER BY currentUserId"
-                ),
-            )
-            assertEquals(
-                listOf(MOVIE to SERVER, SECOND_MOVIE to SECOND_SERVER),
-                rows("SELECT id, serverId FROM movies ORDER BY id"),
-            )
-            assertEquals(
-                listOf("second-source" to SECOND_MOVIE, "source" to MOVIE),
-                rows("SELECT id, itemId FROM sources ORDER BY id"),
-            )
-            assertEquals(2L, long("SELECT COUNT(*) FROM userdata WHERE toBeSynced = 1"))
-
-            val after = describeSchema()
-            // The description does see the foreign keys and indexes it is compared on.
-            assertTrue(before.any { "users foreign key servers serverId id" in it }, "$before")
-            assertTrue(before.any { "users index index_users_serverId" in it }, "$before")
-            assertEquals(
-                before,
-                after - SERVER_TYPE_COLUMN,
-                message = "the migration changed more than the servers table's new column",
-            )
-            assertTrue(SERVER_TYPE_COLUMN in after, message = "no type column: $after")
-            close()
         }
-    }
 
     /**
      * CE (#770): an install that starts at the current version gets the same tables, keys and
@@ -407,9 +408,7 @@ class ServerDatabaseMigrationTest {
         prepare(sql).use { statement ->
             buildList {
                 while (statement.step()) {
-                    add(
-                        columns.map { if (statement.isNull(it)) null else statement.getText(it) }
-                    )
+                    add(columns.map { if (statement.isNull(it)) null else statement.getText(it) })
                 }
             }
         }

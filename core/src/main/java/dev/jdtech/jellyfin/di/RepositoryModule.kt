@@ -39,7 +39,7 @@ object RepositoryModule {
 
     /**
      * CE (#769): what the server in use can do, for code without a repository (settings), over the
-     * MediaServer the adapter provides.
+     * MediaServer of the server in use (#770: `ServerModule`).
      */
     @Provides
     fun provideCurrentServerCapabilities(server: MediaServer): CurrentServerCapabilities =
@@ -48,8 +48,8 @@ object RepositoryModule {
         }
 
     /**
-     * The repository over the server the adapter provides (#758: `JellyfinServerModule` in
-     * `server/jellyfin`).
+     * The repository over the server in use: the adapter of its type (#770: `ServerModule`, over
+     * what `JellyfinServerModule` in `server/jellyfin` provides, #758).
      */
     @Singleton
     @Provides

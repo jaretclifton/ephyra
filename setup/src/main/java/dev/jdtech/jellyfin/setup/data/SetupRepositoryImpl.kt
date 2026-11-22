@@ -1,6 +1,8 @@
 package dev.jdtech.jellyfin.setup.data
 
 import dev.jdtech.jellyfin.core.R as CoreR
+import dev.jdtech.jellyfin.core.server.CurrentServerType
+import dev.jdtech.jellyfin.core.server.ServerConnectors
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.AuthenticatedUser
 import dev.jdtech.jellyfin.domain.ports.ResolvedServer
@@ -15,6 +17,7 @@ import dev.jdtech.jellyfin.models.QuickConnectState
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.ServerCapabilities
+import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.User
@@ -32,21 +35,35 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
- * The saved servers, addresses and users in Room. Talking to a server goes through [connector]
- * (#761), and [session] is the client the app uses.
+ * The saved servers, addresses and users in Room. Talking to a server goes through [connectors]
+ * (#761), the one of the server's type (#770), and [session] is the client the app uses.
+ *
+ * CE (#770): [currentType] is the type of the server on the client. This sets it wherever it puts
+ * another server on the client: adding a server, switching to one.
  */
 class SetupRepositoryImpl(
-    private val connector: ServerConnector,
+    private val connectors: ServerConnectors,
     private val session: ServerSession,
     private val database: ServerDatabaseDao,
     private val appPreferences: AppPreferences,
+    private val currentType: CurrentServerType,
 ) : SetupRepository {
+    /** The login screens' server; none for a type this build has no adapter for. */
     override val capabilities: ServerCapabilities
-        get() = connector.capabilities
+        get() =
+            connectors.ofStoredTypeOrNull(currentType.stored)?.capabilities
+                ?: ServerCapabilities.NONE
 
     override fun discoverServers(): Flow<DiscoveredServer> {
-        return connector.discover()
+        return connectors.discover()
     }
+
+    /**
+     * #770: the connector of the server on the client, which the login screens are about. Throws
+     * [dev.jdtech.jellyfin.domain.ports.UnsupportedServerTypeException] for a type this build has
+     * no adapter for, which the screens show as their error.
+     */
+    private fun clientConnector(): ServerConnector = connectors.ofStoredType(currentType.stored)
 
     override suspend fun getServers(): List<ServerWithAddresses> {
         return database.getServersWithAddresses()
@@ -75,7 +92,10 @@ class SetupRepositoryImpl(
      */
     private suspend fun endSessionOnServer(user: User) {
         val token = user.accessToken ?: return
-        val address = database.getServerWithAddressAndUser(user.serverId)?.address ?: return
+        val saved = database.getServerWithAddressAndUser(user.serverId) ?: return
+        val address = saved.address ?: return
+        // CE (#770): a server of a type this build cannot talk to is still removed, without this.
+        val connector = connectors.ofStoredTypeOrNull(saved.server.type) ?: return
         connector.endSession(baseUrl = address.address, accessToken = token)
     }
 
@@ -87,19 +107,20 @@ class SetupRepositoryImpl(
     private fun clientAddress(): String = checkNotNull(session.baseUrl) { "No server is set" }
 
     override suspend fun getIsQuickConnectEnabled(): Boolean =
-        withContext(Dispatchers.IO) { connector.quickConnectEnabled(clientAddress()) }
+        withContext(Dispatchers.IO) { clientConnector().quickConnectEnabled(clientAddress()) }
 
     override suspend fun initiateQuickConnect(): QuickConnectState =
-        withContext(Dispatchers.IO) { connector.startQuickConnect(clientAddress()) }
+        withContext(Dispatchers.IO) { clientConnector().startQuickConnect(clientAddress()) }
 
     override suspend fun getQuickConnectState(secret: String): QuickConnectState =
-        withContext(Dispatchers.IO) { connector.quickConnectState(clientAddress(), secret) }
+        withContext(Dispatchers.IO) { clientConnector().quickConnectState(clientAddress(), secret) }
 
     override suspend fun setCurrentServer(serverId: String) {
         val serverWithAddressAndUser = database.getServerWithAddressAndUser(serverId) ?: return
         val serverAddress = serverWithAddressAndUser.address ?: return
         val user = serverWithAddressAndUser.user
 
+        currentType.stored = serverWithAddressAndUser.server.type
         session.use(
             baseUrl = serverAddress.address,
             accessToken = user?.accessToken,
@@ -115,13 +136,13 @@ class SetupRepositoryImpl(
             )
         }
 
-        val resolved =
+        val (type, resolved) =
             try {
-                connector.resolve(address)
+                connectors.resolve(address)
             } catch (e: ServerConnectException) {
                 throw e.toUiTextException()
             }
-        return saveServerInDatabase(resolved)
+        return saveServerInDatabase(type, resolved)
     }
 
     private fun ServerConnectException.toUiTextException(): Exception =
@@ -133,7 +154,7 @@ class SetupRepositoryImpl(
             else -> ExceptionUiTexts(createIssuesString(issues))
         }
 
-    private suspend fun saveServerInDatabase(resolved: ResolvedServer): Server {
+    private suspend fun saveServerInDatabase(type: ServerType, resolved: ResolvedServer): Server {
         val serverId = resolved.info.id
         val serverName = resolved.info.name
 
@@ -172,6 +193,7 @@ class SetupRepositoryImpl(
                         name = serverName,
                         currentServerAddressId = serverAddress.id,
                         currentUserId = null,
+                        type = type.value,
                     )
 
                 database.insertServer(server)
@@ -182,6 +204,8 @@ class SetupRepositoryImpl(
         // CE (#425): a server that was saved before keeps its signed-in user, so the client keeps
         // that user's token. Clearing it signed the app out until a restart.
         val currentUser = serverInDatabase?.let { database.getServerCurrentUser(it.id) }
+        // CE (#770): a server saved before keeps the type it was saved with.
+        currentType.stored = server.type
         session.use(
             baseUrl = resolved.address,
             accessToken = currentUser?.accessToken,
@@ -224,11 +248,11 @@ class SetupRepositoryImpl(
     }
 
     override suspend fun loadDisclaimer(): String? =
-        withContext(Dispatchers.IO) { connector.loginDisclaimer(clientAddress()) }
+        withContext(Dispatchers.IO) { clientConnector().loginDisclaimer(clientAddress()) }
 
     override suspend fun login(username: String, password: String) {
         withContext(Dispatchers.IO) {
-            val user = connector.login(clientAddress(), username, password)
+            val user = clientConnector().login(clientAddress(), username, password)
 
             saveAuthenticationResult(user)
         }
@@ -236,7 +260,7 @@ class SetupRepositoryImpl(
 
     override suspend fun loginWithSecret(secret: String) {
         withContext(Dispatchers.IO) {
-            val user = connector.loginWithQuickConnect(clientAddress(), secret)
+            val user = clientConnector().loginWithQuickConnect(clientAddress(), secret)
 
             saveAuthenticationResult(user)
         }
@@ -268,7 +292,7 @@ class SetupRepositoryImpl(
 
     override suspend fun getPublicUsers(serverId: String): List<User> =
         withContext(Dispatchers.IO) {
-            connector.publicUsers(clientAddress()).map {
+            clientConnector().publicUsers(clientAddress()).map {
                 User(
                     id = it.id,
                     name = it.name,
@@ -342,6 +366,8 @@ class SetupRepositoryImpl(
         // and it runs unwatched: this server is not the one in use, so its answers (or silence)
         // must not reach the reachability banner or the return detector.
         // Only accept an address that actually points at the server being edited.
+        // CE (#770): the connector of the server's type.
+        val connector = connectors.ofStoredType(database.getServer(serverId)?.type)
         val match =
             connector.findAddress(address, serverId)
                 ?: throw AddressRejected(AddressRejected.Reason.NOT_FOUND)
