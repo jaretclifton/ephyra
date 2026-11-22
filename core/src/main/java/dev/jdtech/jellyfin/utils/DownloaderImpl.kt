@@ -50,7 +50,6 @@ import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Provider
 import kotlin.Exception
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.math.ceil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -150,6 +149,17 @@ internal fun isUnderMountedRoot(path: String, mountedRoots: List<String>): Boole
     mountedRoots.any {
         path.startsWith("$it/") || path.startsWith("$it${File.separator}")
     }
+
+/**
+ * CE (#849): how many trickplay sheets [info] has: [FindroidTrickplayInfo.thumbnailCount]
+ * thumbnails, [FindroidTrickplayInfo.tileWidth] x [FindroidTrickplayInfo.tileHeight] to a sheet,
+ * the last one partly filled. The same count as the player's `TrickplayTiles.sheetCount`.
+ */
+internal fun trickplaySheetCount(info: FindroidTrickplayInfo): Int {
+    if (info.thumbnailCount <= 0) return 0
+    val tilesPerSheet = (info.tileWidth * info.tileHeight).coerceAtLeast(1)
+    return (info.thumbnailCount - 1) / tilesPerSheet + 1
+}
 
 /**
  * What a download that could not start tells the user. Never the exception's own text: it can hold
@@ -883,39 +893,37 @@ class DownloaderImpl(
         }
     }
 
-    private suspend fun downloadTrickplayData(
+    /**
+     * Downloads the trickplay sheets of [sourceId]. CE (#849): each sheet is stored under its own
+     * index, the name the player asks for. A sheet the server did not give is left out, so the
+     * sheets after it keep their index; the player gets no preview for that one sheet offline.
+     * Internal for its tests.
+     */
+    internal suspend fun downloadTrickplayData(
         itemId: UUID,
         sourceId: String,
         trickplayInfo: FindroidTrickplayInfo,
     ) {
-        val maxIndex =
-            ceil(
-                    trickplayInfo.thumbnailCount
-                        .toDouble()
-                        .div(trickplayInfo.tileWidth * trickplayInfo.tileHeight)
-                )
-                .toInt()
-        val byteArrays = mutableListOf<ByteArray>()
-        for (i in 0..maxIndex) {
-            jellyfinRepository.getTrickplayData(itemId, trickplayInfo.width, i)?.let { byteArray ->
-                byteArrays.add(byteArray)
+        val sheets = mutableMapOf<Int, ByteArray>()
+        for (index in 0 until trickplaySheetCount(trickplayInfo)) {
+            jellyfinRepository.getTrickplayData(itemId, trickplayInfo.width, index)?.let {
+                sheets[index] = it
             }
         }
-        saveTrickplayData(itemId, sourceId, trickplayInfo, byteArrays)
+        saveTrickplayData(itemId, sourceId, trickplayInfo, sheets)
     }
 
     private suspend fun saveTrickplayData(
         itemId: UUID,
         sourceId: String,
         trickplayInfo: FindroidTrickplayInfo,
-        byteArrays: List<ByteArray>,
+        sheets: Map<Int, ByteArray>,
     ) {
         val basePath = "trickplay/$itemId/$sourceId"
         database.insertTrickplayInfo(trickplayInfo.toFindroidTrickplayInfoDto(sourceId))
         File(context.filesDir, basePath).mkdirs()
-        for ((i, byteArray) in byteArrays.withIndex()) {
-            val file = File(context.filesDir, "$basePath/$i")
-            file.writeBytes(byteArray)
+        for ((index, bytes) in sheets) {
+            File(context.filesDir, "$basePath/$index").writeBytes(bytes)
         }
     }
 

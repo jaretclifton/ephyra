@@ -1,0 +1,213 @@
+package dev.jdtech.jellyfin.utils
+
+import android.app.Application
+import android.content.Context
+import androidx.room3.Room
+import androidx.sqlite.driver.AndroidSQLiteDriver
+import dev.jdtech.jellyfin.database.ServerDatabase
+import dev.jdtech.jellyfin.domain.ports.MediaServer
+import dev.jdtech.jellyfin.models.FindroidSourceDto
+import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.FindroidTrickplayInfo
+import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.JellyfinRepositoryImpl
+import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
+import java.io.File
+import java.lang.reflect.Proxy
+import java.util.UUID
+import java.util.concurrent.CopyOnWriteArrayList
+import javax.inject.Provider
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlinx.coroutines.runBlocking
+import okhttp3.OkHttpClient
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.annotation.Config
+
+/**
+ * CE (#849): the trickplay sheets of a download. The downloader asked the server for one sheet more
+ * than there are, and stored the sheets it got under their place in the list of those that came:
+ * one failed sheet moved every later one down, and the offline preview showed the wrong moment.
+ * Each sheet is now stored under its own index, and a failed one is missing on its own.
+ */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34], application = Application::class)
+class TrickplayDownloadTest {
+    private val context: Context = RuntimeEnvironment.getApplication()
+    private val room =
+        Room.inMemoryDatabaseBuilder(context, ServerDatabase::class.java)
+            .setDriver(AndroidSQLiteDriver())
+            .build()
+    private val itemId = UUID.randomUUID()
+
+    /** 10 x 10 thumbnails to a sheet, 250 thumbnails: sheets 0 and 1 full, sheet 2 half. */
+    private val info =
+        FindroidTrickplayInfo(
+            width = 320,
+            height = 180,
+            tileWidth = 10,
+            tileHeight = 10,
+            thumbnailCount = 250,
+            interval = 10_000,
+            bandwidth = 0,
+        )
+
+    /** The sheets the server was asked for. */
+    private val requested = CopyOnWriteArrayList<Int>()
+
+    @Before
+    fun setUp() {
+        // The source row the trickplay row belongs to, inserted by the download before it.
+        runBlocking {
+            room
+                .getServerDatabaseDao()
+                .insertSource(
+                    FindroidSourceDto(
+                        id = SOURCE_ID,
+                        itemId = itemId,
+                        name = "Original",
+                        type = FindroidSourceType.LOCAL,
+                        path = "/downloads/Movie.mkv.download",
+                    )
+                )
+        }
+    }
+
+    @After
+    fun tearDown() {
+        room.close()
+        File(context.filesDir, "trickplay").deleteRecursively()
+    }
+
+    @Test
+    fun `only the sheets there are are asked for, and each is stored under its index`() {
+        download(failing = emptySet())
+
+        assertEquals(listOf(0, 1, 2), requested)
+        assertEquals(listOf("0", "1", "2"), storedSheets())
+        for (sheet in 0..2) assertEquals(sheet(sheet), readOffline(sheet))
+    }
+
+    @Test
+    fun `an exact multiple of a sheet asks for no empty sheet`() {
+        download(failing = emptySet(), info = info.copy(thumbnailCount = 200))
+
+        assertEquals(listOf(0, 1), requested)
+        assertEquals(listOf("0", "1"), storedSheets())
+    }
+
+    @Test
+    fun `a failed first, middle or last sheet leaves the others under their index`() {
+        for (failed in 0..2) {
+            requested.clear()
+            File(context.filesDir, "trickplay").deleteRecursively()
+
+            download(failing = setOf(failed))
+
+            assertEquals(listOf(0, 1, 2), requested, message = "sheet $failed failed")
+            assertEquals(
+                (0..2).filter { it != failed }.map { "$it" },
+                storedSheets(),
+                message = "sheet $failed failed",
+            )
+            for (sheet in (0..2).filter { it != failed }) {
+                assertEquals(sheet(sheet), readOffline(sheet), message = "sheet $failed failed")
+            }
+            // The server is away: no preview for the one sheet that is missing.
+            assertNull(readOffline(failed), message = "sheet $failed failed")
+        }
+    }
+
+    @Test
+    fun `the preview of a position after a failed sheet shows that position's sheet`() {
+        download(failing = setOf(0))
+
+        // Thumbnail 150 (25 minutes in) is in sheet 1, cell 50, as the player works it out.
+        val positionMs = 150L * info.interval
+        val thumbnail = (positionMs / info.interval).toInt()
+        val sheet = thumbnail / (info.tileWidth * info.tileHeight)
+
+        assertEquals(1, sheet)
+        assertEquals(sheet(1), readOffline(sheet))
+    }
+
+    private fun download(failing: Set<Int>, info: FindroidTrickplayInfo = this.info) {
+        val tiles = info.tileWidth * info.tileHeight
+        val sheetsOnServer = (info.thumbnailCount + tiles - 1) / tiles
+        val server =
+            Proxy.newProxyInstance(
+                JellyfinRepository::class.java.classLoader,
+                arrayOf(JellyfinRepository::class.java),
+            ) { _, method, args ->
+                when (method.name) {
+                    "getTrickplayData" -> {
+                        val index = args[2] as Int
+                        requested.add(index)
+                        // A sheet that fails, or does not exist (the server answers 404), is null.
+                        if (index in failing || index >= sheetsOnServer) null
+                        else sheet(index).toByteArray()
+                    }
+                    else -> throw IllegalStateException("JellyfinRepository.${method.name}")
+                }
+            } as JellyfinRepository
+        val downloader =
+            DownloaderImpl(
+                context,
+                room.getServerDatabaseDao(),
+                Provider { server },
+                AppPreferences(
+                    context.getSharedPreferences("trickplay-download-test", Context.MODE_PRIVATE)
+                ),
+                Provider { error("No WorkManager in this test") },
+                MediaDownloadEngine(OkHttpClient(), Online),
+            )
+        runBlocking { downloader.downloadTrickplayData(itemId, SOURCE_ID, info) }
+    }
+
+    private fun storedSheets(): List<String> =
+        File(context.filesDir, "trickplay/$itemId/$SOURCE_ID").list().orEmpty().sortedBy {
+            it.toInt()
+        }
+
+    /** What the player gets for [index] of the downloaded item, with the server away. */
+    private fun readOffline(index: Int): String? {
+        val away =
+            Proxy.newProxyInstance(
+                MediaServer::class.java.classLoader,
+                arrayOf(MediaServer::class.java),
+            ) { _, method, _ ->
+                throw IllegalStateException("MediaServer.${method.name}")
+            } as MediaServer
+        val repository =
+            JellyfinRepositoryImpl(
+                context,
+                away,
+                room.getServerDatabaseDao(),
+                AppPreferences(
+                    context.getSharedPreferences("trickplay-download-test", Context.MODE_PRIVATE)
+                ),
+            )
+        return runBlocking { repository.getTrickplayData(itemId, info.width, index) }
+            ?.decodeToString()
+    }
+
+    private fun sheet(index: Int) = "sheet $index"
+
+    private object Online : NetworkConnectivity {
+        override fun isOnline() = true
+
+        override fun isMetered() = false
+
+        override fun isRoaming() = false
+    }
+
+    private companion object {
+        const val SOURCE_ID = "source"
+    }
+}
