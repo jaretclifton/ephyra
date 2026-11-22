@@ -26,7 +26,7 @@ interface ServerSession {
      */
     var requestWatcher: RequestWatcher?
 
-    /** #763: how long [probe] waits at most. */
+    /** #763: how long [probe] waits at most; never more than [MAX_PROBE_TIMEOUT_MS]. */
     val probeTimeoutMs: Long
 
     /** #763: talks to [baseUrl] as [userId] with [accessToken] from now on. */
@@ -65,6 +65,14 @@ interface ServerSession {
      * updated one after the other.
      */
     suspend fun currentUserImage(): UserImage
+
+    companion object {
+        /**
+         * #758: the longest [probeTimeoutMs] of any adapter, for code that waits for a probe to end
+         * without a session at hand (`ServerAwayReload`).
+         */
+        const val MAX_PROBE_TIMEOUT_MS = 3_000L
+    }
 }
 
 /** #757: a user and the tag of their profile picture, null when they have none. */

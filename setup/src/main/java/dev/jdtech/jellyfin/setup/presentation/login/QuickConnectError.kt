@@ -2,7 +2,7 @@ package dev.jdtech.jellyfin.setup.presentation.login
 
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.UiText
-import dev.jdtech.jellyfin.server.jellyfin.asServerException
+import dev.jdtech.jellyfin.models.serverExceptionOrNull
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.utils.LoadErrorText
 
@@ -49,4 +49,4 @@ private fun isCodeExpired(error: Throwable, step: QuickConnectStep): Boolean =
     }
 
 private fun Throwable.httpStatus(): Int? =
-    (asServerException() as? ServerException.HttpStatus)?.status
+    (serverExceptionOrNull() as? ServerException.HttpStatus)?.status

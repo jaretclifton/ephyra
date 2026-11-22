@@ -4,10 +4,12 @@ import android.app.Application
 import android.provider.Settings
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.domain.ports.RequestWatcher
+import dev.jdtech.jellyfin.domain.ports.ServerSession
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -126,5 +128,7 @@ class JellyfinServerSessionTest {
     fun `the probe waits as long as it always did`() {
         assertEquals(3_000L, session.probeTimeoutMs)
         assertEquals(JellyfinApi.PROBE_TIMEOUT_MS, session.probeTimeoutMs)
+        // #758: ServerAwayReload waits for it without a session at hand.
+        assertTrue(session.probeTimeoutMs <= ServerSession.MAX_PROBE_TIMEOUT_MS)
     }
 }
