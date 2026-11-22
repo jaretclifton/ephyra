@@ -15,6 +15,7 @@ import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.ReloadPolicy
+import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -55,7 +56,20 @@ internal constructor(
     private val reloadPolicy = ReloadPolicy(dataChanges)
 
     /** Whether coming back to Favorites needs a load, see [ReloadPolicy]. */
-    fun shouldReload(): Boolean = reloadPolicy.shouldReload()
+    fun shouldReload(): Boolean = switchedTo(sessionUser()) || reloadPolicy.shouldReload()
+
+    /**
+     * CE (#866): the user the last load started for. Favorites stays on its stack across a user
+     * switch, and [ReloadPolicy] knows nothing of who the list is for.
+     */
+    private var loadingFor: UUID? = null
+
+    /** CE (#866): the user the client acts for now. */
+    private fun sessionUser(): UUID? = runCatching { repository.getUserId() }.getOrNull()
+
+    /** CE (#866): whether the list on screen, or the load running, is for another user. */
+    private fun switchedTo(user: UUID?): Boolean =
+        user != null && loadingFor != null && loadingFor != user
 
     /**
      * CE (#775): the server went away or came back. With the server away the favourites are the
@@ -76,23 +90,30 @@ internal constructor(
     }
 
     fun loadItems(): Job {
-        // CE (#775): the same load twice at once, for the server's return and the error page.
-        loadJob?.let { if (it.isActive && serverAwayReload.runningIsCurrent()) return it }
+        // CE (#775): the same load twice at once, for the server's return and the error page. CE
+        // (#866): not when the one running is for the previous user.
+        if (!switchedTo(sessionUser())) {
+            loadJob?.let { if (it.isActive && serverAwayReload.runningIsCurrent()) return it }
+        }
         // A load for the other state makes way, so it cannot land after this one.
         loadJob?.cancel()
         return start()
     }
 
     private fun start(): Job {
+        // CE (#866): another user's favourites go at once, and the load shows that it runs.
+        val user = sessionUser()
+        if (switchedTo(user)) _state.value = CollectionState(isLoading = true, userId = user)
+        loadingFor = user
         // CE (#779): a newer load stands in for the one more try after a stored answer.
         // A pending one gives its try back: only a retry that ran counts.
         storeRetryJob?.let { if (it.isActive) serverAwayReload.onStoreRetryCancelled() }
         storeRetryJob?.cancel()
         serverAwayReload.begin()
-        return load().also { loadJob = it }
+        return load(user).also { loadJob = it }
     }
 
-    private fun load(): Job = viewModelScope.launch {
+    private fun load(user: UUID?): Job = viewModelScope.launch {
         val token = reloadPolicy.begin()
         // With content on screen the refresh happens quietly (#251).
         val hasContent = _state.value.sections.isNotEmpty()
@@ -146,6 +167,7 @@ internal constructor(
                     isLoading = false,
                     sections = sections,
                     downloadsOnly = result.fromStore,
+                    userId = user,
                 )
             )
             if (serverAwayReload.retriesAfterStore(result.fromStore)) {

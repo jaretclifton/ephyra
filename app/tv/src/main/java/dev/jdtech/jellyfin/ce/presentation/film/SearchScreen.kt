@@ -56,6 +56,7 @@ import dev.jdtech.jellyfin.ce.ui.focus.rememberFocusPosition
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisodes
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovies
+import dev.jdtech.jellyfin.core.presentation.session.LocalServerSession
 import dev.jdtech.jellyfin.film.presentation.search.SearchAction
 import dev.jdtech.jellyfin.film.presentation.search.SearchState
 import dev.jdtech.jellyfin.film.presentation.search.SearchViewModel
@@ -89,7 +90,8 @@ fun SearchScreen(
     LaunchedEffect(true) { viewModel.setup(itemKinds = SearchGroup.entries.map { it.kind }) }
 
     SearchScreenLayout(
-        state = state,
+        // CE (#866): never a frame of the previous user's results after a switch.
+        state = state.shownTo(LocalServerSession.current.userId),
         onAction = { action ->
             when (action) {
                 is SearchAction.OnItemClick -> {
