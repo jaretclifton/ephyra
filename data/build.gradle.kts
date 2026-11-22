@@ -49,15 +49,11 @@ dependencies {
     implementation(libs.androidx.paging)
     implementation(libs.androidx.room3.runtime)
     ksp(libs.androidx.room3.compiler)
-    implementation(libs.jellyfin.core)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.okhttp)
     implementation(libs.timber)
     testImplementation(libs.androidx.room3.testing)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)
-    // #761: the SDK's server discovery logs through SLF4J, which the app gets from core.
-    testImplementation(libs.slf4j.api)
 }

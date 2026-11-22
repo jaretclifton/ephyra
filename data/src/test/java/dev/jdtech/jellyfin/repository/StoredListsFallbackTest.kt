@@ -2,11 +2,9 @@ package dev.jdtech.jellyfin.repository
 
 import android.app.Application
 import android.content.Context
-import android.provider.Settings
 import androidx.paging.PagingSource
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.CollectionType
@@ -19,17 +17,13 @@ import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
 import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
-import dev.jdtech.jellyfin.player.DeviceCodecProbe
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.File
-import java.net.ServerSocket
 import java.time.LocalDateTime
 import java.util.UUID
-import kotlin.concurrent.thread
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
@@ -77,23 +71,13 @@ class StoredListsFallbackTest {
             }
         }
 
-    private var apiUserId = userId
-
-    /** Where the API client sends its requests; none by default, so they go unanswered. */
-    private var serverUrl: String? = null
-    private val sockets = mutableListOf<ServerSocket>()
+    /** Requests go unanswered by default. */
+    private val server = UnansweredServer(userId)
 
     private val repository: JellyfinRepository by lazy {
-        // The SDK names the device after it; Robolectric has none.
-        Settings.Secure.putString(context.contentResolver, Settings.Secure.ANDROID_ID, "test")
-        val api =
-            JellyfinApi(context).apply {
-                userId = this@StoredListsFallbackTest.apiUserId
-                serverUrl?.let { api.update(baseUrl = it, accessToken = "token") }
-            }
         JellyfinRepositoryImpl(
             context,
-            JellyfinMediaServer(api, JellyfinDeviceProfiles(DeviceCodecProbe(context))),
+            server,
             database,
             preferences,
             knownServerState = knownServerState,
@@ -103,7 +87,6 @@ class StoredListsFallbackTest {
     @After
     fun close() {
         room.close()
-        sockets.forEach { it.close() }
     }
 
     private fun id(n: Int) = UUID.fromString("00000000-0000-0000-0000-0000000001%02d".format(n))
@@ -313,7 +296,7 @@ class StoredListsFallbackTest {
     fun `without stored favourites an answered error still surfaces`() = runBlocking {
         // The server is there and says no: that is an error to show.
         storeMovie(id(1), "Not a favourite")
-        serverUrl = answering("HTTP/1.1 500 Internal Server Error")
+        server.failure = { ServerException.HttpStatus(500) }
         assertTrue(fails { repository.getFavoriteItems().items })
     }
 
@@ -321,29 +304,6 @@ class StoredListsFallbackTest {
     fun `without a current server there is no fallback for favourites`() = runBlocking {
         preferences.setValue(preferences.currentServer, null)
         assertTrue(fails { repository.getFavoriteItems().items })
-    }
-
-    /** A server that answers every request with [statusLine] and an empty body. */
-    private fun answering(statusLine: String): String {
-        // The SDK logs through kotlin-logging, which needs this without SLF4J.
-        System.setProperty("kotlin-logging-to-android-native", "true")
-        val socket = ServerSocket(0)
-        sockets += socket
-        thread(isDaemon = true) {
-            while (!socket.isClosed) {
-                val client = runCatching { socket.accept() }.getOrNull() ?: break
-                client.use {
-                    val reader = it.getInputStream().bufferedReader()
-                    while (reader.readLine().orEmpty().isNotEmpty()) Unit
-                    it.getOutputStream()
-                        .write(
-                            "$statusLine\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
-                                .toByteArray()
-                        )
-                }
-            }
-        }
-        return "http://127.0.0.1:${socket.localPort}"
     }
 
     @Test

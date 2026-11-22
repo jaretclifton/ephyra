@@ -1,8 +1,8 @@
 package dev.jdtech.jellyfin.api
 
 import android.content.Context
-import dev.jdtech.jellyfin.data.BuildConfig
 import dev.jdtech.jellyfin.domain.ports.RequestWatcher
+import dev.jdtech.jellyfin.server.jellyfin.BuildConfig
 import dev.jdtech.jellyfin.settings.domain.Constants
 import java.io.IOException
 import java.util.UUID
@@ -160,8 +160,8 @@ class JellyfinApi(
                     androidContext.applicationInfo
                         .loadLabel(androidContext.packageManager)
                         .toString(),
-                // CE (#386): the installed app's version, as Settings > About shows it. This
-                // module's BuildConfig carries upstream's Versions.APP_NAME.
+                // CE (#386): the installed app's version, as Settings > About shows it, not
+                // upstream's Versions.APP_NAME.
                 version =
                     androidContext.packageManager
                         .getPackageInfo(androidContext.packageName, 0)

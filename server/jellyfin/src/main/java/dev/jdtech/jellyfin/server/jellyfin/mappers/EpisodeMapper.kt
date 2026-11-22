@@ -2,13 +2,15 @@ package dev.jdtech.jellyfin.server.jellyfin.mappers
 
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.getLocalSourcesForItems
 import java.util.UUID
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.LocationType
 import org.jellyfin.sdk.model.api.PlayAccess
 
-/** For lists: [localSources] comes from one [getLocalSourcesForItems] call for all items. */
+/**
+ * For lists: [localSources] comes from one `getLocalSourcesForItems` call (in `data`) for all
+ * items.
+ */
 internal suspend fun BaseItemDto.toFindroidEpisode(
     context: MapperContext,
     localSources: Map<UUID, List<FindroidSource>>,

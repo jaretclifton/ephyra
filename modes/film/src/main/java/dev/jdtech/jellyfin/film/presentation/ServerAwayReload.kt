@@ -1,6 +1,6 @@
 package dev.jdtech.jellyfin.film.presentation
 
-import dev.jdtech.jellyfin.api.JellyfinApi
+import dev.jdtech.jellyfin.domain.ports.ServerSession
 
 /**
  * CE (#775): when a list that falls back to the downloads (Favorites, Media, search) loads again
@@ -72,6 +72,6 @@ class ServerAwayReload {
          * After the probe that the unanswered request started has had its time: by then the server
          * is known to be away (and the list reloaded for it), or it answered.
          */
-        const val STORE_RETRY_DELAY_MS = JellyfinApi.PROBE_TIMEOUT_MS + 1_000L
+        const val STORE_RETRY_DELAY_MS = ServerSession.MAX_PROBE_TIMEOUT_MS + 1_000L
     }
 }

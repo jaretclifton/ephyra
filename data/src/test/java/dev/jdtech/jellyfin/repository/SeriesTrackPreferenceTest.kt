@@ -2,15 +2,10 @@ package dev.jdtech.jellyfin.repository
 
 import android.app.Application
 import android.content.Context
-import android.provider.Settings
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
-import dev.jdtech.jellyfin.player.DeviceCodecProbe
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -46,19 +41,10 @@ class SeriesTrackPreferenceTest {
             context.getSharedPreferences("series-track-preference", Context.MODE_PRIVATE)
         )
 
-    private val api by lazy {
-        // The SDK names the device after it; Robolectric has none.
-        Settings.Secure.putString(context.contentResolver, Settings.Secure.ANDROID_ID, "test")
-        JellyfinApi(context).apply { userId = this@SeriesTrackPreferenceTest.userId }
-    }
+    private val server = UnansweredServer(userId)
 
     private val repository: JellyfinRepository by lazy {
-        JellyfinRepositoryImpl(
-            context,
-            JellyfinMediaServer(api, JellyfinDeviceProfiles(DeviceCodecProbe(context))),
-            database,
-            preferences,
-        )
+        JellyfinRepositoryImpl(context, server, database, preferences)
     }
 
     @After fun close() = room.close()
@@ -86,7 +72,7 @@ class SeriesTrackPreferenceTest {
     fun `a saved choice is not read for another user`() = runBlocking {
         repository.saveSeriesTrackPreference(audio)
 
-        api.userId = otherUserId
+        server.userId = otherUserId
         assertTrue(repository.getSeriesTrackPreferences(seriesId).isEmpty())
     }
 

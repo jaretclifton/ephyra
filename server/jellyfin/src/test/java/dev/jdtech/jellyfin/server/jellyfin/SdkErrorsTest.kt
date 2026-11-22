@@ -1,15 +1,23 @@
 package dev.jdtech.jellyfin.server.jellyfin
 
 import dev.jdtech.jellyfin.models.ServerException
+import dev.jdtech.jellyfin.models.isUnanswered
 import java.io.IOException
 import java.net.ConnectException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import javax.net.ssl.SSLHandshakeException
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
+import kotlinx.serialization.SerializationException
 import org.jellyfin.sdk.api.client.exception.ApiClientException
+import org.jellyfin.sdk.api.client.exception.InvalidContentException
 import org.jellyfin.sdk.api.client.exception.InvalidStatusException
+import org.jellyfin.sdk.api.client.exception.MissingBaseUrlException
 import org.jellyfin.sdk.api.client.exception.SecureConnectionException
 import org.jellyfin.sdk.api.client.exception.TimeoutException
 import org.junit.jupiter.api.Test
@@ -74,6 +82,44 @@ class SdkErrorsTest {
     fun `the first of the other failures in the chain wins`() {
         val error = SecureConnectionException("tls", TimeoutException("t", null))
         assertIs<ServerException.Tls>(error.asServerException())
+    }
+
+    @Test
+    fun `no address becomes Unreachable`() {
+        val sdk = MissingBaseUrlException()
+        assertSame(sdk, assertIs<ServerException.Unreachable>(sdk.asServerException()).cause)
+    }
+
+    /**
+     * #758: what the SDK's OkHttp client throws, as the adapter's calls hand it on (translated, or
+     * else as it is), counts as no answer exactly when it did before the stored lists' fallback
+     * stopped reading the SDK's types (`isUnanswered`, #775).
+     */
+    @Test
+    fun `the client's failures without an answer stay unanswered once translated`() {
+        for (failure in
+            listOf(
+                TimeoutException("refused", ConnectException("Connection refused")),
+                TimeoutException("unknown host", UnknownHostException("jellyfin.home")),
+                TimeoutException("timeout", SocketTimeoutException("timeout")),
+                SecureConnectionException("tls", SSLHandshakeException("handshake")),
+                ApiClientException("reset", IOException("Connection reset")),
+                MissingBaseUrlException(),
+            )) {
+            assertTrue((failure.asServerException() ?: failure).isUnanswered(), "$failure")
+        }
+    }
+
+    @Test
+    fun `an error status or a body that could not be read stays answered once translated`() {
+        for (failure in
+            listOf(
+                InvalidStatusException(500, null),
+                TimeoutException("t", InvalidStatusException(502, null)),
+                InvalidContentException("bad body", SerializationException("missing field")),
+            )) {
+            assertFalse((failure.asServerException() ?: failure).isUnanswered(), "$failure")
+        }
     }
 
     @Test

@@ -6,7 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.UiText
-import dev.jdtech.jellyfin.server.jellyfin.asServerException
+import dev.jdtech.jellyfin.models.serverExceptionOrNull
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.domain.ServerLocalNetworkBlock
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
@@ -89,7 +89,8 @@ constructor(
                 val message =
                     if (
                         e !is CancellationException &&
-                            (e.asServerException() as? ServerException.HttpStatus)?.status == 401
+                            (e.serverExceptionOrNull() as? ServerException.HttpStatus)?.status ==
+                                401
                     ) {
                         UiText.StringResource(SetupR.string.login_error_wrong_username_password)
                     } else {

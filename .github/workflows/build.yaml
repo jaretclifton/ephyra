@@ -85,6 +85,7 @@ jobs:
               :player:cast:assembleLibreDebug
               :player:core:assembleDebug
               :player:local:assembleDebug
+              :server:jellyfin:assembleDebug
               :settings:assembleDebug
               :setup:assembleDebug
             apks: app/phone/build/outputs/apk/libre/debug/*.apk

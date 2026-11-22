@@ -13,9 +13,9 @@ import dev.jdtech.jellyfin.domain.ports.UserDataSyncPort
 import dev.jdtech.jellyfin.domain.ports.UserDataSyncPorts
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
 import dev.jdtech.jellyfin.models.ServerException
+import dev.jdtech.jellyfin.models.serverExceptionOrNull
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.PlaybackEvents
-import dev.jdtech.jellyfin.server.jellyfin.asServerException
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -410,7 +410,7 @@ internal fun isRefusedLogin(e: Throwable): Boolean = e.serverStatus() == HTTP_UN
 
 /** The error status the server answered with, or null when it did not answer. */
 private fun Throwable.serverStatus(): Int? =
-    (asServerException() as? ServerException.HttpStatus)?.status
+    (serverExceptionOrNull() as? ServerException.HttpStatus)?.status
 
 /** What an error status from the server means for the row that was sent. */
 internal fun afterStatus(status: Int): AfterStatus =

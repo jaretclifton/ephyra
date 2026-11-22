@@ -3,7 +3,7 @@ package dev.jdtech.jellyfin.utils
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.UiText
-import dev.jdtech.jellyfin.server.jellyfin.asServerException
+import dev.jdtech.jellyfin.models.serverExceptionOrNull
 import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
@@ -17,7 +17,7 @@ object LoadErrorText {
     /** The reason in plain words. */
     fun reason(error: Throwable): UiText {
         // A status anywhere in the chain wins, also over a timeout that wraps it.
-        val status = error.asServerException() as? ServerException.HttpStatus
+        val status = error.serverExceptionOrNull() as? ServerException.HttpStatus
         return when {
             status != null ->
                 UiText.StringResource(CoreR.string.ce_error_server_status, status.status)
@@ -29,7 +29,7 @@ object LoadErrorText {
 
     /** Whether the server could not be reached at all, so checking the connection may help. */
     fun isConnectionError(error: Throwable): Boolean =
-        when (error.asServerException()) {
+        when (error.serverExceptionOrNull()) {
             // The server answered.
             is ServerException.HttpStatus -> false
             is ServerException.Timeout,

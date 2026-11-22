@@ -183,6 +183,7 @@ dependencies {
     implementation(projects.player.local)
     implementation(projects.setup)
     implementation(projects.modes.film)
+    implementation(projects.server.jellyfin)
     implementation(projects.settings)
 
     implementation(libs.aboutlibraries.core)
