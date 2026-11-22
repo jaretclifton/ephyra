@@ -39,6 +39,18 @@ android {
 // ItemMapperGoldenTest can write its expected files instead of comparing with them.
 tasks.withType<Test>().configureEach {
     systemProperty("golden.update", System.getProperty("golden.update") ?: "")
+    // #771: the contract tests run against the Docker test server when EPHYRA_TEST_SERVER is set,
+    // and `-Dcontract.record=true` writes its answers as their recordings. The environment is no
+    // input of the task by itself: without these, a run with the server would be up to date.
+    systemProperty("contract.record", System.getProperty("contract.record") ?: "")
+    systemProperty(
+        "contract.resources",
+        layout.projectDirectory.dir("src/test/resources/contract").asFile.absolutePath,
+    )
+    listOf("EPHYRA_TEST_SERVER", "EPHYRA_TEST_USER", "EPHYRA_TEST_PASSWORD").forEach {
+        // A hash: the password is not kept in the build's task history.
+        inputs.property(it, System.getenv(it).orEmpty().hashCode())
+    }
 }
 
 dependencies {
@@ -58,6 +70,8 @@ dependencies {
     // server, so they pin what goes over the wire end to end. Tests only: the adapter's own code
     // cannot see `data`.
     testImplementation(projects.data)
+    // #771: the contract suites the adapter passes.
+    testImplementation(projects.testing)
     testImplementation(libs.androidx.room3.runtime)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

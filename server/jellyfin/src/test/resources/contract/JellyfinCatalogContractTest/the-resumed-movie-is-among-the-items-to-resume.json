@@ -1,0 +1,39 @@
+[
+    {
+        "request": "GET /UserItems/Resume?userId=00000000-0000-0000-0000-000000000001&limit=12&fields=Overview&mediaTypes=Video&imageTypeLimit=1&enableImageTypes=Primary&enableImageTypes=Backdrop&enableImageTypes=Thumb&includeItemTypes=Movie&includeItemTypes=Episode&includeItemTypes=Video&includeItemTypes=MusicVideo&enableTotalRecordCount=false&enableImages=true&excludeActiveSessions=false",
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "json": {
+            "Items": [
+                {
+                    "Name": "Long Movie (2016)",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "00000000000000000000000000000101",
+                    "Container": "mkv",
+                    "ChannelId": null,
+                    "RunTimeTicks": 7200230000,
+                    "ProductionYear": 2016,
+                    "IsFolder": false,
+                    "Type": "Movie",
+                    "UserData": {
+                        "PlayedPercentage": 16.666134276266177,
+                        "PlaybackPositionTicks": 1200000000,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-0000-0000-000000000101",
+                        "ItemId": "00000000000000000000000000000101"
+                    },
+                    "VideoType": "VideoFile",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Video"
+                }
+            ],
+            "TotalRecordCount": 1,
+            "StartIndex": 0
+        }
+    }
+]

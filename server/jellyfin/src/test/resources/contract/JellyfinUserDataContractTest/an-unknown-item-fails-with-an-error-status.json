@@ -1,0 +1,24 @@
+[
+    {
+        "request": "POST /UserFavoriteItems/00000000-0000-0000-0000-00000000dead",
+        "status": 404,
+        "contentType": "application/json; charset=utf-8",
+        "json": {
+            "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+            "title": "Not Found",
+            "status": 404,
+            "traceId": "00-ac5085813ddcbdc8e6e97ac5c31fd28a-57eabcd3d1c4d7a6-00"
+        }
+    },
+    {
+        "request": "POST /UserPlayedItems/00000000-0000-0000-0000-00000000dead",
+        "status": 404,
+        "contentType": "application/json; charset=utf-8",
+        "json": {
+            "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+            "title": "Not Found",
+            "status": 404,
+            "traceId": "00-5162fc6405a26e13e69edcd9c19d8886-777ea3ce053f0a99-00"
+        }
+    }
+]

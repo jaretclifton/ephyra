@@ -40,4 +40,6 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
+    // #771: FakeMediaServer.
+    testImplementation(projects.testing)
 }

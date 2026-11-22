@@ -1,0 +1,624 @@
+[
+    {
+        "request": "GET /Items?userId=00000000-0000-0000-0000-000000000001&enableTotalRecordCount=true&enableImages=true",
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "json": {
+            "Items": [
+                {
+                    "Name": "Big Movies",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000879cc9254bbb31f386e5",
+                    "ChannelId": null,
+                    "IsFolder": true,
+                    "Type": "CollectionFolder",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-879c-c925-4bbb31f386e5",
+                        "ItemId": "000000000000879cc9254bbb31f386e5"
+                    },
+                    "CollectionType": "movies",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Collections",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000f44adc100e3602e3d17c",
+                    "ChannelId": null,
+                    "IsFolder": true,
+                    "Type": "CollectionFolder",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-f44a-dc10-0e3602e3d17c",
+                        "ItemId": "000000000000f44adc100e3602e3d17c"
+                    },
+                    "CollectionType": "boxsets",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Home Videos",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000ea054c91404dc3768d3d",
+                    "ChannelId": null,
+                    "IsFolder": true,
+                    "Type": "CollectionFolder",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-ea05-4c91-404dc3768d3d",
+                        "ItemId": "000000000000ea054c91404dc3768d3d"
+                    },
+                    "CollectionType": "homevideos",
+                    "ImageTags": {
+                        "Primary": "000000000000ce80a500d33da80cbc8a"
+                    },
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {
+                        "Primary": {
+                            "000000000000ce80a500d33da80cbc8a": "WLC?$F$FRjz6RQ[.kDW.WVjbW.a#4nWTozV]ozoeR%ayW;WBa#kB"
+                        }
+                    },
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Movies",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000c0e8ca136459aad6b921",
+                    "ChannelId": null,
+                    "IsFolder": true,
+                    "Type": "CollectionFolder",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-c0e8-ca13-6459aad6b921",
+                        "ItemId": "000000000000c0e8ca136459aad6b921"
+                    },
+                    "CollectionType": "movies",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Music Videos",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "00000000000098a117afa16d085916bf",
+                    "ChannelId": null,
+                    "IsFolder": true,
+                    "Type": "CollectionFolder",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-98a1-17af-a16d085916bf",
+                        "ItemId": "00000000000098a117afa16d085916bf"
+                    },
+                    "CollectionType": "musicvideos",
+                    "ImageTags": {
+                        "Primary": "000000000000df79a33ec0c3aa4cdede"
+                    },
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {
+                        "Primary": {
+                            "000000000000df79a33ec0c3aa4cdede": "WKC%Hf#fNaz6RQ[-oyW:WWfkagaf4nW,oeVut7s:NHWVbFR,W;k9"
+                        }
+                    },
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Real Movies",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000b0af03c1faac12901618",
+                    "ChannelId": null,
+                    "IsFolder": true,
+                    "Type": "CollectionFolder",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-b0af-03c1-faac12901618",
+                        "ItemId": "000000000000b0af03c1faac12901618"
+                    },
+                    "CollectionType": "movies",
+                    "ImageTags": {
+                        "Primary": "00000000000020afdc5e6071cac661db"
+                    },
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {
+                        "Primary": {
+                            "00000000000020afdc5e6071cac661db": "WLAAULx]MxM{M{ay$lWBaeW.ofof4TM{xuozxuoLRPW.t6afWBWB"
+                        }
+                    },
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Real Shows",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "0000000000008518f2f772ca21672426",
+                    "ChannelId": null,
+                    "IsFolder": true,
+                    "Type": "CollectionFolder",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-8518-f2f7-72ca21672426",
+                        "ItemId": "0000000000008518f2f772ca21672426"
+                    },
+                    "CollectionType": "tvshows",
+                    "ImageTags": {
+                        "Primary": "00000000000089f8b8a87efaa73b2612"
+                    },
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {
+                        "Primary": {
+                            "00000000000089f8b8a87efaa73b2612": "WH9j$Tt7IVRiIVRkSRRjWXt7ofbI00WBxuazxtofaxf5oea#bHWU"
+                        }
+                    },
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Shows",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "0000000000003941914b7daf9f1ebf1b",
+                    "ChannelId": null,
+                    "IsFolder": true,
+                    "Type": "CollectionFolder",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-3941-914b-7daf9f1ebf1b",
+                        "ItemId": "0000000000003941914b7daf9f1ebf1b"
+                    },
+                    "CollectionType": "tvshows",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                },
+                {
+                    "Name": "Playlists",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000a34c26ef82321847739b",
+                    "ChannelId": null,
+                    "IsFolder": true,
+                    "Type": "ManualPlaylistsFolder",
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-a34c-26ef-82321847739b",
+                        "ItemId": "000000000000a34c26ef82321847739b"
+                    },
+                    "CollectionType": "playlists",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown"
+                }
+            ],
+            "TotalRecordCount": 9,
+            "StartIndex": 0
+        }
+    },
+    {
+        "request": "GET /UserViews?userId=00000000-0000-0000-0000-000000000001&includeHidden=false",
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "json": {
+            "Items": [
+                {
+                    "Name": "Big Movies",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000879cc9254bbb31f386e5",
+                    "Etag": "00000000000039a071391dbd16b5dac2",
+                    "DateCreated": "2026-11-14T22:45:58.3984126Z",
+                    "DateLastMediaAdded": "0001-01-01T00:00:00.0000000Z",
+                    "CanDelete": false,
+                    "CanDownload": false,
+                    "SortName": "big movies",
+                    "ExternalUrls": [],
+                    "Path": "/config/root/default/Big Movies",
+                    "EnableMediaSourceDisplay": true,
+                    "ChannelId": null,
+                    "Taglines": [],
+                    "Genres": [],
+                    "PlayAccess": "Full",
+                    "RemoteTrailers": [],
+                    "ProviderIds": {},
+                    "IsFolder": true,
+                    "ParentId": "0000000000007bd88d688e1c52d07584",
+                    "Type": "CollectionFolder",
+                    "People": [],
+                    "Studios": [],
+                    "GenreItems": [],
+                    "LocalTrailerCount": 0,
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-879c-c925-4bbb31f386e5",
+                        "ItemId": "000000000000879cc9254bbb31f386e5"
+                    },
+                    "ChildCount": 648,
+                    "SpecialFeatureCount": 0,
+                    "DisplayPreferencesId": "000000000000879cc9254bbb31f386e5",
+                    "Tags": [],
+                    "CollectionType": "movies",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "Chapters": [],
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown",
+                    "LockedFields": [],
+                    "LockData": false
+                },
+                {
+                    "Name": "Home Videos",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000ea054c91404dc3768d3d",
+                    "Etag": "000000000000f18a50a21e710f293ec4",
+                    "DateCreated": "2026-11-14T23:17:01.4860265Z",
+                    "DateLastMediaAdded": "0001-01-01T00:00:00.0000000Z",
+                    "CanDelete": false,
+                    "CanDownload": false,
+                    "SortName": "home videos",
+                    "ExternalUrls": [],
+                    "Path": "/config/root/default/Home Videos",
+                    "EnableMediaSourceDisplay": true,
+                    "ChannelId": null,
+                    "Taglines": [],
+                    "Genres": [],
+                    "PlayAccess": "Full",
+                    "RemoteTrailers": [],
+                    "ProviderIds": {},
+                    "IsFolder": true,
+                    "ParentId": "0000000000007bd88d688e1c52d07584",
+                    "Type": "CollectionFolder",
+                    "People": [],
+                    "Studios": [],
+                    "GenreItems": [],
+                    "LocalTrailerCount": 0,
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-ea05-4c91-404dc3768d3d",
+                        "ItemId": "000000000000ea054c91404dc3768d3d"
+                    },
+                    "ChildCount": 4,
+                    "SpecialFeatureCount": 0,
+                    "DisplayPreferencesId": "000000000000ea054c91404dc3768d3d",
+                    "Tags": [],
+                    "PrimaryImageAspectRatio": 1.7777777777777777,
+                    "CollectionType": "homevideos",
+                    "ImageTags": {
+                        "Primary": "000000000000ce80a500d33da80cbc8a"
+                    },
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {
+                        "Primary": {
+                            "000000000000ce80a500d33da80cbc8a": "WLC?$F$FRjz6RQ[.kDW.WVjbW.a#4nWTozV]ozoeR%ayW;WBa#kB"
+                        }
+                    },
+                    "Chapters": [],
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown",
+                    "LockedFields": [],
+                    "LockData": false
+                },
+                {
+                    "Name": "Movies",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000c0e8ca136459aad6b921",
+                    "Etag": "0000000000004593de29592cc22e2326",
+                    "DateCreated": "2026-11-11T08:25:52.2469729Z",
+                    "DateLastMediaAdded": "0001-01-01T00:00:00.0000000Z",
+                    "CanDelete": false,
+                    "CanDownload": false,
+                    "SortName": "movies",
+                    "ExternalUrls": [],
+                    "Path": "/config/root/default/Movies",
+                    "EnableMediaSourceDisplay": true,
+                    "ChannelId": null,
+                    "Taglines": [],
+                    "Genres": [],
+                    "PlayAccess": "Full",
+                    "RemoteTrailers": [],
+                    "ProviderIds": {},
+                    "IsFolder": true,
+                    "ParentId": "0000000000007bd88d688e1c52d07584",
+                    "Type": "CollectionFolder",
+                    "People": [],
+                    "Studios": [],
+                    "GenreItems": [],
+                    "LocalTrailerCount": 0,
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-c0e8-ca13-6459aad6b921",
+                        "ItemId": "000000000000c0e8ca136459aad6b921"
+                    },
+                    "ChildCount": 19,
+                    "SpecialFeatureCount": 0,
+                    "DisplayPreferencesId": "000000000000c0e8ca136459aad6b921",
+                    "Tags": [],
+                    "CollectionType": "movies",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "Chapters": [],
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown",
+                    "LockedFields": [],
+                    "LockData": false
+                },
+                {
+                    "Name": "Music Videos",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "00000000000098a117afa16d085916bf",
+                    "Etag": "00000000000026262425082292d76a75",
+                    "DateCreated": "2026-11-14T23:17:02.6029896Z",
+                    "DateLastMediaAdded": "0001-01-01T00:00:00.0000000Z",
+                    "CanDelete": false,
+                    "CanDownload": false,
+                    "SortName": "music videos",
+                    "ExternalUrls": [],
+                    "Path": "/config/root/default/Music Videos",
+                    "EnableMediaSourceDisplay": true,
+                    "ChannelId": null,
+                    "Taglines": [],
+                    "Genres": [],
+                    "PlayAccess": "Full",
+                    "RemoteTrailers": [],
+                    "ProviderIds": {},
+                    "IsFolder": true,
+                    "ParentId": "0000000000007bd88d688e1c52d07584",
+                    "Type": "CollectionFolder",
+                    "People": [],
+                    "Studios": [],
+                    "GenreItems": [],
+                    "LocalTrailerCount": 0,
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-98a1-17af-a16d085916bf",
+                        "ItemId": "00000000000098a117afa16d085916bf"
+                    },
+                    "ChildCount": 3,
+                    "SpecialFeatureCount": 0,
+                    "DisplayPreferencesId": "00000000000098a117afa16d085916bf",
+                    "Tags": [],
+                    "PrimaryImageAspectRatio": 1.7777777777777777,
+                    "CollectionType": "musicvideos",
+                    "ImageTags": {
+                        "Primary": "000000000000df79a33ec0c3aa4cdede"
+                    },
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {
+                        "Primary": {
+                            "000000000000df79a33ec0c3aa4cdede": "WKC%Hf#fNaz6RQ[-oyW:WWfkagaf4nW,oeVut7s:NHWVbFR,W;k9"
+                        }
+                    },
+                    "Chapters": [],
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown",
+                    "LockedFields": [],
+                    "LockData": false
+                },
+                {
+                    "Name": "Real Movies",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "000000000000b0af03c1faac12901618",
+                    "Etag": "0000000000006bff9241290be09a14c3",
+                    "DateCreated": "2026-11-11T08:30:01.6926304Z",
+                    "DateLastMediaAdded": "0001-01-01T00:00:00.0000000Z",
+                    "CanDelete": false,
+                    "CanDownload": false,
+                    "SortName": "real movies",
+                    "ExternalUrls": [],
+                    "Path": "/config/root/default/Real Movies",
+                    "EnableMediaSourceDisplay": true,
+                    "ChannelId": null,
+                    "Taglines": [],
+                    "Genres": [],
+                    "PlayAccess": "Full",
+                    "RemoteTrailers": [],
+                    "ProviderIds": {},
+                    "IsFolder": true,
+                    "ParentId": "0000000000007bd88d688e1c52d07584",
+                    "Type": "CollectionFolder",
+                    "People": [],
+                    "Studios": [],
+                    "GenreItems": [],
+                    "LocalTrailerCount": 0,
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-b0af-03c1-faac12901618",
+                        "ItemId": "000000000000b0af03c1faac12901618"
+                    },
+                    "ChildCount": 14,
+                    "SpecialFeatureCount": 0,
+                    "DisplayPreferencesId": "000000000000b0af03c1faac12901618",
+                    "Tags": [],
+                    "PrimaryImageAspectRatio": 1.7777777777777777,
+                    "CollectionType": "movies",
+                    "ImageTags": {
+                        "Primary": "00000000000020afdc5e6071cac661db"
+                    },
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {
+                        "Primary": {
+                            "00000000000020afdc5e6071cac661db": "WLAAULx]MxM{M{ay$lWBaeW.ofof4TM{xuozxuoLRPW.t6afWBWB"
+                        }
+                    },
+                    "Chapters": [],
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown",
+                    "LockedFields": [],
+                    "LockData": false
+                },
+                {
+                    "Name": "Real Shows",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "0000000000008518f2f772ca21672426",
+                    "Etag": "000000000000a1659e9feb9080013d19",
+                    "DateCreated": "2026-11-11T08:30:02.7493777Z",
+                    "DateLastMediaAdded": "0001-01-01T00:00:00.0000000Z",
+                    "CanDelete": false,
+                    "CanDownload": false,
+                    "SortName": "real shows",
+                    "ExternalUrls": [],
+                    "Path": "/config/root/default/Real Shows",
+                    "EnableMediaSourceDisplay": true,
+                    "ChannelId": null,
+                    "Taglines": [],
+                    "Genres": [],
+                    "PlayAccess": "Full",
+                    "RemoteTrailers": [],
+                    "ProviderIds": {},
+                    "IsFolder": true,
+                    "ParentId": "0000000000007bd88d688e1c52d07584",
+                    "Type": "CollectionFolder",
+                    "People": [],
+                    "Studios": [],
+                    "GenreItems": [],
+                    "LocalTrailerCount": 0,
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-8518-f2f7-72ca21672426",
+                        "ItemId": "0000000000008518f2f772ca21672426"
+                    },
+                    "ChildCount": 5,
+                    "SpecialFeatureCount": 0,
+                    "DisplayPreferencesId": "0000000000008518f2f772ca21672426",
+                    "Tags": [],
+                    "PrimaryImageAspectRatio": 1.7777777777777777,
+                    "CollectionType": "tvshows",
+                    "ImageTags": {
+                        "Primary": "00000000000089f8b8a87efaa73b2612"
+                    },
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {
+                        "Primary": {
+                            "00000000000089f8b8a87efaa73b2612": "WH9j$Tt7IVRiIVRkSRRjWXt7ofbI00WBxuazxtofaxf5oea#bHWU"
+                        }
+                    },
+                    "Chapters": [],
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown",
+                    "LockedFields": [],
+                    "LockData": false
+                },
+                {
+                    "Name": "Shows",
+                    "ServerId": "00000000000000000000000000000002",
+                    "Id": "0000000000003941914b7daf9f1ebf1b",
+                    "Etag": "0000000000008463dc66a4bdeb559b6c",
+                    "DateCreated": "2026-11-11T08:25:53.3210247Z",
+                    "DateLastMediaAdded": "0001-01-01T00:00:00.0000000Z",
+                    "CanDelete": false,
+                    "CanDownload": false,
+                    "SortName": "shows",
+                    "ExternalUrls": [],
+                    "Path": "/config/root/default/Shows",
+                    "EnableMediaSourceDisplay": true,
+                    "ChannelId": null,
+                    "Taglines": [],
+                    "Genres": [],
+                    "PlayAccess": "Full",
+                    "RemoteTrailers": [],
+                    "ProviderIds": {},
+                    "IsFolder": true,
+                    "ParentId": "0000000000007bd88d688e1c52d07584",
+                    "Type": "CollectionFolder",
+                    "People": [],
+                    "Studios": [],
+                    "GenreItems": [],
+                    "LocalTrailerCount": 0,
+                    "UserData": {
+                        "PlaybackPositionTicks": 0,
+                        "PlayCount": 0,
+                        "IsFavorite": false,
+                        "Played": false,
+                        "Key": "00000000-0000-3941-914b-7daf9f1ebf1b",
+                        "ItemId": "0000000000003941914b7daf9f1ebf1b"
+                    },
+                    "ChildCount": 13,
+                    "SpecialFeatureCount": 0,
+                    "DisplayPreferencesId": "0000000000003941914b7daf9f1ebf1b",
+                    "Tags": [],
+                    "CollectionType": "tvshows",
+                    "ImageTags": {},
+                    "BackdropImageTags": [],
+                    "ImageBlurHashes": {},
+                    "Chapters": [],
+                    "LocationType": "FileSystem",
+                    "MediaType": "Unknown",
+                    "LockedFields": [],
+                    "LockData": false
+                }
+            ],
+            "TotalRecordCount": 7,
+            "StartIndex": 0
+        }
+    },
+    {
+        "request": "GET /System/Info/Public",
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "json": {
+            "LocalAddress": "http://server.invalid",
+            "ServerName": "Ephyra Test",
+            "Version": "12.4.0",
+            "ProductName": "Jellyfin Server",
+            "OperatingSystem": "",
+            "Id": "00000000000000000000000000000002",
+            "StartupWizardCompleted": true
+        }
+    }
+]

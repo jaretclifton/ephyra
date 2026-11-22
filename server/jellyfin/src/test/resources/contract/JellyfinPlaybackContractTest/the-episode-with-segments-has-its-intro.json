@@ -1,0 +1,21 @@
+[
+    {
+        "request": "GET /MediaSegments/00000000-0000-0000-0000-000000000312",
+        "handwritten": true,
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "json": {
+            "Items": [
+                {
+                    "Id": "00000000000000000000000000000601",
+                    "ItemId": "00000000000000000000000000000312",
+                    "Type": "Intro",
+                    "StartTicks": 0,
+                    "EndTicks": 300000000
+                }
+            ],
+            "TotalRecordCount": 1,
+            "StartIndex": 0
+        }
+    }
+]
