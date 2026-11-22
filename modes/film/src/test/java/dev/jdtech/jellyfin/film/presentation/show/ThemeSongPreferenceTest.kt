@@ -6,27 +6,47 @@ import android.content.SharedPreferences
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.ServerCapabilities
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.JellyfinRepositoryImpl
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.ContractLibrary
+import dev.jdtech.jellyfin.testing.FakeLibrary
+import dev.jdtech.jellyfin.testing.FakeMediaServer
 import java.lang.reflect.Proxy
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-/** CE (#141): the show ViewModel only asks the server for a theme song when the setting is on. */
+/**
+ * CE (#141): the show ViewModel only asks the server for a theme song when the setting is on.
+ *
+ * #771: over the real repository and a [FakeMediaServer] with a theme song for the contract
+ * library's series, instead of a reflection fake of the repository. The fake lists the port calls,
+ * so "not asked" is that no `themeSongUrl` call reached the server.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ThemeSongPreferenceTest {
-    private val showId = UUID.fromString("11111111-1111-1111-1111-111111111111")
+    private val showId = ContractLibrary.series.id
     private val url = "https://jellyfin.test/Audio/2/stream?static=true"
-    private var lookups = 0
+    private val library =
+        object : FakeLibrary by ContractLibrary {
+            override val themeSongs = mapOf(showId to url)
+        }
+
+    private lateinit var server: FakeMediaServer
+
+    private val lookups
+        get() = server.calls.count { it == "themeSongUrl" }
 
     @BeforeEach
     fun setUp() {
@@ -48,12 +68,14 @@ class ThemeSongPreferenceTest {
     }
 
     @Test
-    fun `turned on, the song lands in the state`() {
+    fun `turned on, the song lands in the state`() = runBlocking {
         val viewModel = viewModel(appPreferences(stored = true))
         viewModel.loadThemeSong(showId)
 
+        // The repository asks on the IO dispatcher.
+        val state = withTimeout(5_000) { viewModel.state.first { it.themeSongUrl != null } }
         assertEquals(1, lookups)
-        assertEquals(url, viewModel.state.value.themeSongUrl)
+        assertEquals(url, state.themeSongUrl)
     }
 
     @Test
@@ -73,7 +95,14 @@ class ThemeSongPreferenceTest {
         preferences: AppPreferences,
         capabilities: ServerCapabilities = ServerCapabilities.ALL,
     ): ShowViewModel {
-        val repository = repository(capabilities)
+        server = FakeMediaServer(library, capabilities)
+        val repository =
+            JellyfinRepositoryImpl(
+                context = ContextWrapper(null),
+                server = server,
+                database = noDownloads(),
+                appPreferences = preferences,
+            )
         return ShowViewModel(
             repository = repository,
             appPreferences = preferences,
@@ -90,17 +119,17 @@ class ThemeSongPreferenceTest {
         )
     }
 
-    private fun repository(capabilities: ServerCapabilities): JellyfinRepository =
+    /** No downloads: with no current server set, the repository only asks whether there are any. */
+    private fun noDownloads(): ServerDatabaseDao =
         Proxy.newProxyInstance(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
+            ServerDatabaseDao::class.java.classLoader,
+            arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, _ ->
             when (method.name) {
-                "getCapabilities" -> capabilities
-                "getThemeSongUrl" -> url.also { lookups++ }
-                else -> throw NotImplementedError("JellyfinRepository.${method.name}")
+                "observeHasSources" -> flowOf(false)
+                else -> throw NotImplementedError("ServerDatabaseDao.${method.name}")
             }
-        } as JellyfinRepository
+        } as ServerDatabaseDao
 
     /** Preferences where only the theme music switch may be stored; null means never touched. */
     private fun appPreferences(stored: Boolean?): AppPreferences {
