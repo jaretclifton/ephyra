@@ -588,34 +588,16 @@ constructor(
             val hevc =
                 sessionManager.connectedDevice.value?.supportsH265 == true ||
                     appPreferences.getValue(appPreferences.castReceiverHevc)
-            val profile =
-                if (hevc) {
-                    ChromecastH265.deviceProfile
-                } else {
-                    Chromecast.deviceProfile
-                }
             val maxBitrateMbps = appPreferences.getValue(appPreferences.castMaxBitrateMbps)
 
-            jellyfinApi.mediaInfoApi
-                .getPostedPlaybackInfo(
-                    item.itemId,
-                    PlaybackInfoDto(
-                        userId = jellyfinApi.userId,
-                        mediaSourceId = item.mediaSourceId,
-                        deviceProfile = profile,
-                        maxStreamingBitrate =
-                            maxBitrateMbps.takeIf { it > 0 }?.let { it * 1_000_000 },
-                        audioStreamIndex = audioStreamIndex,
-                        // The receiver plays a file's own default audio track and cannot be told
-                        // to play another, so a chosen track has to come out of the server.
-                        enableDirectPlay = audioStreamIndex == null,
-                        enableDirectStream = true,
-                        enableTranscoding = true,
-                        allowAudioStreamCopy = true,
-                        allowVideoStreamCopy = true,
-                    ),
-                )
-                .content
+            requestCastPlaybackInfo(
+                jellyfinApi,
+                item.itemId,
+                item.mediaSourceId,
+                audioStreamIndex,
+                hevc,
+                maxBitrateMbps,
+            )
         }
 
     private fun Uri.toCastOptimizeImageUri(isEpisodeOrBackdrop: Boolean = false): Uri {
@@ -1053,4 +1035,43 @@ constructor(
         _currentItem.value = null
         forgetPlaylist()
     }
+}
+
+/**
+ * Asks the server how the receiver can play [itemId]. [hevc] picks the profile with HEVC,
+ * [maxBitrateMbps] is the user's cap (0: none), [audioStreamIndex] the audio track the user chose.
+ */
+internal suspend fun requestCastPlaybackInfo(
+    jellyfinApi: JellyfinApi,
+    itemId: UUID,
+    mediaSourceId: String?,
+    audioStreamIndex: Int?,
+    hevc: Boolean,
+    maxBitrateMbps: Int,
+): PlaybackInfoResponse {
+    val profile =
+        if (hevc) {
+            ChromecastH265.deviceProfile
+        } else {
+            Chromecast.deviceProfile
+        }
+    return jellyfinApi.mediaInfoApi
+        .getPostedPlaybackInfo(
+            itemId,
+            PlaybackInfoDto(
+                userId = jellyfinApi.userId,
+                mediaSourceId = mediaSourceId,
+                deviceProfile = profile,
+                maxStreamingBitrate = maxBitrateMbps.takeIf { it > 0 }?.let { it * 1_000_000 },
+                audioStreamIndex = audioStreamIndex,
+                // The receiver plays a file's own default audio track and cannot be told
+                // to play another, so a chosen track has to come out of the server.
+                enableDirectPlay = audioStreamIndex == null,
+                enableDirectStream = true,
+                enableTranscoding = true,
+                allowAudioStreamCopy = true,
+                allowVideoStreamCopy = true,
+            ),
+        )
+        .content
 }

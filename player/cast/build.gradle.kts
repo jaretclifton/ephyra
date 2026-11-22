@@ -50,4 +50,6 @@ dependencies {
     "proprietaryImplementation"(libs.play.services.cast.framework)
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.robolectric)
 }
