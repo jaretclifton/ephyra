@@ -44,6 +44,7 @@ import org.jellyfin.sdk.api.client.extensions.userDataApi
 import org.jellyfin.sdk.api.client.extensions.userViewApi
 import org.jellyfin.sdk.api.client.extensions.videoApi
 import org.jellyfin.sdk.api.okhttp.OkHttpFactory
+import org.jellyfin.sdk.api.operations.TrickPlayApi
 import org.jellyfin.sdk.createJellyfin
 import org.jellyfin.sdk.model.ClientInfo
 import org.jellyfin.sdk.model.DeviceInfo
@@ -61,6 +62,8 @@ class JellyfinApi(
     requestTimeout: Long = Constants.NETWORK_DEFAULT_REQUEST_TIMEOUT,
     connectTimeout: Long = Constants.NETWORK_DEFAULT_CONNECT_TIMEOUT,
     socketTimeout: Long = Constants.NETWORK_DEFAULT_SOCKET_TIMEOUT,
+    /** CE (#860): see [trickplaySheetApi]. Shorter only in tests. */
+    trickplaySheetTimeout: Long = TRICKPLAY_SHEET_TIMEOUT_MS,
 ) {
     /**
      * CE (#296): the SDK builds its client from this one with `newBuilder()`, so both share one
@@ -192,6 +195,38 @@ class JellyfinApi(
         )
     var userId: UUID? = null
 
+    /**
+     * CE (#860): a trickplay sheet may wait longer than the other requests. A sheet that does not
+     * start within the socket timeout (10 s by default) failed, and the preview was gone; with a
+     * sheet delayed 10 s no preview came at all, with 3 s and 7 s it came while the finger was
+     * down. Sheets are images of a few hundred KB to a few MB, and the player keeps a sheet that
+     * arrives late for every later scrub over it. A longer timeout set by the user is kept.
+     */
+    private val trickplaySheetOptions =
+        HttpClientOptions(
+            requestTimeout =
+                maxOf(requestTimeout, 2 * trickplaySheetTimeout)
+                    .toDuration(DurationUnit.MILLISECONDS),
+            connectTimeout = connectTimeout.toDuration(DurationUnit.MILLISECONDS),
+            socketTimeout =
+                maxOf(socketTimeout, trickplaySheetTimeout).toDuration(DurationUnit.MILLISECONDS),
+        )
+
+    /**
+     * CE (#860): the trickplay API with the timeouts of a sheet. A client of its own, built from
+     * [api] at each use so it has its server and token; it shares the connection pool and the
+     * response watcher of every other request.
+     */
+    val trickplaySheetApi: TrickPlayApi
+        get() =
+            jellyfin
+                .createApi(
+                    baseUrl = api.baseUrl,
+                    accessToken = api.accessToken,
+                    httpClientOptions = trickplaySheetOptions,
+                )
+                .trickPlayApi
+
     private fun watchResponses(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val watcher = requestWatcher
@@ -296,6 +331,13 @@ class JellyfinApi(
          * out the connect timeout is the hang the banner is there to avoid.
          */
         const val PROBE_TIMEOUT_MS = 3_000L
+
+        /**
+         * CE (#860): how long a trickplay sheet may take to start and between its bytes; the whole
+         * request may take twice this. 30 s: three times the default socket timeout, and still
+         * within a scrub that lingers. Much later, the user has let go.
+         */
+        const val TRICKPLAY_SHEET_TIMEOUT_MS = 30_000L
         private const val HTTP_SERVER_ERROR = 500
 
         @Volatile private var INSTANCE: JellyfinApi? = null

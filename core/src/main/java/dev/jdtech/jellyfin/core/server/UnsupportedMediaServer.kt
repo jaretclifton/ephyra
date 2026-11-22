@@ -146,8 +146,12 @@ internal class UnsupportedMediaServer(private val storedType: String) : MediaSer
 
             override suspend fun segments(itemId: ItemId): List<FindroidSegment> = unsupported()
 
-            override suspend fun trickplayTile(itemId: ItemId, width: Int, index: Int): ByteArray? =
-                unsupported()
+            override suspend fun trickplayTile(
+                itemId: ItemId,
+                width: Int,
+                index: Int,
+                mediaSourceId: MediaSourceId?,
+            ): ByteArray? = unsupported()
 
             override fun chapterImageUrl(itemId: ItemId, chapterIndex: Int, tag: String): String? =
                 null

@@ -48,17 +48,7 @@ internal suspend fun BaseItemDto.toFindroidEpisode(
             playCount = userData?.playCount ?: 0,
             images = toFindroidImages(context.baseUrl),
             chapters = toFindroidChapters(),
-            trickplayInfo =
-                trickplay
-                    ?.mapNotNull { (width, info) ->
-                        info
-                            ?.keys
-                            ?.maxOrNull()
-                            ?.let { info[it] }
-                            ?.toFindroidTrickplayInfo()
-                            ?.let { width to it }
-                    }
-                    ?.toMap(),
+            trickplayInfo = toFindroidTrickplayInfo(),
         )
     } catch (_: NullPointerException) {
         null

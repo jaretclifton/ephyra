@@ -521,11 +521,20 @@ class FakeMediaServer(
                 if (capabilities.mediaSegments) library.segments[itemId].orEmpty() else emptyList()
             }
 
-        override suspend fun trickplayTile(itemId: ItemId, width: Int, index: Int): ByteArray? =
+        override suspend fun trickplayTile(
+            itemId: ItemId,
+            width: Int,
+            index: Int,
+            mediaSourceId: MediaSourceId?,
+        ): ByteArray? =
             call("trickplayTile") {
                 val item = stored(itemId) ?: notFound()
                 val info = (item as? dev.jdtech.jellyfin.models.FindroidSources)?.trickplayInfo
-                val has = info?.values?.any { it.width == width } == true
+                // #860: a version has the images of its own entry; without one, any entry.
+                val entries =
+                    if (mediaSourceId == null) info?.values
+                    else listOfNotNull(info?.get(mediaSourceId))
+                val has = entries?.any { it.width == width } == true
                 if (capabilities.trickplay && has) TILE.copyOf() else null
             }
 

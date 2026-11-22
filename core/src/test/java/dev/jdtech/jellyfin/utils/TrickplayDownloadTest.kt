@@ -61,6 +61,9 @@ class TrickplayDownloadTest {
     /** The sheets the server was asked for. */
     private val requested = CopyOnWriteArrayList<Int>()
 
+    /** #860: the version each sheet was asked for. */
+    private val requestedVersions = CopyOnWriteArrayList<String?>()
+
     @Before
     fun setUp() {
         // The source row the trickplay row belongs to, inserted by the download before it.
@@ -92,6 +95,28 @@ class TrickplayDownloadTest {
         assertEquals(listOf(0, 1, 2), requested)
         assertEquals(listOf("0", "1", "2"), storedSheets())
         for (sheet in 0..2) assertEquals(sheet(sheet), readOffline(sheet))
+    }
+
+    @Test
+    fun `the sheets are asked for the version that is downloaded`() {
+        download(failing = emptySet())
+
+        assertEquals(listOf<String?>(SOURCE_ID, SOURCE_ID, SOURCE_ID), requestedVersions.toList())
+    }
+
+    @Test
+    fun `the offline preview of a version shows that version's sheets`() {
+        // #860: two versions of one item with sheets on the device. The folder listing used to
+        // decide whose sheets came back, whichever version was played.
+        for (version in listOf("version-a", "version-b")) {
+            File(context.filesDir, "trickplay/$itemId/$version").mkdirs()
+            File(context.filesDir, "trickplay/$itemId/$version/0").writeText("$version sheet 0")
+        }
+
+        assertEquals("version-a sheet 0", readOffline(0, "version-a"))
+        assertEquals("version-b sheet 0", readOffline(0, "version-b"))
+        // A version that is not downloaded has no sheets on the device: none of another's.
+        assertNull(readOffline(0, "version-c"))
     }
 
     @Test
@@ -149,6 +174,7 @@ class TrickplayDownloadTest {
                     "getTrickplayData" -> {
                         val index = args[2] as Int
                         requested.add(index)
+                        requestedVersions.add(args[3] as String?)
                         // A sheet that fails, or does not exist (the server answers 404), is null.
                         if (index in failing || index >= sheetsOnServer) null
                         else sheet(index).toByteArray()
@@ -175,8 +201,8 @@ class TrickplayDownloadTest {
             it.toInt()
         }
 
-    /** What the player gets for [index] of the downloaded item, with the server away. */
-    private fun readOffline(index: Int): String? {
+    /** What the player gets for [index] of [version] of the downloaded item, server away. */
+    private fun readOffline(index: Int, version: String? = null): String? {
         val away =
             Proxy.newProxyInstance(
                 MediaServer::class.java.classLoader,
@@ -193,7 +219,7 @@ class TrickplayDownloadTest {
                     context.getSharedPreferences("trickplay-download-test", Context.MODE_PRIVATE)
                 ),
             )
-        return runBlocking { repository.getTrickplayData(itemId, info.width, index) }
+        return runBlocking { repository.getTrickplayData(itemId, info.width, index, version) }
             ?.decodeToString()
     }
 
