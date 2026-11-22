@@ -646,15 +646,34 @@ constructor(
                     // DownloadsViewModel reacts to busy→idle by reloading the
                     // library — if we push first, that reload races the rename
                     // and the library tab comes up empty.
-                    val completedNow = updates.values.filter { it.state is EntryState.Completed }
-                    for (entry in completedNow) {
+                    val finished = updates.values.filter { it.state is EntryState.Completed }
+                    for (entry in finished) {
                         val dlId = entry.downloadId ?: continue
-                        try {
-                            downloader.finalizeDownload(dlId)
-                        } catch (e: Exception) {
-                            Timber.e(e, "finalizeDownload failed for ${entry.item.name} (id=$dlId)")
+                        val finalized =
+                            try {
+                                downloader.finalizeDownload(dlId)
+                            } catch (e: Exception) {
+                                Timber.e(e, "finalizeDownload threw for ${entry.item.name}")
+                                false
+                            }
+                        if (!finalized) {
+                            // CE (#848): the transfer is done but the file is not where the item
+                            // is played from, so it is not completed. The downloader keeps the
+                            // finished `.download` file and its row: Retry finalizes it again. A
+                            // local failure such as a full disk does not go away by itself, so no
+                            // auto-retry that could download a transcode again unasked.
+                            Timber.e("Failed to finalize ${entry.item.name} (id=$dlId)")
+                            updates[entry.id] =
+                                entry.copy(
+                                    state =
+                                        EntryState.Failed(
+                                            UiText.StringResource(CoreR.string.downloading_error)
+                                        )
+                                )
+                            permanentFailures.add(entry.id)
                         }
                     }
+                    val completedNow = updates.values.filter { it.state is EntryState.Completed }
                     // A failed entry keeps its partial .download file and source row so
                     // the next attempt (auto-retry or manual retry) can resume from where
                     // it left off via Range. We only clear the speed sample — no file/row cleanup.
