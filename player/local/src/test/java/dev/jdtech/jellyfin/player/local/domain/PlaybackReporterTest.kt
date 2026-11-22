@@ -235,6 +235,8 @@ class PlaybackReporterTest {
         s.reporter.updatePosition(0L, 600_000L)
         player.positionMs = 1_000L
         s.progress(player)
+        // The first one is waiting for the start, as the latest report, when the second is asked.
+        testScheduler.runCurrent()
         player.positionMs = 2_000L
         s.progress(player)
         advanceUntilIdle()
