@@ -1,6 +1,8 @@
 package dev.jdtech.jellyfin.player.local.domain
 
+import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
+import dev.jdtech.jellyfin.utils.LoadErrorText
 import java.util.UUID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -138,3 +140,9 @@ class StreamSwitches(
         }
     }
 }
+
+/**
+ * CE (#825): what the toast of a failed switch says. The reason in plain words, never the
+ * exception's own text (#377), which holds status lines, hosts and class names.
+ */
+fun switchFailureText(error: Throwable): UiText = LoadErrorText.reason(error)
