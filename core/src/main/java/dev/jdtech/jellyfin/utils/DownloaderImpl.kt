@@ -1003,12 +1003,14 @@ class DownloaderImpl(
                 if (renamedBeforeStop(source, downloadId)) {
                     // CE (#848): the app stopped between the rename of the finished file and the
                     // Room write. The file is complete: finish the finalize instead of resuming,
-                    // which would download it all again.
+                    // which would download it all again. Should the finalize fail, the row is kept
+                    // for the next start and never resumed: the `.download` file is gone.
                     try {
-                        if (finalizeSource(source)) continue
+                        finalizeSource(source)
                     } catch (e: Exception) {
                         Timber.e(e, "Failed to finalize the download at ${source.path}")
                     }
+                    continue
                 }
                 val item: FindroidItem? =
                     try {

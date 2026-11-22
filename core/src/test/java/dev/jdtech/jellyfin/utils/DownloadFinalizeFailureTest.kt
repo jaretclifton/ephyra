@@ -178,6 +178,25 @@ class DownloadFinalizeFailureTest {
     }
 
     @Test
+    fun `a download renamed when the app stopped is not resumed while its Room write fails`() {
+        val source = downloadingSource()
+        File(final(source)).writeBytes(VIDEO)
+        failRoomWrite = true
+
+        val active = runBlocking { downloader().getActiveDownloads() }
+
+        // Kept for the next start; nothing is downloaded again.
+        assertEquals(emptyList(), active.map { it.item.id })
+        assertEquals(source.path, sourceRow().path)
+        assertTrue(File(final(source)).readBytes().contentEquals(VIDEO))
+        assertEquals(emptyList(), requests)
+
+        failRoomWrite = false
+        runBlocking { downloader().getActiveDownloads() }
+        assertFinalized(source)
+    }
+
+    @Test
     fun `the orphan sweep finalizes a download renamed when the app stopped, if it runs first`() {
         val source = downloadingSource()
         File(final(source)).writeBytes(VIDEO)
