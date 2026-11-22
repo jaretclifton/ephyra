@@ -7,6 +7,7 @@ import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.UserId
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
@@ -42,13 +43,13 @@ interface SetupRepository {
 
     suspend fun getPublicUsers(serverId: String): List<User>
 
-    suspend fun updateUserImageTag(userId: UUID, tag: String?)
+    suspend fun updateUserImageTag(userId: UserId, tag: String?)
 
     suspend fun getCurrentUser(): User?
 
-    suspend fun deleteUser(userId: UUID)
+    suspend fun deleteUser(userId: UserId)
 
-    suspend fun setCurrentUser(userId: UUID)
+    suspend fun setCurrentUser(userId: UserId)
 
     /** CE (#299): no profile is open on the current server; the app goes to the user selection. */
     suspend fun clearCurrentUser()

@@ -12,6 +12,7 @@ import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.lang.reflect.Proxy
 import java.util.UUID
@@ -34,7 +35,7 @@ import org.robolectric.annotation.Config
 class AddSavedServerSessionTest {
     private val servers = mutableMapOf<String, Server>()
     private val addresses = mutableListOf<ServerAddress>()
-    private val users = mutableMapOf<UUID, User>()
+    private val users = mutableMapOf<UserId, User>()
 
     private val database =
         Proxy.newProxyInstance(

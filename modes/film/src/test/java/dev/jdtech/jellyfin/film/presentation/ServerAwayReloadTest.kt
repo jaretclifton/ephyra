@@ -7,11 +7,13 @@ import dev.jdtech.jellyfin.film.presentation.media.MediaViewModel
 import dev.jdtech.jellyfin.film.presentation.search.SearchAction
 import dev.jdtech.jellyfin.film.presentation.search.SearchViewModel
 import dev.jdtech.jellyfin.models.ServerCapabilities
+import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.ItemsResult
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.StoredLibraries
 import java.lang.reflect.Proxy
+import java.util.UUID
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
 import kotlin.test.assertEquals
@@ -664,6 +666,6 @@ class ServerAwayReloadTest {
         } as JellyfinRepository
 
     private companion object {
-        val USER_ID: java.util.UUID = java.util.UUID.randomUUID()
+        val USER_ID: UserId = java.util.UUID.randomUUID()
     }
 }

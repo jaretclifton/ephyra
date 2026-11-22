@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.film.presentation.search
 
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.models.ServerCapabilities
+import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.repository.ItemsResult
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import java.lang.reflect.Proxy
@@ -36,7 +37,7 @@ class SearchViewModelUserSwitchTest {
     private val bobResults = listOf(dummyMovie.copy(id = UUID.randomUUID(), name = "Bob's"))
 
     /** The user the client acts for. */
-    private var sessionUser: UUID = alice
+    private var sessionUser: UserId = alice
 
     /** Whether the server fails the search. */
     private var searchFails = false

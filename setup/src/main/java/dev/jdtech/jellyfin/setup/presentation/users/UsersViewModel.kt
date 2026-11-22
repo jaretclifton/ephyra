@@ -4,12 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.models.ProfileLockType
+import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.profilelock.ProfileLock
 import dev.jdtech.jellyfin.profilelock.ProfileLockEntry
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.presentation.pin.PinError
 import dev.jdtech.jellyfin.setup.presentation.pin.PinPrompt
-import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -77,14 +77,14 @@ constructor(private val repository: SetupRepository, private val profileLock: Pr
      *
      * @param userId The id of the user
      */
-    private fun deleteUser(userId: UUID) {
+    private fun deleteUser(userId: UserId) {
         viewModelScope.launch {
             repository.deleteUser(userId)
             loadUsers()
         }
     }
 
-    private fun loginAsUser(userId: UUID) {
+    private fun loginAsUser(userId: UserId) {
         viewModelScope.launch {
             // CE (#299): a profile with a PIN opens only after the PIN.
             if (profileLock.needsPinToSwitch(userId)) {
@@ -103,7 +103,7 @@ constructor(private val repository: SetupRepository, private val profileLock: Pr
         }
     }
 
-    private suspend fun switchTo(userId: UUID) {
+    private suspend fun switchTo(userId: UserId) {
         // Unlocked before it becomes current, so the start lock never shows for it.
         profileLock.unlock(userId)
         repository.setCurrentUser(userId)

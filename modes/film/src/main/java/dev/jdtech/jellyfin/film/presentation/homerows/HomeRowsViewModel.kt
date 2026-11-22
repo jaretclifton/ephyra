@@ -10,10 +10,10 @@ import dev.jdtech.jellyfin.film.domain.homerows.HomeRows
 import dev.jdtech.jellyfin.film.domain.homerows.HomeRowsProfile
 import dev.jdtech.jellyfin.film.domain.homerows.HomeRowsStore
 import dev.jdtech.jellyfin.film.domain.homerows.homeLibraries
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
-import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,7 +39,7 @@ constructor(
     val state = _state.asStateFlow()
 
     private var profile: HomeRowsProfile? = null
-    private var libraryNames: Map<UUID, String> = emptyMap()
+    private var libraryNames: Map<ItemId, String> = emptyMap()
 
     init {
         load()

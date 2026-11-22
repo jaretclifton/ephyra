@@ -10,8 +10,10 @@ import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidSeason
 import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.SeasonEpisodeCounts
 import dev.jdtech.jellyfin.models.ServerCapabilities
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.lang.reflect.Proxy
@@ -39,11 +41,11 @@ import org.junit.jupiter.api.Test
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ShowLoadingTest {
-    private val showId = UUID.fromString("11111111-1111-1111-1111-111111111111")
-    private val season1 = UUID.fromString("22222222-2222-2222-2222-222222222221")
-    private val season2 = UUID.fromString("22222222-2222-2222-2222-222222222222")
+    private val showId = "11111111-1111-1111-1111-111111111111".toItemId()
+    private val season1 = "22222222-2222-2222-2222-222222222221".toItemId()
+    private val season2 = "22222222-2222-2222-2222-222222222222".toItemId()
     private val calls = mutableListOf<String>()
-    private val episodeSeasonIds = mutableListOf<UUID?>()
+    private val episodeSeasonIds = mutableListOf<ItemId?>()
     private val episodeFields = mutableListOf<Set<EpisodeField>?>()
 
     /** What the server allows per season (#373). */
@@ -68,7 +70,7 @@ class ShowLoadingTest {
         val state =
             withTimeout(5_000) { viewModel.state.first { it.seasonDownloadInfo.isNotEmpty() } }
 
-        assertEquals(listOf<UUID?>(null), episodeSeasonIds)
+        assertEquals(listOf<ItemId?>(null), episodeSeasonIds)
         assertEquals(
             SeasonDownloadInfo(downloadedCount = 1, totalCount = 3, canDownload = true),
             state.seasonDownloadInfo[season1],
@@ -138,7 +140,7 @@ class ShowLoadingTest {
                 withTimeout(5_000) { viewModel.state.first { it.seasonDownloadInfo.isNotEmpty() } }
 
             assertEquals(false, state.canDownload)
-            assertEquals(emptyList<UUID>(), state.downloadableSeasons.map { it.id })
+            assertEquals(emptyList<ItemId>(), state.downloadableSeasons.map { it.id })
             assertTrue(state.hasDownloads)
             assertEquals(1, state.seasonDownloadInfo[season1]?.downloadedCount)
         }
@@ -223,7 +225,7 @@ class ShowLoadingTest {
                 "getEpisodes" -> {
                     @Suppress("UNCHECKED_CAST")
                     synchronized(calls) {
-                        episodeSeasonIds.add(args!![1] as UUID?)
+                        episodeSeasonIds.add(args!![1] as ItemId?)
                         episodeFields.add(args[2] as Set<EpisodeField>?)
                     }
                     if (episodesFail) throw IllegalStateException("No connection")
@@ -271,7 +273,7 @@ class ShowLoadingTest {
             images = FindroidImages(),
         )
 
-    private fun season(id: UUID, index: Int) =
+    private fun season(id: ItemId, index: Int) =
         FindroidSeason(
             id = id,
             name = "Season $index",
@@ -290,7 +292,7 @@ class ShowLoadingTest {
             images = FindroidImages(),
         )
 
-    private fun episode(seasonId: UUID, canDownload: Boolean = true) =
+    private fun episode(seasonId: ItemId, canDownload: Boolean = true) =
         FindroidEpisode(
             id = UUID.randomUUID(),
             name = "Episode",

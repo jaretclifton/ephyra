@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.film.presentation.home
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.repository.DataChangeEvents
@@ -423,6 +424,6 @@ class HomeViewModelUserSwitchTest {
 
     private companion object {
         const val SERVER_ID = "0123456789abcdef0123456789abcdef"
-        val aliceItemId: UUID = UUID.randomUUID()
+        val aliceItemId: ItemId = UUID.randomUUID()
     }
 }

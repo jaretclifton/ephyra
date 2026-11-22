@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.film.presentation.ServerAwayReload
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
-import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -40,7 +40,7 @@ class SearchViewModel @Inject constructor(private val repository: JellyfinReposi
     private val serverAwayReload = ServerAwayReload()
 
     /** CE (#866): the user the client acts for now. */
-    private fun sessionUser(): UUID? = runCatching { repository.getUserId() }.getOrNull()
+    private fun sessionUser(): UserId? = runCatching { repository.getUserId() }.getOrNull()
 
     /**
      * CE (#775): the server went away or came back. With the server away the search looks in the

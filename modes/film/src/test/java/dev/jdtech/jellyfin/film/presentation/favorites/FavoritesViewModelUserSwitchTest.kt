@@ -6,6 +6,7 @@ import dev.jdtech.jellyfin.models.CollectionSection
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.ItemsResult
 import dev.jdtech.jellyfin.repository.JellyfinRepository
@@ -39,7 +40,7 @@ class FavoritesViewModelUserSwitchTest {
     private val bobFavorites = listOf(movie("Bob's movie"))
 
     /** The user the client acts for. */
-    private var sessionUser: UUID? = alice
+    private var sessionUser: UserId? = alice
 
     /** Whether the server fails the favourites request. */
     private var favoritesFail = false

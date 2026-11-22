@@ -9,10 +9,10 @@ import dev.jdtech.jellyfin.models.CollectionSection
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.repository.JellyfinRepository
-import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +26,7 @@ class CollectionViewModel @Inject constructor(private val repository: JellyfinRe
     private val _state = MutableStateFlow(CollectionState())
     val state = _state.asStateFlow()
 
-    fun loadItems(parentId: UUID) {
+    fun loadItems(parentId: ItemId) {
         viewModelScope.launch {
             _state.emit(_state.value.copy(isLoading = true, error = null))
 

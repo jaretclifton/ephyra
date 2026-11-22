@@ -1,6 +1,6 @@
 package dev.jdtech.jellyfin.film.presentation.episode
 
-import java.util.UUID
+import dev.jdtech.jellyfin.models.ItemId
 
 sealed interface EpisodeAction {
     data class Play(val startFromBeginning: Boolean = false, val mediaSourceId: String? = null) :
@@ -20,12 +20,12 @@ sealed interface EpisodeAction {
 
     data object OnHomeClick : EpisodeAction
 
-    data class NavigateToPerson(val personId: UUID) : EpisodeAction
+    data class NavigateToPerson(val personId: ItemId) : EpisodeAction
 
-    data class NavigateToSeason(val seasonId: UUID, val seriesId: UUID) : EpisodeAction
+    data class NavigateToSeason(val seasonId: ItemId, val seriesId: ItemId) : EpisodeAction
 
     /** CE (#395): the show's page, from the show button in the episode page's top bar. */
-    data class NavigateToSeries(val seriesId: UUID) : EpisodeAction
+    data class NavigateToSeries(val seriesId: ItemId) : EpisodeAction
 
     /** CE (#332): opens the episode on IMDb and the like. */
     data class OpenExternalLink(val url: String) : EpisodeAction

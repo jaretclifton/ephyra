@@ -2,8 +2,8 @@ package dev.jdtech.jellyfin.film.presentation
 
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.models.FindroidEpisode
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.isDownloaded
-import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,7 +28,7 @@ data class EpisodeDownloadChoice(val allCount: Int, val unwatchedCount: Int)
  */
 internal fun selectEpisodesToDownload(
     episodes: List<FindroidEpisode>,
-    inFlightIds: Set<UUID>,
+    inFlightIds: Set<ItemId>,
     unwatchedOnly: Boolean = false,
 ): EpisodeDownloadSelection {
     val toQueue = mutableListOf<FindroidEpisode>()
@@ -49,7 +49,7 @@ internal fun selectEpisodesToDownload(
  */
 internal fun downloadChoiceFor(
     episodes: List<FindroidEpisode>,
-    inFlightIds: Set<UUID>,
+    inFlightIds: Set<ItemId>,
 ): EpisodeDownloadChoice? {
     val all = selectEpisodesToDownload(episodes, inFlightIds).toQueue.size
     val unwatched =
@@ -63,7 +63,7 @@ internal fun downloadChoiceFor(
  * skipped rather than queuing them again: enqueueAll dedupes too, but without this the "Started N
  * downloads" toast would overstate the count.
  */
-internal fun DownloadQueue.inFlightIds(): Set<UUID> =
+internal fun DownloadQueue.inFlightIds(): Set<ItemId> =
     entries.value
         .filter {
             it.state is DownloadQueue.EntryState.Pending ||
@@ -106,7 +106,7 @@ internal class EpisodeDownloadPrompts {
      * (one whose episodes were still loading) is ignored, so the question on screen never changes
      * under the user's answer.
      */
-    fun start(episodes: List<FindroidEpisode>, inFlightIds: Set<UUID>) {
+    fun start(episodes: List<FindroidEpisode>, inFlightIds: Set<ItemId>) {
         if (_prompt.value != null) return
         this.episodes = episodes
         unwatchedOnly = false

@@ -5,6 +5,7 @@ import dev.jdtech.jellyfin.models.ProfileLockType
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.profilelock.ProfileLock
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.presentation.pin.PinError
@@ -324,9 +325,9 @@ class ProfilePinSwitchTest {
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
             when (method.name) {
-                "getUser" -> users[args[0] as UUID]
+                "getUser" -> users[args[0] as UserId]
                 "updateUserPin" -> {
-                    val id = args[0] as UUID
+                    val id = args[0] as UserId
                     users[id]?.let {
                         users[id] =
                             it.copy(
@@ -338,7 +339,7 @@ class ProfilePinSwitchTest {
                     Unit
                 }
                 "updateUserPattern" -> {
-                    val id = args[0] as UUID
+                    val id = args[0] as UserId
                     users[id]?.let {
                         users[id] =
                             it.copy(
@@ -350,7 +351,7 @@ class ProfilePinSwitchTest {
                     Unit
                 }
                 "updateUserPinOnStart" -> {
-                    val id = args[0] as UUID
+                    val id = args[0] as UserId
                     users[id]?.let { users[id] = it.copy(pinOnStart = args[1] as Boolean) }
                     Unit
                 }
@@ -371,7 +372,7 @@ class ProfilePinSwitchTest {
                 "getPublicUsers" -> emptyList<User>()
                 "getCurrentUser" -> server.currentUserId?.let { users[it] }
                 "setCurrentUser" -> {
-                    server.currentUserId = args[0] as UUID
+                    server.currentUserId = args[0] as UserId
                     Unit
                 }
                 "clearCurrentUser" -> {

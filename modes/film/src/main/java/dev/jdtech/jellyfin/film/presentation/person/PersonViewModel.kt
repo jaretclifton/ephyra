@@ -5,9 +5,9 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.repository.JellyfinRepository
-import java.util.UUID
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.async
@@ -22,7 +22,7 @@ class PersonViewModel @Inject internal constructor(private val repository: Jelly
     private val _state = MutableStateFlow(PersonState())
     val state = _state.asStateFlow()
 
-    fun loadPerson(personId: UUID) {
+    fun loadPerson(personId: ItemId) {
         viewModelScope.launch {
             _state.emit(_state.value.copy(isLoading = true, error = null))
             try {

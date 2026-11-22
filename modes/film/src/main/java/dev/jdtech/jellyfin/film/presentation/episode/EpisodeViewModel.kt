@@ -8,13 +8,13 @@ import dev.jdtech.jellyfin.film.presentation.detailSections
 import dev.jdtech.jellyfin.film.presentation.shownIn
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidItemPerson
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.PersonKind
 import dev.jdtech.jellyfin.models.mergeDuplicateRoles
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.ReloadPolicy
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -40,17 +40,17 @@ constructor(
     private val _state = MutableStateFlow(EpisodeState())
     val state = _state.asStateFlow()
 
-    private lateinit var episodeId: UUID
+    private lateinit var episodeId: ItemId
     private val reloadPolicy = ReloadPolicy(dataChanges)
     private var loadJob: Job? = null
 
     /** Whether coming back to the screen needs a load (#251), see [ReloadPolicy]. */
-    fun shouldReload(episodeId: UUID, stopEventFollows: Boolean = false): Boolean =
+    fun shouldReload(episodeId: ItemId, stopEventFollows: Boolean = false): Boolean =
         !::episodeId.isInitialized ||
             this.episodeId != episodeId ||
             reloadPolicy.shouldReload(stopEventFollows)
 
-    fun loadEpisode(episodeId: UUID) {
+    fun loadEpisode(episodeId: ItemId) {
         this.episodeId = episodeId
         loadJob?.cancel()
         loadJob = viewModelScope.launch {

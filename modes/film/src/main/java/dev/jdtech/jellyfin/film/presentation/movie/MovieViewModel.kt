@@ -13,13 +13,13 @@ import dev.jdtech.jellyfin.film.presentation.shownIn
 import dev.jdtech.jellyfin.film.presentation.within
 import dev.jdtech.jellyfin.models.FindroidItemPerson
 import dev.jdtech.jellyfin.models.FindroidMovie
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.PersonKind
 import dev.jdtech.jellyfin.models.mergeDuplicateRoles
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.ReloadPolicy
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -45,20 +45,20 @@ constructor(
     private val _state = MutableStateFlow(MovieState())
     val state = _state.asStateFlow()
 
-    private lateinit var movieId: UUID
+    private lateinit var movieId: ItemId
     private val reloadPolicy = ReloadPolicy(dataChanges)
     private var loadJob: Job? = null
     private var relatedJob: Job? = null
-    private var relatedFor: UUID? = null
+    private var relatedFor: ItemId? = null
     private var relatedRequest: RelatedItemsRequest? = null
 
     /** Whether coming back to the screen needs a load (#251), see [ReloadPolicy]. */
-    fun shouldReload(movieId: UUID, stopEventFollows: Boolean = false): Boolean =
+    fun shouldReload(movieId: ItemId, stopEventFollows: Boolean = false): Boolean =
         !::movieId.isInitialized ||
             this.movieId != movieId ||
             reloadPolicy.shouldReload(stopEventFollows)
 
-    fun loadMovie(movieId: UUID) {
+    fun loadMovie(movieId: ItemId) {
         this.movieId = movieId
         if (relatedFor != null && relatedFor != movieId) {
             relatedJob?.cancel()
@@ -119,7 +119,7 @@ constructor(
      * page calls this once it has drawn the movie, so these requests never delay it; they are made
      * once per movie, not again on every return to the page.
      */
-    fun loadRelated(movieId: UUID) {
+    fun loadRelated(movieId: ItemId) {
         val movie = _state.value.movie?.takeIf { it.id == movieId } ?: return
         val request =
             RelatedItemsRequest.forItem(

@@ -12,10 +12,10 @@ import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.ReloadPolicy
-import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -62,13 +62,13 @@ internal constructor(
      * CE (#866): the user the last load started for. Favorites stays on its stack across a user
      * switch, and [ReloadPolicy] knows nothing of who the list is for.
      */
-    private var loadingFor: UUID? = null
+    private var loadingFor: UserId? = null
 
     /** CE (#866): the user the client acts for now. */
-    private fun sessionUser(): UUID? = runCatching { repository.getUserId() }.getOrNull()
+    private fun sessionUser(): UserId? = runCatching { repository.getUserId() }.getOrNull()
 
     /** CE (#866): whether the list on screen, or the load running, is for another user. */
-    private fun switchedTo(user: UUID?): Boolean =
+    private fun switchedTo(user: UserId?): Boolean =
         user != null && loadingFor != null && loadingFor != user
 
     /**
@@ -115,7 +115,7 @@ internal constructor(
         return load(user).also { loadJob = it }
     }
 
-    private fun load(user: UUID?): Job = viewModelScope.launch {
+    private fun load(user: UserId?): Job = viewModelScope.launch {
         val token = reloadPolicy.begin()
         // With content on screen the refresh happens quietly (#251).
         val hasContent = _state.value.sections.isNotEmpty()

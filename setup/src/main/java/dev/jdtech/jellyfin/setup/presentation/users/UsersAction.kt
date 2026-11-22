@@ -1,13 +1,13 @@
 package dev.jdtech.jellyfin.setup.presentation.users
 
-import java.util.UUID
+import dev.jdtech.jellyfin.models.UserId
 
 sealed interface UsersAction {
-    data class OnUserClick(val userId: UUID) : UsersAction
+    data class OnUserClick(val userId: UserId) : UsersAction
 
     data class OnPublicUserClick(val username: String) : UsersAction
 
-    data class OnDeleteUser(val userId: UUID) : UsersAction
+    data class OnDeleteUser(val userId: UserId) : UsersAction
 
     data object OnChangeServerClick : UsersAction
 

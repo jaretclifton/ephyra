@@ -9,10 +9,10 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidSeason
 import dev.jdtech.jellyfin.models.ServerCapabilities
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.lang.reflect.Proxy
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -33,8 +33,8 @@ import org.junit.jupiter.api.Test
 /** CE (#505): the season page can tell a season without episodes from one that is still loading. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SeasonLoadingTest {
-    private val seriesId = UUID.fromString("11111111-1111-1111-1111-111111111111")
-    private val seasonId = UUID.fromString("22222222-2222-2222-2222-222222222223")
+    private val seriesId = "11111111-1111-1111-1111-111111111111".toItemId()
+    private val seasonId = "22222222-2222-2222-2222-222222222223".toItemId()
 
     private var episodesFail = false
     private var storedEpisodes = emptyList<Any>()

@@ -3,7 +3,7 @@ package dev.jdtech.jellyfin.film.presentation.home
 import dev.jdtech.jellyfin.models.HomeItem
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.User
-import java.util.UUID
+import dev.jdtech.jellyfin.models.UserId
 
 data class HomeState(
     val server: Server? = null,
@@ -35,7 +35,7 @@ data class HomeState(
      * the rows and avatar are the previous user's, so none of them shows, only the server and an
      * empty, loading Home. Null [userId] (no session at hand, as in previews) shows everything.
      */
-    fun shownTo(userId: UUID?): HomeState =
+    fun shownTo(userId: UserId?): HomeState =
         if (userId == null || user == null || user.id == userId) {
             this
         } else {

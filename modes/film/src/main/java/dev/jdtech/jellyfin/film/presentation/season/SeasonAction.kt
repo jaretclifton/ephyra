@@ -1,7 +1,7 @@
 package dev.jdtech.jellyfin.film.presentation.season
 
 import dev.jdtech.jellyfin.models.FindroidItem
-import java.util.UUID
+import dev.jdtech.jellyfin.models.ItemId
 
 sealed interface SeasonAction {
     data class Play(val startFromBeginning: Boolean = false) : SeasonAction
@@ -25,7 +25,7 @@ sealed interface SeasonAction {
 
     data class NavigateToItem(val item: FindroidItem) : SeasonAction
 
-    data class NavigateToSeries(val seriesId: UUID) : SeasonAction
+    data class NavigateToSeries(val seriesId: ItemId) : SeasonAction
 
     /** [maxBitrate] = download quality cap in bits/sec, null for original quality. */
     data class DownloadEpisode(val episode: FindroidItem, val maxBitrate: Int? = null) :

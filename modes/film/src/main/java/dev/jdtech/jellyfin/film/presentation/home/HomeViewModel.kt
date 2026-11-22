@@ -16,15 +16,18 @@ import dev.jdtech.jellyfin.models.FindroidCollection
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.HomeItem
 import dev.jdtech.jellyfin.models.HomeSection
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.ReloadPolicy
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.toView
-import java.util.UUID
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -66,9 +69,9 @@ constructor(
     private val uiTextNextUp = UiText.StringResource(FilmR.string.next_up)
 
     companion object {
-        private val UUID_SUGGESTIONS = UUID.fromString("31e47044-9b79-4bb0-99d0-0e477ed65420")
-        private val UUID_CONTINUE_WATCHING = UUID.fromString("44845958-8326-4e83-beb4-c4f42e9eeb95")
-        private val UUID_NEXT_UP = UUID.fromString("18bfced5-f237-4d42-aa72-d9d7fed19279")
+        private val UUID_SUGGESTIONS = "31e47044-9b79-4bb0-99d0-0e477ed65420".toItemId()
+        private val UUID_CONTINUE_WATCHING = "44845958-8326-4e83-beb4-c4f42e9eeb95".toItemId()
+        private val UUID_NEXT_UP = "18bfced5-f237-4d42-aa72-d9d7fed19279".toItemId()
 
         /** CE (#810): see [clientActsFor]. */
         private const val CLIENT_SWITCH_WAIT_MS = 3_000L
@@ -84,7 +87,7 @@ constructor(
      * switch overtook cannot pair one user's list with another user's key.
      */
     @Volatile
-    private var cachedLibraries: Pair<Pair<String?, UUID?>, List<FindroidCollection>>? = null
+    private var cachedLibraries: Pair<Pair<String?, UserId?>, List<FindroidCollection>>? = null
     private var cacheChecked = false
 
     /**
@@ -104,7 +107,7 @@ constructor(
     private var switchLoad: Job? = null
 
     /** CE (#810): the server and user [followCurrentUser] saw last. Main thread only. */
-    private var followedUser: Pair<String?, UUID?>? = null
+    private var followedUser: Pair<String?, UserId?>? = null
 
     init {
         syncPreferences()
@@ -232,7 +235,7 @@ constructor(
      * CE (#810): waits, a few seconds at most, until the client acts for [userId]. False when it
      * does not by then (signed out in the meantime, or switched to someone else).
      */
-    private suspend fun clientActsFor(userId: UUID): Boolean =
+    private suspend fun clientActsFor(userId: UserId): Boolean =
         withTimeoutOrNull(CLIENT_SWITCH_WAIT_MS) {
             while (runCatching { repository.getUserId() }.getOrNull() != userId) {
                 delay(CLIENT_SWITCH_POLL_MS)
@@ -355,7 +358,7 @@ constructor(
      * Cold start (#251): the rows of the last full load, on screen before the network answers. Only
      * when nothing is on screen yet; the load that follows replaces them.
      */
-    private suspend fun showCachedRows(serverId: String, userId: UUID?) {
+    private suspend fun showCachedRows(serverId: String, userId: UserId?) {
         val cache = homeCache ?: return
         if (userId == null || cacheChecked || !_state.value.isEmpty) return
         cacheChecked = true
@@ -557,7 +560,7 @@ constructor(
                 .mapIndexed { i, view ->
                     async {
                         val result =
-                            logFailure("library ${view.id}") {
+                            logFailure("library ${view.id.asString()}") {
                                 repository.getLatestMedia(view.id, view.type.latestItemTypes)
                             }
                         synchronized(results) {
@@ -575,7 +578,7 @@ constructor(
     }
 
     /** The backdrop of a season, for the hero of an episode. Null when no server is set. */
-    fun seasonBackdropUrl(seasonId: UUID): String? = repository.seasonBackdropUrl(seasonId)
+    fun seasonBackdropUrl(seasonId: ItemId): String? = repository.seasonBackdropUrl(seasonId)
 
     fun onAction(action: HomeAction) {
         when (action) {

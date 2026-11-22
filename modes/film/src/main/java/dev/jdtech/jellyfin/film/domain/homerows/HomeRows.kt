@@ -1,6 +1,8 @@
 package dev.jdtech.jellyfin.film.domain.homerows
 
-import java.util.UUID
+import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toItemId
 
 /** CE (#142): the rows Home can show. [id] is what gets stored, so it never changes. */
 enum class HomeRowType(val id: String) {
@@ -13,15 +15,15 @@ enum class HomeRowType(val id: String) {
 /** One row on Home. Latest has a row per library, told apart by [libraryId]. */
 data class HomeRowConfig(
     val type: HomeRowType,
-    val libraryId: UUID? = null,
+    val libraryId: ItemId? = null,
     val visible: Boolean = true,
 ) {
     val key: String
         get() = homeRowKey(type, libraryId)
 }
 
-fun homeRowKey(type: HomeRowType, libraryId: UUID? = null): String =
-    if (libraryId == null) type.id else "${type.id}:$libraryId"
+fun homeRowKey(type: HomeRowType, libraryId: ItemId? = null): String =
+    if (libraryId == null) type.id else "${type.id}:${libraryId.asString()}"
 
 /** The switches Home had before #142. They set the layout of anyone who hasn't changed it yet. */
 data class LegacyHomeSwitches(
@@ -39,7 +41,7 @@ data class LegacyHomeSwitches(
  */
 object HomeRows {
     /** The order Home had before #142. */
-    fun defaults(legacy: LegacyHomeSwitches, libraries: List<UUID>): List<HomeRowConfig> =
+    fun defaults(legacy: LegacyHomeSwitches, libraries: List<ItemId>): List<HomeRowConfig> =
         buildList {
             add(HomeRowConfig(HomeRowType.SUGGESTIONS, visible = legacy.suggestions))
             add(HomeRowConfig(HomeRowType.CONTINUE_WATCHING, visible = legacy.continueWatching))
@@ -54,7 +56,7 @@ object HomeRows {
      */
     fun resolve(
         stored: List<HomeRowConfig>?,
-        libraries: List<UUID>?,
+        libraries: List<ItemId>?,
         legacy: LegacyHomeSwitches,
     ): List<HomeRowConfig> {
         if (stored == null) return defaults(legacy, libraries.orEmpty())
@@ -100,7 +102,9 @@ object HomeRows {
 
     /** One row per entry, `type,libraryId,1`, entries split by `;`. Ids hold neither. */
     fun encode(rows: List<HomeRowConfig>): String =
-        rows.joinToString(";") { "${it.type.id},${it.libraryId ?: ""},${if (it.visible) 1 else 0}" }
+        rows.joinToString(";") {
+            "${it.type.id},${it.libraryId?.asString() ?: ""},${if (it.visible) 1 else 0}"
+        }
 
     /** Null for nothing stored. Entries it can't read are skipped. */
     fun decode(value: String?): List<HomeRowConfig>? {
@@ -112,7 +116,7 @@ object HomeRows {
                 HomeRowType.entries.firstOrNull { it.id == parts[0] } ?: return@mapNotNull null
             val libraryId =
                 if (parts[1].isEmpty()) null
-                else runCatching { UUID.fromString(parts[1]) }.getOrNull() ?: return@mapNotNull null
+                else runCatching { parts[1].toItemId() }.getOrNull() ?: return@mapNotNull null
             if ((type == HomeRowType.LATEST) != (libraryId != null)) return@mapNotNull null
             HomeRowConfig(type, libraryId, parts[2] == "1")
         }

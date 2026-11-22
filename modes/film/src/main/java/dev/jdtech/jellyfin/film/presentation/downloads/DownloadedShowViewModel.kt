@@ -7,13 +7,13 @@ import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
 import dev.jdtech.jellyfin.models.toFindroidEpisode
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
 import java.io.File
-import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,7 +35,7 @@ constructor(
     private val _state = MutableStateFlow(DownloadedShowState())
     val state = _state.asStateFlow()
 
-    fun loadEpisodes(showId: UUID) {
+    fun loadEpisodes(showId: ItemId) {
         viewModelScope.launch {
             val (episodes, sizes) =
                 withContext(Dispatchers.IO) {
@@ -83,7 +83,7 @@ constructor(
         }
     }
 
-    fun deleteEpisodes(showId: UUID, episodes: List<FindroidEpisode>) {
+    fun deleteEpisodes(showId: ItemId, episodes: List<FindroidEpisode>) {
         downloadDeletionScope.launch {
             for (episode in episodes) {
                 downloadQueue.remove(episode.id)

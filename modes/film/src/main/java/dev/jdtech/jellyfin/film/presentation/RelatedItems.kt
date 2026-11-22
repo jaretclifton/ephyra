@@ -2,9 +2,9 @@ package dev.jdtech.jellyfin.film.presentation
 
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.repository.JellyfinRepository
-import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -72,7 +72,7 @@ fun RelatedItems.keeping(request: RelatedItemsRequest) =
  */
 fun CoroutineScope.launchRelatedItems(
     repository: JellyfinRepository,
-    itemId: UUID,
+    itemId: ItemId,
     request: RelatedItemsRequest,
     update: ((RelatedItems) -> RelatedItems) -> Unit,
 ): Job = launch {
