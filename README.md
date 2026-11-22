@@ -6,6 +6,8 @@
   <a href="https://github.com/midasvo/ephyra/releases/latest"><img src="https://img.shields.io/github/v/release/midasvo/ephyra?label=release&color=4FD8F0" alt="Latest release"></a>
   <a href="https://github.com/midasvo/ephyra/releases"><img src="https://img.shields.io/github/downloads/midasvo/ephyra/total?label=downloads&color=4FD8F0" alt="Total downloads"></a>
   <a href="https://github.com/midasvo/ephyra/issues"><img src="https://img.shields.io/github/issues/midasvo/ephyra?color=4FD8F0" alt="Open issues"></a>
+  <a href="https://github.com/midasvo/ephyra/issues?q=is%3Aissue%20state%3Aclosed"><img src="https://img.shields.io/github/issues-closed/midasvo/ephyra?color=4FD8F0" alt="Closed issues"></a>
+  <a href="https://github.com/midasvo/ephyra/pulls?q=is%3Apr%20is%3Aclosed"><img src="https://img.shields.io/github/issues-pr-closed/midasvo/ephyra?color=4FD8F0" alt="Closed pull requests"></a>
 </p>
 <p align="center">
   <a href="https://jellyfin.org/"><img src="https://img.shields.io/badge/Jellyfin-12.0%2B-B9A3FF" alt="Jellyfin 12.0 or newer"></a>
