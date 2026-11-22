@@ -2,12 +2,14 @@ package dev.jdtech.jellyfin.server.jellyfin.mappers
 
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.getLocalSourcesForItems
 import java.util.UUID
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.BaseItemKind
 
-/** For lists: [localSources] comes from one [getLocalSourcesForItems] call for all items. */
+/**
+ * For lists: [localSources] comes from one `getLocalSourcesForItems` call (in `data`) for all
+ * items.
+ */
 internal suspend fun BaseItemDto.toFindroidItem(
     context: MapperContext,
     localSources: Map<UUID, List<FindroidSource>>,

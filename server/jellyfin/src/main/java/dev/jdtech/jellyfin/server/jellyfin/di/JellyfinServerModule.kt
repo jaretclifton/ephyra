@@ -1,0 +1,115 @@
+package dev.jdtech.jellyfin.server.jellyfin.di
+
+import android.app.Application
+import android.content.Context
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
+import dev.jdtech.jellyfin.api.JellyfinApi
+import dev.jdtech.jellyfin.domain.ports.DeviceCodecs
+import dev.jdtech.jellyfin.domain.ports.DeviceReportSource
+import dev.jdtech.jellyfin.domain.ports.MediaHttpClient
+import dev.jdtech.jellyfin.domain.ports.MediaServer
+import dev.jdtech.jellyfin.domain.ports.ServerConnector
+import dev.jdtech.jellyfin.domain.ports.ServerSession
+import dev.jdtech.jellyfin.domain.ports.SessionRestorer
+import dev.jdtech.jellyfin.domain.ports.UserDataSyncPorts
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinCatalog
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceReportSource
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinPlayback
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinServerConnector
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinServerSession
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinUserData
+import dev.jdtech.jellyfin.server.jellyfin.JellyfinUserDataSyncPorts
+import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import javax.inject.Singleton
+
+/**
+ * #758: what the Jellyfin adapter provides, all over the app's one client. The apps, the only
+ * modules that depend on the adapter, are the composition root; `core` provides what this takes
+ * from outside: the [SessionRestorer] (it knows Room) and the probed [DeviceCodecs].
+ */
+@Module
+@InstallIn(SingletonComponent::class)
+object JellyfinServerModule {
+    /**
+     * CE (#250, #763): signed in before anything uses the client. Every other provider here takes
+     * the client from this one, so none of them, [ServerSession] and [MediaServer] included, gets
+     * it before the saved session is on it.
+     */
+    @Singleton
+    @Provides
+    fun provideJellyfinApi(
+        @ApplicationContext application: Context,
+        appPreferences: AppPreferences,
+        sessionRestorer: SessionRestorer,
+    ): JellyfinApi {
+        val jellyfinApi =
+            JellyfinApi.getInstance(
+                context = application,
+                requestTimeout = appPreferences.getValue(appPreferences.requestTimeout),
+                connectTimeout = appPreferences.getValue(appPreferences.connectTimeout),
+                socketTimeout = appPreferences.getValue(appPreferences.socketTimeout),
+            )
+
+        sessionRestorer.restore(JellyfinServerSession(jellyfinApi))
+
+        return jellyfinApi
+    }
+
+    /** #748: the base URL and the user id for code outside the adapter. */
+    @Singleton
+    @Provides
+    fun provideServerSession(jellyfinApi: JellyfinApi): ServerSession =
+        JellyfinServerSession(jellyfinApi)
+
+    /** #761: finding a server and logging in, for the onboarding screens. */
+    @Singleton
+    @Provides
+    fun provideServerConnector(jellyfinApi: JellyfinApi): ServerConnector =
+        JellyfinServerConnector(jellyfinApi)
+
+    /** #762: the server's user data for any saved user, for the sync. */
+    @Singleton
+    @Provides
+    fun provideUserDataSyncPorts(jellyfinApi: JellyfinApi): UserDataSyncPorts =
+        JellyfinUserDataSyncPorts(jellyfinApi)
+
+    /** The API's own client, so the player shares its connection pool (#296, #750). */
+    @Provides
+    fun provideMediaHttpClient(jellyfinApi: JellyfinApi): MediaHttpClient = MediaHttpClient {
+        jellyfinApi.httpClient
+    }
+
+    /** CE (#752): the Jellyfin device profile for each playback target. */
+    @Singleton
+    @Provides
+    fun provideJellyfinDeviceProfiles(codecs: DeviceCodecs): JellyfinDeviceProfiles =
+        JellyfinDeviceProfiles(codecs)
+
+    @Provides
+    fun provideDeviceReportSource(
+        application: Application,
+        codecs: DeviceCodecs,
+        profiles: JellyfinDeviceProfiles,
+    ): DeviceReportSource = JellyfinDeviceReportSource(application, codecs, profiles)
+
+    /** CE (#756, #757): the Jellyfin server the repository talks to, with its ports. */
+    @Singleton
+    @Provides
+    fun provideMediaServer(
+        jellyfinApi: JellyfinApi,
+        session: ServerSession,
+        deviceProfiles: JellyfinDeviceProfiles,
+    ): MediaServer =
+        JellyfinMediaServer(
+            session = session,
+            catalog = JellyfinCatalog(jellyfinApi),
+            userData = JellyfinUserData(jellyfinApi),
+            playback = JellyfinPlayback(jellyfinApi, deviceProfiles),
+        )
+}

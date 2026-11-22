@@ -5,15 +5,11 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.reachability.ServerReachability
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.domain.ports.CatalogPort
 import dev.jdtech.jellyfin.domain.ports.DeviceCodecs
-import dev.jdtech.jellyfin.domain.ports.DeviceReportSource
 import dev.jdtech.jellyfin.domain.ports.MediaServer
-import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.models.CollectionType
 import dev.jdtech.jellyfin.player.DeviceCodecProbe
 import dev.jdtech.jellyfin.repository.DataChangeEvents
@@ -21,12 +17,6 @@ import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.JellyfinRepositoryImpl
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.repository.StoredLibraryNames
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinCatalog
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceReportSource
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinPlayback
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinUserData
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.work.UserDataSync
 import javax.inject.Singleton
@@ -39,19 +29,6 @@ object RepositoryModule {
     @Provides
     fun provideDeviceCodecs(application: Application): DeviceCodecs = DeviceCodecProbe(application)
 
-    /** CE (#752): the Jellyfin device profile for each playback target. */
-    @Singleton
-    @Provides
-    fun provideJellyfinDeviceProfiles(codecs: DeviceCodecs): JellyfinDeviceProfiles =
-        JellyfinDeviceProfiles(codecs)
-
-    @Provides
-    fun provideDeviceReportSource(
-        application: Application,
-        codecs: DeviceCodecs,
-        profiles: JellyfinDeviceProfiles,
-    ): DeviceReportSource = JellyfinDeviceReportSource(application, codecs, profiles)
-
     @Singleton @Provides fun provideDataChangeEvents(): DataChangeEvents = DataChangeEvents()
 
     @Singleton
@@ -59,27 +36,10 @@ object RepositoryModule {
     fun providePlaybackEvents(dataChanges: DataChangeEvents): PlaybackEvents =
         PlaybackEvents(dataChanges)
 
-    /** CE (#756): the catalog reads of the Jellyfin server, without Room. */
-    @Singleton
-    @Provides
-    fun provideCatalogPort(jellyfinApi: JellyfinApi): CatalogPort = JellyfinCatalog(jellyfinApi)
-
-    /** CE (#757): the Jellyfin server the repository talks to, with its ports. */
-    @Singleton
-    @Provides
-    fun provideMediaServer(
-        jellyfinApi: JellyfinApi,
-        session: ServerSession,
-        catalog: CatalogPort,
-        deviceProfiles: JellyfinDeviceProfiles,
-    ): MediaServer =
-        JellyfinMediaServer(
-            session = session,
-            catalog = catalog,
-            userData = JellyfinUserData(jellyfinApi),
-            playback = JellyfinPlayback(jellyfinApi, deviceProfiles),
-        )
-
+    /**
+     * The repository over the server the adapter provides (#758: `JellyfinServerModule` in
+     * `server/jellyfin`).
+     */
     @Singleton
     @Provides
     fun provideJellyfinRepositoryImpl(
