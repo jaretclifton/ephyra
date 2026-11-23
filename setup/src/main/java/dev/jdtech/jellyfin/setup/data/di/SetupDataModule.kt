@@ -4,9 +4,8 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import dev.jdtech.jellyfin.core.server.CurrentServerType
 import dev.jdtech.jellyfin.core.server.ServerConnectors
-import dev.jdtech.jellyfin.domain.ports.ServerSession
+import dev.jdtech.jellyfin.domain.ports.ActiveServerHolder
 import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.data.SetupRepositoryImpl
@@ -20,17 +19,15 @@ object SetupDataModule {
     @Provides
     fun provideSetupRepository(
         connectors: ServerConnectors,
-        session: ServerSession,
         serverStore: ServerStore,
         appPreferences: AppPreferences,
-        currentType: CurrentServerType,
+        active: ActiveServerHolder,
     ): SetupRepository {
         return SetupRepositoryImpl(
             connectors = connectors,
-            session = session,
             serverStore = serverStore,
             appPreferences = appPreferences,
-            currentType = currentType,
+            active = active,
         )
     }
 }

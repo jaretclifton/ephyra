@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.server.jellyfin
 
 import dev.jdtech.jellyfin.api.JellyfinApi
+import dev.jdtech.jellyfin.domain.ports.ActiveServer
 import dev.jdtech.jellyfin.domain.ports.CatalogPort
 import dev.jdtech.jellyfin.domain.ports.MediaServer
 import dev.jdtech.jellyfin.domain.ports.PlaybackPort
@@ -9,26 +10,28 @@ import dev.jdtech.jellyfin.domain.ports.UserDataPort
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerType
 
-/** A Jellyfin server (#757): its ports, all over the app's one client. */
+/**
+ * A Jellyfin server (#757): its ports, all over the app's one client.
+ *
+ * #899: [pin] is the value its catalog, user data and playback talk to ([at]); without one, the
+ * holder's value at each read. The [session] always follows the holder.
+ */
 class JellyfinMediaServer(
-    override val session: ServerSession,
-    override val catalog: CatalogPort,
-    override val userData: UserDataPort,
-    override val playback: PlaybackPort,
+    private val api: JellyfinApi,
+    private val deviceProfiles: JellyfinDeviceProfiles,
+    override val session: ServerSession = JellyfinServerSession(api),
+    private val pin: ActiveServer? = null,
 ) : MediaServer {
     override val type: ServerType = ServerType.JELLYFIN
 
     /** #769: Jellyfin has every feature the app knows. */
     override val capabilities: ServerCapabilities = ServerCapabilities.ALL
 
-    /** Every port over [api]. */
-    constructor(
-        api: JellyfinApi,
-        deviceProfiles: JellyfinDeviceProfiles,
-    ) : this(
-        session = JellyfinServerSession(api),
-        catalog = JellyfinCatalog(api),
-        userData = JellyfinUserData(api),
-        playback = JellyfinPlayback(api, deviceProfiles),
-    )
+    override val catalog: CatalogPort = JellyfinCatalog(api, pin)
+    override val userData: UserDataPort = JellyfinUserData(api, pin)
+    override val playback: PlaybackPort = JellyfinPlayback(api, deviceProfiles, pin)
+
+    /** #899: three small objects over the same client; made for each call that takes a port. */
+    override fun at(active: ActiveServer): MediaServer =
+        JellyfinMediaServer(api, deviceProfiles, session, active)
 }

@@ -1,8 +1,13 @@
 package dev.jdtech.jellyfin.api
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
+import dev.jdtech.jellyfin.domain.ports.ActiveServer
+import dev.jdtech.jellyfin.domain.ports.ActiveServerHolder
 import dev.jdtech.jellyfin.domain.ports.RequestWatcher
 import dev.jdtech.jellyfin.server.jellyfin.BuildConfig
+import dev.jdtech.jellyfin.server.jellyfin.toUserId
+import dev.jdtech.jellyfin.server.jellyfin.toUuid
 import dev.jdtech.jellyfin.settings.domain.Constants
 import java.io.IOException
 import java.util.UUID
@@ -13,6 +18,7 @@ import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -27,6 +33,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jellyfin.sdk.android.androidDevice
+import org.jellyfin.sdk.api.client.ApiClient
 import org.jellyfin.sdk.api.client.HttpClientOptions
 import org.jellyfin.sdk.api.client.extensions.authenticationApi
 import org.jellyfin.sdk.api.client.extensions.brandingApi
@@ -64,7 +71,41 @@ class JellyfinApi(
     socketTimeout: Long = Constants.NETWORK_DEFAULT_SOCKET_TIMEOUT,
     /** CE (#860): see [trickplaySheetApi]. Shorter only in tests. */
     trickplaySheetTimeout: Long = TRICKPLAY_SHEET_TIMEOUT_MS,
+    /**
+     * #899: the server and user the client talks to, the app's one holder. A holder of its own when
+     * none is given: the adapter's tests set it up through [api] and [userId].
+     */
+    internal val activeServer: ActiveServerHolder = ActiveServerHolder(),
 ) {
+    /** #899: the value a request was started with, while it runs; see [pinnedTo]. */
+    private val pinned = ThreadLocal<ActiveServer?>()
+
+    /**
+     * #899: the server and user to talk to: the value the running request was started with
+     * ([pinnedTo]), else the holder's value now. Read it once and keep it for the request.
+     */
+    internal fun snapshot(): ActiveServer = pinned.get() ?: activeServer.value
+
+    /**
+     * #899: runs [block] with [server] as its [snapshot], also in the coroutines it starts and on
+     * every thread it moves to; with null, as it is. The ports of a server `CurrentMediaServer`
+     * handed a value to run each call this way.
+     */
+    internal suspend fun <T> pinnedTo(server: ActiveServer?, block: suspend () -> T): T =
+        if (server == null) block() else withContext(pinned.asContextElement(server)) { block() }
+
+    /** #899: [pinnedTo] for code that does not suspend, such as building a URL. */
+    internal fun <T> pinnedNow(server: ActiveServer?, block: () -> T): T {
+        if (server == null) return block()
+        val before = pinned.get()
+        pinned.set(server)
+        try {
+            return block()
+        } finally {
+            pinned.set(before)
+        }
+    }
+
     /**
      * CE (#296): the SDK builds its client from this one with `newBuilder()`, so both share one
      * connection pool. The player streams media over it ([httpClient]) and so reuses the connection
@@ -184,16 +225,37 @@ class JellyfinApi(
      * not to the reachability banner, not to the return detector. It never touches [api].
      */
     val unwatchedDiscovery by lazy { buildJellyfin(OkHttpFactory()).discovery }
-    val api =
-        jellyfin.createApi(
+
+    /**
+     * #899: the app's client. It has no address or token of its own: each request reads them from
+     * one [snapshot] (see [ActiveServerClient]).
+     */
+    val api: ApiClient =
+        ActiveServerClient(
+            jellyfin = jellyfin,
             httpClientOptions =
                 HttpClientOptions(
                     requestTimeout = requestTimeout.toDuration(DurationUnit.MILLISECONDS),
                     connectTimeout = connectTimeout.toDuration(DurationUnit.MILLISECONDS),
                     socketTimeout = socketTimeout.toDuration(DurationUnit.MILLISECONDS),
-                )
+                ),
+            snapshot = ::snapshot,
+            onSameServer = activeServer::onSameServer,
         )
-    var userId: UUID? = null
+
+    /** #899: the SDK client for [server]'s address and token; it never points anywhere else. */
+    internal fun clientAt(server: ActiveServer): ApiClient = (api as ActiveServerClient).at(server)
+
+    /**
+     * The user the client is signed in as, from the [snapshot]. #899: setting it is for the
+     * adapter's tests only; the app switches users through the holder (rule R15).
+     */
+    var userId: UUID?
+        get() = snapshot().userId?.toUuid()
+        @VisibleForTesting
+        set(value) {
+            activeServer.onSameServer { it.copy(userId = value?.toUserId()) }
+        }
 
     /**
      * CE (#860): a trickplay sheet may wait longer than the other requests. A sheet that does not
@@ -218,14 +280,17 @@ class JellyfinApi(
      * response watcher of every other request.
      */
     val trickplaySheetApi: TrickPlayApi
-        get() =
-            jellyfin
+        get() {
+            // #899: address and token of one value.
+            val server = snapshot()
+            return jellyfin
                 .createApi(
-                    baseUrl = api.baseUrl,
-                    accessToken = api.accessToken,
+                    baseUrl = server.baseUrl,
+                    accessToken = server.accessToken,
                     httpClientOptions = trickplaySheetOptions,
                 )
                 .trickPlayApi
+        }
 
     private fun watchResponses(chain: Interceptor.Chain): Response {
         val request = chain.request()
@@ -347,6 +412,7 @@ class JellyfinApi(
             requestTimeout: Long = Constants.NETWORK_DEFAULT_REQUEST_TIMEOUT,
             connectTimeout: Long = Constants.NETWORK_DEFAULT_CONNECT_TIMEOUT,
             socketTimeout: Long = Constants.NETWORK_DEFAULT_SOCKET_TIMEOUT,
+            activeServer: ActiveServerHolder,
         ): JellyfinApi {
             synchronized(this) {
                 var instance = INSTANCE
@@ -357,6 +423,7 @@ class JellyfinApi(
                             requestTimeout = requestTimeout,
                             connectTimeout = connectTimeout,
                             socketTimeout = socketTimeout,
+                            activeServer = activeServer,
                         )
                     INSTANCE = instance
                 }

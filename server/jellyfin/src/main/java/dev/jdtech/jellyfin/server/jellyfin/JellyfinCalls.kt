@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.server.jellyfin
 
 import dev.jdtech.jellyfin.api.JellyfinApi
+import dev.jdtech.jellyfin.domain.ports.ActiveServer
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.server.jellyfin.mappers.MapperContext
@@ -28,6 +29,16 @@ internal suspend fun <T> call(block: suspend CoroutineScope.() -> T): T =
             throw e.asServerException() ?: e
         }
     }
+
+/**
+ * #899: [call] with [pin] as the client's value for the whole call ([JellyfinApi.pinnedTo]): the
+ * ports of a server `CurrentMediaServer` handed a value
+ * ([dev.jdtech.jellyfin.domain.ports.MediaServer.at]) run each call this way.
+ */
+internal suspend fun <T> JellyfinApi.pinnedCall(
+    pin: ActiveServer?,
+    block: suspend CoroutineScope.() -> T,
+): T = pinnedTo(pin) { call(block) }
 
 /** The user the client is signed in as; an [IllegalStateException] when nobody is. */
 internal val JellyfinApi.currentUserId: UUID

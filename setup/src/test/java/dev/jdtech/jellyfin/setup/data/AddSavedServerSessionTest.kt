@@ -2,7 +2,6 @@ package dev.jdtech.jellyfin.setup.data
 
 import android.app.Application
 import android.content.Context
-import dev.jdtech.jellyfin.core.server.CurrentServerType
 import dev.jdtech.jellyfin.core.server.ServerConnectors
 import dev.jdtech.jellyfin.domain.ports.ResolvedServer
 import dev.jdtech.jellyfin.models.Server
@@ -82,15 +81,13 @@ class AddSavedServerSessionTest {
 
     /** CE (#770): the type of the one connector installed; set before the first [add]. */
     private var connectorType = ServerType.JELLYFIN
-    private val currentType = CurrentServerType()
 
     private val repository by lazy {
         SetupRepositoryImpl(
             ServerConnectors(mapOf(connectorType to connector)),
-            session,
             database,
             AppPreferences(context.getSharedPreferences("test", Context.MODE_PRIVATE)),
-            currentType,
+            session.active,
         )
     }
 
@@ -202,7 +199,7 @@ class AddSavedServerSessionTest {
         add("c", "https://c.example/")
 
         assertEquals("jellyfin", servers.getValue("c").type)
-        assertEquals("jellyfin", currentType.stored)
+        assertEquals("jellyfin", session.active.value.type)
     }
 
     @Test
@@ -210,13 +207,13 @@ class AddSavedServerSessionTest {
         connectorType = ServerType.EMBY
         saveServer("a", "https://a.example/", alice)
         signInClient("https://a.example/", alice)
-        currentType.stored = "jellyfin"
+        session.active.switchTo(session.active.value.copy(type = "jellyfin"))
 
         val server = add("c", "https://c.example/")
 
         assertEquals("emby", server.type)
         assertEquals("emby", servers.getValue("c").type)
-        assertEquals("emby", currentType.stored)
+        assertEquals("emby", session.active.value.type)
     }
 
     @Test
@@ -226,6 +223,6 @@ class AddSavedServerSessionTest {
         add("b", "https://b.example/")
 
         assertEquals("emby", servers.getValue("b").type)
-        assertEquals("emby", currentType.stored)
+        assertEquals("emby", session.active.value.type)
     }
 }

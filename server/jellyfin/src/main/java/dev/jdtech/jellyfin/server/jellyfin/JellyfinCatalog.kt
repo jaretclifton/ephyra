@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.server.jellyfin
 
 import dev.jdtech.jellyfin.api.JellyfinApi
+import dev.jdtech.jellyfin.domain.ports.ActiveServer
 import dev.jdtech.jellyfin.domain.ports.CatalogPort
 import dev.jdtech.jellyfin.domain.ports.CatalogPort.Companion.SEARCH_LIMIT
 import dev.jdtech.jellyfin.domain.ports.CatalogPort.Companion.SEARCH_LIMIT_PER_KIND
@@ -27,6 +28,7 @@ import dev.jdtech.jellyfin.server.jellyfin.mappers.toSeason
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toShow
 import java.time.LocalDateTime
 import java.util.UUID
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import org.jellyfin.sdk.api.client.extensions.audioApi
@@ -43,8 +45,16 @@ import org.jellyfin.sdk.model.api.SortOrder as SdkSortOrder
  * [CatalogPort] over the Jellyfin SDK (#756). No Room: movies and episodes carry only the server's
  * sources, the repository adds the downloaded ones. Throws [ServerException] for every failure the
  * SDK reports as one (see [asServerException]); anything else leaves as it is.
+ *
+ * #899: with a [pin], every call talks to that value's server as its user, whatever is switched to
+ * meanwhile; without one, to the holder's value at each read.
  */
-class JellyfinCatalog(private val api: JellyfinApi) : CatalogPort {
+class JellyfinCatalog(private val api: JellyfinApi, private val pin: ActiveServer? = null) :
+    CatalogPort {
+    /** #899: every call of this port goes through here, held to [pin]. */
+    private suspend fun <T> call(block: suspend CoroutineScope.() -> T): T =
+        api.pinnedCall(pin, block)
+
     private val currentUserId: UUID
         get() = api.currentUserId
 

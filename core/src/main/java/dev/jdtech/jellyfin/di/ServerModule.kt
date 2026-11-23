@@ -5,8 +5,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.jdtech.jellyfin.core.server.CurrentMediaServer
-import dev.jdtech.jellyfin.core.server.CurrentServerType
 import dev.jdtech.jellyfin.core.server.ServerConnectors
+import dev.jdtech.jellyfin.domain.ports.ActiveServerHolder
 import dev.jdtech.jellyfin.domain.ports.MediaServer
 import dev.jdtech.jellyfin.domain.ports.ServerConnector
 import dev.jdtech.jellyfin.models.ServerType
@@ -20,18 +20,16 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object ServerModule {
-    @Singleton @Provides fun provideCurrentServerType(): CurrentServerType = CurrentServerType()
-
     /**
-     * The adapters' servers are built after their client has the saved session, and the session
-     * restorer sets [CurrentServerType] with it, so the type is there before the first request.
+     * #899: the holder comes with the saved session already on it ([ApiModule]), so the type is
+     * there before the first request.
      */
     @Singleton
     @Provides
     fun provideMediaServer(
         servers: Map<ServerType, @JvmSuppressWildcards MediaServer>,
-        currentType: CurrentServerType,
-    ): MediaServer = CurrentMediaServer(servers, currentType)
+        active: ActiveServerHolder,
+    ): MediaServer = CurrentMediaServer(servers, active)
 
     @Singleton
     @Provides

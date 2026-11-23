@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.server.jellyfin
 
 import dev.jdtech.jellyfin.api.JellyfinApi
+import dev.jdtech.jellyfin.domain.ports.ActiveServer
 import dev.jdtech.jellyfin.domain.ports.PlaybackPort
 import dev.jdtech.jellyfin.domain.ports.PlaybackReport
 import dev.jdtech.jellyfin.domain.ports.PlaybackRequest
@@ -16,6 +17,7 @@ import dev.jdtech.jellyfin.server.jellyfin.cast.toReceiverSource
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toItemSource
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toSegment
 import java.util.UUID
+import kotlinx.coroutines.CoroutineScope
 import org.jellyfin.sdk.model.api.GeneralCommandType
 import org.jellyfin.sdk.model.api.MediaType
 import org.jellyfin.sdk.model.api.PlayMethod
@@ -31,11 +33,18 @@ import org.jellyfin.sdk.model.serializer.toUUIDOrNull
  * [PlaybackPort] over the Jellyfin SDK (#757). No Room: the repository answers with a download
  * before it asks here. Throws [dev.jdtech.jellyfin.models.ServerException] for every failure the
  * SDK reports as one (see [asServerException]); anything else leaves as it is.
+ *
+ * #899: with a [pin], every call and URL is of that value's server and user, whatever is switched
+ * to meanwhile; without one, of the holder's value at each read.
  */
 class JellyfinPlayback(
     private val api: JellyfinApi,
     private val deviceProfiles: JellyfinDeviceProfiles,
+    private val pin: ActiveServer? = null,
 ) : PlaybackPort {
+    /** #899: every call of this port goes through here, held to [pin]. */
+    private suspend fun <T> call(block: suspend CoroutineScope.() -> T): T =
+        api.pinnedCall(pin, block)
 
     override suspend fun sources(request: PlaybackRequest): List<ItemSource> = call {
         val playbackInfo =
@@ -163,10 +172,10 @@ class JellyfinPlayback(
     }
 
     override fun chapterImageUrl(itemId: ItemId, chapterIndex: Int, tag: String): String? =
-        chapterImageUrl(api.baseUrl(), itemId, chapterIndex, tag)
+        chapterImageUrl(api.pinnedNow(pin) { api.baseUrl() }, itemId, chapterIndex, tag)
 
     override fun seasonBackdropUrl(seasonId: ItemId): String? =
-        seasonBackdropUrl(api.baseUrl(), seasonId)
+        seasonBackdropUrl(api.pinnedNow(pin) { api.baseUrl() }, seasonId)
 
     override suspend fun reportStart(report: PlaybackReport) {
         call {

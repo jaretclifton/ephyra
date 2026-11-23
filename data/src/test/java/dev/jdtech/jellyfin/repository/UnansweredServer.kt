@@ -62,7 +62,7 @@ internal class UnansweredServer(
             override var requestWatcher: RequestWatcher? = null
             override val probeTimeoutMs: Long = ServerSession.MAX_PROBE_TIMEOUT_MS
 
-            override fun use(baseUrl: String?, accessToken: String?, userId: UserId?) {
+            fun use(baseUrl: String?, accessToken: String?, userId: UserId?) {
                 this@UnansweredServer.userId = userId
             }
 

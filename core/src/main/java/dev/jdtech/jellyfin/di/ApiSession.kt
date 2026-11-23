@@ -1,8 +1,7 @@
 package dev.jdtech.jellyfin.di
 
-import dev.jdtech.jellyfin.core.server.CurrentServerType
-import dev.jdtech.jellyfin.domain.ports.ServerSession
-import dev.jdtech.jellyfin.domain.ports.SessionRestorer
+import dev.jdtech.jellyfin.domain.ports.ActiveServer
+import dev.jdtech.jellyfin.domain.ports.ActiveServerHolder
 import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.ServerWithAddressAndUser
@@ -29,7 +28,7 @@ import timber.log.Timber
  * What the API client needs to act for the current server and user: the server's current address,
  * and the current user's token and id. All null when the database has no address for the server.
  *
- * CE (#770): and the server's stored type, which picks the adapter ([CurrentServerType]). Null when
+ * CE (#770): and the server's stored type, which picks the adapter ([ActiveServer.type]). Null when
  * the database has no such server.
  */
 internal data class ApiSession(
@@ -47,31 +46,33 @@ internal fun ServerWithAddressAndUser?.toApiSession(serverId: ServerId): ApiSess
     return ApiSession(serverId, address.address, user?.accessToken, user?.id, type)
 }
 
-/** CE (#770): puts [session] on the client and its server's type on [currentType]. */
-internal fun ServerSession.applySession(session: ApiSession, currentType: CurrentServerType) {
-    currentType.stored = session.serverType
-    applySession(session)
-}
-
-internal fun ServerSession.applySession(session: ApiSession) {
-    use(baseUrl = session.baseUrl, accessToken = session.accessToken, userId = session.userId)
-}
-
-internal fun ServerSession.holds(session: ApiSession): Boolean =
-    baseUrl == session.baseUrl && accessToken == session.accessToken && userId == session.userId
+/**
+ * #899: [this] as the value the app talks to: the server's type, address and id with the user's
+ * token and id, put on together.
+ */
+internal fun ApiSession.toActiveServer(): ActiveServer =
+    ActiveServer(
+        type = serverType,
+        serverId = serverId,
+        baseUrl = baseUrl,
+        accessToken = accessToken,
+        userId = userId,
+    )
 
 /**
  * #763: what the Hilt provider of the client did itself before. CE (#250): the session comes from
  * the copy in preferences, which are already in memory, so whichever thread first asks for the
  * client (often Main, through HomeViewModel) does not wait for Room to open. Then
  * [mirrorApiSession] keeps that copy up to date.
+ *
+ * #899: it puts the session on the [ActiveServerHolder] as one value, type included, before the
+ * holder is handed to anything (`ApiModule`).
  */
 internal class SavedSessionRestorer(
     private val appPreferences: AppPreferences,
     private val serverStore: ServerStore,
-    private val currentType: CurrentServerType,
-) : SessionRestorer {
-    override fun restore(session: ServerSession) {
+) {
+    fun restore(active: ActiveServerHolder) {
         val serverId = appPreferences.currentServerId()
         val saved = appPreferences.savedApiSession()
         val initial =
@@ -86,9 +87,9 @@ internal class SavedSessionRestorer(
                         serverStore.serverWithAddressAndUser(serverId).toApiSession(serverId)
                     }
             }
-        initial?.let { session.applySession(it, currentType) }
+        initial?.let { active.switchTo(it.toActiveServer()) }
 
-        mirrorApiSession(session, appPreferences, serverStore, initial, currentType)
+        mirrorApiSession(active, appPreferences, serverStore, initial)
     }
 }
 
@@ -128,16 +129,16 @@ internal fun AppPreferences.saveApiSession(session: ApiSession?) {
  * makes them (SetupRepositoryImpl), as before. The correction is skipped when that code has already
  * changed the client since [initial] was applied.
  *
- * CE (#770): [currentType] follows the client the same way: it is set with the correction, and
- * otherwise by the code that changes the client.
+ * #899: the correction replaces the whole value, type included, and only while the value of
+ * [initial] is still on ([ActiveServerHolder.switchTo] with the expected value): no check and then
+ * a write that a switch could come in between.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun mirrorApiSession(
-    serverSession: ServerSession,
+    active: ActiveServerHolder,
     appPreferences: AppPreferences,
     serverStore: ServerStore,
     initial: ApiSession?,
-    currentType: CurrentServerType,
 ) {
     CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
         var first = true
@@ -157,13 +158,8 @@ internal fun mirrorApiSession(
             .collect { session ->
                 if (first) {
                     first = false
-                    if (
-                        initial != null &&
-                            session != null &&
-                            session != initial &&
-                            serverSession.holds(initial)
-                    ) {
-                        serverSession.applySession(session, currentType)
+                    if (initial != null && session != null && session != initial) {
+                        active.switchTo(session.toActiveServer(), initial.toActiveServer())
                     }
                 }
                 appPreferences.saveApiSession(session)
