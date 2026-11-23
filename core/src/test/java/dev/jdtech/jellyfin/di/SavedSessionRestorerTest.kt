@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.Context
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
-import dev.jdtech.jellyfin.core.server.CurrentServerType
 import dev.jdtech.jellyfin.core.session.FakeServerSession
 import dev.jdtech.jellyfin.core.session.FakeServerSession.Use
 import dev.jdtech.jellyfin.database.RoomServerStore
@@ -49,8 +48,7 @@ class SavedSessionRestorerTest {
     private val preferences =
         AppPreferences(context.getSharedPreferences("session-restorer", Context.MODE_PRIVATE))
     private val session = FakeServerSession()
-    private val currentType = CurrentServerType()
-    private val restorer = SavedSessionRestorer(preferences, RoomServerStore(database), currentType)
+    private val restorer = SavedSessionRestorer(preferences, RoomServerStore(database))
 
     @After fun close() = room.close()
 
@@ -90,7 +88,7 @@ class SavedSessionRestorerTest {
         storeServer()
         preferences.saveApiSession(ApiSession(SERVER.toServerId(), ADDRESS, TOKEN, USER_ID))
 
-        restorer.restore(session)
+        restorer.restore(session.active)
 
         assertEquals(Use(ADDRESS, TOKEN, USER_ID), session.uses.first())
         // Room says the same: nothing to correct.
@@ -105,7 +103,7 @@ class SavedSessionRestorerTest {
             ApiSession("other-server".toServerId(), "http://other", "x", null)
         )
 
-        restorer.restore(session)
+        restorer.restore(session.active)
 
         assertEquals(listOf(Use(ADDRESS, TOKEN, USER_ID)), session.uses.toList())
         eventually { preferences.savedApiSession()?.serverId?.asString() == SERVER }
@@ -120,7 +118,7 @@ class SavedSessionRestorerTest {
         storeServer(token = "new-token")
         preferences.saveApiSession(ApiSession(SERVER.toServerId(), ADDRESS, TOKEN, USER_ID))
 
-        restorer.restore(session)
+        restorer.restore(session.active)
 
         assertEquals(Use(ADDRESS, TOKEN, USER_ID), session.uses.first())
         eventually { session.uses.size == 2 }
@@ -135,7 +133,7 @@ class SavedSessionRestorerTest {
         // A login or a switch right after the start, before Room was first read.
         session.afterUse = { if (session.uses.size == 1) session.accessToken = "switched" }
 
-        restorer.restore(session)
+        restorer.restore(session.active)
 
         eventually { preferences.savedApiSession()?.accessToken == "new-token" }
         assertEquals(listOf(Use(ADDRESS, TOKEN, USER_ID)), session.uses.toList())
@@ -145,11 +143,11 @@ class SavedSessionRestorerTest {
     fun `no current server, nothing is put on the session and the copy is cleared`() {
         preferences.saveApiSession(ApiSession(SERVER.toServerId(), ADDRESS, TOKEN, USER_ID))
 
-        restorer.restore(session)
+        restorer.restore(session.active)
 
         eventually { preferences.savedApiSession() == null }
         assertTrue(session.uses.isEmpty())
-        assertNull(currentType.stored)
+        assertNull(session.active.value.type)
     }
 
     @Test
@@ -158,9 +156,9 @@ class SavedSessionRestorerTest {
         storeServer(type = "emby")
         preferences.saveApiSession(ApiSession(SERVER.toServerId(), ADDRESS, TOKEN, USER_ID, "emby"))
 
-        restorer.restore(session)
+        restorer.restore(session.active)
 
-        assertEquals("emby", currentType.stored)
+        assertEquals("emby", session.active.value.type)
     }
 
     @Test
@@ -170,9 +168,9 @@ class SavedSessionRestorerTest {
             ApiSession("other-server".toServerId(), "http://other", "x", null)
         )
 
-        restorer.restore(session)
+        restorer.restore(session.active)
 
-        assertEquals("emby", currentType.stored)
+        assertEquals("emby", session.active.value.type)
         eventually { preferences.savedApiSession()?.serverId?.asString() == SERVER }
         assertEquals(
             ApiSession(SERVER.toServerId(), ADDRESS, TOKEN, USER_ID, "emby"),
@@ -190,9 +188,9 @@ class SavedSessionRestorerTest {
             .remove(preferences.sessionServerType.backendName)
             .commit()
 
-        restorer.restore(session)
+        restorer.restore(session.active)
 
-        assertEquals("jellyfin", currentType.stored)
+        assertEquals("jellyfin", session.active.value.type)
         assertEquals(listOf(Use(ADDRESS, TOKEN, USER_ID)), session.uses.toList())
     }
 

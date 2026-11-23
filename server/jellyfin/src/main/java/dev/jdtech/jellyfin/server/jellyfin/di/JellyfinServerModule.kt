@@ -9,23 +9,20 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dagger.multibindings.IntoMap
 import dev.jdtech.jellyfin.api.JellyfinApi
+import dev.jdtech.jellyfin.domain.ports.ActiveServerHolder
 import dev.jdtech.jellyfin.domain.ports.DeviceCodecs
 import dev.jdtech.jellyfin.domain.ports.DeviceReportSource
 import dev.jdtech.jellyfin.domain.ports.MediaHttpClient
 import dev.jdtech.jellyfin.domain.ports.MediaServer
 import dev.jdtech.jellyfin.domain.ports.ServerConnector
 import dev.jdtech.jellyfin.domain.ports.ServerSession
-import dev.jdtech.jellyfin.domain.ports.SessionRestorer
 import dev.jdtech.jellyfin.domain.ports.UserDataSyncPorts
 import dev.jdtech.jellyfin.models.ServerType
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinCatalog
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceReportSource
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinPlayback
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinServerConnector
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinServerSession
-import dev.jdtech.jellyfin.server.jellyfin.JellyfinUserData
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinUserDataSyncPorts
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Singleton
@@ -33,35 +30,32 @@ import javax.inject.Singleton
 /**
  * #758: what the Jellyfin adapter provides, all over the app's one client. The apps, the only
  * modules that depend on the adapter, are the composition root; `core` provides what this takes
- * from outside: the [SessionRestorer] (it knows Room) and the probed [DeviceCodecs].
+ * from outside: the [ActiveServerHolder] (with the saved session on it; `core` knows Room) and the
+ * probed [DeviceCodecs].
  */
 @Module
 @InstallIn(SingletonComponent::class)
 object JellyfinServerModule {
     /**
-     * CE (#250, #763): signed in before anything uses the client. Every other provider here takes
-     * the client from this one, so none of them, [ServerSession] and [MediaServer] included, gets
-     * it before the saved session is on it.
+     * CE (#250, #763): signed in before anything uses the client. #899: the client reads the
+     * server, the user and the token from [active], which `core` hands out with the saved session
+     * already on it, so no provider here, [ServerSession] and [MediaServer] included, sees the
+     * client before that.
      */
     @Singleton
     @Provides
     fun provideJellyfinApi(
         @ApplicationContext application: Context,
         appPreferences: AppPreferences,
-        sessionRestorer: SessionRestorer,
-    ): JellyfinApi {
-        val jellyfinApi =
-            JellyfinApi.getInstance(
-                context = application,
-                requestTimeout = appPreferences.getValue(appPreferences.requestTimeout),
-                connectTimeout = appPreferences.getValue(appPreferences.connectTimeout),
-                socketTimeout = appPreferences.getValue(appPreferences.socketTimeout),
-            )
-
-        sessionRestorer.restore(JellyfinServerSession(jellyfinApi))
-
-        return jellyfinApi
-    }
+        active: ActiveServerHolder,
+    ): JellyfinApi =
+        JellyfinApi.getInstance(
+            context = application,
+            requestTimeout = appPreferences.getValue(appPreferences.requestTimeout),
+            connectTimeout = appPreferences.getValue(appPreferences.connectTimeout),
+            socketTimeout = appPreferences.getValue(appPreferences.socketTimeout),
+            activeServer = active,
+        )
 
     /** #748: the base URL and the user id for code outside the adapter. */
     @Singleton
@@ -109,7 +103,8 @@ object JellyfinServerModule {
 
     /**
      * CE (#756, #757): the Jellyfin server the repository talks to, with its ports. #770: the
-     * repository gets it through `CurrentMediaServer`, while the server in use is a Jellyfin one.
+     * repository gets it through `CurrentMediaServer`, while the server in use is a Jellyfin
+     * one. #899: `CurrentMediaServer` takes its ports for one value at a time ([MediaServer.at]).
      */
     @Singleton
     @Provides
@@ -119,11 +114,5 @@ object JellyfinServerModule {
         jellyfinApi: JellyfinApi,
         session: ServerSession,
         deviceProfiles: JellyfinDeviceProfiles,
-    ): MediaServer =
-        JellyfinMediaServer(
-            session = session,
-            catalog = JellyfinCatalog(jellyfinApi),
-            userData = JellyfinUserData(jellyfinApi),
-            playback = JellyfinPlayback(jellyfinApi, deviceProfiles),
-        )
+    ): MediaServer = JellyfinMediaServer(jellyfinApi, deviceProfiles, session)
 }

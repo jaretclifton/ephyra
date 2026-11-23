@@ -3,7 +3,13 @@ package dev.jdtech.jellyfin.domain.ports
 import dev.jdtech.jellyfin.models.UserId
 import kotlinx.coroutines.flow.Flow
 
-/** The server and user the app is talking to right now. More members arrive with later tasks. */
+/**
+ * The server and user the app is talking to right now. More members arrive with later tasks.
+ *
+ * #899: [baseUrl], [userId] and [accessToken] are each read from the [ActiveServerHolder] when
+ * asked; code that needs more than one of them reads [ActiveServerHolder.value] once instead. The
+ * session does not change them: switching servers, users or addresses is a write to the holder.
+ */
 interface ServerSession {
     /** Null when no server is set. */
     val baseUrl: String?
@@ -28,9 +34,6 @@ interface ServerSession {
 
     /** #763: how long [probe] waits at most; never more than [MAX_PROBE_TIMEOUT_MS]. */
     val probeTimeoutMs: Long
-
-    /** #763: talks to [baseUrl] as [userId] with [accessToken] from now on. */
-    fun use(baseUrl: String?, accessToken: String?, userId: UserId?)
 
     /**
      * #763: asks the server whether it is there. True when it answered, false when it did not, null
@@ -61,8 +64,8 @@ interface ServerSession {
 
     /**
      * #757: the profile picture of the user the token sent is for, as the server has it now. The
-     * user comes from the answer, not from [userId]: during a switch the token and the id are
-     * updated one after the other.
+     * user comes from the answer, not from [userId]: the user may be switched while the request
+     * runs, and the answer is about the token that was sent.
      */
     suspend fun currentUserImage(): UserImage
 

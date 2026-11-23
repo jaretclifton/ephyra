@@ -1,20 +1,23 @@
 package dev.jdtech.jellyfin.setup.data
 
+import dev.jdtech.jellyfin.domain.ports.ActiveServer
+import dev.jdtech.jellyfin.domain.ports.ActiveServerHolder
 import dev.jdtech.jellyfin.domain.ports.AuthenticatedUser
 import dev.jdtech.jellyfin.domain.ports.PublicUser
-import dev.jdtech.jellyfin.domain.ports.RequestWatcher
 import dev.jdtech.jellyfin.domain.ports.ResolvedServer
 import dev.jdtech.jellyfin.domain.ports.ServerConnector
-import dev.jdtech.jellyfin.domain.ports.ServerSession
-import dev.jdtech.jellyfin.domain.ports.UserImage
 import dev.jdtech.jellyfin.models.DiscoveredServer
 import dev.jdtech.jellyfin.models.QuickConnectState
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.UserId
 import java.util.Collections
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
 
 /**
  * #761: a [ServerConnector] whose calls answer with the `on…` functions; those not set fail.
@@ -79,42 +82,46 @@ class FakeServerConnector(
     private fun unexpected(): Nothing = throw UnsupportedOperationException("not expected")
 }
 
-/** #761: a [ServerSession] that holds what [use] puts on it and records every [use]. */
+/**
+ * #761: the client the setup repository puts servers and users on, recording every [use].
+ *
+ * #899: the client is [active], which the repository is given; every value put there counts as a
+ * use, whoever puts it there, and [baseUrl], [accessToken] and [userId] read it.
+ */
 class RecordingServerSession(
-    override var baseUrl: String? = null,
-    override var accessToken: String? = null,
-    override var userId: UserId? = null,
-) : ServerSession {
+    baseUrl: String? = null,
+    accessToken: String? = null,
+    userId: UserId? = null,
+) {
     data class Use(val baseUrl: String?, val accessToken: String?, val userId: UserId?)
+
+    val active =
+        ActiveServerHolder(
+            ActiveServer(baseUrl = baseUrl, accessToken = accessToken, userId = userId)
+        )
 
     val uses: MutableList<Use> = Collections.synchronizedList(mutableListOf())
 
-    override val unauthorized: Flow<String> = emptyFlow()
-    override val serverReturned: Flow<Unit> = emptyFlow()
-    override var requestWatcher: RequestWatcher? = null
-    override val probeTimeoutMs: Long = 3_000L
-
-    override fun use(baseUrl: String?, accessToken: String?, userId: UserId?) {
-        this.baseUrl = baseUrl
-        this.accessToken = accessToken
-        this.userId = userId
-        uses += Use(baseUrl, accessToken, userId)
+    init {
+        // Unconfined: each value is recorded in the write that puts it on, before the write
+        // returns.
+        CoroutineScope(Dispatchers.Unconfined).launch {
+            active.flow.drop(1).collect { uses += Use(it.baseUrl, it.accessToken, it.userId) }
+        }
     }
 
-    override suspend fun probe(): Boolean? = baseUrl?.let { true }
+    val baseUrl: String?
+        get() = active.value.baseUrl
 
-    override suspend fun isTokenValid(): Boolean = true
+    val accessToken: String?
+        get() = active.value.accessToken
 
-    override fun keepAlive(): Flow<Nothing> = emptyFlow()
+    val userId: UserId?
+        get() = active.value.userId
 
-    override fun userImageUrl(userId: UserId, tag: String): String? = null
-
-    // #757: setup never calls these.
-    override suspend fun updateDeviceName(name: String) = unexpected()
-
-    override suspend fun autoPlayNextEpisode(): Boolean? = unexpected()
-
-    override suspend fun currentUserImage(): UserImage = unexpected()
-
-    private fun unexpected(): Nothing = throw UnsupportedOperationException("not expected")
+    fun use(baseUrl: String?, accessToken: String?, userId: UserId?) {
+        active.onSameServer {
+            it.copy(baseUrl = baseUrl, accessToken = accessToken, userId = userId)
+        }
+    }
 }

@@ -23,21 +23,24 @@ class JellyfinUserDataSyncPorts(private val jellyfinApi: JellyfinApi) : UserData
      * share its connections and its detection of a revoked token; otherwise over a client for that
      * user from the same Jellyfin instance. The app's client is never pointed at another user,
      * because the screens use it at the same time.
+     *
+     * #899: the app's client as it is now, read once: the address and the token of that value, also
+     * when the app switches while the sync runs.
      */
     override fun forUser(baseUrl: String, accessToken: String?, userId: UserId): UserDataSyncPort {
-        val current = jellyfinApi.api
+        val current = jellyfinApi.snapshot()
         if (
-            jellyfinApi.userId?.toUserId() == userId &&
+            current.userId == userId &&
                 current.baseUrl == baseUrl &&
                 current.accessToken == accessToken
         ) {
-            return JellyfinUserDataSync(current, userId, appClient = true)
+            return JellyfinUserDataSync(jellyfinApi.clientAt(current), userId, appClient = true)
         }
         val api =
             jellyfinApi.jellyfin.createApi(
                 baseUrl = baseUrl,
                 accessToken = accessToken,
-                httpClientOptions = current.httpClientOptions,
+                httpClientOptions = jellyfinApi.api.httpClientOptions,
             )
         return JellyfinUserDataSync(api, userId, appClient = false)
     }

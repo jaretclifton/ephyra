@@ -64,9 +64,14 @@ class ServerSessionKeeperTest {
     private val session = FakeServerSession(ADDRESS, TOKEN, USER_ID)
     private var capabilities = ServerCapabilities.ALL
     private val keeper =
-        ServerSessionKeeper(context, session, preferences, RoomServerStore(database)) {
-            capabilities
-        }
+        ServerSessionKeeper(
+            context,
+            session,
+            preferences,
+            RoomServerStore(database),
+            { capabilities },
+            session.active,
+        )
 
     /**
      * Runs [ServerSessionKeeper.onUnauthorized] off the main thread, as the keeper's scope does,

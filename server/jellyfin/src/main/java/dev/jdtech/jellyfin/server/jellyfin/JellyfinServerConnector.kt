@@ -159,12 +159,15 @@ class JellyfinServerConnector(private val api: JellyfinApi) : ServerConnector {
      * Otherwise a client of its own, without a token: the shared client's base URL is the session's
      * and stays as it is, and its token never goes to another server.
      */
-    private fun clientFor(address: String): ApiClient =
-        if (api.api.baseUrl == address) {
-            api.api
+    private fun clientFor(address: String): ApiClient {
+        // #899: the address and the token of one value.
+        val current = api.snapshot()
+        return if (current.baseUrl == address) {
+            api.clientAt(current)
         } else {
             api.jellyfin.createApi(baseUrl = address, httpClientOptions = api.api.httpClientOptions)
         }
+    }
 }
 
 internal fun ServerDiscoveryInfo.toDiscoveredServer() =

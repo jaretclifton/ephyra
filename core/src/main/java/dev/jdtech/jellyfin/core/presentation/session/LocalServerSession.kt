@@ -34,8 +34,6 @@ object NoServerSession : ServerSession {
 
     override val probeTimeoutMs: Long = 0
 
-    override fun use(baseUrl: String?, accessToken: String?, userId: UserId?) = Unit
-
     override suspend fun probe(): Boolean? = null
 
     /** There is no server to say. */

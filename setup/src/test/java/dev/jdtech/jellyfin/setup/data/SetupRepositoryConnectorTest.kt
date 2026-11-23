@@ -3,7 +3,6 @@ package dev.jdtech.jellyfin.setup.data
 import android.app.Application
 import android.content.Context
 import dev.jdtech.jellyfin.core.R as CoreR
-import dev.jdtech.jellyfin.core.server.CurrentServerType
 import dev.jdtech.jellyfin.core.server.ServerConnectors
 import dev.jdtech.jellyfin.domain.ports.AuthenticatedUser
 import dev.jdtech.jellyfin.domain.ports.PublicUser
@@ -134,15 +133,12 @@ class SetupRepositoryConnectorTest {
         }
     }
 
-    private val currentType = CurrentServerType()
-
     private val repository by lazy {
         SetupRepositoryImpl(
             ServerConnectors(mapOf(ServerType.JELLYFIN to connector)),
-            session,
             database,
             preferences,
-            currentType,
+            session.active,
         )
     }
 
@@ -307,17 +303,17 @@ class SetupRepositoryConnectorTest {
     fun `switching server puts its type on the client's`() = runBlocking {
         // CE (#770): any stored type, also one this build has no adapter for.
         server = server.copy(type = "emby")
-        currentType.stored = "jellyfin"
+        session.active.switchTo(session.active.value.copy(type = "jellyfin"))
 
         repository.setCurrentServer("a".toServerId())
 
-        assertEquals("emby", currentType.stored)
+        assertEquals("emby", session.active.value.type)
     }
 
     @Test
     fun `the login screens get nothing for a type without an adapter`() = runBlocking {
         server = server.copy(type = "emby")
-        currentType.stored = "emby"
+        session.active.switchTo(session.active.value.copy(type = "emby"))
 
         assertEquals(ServerCapabilities.NONE, repository.capabilities)
         assertEquals(

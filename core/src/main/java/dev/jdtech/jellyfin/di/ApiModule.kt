@@ -4,10 +4,10 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import dev.jdtech.jellyfin.core.server.CurrentServerType
-import dev.jdtech.jellyfin.domain.ports.SessionRestorer
+import dev.jdtech.jellyfin.domain.ports.ActiveServerHolder
 import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import javax.inject.Singleton
 
 /**
  * What the server adapter takes from `core`. The adapter builds its client and the ports itself
@@ -17,13 +17,16 @@ import dev.jdtech.jellyfin.settings.domain.AppPreferences
 @InstallIn(SingletonComponent::class)
 object ApiModule {
     /**
-     * #763: the saved server, user and token, from preferences or else from Room once. CE (#770):
-     * and the server's type, for the selectors.
+     * #899: the one [ActiveServerHolder], with the saved server, user and token already on it (from
+     * preferences, or else from Room once, [SavedSessionRestorer]). Whatever injects it, the
+     * adapter's client and the selector included, gets it signed in (#250, #763), so nothing reads
+     * it before the saved session is there.
      */
+    @Singleton
     @Provides
-    fun provideSessionRestorer(
+    fun provideActiveServerHolder(
         appPreferences: AppPreferences,
         serverStore: ServerStore,
-        currentType: CurrentServerType,
-    ): SessionRestorer = SavedSessionRestorer(appPreferences, serverStore, currentType)
+    ): ActiveServerHolder =
+        ActiveServerHolder().also { SavedSessionRestorer(appPreferences, serverStore).restore(it) }
 }

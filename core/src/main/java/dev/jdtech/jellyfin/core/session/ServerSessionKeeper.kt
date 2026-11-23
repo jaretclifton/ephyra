@@ -8,6 +8,7 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.jdtech.jellyfin.core.R
+import dev.jdtech.jellyfin.domain.ports.ActiveServerHolder
 import dev.jdtech.jellyfin.domain.ports.CurrentServerCapabilities
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.repository.ServerStore
@@ -46,6 +47,7 @@ constructor(
     private val appPreferences: AppPreferences,
     private val serverStore: ServerStore,
     private val capabilities: CurrentServerCapabilities,
+    private val active: ActiveServerHolder,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var started = false
@@ -119,7 +121,10 @@ constructor(
         Timber.i("The server revoked the token of ${user.name}, signing out")
         serverStore.clearCurrentUser(serverId)
         serverStore.deleteUser(user.id)
-        serverSession.use(baseUrl = serverSession.baseUrl, accessToken = null, userId = null)
+        // #899: the address stays; only while the token is still the one refused.
+        active.onSameServer {
+            if (it.accessToken == token) it.copy(accessToken = null, userId = null) else it
+        }
 
         withContext(Dispatchers.Main) {
             Toast.makeText(

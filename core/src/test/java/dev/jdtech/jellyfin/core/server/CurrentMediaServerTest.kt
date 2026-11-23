@@ -1,6 +1,8 @@
 package dev.jdtech.jellyfin.core.server
 
 import dev.jdtech.jellyfin.core.presentation.session.NoServerSession
+import dev.jdtech.jellyfin.domain.ports.ActiveServer
+import dev.jdtech.jellyfin.domain.ports.ActiveServerHolder
 import dev.jdtech.jellyfin.domain.ports.CatalogPort
 import dev.jdtech.jellyfin.domain.ports.MediaServer
 import dev.jdtech.jellyfin.domain.ports.PlaybackPort
@@ -25,17 +27,17 @@ class CurrentMediaServerTest {
     private val jellyfin = FakeMediaServer(ServerType.JELLYFIN, ServerCapabilities.ALL)
     private val emby =
         FakeMediaServer(ServerType.EMBY, ServerCapabilities.ALL.copy(quickConnect = false))
-    private val currentType = CurrentServerType()
+    private val active = ActiveServerHolder()
 
     @Test
     fun `every port is the current type's adapter's`() {
         val server =
             CurrentMediaServer(
                 mapOf(ServerType.JELLYFIN to jellyfin, ServerType.EMBY to emby),
-                currentType,
+                active,
             )
 
-        currentType.stored = "emby"
+        active.switchTo(ActiveServer(type = "emby"))
 
         assertEquals(ServerType.EMBY, server.type)
         assertSame(emby.capabilities, server.capabilities)
@@ -50,37 +52,37 @@ class CurrentMediaServerTest {
         val server =
             CurrentMediaServer(
                 mapOf(ServerType.JELLYFIN to jellyfin, ServerType.EMBY to emby),
-                currentType,
+                active,
             )
-        currentType.stored = "jellyfin"
+        active.switchTo(ActiveServer(type = "jellyfin"))
         val startedOnJellyfin = server.catalog
 
-        currentType.stored = "emby"
+        active.switchTo(ActiveServer(type = "emby"))
 
         assertSame(jellyfin.catalog, startedOnJellyfin)
         assertSame(emby.catalog, server.catalog)
         assertEquals(ServerType.EMBY, server.type)
 
-        currentType.stored = "jellyfin"
+        active.switchTo(ActiveServer(type = "jellyfin"))
 
         assertSame(jellyfin.catalog, server.catalog)
     }
 
     @Test
     fun `without a server it is the Jellyfin adapter, as before servers had a type`() {
-        val server = CurrentMediaServer(mapOf(ServerType.JELLYFIN to jellyfin), currentType)
+        val server = CurrentMediaServer(mapOf(ServerType.JELLYFIN to jellyfin), active)
 
-        assertNull(currentType.stored)
+        assertNull(active.value.type)
         assertSame(jellyfin.catalog, server.catalog)
         assertSame(jellyfin.session, server.session)
     }
 
     @Test
     fun `a type without an adapter offers nothing and fails every request`() = runBlocking {
-        val server = CurrentMediaServer(mapOf(ServerType.JELLYFIN to jellyfin), currentType)
+        val server = CurrentMediaServer(mapOf(ServerType.JELLYFIN to jellyfin), active)
 
         for (stored in listOf("emby", "plex")) {
-            currentType.stored = stored
+            active.switchTo(ActiveServer(type = stored))
 
             assertEquals(ServerCapabilities.NONE, server.capabilities)
             assertSame(NoServerSession, server.session)

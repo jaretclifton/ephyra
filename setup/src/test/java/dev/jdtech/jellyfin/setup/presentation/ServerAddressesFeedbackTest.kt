@@ -3,8 +3,8 @@ package dev.jdtech.jellyfin.setup.presentation
 import android.app.Application
 import android.content.Context
 import dev.jdtech.jellyfin.core.R as CoreR
-import dev.jdtech.jellyfin.core.server.CurrentServerType
 import dev.jdtech.jellyfin.core.server.ServerConnectors
+import dev.jdtech.jellyfin.domain.ports.ActiveServerHolder
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.ServerType
@@ -16,7 +16,6 @@ import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.data.FakeServerConnector
-import dev.jdtech.jellyfin.setup.data.RecordingServerSession
 import dev.jdtech.jellyfin.setup.data.SetupRepositoryImpl
 import dev.jdtech.jellyfin.setup.domain.FakeLocalNetworkAccess
 import dev.jdtech.jellyfin.setup.presentation.addresses.ServerAddressesAction
@@ -115,10 +114,9 @@ class ServerAddressesFeedbackTest {
         val repository =
             SetupRepositoryImpl(
                 ServerConnectors(mapOf(ServerType.JELLYFIN to connector)),
-                RecordingServerSession(),
                 database,
                 AppPreferences(application.getSharedPreferences("test", Context.MODE_PRIVATE)),
-                CurrentServerType(),
+                ActiveServerHolder(),
             )
         viewModel = ServerAddressesViewModel(repository, localNetworkAccess)
         viewModel.loadAddresses(serverId.toServerId())

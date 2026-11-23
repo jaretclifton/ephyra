@@ -591,7 +591,8 @@ class FakeMediaServer(
     private fun streamUrlOf(itemId: ItemId, mediaSourceId: MediaSourceId) =
         "${library.address}/Videos/${itemId.asString()}/stream?static=true&mediaSourceId=$mediaSourceId"
 
-    private inner class Session : ServerSession {
+    /** #899: public for the fake's own tests, which switch it with [use]. */
+    inner class Session : ServerSession {
         @Volatile override var baseUrl: String? = library.address
         @Volatile override var userId: UserId? = library.userId
         @Volatile override var accessToken: String? = TOKEN
@@ -600,7 +601,7 @@ class FakeMediaServer(
         @Volatile override var requestWatcher: RequestWatcher? = null
         override val probeTimeoutMs: Long = 1_000L
 
-        override fun use(baseUrl: String?, accessToken: String?, userId: UserId?) {
+        fun use(baseUrl: String?, accessToken: String?, userId: UserId?) {
             answer("use") {
                 this.baseUrl = baseUrl
                 this.accessToken = accessToken
@@ -636,7 +637,7 @@ class FakeMediaServer(
             call("currentUserImage") { UserImage(userId ?: library.userId, tag = null) }
     }
 
-    override val session: ServerSession = Session()
+    override val session: Session = Session()
     override val catalog: CatalogPort = Catalog()
     override val userData: UserDataPort = UserData()
     override val playback: PlaybackPort = Playback()

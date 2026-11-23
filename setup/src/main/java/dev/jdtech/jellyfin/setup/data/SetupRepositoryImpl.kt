@@ -1,14 +1,14 @@
 package dev.jdtech.jellyfin.setup.data
 
 import dev.jdtech.jellyfin.core.R as CoreR
-import dev.jdtech.jellyfin.core.server.CurrentServerType
 import dev.jdtech.jellyfin.core.server.ServerConnectors
+import dev.jdtech.jellyfin.domain.ports.ActiveServer
+import dev.jdtech.jellyfin.domain.ports.ActiveServerHolder
 import dev.jdtech.jellyfin.domain.ports.AuthenticatedUser
 import dev.jdtech.jellyfin.domain.ports.ResolvedServer
 import dev.jdtech.jellyfin.domain.ports.ServerConnectException
 import dev.jdtech.jellyfin.domain.ports.ServerConnector
 import dev.jdtech.jellyfin.domain.ports.ServerIssue
-import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.models.DiscoveredServer
 import dev.jdtech.jellyfin.models.ExceptionUiText
 import dev.jdtech.jellyfin.models.ExceptionUiTexts
@@ -38,22 +38,23 @@ import timber.log.Timber
 
 /**
  * The saved servers, addresses and users in Room. Talking to a server goes through [connectors]
- * (#761), the one of the server's type (#770), and [session] is the client the app uses.
+ * (#761), the one of the server's type (#770), and [active] is the server and user the app talks
+ * to.
  *
- * CE (#770): [currentType] is the type of the server on the client. This sets it wherever it puts
- * another server on the client: adding a server, switching to one.
+ * #899: putting another server on (adding one, switching to one) writes its type, address, token
+ * and user to [active] as one value. A login, a user or an address switch keeps the server, so its
+ * type, and changes the value in one write too ([ActiveServerHolder.onSameServer]).
  */
 class SetupRepositoryImpl(
     private val connectors: ServerConnectors,
-    private val session: ServerSession,
     private val serverStore: ServerStore,
     private val appPreferences: AppPreferences,
-    private val currentType: CurrentServerType,
+    private val active: ActiveServerHolder,
 ) : SetupRepository {
     /** The login screens' server; none for a type this build has no adapter for. */
     override val capabilities: ServerCapabilities
         get() =
-            connectors.ofStoredTypeOrNull(currentType.stored)?.capabilities
+            connectors.ofStoredTypeOrNull(active.value.type)?.capabilities
                 ?: ServerCapabilities.NONE
 
     override fun discoverServers(): Flow<DiscoveredServer> {
@@ -65,7 +66,7 @@ class SetupRepositoryImpl(
      * [dev.jdtech.jellyfin.domain.ports.UnsupportedServerTypeException] for a type this build has
      * no adapter for, which the screens show as their error.
      */
-    private fun clientConnector(): ServerConnector = connectors.ofStoredType(currentType.stored)
+    private fun clientConnector(): ServerConnector = connectors.ofStoredType(active.value.type)
 
     override suspend fun getServers(): List<ServerWithAddresses> {
         return serverStore.serversWithAddresses()
@@ -104,7 +105,7 @@ class SetupRepositoryImpl(
      * server's current address in Room: re-adding a saved server by a new address points the client
      * there and leaves Room's current address as it was.
      */
-    private fun clientAddress(): String = checkNotNull(session.baseUrl) { "No server is set" }
+    private fun clientAddress(): String = checkNotNull(active.value.baseUrl) { "No server is set" }
 
     override suspend fun getIsQuickConnectEnabled(): Boolean =
         withContext(Dispatchers.IO) { clientConnector().quickConnectEnabled(clientAddress()) }
@@ -120,11 +121,14 @@ class SetupRepositoryImpl(
         val serverAddress = serverWithAddressAndUser.address ?: return
         val user = serverWithAddressAndUser.user
 
-        currentType.stored = serverWithAddressAndUser.server.type
-        session.use(
-            baseUrl = serverAddress.address,
-            accessToken = user?.accessToken,
-            userId = user?.id,
+        active.switchTo(
+            ActiveServer(
+                type = serverWithAddressAndUser.server.type,
+                serverId = serverWithAddressAndUser.server.id,
+                baseUrl = serverAddress.address,
+                accessToken = user?.accessToken,
+                userId = user?.id,
+            )
         )
     }
 
@@ -205,11 +209,14 @@ class SetupRepositoryImpl(
         // that user's token. Clearing it signed the app out until a restart.
         val currentUser = serverInDatabase?.let { serverStore.currentUser(it.id) }
         // CE (#770): a server saved before keeps the type it was saved with.
-        currentType.stored = server.type
-        session.use(
-            baseUrl = resolved.address,
-            accessToken = currentUser?.accessToken,
-            userId = currentUser?.id,
+        active.switchTo(
+            ActiveServer(
+                type = server.type,
+                serverId = server.id,
+                baseUrl = resolved.address,
+                accessToken = currentUser?.accessToken,
+                userId = currentUser?.id,
+            )
         )
 
         return server
@@ -279,11 +286,9 @@ class SetupRepositoryImpl(
         serverStore.insertUser(user)
         serverStore.setCurrentUser(authenticated.serverId, user.id)
 
-        session.use(
-            baseUrl = session.baseUrl,
-            accessToken = authenticated.accessToken,
-            userId = authenticated.id,
-        )
+        active.onSameServer {
+            it.copy(accessToken = authenticated.accessToken, userId = authenticated.id)
+        }
     }
 
     override suspend fun getUsers(serverId: ServerId): List<User> {
@@ -324,8 +329,8 @@ class SetupRepositoryImpl(
         val server = serverStore.server(user.serverId)
         if (server?.currentUserId == userId) {
             serverStore.clearCurrentUser(server.id)
-            if (session.userId == userId) {
-                session.use(baseUrl = session.baseUrl, accessToken = null, userId = null)
+            active.onSameServer {
+                if (it.userId == userId) it.copy(accessToken = null, userId = null) else it
             }
         }
         serverStore.deleteUser(userId)
@@ -336,7 +341,7 @@ class SetupRepositoryImpl(
         val user = serverStore.user(userId) ?: return
         serverStore.updateServer(server.copy(currentUserId = user.id))
 
-        session.use(baseUrl = session.baseUrl, accessToken = user.accessToken, userId = user.id)
+        active.onSameServer { it.copy(accessToken = user.accessToken, userId = user.id) }
     }
 
     override suspend fun clearCurrentUser() {
@@ -351,11 +356,7 @@ class SetupRepositoryImpl(
             return
         }
         serverStore.updateServer(server.copy(currentServerAddressId = address.id))
-        session.use(
-            baseUrl = address.address,
-            accessToken = session.accessToken,
-            userId = session.userId,
-        )
+        active.onSameServer { it.copy(baseUrl = address.address) }
     }
 
     override suspend fun addAddress(serverId: ServerId, address: String): ServerAddress {
