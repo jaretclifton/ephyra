@@ -7,6 +7,7 @@ Status: built, on phone and TV; Jellyfin is the only server type with an adapter
 - Setup is `setup/`: `SetupRepositoryImpl` (servers, addresses, users in Room through `ServerStore`) and the ViewModels in `setup/.../presentation/`.
 - It talks to a server through the `ServerConnector` port; Jellyfin's is `JellyfinServerConnector` in `server/jellyfin`.
 - The server in use is one `ActiveServer` on `ActiveServerHolder`, switched whole (rule R16); `CurrentMediaServer` in `core` picks the adapter.
+- Ports: `ServerConnector` (before a session), `MediaServer` and its `ServerSession` (after: the session keeper and reachability), `ServerStore` (servers, addresses and users in Room), `ActiveServerHolder`.
 - Test fast: `./gradlew :setup:testDebugUnitTest :core:testLibreDebugUnitTest`. On a device: users `tester`, `second`, `nopass`; `forward.py` for a second address.
 - A setup flow PR that no review bot read gets an independent review before it merges.
 
@@ -84,7 +85,7 @@ Then walk the flow on an emulator: add the server, log in, switch user, switch s
 
 ## Decisions and history
 
-- ADR [0001](../architecture/adr/0001-ports-and-adapters.md) and [0002](../architecture/adr/0002-hexagonal-ddd.md); T7 in [`docs/architecture/5-hexagonal-ddd.md`](../architecture/5-hexagonal-ddd.md).
+- ADR [0001](../architecture/adr/0001-ports-and-adapters.md) and [0002](../architecture/adr/0002-hexagonal-ddd.md); T7 in [`docs/architecture/5-hexagonal-ddd.md`](../architecture/5-hexagonal-ddd.md); the ports as they are now in [`docs/architecture/README.md`](../architecture/README.md).
 - [#761](https://github.com/midasvo/ephyra/issues/761): discovery, login and Quick Connect move behind `ServerConnector`.
 - [#763](https://github.com/midasvo/ephyra/issues/763): session keeper and reachability go through `ServerSession`.
 - [#770](https://github.com/midasvo/ephyra/issues/770): servers have a type; the `MediaServer` and connector are chosen by it.

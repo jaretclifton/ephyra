@@ -54,7 +54,7 @@ Unit tests, pure modules first:
 
 ```bash
 ./gradlew :domain:test :application:test :architecture:test   # DownloadStateTest, R13, R15
-./gradlew :downloads:testDebugUnitTest                         # queue, engine, resume, smart downloads, orphan sweep
+./gradlew :downloads:testDebugUnitTest                         # DownloadQueue*Test, MediaDownloadEngine*Test, ResumeValidatorsTest, SmartDownloadPlannerTest, OrphanSweep*Test
 ./gradlew :data:testDebugUnitTest                              # StoredFallbackTest, StoredItemFallbackTest, UnfinishedDownloadPlaybackTest
 ./gradlew :modes:film:testDebugUnitTest                        # DownloadsViewModelUserSwitchTest, QueueCountsTest, EpisodeDownloadSelectionTest
 ./gradlew :core:testLibreDebugUnitTest                         # DownloadErrorTextTest (core has a libre flavour)
@@ -84,6 +84,8 @@ python3 .claude/skills/translate-strings/scripts/check-translations.py   # when 
 ```
 
 Or all of it: `./gradlew testDebugUnitTest`.
+
+Then on an emulator: start a download, cut the server off with `iptables` (see above), bring it back, and check what the queue shows.
 
 ## Decisions and history
 
