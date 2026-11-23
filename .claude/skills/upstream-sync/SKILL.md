@@ -42,9 +42,17 @@ follow anyway. The rest is **skipped**, with the reason in the ledger.
 ## Module layout
 
 Ephyra's code is not where upstream's is. Upstream's `data/models` are in `domain` (pure Kotlin).
-Everything that uses the Jellyfin SDK is in `server/jellyfin`. `JellyfinRepositoryImpl` talks to
+Everything that uses the Jellyfin SDK is in `server/jellyfin`. `MediaRepositoryImpl` talks to
 ports, and the player's engines are in `player/local/.../engine/`. Use this to say in the ledger
 where an upstream change would land (`docs/architecture/`).
+
+**Renamed since #774.** `JellyfinRepository`/`JellyfinRepositoryImpl` are `MediaRepository`/
+`MediaRepositoryImpl` (same package, `data/.../repository/`), and the models were renamed from
+`Findroid*` (`FindroidItem` is `Item`, `FindroidMovie` is `Movie`, `FindroidSource` is `ItemSource`,
+`FindroidCollection` is `Library`, `FindroidSources` is `Playable`, the Room `Findroid*Dto` are
+`*Entity`; the full map is in #774). A Findroid change that names an old type is re-applied with the
+new name, and an upstream change to `JellyfinRepository.kt` lands in `MediaRepository.kt` or
+`MediaRepositoryImpl.kt` by hand. `FindroidTheme` kept its name.
 
 ## Background
 

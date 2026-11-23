@@ -54,7 +54,7 @@ All five were decided on 2026-11-21. Nothing in the plan waits for a decision an
   Emby server has been looked at: its item ids are believed to be numeric strings, which nobody
   has checked. Opaque ids now would cost 160 files for no user; keeping `UUID` for good would
   mean a mapping table in an Emby adapter. #773 stays open until then.
-- **D2. `MediaRepository` becomes `MediaRepository`, last, and only when the Emby work really
+- **D2. `JellyfinRepository` becomes `MediaRepository`, last, and only when the Emby work really
   starts.** With a second server the name says something false, which is what sets it apart from
   the internal names `CLAUDE.md` keeps. Renaming earlier would collide with phase 3, which
   rewrites the same files, and after the rename every upstream change to a file that names the
