@@ -1,6 +1,14 @@
 # Downloads
 
-Status: built and in use on phones; the TV app has no downloads. One known bug is open ([#912](https://github.com/midasvo/ephyra/issues/912)). As of 2026-11-23 (`main` at `71c25144b`).
+Status: built and in use on phones; the TV app has no downloads. One known bug is open ([#912](https://github.com/midasvo/ephyra/issues/912)). As of 2026-11-23 (`main` at `b24b19d54`).
+
+## Start here
+
+- The queue is `DownloadQueue` (`downloads/.../core/presentation/downloader/`); the bytes are `MediaDownloadEngine` (`downloads/.../utils/download/`); the rows are `DownloaderImpl` through the `DownloadStore` port.
+- Finished or not is `DownloadState` in `domain`: only it names the `.download` suffix (rule R13).
+- `downloads` may not use `core`, `data` or an adapter (rule R15): what it needs from them comes through a port in `application` (`DownloadStore`, `DownloadSettings`, `CurrentServerId`).
+- Test fast: `./gradlew :downloads:testDebugUnitTest`. On a device: user `tester` (may download) and `nodownload`, Plain Movie or Short Movie, `iptables` to cut the server.
+- Open: a download cut off by an unreachable server does not resume (#912).
 
 ## What it does
 
@@ -36,7 +44,7 @@ Strings: the English CE strings of the module are in `downloads/src/main/res/val
 - **R13**: only `DownloadState.kt` names the `.download` suffix, also inside SQL. Ask `ItemSource.downloadState` or `DownloadFiles`.
 - **R15**: `downloads` does not depend on `data`, `server/jellyfin`, `core` or an app outside its tests; no file outside `downloads` names `DownloaderImpl`, `MediaDownloadEngine`, `ResumeValidatorStore`, `SharedPreferencesResumeValidatorStore`, `DownloadHttpClient` or `ImagesDownloaderWorker`. Others use `Downloader`, `DownloadQueue`, `SmartDownloads`.
 - **R9, R4**: only the apps depend on `data`; only `data` imports `ServerDatabaseDao`. Room access goes through `DownloadStore`.
-- **R10**: ids are value classes. `DownloadStore.kt`, `DownloaderImpl.kt` and `RoomDownloadStore.kt` are on the `java.util.UUID` allowlist ([`architecture/baseline/uuid-imports.txt`](../../architecture/baseline/uuid-imports.txt)) for ids the app makes itself; do not add lines to get past the rule.
+- **R10**: ids are value classes (`ItemId`, `MediaSourceId`, `MediaStreamId`, … in `domain/.../models/Ids.kt`); no `java.util.UUID` and no `String` id outside the adapter. Don't add a line to `architecture/baseline/` to get past it.
 - **R1, R2**: no SDK and no `JellyfinApi` here; the engine gets its URLs through `MediaRepository`.
 - Project rules (`CLAUDE.md`): the `libre` flavour stays free of Google code; every CE string in 36 languages (`translate-strings` skill); a Room migration gets an independent review when no bot reviewed the PR.
 

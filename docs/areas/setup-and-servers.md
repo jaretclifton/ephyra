@@ -1,6 +1,14 @@
 # Setup, servers and users
 
-Status: built, on phone and TV; Jellyfin is the only server type with an adapter. As of 2026-11-23 (`main` at `71c25144b`).
+Status: built, on phone and TV; Jellyfin is the only server type with an adapter. As of 2026-11-23 (`main` at `b24b19d54`).
+
+## Start here
+
+- Setup is `setup/`: `SetupRepositoryImpl` (servers, addresses, users in Room through `ServerStore`) and the ViewModels in `setup/.../presentation/`.
+- It talks to a server through the `ServerConnector` port; Jellyfin's is `JellyfinServerConnector` in `server/jellyfin`.
+- The server in use is one `ActiveServer` on `ActiveServerHolder`, switched whole (rule R16); `CurrentMediaServer` in `core` picks the adapter.
+- Test fast: `./gradlew :setup:testDebugUnitTest :core:testLibreDebugUnitTest`. On a device: users `tester`, `second`, `nopass`; `forward.py` for a second address.
+- A setup flow PR that no review bot read gets an independent review before it merges.
 
 ## What it does
 
@@ -31,7 +39,7 @@ Setup finds a server (discovery on the local network, or an address typed in), c
 - **R16**: the server in use is written as one `ActiveServer`. Only `ActiveServer.kt` keeps a mutable one; only `ApiSession.kt` and `SetupRepositoryImpl.kt` call `.switchTo(`; no `copy(type = …)` on an `ActiveServer` outside the holder; nothing calls the SDK client's `update(…)`.
 - **R1, R2, R3**: the SDK is only in `server/jellyfin`. Setup talks to a server through `ServerConnector`; failures are `ServerException`.
 - **R4, R9**: Room through `ServerStore`; `setup` and `core` do not depend on `data` (their tests may).
-- **R10**: `ServerId` and `UserId`, never `String` or `UUID`. Address ids are random `UUID`s the app makes: `SetupRepository.kt`, `SetupRepositoryImpl.kt`, `ServerStore.kt` and the addresses and servers ViewModels are on the allowlists in [`architecture/baseline/`](../../architecture/baseline/). Do not add a line to get past the rule.
+- **R10**: `ServerId`, `UserId` and `ServerAddressId` ([#929](https://github.com/midasvo/ephyra/pull/929)), in `domain/.../models/Ids.kt`; never a `String` or `java.util.UUID` id outside the adapter. Do not add a line to `architecture/baseline/` to get past the rule.
 - **R11**: no `Jellyfin*` type outside the adapter.
 - What a server can do is `ServerCapabilities` (Quick Connect, public users, the login disclaimer), never a version check.
 - Project rules (`CLAUDE.md`): a setup flow PR that no bot reviewed gets an independent review posted on the PR before it merges. CE strings in 36 languages; upstream's setup texts are not edited, a `ce_` key replaces them.
@@ -88,11 +96,11 @@ Then walk the flow on an emulator: add the server, log in, switch user, switch s
 - [#425](https://github.com/midasvo/ephyra/issues/425): adding a saved server again keeps its user signed in.
 - [#376](https://github.com/midasvo/ephyra/issues/376), [#571](https://github.com/midasvo/ephyra/issues/571): say when Android 17's local network permission blocks a server.
 - [#606](https://github.com/midasvo/ephyra/issues/606): Quick Connect failures in plain words.
-- [#918](https://github.com/midasvo/ephyra/issues/918) (open): `data` and the adapter stop reading `AppPreferences`.
+- [#918](https://github.com/midasvo/ephyra/issues/918): `data`, the adapter and `downloads` read settings through ports, not `AppPreferences` (rule R17); address ids are `ServerAddressId` ([#929](https://github.com/midasvo/ephyra/pull/929)).
 
 ## Pitfalls
 
-- **The current server id is a preference, not only `ActiveServer`.** `AddServerViewModel` and `ServersViewModel` write `AppPreferences.setCurrentServerId`; `SetupRepositoryImpl` switches the holder. `MediaRepositoryImpl`, `CurrentServerId` and several ViewModels read the preference. A change to the switch must keep both in step ([#918](https://github.com/midasvo/ephyra/issues/918), [#926](https://github.com/midasvo/ephyra/pull/926)).
+- **The current server id is a preference, not only `ActiveServer`.** `AddServerViewModel` and `ServersViewModel` write `AppPreferences.setCurrentServerId`; `SetupRepositoryImpl` switches the holder. Several ViewModels read the preference, and `MediaRepositoryImpl` reads it through the `CurrentServerId` port. A change to the switch must keep both in step ([#918](https://github.com/midasvo/ephyra/issues/918), [#926](https://github.com/midasvo/ephyra/pull/926)).
 - **The login screens use the client's address, not Room's.** Re-adding a saved server by a new address points `ActiveServer` there and leaves Room's current address as it was (`clientAddress()` in `SetupRepositoryImpl`).
 - **Checking another server's address must run unwatched**, or its silence shows the unreachable banner for the server in use ([#819](https://github.com/midasvo/ephyra/issues/819), `addAddress`).
 - **Deleting the active user is allowed**: the guard in `SetupRepositoryImpl.deleteUser` is commented out (setup-02 in [`docs/open-decisions.md`](../open-decisions.md)). It now clears the current user and the token.
