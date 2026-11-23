@@ -1,17 +1,16 @@
 package dev.jdtech.jellyfin.player.local.domain
 
 import android.content.ContextWrapper
-import android.content.SharedPreferences
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Chapter
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.repository.MediaRepositoryImpl
-import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.ContractLibrary
 import dev.jdtech.jellyfin.testing.FakeLibrary
 import dev.jdtech.jellyfin.testing.FakeMediaServer
+import dev.jdtech.jellyfin.testing.FakeResumeThresholdsStore
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import kotlin.test.assertEquals
@@ -77,7 +76,10 @@ class PlaylistManagerNextUpTest {
             context = ContextWrapper(null),
             server = server,
             database = noDownloads(),
-            appPreferences = defaultPreferences(),
+            // Every setting at its default: no current server, no Next Up limit.
+            currentServer = { null },
+            nextUpMaxDays = { 0 },
+            resumeThresholds = FakeResumeThresholdsStore(),
         )
 
     /** No downloads: with no current server set, the repository only asks whether there are any. */
@@ -92,27 +94,4 @@ class PlaylistManagerNextUpTest {
             }
         }
             as ServerDatabaseDao
-
-    /** Every preference at its default. */
-    private fun defaultPreferences(): AppPreferences =
-        AppPreferences(
-            fakeProxy(
-                SharedPreferences::class.java.classLoader,
-                arrayOf(SharedPreferences::class.java),
-            ) { _, method, args ->
-                when (method.kotlinName) {
-                    "getBoolean",
-                    "getString",
-                    "getInt",
-                    "getLong",
-                    "getFloat",
-                    "getStringSet" -> args!![1]
-                    else ->
-                        throw UnsupportedOperationException(
-                            "SharedPreferences.${method.kotlinName}"
-                        )
-                }
-            }
-                as SharedPreferences
-        )
 }

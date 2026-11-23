@@ -16,7 +16,7 @@ import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.FakeResumeThresholdsStore
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -76,8 +76,10 @@ class PlayStateWritesTest {
             context,
             server,
             database,
-            AppPreferences(context.getSharedPreferences("test", Context.MODE_PRIVATE)),
-            UserDataSyncRequester {},
+            currentServer = { null },
+            nextUpMaxDays = { 0 },
+            resumeThresholds = FakeResumeThresholdsStore(),
+            syncRequester = UserDataSyncRequester {},
         )
     }
 

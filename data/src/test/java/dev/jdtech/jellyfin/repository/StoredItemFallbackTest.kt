@@ -1,7 +1,6 @@
 package dev.jdtech.jellyfin.repository
 
 import android.app.Application
-import android.content.Context
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.EpisodeEntity
@@ -18,7 +17,7 @@ import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.FakeResumeThresholdsStore
 import dev.jdtech.jellyfin.testing.asItemId
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -155,9 +154,9 @@ class StoredItemFallbackTest {
             context,
             UnansweredServer(userId),
             database,
-            AppPreferences(context.getSharedPreferences("test", Context.MODE_PRIVATE)).apply {
-                setValue(currentServer, "server")
-            },
+            currentServer = { "server".toServerId() },
+            nextUpMaxDays = { 0 },
+            resumeThresholds = FakeResumeThresholdsStore(),
         )
     }
 

@@ -15,6 +15,7 @@ import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
 import dev.jdtech.jellyfin.server.jellyfin.toUuid
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.FakeResumeThresholdsStore
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.Closeable
@@ -225,6 +226,8 @@ internal fun StandInServer.repository(
             override val capabilities = capabilities
         },
         database,
-        preferences,
+        currentServer = { preferences.currentServerId() },
+        nextUpMaxDays = { preferences.getValue(preferences.homeNextUpMaxDays) },
+        resumeThresholds = FakeResumeThresholdsStore(),
     )
 }

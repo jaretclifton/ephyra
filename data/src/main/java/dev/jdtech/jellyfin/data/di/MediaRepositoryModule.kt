@@ -9,19 +9,22 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.DeviceCodecs
 import dev.jdtech.jellyfin.domain.ports.MediaServer
 import dev.jdtech.jellyfin.player.DeviceCodecProbe
+import dev.jdtech.jellyfin.repository.CurrentServerId
 import dev.jdtech.jellyfin.repository.KnownServerState
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.MediaRepositoryImpl
+import dev.jdtech.jellyfin.repository.NextUpMaxDays
+import dev.jdtech.jellyfin.repository.ResumeThresholdsStore
 import dev.jdtech.jellyfin.repository.StoredLibraryNames
 import dev.jdtech.jellyfin.repository.UserDataSyncRequester
-import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Singleton
 
 /**
  * The repository over the server in use and Room (#899: moved from `core`'s `RepositoryModule`).
  * What it takes from `core` comes through the ports `core` binds: [UserDataSyncRequester] (the user
- * data sync), [KnownServerState] (the server reachability) and [StoredLibraryNames] (the app's
- * strings).
+ * data sync), [KnownServerState] (the server reachability), [StoredLibraryNames] (the app's
+ * strings) and, #918, what it reads of the settings ([CurrentServerId], [NextUpMaxDays],
+ * [ResumeThresholdsStore]).
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -41,7 +44,9 @@ object MediaRepositoryModule {
         application: Application,
         server: MediaServer,
         serverDatabase: ServerDatabaseDao,
-        appPreferences: AppPreferences,
+        currentServerId: CurrentServerId,
+        nextUpMaxDays: NextUpMaxDays,
+        resumeThresholds: ResumeThresholdsStore,
         syncRequester: UserDataSyncRequester,
         knownServerState: KnownServerState,
         storedLibraryNames: StoredLibraryNames,
@@ -50,7 +55,9 @@ object MediaRepositoryModule {
             application,
             server,
             serverDatabase,
-            appPreferences,
+            currentServerId,
+            nextUpMaxDays,
+            resumeThresholds,
             syncRequester,
             knownServerState,
             storedLibraryNames,

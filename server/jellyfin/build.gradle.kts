@@ -55,6 +55,8 @@ tasks.withType<Test>().configureEach {
 }
 
 dependencies {
+    // #918: the ports the adapter reads its settings through (NetworkTimeouts), bound in core.
+    implementation(projects.application)
     implementation(projects.domain)
     implementation(projects.settings)
     implementation(libs.coil.core)
@@ -70,7 +72,6 @@ dependencies {
     // The characterization tests of #738 run the real repository over this adapter and a stand-in
     // server, so they pin what goes over the wire end to end. Tests only: the adapter's own code
     // cannot see `data`.
-    testImplementation(projects.application)
     testImplementation(projects.data)
     // #771: the contract suites the adapter passes.
     testImplementation(projects.testing)

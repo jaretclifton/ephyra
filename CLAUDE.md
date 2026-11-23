@@ -62,7 +62,7 @@ player/cast      — Google Cast: session and playback on a receiver (real in th
 setup            — Server discovery and login onboarding flow
 settings         — AppPreferences (DataStore) and settings screen
 testing          — test-only (R8): FakeMediaServer, FakeServerConnector and the contract suites a server adapter passes
-architecture     — Konsist rules R1–R16 over the source tree; the allowlists in architecture/baseline/
+architecture     — Konsist rules R1–R17 over the source tree; the allowlists in architecture/baseline/
 baselineprofile  — Macrobenchmark modules (baselineprofile for app/phone, baselineprofile-tv for app/tv): baseline profile and startup benchmark
 ```
 
@@ -93,7 +93,7 @@ Events that fire once (navigation, toasts) use a `Channel<FooEvent>` exposed as 
 - One rule, one place: user-data rules (played, favourite, resume position, last played, the sync's merge) are `PlayState` in `domain/.../userdata` (R14); a finished download is `DownloadState` (`ItemSource.downloadState`; only `DownloadFiles` names the `.download` suffix, R13); tick conversions are `Ticks` (R12).
 - The server in use is one `ActiveServer` (type, address, token, user) on `ActiveServerHolder`, switched as a whole (R16); `CurrentMediaServer` picks the adapter by its type. What a server can do is `ServerCapabilities`, never a version check.
 - A new adapter passes the contract suites in `testing`. Shared player code imports no engine package (R6). No type is named `Findroid*`, or `Jellyfin*` outside the adapter (R11).
-- `./gradlew :architecture:test` (also run by `testDebugUnitTest`) enforces R1–R16. When one fails, fix the code; never add a baseline line to get past it (the two files in `architecture/baseline/` are allowlists with a reason per entry).
+- `./gradlew :architecture:test` (also run by `testDebugUnitTest`) enforces R1–R17. When one fails, fix the code; never add a baseline line to get past it (the two files in `architecture/baseline/` are allowlists with a reason per entry).
 
 **Glossary** ("session" alone is ambiguous: never use it for a new name):
 - **server** `Server`/`ServerId` (its `ServerType`); **address** `ServerAddress`, where it answers; **user** `User`/`UserId`.

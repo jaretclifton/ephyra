@@ -14,6 +14,7 @@ import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.ContractLibrary
 import dev.jdtech.jellyfin.testing.FakeLibrary
 import dev.jdtech.jellyfin.testing.FakeMediaServer
+import dev.jdtech.jellyfin.testing.FakeResumeThresholdsStore
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.CoreDownloadTexts
@@ -117,7 +118,10 @@ class ThemeSongPreferenceTest {
                 context = ContextWrapper(null),
                 server = server,
                 database = noDownloads(),
-                appPreferences = preferences,
+                // Every setting the repository reads at its default.
+                currentServer = { null },
+                nextUpMaxDays = { 0 },
+                resumeThresholds = FakeResumeThresholdsStore(),
             )
         return ShowViewModel(
             repository = repository,

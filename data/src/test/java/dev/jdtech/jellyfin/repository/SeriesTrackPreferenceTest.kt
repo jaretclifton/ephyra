@@ -8,7 +8,7 @@ import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.models.SeriesTrackPreference
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.FakeResumeThresholdsStore
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
@@ -37,15 +37,18 @@ class SeriesTrackPreferenceTest {
             .setDriver(AndroidSQLiteDriver())
             .build()
     private val database = room.getServerDatabaseDao()
-    private val preferences =
-        AppPreferences(
-            context.getSharedPreferences("series-track-preference", Context.MODE_PRIVATE)
-        )
 
     private val server = UnansweredServer(userId)
 
     private val repository: MediaRepository by lazy {
-        MediaRepositoryImpl(context, server, database, preferences)
+        MediaRepositoryImpl(
+            context,
+            server,
+            database,
+            currentServer = { null },
+            nextUpMaxDays = { 0 },
+            resumeThresholds = FakeResumeThresholdsStore(),
+        )
     }
 
     @After fun close() = room.close()
