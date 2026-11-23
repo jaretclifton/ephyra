@@ -300,9 +300,10 @@ def check_model(models: dict[str, str]) -> list[str]:
                 opened = extended.group(1)
             link = re.search(r"link\s+https://github\.com/midasvo/ephyra/(?:tree|blob)/main/(\S+)", line)
             if link and scope:
-                path = link.group(1).rstrip("/")
+                path = link.group(1).split("#")[0].strip("'\"").rstrip("/")
                 files = [path] if path in FILE_SET else [f for f in FILES if f.startswith(path + "/")]
-                sources.setdefault(scope, []).extend(files)
+                # Code only: a link to a doc is not a source and is no evidence for an arrow.
+                sources.setdefault(scope, []).extend(f for f in files if f.endswith((".kt", ".kts", ".java")))
             arrow = re.match(r"\s*([\w.]+)\s+-(?:\[\w+\]-)?>\s+([\w.]+)", line)
             if arrow:
                 arrows.append((scope, arrow.group(1), arrow.group(2), rel))
@@ -324,7 +325,7 @@ def check_model(models: dict[str, str]) -> list[str]:
 
     for element, rel in needs_source.items():
         if not sources.get(element):
-            problems.append(f"{rel}: `{element}` has no `link` to a source file or folder of this repository")
+            problems.append(f"{rel}: `{element}` has no `link` to a Kotlin file or a folder of them in this repository")
     for scope, a, b, rel in arrows:
         a, b = resolve(scope, a), resolve(scope, b)
         if not sources.get(a) or not sources.get(b):
