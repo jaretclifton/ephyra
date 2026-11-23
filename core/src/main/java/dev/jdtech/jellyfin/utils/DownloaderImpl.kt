@@ -9,16 +9,13 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import dev.jdtech.jellyfin.core.R as CoreR
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.DownloadFiles
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSource
-import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemTrickplayInfo
 import dev.jdtech.jellyfin.models.MediaSourceId
-import dev.jdtech.jellyfin.models.MediaStreamEntity
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Playable
@@ -27,21 +24,13 @@ import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.looksLikeJellyfinId
-import dev.jdtech.jellyfin.models.toEpisode
-import dev.jdtech.jellyfin.models.toEpisodeEntity
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.models.toItemSource
-import dev.jdtech.jellyfin.models.toItemSourceEntity
-import dev.jdtech.jellyfin.models.toItemTrickplayInfoEntity
-import dev.jdtech.jellyfin.models.toMediaStreamEntity
-import dev.jdtech.jellyfin.models.toMovie
-import dev.jdtech.jellyfin.models.toMovieEntity
-import dev.jdtech.jellyfin.models.toSeasonEntity
-import dev.jdtech.jellyfin.models.toSegmentEntity
-import dev.jdtech.jellyfin.models.toShowEntity
-import dev.jdtech.jellyfin.models.toUserDataEntity
 import dev.jdtech.jellyfin.repository.DataChangeEvents
+import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.StoredMediaStream
+import dev.jdtech.jellyfin.repository.StoredPendingDownload
+import dev.jdtech.jellyfin.repository.StoredSource
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
@@ -188,7 +177,7 @@ internal fun downloadErrorText(e: Throwable): UiText =
 
 class DownloaderImpl(
     private val context: Context,
-    private val database: ServerDatabaseDao,
+    private val store: DownloadStore,
     private val mediaRepositoryProvider: Provider<MediaRepository>,
     private val appPreferences: AppPreferences,
     // A Provider, so building this @Singleton (during Application.onCreate's field injection) does
@@ -293,7 +282,7 @@ class DownloaderImpl(
                     )
                 )
                 // Resume external streams: restart any still-in-progress subtitle transfers.
-                val resolvedSource = existingSource.toItemSource(database)
+                val resolvedSource = store.itemSource(existingSource)
                 resumeExternalMediaStreams(item, resolvedSource, source, allowMetered, allowRoaming)
                 Pair(existingDownloadId, null)
             } catch (e: Exception) {
@@ -399,13 +388,11 @@ class DownloaderImpl(
 
             when (item) {
                 is Movie -> {
-                    database.insertMovie(item.toMovieEntity(serverId))
+                    store.insertMovie(item, serverId)
                 }
                 is Episode -> {
                     val (show, season) = showAndSeason!!
-                    database.insertShow(show.toShowEntity(serverId))
-                    database.insertSeason(season.toSeasonEntity())
-                    database.insertEpisode(item.toEpisodeEntity(serverId))
+                    store.insertEpisode(item, show, season, serverId)
 
                     startImagesDownloader(show)
                     startImagesDownloader(season)
@@ -414,23 +401,20 @@ class DownloaderImpl(
 
             // Before the source row: once that exists, a restart resumes the download and never
             // gets here again (#693).
-            database.replaceSegments(item.id, segments.map { it.toSegmentEntity(item.id) })
+            store.replaceSegments(item.id, segments)
 
-            val sourceDto = source.toItemSourceEntity(item.id, destFile.absolutePath)
-
-            database.insertSource(
-                sourceDto.copy(
-                    downloadId = downloadId,
-                    downloadMaxBitrate = maxBitrate,
-                    smartQueued = smartQueued,
-                )
+            store.insertSource(
+                itemId = item.id,
+                source = source,
+                path = destFile.absolutePath,
+                downloadId = downloadId,
+                downloadMaxBitrate = maxBitrate,
+                smartQueued = smartQueued,
             )
             // Progress from an earlier download of this item that has not reached the server yet
             // is newer than what the server sent with the item: keep it.
             val userId = mediaRepository.getUserId()
-            if (database.getUserDataToBeSynced(userId, item.id) == null) {
-                database.insertUserData(item.toUserDataEntity(userId))
-            }
+            store.storeUserDataOfDownload(userId, item)
 
             val resolvedStorageIndex = dirs.indexOf(storageLocation)
             downloadExternalMediaStreams(
@@ -508,7 +492,7 @@ class DownloaderImpl(
         // First, and even when the row is already gone: a resume started while the queue entry
         // was being removed (#426) must not keep writing.
         engine.cancel(downloadId)
-        val source = database.getSourceByDownloadId(downloadId)?.toItemSource(database) ?: return
+        val source = store.sourceByDownloadId(downloadId)?.let { store.itemSource(it) } ?: return
         deleteItem(item, source)
     }
 
@@ -518,7 +502,7 @@ class DownloaderImpl(
      */
     private suspend fun partialSourceOfServer(item: Item, serverId: ServerId?) =
         serverId
-            ?.let { database.getSourcesOfServer(item.id, it) }
+            ?.let { store.sourcesOfServer(item.id, it) }
             .orEmpty()
             .firstOrNull { source ->
                 DownloadFiles.isPartial(source.path) && source.downloadId != null
@@ -540,10 +524,10 @@ class DownloaderImpl(
     internal suspend fun releaseOtherServersCopy(item: Item, serverId: ServerId?) {
         if (!isStoredForAnotherServer(item, serverId)) return
         Timber.i("Replacing the copy of ${item.id.asString()} stored for another server")
-        val sources = database.getSources(item.id)
+        val sources = store.sources(item.id)
         for (source in sources) {
             source.downloadId?.let { engine.cancel(it) }
-            deleteItemRows(item, source.toItemSource(database))
+            deleteItemRows(item, store.itemSource(source))
         }
         if (sources.isEmpty()) deleteItemRows(item, source = null)
         dataChanges.onChanged()
@@ -556,9 +540,9 @@ class DownloaderImpl(
         val storedFor =
             when (item) {
                 is Movie ->
-                    database.getMovieOrNull(item.id)?.let { it.serverId?.asString().orEmpty() }
+                    store.storedServerOfMovie(item.id)?.let { it.serverId?.asString().orEmpty() }
                 is Episode ->
-                    database.getEpisodeOrNull(item.id)?.let { it.serverId?.asString().orEmpty() }
+                    store.storedServerOfEpisode(item.id)?.let { it.serverId?.asString().orEmpty() }
                 else -> null
             }
         return storedFor != null && storedFor != serverId.asString()
@@ -567,21 +551,19 @@ class DownloaderImpl(
     private suspend fun deleteItemRows(item: Item, source: ItemSource?) {
         when (item) {
             is Movie -> {
-                database.deleteMovie(item.id)
+                store.deleteMovie(item.id)
             }
             is Episode -> {
-                database.deleteEpisode(item.id)
-                val remainingEpisodes = database.getEpisodesBySeasonId(item.seasonId)
+                store.deleteEpisode(item.id)
+                val remainingEpisodes = store.episodeIdsOfSeason(item.seasonId)
                 if (remainingEpisodes.isEmpty()) {
-                    database.deleteSeason(item.seasonId)
-                    database.deleteUserData(item.seasonId)
+                    store.deleteSeasonAndUserData(item.seasonId)
                     File(context.filesDir, "trickplay/${item.seasonId.asString()}")
                         .deleteRecursively()
                     File(context.filesDir, "images/${item.seasonId.asString()}").deleteRecursively()
-                    val remainingSeasons = database.getSeasonsByShowId(item.seriesId)
+                    val remainingSeasons = store.seasonIdsOfShow(item.seriesId)
                     if (remainingSeasons.isEmpty()) {
-                        database.deleteShow(item.seriesId)
-                        database.deleteUserData(item.seriesId)
+                        store.deleteShowAndUserData(item.seriesId)
                         File(context.filesDir, "trickplay/${item.seriesId.asString()}")
                             .deleteRecursively()
                         File(context.filesDir, "images/${item.seriesId.asString()}")
@@ -592,25 +574,25 @@ class DownloaderImpl(
         }
 
         if (source != null) {
-            database.deleteSource(source.id)
+            store.deleteSource(source.id)
             val sourceFile = File(source.path)
             sourceFile.delete()
             pruneEmptyParents(sourceFile)
 
-            val mediaStreams = database.getMediaStreamsBySourceId(source.id)
+            val mediaStreams = store.mediaStreamsOfSource(source.id)
             for (mediaStream in mediaStreams) {
                 // Cancel any still-running engine task for this external stream before
                 // removing the DB row, otherwise we leak in-flight downloads.
                 mediaStream.downloadId?.let { engine.cancel(it) }
                 File(mediaStream.path).delete()
             }
-            database.deleteMediaStreamsBySourceId(source.id)
+            store.deleteMediaStreamsOfSource(source.id)
         }
 
         // Progress watched offline that has not reached the server yet outlives the download:
         // the sync sends it and then removes the row (#281).
-        database.deleteSyncedUserData(item.id)
-        database.deleteSegments(item.id)
+        store.deleteSyncedUserData(item.id)
+        store.deleteSegments(item.id)
 
         File(context.filesDir, "trickplay/${item.id.asString()}").deleteRecursively()
         File(context.filesDir, "images/${item.id.asString()}").deleteRecursively()
@@ -734,9 +716,7 @@ class DownloaderImpl(
                             ),
                         )
                         .absolutePath
-                database.insertMediaStream(
-                    mediaStream.toMediaStreamEntity(id, source.id, streamPath)
-                )
+                store.insertMediaStream(id, source.id, mediaStream, streamPath)
                 val downloadId = idCounter.incrementAndGet()
                 engine.start(
                     MediaDownloadEngine.Request(
@@ -747,14 +727,14 @@ class DownloaderImpl(
                         allowRoaming = allowRoaming,
                     )
                 )
-                database.setMediaStreamDownloadId(id, downloadId)
+                store.setMediaStreamDownloadId(id, downloadId)
             } catch (e: Exception) {
                 // One bad external stream (malformed URL, engine rejects request)
                 // shouldn't kill the whole download. Drop the orphan DB row and
                 // keep going with the remaining streams.
                 Timber.e(e, "Failed to start external stream ${mediaStream.title} for ${item.name}")
                 try {
-                    database.deleteMediaStream(id)
+                    store.deleteMediaStream(id)
                 } catch (_: Exception) {
                     // swallow — nothing more we can do
                 }
@@ -782,7 +762,7 @@ class DownloaderImpl(
     ) {
         val rows =
             try {
-                database.getMediaStreamsBySourceId(dbSource.id)
+                store.mediaStreamsOfSource(dbSource.id)
             } catch (e: Exception) {
                 Timber.w(e, "Failed to load media streams for resume of ${item.name}")
                 return
@@ -818,7 +798,7 @@ class DownloaderImpl(
             } ?: return
         val rows =
             try {
-                    database.getMediaStreamsBySourceId(dbSourceDto.id)
+                    store.mediaStreamsOfSource(dbSourceDto.id)
                 } catch (e: Exception) {
                     Timber.w(e, "Failed to load media streams for retry check on ${item.name}")
                     return
@@ -864,7 +844,7 @@ class DownloaderImpl(
      * dropped (its partial discarded).
      */
     private suspend fun restartExternalMediaStreamRows(
-        rows: List<MediaStreamEntity>,
+        rows: List<StoredMediaStream>,
         serverSource: ItemSource,
         allowMetered: Boolean,
         allowRoaming: Boolean,
@@ -891,7 +871,7 @@ class DownloaderImpl(
                 engine.cancel(downloadId)
                 File(row.path).delete()
                 try {
-                    database.deleteMediaStream(row.id)
+                    store.deleteMediaStream(row.id)
                 } catch (_: Exception) {}
                 continue
             }
@@ -937,7 +917,7 @@ class DownloaderImpl(
         sheets: Map<Int, ByteArray>,
     ) {
         val basePath = "trickplay/${itemId.asString()}/${sourceId.asString()}"
-        database.insertTrickplayInfo(trickplayInfo.toItemTrickplayInfoEntity(sourceId))
+        store.insertTrickplayInfo(sourceId, trickplayInfo)
         File(context.filesDir, basePath).mkdirs()
         for ((index, bytes) in sheets) {
             File(context.filesDir, "$basePath/$index").writeBytes(bytes)
@@ -952,8 +932,8 @@ class DownloaderImpl(
                     is Episode -> "EPISODE"
                     else -> return@withContext
                 }
-            database.insertPendingDownload(
-                dev.jdtech.jellyfin.models.PendingDownloadDto(
+            store.insertPendingDownload(
+                StoredPendingDownload(
                     itemId = item.id,
                     itemKind = kind,
                     addedAt = System.currentTimeMillis(),
@@ -964,16 +944,16 @@ class DownloaderImpl(
         }
 
     override suspend fun removePendingDownload(itemId: ItemId) =
-        withContext(Dispatchers.IO) { database.deletePendingDownload(itemId) }
+        withContext(Dispatchers.IO) { store.deletePendingDownload(itemId) }
 
     override suspend fun getPendingDownloads(): List<Downloader.PendingDownload> =
         withContext(Dispatchers.IO) {
-            val pending = database.getPendingDownloads()
+            val pending = store.pendingDownloads()
             val result = mutableListOf<Downloader.PendingDownload>()
             val cutoff = System.currentTimeMillis() - PENDING_DOWNLOAD_MAX_AGE_MS
             for (row in pending) {
                 if (row.itemKind != "MOVIE" && row.itemKind != "EPISODE") {
-                    database.deletePendingDownload(row.itemId)
+                    store.deletePendingDownload(row.itemId)
                     continue
                 }
                 val resolved: Item? =
@@ -1006,7 +986,7 @@ class DownloaderImpl(
                         Timber.i(
                             "Dropping stale pending download ${row.itemId.asString()} (>30 days unresolvable)"
                         )
-                        database.deletePendingDownload(row.itemId)
+                        store.deletePendingDownload(row.itemId)
                     }
                 // else: keep the row; it will be retried on the next restoreAll().
                 }
@@ -1017,7 +997,7 @@ class DownloaderImpl(
     override suspend fun getActiveDownloads(): List<Downloader.ActiveDownload> =
         withContext(Dispatchers.IO) {
             val userId = mediaRepository.getUserId()
-            val sources = database.getActiveDownloadSources()
+            val sources = store.activeDownloadSources()
             val result = mutableListOf<Downloader.ActiveDownload>()
             for (source in sources) {
                 val downloadId = source.downloadId ?: continue
@@ -1035,10 +1015,10 @@ class DownloaderImpl(
                 }
                 val item: Item? =
                     try {
-                        database.getMovie(source.itemId).toMovie(database, userId)
+                        store.movie(source.itemId, userId)
                     } catch (_: Exception) {
                         try {
-                            database.getEpisode(source.itemId).toEpisode(database, userId)
+                            store.episode(source.itemId, userId)
                         } catch (_: Exception) {
                             null
                         }
@@ -1061,7 +1041,7 @@ class DownloaderImpl(
      * A `.download` row whose file has its final name already: only the rename of a finished
      * transfer makes that file. A task the engine knows is still this session's, and left alone.
      */
-    private fun renamedBeforeStop(source: ItemSourceEntity, downloadId: Long): Boolean {
+    private fun renamedBeforeStop(source: StoredSource, downloadId: Long): Boolean {
         if (engine.snapshot(downloadId) != null) return false
         val finalFile = File(DownloadFiles.finalPath(source.path))
         return !File(source.path).exists() && finalFile.isFile && finalFile.length() > 0
@@ -1099,14 +1079,14 @@ class DownloaderImpl(
                     .map { File(it, "downloads").absolutePath }
 
             val knownPaths = mutableSetOf<String>()
-            suspend fun remember(source: ItemSourceEntity) {
+            suspend fun remember(source: StoredSource) {
                 knownPaths.add(source.path)
-                for (stream in database.getMediaStreamsBySourceId(source.id)) {
+                for (stream in store.mediaStreamsOfSource(source.id)) {
                     knownPaths.add(stream.path)
                 }
             }
 
-            for (source in database.getCompletedDownloadSources()) {
+            for (source in store.completedDownloadSources()) {
                 remember(source)
                 if (!isUnderMountedRoot(source.path, mountedRoots)) continue
                 if (File(source.path).exists()) continue
@@ -1114,7 +1094,7 @@ class DownloaderImpl(
                 cleanupOrphanSource(source.itemId, userId)
             }
 
-            for (source in database.getActiveDownloadSources()) {
+            for (source in store.activeDownloadSources()) {
                 remember(source)
                 if (!isUnderMountedRoot(source.path, mountedRoots)) continue
                 val engineAlive = source.downloadId != null && source.downloadId in liveTaskIds
@@ -1137,7 +1117,7 @@ class DownloaderImpl(
 
             // CE (#379): read before anything below is deleted, so a database that cannot be read
             // deletes nothing.
-            val knownItemIds = database.getAllItemIds().toSet()
+            val knownItemIds = store.allItemIds().toSet()
             val knownFinalPaths = knownPaths.map { DownloadFiles.finalPath(it) }.toSet()
             val now = System.currentTimeMillis()
             var deletedFiles = 0
@@ -1224,11 +1204,11 @@ class DownloaderImpl(
 
     override suspend fun finalizeDownload(downloadId: Long): Boolean =
         withContext(Dispatchers.IO) {
-            val source = database.getSourceByDownloadId(downloadId)
+            val source = store.sourceByDownloadId(downloadId)
             if (source != null) {
                 return@withContext finalizeSource(source)
             }
-            val mediaStream = database.getMediaStreamByDownloadId(downloadId)
+            val mediaStream = store.mediaStreamByDownloadId(downloadId)
             if (mediaStream != null) {
                 return@withContext finalizeMediaStream(mediaStream)
             }
@@ -1237,7 +1217,7 @@ class DownloaderImpl(
             false
         }
 
-    private suspend fun finalizeSource(source: ItemSourceEntity): Boolean {
+    private suspend fun finalizeSource(source: StoredSource): Boolean {
         if (!DownloadFiles.isPartial(source.path)) return true
         val finalPath = DownloadFiles.finalPath(source.path)
         val downloadFile = File(source.path)
@@ -1246,7 +1226,7 @@ class DownloaderImpl(
         // If the rename already happened on disk (earlier finalize, manual recovery),
         // just sync the DB and exit.
         if (finalFile.exists() && finalFile.length() > 0 && !downloadFile.exists()) {
-            database.setSourceDownloaded(source.id, finalPath, System.currentTimeMillis())
+            store.setSourceDownloaded(source.id, finalPath, System.currentTimeMillis())
             finalizeMediaStreamsOf(source)
             return true
         }
@@ -1262,7 +1242,7 @@ class DownloaderImpl(
             return false
         }
         try {
-            database.setSourceDownloaded(source.id, finalPath, System.currentTimeMillis())
+            store.setSourceDownloaded(source.id, finalPath, System.currentTimeMillis())
         } catch (e: Exception) {
             // The row still says `.download`: the file goes back under that name, so the row and
             // the disk agree for the retry, the removal and the storage sweep.
@@ -1284,7 +1264,7 @@ class DownloaderImpl(
      * each with a download id of its own, kept their `.download` name. Finalizes the ones that are
      * done, and hands the rest to one background job for [source].
      */
-    private suspend fun finalizeMediaStreamsOf(source: ItemSourceEntity) {
+    private suspend fun finalizeMediaStreamsOf(source: StoredSource) {
         val rows =
             try {
                 unfinishedMediaStreams(source.id)
@@ -1317,8 +1297,8 @@ class DownloaderImpl(
         if (left) finalizeMediaStreamsLater(source)
     }
 
-    private suspend fun unfinishedMediaStreams(sourceId: MediaSourceId): List<MediaStreamEntity> =
-        database.getMediaStreamsBySourceId(sourceId).filter { DownloadFiles.isPartial(it.path) }
+    private suspend fun unfinishedMediaStreams(sourceId: MediaSourceId): List<StoredMediaStream> =
+        store.mediaStreamsOfSource(sourceId).filter { DownloadFiles.isPartial(it.path) }
 
     /**
      * Waits, at most [mediaStreamFinalizeTimeoutMs], for the subtitles of [source] that were not
@@ -1327,7 +1307,7 @@ class DownloaderImpl(
      * are gone (the download was deleted). What it leaves behind keeps its `.download` name for
      * [finalizeFinishedMediaStreams] at the next start.
      */
-    private fun finalizeMediaStreamsLater(source: ItemSourceEntity) {
+    private fun finalizeMediaStreamsLater(source: StoredSource) {
         mediaStreamFinalizeJobs.compute(source.id) { _, running ->
             running?.takeIf { it.isActive }
                 ?: mediaStreamFinalizeScope.launch {
@@ -1377,7 +1357,7 @@ class DownloaderImpl(
     }
 
     /** Starts the failed or lost subtitle transfers of a finished [source] once more. */
-    private suspend fun restartFailedMediaStreams(source: ItemSourceEntity) {
+    private suspend fun restartFailedMediaStreams(source: StoredSource) {
         val rows = unfinishedMediaStreams(source.id)
         val snapshots = engine.snapshots(rows.mapNotNull { it.downloadId })
         val failed = rows.filter { row ->
@@ -1409,7 +1389,7 @@ class DownloaderImpl(
 
     override suspend fun finalizeFinishedMediaStreams() =
         withContext(Dispatchers.IO) {
-            for (source in database.getCompletedDownloadSources()) {
+            for (source in store.completedDownloadSources()) {
                 if (mediaStreamFinalizeJobs[source.id]?.isActive == true) continue
                 for (row in unfinishedMediaStreams(source.id)) {
                     val status = row.downloadId?.let { engine.snapshot(it)?.status }
@@ -1430,7 +1410,7 @@ class DownloaderImpl(
      * failed rename keeps the row, which still points at a readable file.
      */
     private suspend fun finalizeMediaStream(
-        mediaStream: MediaStreamEntity,
+        mediaStream: StoredMediaStream,
         taskGone: Boolean = false,
     ): Boolean {
         if (!DownloadFiles.isPartial(mediaStream.path)) return true
@@ -1439,7 +1419,7 @@ class DownloaderImpl(
         val finalFile = File(finalPath)
 
         if (finalFile.exists() && finalFile.length() > 0 && !downloadFile.exists()) {
-            database.setMediaStreamPath(mediaStream.id, finalPath)
+            store.setMediaStreamPath(mediaStream.id, finalPath)
             return true
         }
 
@@ -1451,10 +1431,10 @@ class DownloaderImpl(
 
         if (!renameDownloadFile(mediaStream.path, finalPath)) {
             Timber.e("Failed to rename media stream download. path=${mediaStream.path}")
-            if (!taskGone) database.deleteMediaStream(mediaStream.id)
+            if (!taskGone) store.deleteMediaStream(mediaStream.id)
             return false
         }
-        database.setMediaStreamPath(mediaStream.id, finalPath)
+        store.setMediaStreamPath(mediaStream.id, finalPath)
         // Drop the terminal task from the engine registry after successful finalize.
         mediaStream.downloadId?.let { engine.cancel(it) }
         return true
@@ -1489,24 +1469,24 @@ class DownloaderImpl(
     private suspend fun cleanupOrphanSource(itemId: ItemId, userId: UserId) {
         val item: Item? =
             try {
-                database.getMovieOrNull(itemId)?.toMovie(database, userId)
+                store.movieOrNull(itemId, userId)
             } catch (_: Exception) {
                 null
             }
                 ?: try {
-                    database.getEpisodeOrNull(itemId)?.toEpisode(database, userId)
+                    store.episodeOrNull(itemId, userId)
                 } catch (_: Exception) {
                     null
                 }
         if (item == null) {
             // Item record is already gone — drop lingering source rows directly.
-            for (source in database.getSources(itemId)) {
-                database.deleteMediaStreamsBySourceId(source.id)
-                database.deleteSource(source.id)
+            for (source in store.sources(itemId)) {
+                store.deleteMediaStreamsOfSource(source.id)
+                store.deleteSource(source.id)
             }
             return
         }
-        for (source in database.getSources(itemId).map { it.toItemSource(database) }) {
+        for (source in store.sources(itemId).map { store.itemSource(it) }) {
             try {
                 deleteItem(item, source)
             } catch (e: Exception) {

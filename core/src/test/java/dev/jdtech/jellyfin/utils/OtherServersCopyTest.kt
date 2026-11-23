@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Environment
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
+import dev.jdtech.jellyfin.database.RoomDownloadStore
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.EpisodeEntity
@@ -86,7 +87,7 @@ class OtherServersCopyTest {
                 as MediaRepository
         DownloaderImpl(
             context,
-            database,
+            RoomDownloadStore(database),
             Provider { repository },
             preferences,
             Provider { error("No WorkManager in this test") },

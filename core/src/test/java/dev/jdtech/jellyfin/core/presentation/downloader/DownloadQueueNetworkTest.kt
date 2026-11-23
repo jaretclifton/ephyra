@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.core.presentation.downloader
 import android.app.Application
 import android.content.Context
 import dev.jdtech.jellyfin.core.R as CoreR
+import dev.jdtech.jellyfin.database.RoomDownloadStore
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.Item
@@ -117,7 +118,7 @@ class DownloadQueueNetworkTest {
             downloader = downloader,
             appPreferences = AppPreferences(preferences),
             repositoryProvider = Provider { error("No repository in this test") },
-            database = database(),
+            downloadStore = RoomDownloadStore(database()),
             context = context,
             connectivity = connectivity,
         )
