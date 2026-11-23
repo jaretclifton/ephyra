@@ -20,9 +20,10 @@ Read it first; `docs/get-started.md` has what to install. This file is how to ac
    to use: do not make a second one, and do not wipe one you did not create in this session
    without asking, because other sessions may be testing on it.
 2. **Check what the machine has.** `scripts/doctor.sh server` (from Git Bash on Windows). It
-   checks Docker and `python3` where Docker runs (in WSL on Windows: run every command of this
-   skill as `wsl -d <distro> -- bash <script>`; `wsl -l -q` lists the distros) and whether a
-   server answers. Docker missing is the user's to install: say so and stop.
+   checks Docker and `python3` where Docker runs and whether a server answers. On Windows every
+   command of this skill runs in WSL: `wsl -d <distro> -- bash tools/test-server/setup.sh …` for
+   the shell script, `wsl -d <distro> -- python3 tools/test-server/user.py …` for the Python
+   ones (`wsl -l -q` lists the distros). Docker missing is the user's to install: say so and stop.
 3. **Start it.** `tools/test-server/setup.sh`. About two minutes on a first run once the image is
    there, seconds after that. Run it in the background if you have other work.
 4. **Read the report it ends with** and compare it with the media table in the doc. "with a

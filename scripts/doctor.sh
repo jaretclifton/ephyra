@@ -63,9 +63,13 @@ sdk_tool() { # sdk_tool <path under the SDK, without .exe/.bat>
 
 default_sdk() {
   case "$OS" in
-    windows) echo "%LOCALAPPDATA%\\Android\\Sdk" ;;
-    mac) echo "~/Library/Android/sdk" ;;
-    *) echo "~/Android/Sdk" ;;
+    # Printed as text to paste into the shell, so the variables stay unexpanded on purpose.
+    # shellcheck disable=SC2016
+    windows) echo '"$LOCALAPPDATA/Android/Sdk"' ;;
+    # shellcheck disable=SC2016
+    mac) echo '"$HOME/Library/Android/sdk"' ;;
+    # shellcheck disable=SC2016
+    *) echo '"$HOME/Android/Sdk"' ;;
   esac
 }
 
@@ -155,10 +159,18 @@ check_server() {
   fi
   if v="$(in_docker_host python3 --version 2>/dev/null)"; then ok python3-server "${v#Python }$where"
   else fail python3-server "no python3$where" "install python3 where Docker runs"; fi
-  if has curl && answer="$(curl -s -m 5 "http://localhost:$port/System/Info/Public" 2>/dev/null)" && [ -n "$answer" ]; then
-    ok test-server "answers on localhost:$port, Jellyfin $(echo "$answer" | sed -n 's/.*"Version":"\([^"]*\)".*/\1/p')"
+  # 127.0.0.1, not localhost: an emulator reaches the host over IPv4 (10.0.2.2), and on Windows
+  # another process can hold the IPv4 port while WSL answers on IPv6.
+  local jf=""
+  if has curl && answer="$(curl -sf -m 5 "http://127.0.0.1:$port/System/Info/Public" 2>/dev/null)"; then
+    jf="$(echo "$answer" | sed -n 's/.*"ProductName":"Jellyfin Server".*"Version":"\([^"]*\)".*/\1/p; s/.*"Version":"\([^"]*\)".*"ProductName":"Jellyfin Server".*/\1/p' | head -1)"
+  fi
+  if [ -n "$jf" ]; then
+    ok test-server "Jellyfin $jf answers on 127.0.0.1:$port"
+  elif [ -n "${answer:-}" ]; then
+    warn test-server "something answers on 127.0.0.1:$port, but not Jellyfin" "pick another EPHYRA_TEST_SERVER_PORT, or stop what holds the port"
   else
-    warn test-server "nothing answers on localhost:$port" \
+    warn test-server "nothing answers on 127.0.0.1:$port" \
       "tools/test-server/setup.sh$( [ "$OS" = windows ] && echo " (from Git Bash: wsl.exe -- bash tools/test-server/setup.sh)")"
   fi
 }

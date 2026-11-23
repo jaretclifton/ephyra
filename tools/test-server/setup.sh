@@ -69,8 +69,21 @@ if [ ! -f "$CREDS" ]; then
   } > "$CREDS"
   umask 022
 fi
+# An existing container keeps the port it was made with: a different EPHYRA_TEST_SERVER_PORT
+# would leave creds.env pointing at a port nothing answers on.
+if docker ps -a --format '{{.Names}}' | grep -qx "$NAME"; then
+  OLD_PORT="$(docker inspect -f '{{range (index .HostConfig.PortBindings "8096/tcp")}}{{.HostPort}}{{end}}' "$NAME")"
+  if [ -n "$OLD_PORT" ] && [ "$OLD_PORT" != "$PORT" ]; then
+    echo "$NAME exists on port $OLD_PORT, not $PORT: use EPHYRA_TEST_SERVER_PORT=$OLD_PORT, or run 'setup.sh wipe' first" >&2
+    exit 1
+  fi
+fi
 # The addresses follow EPHYRA_TEST_SERVER_PORT, also when it changed since creds.env was written.
-sed -i "s|^JF_URL_HOST=.*|JF_URL_HOST=http://localhost:$PORT|; s|^JF_URL_EMULATOR=.*|JF_URL_EMULATOR=http://10.0.2.2:$PORT|" "$CREDS"
+# A copy rather than sed -i (which differs between GNU and macOS), written under umask 077.
+umask 077
+sed "s|^JF_URL_HOST=.*|JF_URL_HOST=http://localhost:$PORT|; s|^JF_URL_EMULATOR=.*|JF_URL_EMULATOR=http://10.0.2.2:$PORT|" "$CREDS" > "$CREDS.new"
+mv "$CREDS.new" "$CREDS"
+umask 022
 # shellcheck disable=SC1090
 source "$CREDS"
 

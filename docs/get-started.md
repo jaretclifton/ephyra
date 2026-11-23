@@ -50,6 +50,11 @@ Notes per system:
   the emulators and `adb` run on Windows. `python3` may be the Microsoft Store stub, which prints
   "Python was not found": use `python`, or turn the alias off under the app execution aliases in
   Windows settings.
+- **Mac with Apple Silicon.** The build works. The emulators in `scripts/avds.sh` use x86 system
+  images, which an ARM host cannot run; make an AVD from an `arm64-v8a` image by hand
+  (`avdmanager create avd -n <name> -k "system-images;android-34;google_apis;arm64-v8a" -d
+  pixel_6`) and install `phone-libre-arm64-v8a-debug.apk` with `adb install -r`. Not tried here:
+  there was no Mac.
 - **Git worktrees** have no `local.properties` of their own. Set `ANDROID_HOME` in your shell
   profile instead, so every checkout finds the SDK.
 - **CI** is Linux (`ubuntu-latest`) with JDK 21; the site is built with Node 24.
