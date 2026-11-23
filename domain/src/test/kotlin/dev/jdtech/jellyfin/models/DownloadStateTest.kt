@@ -58,6 +58,7 @@ class DownloadStateTest {
         // A final name stays as it is, and only one suffix goes.
         assertEquals("/d/a.mkv", DownloadFiles.finalPath("/d/a.mkv"))
         assertEquals("/d/a.download", DownloadFiles.finalPath("/d/a.download.download"))
+        assertEquals("%.download", DownloadFiles.PARTIAL_LIKE)
         assertTrue(DownloadFiles.isPartial("/d/a.mkv.download"))
         assertFalse(DownloadFiles.isPartial("/d/a.mkv"))
     }

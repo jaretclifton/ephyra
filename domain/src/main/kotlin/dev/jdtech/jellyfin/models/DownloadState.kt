@@ -23,6 +23,9 @@ enum class DownloadState {
 object DownloadFiles {
     const val PARTIAL_SUFFIX = ".download"
 
+    /** The SQL `LIKE` pattern of a partial name, for the queries that filter rows by it. */
+    const val PARTIAL_LIKE = "%$PARTIAL_SUFFIX"
+
     /** True when [path] is the name of a download that is not finished. */
     fun isPartial(path: String): Boolean = path.endsWith(PARTIAL_SUFFIX)
 

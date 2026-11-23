@@ -11,7 +11,8 @@ import kotlin.test.assertTrue
  * `DownloadFiles`. No baseline: it starts at zero.
  *
  * The check looks for a string literal that ends in `.download` (`".download"`, `"$path.download"`)
- * in the code, with comments removed. Tests are not production files and may spell the name out.
+ * in the code (also inside SQL, `LIKE '%.download'`), with comments removed. Tests are not
+ * production files and may spell the name out.
  */
 class DownloadSuffixTest {
 
@@ -41,6 +42,9 @@ class DownloadSuffixTest {
     fun `R13 finds a literal that ends in the suffix, and nothing else`() {
         assertTrue(SUFFIX_LITERAL.containsMatchIn(code("""val a = path.endsWith(".download")""")))
         assertTrue(SUFFIX_LITERAL.containsMatchIn(code("""val b = "downloads/${'$'}x.download"""")))
+        assertTrue(
+            SUFFIX_LITERAL.containsMatchIn(code("""@Query("WHERE path LIKE '%.download'")"""))
+        )
         assertTrue(SUFFIX_LITERAL.containsMatchIn(code("""val c = p.removeSuffix(".download")""")))
         assertEquals(false, SUFFIX_LITERAL.containsMatchIn(code("// path.endsWith(\".download\")")))
         assertEquals(false, SUFFIX_LITERAL.containsMatchIn(code("/* \".download\" */ val d = 1")))
@@ -55,7 +59,7 @@ class DownloadSuffixTest {
         const val DOWNLOAD_STATE_FILE =
             "domain/src/main/kotlin/dev/jdtech/jellyfin/models/DownloadState.kt"
 
-        val SUFFIX_LITERAL = Regex("""\.download"""")
+        val SUFFIX_LITERAL = Regex("""\.download["']""")
 
         fun code(source: String) = UuidBoundaryTest.withoutComments(source)
     }

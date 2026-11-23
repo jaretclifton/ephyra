@@ -6,6 +6,7 @@ import androidx.room3.OnConflictStrategy
 import androidx.room3.Query
 import androidx.room3.Transaction
 import androidx.room3.Update
+import dev.jdtech.jellyfin.models.DownloadFiles
 import dev.jdtech.jellyfin.models.EpisodeEntity
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSourceEntity
@@ -62,11 +63,15 @@ private const val SOURCE_OF_SERVER =
  */
 private const val MOVIE_DOWNLOADED =
     "EXISTS (SELECT 1 FROM sources WHERE sources.itemId = movies.id " +
-        "AND sources.type = 'LOCAL' AND sources.path NOT LIKE '%.download')"
+        "AND sources.type = 'LOCAL' AND sources.path NOT LIKE '" +
+        DownloadFiles.PARTIAL_LIKE +
+        "')"
 
 private const val EPISODE_DOWNLOADED =
     "EXISTS (SELECT 1 FROM sources WHERE sources.itemId = episodes.id " +
-        "AND sources.type = 'LOCAL' AND sources.path NOT LIKE '%.download')"
+        "AND sources.type = 'LOCAL' AND sources.path NOT LIKE '" +
+        DownloadFiles.PARTIAL_LIKE +
+        "')"
 
 private const val SHOW_DOWNLOADED =
     "EXISTS (SELECT 1 FROM episodes WHERE episodes.seriesId = shows.id " +
@@ -201,15 +206,25 @@ interface ServerDatabaseDao {
     @Query("SELECT * FROM sources WHERE downloadId = :downloadId")
     suspend fun getSourceByDownloadId(downloadId: Long): ItemSourceEntity?
 
-    @Query("SELECT * FROM sources WHERE type = 'LOCAL' AND path LIKE '%.download'")
+    @Query(
+        "SELECT * FROM sources WHERE type = 'LOCAL' AND path LIKE '" +
+            DownloadFiles.PARTIAL_LIKE +
+            "'"
+    )
     suspend fun getActiveDownloadSources(): List<ItemSourceEntity>
 
-    @Query("SELECT * FROM sources WHERE type = 'LOCAL' AND path NOT LIKE '%.download'")
+    @Query(
+        "SELECT * FROM sources WHERE type = 'LOCAL' AND path NOT LIKE '" +
+            DownloadFiles.PARTIAL_LIKE +
+            "'"
+    )
     suspend fun getCompletedDownloadSources(): List<ItemSourceEntity>
 
     /** The item's finished downloads: a `.download` file is still being written (#454). */
     @Query(
-        "SELECT * FROM sources WHERE itemId = :itemId AND path NOT LIKE '%.download' " +
+        "SELECT * FROM sources WHERE itemId = :itemId AND path NOT LIKE '" +
+            DownloadFiles.PARTIAL_LIKE +
+            "' " +
             "AND $SOURCE_OF_SERVER"
     )
     suspend fun getCompletedSources(itemId: ItemId, serverId: String): List<ItemSourceEntity>
@@ -217,7 +232,9 @@ interface ServerDatabaseDao {
     @Query(
         "SELECT DISTINCT episodes.seriesId FROM episodes " +
             "JOIN sources ON sources.itemId = episodes.id " +
-            "WHERE sources.type = 'LOCAL' AND sources.path NOT LIKE '%.download' " +
+            "WHERE sources.type = 'LOCAL' AND sources.path NOT LIKE '" +
+            DownloadFiles.PARTIAL_LIKE +
+            "' " +
             "AND episodes.serverId = :serverId"
     )
     suspend fun getSeriesIdsWithCompletedDownloads(serverId: String): List<ItemId>
@@ -418,7 +435,9 @@ interface ServerDatabaseDao {
     @Query(
         "SELECT episodes.seasonId AS seasonId, COUNT(*) AS total, " +
             "SUM(CASE WHEN EXISTS (SELECT 1 FROM sources WHERE sources.itemId = episodes.id " +
-            "AND sources.type = 'LOCAL' AND sources.path NOT LIKE '%.download') " +
+            "AND sources.type = 'LOCAL' AND sources.path NOT LIKE '" +
+            DownloadFiles.PARTIAL_LIKE +
+            "') " +
             "THEN 1 ELSE 0 END) AS downloaded " +
             "FROM episodes WHERE episodes.seriesId = :seriesId " +
             "AND episodes.serverId = :serverId GROUP BY episodes.seasonId"
