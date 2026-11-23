@@ -13,6 +13,7 @@ import dev.jdtech.jellyfin.models.CollectionType
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.KnownServerState
 import dev.jdtech.jellyfin.repository.PlaybackEvents
+import dev.jdtech.jellyfin.repository.ServerAvailability
 import dev.jdtech.jellyfin.repository.StoredLibraryNames
 import dev.jdtech.jellyfin.repository.UserDataSyncRequester
 import dev.jdtech.jellyfin.work.UserDataSync
@@ -51,6 +52,11 @@ object RepositoryModule {
     /** #899: the repository reads whether the server is known to be away through this. */
     @Provides
     fun provideKnownServerState(serverReachability: ServerReachability): KnownServerState =
+        serverReachability
+
+    /** CE (#912): the download queue goes on when the server is found back, through this. */
+    @Provides
+    fun provideServerAvailability(serverReachability: ServerReachability): ServerAvailability =
         serverReachability
 
     /** CE (#775): the stored libraries get the names the app uses for these kinds. */

@@ -1,6 +1,6 @@
 # User data and sync
 
-Status: works on phone and TV; one bug is open ([#907](https://github.com/midasvo/ephyra/issues/907)). As of 2026-11-23 (`main` at `26e62f27a`).
+Status: works on phone and TV; no open bugs known. As of 2026-11-23 (`main` at `26e62f27a`).
 
 ## Start here
 
@@ -9,7 +9,6 @@ Status: works on phone and TV; one bug is open ([#907](https://github.com/midasv
 - What is owed to the server is `PendingUserDataStore` (port in `application`, Room in `data`). `UserDataSync` and `SyncWorker` in `core` send it, through `UserDataSyncPort` (`JellyfinUserDataSync`). The current user's marks go through `UserDataPort` (`JellyfinUserData`).
 - Only downloads have a row; for any other item a write is the server call alone. State is per user: `AccountKey(serverId, userId)`.
 - Test fast: `./gradlew :domain:test :data:testDebugUnitTest`, and `./gradlew :core:testLibreDebugUnitTest --tests '*Sync*'`.
-- Open: an unplayed mark during a profile switch may clear the other user's last-played date (#907, `MediaRepositoryImpl.markAsUnplayed`).
 
 ## What it does
 
@@ -54,7 +53,7 @@ Playback reports are the other flow: [playback-reporting](playback-reporting.md)
 On a device (`docs/dev-environment.md`, `test-server` skill): users `tester` and `second` on one server, a downloaded Short Movie for both (so both have a row), Resume Show for positions. Marking items on the server is free during tests.
 
 - Server away: `adb root`, `adb shell iptables -I OUTPUT -d 10.0.2.2 -p tcp --dport 8096 -j REJECT --reject-with tcp-reset` (`-D` undoes it). Mark the item played, unplayed, favourite; watch part of it. The row keeps `toBeSynced`; with the server back the sync sends it.
-- A request held open (#907): `tools/test-server/forward.py` cannot hold one request: its rate limit slows a long answer, but a small one passes in one chunk. Hold the call in a unit test instead, with a fake whose call suspends until the test releases it (the server port in the `data` tests), switch the user during the wait and read the rows.
+- A request held open (#907): `tools/test-server/forward.py` cannot hold one request: its rate limit slows a long answer, but a small one passes in one chunk. Hold the call in a unit test instead, with a fake whose call suspends or switches the user (`PlayStateWritesTest`), and read the rows. On the phone the race did not show (emulator, a proxy holding `DELETE /UserPlayedItems` 15 s, switch from Home): the mark runs in the item page's `viewModelScope`, and the switch is on Home only, so the page and its mark are most likely gone before the server answers.
 - Look at the rows with `run-as nl.midasvo.findroid.ce.debug` on the database: `userdata` has `played`, `favorite`, `playbackPositionTicks`, `lastPlayedDate`, `toBeSynced`.
 
 ## Before a PR
@@ -78,7 +77,7 @@ A new rule in `PlayState` comes with a test in `PlayStateTest` or `SyncMergeTest
 
 ## Pitfalls
 
-- **#907 (open): `markAsUnplayed` reads the user twice.** `reportUserData` takes `currentUserId` once for the write, the mark and the report. Then `markAsUnplayed` reads it again in `database.updatePlayState(currentUserId, itemId) { it.afterUnplayedReport(reached) }`. A switch while the request waits sends the clear to the new user's row. Fix, if it reproduces: read the id once at the top of `markAsUnplayed`. `currentUserId` is a getter on `server.session.userId`, so any second read in `MediaRepositoryImpl` has the same problem. Reproduce first (two users, a row each, a held request, a switch).
+- **Read the user once per write (#907).** `currentUserId` is a getter on `server.session.userId`: every read can answer another user after a profile switch. `markAsUnplayed` used to read it again after the request, so a switch while the request waited cleared the new user's date; it now reads it once and hands it to `reportUserData`. A new write that touches the row after a server call does the same.
 - **A request is pinned to its server, the user id is not.** `JellyfinUserData` keeps the `ActiveServer` it was made for; the id used for the local row is a separate read.
 - **An unplayed mark keeps the last-played date until the server has it** (`markedUnplayed`, `afterUnplayedReport`): the sync needs it to see the mark is not older than the play.
 - **The server's date is a local date-time**; `toPlayState` and `epochMillisOf` in `SyncWorker.kt` convert it.

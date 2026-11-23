@@ -10,6 +10,7 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.repository.KnownServerState
+import dev.jdtech.jellyfin.repository.ServerAvailability
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -41,7 +42,7 @@ constructor(
     @ApplicationContext private val context: Context,
     private val serverSession: ServerSession,
     private val appPreferences: AppPreferences,
-) : KnownServerState {
+) : KnownServerState, ServerAvailability {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var started = false
 
@@ -57,7 +58,7 @@ constructor(
     val state: StateFlow<ServerReachabilityState> = monitor.state
 
     /** See [ServerReachabilityMonitor.serverConfirmed]: the user data sync starts over on it. */
-    val serverConfirmed: SharedFlow<Unit> = monitor.serverConfirmed
+    override val serverConfirmed: SharedFlow<Unit> = monitor.serverConfirmed
 
     /** Asks now, without waiting for the answer: the banner's Retry and a pull to refresh. */
     fun check() = monitor.check()
