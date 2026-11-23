@@ -19,9 +19,6 @@ object Constants {
     const val ZOOM_SCALE_BASE = 1f
     const val ZOOM_SCALE_THRESHOLD = 0.01f
 
-    // downloads
-    const val DOWNLOAD_POLL_INTERVAL_MS = 1000L
-
     // favorites
     const val FAVORITE_TYPE_MOVIES = 0
     const val FAVORITE_TYPE_SHOWS = 1

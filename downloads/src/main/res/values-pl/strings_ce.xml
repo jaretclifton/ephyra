@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">Brak dostępnych źródeł do odtworzenia tego elementu</string>
+    <string name="ce_download_error_server">Serwer odrzucił pobieranie (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">Błędy pobierania</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="one">Pobieranie %d elementu</item>
+        <item quantity="few">Pobieranie %d elementów</item>
+        <item quantity="many">Pobieranie %d elementów</item>
+        <item quantity="other">Pobieranie %d elementu</item>
+    </plurals>
+    <string name="downloads_channel_name">Pobieranie</string>
+    <string name="downloads_channel_description">Bieżące operacje pobierania</string>
+</resources>

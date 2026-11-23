@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">Немає доступних джерел для відтворення цього елемента</string>
+    <string name="ce_download_error_server">Сервер відхилив завантаження (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">Помилки завантаження</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="one">Завантаження %d елемента</item>
+        <item quantity="few">Завантаження %d елементів</item>
+        <item quantity="many">Завантаження %d елементів</item>
+        <item quantity="other">Завантаження %d елементів</item>
+    </plurals>
+    <string name="downloads_channel_name">Завантаження</string>
+    <string name="downloads_channel_description">Поточні процеси завантаження</string>
+</resources>

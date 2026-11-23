@@ -9,11 +9,9 @@
     <string name="download_cancelled">تم إلغاء تنزيل %1$s</string>
     <string name="download_completed">مكتمل</string>
     <string name="download_error_network">خطأ في الشبكة — تحقق من اتصالك</string>
-    <string name="download_error_no_sources">لا توجد مصادر قابلة للتشغيل لهذا العنصر</string>
     <string name="download_error_server_unreachable">تعذر الوصول إلى خادم Jellyfin</string>
     <string name="download_error_timeout">انتهت مهلة الاتصال</string>
     <string name="download_failed_indicator">فشل التنزيل</string>
-    <string name="download_failures_channel_name">إخفاقات التنزيل</string>
     <string name="download_preparing_on_server">جارٍ التحضير على الخادم</string>
     <string name="download_quality">جودة التنزيل</string>
     <string name="download_quality_original">الجودة الأصلية</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">في انتظار الشبكة</string>
     <string name="downloaded_to">تم الحفظ في: %s</string>
     <string name="downloading_indicator">جارٍ التنزيل</string>
-    <string name="downloads_channel_description">نشاط التنزيل الجاري</string>
-    <string name="downloads_channel_name">التنزيلات</string>
     <string name="downloads_downloading">جارٍ التنزيل</string>
     <string name="downloads_empty_body">نزّل الأفلام والحلقات لمشاهدتها بدون اتصال بالإنترنت، على متن طائرة أو قطار أو في أي مكان آخر.</string>
     <string name="downloads_empty_title">لا توجد تنزيلات بعد</string>
@@ -71,14 +67,6 @@
         <item quantity="many">%d حلقة</item>
         <item quantity="other">%d حلقة</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="zero">لا يتم تنزيل أي عنصر</item>
-        <item quantity="one">جارٍ تنزيل عنصر واحد</item>
-        <item quantity="two">جارٍ تنزيل عنصرين</item>
-        <item quantity="few">جارٍ تنزيل %d عناصر</item>
-        <item quantity="many">جارٍ تنزيل %d عنصراً</item>
-        <item quantity="other">جارٍ تنزيل %d عنصر</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="zero">لم تتم إزالة أي تنزيل</item>
         <item quantity="one">تمت إزالة تنزيل واحد</item>
@@ -109,7 +97,6 @@
     <string name="item_included_in">مضمَّن في</string>
     <string name="item_more_like_this">المزيد من هذا القبيل</string>
     <string name="ce_session_revoked">سجّل %1$s خروجك. سجّل الدخول مرة أخرى للمتابعة.</string>
-    <string name="ce_download_error_server">رفض الخادم التنزيل (HTTP %1$d)</string>
     <string name="ce_error_server_status">ردّ الخادم بخطأ (HTTP %1$d). حاول مرة أخرى لاحقًا.</string>
     <string name="ce_media_info">معلومات الوسائط</string>
     <string name="ce_home_profile">الملف الشخصي</string>

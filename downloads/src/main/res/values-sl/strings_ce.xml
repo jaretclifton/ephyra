@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">Za ta element ni na voljo nobenih virov za predvajanje</string>
+    <string name="ce_download_error_server">Strežnik je zavrnil prenos (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">Neuspeli prenosi</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="one">Prenašanje %d elementa</item>
+        <item quantity="two">Prenašanje %d elementov</item>
+        <item quantity="few">Prenašanje %d elementov</item>
+        <item quantity="other">Prenašanje %d elementov</item>
+    </plurals>
+    <string name="downloads_channel_name">Prenosi</string>
+    <string name="downloads_channel_description">Tekoče dejavnosti prenosov</string>
+</resources>

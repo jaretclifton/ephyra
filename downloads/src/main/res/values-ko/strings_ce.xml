@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">이 항목에 대해 재생 가능한 소스가 없습니다</string>
+    <string name="ce_download_error_server">서버가 다운로드를 거부했습니다 (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">다운로드 실패</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="other">%d개 항목 다운로드 중</item>
+    </plurals>
+    <string name="downloads_channel_name">다운로드</string>
+    <string name="downloads_channel_description">진행 중인 다운로드 활동</string>
+</resources>

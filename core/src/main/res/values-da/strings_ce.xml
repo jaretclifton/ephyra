@@ -9,11 +9,9 @@
     <string name="download_cancelled">Download af %1$s annulleret</string>
     <string name="download_completed">Fuldført</string>
     <string name="download_error_network">Netværksfejl — tjek din forbindelse</string>
-    <string name="download_error_no_sources">Ingen afspillelige kilder tilgængelige for dette element</string>
     <string name="download_error_server_unreachable">Kan ikke oprette forbindelse til Jellyfin-serveren</string>
     <string name="download_error_timeout">Forbindelsestimeout</string>
     <string name="download_failed_indicator">Download mislykkedes</string>
-    <string name="download_failures_channel_name">Downloadfejl</string>
     <string name="download_preparing_on_server">Forbereder på server</string>
     <string name="download_quality">Downloadkvalitet</string>
     <string name="download_quality_original">Oprindelig kvalitet</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">Venter på netværk</string>
     <string name="downloaded_to">Gemt i: %s</string>
     <string name="downloading_indicator">Downloader</string>
-    <string name="downloads_channel_description">Igangværende downloadaktivitet</string>
-    <string name="downloads_channel_name">Downloads</string>
     <string name="downloads_downloading">Downloader</string>
     <string name="downloads_empty_body">Download film og episoder for at se uden internetforbindelse, på et fly, et tog eller andre steder.</string>
     <string name="downloads_empty_title">Ingen downloads endnu</string>
@@ -67,10 +63,6 @@
         <item quantity="one">%d episode</item>
         <item quantity="other">%d episoder</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="one">Downloader %d element</item>
-        <item quantity="other">Downloader %d elementer</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="one">Fjernede %d download</item>
         <item quantity="other">Fjernede %d downloads</item>
@@ -97,7 +89,6 @@
     <string name="item_included_in">Indgår i</string>
     <string name="item_more_like_this">Mere som dette</string>
     <string name="ce_session_revoked">%1$s har logget dig ud. Log ind igen for at fortsætte.</string>
-    <string name="ce_download_error_server">Serveren afviste downloadet (HTTP %1$d)</string>
     <string name="ce_error_server_status">Serveren svarede med en fejl (HTTP %1$d). Prøv igen senere.</string>
     <string name="ce_media_info">Medieoplysninger</string>
     <string name="ce_home_profile">Profil</string>

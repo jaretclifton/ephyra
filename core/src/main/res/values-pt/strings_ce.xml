@@ -9,11 +9,9 @@
     <string name="download_cancelled">Transferência de %1$s cancelada</string>
     <string name="download_completed">Concluído</string>
     <string name="download_error_network">Erro de rede — verifique a sua ligação</string>
-    <string name="download_error_no_sources">Não há fontes reproduzíveis disponíveis para este item</string>
     <string name="download_error_server_unreachable">Não é possível contactar o servidor Jellyfin</string>
     <string name="download_error_timeout">Tempo limite de ligação esgotado</string>
     <string name="download_failed_indicator">Falha na transferência</string>
-    <string name="download_failures_channel_name">Falhas de transferência</string>
     <string name="download_preparing_on_server">A preparar no servidor</string>
     <string name="download_quality">Qualidade da transferência</string>
     <string name="download_quality_original">Qualidade original</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">A aguardar pela rede</string>
     <string name="downloaded_to">Guardado em: %s</string>
     <string name="downloading_indicator">A transferir</string>
-    <string name="downloads_channel_description">Atividade de transferência em curso</string>
-    <string name="downloads_channel_name">Transferências</string>
     <string name="downloads_downloading">A transferir</string>
     <string name="downloads_empty_body">Transfira filmes e episódios para ver sem ligação à internet, num avião, comboio ou em qualquer outro lugar.</string>
     <string name="downloads_empty_title">Ainda não há transferências</string>
@@ -67,10 +63,6 @@
         <item quantity="one">%d episódio</item>
         <item quantity="other">%d episódios</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="one">A transferir %d item</item>
-        <item quantity="other">A transferir %d itens</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="one">%d transferência removida</item>
         <item quantity="other">%d transferências removidas</item>
@@ -97,7 +89,6 @@
     <string name="item_included_in">Incluído em</string>
     <string name="item_more_like_this">Mais como este</string>
     <string name="ce_session_revoked">%1$s terminou a sua sessão. Inicie sessão novamente para continuar.</string>
-    <string name="ce_download_error_server">O servidor recusou a transferência (HTTP %1$d)</string>
     <string name="ce_error_server_status">O servidor respondeu com um erro (HTTP %1$d). Tente novamente mais tarde.</string>
     <string name="ce_media_info">Informações multimédia</string>
     <string name="ce_home_profile">Perfil</string>

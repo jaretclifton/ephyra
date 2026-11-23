@@ -40,6 +40,11 @@ object ProjectTree {
         allFiles.filter { (path, _) -> path.endsWith(".kt") && isProduction(path) }
     }
 
+    /** The Kotlin files of every source set, tests included (R15). */
+    val kotlinFiles: Map<String, File> by lazy {
+        allFiles.filter { (path, _) -> path.endsWith(".kt") }
+    }
+
     /** The Java files of every production source set. The rules read Kotlin only. */
     val productionJavaFiles: Map<String, File> by lazy {
         allFiles.filter { (path, _) -> path.endsWith(".java") && isProduction(path) }

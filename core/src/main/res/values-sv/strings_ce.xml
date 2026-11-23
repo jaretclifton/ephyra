@@ -9,11 +9,9 @@
     <string name="download_cancelled">Nedladdning av %1$s avbröts</string>
     <string name="download_completed">Slutförd</string>
     <string name="download_error_network">Nätverksfel — kontrollera din anslutning</string>
-    <string name="download_error_no_sources">Inga uppspelningsbara källor tillgängliga för detta objekt</string>
     <string name="download_error_server_unreachable">Kan inte nå Jellyfin-servern</string>
     <string name="download_error_timeout">Tidsgränsen för anslutningen överskreds</string>
     <string name="download_failed_indicator">Nedladdning misslyckades</string>
-    <string name="download_failures_channel_name">Misslyckade nedladdningar</string>
     <string name="download_preparing_on_server">Förbereder på servern</string>
     <string name="download_quality">Nedladdningskvalitet</string>
     <string name="download_quality_original">Ursprunglig kvalitet</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">Väntar på nätverk</string>
     <string name="downloaded_to">Sparad till: %s</string>
     <string name="downloading_indicator">Laddar ner</string>
-    <string name="downloads_channel_description">Pågående nedladdningsaktivitet</string>
-    <string name="downloads_channel_name">Nedladdningar</string>
     <string name="downloads_downloading">Laddar ner</string>
     <string name="downloads_empty_body">Ladda ner filmer och avsnitt för att titta utan anslutning, på ett flygplan, tåg eller någon annanstans.</string>
     <string name="downloads_empty_title">Inga nedladdningar ännu</string>
@@ -67,10 +63,6 @@
         <item quantity="one">%d avsnitt</item>
         <item quantity="other">%d avsnitt</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="one">Laddar ner %d objekt</item>
-        <item quantity="other">Laddar ner %d objekt</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="one">Tog bort %d nedladdning</item>
         <item quantity="other">Tog bort %d nedladdningar</item>
@@ -97,7 +89,6 @@
     <string name="item_included_in">Ingår i</string>
     <string name="item_more_like_this">Mer som detta</string>
     <string name="ce_session_revoked">%1$s loggade ut dig. Logga in igen för att fortsätta.</string>
-    <string name="ce_download_error_server">Servern nekade nedladdningen (HTTP %1$d)</string>
     <string name="ce_error_server_status">Servern svarade med ett fel (HTTP %1$d). Försök igen senare.</string>
     <string name="ce_media_info">Medieinformation</string>
     <string name="ce_home_profile">Profil</string>

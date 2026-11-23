@@ -36,6 +36,7 @@ import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
+import dev.jdtech.jellyfin.utils.CoreDownloadTexts
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.NetworkConnectivity
 import java.time.LocalDateTime
@@ -188,6 +189,7 @@ class SyncWorkerRunTest {
                 repository,
                 RoomDownloadStore(database),
                 context,
+                CoreDownloadTexts,
             ),
             downloader,
             preferences,

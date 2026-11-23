@@ -1,7 +1,15 @@
 plugins {
     alias(libs.plugins.android.library)
+    // #901: UiText (from core) has a @Composable asString, which needs the Compose compiler.
+    alias(libs.plugins.kotlin.compose.compiler)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+}
+
+composeCompiler {
+    stabilityConfigurationFiles.add(
+        rootProject.layout.projectDirectory.file("compose_stability.conf")
+    )
 }
 
 java { toolchain { languageVersion = Versions.JAVA } }

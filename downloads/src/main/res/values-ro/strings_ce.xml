@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">Nu există surse redabile pentru acest element</string>
+    <string name="ce_download_error_server">Serverul a refuzat descărcarea (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">Descărcări eșuate</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="one">Se descarcă %d element</item>
+        <item quantity="few">Se descarcă %d elemente</item>
+        <item quantity="other">Se descarcă %d de elemente</item>
+    </plurals>
+    <string name="downloads_channel_name">Descărcări</string>
+    <string name="downloads_channel_description">Activitate de descărcare în curs</string>
+</resources>

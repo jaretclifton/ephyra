@@ -9,11 +9,9 @@
     <string name="download_cancelled">%1$s endirilməsi ləğv edildi</string>
     <string name="download_completed">Tamamlandı</string>
     <string name="download_error_network">Şəbəkə xətası — bağlantınızı yoxlayın</string>
-    <string name="download_error_no_sources">Bu element üçün oxuna bilən mənbə yoxdur</string>
     <string name="download_error_server_unreachable">Jellyfin serverinə qoşulmaq mümkün deyil</string>
     <string name="download_error_timeout">Bağlantı vaxtı bitdi</string>
     <string name="download_failed_indicator">Endirmə uğursuz oldu</string>
-    <string name="download_failures_channel_name">Uğursuz endirmələr</string>
     <string name="download_preparing_on_server">Serverdə hazırlanır</string>
     <string name="download_quality">Endirmə keyfiyyəti</string>
     <string name="download_quality_original">Orijinal keyfiyyət</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">Şəbəkə gözlənilir</string>
     <string name="downloaded_to">Saxlanıldı: %s</string>
     <string name="downloading_indicator">Endirilir</string>
-    <string name="downloads_channel_description">Davam edən endirmə fəaliyyəti</string>
-    <string name="downloads_channel_name">Endirmələr</string>
     <string name="downloads_downloading">Endirilir</string>
     <string name="downloads_empty_body">Təyyarədə, qatarda və ya başqa yerdə internetsiz baxmaq üçün film və seriyaları endirin.</string>
     <string name="downloads_empty_title">Hələ heç bir endirmə yoxdur</string>
@@ -66,9 +62,6 @@
     <plurals name="downloaded_episode_count">
         <item quantity="other">%d seriya</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="other">%d element endirilir</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="other">%d endirmə silindi</item>
     </plurals>
@@ -94,7 +87,6 @@
     <string name="item_included_in">Daxil olduğu</string>
     <string name="item_more_like_this">Buna bənzər</string>
     <string name="ce_session_revoked">%1$s sizi hesabdan çıxardı. Davam etmək üçün yenidən daxil olun.</string>
-    <string name="ce_download_error_server">Server endirməni rədd etdi (HTTP %1$d)</string>
     <string name="ce_error_server_status">Server xəta ilə cavab verdi (HTTP %1$d). Sonra yenidən cəhd edin.</string>
     <string name="ce_media_info">Media məlumatı</string>
     <string name="ce_home_profile">Profil</string>

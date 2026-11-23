@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">Pro tuto položku nejsou k dispozici žádné přehratelné zdroje</string>
+    <string name="ce_download_error_server">Server stahování odmítl (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">Chyby stahování</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="one">Stahování %d položky</item>
+        <item quantity="few">Stahování %d položek</item>
+        <item quantity="other">Stahování %d položek</item>
+    </plurals>
+    <string name="downloads_channel_name">Stahování</string>
+    <string name="downloads_channel_description">Probíhající stahování</string>
+</resources>

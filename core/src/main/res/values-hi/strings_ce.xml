@@ -9,11 +9,9 @@
     <string name="download_cancelled">%1$s का डाउनलोड रद्द किया गया</string>
     <string name="download_completed">पूर्ण</string>
     <string name="download_error_network">नेटवर्क त्रुटि — अपना कनेक्शन जांचें</string>
-    <string name="download_error_no_sources">इस आइटम के लिए कोई चलाने योग्य स्रोत उपलब्ध नहीं है</string>
     <string name="download_error_server_unreachable">Jellyfin सर्वर तक नहीं पहुँचा जा सकता</string>
     <string name="download_error_timeout">कनेक्शन का समय समाप्त हो गया</string>
     <string name="download_failed_indicator">डाउनलोड विफल</string>
-    <string name="download_failures_channel_name">विफल डाउनलोड</string>
     <string name="download_preparing_on_server">सर्वर पर तैयार किया जा रहा है</string>
     <string name="download_quality">डाउनलोड गुणवत्ता</string>
     <string name="download_quality_original">मूल गुणवत्ता</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">नेटवर्क की प्रतीक्षा की जा रही है</string>
     <string name="downloaded_to">यहाँ सहेजा गया: %s</string>
     <string name="downloading_indicator">डाउनलोड हो रहा है</string>
-    <string name="downloads_channel_description">चल रही डाउनलोड गतिविधि</string>
-    <string name="downloads_channel_name">डाउनलोड</string>
     <string name="downloads_downloading">डाउनलोड हो रहा है</string>
     <string name="downloads_empty_body">बिना कनेक्शन के, हवाई जहाज़, ट्रेन या कहीं भी देखने के लिए फ़िल्में और एपिसोड डाउनलोड करें।</string>
     <string name="downloads_empty_title">अभी तक कोई डाउनलोड नहीं</string>
@@ -67,10 +63,6 @@
         <item quantity="one">%d एपिसोड</item>
         <item quantity="other">%d एपिसोड</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="one">%d आइटम डाउनलोड हो रहा है</item>
-        <item quantity="other">%d आइटम डाउनलोड हो रहे हैं</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="one">%d डाउनलोड हटाया गया</item>
         <item quantity="other">%d डाउनलोड हटाए गए</item>
@@ -97,7 +89,6 @@
     <string name="item_included_in">इसमें शामिल</string>
     <string name="item_more_like_this">ऐसे और</string>
     <string name="ce_session_revoked">%1$s ने आपको साइन आउट कर दिया। जारी रखने के लिए फिर से साइन इन करें।</string>
-    <string name="ce_download_error_server">सर्वर ने डाउनलोड अस्वीकार कर दिया (HTTP %1$d)</string>
     <string name="ce_error_server_status">सर्वर ने त्रुटि के साथ जवाब दिया (HTTP %1$d)। बाद में फिर से कोशिश करें।</string>
     <string name="ce_media_info">मीडिया जानकारी</string>
     <string name="ce_home_profile">प्रोफ़ाइल</string>

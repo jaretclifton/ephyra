@@ -9,11 +9,9 @@
     <string name="download_cancelled">Stahování %1$s bylo zrušeno</string>
     <string name="download_completed">Dokončeno</string>
     <string name="download_error_network">Chyba sítě — zkontrolujte připojení</string>
-    <string name="download_error_no_sources">Pro tuto položku nejsou k dispozici žádné přehratelné zdroje</string>
     <string name="download_error_server_unreachable">Nelze se připojit k serveru Jellyfin</string>
     <string name="download_error_timeout">Časový limit připojení vypršel</string>
     <string name="download_failed_indicator">Stahování selhalo</string>
-    <string name="download_failures_channel_name">Chyby stahování</string>
     <string name="download_preparing_on_server">Příprava na serveru</string>
     <string name="download_quality">Kvalita stahování</string>
     <string name="download_quality_original">Původní kvalita</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">Čekání na síť</string>
     <string name="downloaded_to">Uloženo do: %s</string>
     <string name="downloading_indicator">Stahování</string>
-    <string name="downloads_channel_description">Probíhající stahování</string>
-    <string name="downloads_channel_name">Stahování</string>
     <string name="downloads_downloading">Stahování</string>
     <string name="downloads_empty_body">Stahujte filmy a epizody pro sledování bez připojení: v letadle, vlaku nebo kdekoli jinde.</string>
     <string name="downloads_empty_title">Zatím žádná stažení</string>
@@ -68,11 +64,6 @@
         <item quantity="few">%d epizody</item>
         <item quantity="other">%d epizod</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="one">Stahování %d položky</item>
-        <item quantity="few">Stahování %d položek</item>
-        <item quantity="other">Stahování %d položek</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="one">Odebrána %d stažená položka</item>
         <item quantity="few">Odebrány %d stažené položky</item>
@@ -100,7 +91,6 @@
     <string name="item_included_in">Součástí</string>
     <string name="item_more_like_this">Podobné tituly</string>
     <string name="ce_session_revoked">%1$s vás odhlásil. Pro pokračování se znovu přihlaste.</string>
-    <string name="ce_download_error_server">Server stahování odmítl (HTTP %1$d)</string>
     <string name="ce_error_server_status">Server odpověděl chybou (HTTP %1$d). Zkuste to později.</string>
     <string name="ce_media_info">Informace o médiu</string>
     <string name="ce_home_profile">Profil</string>

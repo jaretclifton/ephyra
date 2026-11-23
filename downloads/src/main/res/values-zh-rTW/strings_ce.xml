@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">此項目沒有可播放的來源</string>
+    <string name="ce_download_error_server">伺服器拒絕了下載 (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">下載失敗</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="other">正在下載 %d 個項目</item>
+    </plurals>
+    <string name="downloads_channel_name">下載</string>
+    <string name="downloads_channel_description">進行中的下載活動</string>
+</resources>

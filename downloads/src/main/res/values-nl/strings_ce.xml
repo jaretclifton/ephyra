@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">Geen afspeelbare bronnen beschikbaar voor dit item</string>
+    <string name="ce_download_error_server">De server heeft de download geweigerd (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">Mislukte downloads</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="one">%d item downloaden</item>
+        <item quantity="other">%d items downloaden</item>
+    </plurals>
+    <string name="downloads_channel_name">Downloads</string>
+    <string name="downloads_channel_description">Lopende downloadactiviteit</string>
+</resources>
