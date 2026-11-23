@@ -226,11 +226,23 @@ class PlaybackReporter(
      * The report runs in [reportScope] so that closing the player does not cut it off halfway;
      * [reportStopped] waits for it (with a time limit) to keep the stop behind it.
      *
-     * CE (#890): it waits for the stop reports still being sent, so the server hears of the item
-     * left first, also when the start comes from a ready state or a replaced stream that did not
-     * wait for that stop itself.
+     * CE (#890): it first waits for the stop reports still being sent, so the server hears of the
+     * item left first, also when the start comes from a ready state or a replaced stream that did
+     * not wait for that stop itself. Then it reads the player, and sends nothing for an item the
+     * player has left or a stream a switch replaced meanwhile.
      */
     suspend fun sendPlaybackStart(item: PlayerItem, player: ReportedPlayer) {
+        // CE (#890): the stops still being sent go first. Waited for here, before the start is
+        // recorded on [playing], so no progress report goes out ahead of the start meanwhile; and
+        // what follows is checked after the wait.
+        val seq = transitionSeq
+        stopsInFlight.removeAll { it.isCompleted }
+        stopsInFlight.toList().joinAll()
+        // A switch replaced the stream while this waited: the new stream owes the start.
+        if (seq != transitionSeq) {
+            Timber.d("No playback start for ${item.itemId.asString()}: a newer stream owes it")
+            return
+        }
         // The player moved on while the previous item's stop was being sent (Previous or Next
         // pressed while this item was loading). A start now would arrive after the next item's,
         // and nothing would stop it.
@@ -239,12 +251,9 @@ class PlaybackReporter(
             return
         }
         val positionTicks = Ticks.fromMilliseconds(player.currentPositionMs())
-        stopsInFlight.removeAll { it.isCompleted }
-        val stopsFirst = stopsInFlight.toList()
         val start =
             reportScope.launch(ioDispatcher) {
                 try {
-                    stopsFirst.joinAll()
                     repository.postPlaybackStart(item.itemId, positionTicks, item.isTranscoded)
                 } catch (e: Exception) {
                     Timber.e(e)
@@ -287,6 +296,9 @@ class PlaybackReporter(
             playbackEvents.onLeftWithoutStop()
             return null
         }
+        // CE (#890): and after the stops sent before it, so they reach the server in order.
+        stopsInFlight.removeAll { it.isCompleted }
+        val earlierStops = stopsInFlight.toList()
         return reportScope
             .launch(ioDispatcher) {
                 try {
@@ -296,6 +308,7 @@ class PlaybackReporter(
                                 "Start report for ${itemId.asString()} still running, sending stop anyway"
                             )
                     }
+                    earlierStops.joinAll()
                     if (report.playedPercentage == null) {
                         Timber.d(
                             "Sending playback stop for ${itemId.asString()} at its start, $position ms"

@@ -401,6 +401,68 @@ class PlaybackReporterTest {
         }
 
     @Test
+    fun `a start waiting for the previous item's stop reads the player after it (#890)`() =
+        test { s ->
+            s.transition(item())
+            s.loaded()
+            advanceUntilIdle()
+            s.reporter.updatePosition(positionMs = 60_000L, durationMs = 600_000L)
+            s.fake.stopDelayMs = 10_000L
+
+            // Next, and a switch of the next item whose new stream loads while the stop is sent.
+            s.transition(item(id = nextId, session = "session-2", transcoded = true))
+            s.streamReplaced(item(id = nextId, session = "session-3"))
+            s.player.mediaId = nextId.asString()
+            s.loaded()
+            s.playerReady = true
+            // It plays meanwhile. No progress before its start, which has not gone out.
+            s.reporter.updatePosition(positionMs = 9_000L, durationMs = 600_000L)
+            s.progress(s.player)
+            testScheduler.advanceTimeBy(9_999L)
+            s.player.positionMs = 10_000L
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(
+                    "0: start $itemId false",
+                    "10000: stop $itemId 600000000 10",
+                    "10000: start $nextId false",
+                ),
+                s.reports,
+            )
+            // Where the player was when the start went out, not when it was asked for.
+            assertEquals(100_000_000L, s.fake.startPositions.last())
+        }
+
+    @Test
+    fun `an item left while its start waits for the previous stop sends no start (#890)`() =
+        test { s ->
+            s.transition(item())
+            s.loaded()
+            advanceUntilIdle()
+            s.reporter.updatePosition(positionMs = 60_000L, durationMs = 600_000L)
+            s.fake.stopDelayMs = 10_000L
+
+            s.transition(item(id = nextId))
+            s.loaded()
+            s.reporter.updatePosition(positionMs = 5_000L, durationMs = 600_000L)
+            // Previous, back to the first item, while the first stop is still being sent.
+            s.fake.stopDelayMs = 0L
+            s.transition(item())
+            advanceUntilIdle()
+
+            // No start for the item left, and its stop after the earlier one.
+            assertEquals(
+                listOf(
+                    "0: start $itemId false",
+                    "10000: stop $itemId 600000000 10",
+                    "10000: stop $nextId 50000000 0",
+                ),
+                s.reports.take(3),
+            )
+        }
+
+    @Test
     fun `a replaced stream that never loads sends no start (#870)`() = test { s ->
         s.transition(item())
         s.loaded()
