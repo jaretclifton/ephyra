@@ -1,0 +1,34 @@
+name: Docs
+
+# Checks that the docs people and agents start from still match the tree (#928): the paths, Kotlin
+# names, rule numbers, Gradle tasks and test names in CLAUDE.md, docs/areas.yaml, the area guides,
+# the skills and the architecture model. It runs on every pull request, because a doc goes stale
+# when the code moves as often as when the doc is edited. It reads files only and takes seconds.
+#
+# The same check locally: python3 .claude/skills/start-work/scripts/check-docs.py
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    name: Docs match the tree
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Check paths, names, rules and commands in the docs
+        run: python3 .claude/skills/start-work/scripts/check-docs.py

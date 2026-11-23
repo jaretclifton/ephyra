@@ -89,3 +89,7 @@ Report: the PR number, what you checked yourself, and what is still open.
 If an entry or guide names a path that does not exist, misses the file where the work really
 is, or gives a command that fails, fix `docs/areas.yaml` or the guide in the same PR as the work
 (or say it in the report). The map is only useful while it is true.
+
+`python3 .claude/skills/start-work/scripts/check-docs.py` finds the stale paths, names, rule numbers,
+Gradle tasks and test names for you (a second, no build); CI runs it on every pull request. Run it
+after moving or renaming code that a doc names, and after editing the map or a guide.

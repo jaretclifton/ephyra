@@ -159,6 +159,8 @@ Read the one that fits the change before starting:
 
 The numbered files in `docs/mpv-research/`, `docs/tablet/` and `docs/tv-research/` are research from before the work was done. Where they differ from the code, the code is right.
 
+`python3 .claude/skills/start-work/scripts/check-docs.py` checks this file, `docs/areas.yaml`, the area guides, the topic docs, the skills and the model: that each path and link exists, each Kotlin name in backticks is a word in some source file, each rule number is a rule, each Gradle task names a module that exists (with its flavour), and each test name matches a test file. It takes a second and needs no build. CI runs it on every pull request to `main` (`docs.yml`), so a rename or a move that a doc names fails until the doc follows. It does not check what a sentence claims: a green run means nothing named is gone, not that the text is right.
+
 ## Translations & Localization
 
 All user-visible strings and plurals that CE adds must be translated into all 36 supported languages. The `translate-strings` skill has the rules and the language list; use it for every string change.

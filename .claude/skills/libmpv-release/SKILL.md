@@ -63,7 +63,7 @@ Fill in the draft GitHub release ("What changed for players") and publish it.
 ### 4. Bump Ephyra
 Make a branch, set `libmpv = "1.2.0"`, and apply what step 2 found. Then run:
 ```bash
-./gradlew ktfmtCheck :player:local:testDebugUnitTest testDebugUnitTest :app:phone:assembleLibreDebug :app:tv:assembleDebug
+./gradlew ktfmtCheck :player:local:testDebugUnitTest testDebugUnitTest :app:phone:assembleLibreDebug :app:tv:assembleLibreDebug
 ```
 Don't edit `CHANGELOG.md`: the `release` skill writes it (CLAUDE.md). Put the versions ("libmpv
 1.2.0: mpv …, FFmpeg …") and anything users see in the commit body and the PR description.
