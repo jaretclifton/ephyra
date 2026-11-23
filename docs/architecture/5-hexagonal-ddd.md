@@ -1,5 +1,27 @@
 # 5. Further towards hexagonal, with DDD where it pays
 
+**Status: built, 2026-11-23.** Every task of 5.3 is merged. The rest of this file is as written on
+2026-11-22; the code as it is now is described in [README.md](README.md) and `CLAUDE.md`.
+
+| Task | Issue | Pull requests |
+|---|---|---|
+| T1, ids named by kind | #773 | #879, #883, #882, #886, #885 |
+| T2, ids as value classes | #773 | #888 |
+| T4, `MediaRepository` and the model names (Q2 b) | #774 | #895 |
+| T3, the `application` module, rule R9 | #896 | #904 |
+| T8, `Ticks`, rule R12 | #900 | #903 |
+| T5, `DownloadState`, rule R13 | #897 | #905 |
+| T6, `PlayState`, rule R14 | #898 | #906 |
+| `ServerId` and `MediaSourceId` as value classes, R10 second half | #902 | #908 |
+| T7, the store ports and the switch as one `ActiveServer`, rule R16 | #899 | #910, #911, #913, #915 |
+| T9, the `downloads` module, rule R15 | #901 | #914 |
+| T10, the docs | #772 | this file's status, the README, `CLAUDE.md`, the upstream-sync skill |
+
+Decided against, as recommended below: a use case per repository function, an `Item` aggregate or
+domain events for the catalog, ports for preferences, splitting `MediaRepository` per context, a
+server-neutral device profile, `Ticks` as a value class, one id type per kind of item (Q4), and
+renaming the packages (a possible follow-up, Q2). What is left is in the README under "Not done".
+
 Files 1 to 4 planned the move to ports and adapters (#733). Thirty-six of its forty tasks are
 merged. On 2026-11-22 the owner asked to take the structure as far towards hexagonal architecture
 with DDD as is sensible, before any Emby work. This file measures where the code stands, says what

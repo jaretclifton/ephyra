@@ -21,6 +21,7 @@ Kept current. Follow these when you work on the matching part of the app.
 | [upstream-sync.md](upstream-sync.md) | Syncing with Findroid, releasing and publishing a beta |
 | [upstream-ledger.md](upstream-ledger.md) | Every Findroid commit since 2026-11-22 with what Ephyra did with it and why |
 | [open-decisions.md](open-decisions.md) | Product questions from the code audit that nobody has decided yet |
+| [architecture/README.md](architecture/README.md) | The module layout, the ports and stores, the architecture rules R1 to R16 and what is not done |
 
 ## Research
 
@@ -32,7 +33,7 @@ it. Where one differs from the code, the code is right.
 | [tv-research/](tv-research/README.md) | How to turn `app/tv` into a first-class Android TV client | Built, #121 |
 | [tablet/](tablet/README.md) | How to make the phone app a first-class tablet client | Built, in v2.2.0 |
 | [mpv-research/](mpv-research/README.md) | How healthy the mpv backend is | Follow-up issues and the mpv checklist, #284 |
-| [architecture/](architecture/README.md) | How to move to ports and adapters, so a second server type and the two player engines sit behind boundaries the build enforces | Planned, #733 |
+| [architecture/](architecture/README.md) | How to move to ports and adapters, so a second server type and the two player engines sit behind boundaries the build enforces; then further towards hexagonal with DDD where there are rules | Built, #733 (ADR 0001, files 1 to 4) and ADR 0002 (file 5) |
 
 ## Images
 
