@@ -12,6 +12,7 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.MediaStreamEntity
+import dev.jdtech.jellyfin.models.MediaStreamId
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.MovieEntity
 import dev.jdtech.jellyfin.models.UserId
@@ -245,7 +246,7 @@ class DownloadFinalizeFailureTest {
     private fun final(source: ItemSourceEntity) = source.path.removeSuffix(".download")
 
     private fun subtitleRow(source: ItemSourceEntity): MediaStreamEntity {
-        val id = UUID.randomUUID()
+        val id = MediaStreamId.random()
         val row =
             MediaStreamEntity(
                 id = id,

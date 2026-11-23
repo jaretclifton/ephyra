@@ -2,12 +2,12 @@ package dev.jdtech.jellyfin.repository
 
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.ServerAddressId
 import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerWithAddressAndUser
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
-import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -59,12 +59,12 @@ interface ServerStore {
     suspend fun insertAddress(address: ServerAddress)
 
     /** The address [id]. Throws when it is not saved. */
-    suspend fun address(id: UUID): ServerAddress
+    suspend fun address(id: ServerAddressId): ServerAddress
 
     /** The address the server [serverId] uses, or null when it has none. */
     suspend fun currentAddress(serverId: ServerId): ServerAddress?
 
-    suspend fun deleteAddress(id: UUID)
+    suspend fun deleteAddress(id: ServerAddressId)
 
     // ---- Users ---------------------------------------------------------------------------------
 

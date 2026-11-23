@@ -1,34 +1,6 @@
 # R10 (#773): the production files outside server/jellyfin that may name java.util.UUID, each for a
-# reason below. Item and user ids are ItemId and UserId (domain/.../models/Ids.kt) and never a UUID
-# here; what is left are ids the app makes for itself. An allowlist, not debt: a new file gets a
-# line only with a reason of the same kind, given in the PR that adds it (UuidBoundaryTest).
-
-# Server addresses: the app gives each address it stores a random UUID (Room column
-# serverAddresses.id, servers.currentServerAddressId), and the screens and setup flow pass it around.
-# #899: the domain model of a saved server and its addresses, and the ServerStore port over them.
-application/src/main/kotlin/dev/jdtech/jellyfin/repository/ServerStore.kt
-app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/components/ServerSelectionItem.kt
-app/tv/src/main/java/dev/jdtech/jellyfin/presentation/setup/servers/ServersScreen.kt
-core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/Servers.kt
-data/src/main/java/dev/jdtech/jellyfin/database/RoomServerStore.kt
-data/src/main/java/dev/jdtech/jellyfin/models/ServerAddressEntity.kt
-data/src/main/java/dev/jdtech/jellyfin/models/ServerEntity.kt
-domain/src/main/kotlin/dev/jdtech/jellyfin/models/Server.kt
-setup/src/main/java/dev/jdtech/jellyfin/setup/data/SetupRepositoryImpl.kt
-setup/src/main/java/dev/jdtech/jellyfin/setup/domain/SetupRepository.kt
-setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/addresses/ServerAddressesAction.kt
-setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/addresses/ServerAddressesViewModel.kt
-setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/servers/ServersAction.kt
-setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/servers/ServersViewModel.kt
-
-# Downloaded media streams (subtitles): the downloader gives each stored stream a random UUID
-# (Room column mediastreams.id), and the download store that keeps them (#899).
-application/src/main/kotlin/dev/jdtech/jellyfin/repository/DownloadStore.kt
-downloads/src/main/java/dev/jdtech/jellyfin/utils/DownloaderImpl.kt
-data/src/main/java/dev/jdtech/jellyfin/database/RoomDownloadStore.kt
-data/src/main/java/dev/jdtech/jellyfin/models/MediaStreamEntity.kt
-
-# Room: the queries on those two kinds of id, and the column converter that stores them as text.
-data/src/main/java/dev/jdtech/jellyfin/database/Converters.kt
-data/src/main/java/dev/jdtech/jellyfin/database/ServerDatabaseDao.kt
-
+# reason below. Item and user ids are ItemId and UserId, server address and stored media stream ids
+# ServerAddressId and MediaStreamId (#918), all in domain/.../models/Ids.kt, and never a UUID here.
+# Random names and tokens come from kotlin.uuid.Uuid (#918), so no file is listed now. An
+# allowlist, not debt: a new file gets a line only for a random value the app makes for itself that
+# kotlin.uuid cannot make, with the reason, given in the PR that adds it (UuidBoundaryTest).

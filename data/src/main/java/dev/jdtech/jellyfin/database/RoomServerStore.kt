@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.database
 
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.ServerAddressId
 import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerWithAddressAndUser
 import dev.jdtech.jellyfin.models.ServerWithAddresses
@@ -16,7 +17,6 @@ import dev.jdtech.jellyfin.models.toServerWithAddresses
 import dev.jdtech.jellyfin.models.toUser
 import dev.jdtech.jellyfin.models.toUserEntity
 import dev.jdtech.jellyfin.repository.ServerStore
-import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -55,13 +55,13 @@ class RoomServerStore(private val database: ServerDatabaseDao) : ServerStore {
     override suspend fun insertAddress(address: ServerAddress) =
         database.insertServerAddress(address.toServerAddressEntity())
 
-    override suspend fun address(id: UUID): ServerAddress =
+    override suspend fun address(id: ServerAddressId): ServerAddress =
         database.getAddress(id = id).toServerAddress()
 
     override suspend fun currentAddress(serverId: ServerId): ServerAddress? =
         database.getServerCurrentAddress(serverId)?.toServerAddress()
 
-    override suspend fun deleteAddress(id: UUID) = database.deleteServerAddress(id)
+    override suspend fun deleteAddress(id: ServerAddressId) = database.deleteServerAddress(id)
 
     override suspend fun user(id: UserId): User? = database.getUser(id)?.toUser()
 

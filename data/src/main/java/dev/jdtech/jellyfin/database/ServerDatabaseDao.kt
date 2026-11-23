@@ -14,6 +14,7 @@ import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemTrickplayInfoEntity
 import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.MediaStreamEntity
+import dev.jdtech.jellyfin.models.MediaStreamId
 import dev.jdtech.jellyfin.models.MovieEntity
 import dev.jdtech.jellyfin.models.PendingDownloadDto
 import dev.jdtech.jellyfin.models.SeasonEntity
@@ -21,6 +22,7 @@ import dev.jdtech.jellyfin.models.SeasonEpisodeCounts
 import dev.jdtech.jellyfin.models.SegmentEntity
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
 import dev.jdtech.jellyfin.models.ServerAddressEntity
+import dev.jdtech.jellyfin.models.ServerAddressId
 import dev.jdtech.jellyfin.models.ServerEntity
 import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerWithAddressAndUserDto
@@ -32,7 +34,6 @@ import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.UserEntity
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.toPlayState
-import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
 /*
@@ -102,7 +103,7 @@ interface ServerDatabaseDao {
     suspend fun getServerWithAddresses(id: ServerId): ServerWithAddressesDto
 
     @Query("SELECT * FROM serverAddresses WHERE id = :id")
-    suspend fun getAddress(id: UUID): ServerAddressEntity
+    suspend fun getAddress(id: ServerAddressId): ServerAddressEntity
 
     @Query("SELECT * FROM users WHERE serverId = :serverId")
     suspend fun getUsers(serverId: ServerId): List<UserEntity>
@@ -145,7 +146,8 @@ interface ServerDatabaseDao {
     @Query("UPDATE users SET primaryImageTag = :tag WHERE id = :id")
     suspend fun updateUserPrimaryImageTag(id: UserId, tag: String?)
 
-    @Query("DELETE FROM serverAddresses WHERE id = :id") suspend fun deleteServerAddress(id: UUID)
+    @Query("DELETE FROM serverAddresses WHERE id = :id")
+    suspend fun deleteServerAddress(id: ServerAddressId)
 
     @Query("UPDATE servers SET currentUserId = :userId WHERE id = :serverId")
     suspend fun updateServerCurrentUser(serverId: ServerId, userId: UserId)
@@ -295,12 +297,13 @@ interface ServerDatabaseDao {
     suspend fun getMediaStreamByDownloadId(downloadId: Long): MediaStreamEntity?
 
     @Query("UPDATE mediastreams SET downloadId = :downloadId WHERE id = :id")
-    suspend fun setMediaStreamDownloadId(id: UUID, downloadId: Long)
+    suspend fun setMediaStreamDownloadId(id: MediaStreamId, downloadId: Long)
 
     @Query("UPDATE mediastreams SET path = :path WHERE id = :id")
-    suspend fun setMediaStreamPath(id: UUID, path: String)
+    suspend fun setMediaStreamPath(id: MediaStreamId, path: String)
 
-    @Query("DELETE FROM mediastreams WHERE id = :id") suspend fun deleteMediaStream(id: UUID)
+    @Query("DELETE FROM mediastreams WHERE id = :id")
+    suspend fun deleteMediaStream(id: MediaStreamId)
 
     @Query("DELETE FROM mediastreams WHERE sourceId = :sourceId")
     suspend fun deleteMediaStreamsBySourceId(sourceId: MediaSourceId)

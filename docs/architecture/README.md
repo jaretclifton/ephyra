@@ -69,8 +69,8 @@ ids opaque and renamed the repository and the models at once.
 
 `./gradlew :architecture:test` (part of `testDebugUnitTest`) runs them over the source tree. When
 one fails, fix the code. `architecture/baseline/` has one allowlist, not debt: `uuid-imports.txt`
-(files that may name `java.util.UUID`, for ids the app makes itself). A line is added only with a
-reason of the same kind, given in the PR.
+(files that may name `java.util.UUID`, for a random value the app makes itself; empty since #918).
+A line is added only with its reason, given in the PR.
 
 | Rule | Says |
 |---|---|
