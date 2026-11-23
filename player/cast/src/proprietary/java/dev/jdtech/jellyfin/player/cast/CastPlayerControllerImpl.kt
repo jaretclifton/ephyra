@@ -542,16 +542,15 @@ constructor(
                 // else, while this was loading.
                 if (item == null || loadPending || remoteItemId() != itemId) return@launch
 
-                if (playback != null) {
-                    // The receiver's stream plays, so its play session is the one the reports
-                    // name, whatever the phone's own player recorded for this item before.
-                    repository.setPlaySession(
-                        itemId,
-                        playback.playSessionId,
-                        transcodes = playback.transcoded,
-                        mediaSourceId = playback.mediaSourceId,
-                    )
-                }
+                // The receiver's stream plays, so its play session and version are the ones the
+                // reports name, whatever the phone's own player recorded for this item before.
+                // When they cannot be read, the reports name none rather than the phone's.
+                repository.setPlaySession(
+                    itemId,
+                    playback?.playSessionId,
+                    transcodes = playback?.transcoded == true,
+                    mediaSourceId = playback?.mediaSourceId,
+                )
                 val tracks = playback?.tracks(audioIndex, subtitleTrackId)
                 val castItem =
                     CastMediaItem(

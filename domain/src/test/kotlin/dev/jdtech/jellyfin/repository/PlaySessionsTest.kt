@@ -37,6 +37,22 @@ class PlaySessionsTest {
     }
 
     @Test
+    fun `a report takes the session and the version of the same stream`() {
+        sessions.onPlaybackInfo(item, "abc", transcodes = true, "360p".toMediaSourceId())
+
+        assertEquals(
+            PlayReport(transcoded = true, "abc", "360p".toMediaSourceId()),
+            sessions.playReport(item, true),
+        )
+        assertEquals(PlayingStream("abc", "360p".toMediaSourceId()), sessions.streamOf(item))
+        // Played directly: no session, the version still.
+        assertEquals(
+            PlayReport(transcoded = false, null, "360p".toMediaSourceId()),
+            sessions.playReport(item, false),
+        )
+    }
+
+    @Test
     fun `an item that plays directly has no session to end`() {
         sessions.onPlaybackInfo(item, "abc", transcodes = false)
 

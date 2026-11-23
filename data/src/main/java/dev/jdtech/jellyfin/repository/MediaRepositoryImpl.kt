@@ -745,7 +745,7 @@ class MediaRepositoryImpl(
                         isPaused = false,
                         transcoded = report.transcoded,
                         playSessionId = report.playSessionId,
-                        mediaSourceId = playSessions.sourceOf(itemId),
+                        mediaSourceId = report.mediaSourceId,
                     )
                 )
             }
@@ -769,6 +769,8 @@ class MediaRepositoryImpl(
                     thresholds = resumeThresholds.get(currentServerId()),
                 )
             val stop = suspend {
+                // CE (#909): the session and the version of one stream, read once.
+                val stream = playSessions.streamOf(itemId)
                 server.playback.reportStopped(
                     PlaybackReport(
                         itemId = itemId,
@@ -776,8 +778,8 @@ class MediaRepositoryImpl(
                         isPaused = false,
                         transcoded = false,
                         // With it the server ends the item's transcode now, not a minute later.
-                        playSessionId = playSessions.sessionOf(itemId),
-                        mediaSourceId = playSessions.sourceOf(itemId),
+                        playSessionId = stream?.playSessionId,
+                        mediaSourceId = stream?.mediaSourceId,
                     )
                 )
             }
@@ -815,7 +817,7 @@ class MediaRepositoryImpl(
                             isPaused = isPaused,
                             transcoded = report.transcoded,
                             playSessionId = report.playSessionId,
-                            mediaSourceId = playSessions.sourceOf(itemId),
+                            mediaSourceId = report.mediaSourceId,
                         )
                     )
                 },
