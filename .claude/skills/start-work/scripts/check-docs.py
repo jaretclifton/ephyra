@@ -54,6 +54,7 @@ CHECKED = [
     "docs/upstream-sync.md",
     "docs/play-store.md",
     "docs/screenshots.md",
+    ".github/pull_request_template.md",
     "docs/open-decisions.md",
 ]
 
