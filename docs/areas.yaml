@@ -70,7 +70,7 @@ areas:
       - domain/src/main/kotlin/dev/jdtech/jellyfin/domain/ports/PlaybackPort.kt
       - server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/JellyfinPlayback.kt
       - data/src/main/java/dev/jdtech/jellyfin/repository/MediaRepositoryImpl.kt
-      - app/tv/src/main/java/dev/jdtech/jellyfin/ce/presentation/player/TvProgressReports.kt
+      - player/local/src/main/java/dev/jdtech/jellyfin/player/local/presentation/PlayerViewModel.kt
       - player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/CastPlaybackReporter.kt
     docs: [docs/mpv-checklist.md]
     rules: [R14, R12, R1, R2]
