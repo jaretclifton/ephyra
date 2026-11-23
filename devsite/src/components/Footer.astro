@@ -1,0 +1,26 @@
+---
+// Starlight's footer, plus Mermaid for the ```mermaid blocks of the repository's Markdown
+// (astro.config.mjs turns them into <pre class="mermaid">). Loaded only on pages that have one.
+import Default from '@astrojs/starlight/components/Footer.astro';
+---
+
+<Default><slot /></Default>
+
+<script>
+  async function draw() {
+    const blocks = document.querySelectorAll<HTMLElement>('pre.mermaid');
+    if (!blocks.length) return;
+    const { default: mermaid } = await import('mermaid');
+    const dark = document.documentElement.dataset.theme !== 'light';
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'base',
+      fontFamily: 'system-ui, Roboto, sans-serif',
+      themeVariables: dark
+        ? { primaryColor: '#0E4F5C', primaryTextColor: '#E4FBFF', primaryBorderColor: '#4FD8F0', lineColor: '#9FB3C8', clusterBkg: '#121A2C', clusterBorder: '#2A3650', background: '#070B16', textColor: '#E4FBFF' }
+        : { primaryColor: '#BDF4FF', primaryTextColor: '#0B1326', primaryBorderColor: '#007A8E', lineColor: '#3F4F64', clusterBkg: '#E9F5FA', clusterBorder: '#BCC9D8', background: '#F3FBFF', textColor: '#0B1326' },
+    });
+    await mermaid.run({ nodes: blocks });
+  }
+  draw();
+</script>

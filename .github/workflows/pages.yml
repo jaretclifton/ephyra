@@ -1,46 +1,97 @@
 name: Pages
 
-# Publishes site/ (the landing page and the privacy policy that Google Play links to) to GitHub Pages at
-# https://midasvo.nl/ephyra/ (the custom domain of midasvo.github.io). Needs Settings → Pages →
-# Source set to "GitHub Actions".
+# Publishes the Ephyra site and the development site to GitHub Pages at https://midasvo.nl/ephyra/
+# (the custom domain of midasvo.github.io). Needs Settings → Pages → Source set to "GitHub Actions".
+#
+# - site/ (the landing page and the privacy policy that Google Play links to) is published as it
+#   is, at the root.
+# - devsite/ (Astro Starlight, #928) is built from the repository's Markdown and the LikeC4 model in
+#   docs/architecture/model/, and published at dev/. `npm run pages` composes both the same way
+#   locally.
+#
+# A pull request that touches either builds them, so a broken page or model fails before the merge;
+# only a push to main deploys.
 
 on:
   workflow_dispatch:
   push:
     branches:
       - main
-    paths:
+    paths: &pages-paths
       - "site/**"
+      - "devsite/**"
+      - "docs/**"
+      - "CLAUDE.md"
       - ".github/workflows/pages.yml"
+  pull_request:
+    branches:
+      - main
+    paths: *pages-paths
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: pages-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  deploy:
-    name: Deploy site
+  build:
+    name: Build sites
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v6
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: devsite/package-lock.json
+
+      - name: Install the development site's tools
+        working-directory: devsite
+        run: npm ci
+
+      - name: Validate the architecture model
+        working-directory: devsite
+        run: npm run check-model
+
+      - name: Build the development site
+        working-directory: devsite
+        run: npm run build
+
+      - name: Put both sites together
+        working-directory: devsite
+        run: node scripts/compose.mjs "$RUNNER_TEMP/pages"
+
+      - name: Check that site/ is published unchanged
+        run: diff -r site "$RUNNER_TEMP/pages" --exclude=dev
 
       - name: Upload site
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v5
         with:
-          path: site
+          path: ${{ runner.temp }}/pages
+
+  deploy:
+    name: Deploy site
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - name: Configure Pages
+        uses: actions/configure-pages@v6
 
       - name: Deploy to GitHub Pages
         id: deployment
