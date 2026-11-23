@@ -29,6 +29,7 @@ android {
 dependencies {
     implementation(projects.application)
     implementation(projects.domain)
+    // UiText (and nothing of AppPreferences: rule R17).
     implementation(projects.settings)
     implementation(libs.androidx.core)
     implementation(libs.androidx.hilt.work)

@@ -6,11 +6,12 @@ import dev.jdtech.jellyfin.models.EpisodeField
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.repository.CurrentServerId
+import dev.jdtech.jellyfin.repository.DownloadSettings
 import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.repository.StoredSource
-import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.NetworkConnectivity
 import javax.inject.Inject
@@ -39,7 +40,8 @@ class SmartDownloads
 constructor(
     private val downloadQueue: DownloadQueue,
     private val downloader: Downloader,
-    private val appPreferences: AppPreferences,
+    private val settings: DownloadSettings,
+    private val currentServerId: CurrentServerId,
     private val downloadStore: DownloadStore,
     private val repositoryProvider: Provider<MediaRepository>,
     private val networkConnectivity: NetworkConnectivity,
@@ -79,7 +81,7 @@ constructor(
     suspend fun checkAll() {
         if (!isActive()) return
         // CE (#718): the current server's series; another server's downloads are not its to manage.
-        val serverId = appPreferences.currentServerId() ?: return
+        val serverId = currentServerId.get() ?: return
         for (seriesId in downloadStore.seriesIdsWithCompletedDownloads(serverId)) {
             check(seriesId, finishedRecently = false)
         }
@@ -105,16 +107,15 @@ constructor(
     }
 
     /** Smart Downloads needs the server to say what is watched, so it never runs offline. */
-    private fun isActive(): Boolean =
-        appPreferences.getValue(appPreferences.smartDownloads) && networkConnectivity.isOnline()
+    private fun isActive(): Boolean = settings.smartDownloads && networkConnectivity.isOnline()
 
     private suspend fun run(seriesId: ItemId, finishedRecently: Boolean) {
         // Smart Downloads that was already on before the moment was recorded: only what is watched
         // from now on may be removed.
-        var since = appPreferences.getValue(appPreferences.smartDownloadsSince)
+        var since = settings.smartDownloadsSince
         if (since == 0L) {
             since = System.currentTimeMillis()
-            appPreferences.setValue(appPreferences.smartDownloadsSince, since)
+            settings.smartDownloadsSince = since
         }
 
         val repository = repositoryProvider.get()
@@ -139,7 +140,7 @@ constructor(
         }
 
         // CE (#718): only this server's downloads count as downloaded here.
-        val serverId = appPreferences.currentServerId() ?: return
+        val serverId = currentServerId.get() ?: return
         val sourcesByEpisode = episodes.associate { episode ->
             episode.id to
                 downloadStore.sourcesOfServer(episode.id, serverId).filter {
@@ -170,10 +171,7 @@ constructor(
                 episodes = episodes,
                 downloads = downloads,
                 inFlightIds = inFlightIds,
-                keepReady =
-                    appPreferences
-                        .getValue(appPreferences.smartDownloadsKeepReady)
-                        .coerceAtLeast(1),
+                keepReady = settings.smartDownloadsKeepReady.coerceAtLeast(1),
                 since = since,
                 finishedRecently = finishedRecently,
                 playingItemId = playbackEvents.playingItemId.value,
