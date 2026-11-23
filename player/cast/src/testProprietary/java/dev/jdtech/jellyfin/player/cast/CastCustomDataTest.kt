@@ -9,6 +9,7 @@ import dev.jdtech.jellyfin.models.toMediaSourceId
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
@@ -80,13 +81,20 @@ class CastCustomDataTest {
     }
 
     @Test
+    fun `the source id is written as the plain string the JSON held before it had a type`() {
+        val encoded = CastCustomData.of(source, castTracks(source, null, null)).encode()
+
+        assertTrue(encoded.startsWith("""{"mediaSourceId":"abc","""), encoded)
+    }
+
+    @Test
     fun `what another version wrote is read as far as it goes`() {
         val data =
             CastCustomData.decode(
                 """{"mediaSourceId":"abc","transcoded":true,"somethingNew":[1,2]}"""
             )!!
 
-        assertEquals("abc", data.mediaSourceId)
+        assertEquals("abc", data.mediaSourceId.asString())
         assertEquals(emptyList(), data.audio)
     }
 

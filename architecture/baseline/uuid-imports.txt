@@ -1,16 +1,6 @@
 # R10 (#773): the production files outside server/jellyfin that may name java.util.UUID, each for a
 # reason below. Item and user ids are ItemId and UserId, server address and stored media stream ids
-# ServerAddressId and MediaStreamId (#918), all in domain/.../models/Ids.kt, and never a UUID here;
-# what is left are random values the app makes for itself. An allowlist, not debt: a new file gets a
-# line only with a reason of the same kind, given in the PR that adds it (UuidBoundaryTest).
-
-# Random names that are not ids of anything stored: the media session, mpv's subtitle files.
-player/local/src/main/java/dev/jdtech/jellyfin/player/local/engine/mpv/MPVPlayer.kt
-player/local/src/main/java/dev/jdtech/jellyfin/player/local/presentation/PlayerViewModel.kt
-
-# Random ids for previews: the dummies' item and user ids, in a Jellyfin id's form.
-core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/DummyIds.kt
-
-# The test fakes' random tokens and secrets (the testing module is test-only, rule R8).
-testing/src/main/kotlin/dev/jdtech/jellyfin/testing/FakeMediaServer.kt
-testing/src/main/kotlin/dev/jdtech/jellyfin/testing/FakeServerConnector.kt
+# ServerAddressId and MediaStreamId (#918), all in domain/.../models/Ids.kt, and never a UUID here.
+# Random names and tokens come from kotlin.uuid.Uuid (#918), so no file is listed now. An
+# allowlist, not debt: a new file gets a line only for a random value the app makes for itself that
+# kotlin.uuid cannot make, with the reason, given in the PR that adds it (UuidBoundaryTest).

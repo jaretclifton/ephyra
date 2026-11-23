@@ -1,5 +1,6 @@
 package dev.jdtech.jellyfin.player.cast
 
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -61,7 +62,7 @@ internal fun decodeLegacyPlaybackInfo(value: String?, baseUrl: String?): CastCus
     val source = info.mediaSources?.firstOrNull() ?: return null
     val streams = source.mediaStreams.orEmpty().filter { it.index != null }
     return CastCustomData(
-        mediaSourceId = source.id.orEmpty(),
+        mediaSourceId = source.id.orEmpty().toMediaSourceId(),
         playSessionId = info.playSessionId,
         transcoded = !source.transcodingUrl.isNullOrBlank(),
         defaultAudioStreamIndex = source.defaultAudioStreamIndex,

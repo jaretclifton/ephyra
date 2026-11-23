@@ -2,6 +2,8 @@ package dev.jdtech.jellyfin
 
 import androidx.navigation3.runtime.NavKey
 import dev.jdtech.jellyfin.models.CollectionType
+import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ServerId
 import kotlinx.serialization.Serializable
 
 @Serializable data object WelcomeRoute : NavKey
@@ -12,7 +14,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable data object AddServerRoute : NavKey
 
-@Serializable data class ServerAddressesRoute(val serverId: String) : NavKey
+@Serializable data class ServerAddressesRoute(val serverId: ServerId) : NavKey
 
 @Serializable data object UsersRoute : NavKey
 
@@ -26,33 +28,33 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class LibraryRoute(
-    val libraryId: String,
+    val libraryId: ItemId,
     val libraryName: String,
     val libraryType: CollectionType,
 ) : NavKey
 
 @Serializable
-data class CollectionRoute(val collectionId: String, val collectionName: String) : NavKey
+data class CollectionRoute(val collectionId: ItemId, val collectionName: String) : NavKey
 
 @Serializable data object FavoritesRoute : NavKey
 
-@Serializable data class MovieRoute(val movieId: String) : NavKey
+@Serializable data class MovieRoute(val movieId: ItemId) : NavKey
 
-@Serializable data class ShowRoute(val showId: String, val downloadsOnly: Boolean = false) : NavKey
+@Serializable data class ShowRoute(val showId: ItemId, val downloadsOnly: Boolean = false) : NavKey
 
-@Serializable data class EpisodeRoute(val episodeId: String) : NavKey
+@Serializable data class EpisodeRoute(val episodeId: ItemId) : NavKey
 
-@Serializable data class DownloadedShowRoute(val showId: String, val showName: String) : NavKey
+@Serializable data class DownloadedShowRoute(val showId: ItemId, val showName: String) : NavKey
 
 /** [seriesId] lets the season page request everything at once (#252); null when not known. */
 @Serializable
 data class SeasonRoute(
-    val seasonId: String,
+    val seasonId: ItemId,
     val downloadsOnly: Boolean = false,
-    val seriesId: String? = null,
+    val seriesId: ItemId? = null,
 ) : NavKey
 
-@Serializable data class PersonRoute(val personId: String) : NavKey
+@Serializable data class PersonRoute(val personId: ItemId) : NavKey
 
 @Serializable data class SettingsRoute(val indexes: List<Int>) : NavKey
 

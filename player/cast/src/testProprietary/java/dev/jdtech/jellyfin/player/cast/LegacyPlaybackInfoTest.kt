@@ -1,5 +1,6 @@
 package dev.jdtech.jellyfin.player.cast
 
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.player.core.domain.models.Track
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -49,7 +50,7 @@ class LegacyPlaybackInfoTest {
     fun `a transcode comes back with its play session and its tracks`() {
         val data = assertNotNull(decodeLegacyPlaybackInfo(legacy("cast-transcode"), base))
 
-        assertEquals("8f0862286a92020d0cb735d734765afe", data.mediaSourceId)
+        assertEquals("8f0862286a92020d0cb735d734765afe", data.mediaSourceId.asString())
         assertEquals("51c3f794f3da47dcb92c5c42f43f8c88", data.playSessionId)
         assertEquals(true, data.transcoded)
         assertEquals(true, data.source().transcoded)

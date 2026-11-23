@@ -2,6 +2,8 @@ package dev.jdtech.jellyfin
 
 import androidx.navigation3.runtime.NavKey
 import dev.jdtech.jellyfin.models.CollectionType
+import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.MediaSourceId
 import kotlinx.serialization.Serializable
 
 @Serializable data object WelcomeRoute : NavKey
@@ -20,32 +22,32 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class LibraryRoute(
-    val libraryId: String,
+    val libraryId: ItemId,
     val libraryName: String,
     val libraryType: CollectionType,
 ) : NavKey
 
 @Serializable
-data class CollectionRoute(val collectionId: String, val collectionName: String) : NavKey
+data class CollectionRoute(val collectionId: ItemId, val collectionName: String) : NavKey
 
-@Serializable data class MovieRoute(val itemId: String) : NavKey
+@Serializable data class MovieRoute(val itemId: ItemId) : NavKey
 
-@Serializable data class ShowRoute(val itemId: String) : NavKey
+@Serializable data class ShowRoute(val itemId: ItemId) : NavKey
 
 /** [seriesId] lets the season page request everything at once (#252); null when not known. */
-@Serializable data class SeasonRoute(val seasonId: String, val seriesId: String? = null) : NavKey
+@Serializable data class SeasonRoute(val seasonId: ItemId, val seriesId: ItemId? = null) : NavKey
 
 /** CE (#130): an episode opens on the season page of its season, with that episode focused. */
-@Serializable data class EpisodeRoute(val episodeId: String) : NavKey
+@Serializable data class EpisodeRoute(val episodeId: ItemId) : NavKey
 
 /** CE (#136): person page showing bio and movies/shows. */
-@Serializable data class PersonRoute(val personId: String) : NavKey
+@Serializable data class PersonRoute(val personId: ItemId) : NavKey
 
 @Serializable
 data class PlayerRoute(
-    val itemId: String,
+    val itemId: ItemId,
     val itemKind: String,
-    val mediaSourceId: String? = null,
+    val mediaSourceId: MediaSourceId? = null,
     val startFromBeginning: Boolean = false,
     val shuffle: Boolean = false,
 ) : NavKey

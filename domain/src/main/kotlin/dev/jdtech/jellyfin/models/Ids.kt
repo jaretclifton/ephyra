@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.models
 
 import java.io.Serializable
 import kotlin.uuid.Uuid
+import kotlinx.serialization.Serializable as KSerializable
 
 // The ids of the domain (#773, #902). An item, user, server or media source id is an opaque string
 // wrapped in its own type, so one kind of id cannot go where another belongs, and a server whose
@@ -24,16 +25,24 @@ import kotlin.uuid.Uuid
  * It is [Serializable] as `UUID` was: where the id is boxed (a nullable or generic position),
  * Android stores it in a `Bundle` that way. Compose's lazy list keys and `rememberSaveable` values
  * must be Bundle types, and screens use item ids as both.
+ *
+ * It is also kotlinx-serializable ([KSerializable]), as the plain string it wraps: an inline value
+ * class over a `String` is encoded as that string. So a navigation route, which the saved back
+ * stack stores, or the Cast receiver's custom data can hold an id and still write and read the text
+ * it did when the field was a `String` (`RouteIdsSerializationTest` in app/phone and app/tv,
+ * `CastCustomDataTest`).
  */
+@KSerializable
 @JvmInline
 value class ItemId(val value: String) : Serializable {
     override fun toString(): String = value
 }
 
 /**
- * The id of a user on a server. Make one with [toUserId], read it with [asString]. [toString] and
- * [Serializable] as for [ItemId].
+ * The id of a user on a server. Make one with [toUserId], read it with [asString]. [toString],
+ * [Serializable] and [KSerializable] as for [ItemId].
  */
+@KSerializable
 @JvmInline
 value class UserId(val value: String) : Serializable {
     override fun toString(): String = value
@@ -43,8 +52,9 @@ value class UserId(val value: String) : Serializable {
  * The id a server gives itself (`ServerInfo.id`), exactly as the server sends it (#902). It names
  * the server in Room (the servers, users and downloads), in the current server preference and in
  * the saved session, so its text never changes form. Make one with [toServerId], read it with
- * [asString]. [toString] and [Serializable] as for [ItemId].
+ * [asString]. [toString], [Serializable] and [KSerializable] as for [ItemId].
  */
+@KSerializable
 @JvmInline
 value class ServerId(val value: String) : Serializable {
     override fun toString(): String = value
@@ -55,8 +65,9 @@ value class ServerId(val value: String) : Serializable {
  * (#902). For Jellyfin it is a UUID, dashed or not depending on the answer it came in: the text is
  * kept as it came, never normalised, because Room (sources, media streams, trickplay), the player
  * and the receiver match it as text. Make one with [toMediaSourceId], read it with [asString].
- * [toString] and [Serializable] as for [ItemId].
+ * [toString], [Serializable] and [KSerializable] as for [ItemId].
  */
+@KSerializable
 @JvmInline
 value class MediaSourceId(val value: String) : Serializable {
     override fun toString(): String = value

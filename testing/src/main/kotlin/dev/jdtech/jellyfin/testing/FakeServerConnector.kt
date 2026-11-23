@@ -11,7 +11,7 @@ import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.ServerId
 import java.util.Collections
-import java.util.UUID
+import kotlin.uuid.Uuid
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
@@ -79,7 +79,7 @@ class FakeServerConnector(
     }
 
     private fun user(name: String): AuthenticatedUser {
-        val token = UUID.randomUUID().toString().replace("-", "")
+        val token = Uuid.random().toHexString()
         tokens += token
         return AuthenticatedUser(
             id = library.userId,
@@ -97,7 +97,7 @@ class FakeServerConnector(
 
     override suspend fun startQuickConnect(address: String): QuickConnectState {
         if (!quickConnectEnabled(address)) throw ServerException.HttpStatus(401)
-        val secret = UUID.randomUUID().toString().replace("-", "").repeat(2)
+        val secret = Uuid.random().toHexString().repeat(2)
         val state =
             QuickConnectState(
                 code = "%06d".format(quickConnects.size + 1),

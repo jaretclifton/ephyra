@@ -45,10 +45,10 @@ import dev.jdtech.mpv.MPVLib.MpvEvent
 import dev.jdtech.mpv.MPVLib.MpvFormat
 import java.io.File
 import java.io.IOException
-import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.TimeUnit
+import kotlin.uuid.Uuid
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -554,7 +554,7 @@ class MPVPlayer(
      * are removed when the next player starts (see [removeStaleSubtitleDirs]).
      */
     private val subtitleDir =
-        File(File(context.cacheDir, SUBTITLE_DIR), UUID.randomUUID().toString()).also {
+        File(File(context.cacheDir, SUBTITLE_DIR), Uuid.random().toString()).also {
             liveSubtitleDirs += it.name
             removeStaleSubtitleDirs(it.parentFile!!)
         }

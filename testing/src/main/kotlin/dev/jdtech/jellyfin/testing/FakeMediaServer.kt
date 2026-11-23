@@ -41,7 +41,7 @@ import dev.jdtech.jellyfin.repository.ItemsPage
 import dev.jdtech.jellyfin.repository.ResumeThresholds
 import java.time.LocalDateTime
 import java.util.Collections
-import java.util.UUID
+import kotlin.uuid.Uuid
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -486,7 +486,7 @@ class FakeMediaServer(
                             cap != null && source.bitrate != null && source.bitrate!! > cap
                         val session =
                             if (transcoded && target !is PlaybackTarget.Download) {
-                                UUID.randomUUID().toString().replace("-", "")
+                                Uuid.random().toHexString()
                             } else null
                         source.copy(
                             path =

@@ -97,12 +97,12 @@ import dev.jdtech.jellyfin.settings.domain.Constants
 import dev.jdtech.jellyfin.settings.domain.QualityNetwork
 import dev.jdtech.jellyfin.settings.presentation.enums.AppVariant
 import java.util.Collections
-import java.util.UUID
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.resume
 import kotlin.math.abs
+import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -689,7 +689,7 @@ constructor(
         // A new player can open while the old one is still alive (a Watch Next link while playing,
         // #187), so each session needs its own ID: Media3 allows only one session per ID.
         mediaSession =
-            MediaSession.Builder(application, player).setId(UUID.randomUUID().toString()).build()
+            MediaSession.Builder(application, player).setId(Uuid.random().toString()).build()
         // PlaybackService keeps the process alive, with a media notification, while the player
         // activity is in the background. Without background audio the player pauses when the
         // activity does, so the service is not needed.
