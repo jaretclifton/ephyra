@@ -188,6 +188,11 @@ object ArchitectureModel {
                     Layer.ADAPTER,
                     "The Jellyfin adapter, the only module with the Jellyfin SDK: JellyfinApi, the mappers, the port implementations, the device profiles and its own Hilt module.",
                 ),
+            "ratings/mdblist" to
+                Module(
+                    Layer.ADAPTER,
+                    "The MDBList adapter of the external ratings on the movie and show pages: its HTTP client and the ratings cache on disk, with its own Hilt module.",
+                ),
             "testing" to
                 Module(
                     Layer.TOOLING,
