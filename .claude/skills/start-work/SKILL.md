@@ -73,6 +73,7 @@ to start from, what done looks like, and the checks. Use this template:
 <Issue title> (midasvo/ephyra#<n>, or: no issue yet).
 
 Read first: CLAUDE.md, docs/areas/<id>.md<, docs/... from the guide>.
+   [For an area without a guide: CLAUDE.md, the `<id>` entry of docs/areas.yaml and its docs.]
 The problem: <one paragraph: what happens, what should happen, how to reproduce it>.
 Start in: <paths>. It goes through <ports>; rules <R-numbers> apply.
 Seen before: <pitfalls and issues>.
