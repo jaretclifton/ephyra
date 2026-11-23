@@ -5,11 +5,10 @@ import android.content.ContextWrapper
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.CollectionSection
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
-import dev.jdtech.jellyfin.models.ItemSourceEntity
+import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.UiText
@@ -19,6 +18,7 @@ import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
@@ -164,7 +164,7 @@ class DownloadsViewModelUserSwitchTest {
     private fun viewModel(): DownloadsViewModel {
         val repository = repository()
         val preferences = appPreferences()
-        val database = database()
+        val downloadStore = downloadStore()
         val context = ContextWrapper(null) as Context
         return DownloadsViewModel(
             context = context,
@@ -175,11 +175,11 @@ class DownloadsViewModelUserSwitchTest {
                     downloader = unused(),
                     appPreferences = preferences,
                     repositoryProvider = { repository },
-                    database = database,
+                    downloadStore = downloadStore,
                     context = context,
                 ),
             downloader = unused(),
-            database = database,
+            downloadStore = downloadStore,
         )
     }
 
@@ -206,29 +206,32 @@ class DownloadsViewModelUserSwitchTest {
         }
             as MediaRepository
 
-    private fun database(): ServerDatabaseDao =
-        fakeProxy(
-            ServerDatabaseDao::class.java.classLoader,
-            arrayOf(ServerDatabaseDao::class.java),
-        ) { _, method, args ->
+    private fun downloadStore(): DownloadStore =
+        fakeProxy(DownloadStore::class.java.classLoader, arrayOf(DownloadStore::class.java)) {
+            _,
+            method,
+            args ->
             when (method.kotlinName) {
-                "getActiveDownloadSources",
-                "getMediaStreamsForSources" -> emptyList<Any>()
+                "activeDownloadSources" -> emptyList<Any>()
                 // A finished download of every item asked for.
-                "getSourcesForItems" ->
-                    (args!![0] as List<*>).map { id ->
-                        ItemSourceEntity(
-                            id = "source-$id".toMediaSourceId(),
-                            itemId = id as ItemId,
-                            name = "source",
-                            type = ItemSourceType.LOCAL,
-                            path = "/nowhere/$id.mkv",
-                        )
+                "localSourcesOfItems" ->
+                    (args!![0] as Collection<*>).associate { id ->
+                        id as ItemId to
+                            listOf(
+                                ItemSource(
+                                    id = "source-$id".toMediaSourceId(),
+                                    name = "source",
+                                    type = ItemSourceType.LOCAL,
+                                    path = "/nowhere/$id.mkv",
+                                    size = 0,
+                                    mediaStreams = emptyList(),
+                                )
+                            )
                     }
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
+                else -> throw NotImplementedError("DownloadStore.${method.kotlinName}")
             }
         }
-            as ServerDatabaseDao
+            as DownloadStore
 
     private fun appPreferences(): AppPreferences {
         val preferences =

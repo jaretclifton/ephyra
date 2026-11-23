@@ -9,9 +9,11 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dev.jdtech.jellyfin.database.MIGRATION_6_7
+import dev.jdtech.jellyfin.database.RoomDownloadStore
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.profilelock.ProfileLock
+import dev.jdtech.jellyfin.repository.DownloadStore
 import javax.inject.Singleton
 
 @Module
@@ -32,4 +34,10 @@ object DatabaseModule {
     @Singleton
     @Provides
     fun provideProfileLock(database: ServerDatabaseDao): ProfileLock = ProfileLock(database)
+
+    // #899: the download rows, for the downloader, the queue, Smart Downloads and the screens.
+    @Singleton
+    @Provides
+    fun provideDownloadStore(database: ServerDatabaseDao): DownloadStore =
+        RoomDownloadStore(database)
 }

@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.film.domain.VideoMetadataParser
 import dev.jdtech.jellyfin.film.presentation.movie.MovieViewModel
 import dev.jdtech.jellyfin.film.presentation.show.ShowViewModel
@@ -17,6 +16,7 @@ import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.IOException
@@ -335,10 +335,10 @@ class RelatedItemsLoadingTest {
                     downloader = unused(),
                     appPreferences = preferences,
                     repositoryProvider = { repository },
-                    database = unused<ServerDatabaseDao>(),
+                    downloadStore = unused<DownloadStore>(),
                     context = ContextWrapper(null) as Context,
                 ),
-            database = noDownloads(),
+            downloadStore = noDownloads(),
         )
     }
 
@@ -371,17 +371,17 @@ class RelatedItemsLoadingTest {
         }
             as MediaRepository
 
-    private fun noDownloads(): ServerDatabaseDao =
-        fakeProxy(
-            ServerDatabaseDao::class.java.classLoader,
-            arrayOf(ServerDatabaseDao::class.java),
-        ) { _, method, _ ->
+    private fun noDownloads(): DownloadStore =
+        fakeProxy(DownloadStore::class.java.classLoader, arrayOf(DownloadStore::class.java)) {
+            _,
+            method,
+            _ ->
             when (method.kotlinName) {
-                "getSeasonEpisodeCounts" -> emptyList<Any>()
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
+                "seasonEpisodeCounts" -> emptyList<Any>()
+                else -> throw NotImplementedError("DownloadStore.${method.kotlinName}")
             }
         }
-            as ServerDatabaseDao
+            as DownloadStore
 
     private fun movie(id: ItemId, name: String, localTrailers: Int = 0, specialFeatures: Int? = 0) =
         Movie(

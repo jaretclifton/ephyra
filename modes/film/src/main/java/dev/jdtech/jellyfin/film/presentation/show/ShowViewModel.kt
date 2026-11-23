@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.film.presentation.DownloadPrompt
 import dev.jdtech.jellyfin.film.presentation.EpisodeDownloadPrompts
 import dev.jdtech.jellyfin.film.presentation.RelatedItems
@@ -31,6 +30,7 @@ import dev.jdtech.jellyfin.repository.ReloadPolicy
 import dev.jdtech.jellyfin.repository.serverOrStored
 import dev.jdtech.jellyfin.repository.serverOrStoredList
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.utils.Downloader
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
@@ -62,7 +62,7 @@ constructor(
     private val appPreferences: AppPreferences,
     private val downloader: Downloader,
     private val downloadQueue: DownloadQueue,
-    private val database: ServerDatabaseDao,
+    private val downloadStore: DownloadStore,
     dataChanges: DataChangeEvents = DataChangeEvents(),
 ) : ViewModel() {
     private val _state = MutableStateFlow(ShowState())
@@ -221,7 +221,7 @@ constructor(
     private suspend fun getLocalEpisodeCounts(showId: ItemId): Map<ItemId, SeasonEpisodeCounts> =
         withContext(Dispatchers.IO) {
             val serverId = appPreferences.currentServerId() ?: return@withContext emptyMap()
-            database.getSeasonEpisodeCounts(showId, serverId).associateBy { it.seasonId }
+            downloadStore.seasonEpisodeCounts(showId, serverId).associateBy { it.seasonId }
         }
 
     private data class SeasonEpisodeTotals(val total: Int = 0, val canDownload: Boolean = false)

@@ -18,8 +18,10 @@ setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/servers/ServersAction
 setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/servers/ServersViewModel.kt
 
 # Downloaded media streams (subtitles): the downloader gives each stored stream a random UUID
-# (Room column mediastreams.id).
+# (Room column mediastreams.id), and the download store that keeps them (#899).
+application/src/main/kotlin/dev/jdtech/jellyfin/repository/DownloadStore.kt
 core/src/main/java/dev/jdtech/jellyfin/utils/DownloaderImpl.kt
+data/src/main/java/dev/jdtech/jellyfin/database/RoomDownloadStore.kt
 data/src/main/java/dev/jdtech/jellyfin/models/MediaStreamEntity.kt
 
 # Room: the queries on those two kinds of id, and the column converter that stores them as text.

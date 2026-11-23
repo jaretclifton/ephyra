@@ -12,10 +12,9 @@ import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadProgress
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadStatus
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.models.AccountKey
 import dev.jdtech.jellyfin.models.CollectionSection
 import dev.jdtech.jellyfin.models.DownloadFiles
-import dev.jdtech.jellyfin.models.EpisodeEntity
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSource
@@ -24,10 +23,9 @@ import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
-import dev.jdtech.jellyfin.models.getLocalSourcesForItems
-import dev.jdtech.jellyfin.models.toEpisode
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.utils.Downloader
 import java.io.File
 import javax.inject.Inject
@@ -58,7 +56,7 @@ constructor(
     private val appPreferences: AppPreferences,
     private val downloadQueue: DownloadQueue,
     private val downloader: Downloader,
-    private val database: ServerDatabaseDao,
+    private val downloadStore: DownloadStore,
 ) : ViewModel() {
     private val _state = MutableStateFlow(DownloadsState())
     val state = _state.asStateFlow()
@@ -232,11 +230,11 @@ constructor(
      */
     private suspend fun reconcileStuckDownloads() =
         withContext(Dispatchers.IO) {
-            for (src in database.getActiveDownloadSources()) {
+            for (src in downloadStore.activeDownloadSources()) {
                 val finalPath = DownloadFiles.finalPath(src.path)
                 val finalFile = File(finalPath)
                 if (finalFile.exists() && finalFile.length() > 0) {
-                    database.setSourceDownloaded(src.id, finalPath, System.currentTimeMillis())
+                    downloadStore.setSourceDownloaded(src.id, finalPath, System.currentTimeMillis())
                     File(src.path).takeIf { it.exists() }?.delete()
                 }
             }
@@ -279,8 +277,9 @@ constructor(
                 if (item is Show) {
                     val userId = repository.getUserId()
                     // CE (#718): this server's episodes; another server's of the same show stay.
-                    for (epDto in storedEpisodes(item.id)) {
-                        deleteLocalCopy(epDto.toEpisode(database, userId))
+                    val serverId = appPreferences.currentServerId() ?: continue
+                    downloadStore.episodesOfShow(AccountKey(serverId, userId), item.id).collect {
+                        deleteLocalCopy(it)
                     }
                 } else {
                     deleteLocalCopy(item)
@@ -292,9 +291,9 @@ constructor(
     }
 
     /** CE (#718): the stored episodes of [showId] that the current server downloaded. */
-    private suspend fun storedEpisodes(showId: ItemId): List<EpisodeEntity> {
+    private suspend fun storedEpisodes(showId: ItemId): List<ItemId> {
         val serverId = appPreferences.currentServerId() ?: return emptyList()
-        return database.getEpisodesByShowIdOfServer(showId, serverId)
+        return downloadStore.episodeIdsOfShow(showId, serverId)
     }
 
     private suspend fun deleteLocalCopy(item: Item) {
@@ -346,7 +345,7 @@ constructor(
     private class LoadedLibrary(
         val movies: List<Movie>,
         val shows: List<Show>,
-        val episodesByShow: Map<ItemId, List<EpisodeEntity>>,
+        val episodesByShow: Map<ItemId, List<ItemId>>,
         val sourcesByItem: Map<ItemId, List<ItemSource>>,
         val itemSizes: Map<ItemId, Long>,
         val episodeCounts: Map<ItemId, Int>,
@@ -375,9 +374,8 @@ constructor(
             // One batched read for every movie and episode instead of a query per item
             // (and per pass).
             val sourcesByItem =
-                database.getLocalSourcesForItems(
-                    items.filter { it !is Show }.map { it.id } +
-                        episodesByShow.values.flatten().map { it.id }
+                downloadStore.localSourcesOfItems(
+                    items.filter { it !is Show }.map { it.id } + episodesByShow.values.flatten()
                 )
 
             fun sizeOf(id: ItemId): Long =
@@ -389,16 +387,16 @@ constructor(
             for (item in items) {
                 val bytes =
                     if (item is Show) {
-                        episodesByShow.getValue(item.id).sumOf { sizeOf(it.id) }
+                        episodesByShow.getValue(item.id).sumOf { sizeOf(it) }
                     } else {
                         sizeOf(item.id)
                     }
                 if (bytes > 0) itemSizes[item.id] = bytes
             }
             for (episodes in episodesByShow.values) {
-                for (ep in episodes) {
-                    val bytes = sizeOf(ep.id)
-                    if (bytes > 0) itemSizes[ep.id] = bytes
+                for (episodeId in episodes) {
+                    val bytes = sizeOf(episodeId)
+                    if (bytes > 0) itemSizes[episodeId] = bytes
                 }
             }
 
@@ -408,7 +406,7 @@ constructor(
             // and belongs in the Queue tab, not the Library tab.
             val movies = items.filterIsInstance<Movie>().filter { hasCompletedSource(it.id) }
             val episodeCounts = shows.associate { show ->
-                show.id to episodesByShow.getValue(show.id).count { hasCompletedSource(it.id) }
+                show.id to episodesByShow.getValue(show.id).count { hasCompletedSource(it) }
             }
             LoadedLibrary(
                 movies = movies,
@@ -443,12 +441,11 @@ constructor(
                 DownloadSortOrder.NAME -> library.shows.sortedBy { it.name.lowercase() }
                 DownloadSortOrder.DATE ->
                     library.shows.sortedByDescending { show ->
-                        library.episodesByShow.getValue(show.id).maxOfOrNull { mtimeOf(it.id) }
-                            ?: 0L
+                        library.episodesByShow.getValue(show.id).maxOfOrNull { mtimeOf(it) } ?: 0L
                     }
                 DownloadSortOrder.SIZE ->
                     library.shows.sortedByDescending { show ->
-                        library.episodesByShow.getValue(show.id).sumOf { itemSizes[it.id] ?: 0L }
+                        library.episodesByShow.getValue(show.id).sumOf { itemSizes[it] ?: 0L }
                     }
             }
         val sections = mutableListOf<CollectionSection>()

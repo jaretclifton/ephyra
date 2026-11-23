@@ -1,17 +1,16 @@
 package dev.jdtech.jellyfin.core.presentation.downloader
 
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.DownloadFiles
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.EpisodeField
 import dev.jdtech.jellyfin.models.ItemId
-import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.asString
-import dev.jdtech.jellyfin.models.toItemSource
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.repository.DownloadStore
+import dev.jdtech.jellyfin.repository.StoredSource
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.NetworkConnectivity
 import javax.inject.Inject
@@ -41,7 +40,7 @@ constructor(
     private val downloadQueue: DownloadQueue,
     private val downloader: Downloader,
     private val appPreferences: AppPreferences,
-    private val database: ServerDatabaseDao,
+    private val downloadStore: DownloadStore,
     private val repositoryProvider: Provider<MediaRepository>,
     private val networkConnectivity: NetworkConnectivity,
     private val playbackEvents: PlaybackEvents,
@@ -81,7 +80,7 @@ constructor(
         if (!isActive()) return
         // CE (#718): the current server's series; another server's downloads are not its to manage.
         val serverId = appPreferences.currentServerId() ?: return
-        for (seriesId in database.getSeriesIdsWithCompletedDownloads(serverId)) {
+        for (seriesId in downloadStore.seriesIdsWithCompletedDownloads(serverId)) {
             check(seriesId, finishedRecently = false)
         }
     }
@@ -132,7 +131,7 @@ constructor(
 
         // The server decides what counts as watched, so wait until our own progress has reached
         // it. The sync that pushes it runs a check afterwards.
-        if (episodes.any { database.getUserDataToBeSynced(userId, it.id) != null }) {
+        if (episodes.any { downloadStore.hasUserDataToBeSynced(userId, it.id) }) {
             Timber.d(
                 "Smart Downloads: unsynced progress for series ${seriesId.asString()}, waiting"
             )
@@ -143,7 +142,7 @@ constructor(
         val serverId = appPreferences.currentServerId() ?: return
         val sourcesByEpisode = episodes.associate { episode ->
             episode.id to
-                database.getSourcesOfServer(episode.id, serverId).filter {
+                downloadStore.sourcesOfServer(episode.id, serverId).filter {
                     it.type == ItemSourceType.LOCAL
                 }
         }
@@ -189,7 +188,7 @@ constructor(
             if (playbackEvents.playingItemId.value == episode.id) continue
             val source = completed[episode.id]?.firstOrNull() ?: continue
             Timber.i("Smart Downloads: removing watched ${episode.describe()}")
-            downloader.deleteItem(episode, source.toItemSource(database))
+            downloader.deleteItem(episode, downloadStore.itemSource(source))
         }
 
         if (plan.toQueue.isEmpty()) return
@@ -204,7 +203,7 @@ constructor(
      * The quality of the most recent download of the series, or of any source of it. Null, which
      * means original quality, when there is none: there is no default download quality to use.
      */
-    private fun qualityOf(sources: List<ItemSourceEntity>): Int? {
+    private fun qualityOf(sources: List<StoredSource>): Int? {
         val latest =
             sources.filter { it.downloadedAt != null }.maxByOrNull { it.downloadedAt ?: 0L }
                 ?: sources.firstOrNull()

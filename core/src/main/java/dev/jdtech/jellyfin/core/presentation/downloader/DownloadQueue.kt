@@ -8,7 +8,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.jdtech.jellyfin.core.R as CoreR
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.DownloadFiles
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.Item
@@ -19,6 +18,7 @@ import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.NetworkConnectivity
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
@@ -67,7 +67,7 @@ constructor(
     private val downloader: Downloader,
     private val appPreferences: AppPreferences,
     private val repositoryProvider: Provider<MediaRepository>,
-    private val database: ServerDatabaseDao,
+    private val downloadStore: DownloadStore,
     @ApplicationContext private val context: Context,
     private val dataChanges: DataChangeEvents = DataChangeEvents(),
     private val connectivity: NetworkConnectivity = AlwaysOnline,
@@ -205,8 +205,7 @@ constructor(
 
     private suspend fun claimSmartQueued(itemId: ItemId) {
         try {
-            database.clearPendingDownloadSmartQueued(itemId)
-            database.clearSourceSmartQueued(itemId)
+            downloadStore.clearSmartQueued(itemId)
         } catch (e: Exception) {
             Timber.e(e, "Failed to mark download ${itemId.asString()} as user-started")
         }
@@ -408,8 +407,8 @@ constructor(
     private suspend fun unfinishedDownloadIds(entry: Entry): List<Long> {
         val fromRows =
             try {
-                database
-                    .getSources(entry.id)
+                downloadStore
+                    .sources(entry.id)
                     .filter { DownloadFiles.isPartial(it.path) }
                     .mapNotNull { it.downloadId }
             } catch (e: Exception) {

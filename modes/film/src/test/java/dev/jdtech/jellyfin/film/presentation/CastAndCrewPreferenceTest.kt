@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.film.domain.VideoMetadataParser
 import dev.jdtech.jellyfin.film.presentation.episode.EpisodeViewModel
 import dev.jdtech.jellyfin.film.presentation.movie.MovieViewModel
@@ -20,6 +19,7 @@ import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
@@ -147,10 +147,10 @@ class CastAndCrewPreferenceTest {
                         downloader = unused(),
                         appPreferences = preferences,
                         repositoryProvider = { repository },
-                        database = unused<ServerDatabaseDao>(),
+                        downloadStore = unused<DownloadStore>(),
                         context = ContextWrapper(null) as Context,
                     ),
-                database = noDownloads(),
+                downloadStore = noDownloads(),
             )
         viewModel.loadShow(itemId)
         withTimeout(5_000) { viewModel.state.first { it.show != null } }
@@ -300,18 +300,18 @@ class CastAndCrewPreferenceTest {
         return AppPreferences(preferences)
     }
 
-    /** A database with nothing downloaded, for the show page's download counts. */
-    private fun noDownloads(): ServerDatabaseDao =
-        fakeProxy(
-            ServerDatabaseDao::class.java.classLoader,
-            arrayOf(ServerDatabaseDao::class.java),
-        ) { _, method, _ ->
+    /** A download store with nothing downloaded, for the show page's download counts. */
+    private fun noDownloads(): DownloadStore =
+        fakeProxy(DownloadStore::class.java.classLoader, arrayOf(DownloadStore::class.java)) {
+            _,
+            method,
+            _ ->
             when (method.kotlinName) {
-                "getSeasonEpisodeCounts" -> emptyList<Any>()
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
+                "seasonEpisodeCounts" -> emptyList<Any>()
+                else -> throw NotImplementedError("DownloadStore.${method.kotlinName}")
             }
         }
-            as ServerDatabaseDao
+            as DownloadStore
 
     private inline fun <reified T : Any> unused(): T =
         fakeProxy(T::class.java.classLoader, arrayOf(T::class.java)) { _, method, _ ->
