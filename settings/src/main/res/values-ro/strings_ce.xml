@@ -195,7 +195,7 @@
     <string name="ce_number_no_limit">Fără limită</string>
     <string name="ce_number_off">Dezactivat</string>
     <string name="ce_pref_player_keep_landscape">Păstrează playerul în modul peisaj</string>
-    <string name="ce_pref_player_keep_landscape_summary">Redă videoclipurile în modul peisaj, chiar și când rotești tableta pe verticală</string>
+    <string name="ce_pref_player_keep_landscape_summary">Redă videoclipurile în modul peisaj, chiar și când rotești tableta pe verticală. Unele tablete nu permit acest lucru; atunci playerul se rotește odată cu tableta.</string>
     <string name="ce_pref_home_episode_images">Folosește imaginile episoadelor</string>
     <string name="ce_pref_home_episode_images_summary">Afișează imaginea episodului în locul imaginii serialului în Continuă vizionarea și Urmează</string>
     <string name="ce_pref_cast_group">Chromecast</string>

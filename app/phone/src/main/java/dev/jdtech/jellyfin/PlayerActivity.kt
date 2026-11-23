@@ -194,7 +194,6 @@ class PlayerActivity : BasePlayerActivity() {
                 multiWindow = isInMultiWindowMode,
                 pictureInPicture = isInPictureInPictureMode,
                 foldHalfOpened = foldHalfOpened,
-                sdkInt = Build.VERSION.SDK_INT,
                 landscapeRefused = landscapeRefused,
             )
         if (requestedOrientation != orientation) {

@@ -70,7 +70,6 @@ class PlayerLetterboxTest {
             multiWindow = false,
             pictureInPicture = false,
             foldHalfOpened = false,
-            sdkInt = 34,
             landscapeRefused = true,
         )
 

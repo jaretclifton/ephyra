@@ -1,7 +1,6 @@
 package dev.jdtech.jellyfin
 
 import android.content.pm.ActivityInfo
-import dev.jdtech.jellyfin.settings.domain.KeepPlayerLandscape
 
 /** Below this many dp a window is compact width (Material window size classes). */
 internal const val COMPACT_WIDTH_DP = 600
@@ -14,8 +13,8 @@ internal const val COMPACT_WIDTH_DP = 600
  * - A wider window (a tablet, an unfolded foldable) follows the device, unless "Keep the player in
  *   landscape" is on. That setting is left out in split-screen or a freeform window, in
  *   picture-in-picture and with a fold half-opened (tabletop or book posture, R9): there the window
- *   has to be free to turn. It is also left out where the system ignores the request
- *   ([KeepPlayerLandscape.isSupported]).
+ *   has to be free to turn. A display that ignores the request leaves the player upright, or
+ *   letterboxes it ([refusesLandscape], then [landscapeRefused]); either way it follows the device.
  *
  * The fold counts half-opened in either orientation: with landscape forced, a Pixel Fold held in
  * tabletop posture reports its hinge as vertical, because a fold's orientation is relative to the
@@ -28,7 +27,6 @@ internal fun playerOrientation(
     multiWindow: Boolean,
     pictureInPicture: Boolean,
     foldHalfOpened: Boolean,
-    sdkInt: Int,
     landscapeRefused: Boolean = false,
 ): Int =
     when {
@@ -36,7 +34,6 @@ internal fun playerOrientation(
         shorterSideDp < COMPACT_WIDTH_DP -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         keepLandscape &&
             !landscapeRefused &&
-            KeepPlayerLandscape.isSupported(sdkInt) &&
             !multiWindow &&
             !pictureInPicture &&
             !foldHalfOpened -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE

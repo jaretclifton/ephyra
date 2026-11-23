@@ -197,7 +197,7 @@
     <string name="ce_number_no_limit">Без обмежень</string>
     <string name="ce_number_off">Вимк.</string>
     <string name="ce_pref_player_keep_landscape">Тримати плеєр в альбомній орієнтації</string>
-    <string name="ce_pref_player_keep_landscape_summary">Відтворювати відео в альбомній орієнтації, навіть якщо повернути планшет вертикально</string>
+    <string name="ce_pref_player_keep_landscape_summary">Відтворювати відео в альбомній орієнтації, навіть якщо повернути планшет вертикально. Деякі планшети цього не дозволяють; тоді плеєр повертається разом із планшетом.</string>
     <string name="ce_pref_home_episode_images">Використовувати зображення серій</string>
     <string name="ce_pref_home_episode_images_summary">Показувати зображення серії замість зображення серіалу в «Продовжити перегляд» і «Далі»</string>
     <string name="ce_pref_cast_group">Chromecast</string>
