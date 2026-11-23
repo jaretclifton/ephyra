@@ -10,6 +10,7 @@ import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.Collections
@@ -74,7 +75,7 @@ class CatalogLocalSourcesTest {
 
     private fun localSource(itemId: ItemId) =
         ItemSourceEntity(
-            id = "download-${itemId.asString()}",
+            id = "download-${itemId.asString()}".toMediaSourceId(),
             itemId = itemId,
             name = "Original",
             type = ItemSourceType.LOCAL,
@@ -104,7 +105,7 @@ class CatalogLocalSourcesTest {
             listOf(ItemSourceType.REMOTE, ItemSourceType.LOCAL),
             result.sources.map { it.type },
         )
-        assertEquals("download-${movieId.asString()}", result.sources.last().id)
+        assertEquals("download-${movieId.asString()}", result.sources.last().id.asString())
     }
 
     @Test

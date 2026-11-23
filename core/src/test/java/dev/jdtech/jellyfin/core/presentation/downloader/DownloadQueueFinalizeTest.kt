@@ -10,6 +10,7 @@ import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -179,7 +180,7 @@ class DownloadQueueFinalizeTest {
 
         override suspend fun downloadItem(
             item: Item,
-            sourceId: String,
+            sourceId: MediaSourceId,
             storageIndex: Int,
             maxBitrate: Int?,
             smartQueued: Boolean,

@@ -8,6 +8,7 @@ import dev.jdtech.jellyfin.film.domain.homerows.HomeRowType.NEXT_UP
 import dev.jdtech.jellyfin.film.domain.homerows.HomeRowType.SUGGESTIONS
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -149,8 +150,8 @@ class HomeRowsTest {
         val bob = UUID.randomUUID().toString().toUserId()
         val servers =
             mutableMapOf(
-                "server1" to Server("server1", "One", null, alice),
-                "server2" to Server("server2", "Two", null, alice),
+                "server1" to Server("server1".toServerId(), "One", null, alice),
+                "server2" to Server("server2".toServerId(), "Two", null, alice),
             )
         val store = HomeRowsStore(prefs, dao(servers))
 
@@ -162,13 +163,13 @@ class HomeRowsTest {
         assertEquals(layout, store.read(store.currentProfile()))
 
         // Bob on the same server, and Alice on another server, start from the defaults.
-        servers["server1"] = Server("server1", "One", null, bob)
+        servers["server1"] = Server("server1".toServerId(), "One", null, bob)
         assertNull(store.read(store.currentProfile()))
         prefs.setValue(prefs.currentServer, "server2")
         assertNull(store.read(store.currentProfile()))
 
         // Back to Alice on server 1.
-        servers["server1"] = Server("server1", "One", null, alice)
+        servers["server1"] = Server("server1".toServerId(), "One", null, alice)
         prefs.setValue(prefs.currentServer, "server1")
         assertEquals(layout, store.read(store.currentProfile()))
     }
@@ -176,7 +177,11 @@ class HomeRowsTest {
     @Test
     fun `no server or user means no profile`() = runBlocking {
         val prefs = AppPreferences(MemorySharedPreferences())
-        val store = HomeRowsStore(prefs, dao(mutableMapOf("s" to Server("s", "S", null, null))))
+        val store =
+            HomeRowsStore(
+                prefs,
+                dao(mutableMapOf("s" to Server("s".toServerId(), "S", null, null))),
+            )
 
         assertNull(store.currentProfile())
         prefs.setValue(prefs.currentServer, "s")

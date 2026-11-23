@@ -13,6 +13,8 @@ import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -58,7 +60,7 @@ class AddSavedServerSessionTest {
                     servers[args[0] as String]?.currentUserId?.let { users[it] }
                 "insertServer" -> {
                     val server = args[0] as Server
-                    servers[server.id] = server
+                    servers[server.id.asString()] = server
                     Unit
                 }
                 "insertServerAddress" -> {
@@ -94,8 +96,8 @@ class AddSavedServerSessionTest {
     }
 
     private fun saveServer(id: String, address: String, user: User?, type: String = "jellyfin") {
-        val serverAddress = ServerAddress(UUID.randomUUID(), id, address)
-        servers[id] = Server(id, "Server $id", serverAddress.id, user?.id, type)
+        val serverAddress = ServerAddress(UUID.randomUUID(), id.toServerId(), address)
+        servers[id] = Server(id.toServerId(), "Server $id", serverAddress.id, user?.id, type)
         addresses += serverAddress
         user?.let { users[it.id] = it }
     }
@@ -112,7 +114,13 @@ class AddSavedServerSessionTest {
     ): Server {
         found =
             ResolvedServer(
-                info = ServerInfo(id = id, name = "Server $id", version = null, product = null),
+                info =
+                    ServerInfo(
+                        id = id.toServerId(),
+                        name = "Server $id",
+                        version = null,
+                        product = null,
+                    ),
                 address = resolvedAddress,
             )
         return repository.addServer(address)
@@ -122,14 +130,14 @@ class AddSavedServerSessionTest {
         User(
             UUID.randomUUID().toString().toUserId(),
             "alice",
-            serverId = "a",
+            serverId = "a".toServerId(),
             accessToken = "token-a",
         )
     private val bob =
         User(
             UUID.randomUUID().toString().toUserId(),
             "bob",
-            serverId = "b",
+            serverId = "b".toServerId(),
             accessToken = "token-b",
         )
 
@@ -158,7 +166,7 @@ class AddSavedServerSessionTest {
         assertEquals(alice.id, session.userId)
         assertEquals(
             listOf("https://a.example/", "http://a.local:8096"),
-            addresses.filter { it.serverId == "a" }.map { it.address },
+            addresses.filter { it.serverId.asString() == "a" }.map { it.address },
         )
     }
 

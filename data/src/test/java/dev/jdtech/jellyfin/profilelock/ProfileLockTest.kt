@@ -4,6 +4,7 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.ProfileLockType
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.testing.asUserId
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -20,9 +21,17 @@ import org.junit.jupiter.api.Test
 
 class ProfileLockTest {
     private val alice =
-        User(id = UUID.randomUUID().toString().toUserId(), name = "Alice", serverId = "s")
+        User(
+            id = UUID.randomUUID().toString().toUserId(),
+            name = "Alice",
+            serverId = "s".toServerId(),
+        )
     private val bob =
-        User(id = UUID.randomUUID().toString().toUserId(), name = "Bob", serverId = "s")
+        User(
+            id = UUID.randomUUID().toString().toUserId(),
+            name = "Bob",
+            serverId = "s".toServerId(),
+        )
     private val users = mutableMapOf(alice.id to alice, bob.id to bob)
     private val lock = ProfileLock(fakeDao(users))
 

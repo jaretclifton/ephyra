@@ -6,6 +6,7 @@ import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -58,7 +59,7 @@ class PlaylistManagerUnfinishedDownloadTest {
 
     private fun partial() =
         ItemSource(
-            id = "source",
+            id = "source".toMediaSourceId(),
             name = "Source",
             type = ItemSourceType.LOCAL,
             path = "/downloads/Show/S01/S01E01 - Episode.ts.download",
@@ -69,7 +70,7 @@ class PlaylistManagerUnfinishedDownloadTest {
 
     private fun remote() =
         ItemSource(
-            id = "source",
+            id = "source".toMediaSourceId(),
             name = "Source",
             type = ItemSourceType.REMOTE,
             path = REMOTE_PATH,

@@ -10,6 +10,7 @@ import androidx.compose.ui.test.performScrollTo
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyUser
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.setup.R as SetupR
@@ -35,7 +36,11 @@ class ProfileBottomSheetTest {
 
     private fun showSheet() {
         val other =
-            User(id = UUID.randomUUID().toString().toUserId(), name = "Alice", serverId = "")
+            User(
+                id = UUID.randomUUID().toString().toUserId(),
+                name = "Alice",
+                serverId = "".toServerId(),
+            )
         rule.setContent {
             FindroidTheme {
                 ProfileBottomSheetLayout(

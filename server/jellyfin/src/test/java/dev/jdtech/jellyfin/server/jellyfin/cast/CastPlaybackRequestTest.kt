@@ -8,6 +8,7 @@ import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.player.DeviceCodecProbe
 import dev.jdtech.jellyfin.repository.StandInServer
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
@@ -116,7 +117,7 @@ class CastPlaybackRequestTest {
                 PlaybackRequest(
                     itemId = itemId,
                     target = PlaybackTarget.CastReceiver(supportsHevc = false),
-                    mediaSourceId = SOURCE_ID,
+                    mediaSourceId = SOURCE_ID.toMediaSourceId(),
                 )
             )
 
@@ -146,7 +147,7 @@ class CastPlaybackRequestTest {
                 PlaybackRequest(
                     itemId = itemId,
                     target = PlaybackTarget.CastReceiver(supportsHevc = true),
-                    mediaSourceId = SOURCE_ID,
+                    mediaSourceId = SOURCE_ID.toMediaSourceId(),
                     audioStreamIndex = 2,
                     maxBitrate = 8_000_000,
                 )

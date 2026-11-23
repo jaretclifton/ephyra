@@ -11,6 +11,7 @@ import dev.jdtech.jellyfin.models.MovieEntity
 import dev.jdtech.jellyfin.models.ShowEntity
 import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import kotlin.test.assertEquals
@@ -64,7 +65,7 @@ class PendingUserDataSyncTest {
         database.insertMovie(
             MovieEntity(
                 id = movieId,
-                serverId = SERVER,
+                serverId = SERVER.toServerId(),
                 name = "Movie",
                 originalTitle = null,
                 overview = "",
@@ -91,7 +92,7 @@ class PendingUserDataSyncTest {
             toBeSynced = toBeSynced,
         )
 
-    private suspend fun pending() = database.getAllUserDataToBeSynced(SERVER, userId)
+    private suspend fun pending() = database.getAllUserDataToBeSynced(SERVER.toServerId(), userId)
 
     @Test
     fun `a failed write on a downloaded item asks for a sync`() = runBlocking {
@@ -388,7 +389,7 @@ class PendingUserDataSyncTest {
         database.insertShow(
             ShowEntity(
                 id = showId,
-                serverId = SERVER,
+                serverId = SERVER.toServerId(),
                 name = "Show",
                 originalTitle = null,
                 overview = "",

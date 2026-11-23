@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 class DownloadStateTest {
     private fun source(type: ItemSourceType, path: String) =
         ItemSource(
-            id = "source",
+            id = "source".toMediaSourceId(),
             name = "source",
             type = type,
             path = path,

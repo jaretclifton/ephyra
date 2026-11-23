@@ -7,6 +7,7 @@ import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.testing.asItemId
@@ -218,7 +219,7 @@ class QueueRebuildTest {
 
     private fun source() =
         ItemSource(
-            id = "source",
+            id = "source".toMediaSourceId(),
             name = "Source",
             type = ItemSourceType.REMOTE,
             path = "http://server/video",

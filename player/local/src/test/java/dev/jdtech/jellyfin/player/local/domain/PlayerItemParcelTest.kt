@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.player.local.domain
 
 import android.os.Parcel
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import kotlin.test.assertEquals
 import org.junit.Test
@@ -33,7 +34,7 @@ class PlayerItemParcelTest {
         PlayerItem(
             name = "Obstacle Course",
             itemId = "0f8fad5b-d9cb-469f-a165-70867728950e".toItemId(),
-            mediaSourceId = "0f8fad5bd9cb469fa16570867728950e",
+            mediaSourceId = "0f8fad5bd9cb469fa16570867728950e".toMediaSourceId(),
             playbackPosition = 42L,
             seriesId = "7c9e6679-7425-40de-944b-e07fc1f90ae7".toItemId(),
             seasonId = "16fd2706-8baf-433b-82eb-8c7fada847da".toItemId(),

@@ -4,6 +4,7 @@ import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import java.util.Locale
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -49,7 +50,7 @@ class MediaInfoTest {
         bitrate: Int? = null,
     ) =
         ItemSource(
-            id = "s",
+            id = "s".toMediaSourceId(),
             name = "s",
             type = ItemSourceType.REMOTE,
             path = "",

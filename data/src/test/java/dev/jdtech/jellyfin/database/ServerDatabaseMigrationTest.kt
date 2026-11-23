@@ -12,6 +12,7 @@ import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.serverType
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import kotlin.math.abs
 import kotlin.test.assertEquals
@@ -226,8 +227,8 @@ class ServerDatabaseMigrationTest {
                     .build()
             try {
                 val dao = database.getServerDatabaseDao()
-                assertEquals(USER.toUserId(), dao.getServerCurrentUser(SERVER)!!.id)
-                assertEquals(USER.toUserId(), dao.getServer(SERVER)!!.currentUserId)
+                assertEquals(USER.toUserId(), dao.getServerCurrentUser(SERVER.toServerId())!!.id)
+                assertEquals(USER.toUserId(), dao.getServer(SERVER.toServerId())!!.currentUserId)
                 assertEquals(MOVIE.toItemId(), dao.getMovie(MOVIE.toItemId()).id)
                 assertEquals(MOVIE.toItemId(), dao.getSources(MOVIE.toItemId()).single().itemId)
                 val episode = dao.getEpisode(EPISODE.toItemId())
@@ -240,7 +241,9 @@ class ServerDatabaseMigrationTest {
                 )
                 assertEquals(EPISODE.toItemId(), dao.getPendingDownloads().single().itemId)
 
-                dao.insertUser(User(id = NEW_USER.toUserId(), name = "Bob", serverId = SERVER))
+                dao.insertUser(
+                    User(id = NEW_USER.toUserId(), name = "Bob", serverId = SERVER.toServerId())
+                )
                 dao.insertPendingDownload(
                     PendingDownloadDto(
                         itemId = NEW_ITEM.toItemId(),
@@ -286,9 +289,9 @@ class ServerDatabaseMigrationTest {
                 .build()
         try {
             val dao = database.getServerDatabaseDao()
-            assertEquals(ServerType.JELLYFIN, dao.getServer(SERVER)!!.serverType)
-            assertEquals(TOKEN, dao.getServerCurrentUser(SERVER)!!.accessToken)
-            assertEquals(ADDRESS, dao.getServerCurrentAddress(SERVER)!!.address)
+            assertEquals(ServerType.JELLYFIN, dao.getServer(SERVER.toServerId())!!.serverType)
+            assertEquals(TOKEN, dao.getServerCurrentUser(SERVER.toServerId())!!.accessToken)
+            assertEquals(ADDRESS, dao.getServerCurrentAddress(SERVER.toServerId())!!.address)
             assertEquals("Movie", dao.getMovie(MOVIE.toItemId()).name)
             assertEquals(PATH, dao.getSources(MOVIE.toItemId()).single().path)
             assertEquals(

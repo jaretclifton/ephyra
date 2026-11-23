@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.setup.presentation
 import android.app.Application
 import android.content.Context
 import dev.jdtech.jellyfin.models.Server
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.domain.FakeLocalNetworkAccess
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
@@ -44,7 +45,7 @@ class AddServerAddressTrimTest {
                 "addServer" -> {
                     addedAddresses.add(args[0] as String)
                     Server(
-                        id = "s",
+                        id = "s".toServerId(),
                         name = "Demo",
                         currentServerAddressId = null,
                         currentUserId = null,

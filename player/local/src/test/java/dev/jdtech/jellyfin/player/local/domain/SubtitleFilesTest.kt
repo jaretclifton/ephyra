@@ -6,6 +6,7 @@ import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.SubtitleDeliveryMethod
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -205,7 +206,7 @@ class SubtitleFilesTest {
             ),
     ) =
         ItemSource(
-            id = "source",
+            id = "source".toMediaSourceId(),
             name = "Source",
             type = ItemSourceType.REMOTE,
             path = "http://server/stream",

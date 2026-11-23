@@ -7,6 +7,7 @@ import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import kotlin.test.assertEquals
@@ -75,14 +76,16 @@ class CancellationNotSwallowedTest {
     fun `a cancelled stream url request is cancelled`() =
         runBlocking<Unit> {
             cancelled()
-            assertFailsWith<CancellationException> { repository.getStreamUrl(itemId, "source") }
+            assertFailsWith<CancellationException> {
+                repository.getStreamUrl(itemId, "source".toMediaSourceId())
+            }
         }
 
     @Test
     fun `a failed stream url request gives an empty url`() =
         runBlocking<Unit> {
             failing()
-            assertEquals("", repository.getStreamUrl(itemId, "source"))
+            assertEquals("", repository.getStreamUrl(itemId, "source".toMediaSourceId()))
         }
 
     @Test

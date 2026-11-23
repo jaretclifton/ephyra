@@ -11,8 +11,10 @@ import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -43,7 +45,7 @@ class DownloadQueueHttpErrorTest {
 
     private val partialRow =
         ItemSourceEntity(
-            id = "source",
+            id = "source".toMediaSourceId(),
             itemId = item.id,
             name = "Original",
             type = ItemSourceType.LOCAL,
@@ -161,7 +163,7 @@ class DownloadQueueHttpErrorTest {
 
         override suspend fun downloadItem(
             item: Item,
-            sourceId: String,
+            sourceId: MediaSourceId,
             storageIndex: Int,
             maxBitrate: Int?,
             smartQueued: Boolean,

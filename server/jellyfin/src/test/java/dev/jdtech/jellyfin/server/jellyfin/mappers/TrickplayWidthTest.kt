@@ -1,5 +1,6 @@
 package dev.jdtech.jellyfin.server.jellyfin.mappers
 
+import dev.jdtech.jellyfin.models.asString
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -85,6 +86,9 @@ class TrickplayWidthTest {
 
         val info = item.toItemTrickplayInfo()
 
-        assertEquals(mapOf("a" to 1280, "b" to 320), info?.mapValues { it.value.width })
+        assertEquals(
+            mapOf("a" to 1280, "b" to 320),
+            info?.entries?.associate { it.key.asString() to it.value.width },
+        )
     }
 }

@@ -10,6 +10,7 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.MovieEntity
 import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import java.io.IOException
 import kotlin.test.assertEquals
@@ -50,7 +51,7 @@ class UserDataReportTest {
         database.insertMovie(
             MovieEntity(
                 id = movieId,
-                serverId = SERVER,
+                serverId = SERVER.toServerId(),
                 name = "Movie",
                 originalTitle = null,
                 overview = "",

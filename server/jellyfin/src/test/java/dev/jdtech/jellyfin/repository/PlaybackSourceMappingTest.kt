@@ -5,6 +5,7 @@ import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.SubtitleDeliveryMethod
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -68,7 +69,7 @@ class PlaybackSourceMappingTest {
             message = "the server's relative URL joined to the base URL",
         )
         assertEquals(TRANSCODE_SESSION, source.playSessionId)
-        assertEquals(SOURCE_ID, source.id)
+        assertEquals(SOURCE_ID, source.id.asString())
         assertEquals("Libass Sidecar Movie (2026)", source.name)
         assertEquals(ItemSourceType.REMOTE, source.type)
         assertEquals(46_587_363L, source.size)

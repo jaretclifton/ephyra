@@ -20,7 +20,9 @@ import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toEpisode
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.models.toMovie
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -108,7 +110,7 @@ class OtherServersCopyTest {
         val file = file(itemId)
         database.insertSource(
             ItemSourceEntity(
-                id = "source-${itemId.asString()}",
+                id = "source-${itemId.asString()}".toMediaSourceId(),
                 itemId = itemId,
                 name = "Original",
                 type = ItemSourceType.LOCAL,
@@ -122,7 +124,7 @@ class OtherServersCopyTest {
         database.insertMovie(
             MovieEntity(
                 id = movieId,
-                serverId = serverId,
+                serverId = serverId.toServerId(),
                 name = "Movie",
                 originalTitle = null,
                 overview = "",
@@ -143,7 +145,7 @@ class OtherServersCopyTest {
         database.insertShow(
             ShowEntity(
                 id = showId,
-                serverId = serverId,
+                serverId = serverId.toServerId(),
                 name = "Bluey",
                 originalTitle = null,
                 overview = "",
@@ -168,7 +170,7 @@ class OtherServersCopyTest {
         database.insertEpisode(
             EpisodeEntity(
                 id = id,
-                serverId = serverId,
+                serverId = serverId.toServerId(),
                 seasonId = seasonId,
                 seriesId = showId,
                 name = "Episode $index",
@@ -206,7 +208,7 @@ class OtherServersCopyTest {
             val movie = database.getMovie(movieId).toMovie(database, userB)
 
             current(SERVER_B)
-            downloader.releaseOtherServersCopy(movie, SERVER_B)
+            downloader.releaseOtherServersCopy(movie, SERVER_B.toServerId())
 
             assertNull(database.getMovieOrNull(movieId), "A's movie row")
             assertEquals(emptyList(), database.getSources(movieId), "A's source rows")
@@ -221,9 +223,9 @@ class OtherServersCopyTest {
         val movie = database.getMovie(movieId).toMovie(database, userA)
 
         current(SERVER_A)
-        downloader.releaseOtherServersCopy(movie, SERVER_A)
+        downloader.releaseOtherServersCopy(movie, SERVER_A.toServerId())
 
-        assertEquals(SERVER_A, database.getMovieOrNull(movieId)?.serverId)
+        assertEquals(SERVER_A, database.getMovieOrNull(movieId)?.serverId?.asString())
         assertEquals(1, database.getSources(movieId).size)
         assertTrue(file.exists(), "A's file")
     }
@@ -236,11 +238,11 @@ class OtherServersCopyTest {
             val episode = database.getEpisode(episodeId).toEpisode(database, userB)
 
             current(SERVER_B)
-            downloader.releaseOtherServersCopy(episode, SERVER_B)
+            downloader.releaseOtherServersCopy(episode, SERVER_B.toServerId())
 
             assertNull(database.getEpisodeOrNull(episodeId), "the episode B downloads")
             assertFalse(taken.exists(), "its file")
-            assertEquals(SERVER_A, database.getEpisodeOrNull(otherEpisodeId)?.serverId)
+            assertEquals(SERVER_A, database.getEpisodeOrNull(otherEpisodeId)?.serverId?.asString())
             assertTrue(kept.exists(), "A's other episode's file")
             assertEquals(listOf(seasonId), database.getSeasonsByShowId(showId).map { it.id })
             assertEquals(1, database.getSources(otherEpisodeId).size)
@@ -249,7 +251,7 @@ class OtherServersCopyTest {
     /** The server's source of the movie, [size] bytes. */
     private fun serverSource(size: Long) =
         ItemSource(
-            id = "source-${movieId.asString()}",
+            id = "source-${movieId.asString()}".toMediaSourceId(),
             name = "Original",
             type = ItemSourceType.REMOTE,
             path = "http://server.invalid/Videos/${movieId.asString()}/stream",
@@ -258,7 +260,11 @@ class OtherServersCopyTest {
         )
 
     private fun assertMovieKept(file: File) = runBlocking {
-        assertEquals(SERVER_A, database.getMovieOrNull(movieId)?.serverId, "A's movie row")
+        assertEquals(
+            SERVER_A,
+            database.getMovieOrNull(movieId)?.serverId?.asString(),
+            "A's movie row",
+        )
         assertEquals(listOf(file.absolutePath), database.getSources(movieId).map { it.path })
         assertTrue(file.exists(), "A's file")
     }
@@ -282,7 +288,12 @@ class OtherServersCopyTest {
 
             current(SERVER_B)
             val (downloadId, error) =
-                downloader.downloadItem(movie, "source-${movieId.asString()}", 0, null)
+                downloader.downloadItem(
+                    movie,
+                    "source-${movieId.asString()}".toMediaSourceId(),
+                    0,
+                    null,
+                )
 
             assertEquals(-1L, downloadId)
             assertNotNull(error, "the refusal")
@@ -303,7 +314,12 @@ class OtherServersCopyTest {
 
         current(SERVER_B)
         val (downloadId, _) =
-            downloader.downloadItem(movie, "source-${movieId.asString()}", 0, null)
+            downloader.downloadItem(
+                movie,
+                "source-${movieId.asString()}".toMediaSourceId(),
+                0,
+                null,
+            )
 
         assertEquals(-1L, downloadId)
         assertMovieKept(file)

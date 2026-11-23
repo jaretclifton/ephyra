@@ -13,6 +13,8 @@ import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.util.UUID
@@ -54,16 +56,16 @@ class SavedSessionRestorerTest {
     private fun storeServer(token: String = TOKEN, type: String = "jellyfin") = runBlocking {
         database.insertServer(
             Server(
-                id = SERVER,
+                id = SERVER.toServerId(),
                 name = "Home",
                 currentServerAddressId = ADDRESS_ID,
                 currentUserId = USER_ID,
                 type = type,
             )
         )
-        database.insertServerAddress(ServerAddress(ADDRESS_ID, SERVER, ADDRESS))
+        database.insertServerAddress(ServerAddress(ADDRESS_ID, SERVER.toServerId(), ADDRESS))
         database.insertUser(
-            User(id = USER_ID, name = "User", serverId = SERVER, accessToken = token)
+            User(id = USER_ID, name = "User", serverId = SERVER.toServerId(), accessToken = token)
         )
         preferences.setValue(preferences.currentServer, SERVER)
     }
@@ -80,7 +82,7 @@ class SavedSessionRestorerTest {
     @Test
     fun `the copy in preferences is used before restore returns`() {
         storeServer()
-        preferences.saveApiSession(ApiSession(SERVER, ADDRESS, TOKEN, USER_ID))
+        preferences.saveApiSession(ApiSession(SERVER.toServerId(), ADDRESS, TOKEN, USER_ID))
 
         restorer.restore(session)
 
@@ -93,19 +95,24 @@ class SavedSessionRestorerTest {
     @Test
     fun `without a copy for this server Room is read before restore returns`() {
         storeServer()
-        preferences.saveApiSession(ApiSession("other-server", "http://other", "x", null))
+        preferences.saveApiSession(
+            ApiSession("other-server".toServerId(), "http://other", "x", null)
+        )
 
         restorer.restore(session)
 
         assertEquals(listOf(Use(ADDRESS, TOKEN, USER_ID)), session.uses.toList())
-        eventually { preferences.savedApiSession()?.serverId == SERVER }
-        assertEquals(ApiSession(SERVER, ADDRESS, TOKEN, USER_ID), preferences.savedApiSession())
+        eventually { preferences.savedApiSession()?.serverId?.asString() == SERVER }
+        assertEquals(
+            ApiSession(SERVER.toServerId(), ADDRESS, TOKEN, USER_ID),
+            preferences.savedApiSession(),
+        )
     }
 
     @Test
     fun `a copy that is behind is corrected once from Room`() {
         storeServer(token = "new-token")
-        preferences.saveApiSession(ApiSession(SERVER, ADDRESS, TOKEN, USER_ID))
+        preferences.saveApiSession(ApiSession(SERVER.toServerId(), ADDRESS, TOKEN, USER_ID))
 
         restorer.restore(session)
 
@@ -118,7 +125,7 @@ class SavedSessionRestorerTest {
     @Test
     fun `no correction when the session changed after the copy was applied`() {
         storeServer(token = "new-token")
-        preferences.saveApiSession(ApiSession(SERVER, ADDRESS, TOKEN, USER_ID))
+        preferences.saveApiSession(ApiSession(SERVER.toServerId(), ADDRESS, TOKEN, USER_ID))
         // A login or a switch right after the start, before Room was first read.
         session.afterUse = { if (session.uses.size == 1) session.accessToken = "switched" }
 
@@ -130,7 +137,7 @@ class SavedSessionRestorerTest {
 
     @Test
     fun `no current server, nothing is put on the session and the copy is cleared`() {
-        preferences.saveApiSession(ApiSession(SERVER, ADDRESS, TOKEN, USER_ID))
+        preferences.saveApiSession(ApiSession(SERVER.toServerId(), ADDRESS, TOKEN, USER_ID))
 
         restorer.restore(session)
 
@@ -143,7 +150,7 @@ class SavedSessionRestorerTest {
     fun `the server type comes with the copy, before restore returns`() {
         // CE (#770): any stored type, also one this build has no adapter for.
         storeServer(type = "emby")
-        preferences.saveApiSession(ApiSession(SERVER, ADDRESS, TOKEN, USER_ID, "emby"))
+        preferences.saveApiSession(ApiSession(SERVER.toServerId(), ADDRESS, TOKEN, USER_ID, "emby"))
 
         restorer.restore(session)
 
@@ -153,14 +160,16 @@ class SavedSessionRestorerTest {
     @Test
     fun `without a copy for this server the type is read from Room and copied`() {
         storeServer(type = "emby")
-        preferences.saveApiSession(ApiSession("other-server", "http://other", "x", null))
+        preferences.saveApiSession(
+            ApiSession("other-server".toServerId(), "http://other", "x", null)
+        )
 
         restorer.restore(session)
 
         assertEquals("emby", currentType.stored)
-        eventually { preferences.savedApiSession()?.serverId == SERVER }
+        eventually { preferences.savedApiSession()?.serverId?.asString() == SERVER }
         assertEquals(
-            ApiSession(SERVER, ADDRESS, TOKEN, USER_ID, "emby"),
+            ApiSession(SERVER.toServerId(), ADDRESS, TOKEN, USER_ID, "emby"),
             preferences.savedApiSession(),
         )
     }
@@ -168,7 +177,7 @@ class SavedSessionRestorerTest {
     @Test
     fun `a copy saved before servers had a type is a Jellyfin server's`() {
         storeServer()
-        preferences.saveApiSession(ApiSession(SERVER, ADDRESS, TOKEN, USER_ID))
+        preferences.saveApiSession(ApiSession(SERVER.toServerId(), ADDRESS, TOKEN, USER_ID))
         // As a version before #770 left it: no type at all.
         preferences.sharedPreferences
             .edit()

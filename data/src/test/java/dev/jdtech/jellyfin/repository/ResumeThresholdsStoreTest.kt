@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.repository
 
 import android.app.Application
 import android.content.Context
+import dev.jdtech.jellyfin.models.toServerId
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -25,24 +26,30 @@ class ResumeThresholdsStoreTest {
 
     @Test
     fun `an unknown server has the defaults`() {
-        assertEquals(ResumeThresholds.DEFAULT, store.get("never-read"))
+        assertEquals(ResumeThresholds.DEFAULT, store.get("never-read".toServerId()))
         assertEquals(ResumeThresholds.DEFAULT, store.get(null))
     }
 
     @Test
     fun `each server keeps its own`() {
-        store.put("a", ResumeThresholds(2, 93, 2))
-        store.put("b", ResumeThresholds(10, 80, 60))
+        store.put("a".toServerId(), ResumeThresholds(2, 93, 2))
+        store.put("b".toServerId(), ResumeThresholds(10, 80, 60))
 
-        assertEquals(ResumeThresholds(2, 93, 2), ResumeThresholdsStore(preferences).get("a"))
-        assertEquals(ResumeThresholds(10, 80, 60), ResumeThresholdsStore(preferences).get("b"))
+        assertEquals(
+            ResumeThresholds(2, 93, 2),
+            ResumeThresholdsStore(preferences).get("a".toServerId()),
+        )
+        assertEquals(
+            ResumeThresholds(10, 80, 60),
+            ResumeThresholdsStore(preferences).get("b".toServerId()),
+        )
     }
 
     @Test
     fun `a server read in this run is fresh`() {
-        assertFalse(store.isFresh("c"))
-        store.put("c", ResumeThresholds.DEFAULT)
-        assertTrue(store.isFresh("c"))
+        assertFalse(store.isFresh("c".toServerId()))
+        store.put("c".toServerId(), ResumeThresholds.DEFAULT)
+        assertTrue(store.isFresh("c".toServerId()))
     }
 
     @Test

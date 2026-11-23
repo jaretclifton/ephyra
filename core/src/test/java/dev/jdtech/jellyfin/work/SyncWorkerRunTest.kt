@@ -26,6 +26,7 @@ import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.MediaRepository
@@ -76,16 +77,16 @@ class SyncWorkerRunTest {
     private suspend fun storeServer(type: String = ServerType.JELLYFIN.value) {
         database.insertServer(
             Server(
-                id = SERVER,
+                id = SERVER.toServerId(),
                 name = "Server",
                 currentServerAddressId = ADDRESS_ID,
                 currentUserId = USER_ID,
                 type = type,
             )
         )
-        database.insertServerAddress(ServerAddress(ADDRESS_ID, SERVER, ADDRESS))
+        database.insertServerAddress(ServerAddress(ADDRESS_ID, SERVER.toServerId(), ADDRESS))
         database.insertUser(
-            User(id = USER_ID, name = "User", serverId = SERVER, accessToken = TOKEN)
+            User(id = USER_ID, name = "User", serverId = SERVER.toServerId(), accessToken = TOKEN)
         )
     }
 
@@ -94,7 +95,7 @@ class SyncWorkerRunTest {
         database.insertMovie(
             MovieEntity(
                 id = ITEM_ID,
-                serverId = SERVER,
+                serverId = SERVER.toServerId(),
                 name = "Movie",
                 originalTitle = null,
                 overview = "",

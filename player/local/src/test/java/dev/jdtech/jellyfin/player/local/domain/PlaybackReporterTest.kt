@@ -4,6 +4,7 @@ import androidx.media3.common.C
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.MediaRepository
@@ -48,7 +49,7 @@ class PlaybackReporterTest {
         PlayerItem(
             name = "item",
             itemId = id,
-            mediaSourceId = "source",
+            mediaSourceId = "source".toMediaSourceId(),
             playbackPosition = position,
             isTranscoded = transcoded,
             playSessionId = session,

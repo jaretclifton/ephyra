@@ -5,6 +5,7 @@ import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import java.util.UUID
 import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
@@ -203,7 +204,7 @@ class EpisodeDownloadSelectionTest {
                 if (downloaded) {
                     listOf(
                         ItemSource(
-                            id = "local",
+                            id = "local".toMediaSourceId(),
                             name = "",
                             type = ItemSourceType.LOCAL,
                             path = "/downloads/Episode.mkv",

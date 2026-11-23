@@ -4,6 +4,7 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.profilelock.ProfileLock
 import dev.jdtech.jellyfin.setup.domain.FakeLocalNetworkAccess
@@ -35,11 +36,24 @@ import org.junit.jupiter.api.Test
 class LoginCapabilitiesTest {
     private val asked = mutableListOf<String>()
     private val saved =
-        User(id = UUID.randomUUID().toString().toUserId(), name = "Saved", serverId = "s")
+        User(
+            id = UUID.randomUUID().toString().toUserId(),
+            name = "Saved",
+            serverId = "s".toServerId(),
+        )
     private val listed =
-        User(id = UUID.randomUUID().toString().toUserId(), name = "Listed", serverId = "s")
+        User(
+            id = UUID.randomUUID().toString().toUserId(),
+            name = "Listed",
+            serverId = "s".toServerId(),
+        )
     private val server =
-        Server(id = "s", name = "Home", currentServerAddressId = null, currentUserId = null)
+        Server(
+            id = "s".toServerId(),
+            name = "Home",
+            currentServerAddressId = null,
+            currentUserId = null,
+        )
 
     @BeforeEach
     fun setUp() {

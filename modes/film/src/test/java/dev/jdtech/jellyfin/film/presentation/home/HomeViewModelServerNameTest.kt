@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerInfo
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -27,7 +28,7 @@ import org.junit.jupiter.api.Test
 /** #543: a server renamed on the server is renamed in the app on the next Home load. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelServerNameTest {
-    private val stored = Server(id = SERVER_ID, name = "Old name", null, null)
+    private val stored = Server(id = SERVER_ID.toServerId(), name = "Old name", null, null)
     private val updated = mutableListOf<Server>()
     private var systemInfo: () -> ServerInfo = { info(SERVER_ID, "New name") }
 
@@ -87,7 +88,7 @@ class HomeViewModelServerNameTest {
         }
     }
 
-    private fun info(id: String, name: String) = ServerInfo(id, name, null, null)
+    private fun info(id: String, name: String) = ServerInfo(id.toServerId(), name, null, null)
 
     private fun repository(): MediaRepository =
         fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {

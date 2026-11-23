@@ -14,6 +14,7 @@ import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.ServerType
+import dev.jdtech.jellyfin.models.toServerId
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
@@ -33,7 +34,10 @@ class ServerConnectorsTest {
     private val nothing = ServerConnectException(emptyList())
 
     private fun found(name: String) =
-        ResolvedServer(ServerInfo(id = name, name = name, version = null, product = null), ADDRESS)
+        ResolvedServer(
+            ServerInfo(id = name.toServerId(), name = name, version = null, product = null),
+            ADDRESS,
+        )
 
     @Test
     fun `the second connector is tried when the first finds another kind of server`() =
@@ -138,11 +142,15 @@ class ServerConnectorsTest {
     @Test
     fun `discovery finds the servers of every connector`() = runBlocking {
         val jellyfin =
-            FakeConnector(discovered = listOf(DiscoveredServer("1", "Home", ADDRESS))) {
+            FakeConnector(
+                discovered = listOf(DiscoveredServer("1".toServerId(), "Home", ADDRESS))
+            ) {
                 found("jellyfin")
             }
         val emby =
-            FakeConnector(discovered = listOf(DiscoveredServer("2", "Cabin", "http://cabin"))) {
+            FakeConnector(
+                discovered = listOf(DiscoveredServer("2".toServerId(), "Cabin", "http://cabin"))
+            ) {
                 found("emby")
             }
         val connectors =

@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.repository
 import android.app.Application
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlinx.coroutines.runBlocking
@@ -46,7 +47,7 @@ class TrickplayTileRequestTest {
             itemId,
             320,
             4,
-            mediaSourceId = itemId.asString().replace("-", ""),
+            mediaSourceId = itemId.asString().replace("-", "").toMediaSourceId(),
         )
 
         assertEquals("/Videos/${itemId.asString()}/Trickplay/320/4.jpg", sentTarget())
@@ -58,7 +59,7 @@ class TrickplayTileRequestTest {
             itemId,
             320,
             4,
-            mediaSourceId = otherVersion.toString().replace("-", ""),
+            mediaSourceId = otherVersion.toString().replace("-", "").toMediaSourceId(),
         )
 
         assertEquals(
@@ -69,7 +70,7 @@ class TrickplayTileRequestTest {
 
     @Test
     fun `a source id that is not an id asks for the item's images`() = runBlocking {
-        repository.getTrickplayData(itemId, 320, 4, mediaSourceId = "not-an-id")
+        repository.getTrickplayData(itemId, 320, 4, mediaSourceId = "not-an-id".toMediaSourceId())
 
         assertEquals("/Videos/${itemId.asString()}/Trickplay/320/4.jpg", sentTarget())
     }

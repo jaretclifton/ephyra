@@ -8,11 +8,13 @@ import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.ReloadPolicy
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.asServerId
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
@@ -52,7 +54,14 @@ class HomeRowsViewModelTest {
         val store =
             HomeRowsStore(
                 prefs,
-                dao(Server("server", "Server", null, UUID.randomUUID().toString().toUserId())),
+                dao(
+                    Server(
+                        "server".toServerId(),
+                        "Server",
+                        null,
+                        UUID.randomUUID().toString().toUserId(),
+                    )
+                ),
             )
         viewModel = HomeRowsViewModel(repository(), store, events)
     }
@@ -103,7 +112,7 @@ class HomeRowsViewModelTest {
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
             when (method.kotlinName) {
-                "getServer" -> server.takeIf { it.id == args!![0] }
+                "getServer" -> server.takeIf { it.id == args!![0].asServerId() }
                 else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
         }

@@ -5,6 +5,7 @@ import dev.jdtech.jellyfin.models.ProfileLockType
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.profilelock.ProfileLock
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
@@ -46,12 +47,25 @@ import org.junit.jupiter.api.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProfilePinSwitchTest {
     private val adult =
-        User(id = UUID.randomUUID().toString().toUserId(), name = "Adult", serverId = "s")
+        User(
+            id = UUID.randomUUID().toString().toUserId(),
+            name = "Adult",
+            serverId = "s".toServerId(),
+        )
     private val kid =
-        User(id = UUID.randomUUID().toString().toUserId(), name = "Kid", serverId = "s")
+        User(
+            id = UUID.randomUUID().toString().toUserId(),
+            name = "Kid",
+            serverId = "s".toServerId(),
+        )
     private val users = mutableMapOf(adult.id to adult, kid.id to kid)
     private val server =
-        Server(id = "s", name = "Home", currentServerAddressId = null, currentUserId = kid.id)
+        Server(
+            id = "s".toServerId(),
+            name = "Home",
+            currentServerAddressId = null,
+            currentUserId = kid.id,
+        )
     private val lock = ProfileLock(fakeDao(), Dispatchers.Unconfined)
     private val repository = fakeRepository()
 

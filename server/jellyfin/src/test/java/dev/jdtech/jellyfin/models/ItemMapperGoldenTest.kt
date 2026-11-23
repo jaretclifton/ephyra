@@ -221,6 +221,9 @@ class ItemMapperGoldenTest {
             // #773: an id prints as it did when it was a UUID, unquoted.
             value is ItemId -> value.asString()
             value is UserId -> value.asString()
+            // #902: a server or source id prints as the String it was, quoted.
+            value is ServerId -> print(value.asString())
+            value is MediaSourceId -> print(value.asString())
             value is String -> "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
             value is Enum<*> -> value.name
             value is Collection<*> ->
@@ -248,7 +251,7 @@ class ItemMapperGoldenTest {
                     it.isAccessible = true
                     val field = it.get(value)
                     val printed =
-                        if (field is String && holdsValueClass(value.javaClass, it.name)) field
+                        if (field is String && holdsUuidId(value.javaClass, it.name)) field
                         else print(field, "$indent  ")
                     "$indent  ${it.name} = $printed"
                 }
@@ -257,16 +260,38 @@ class ItemMapperGoldenTest {
         }
 
     /**
-     * #773: a property of a value class type (`ItemId`, `UserId`) is a plain `String` field on the
-     * JVM. Its getter gives it away: Kotlin mangles its name (`getId-<hash>`). Such a field prints
-     * as the id it holds, unquoted, as the `UUID` it was before.
+     * #773: a property of a value class type is a plain `String` field on the JVM. Its getter gives
+     * it away: Kotlin mangles its name with a hash of the type (`getId-<hash>`). A field of
+     * [ItemId] or [UserId] prints as the id it holds, unquoted, as the `UUID` it was before; one of
+     * [ServerId] or [MediaSourceId] (#902) was a `String` and prints quoted, as any string.
      */
-    private fun holdsValueClass(owner: Class<*>, field: String): Boolean {
+    private fun holdsUuidId(owner: Class<*>, field: String): Boolean {
         val getter = "get" + field.replaceFirstChar { it.uppercase() } + "-"
-        return owner.methods.any { it.name.startsWith(getter) }
+        return owner.methods.any { method ->
+            method.name.startsWith(getter) && method.name.substringAfter('-') in UUID_ID_SUFFIXES
+        }
     }
+
+    /** One property of each id type, to read the hash Kotlin mangles its getters with. */
+    @Suppress("unused")
+    private class IdProbe(
+        val itemId: ItemId,
+        val userId: UserId,
+        val serverId: ServerId,
+        val mediaSourceId: MediaSourceId,
+    )
 
     private companion object {
         const val BASE_URL = "https://server.test"
+
+        /** The getter suffixes of [ItemId] and [UserId] properties, the ids that were `UUID`s. */
+        val UUID_ID_SUFFIXES: Set<String> =
+            IdProbe::class
+                .java
+                .methods
+                .filter { it.name.startsWith("getItemId-") || it.name.startsWith("getUserId-") }
+                .map { it.name.substringAfter('-') }
+                .toSet()
+                .also { check(it.size == 2) { "IdProbe getters not mangled: $it" } }
     }
 }

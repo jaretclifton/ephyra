@@ -16,6 +16,7 @@ import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.time.Duration
@@ -87,22 +88,22 @@ class ServerSessionKeeperTest {
         preferences.setValue(preferences.currentServer, SERVER)
         database.insertServer(
             Server(
-                id = SERVER,
+                id = SERVER.toServerId(),
                 name = "Home",
                 currentServerAddressId = ADDRESS_ID,
                 currentUserId = USER_ID,
             )
         )
-        database.insertServerAddress(ServerAddress(ADDRESS_ID, SERVER, ADDRESS))
+        database.insertServerAddress(ServerAddress(ADDRESS_ID, SERVER.toServerId(), ADDRESS))
         database.insertUser(
-            User(id = USER_ID, name = "User", serverId = SERVER, accessToken = TOKEN)
+            User(id = USER_ID, name = "User", serverId = SERVER.toServerId(), accessToken = TOKEN)
         )
     }
 
     @After fun tearDown() = room.close()
 
     private suspend fun assertSignedIn() {
-        assertNotNull(database.getServerCurrentUser(SERVER))
+        assertNotNull(database.getServerCurrentUser(SERVER.toServerId()))
         assertTrue(session.uses.isEmpty())
         assertEquals(TOKEN, session.accessToken)
         shadowOf(Looper.getMainLooper()).idle()
@@ -116,7 +117,7 @@ class ServerSessionKeeperTest {
         unauthorized(TOKEN)
 
         assertEquals(1, session.tokenChecks)
-        assertNull(database.getServerCurrentUser(SERVER))
+        assertNull(database.getServerCurrentUser(SERVER.toServerId()))
         assertNull(database.getUser(USER_ID))
         assertEquals(listOf(FakeServerSession.Use(ADDRESS, null, null)), session.uses)
         shadowOf(Looper.getMainLooper()).idle()
@@ -149,7 +150,7 @@ class ServerSessionKeeperTest {
         session.tokenCheck = { false }
         unauthorized(TOKEN)
         assertEquals(2, session.tokenChecks)
-        assertNull(database.getServerCurrentUser(SERVER))
+        assertNull(database.getServerCurrentUser(SERVER.toServerId()))
     }
 
     @Test
@@ -184,15 +185,20 @@ class ServerSessionKeeperTest {
     fun `no sign-out when Room has another current user meanwhile`() = runBlocking {
         val other = "00000000-0000-0000-0000-000000000002".toUserId()
         database.insertUser(
-            User(id = other, name = "Other", serverId = SERVER, accessToken = "other-token")
+            User(
+                id = other,
+                name = "Other",
+                serverId = SERVER.toServerId(),
+                accessToken = "other-token",
+            )
         )
-        database.updateServerCurrentUser(SERVER, other)
+        database.updateServerCurrentUser(SERVER.toServerId(), other)
         session.tokenCheck = { false }
 
         unauthorized(TOKEN)
 
         assertEquals(1, session.tokenChecks)
-        assertEquals(other, database.getServerCurrentUser(SERVER)?.id)
+        assertEquals(other, database.getServerCurrentUser(SERVER.toServerId())?.id)
         assertNotNull(database.getUser(USER_ID))
         assertTrue(session.uses.isEmpty())
     }
@@ -208,7 +214,7 @@ class ServerSessionKeeperTest {
         unauthorized(TOKEN)
 
         assertEquals(1, session.tokenChecks)
-        assertNotNull(database.getServerCurrentUser(SERVER))
+        assertNotNull(database.getServerCurrentUser(SERVER.toServerId()))
         assertTrue(session.uses.isEmpty())
         shadowOf(Looper.getMainLooper()).idle()
         assertNull(ShadowToast.getLatestToast())
@@ -221,7 +227,7 @@ class ServerSessionKeeperTest {
 
         unauthorized(TOKEN)
 
-        assertNotNull(database.getServerCurrentUser(SERVER))
+        assertNotNull(database.getServerCurrentUser(SERVER.toServerId()))
         assertTrue(session.uses.isEmpty())
     }
 
@@ -244,13 +250,13 @@ class ServerSessionKeeperTest {
         while (session.uses.isEmpty()) {
             check(System.currentTimeMillis() < until) { "Not signed out" }
             // Again until the keeper's collector, which starts on its own scope, is there.
-            if (database.getServerCurrentUser(SERVER) != null) {
+            if (database.getServerCurrentUser(SERVER.toServerId()) != null) {
                 session.unauthorized.tryEmit(TOKEN)
             }
             shadowOf(Looper.getMainLooper()).idle()
             Thread.sleep(10)
         }
-        assertNull(database.getServerCurrentUser(SERVER))
+        assertNull(database.getServerCurrentUser(SERVER.toServerId()))
         assertEquals(listOf(FakeServerSession.Use(ADDRESS, null, null)), session.uses)
     }
 
