@@ -289,13 +289,16 @@ def check_areas(rel: str, text: str) -> list[str]:
     for entry in entries:
         area = entry.split("\n", 1)[0].strip()
         ids.append(area)
-        fields = set(re.findall(r"^    (\w+):", entry, re.M)) | {"id"}
+        fields = set(re.findall(r"^    ([\w-]+):", entry, re.M)) | {"id"}
         for unknown in sorted(fields - AREA_FIELDS):
             problems.append(f"area {area}: unknown field `{unknown}` (it belongs in the guide)")
         for needed in AREA_REQUIRED:
             if needed not in fields:
                 problems.append(f"area {area}: no `{needed}`")
         paths = area_list(entry, "paths")
+        for needed in ("keywords", "paths"):
+            if needed in fields and not area_list(entry, needed):
+                problems.append(f"area {area}: `{needed}` must be a list with at least one item")
         if paths and not 3 <= len(paths) <= 8:
             problems.append(f"area {area}: {len(paths)} paths, keep 3 to 8")
         for value in paths:
