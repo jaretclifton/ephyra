@@ -51,6 +51,7 @@ them, so these rules have no exceptions:
 | R5 also holds for `application` (the repository interface, #896), which imports nothing `data` declares either | added in #896 | none allowed |
 | R9. No module but `app/phone` and `app/tv` depends on `data` outside its tests (`DataDependencyTest`, #896) | 3 modules | frozen in `architecture/baseline/data-dependents.txt` (`core`, `modes/film`, `setup`), which #899 empties |
 | R11. No production class, interface, object or typealias is named `Findroid…` (but `FindroidTheme`), and none is named `Jellyfin…` outside `server/jellyfin` (`NamesTest`, #774) | added in #774 | none allowed, no baseline |
+| R14. The play state rules are in `PlayState` (`domain/.../domain/userdata/`): no production file outside `domain` declares a function with the name of one of them (`stopUserData`, `serverIsNewer`, `isNewerThanServer`, `keepServerProgress`, `serverUserDataToStore`, `mergeWithServer`, `playedAfter`, `refreshedFromServer`), and `data` and `core`'s `work` package neither compare nor fall back from a `lastPlayed…` value nor keep one with `COALESCE(lastPlayedDate` (`PlayStateRulesTest`, #898). By names and text: a date under another name is not found | added in #898 | none allowed, no baseline |
 
 **A baseline is exact.** The test fails when a file that is not listed violates a rule, and it
 also fails when a listed file no longer does ("remove it from the baseline"). So a baseline can
