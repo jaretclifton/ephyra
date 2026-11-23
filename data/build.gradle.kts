@@ -45,6 +45,7 @@ tasks.withType<Test>().configureEach {
 }
 
 dependencies {
+    implementation(projects.application)
     implementation(projects.domain)
     implementation(projects.settings)
     implementation(libs.androidx.paging)

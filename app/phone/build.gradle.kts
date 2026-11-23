@@ -177,6 +177,7 @@ dependencies {
     baselineProfile(projects.baselineprofile)
     implementation(libs.androidx.profileinstaller)
     implementation(projects.core)
+    implementation(projects.application)
     implementation(projects.data)
     implementation(projects.domain)
     implementation(projects.player.core)

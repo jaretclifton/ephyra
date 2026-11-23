@@ -1,7 +1,7 @@
 package dev.jdtech.jellyfin.player.local.domain
 
 import androidx.media3.common.C
-import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
+import dev.jdtech.jellyfin.models.SeriesTrackPreference
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
 import java.util.UUID
@@ -75,7 +75,7 @@ class SessionTrackPicksTest {
         val userId = UUID.randomUUID().toString().toUserId()
         val seriesId = UUID.randomUUID().toString().toItemId()
         val audio =
-            SeriesTrackPreferenceDto(
+            SeriesTrackPreference(
                 userId,
                 seriesId,
                 C.TRACK_TYPE_AUDIO,
@@ -85,7 +85,7 @@ class SessionTrackPicksTest {
                 positionInLanguage = 0,
             )
         val subtitlesOff =
-            SeriesTrackPreferenceDto(userId, seriesId, C.TRACK_TYPE_TEXT, disabled = true)
+            SeriesTrackPreference(userId, seriesId, C.TRACK_TYPE_TEXT, disabled = true)
 
         assertEquals(dutch, audio.toTrackPick())
         assertEquals(TrackPick(C.TRACK_TYPE_TEXT, null), subtitlesOff.toTrackPick())

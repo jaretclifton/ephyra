@@ -33,8 +33,8 @@ android {
 }
 
 dependencies {
+    implementation(projects.application)
     implementation(projects.core)
-    implementation(projects.data)
     implementation(projects.domain)
     implementation(projects.player.core)
     implementation(projects.player.local)

@@ -58,39 +58,13 @@ class TestingModuleTest {
         const val ALLOWED = "testImplementation"
 
         /** How a build file names the module: its accessor or its project path. */
-        val MARKER = Regex("""projects\.testing\b|":testing"""")
-
-        val COMMENT = Regex("""//[^\n]*|/\*.*?\*/""", RegexOption.DOT_MATCHES_ALL)
-
-        /** The name before an opening parenthesis: `implementation`, `"implementation"`, `add`. */
-        val CALL = Regex(""""?([A-Za-z_][A-Za-z0-9_]*)"?\s*$""")
+        val MARKER = BuildFileDependencies.markerOf("testing")
 
         /**
-         * The configuration of each mention of the module in [buildFile]: the name of the call
-         * whose parentheses hold it, outside `project(…)`, over any line breaks. A mention through
+         * The configuration of each mention of the module in [buildFile]. A mention through
          * `add("…", …)` gives `add`, which is not allowed either.
          */
-        fun configurationsOf(buildFile: String): List<String> {
-            val text = COMMENT.replace(buildFile) { " ".repeat(it.value.length) }
-            return MARKER.findAll(text).map { configurationAt(text, it.range.first) }.toList()
-        }
-
-        private fun configurationAt(text: String, index: Int): String {
-            var depth = 0
-            var i = index - 1
-            while (i >= 0) {
-                when (text[i]) {
-                    ')' -> depth++
-                    '(' ->
-                        if (depth > 0) depth--
-                        else {
-                            val name = CALL.find(text.substring(0, i))?.groupValues?.get(1) ?: "?"
-                            if (name != "project") return name
-                        }
-                }
-                i--
-            }
-            return "?"
-        }
+        fun configurationsOf(buildFile: String): List<String> =
+            BuildFileDependencies.configurationsOf(buildFile, MARKER)
     }
 }

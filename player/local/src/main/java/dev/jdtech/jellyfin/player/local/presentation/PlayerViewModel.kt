@@ -38,7 +38,7 @@ import dev.jdtech.jellyfin.models.MediaSegmentAction
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.Segment
 import dev.jdtech.jellyfin.models.SegmentType
-import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
+import dev.jdtech.jellyfin.models.SeriesTrackPreference
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
@@ -322,7 +322,7 @@ constructor(
      * CE (#296): the playing series' saved audio and subtitle choice, read from Room while its
      * first item buffers. See [seriesTrackPreferences].
      */
-    private var trackPreferences: Pair<ItemId, Deferred<List<SeriesTrackPreferenceDto>>>? = null
+    private var trackPreferences: Pair<ItemId, Deferred<List<SeriesTrackPreference>>>? = null
 
     /** CE (#596): the tracks picked by hand in an item without a series, such as a movie. */
     private val sessionTrackPicks = SessionTrackPicks()
@@ -1838,10 +1838,10 @@ constructor(
         val userId = signedInUserId() ?: return
         val preference =
             if (index == -1) {
-                SeriesTrackPreferenceDto(userId, seriesId, trackType, disabled = true)
+                SeriesTrackPreference(userId, seriesId, trackType, disabled = true)
             } else {
                 if (choice == null) return
-                SeriesTrackPreferenceDto(
+                SeriesTrackPreference(
                     userId,
                     seriesId,
                     trackType,
@@ -1979,9 +1979,7 @@ constructor(
      * The saved choice for [seriesId], read on IO once per series and kept for its next items. Null
      * without a logged-in user. A read error gives no choice, as if none was saved.
      */
-    private fun seriesTrackPreferences(
-        seriesId: ItemId
-    ): Deferred<List<SeriesTrackPreferenceDto>>? {
+    private fun seriesTrackPreferences(seriesId: ItemId): Deferred<List<SeriesTrackPreference>>? {
         trackPreferences?.let { (id, preferences) -> if (id == seriesId) return preferences }
         if (signedInUserId() == null) return null
         val preferences =
@@ -2001,9 +1999,7 @@ constructor(
             null
         }
 
-    private suspend fun readSeriesTrackPreferences(
-        seriesId: ItemId
-    ): List<SeriesTrackPreferenceDto> =
+    private suspend fun readSeriesTrackPreferences(seriesId: ItemId): List<SeriesTrackPreference> =
         try {
             repository.getSeriesTrackPreferences(seriesId)
         } catch (e: CancellationException) {

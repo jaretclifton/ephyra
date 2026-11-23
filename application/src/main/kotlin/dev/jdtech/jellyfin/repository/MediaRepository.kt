@@ -14,7 +14,7 @@ import dev.jdtech.jellyfin.models.Person
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.models.Segment
-import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
+import dev.jdtech.jellyfin.models.SeriesTrackPreference
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.Show
@@ -195,13 +195,13 @@ interface MediaRepository {
     ): List<ItemSource>
 
     /** CE (#580): the tracks the user last picked by hand in [seriesId], one per track type. */
-    suspend fun getSeriesTrackPreferences(seriesId: ItemId): List<SeriesTrackPreferenceDto>
+    suspend fun getSeriesTrackPreferences(seriesId: ItemId): List<SeriesTrackPreference>
 
     /**
      * Remembers [preference] as the current user's choice for its series and track type, replacing
      * the one before. The current user is written whatever [preference] says (#750).
      */
-    suspend fun saveSeriesTrackPreference(preference: SeriesTrackPreferenceDto)
+    suspend fun saveSeriesTrackPreference(preference: SeriesTrackPreference)
 
     suspend fun getStreamUrl(itemId: ItemId, mediaSourceId: String): String
 

@@ -48,6 +48,8 @@ them, so these rules have no exceptions:
 | R5. `domain` imports nothing from `android.`, `androidx.` (except `androidx.paging`), `org.jellyfin.sdk`, `dev.jdtech.jellyfin.database`, `dev.jdtech.jellyfin.api` | 0 | none allowed |
 | R6. In `player/local`, engine packages do not import each other and shared code imports neither (`PlayerEngineBoundaryTest`, #764; `engine.di` binds both) | added in #764 | none allowed |
 | R7. No module but `app/phone` and `app/tv` depends on `server/jellyfin` | added in #758 | exactly the two apps, no baseline |
+| R5 also holds for `application` (the repository interface, #896), which imports nothing `data` declares either | added in #896 | none allowed |
+| R9. No module but `app/phone` and `app/tv` depends on `data` outside its tests (`DataDependencyTest`, #896) | 3 modules | frozen in `architecture/baseline/data-dependents.txt` (`core`, `modes/film`, `setup`), which #899 empties |
 | R11. No production class, interface, object or typealias is named `Findroid…` (but `FindroidTheme`), and none is named `Jellyfin…` outside `server/jellyfin` (`NamesTest`, #774) | added in #774 | none allowed, no baseline |
 
 **A baseline is exact.** The test fails when a file that is not listed violates a rule, and it
@@ -55,7 +57,7 @@ also fails when a listed file no longer does ("remove it from the baseline"). So
 only shrink, a cleanup PR shows its progress as deleted lines, and nobody can add an entry
 without a reviewer seeing it in the diff. `main` stayed green throughout; "red turning green" was
 the baselines going from 56 lines to none, after which #768 deleted the files and the exceptions
-for them. `dao-imports.txt` (R4) is the only baseline left.
+for them. `dao-imports.txt` (R4) and `data-dependents.txt` (R9) are the baselines left.
 
 The "adapter" in R1 and R2 narrows as the work goes on: the whole `data` module at first; from
 #753 the packages `dev.jdtech.jellyfin.server.jellyfin` and `dev.jdtech.jellyfin.api` inside

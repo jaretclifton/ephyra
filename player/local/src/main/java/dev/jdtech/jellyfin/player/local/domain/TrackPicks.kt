@@ -1,7 +1,7 @@
 package dev.jdtech.jellyfin.player.local.domain
 
 import dev.jdtech.jellyfin.models.ItemId
-import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
+import dev.jdtech.jellyfin.models.SeriesTrackPreference
 
 /**
  * CE (#596): what a track dialog lists: the [names] of the tracks in order, and the position of the
@@ -15,7 +15,7 @@ data class TrackChoices(val names: List<String>, val selected: Int)
  */
 data class TrackPick(val trackType: Int, val choice: StoredChoice?)
 
-fun SeriesTrackPreferenceDto.toTrackPick(): TrackPick =
+fun SeriesTrackPreference.toTrackPick(): TrackPick =
     TrackPick(trackType, if (disabled) null else StoredChoice(language, title, positionInLanguage))
 
 /**
@@ -27,9 +27,9 @@ fun trackPreferenceKey(itemId: String, selectableTracks: Int): String = "$itemId
 
 /**
  * CE (#596): the tracks picked by hand in items without a series, such as a movie, for as long as
- * the player is open. A series has its saved choice ([SeriesTrackPreferenceDto]); a movie had
- * nothing, so it went back to its default tracks whenever its stream was loaded again: on a quality
- * switch, and on an audio switch while the server transcodes.
+ * the player is open. A series has its saved choice ([SeriesTrackPreference]); a movie had nothing,
+ * so it went back to its default tracks whenever its stream was loaded again: on a quality switch,
+ * and on an audio switch while the server transcodes.
  */
 class SessionTrackPicks {
     private val picks = HashMap<ItemId, MutableMap<Int, TrackPick>>()
