@@ -26,6 +26,15 @@ tasks.test {
             }
         )
         .withPathSensitivity(PathSensitivity.RELATIVE)
+    // GeneratedDocsTest compares these with the tree: a hand edit must rerun it, not come from the
+    // build cache (#928).
+    inputs
+        .files(
+            rootProject.file("docs/architecture/modules.md"),
+            rootProject.file("docs/architecture/rules.md"),
+            rootProject.file("docs/architecture/model/modules.generated.c4"),
+        )
+        .withPathSensitivity(PathSensitivity.RELATIVE)
     systemProperty("ephyra.rootDir", rootProject.projectDir.absolutePath)
 }
 
