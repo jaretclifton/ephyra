@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.models
 
 import androidx.room3.Entity
+import dev.jdtech.jellyfin.domain.userdata.PlayState
 import java.time.LocalDateTime
 import java.time.ZoneId
 
@@ -40,3 +41,12 @@ private fun lastPlayedDateOf(item: Item): LocalDateTime? =
         is Episode -> item.lastPlayedDate
         else -> null
     }
+
+/** #898: the play state this row holds, for the rules in [PlayState]. */
+fun UserDataEntity.toPlayState(): PlayState =
+    PlayState(
+        played = played,
+        favorite = favorite,
+        positionTicks = playbackPositionTicks,
+        lastPlayedMillis = lastPlayedDate,
+    )
