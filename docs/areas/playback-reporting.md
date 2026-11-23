@@ -6,7 +6,7 @@ Status: works on phone, TV and Cast; two bugs are open ([#909](https://github.co
 
 - The local player's reports come from `PlaybackReporter` (`player/local/.../domain/`), which `PlayerViewModel` builds and tells what happened. `PlaybackStartGate` holds a start until the item has loaded; `playbackStopReport` decides which stop is owed.
 - The chain: `PlaybackReporter` to `MediaRepository.postPlaybackStart/Progress/Stop` (`MediaRepositoryImpl`) to `PlaybackPort.reportStart/Progress/Stopped` with a `PlaybackReport` to `JellyfinPlayback`, which builds the SDK's `PlaybackStartInfo`, `PlaybackProgressInfo` and `PlaybackStopInfo`.
-- `playSessionId` and the play method come from `PlaySessions` (`domain`): Transcode with the transcode's session, else DirectPlay without one.
+- What plays per item is `PlaySessions` (`domain/.../repository/PlaySessions.kt`): the play session and the play method (Transcode with the transcode's session, else DirectPlay without one). The way through the layers: the `PlayerItem` → `PlaybackReporter.onStreamQueued` → `MediaRepository.setPlaySession` → `PlaySessions` → `MediaRepositoryImpl.postPlayback*` builds the `PlaybackReport` → `JellyfinPlayback`.
 - Other senders: TV's `TvProgressReports` (loop only), Cast's `CastPlaybackReporter` (proprietary flavour).
 - Rules: R1, R2 (no SDK outside the adapter), R12 (`Ticks`), R14 (`PlayStop` and `PlayState`), R6 (no engine package).
 - Test fast: `./gradlew :player:local:testDebugUnitTest --tests '*PlaybackReporter*' --tests '*PlaybackStartGate*' --tests '*PlaybackStopReport*'`; request bodies: `./gradlew :server:jellyfin:testDebugUnitTest --tests '*PlaybackReportRequestTest'`.
@@ -49,6 +49,8 @@ On the phone the progress loop is in `PlayerActivity.kt` and a report on pause i
 - **R1, R2**: SDK types stay in `server/jellyfin`; everything else uses `PlaybackReport`.
 - **R12**: positions go through `Ticks`. **R14**: what a stop writes locally is `PlayStop` and `PlayState`. **R6**: `PlaybackReporter` reads the player through `ReportedPlayer`. **R10**: ids are `ItemId` and `MediaSourceId`.
 - A report runs in `reportScope` (the application's), not the ViewModel's: the stop must outlive the player.
+- **The previous item's stop goes before the next item's start.** On `main` that order is kept in one place only, `stopJob?.join()` in `PlayerViewModel.onMediaItemTransition`, not in `PlaybackReporter`: a quality switch (a second transition on ExoPlayer, `onStreamReplaced` on mpv) or a ready state goes around it (#890).
+- `PlayerInvariantsTest` reads the source of `onMediaItemTransition` with a regex and expects `playbackReporter.onTransitionHandled(` in it: change that signature or call and the test fails; look there first.
 
 ## How to test it
 
@@ -60,12 +62,15 @@ On the phone the progress loop is in `PlayerActivity.kt` and a report on pause i
 ./gradlew :player:cast:testProprietaryDebugUnitTest --tests '*CastPlaybackReporterTest*'
 ```
 
-On a device: the test server (`test-server` skill, `docs/dev-environment.md`). What the server was told is in the dashboard (Activity) and in `GET /Sessions` (`NowPlayingItem`, `PlayState.PlayMethod`, `PlayState.MediaSourceId`); `tools/test-server/jf.py` has the login and call helpers.
+Which test pins what: `PlaybackReportRequestTest` (`server/jellyfin`, Robolectric with a stand-in server) the JSON bodies; `PlaybackReporterTest` the order and timing, in virtual time; `PlaySessionsTest` what is stored per item; `PlayerInvariantsTest` the calls in `onMediaItemTransition`.
+
+On a device: the test server (`test-server` skill, `docs/dev-environment.md`). What the server was told is in `GET /Sessions`: `NowPlayingItem`, `PlayState.MediaSourceId`, `PlayState.PlayMethod`, `PlayState.PositionTicks`. Call it with a DeviceId of your own in the `Authorization` header (`tools/test-server/jf.py` has the login and call helpers and its own DeviceId); a DeviceId the app uses signs the app out. The dashboard's activity log says only that something is playing: no version, no method.
 
 - Versions Movie: pick a version, play, read the session (#909).
 - Plain Movie: start, pause, resume, leave: one start, progress, one stop at the right position.
 - A quality switch on both ExoPlayer and mpv: one new start after each switch (#870).
-- Next while the server holds the stop (#890): `tools/test-server/forward.py` cannot hold one request: its rate limit slows a long answer, but a small one passes in one chunk. Hold the call in a unit test instead, with a fake whose call suspends until the test releases it (`postPlaybackStop` in the `PlaybackReporter` tests), switch during the wait and count the starts and their play method.
+- Next while the server holds the stop (#890). In a unit test: a fake whose `postPlaybackStop` suspends until the test releases it (`PlaybackReporterTest`), switch during the wait, count the starts and their play method. On a device: a proxy that holds `POST /Sessions/Playing/Stopped`. `tools/test-server/forward.py` cannot (its rate limit slows long answers; a small one passes in one chunk), so a copy with a hold was used for #890, with the app's address pointed at it (`update serverAddresses set address=…` in the app's database, as root). Two traps on Windows: a second proxy that sets `SO_REUSEADDR` binds silently to the port another session's `forward.py` already uses (use your own port, or `SO_EXCLUSIVEADDRUSE`); and a hard close of the client socket at the server's EOF gives mpv "Connection reset by peer" on `master.m3u8` (ExoPlayer copes): half-close instead (`shutdown(SHUT_WR)`). The second also hits `forward.py` itself with mpv and a transcode ([#941](https://github.com/midasvo/ephyra/issues/941)).
+- A quality cap set during a test stays in the preferences (`pref_player_max_bitrate`): the next test then starts transcoded. Reset it to Auto first.
 - Leave while the item loads: no start, progress or stop for it.
 
 ## Before a PR
