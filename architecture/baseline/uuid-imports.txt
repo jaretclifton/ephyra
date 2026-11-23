@@ -5,11 +5,15 @@
 
 # Server addresses: the app gives each address it stores a random UUID (Room column
 # serverAddresses.id, servers.currentServerAddressId), and the screens and setup flow pass it around.
+# #899: the domain model of a saved server and its addresses, and the ServerStore port over them.
+application/src/main/kotlin/dev/jdtech/jellyfin/repository/ServerStore.kt
 app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/components/ServerSelectionItem.kt
 app/tv/src/main/java/dev/jdtech/jellyfin/presentation/setup/servers/ServersScreen.kt
 core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/Servers.kt
-data/src/main/java/dev/jdtech/jellyfin/models/Server.kt
-data/src/main/java/dev/jdtech/jellyfin/models/ServerAddress.kt
+data/src/main/java/dev/jdtech/jellyfin/database/RoomServerStore.kt
+data/src/main/java/dev/jdtech/jellyfin/models/ServerAddressEntity.kt
+data/src/main/java/dev/jdtech/jellyfin/models/ServerEntity.kt
+domain/src/main/kotlin/dev/jdtech/jellyfin/models/Server.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/data/SetupRepositoryImpl.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/domain/SetupRepository.kt
 setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/addresses/ServerAddressesAction.kt

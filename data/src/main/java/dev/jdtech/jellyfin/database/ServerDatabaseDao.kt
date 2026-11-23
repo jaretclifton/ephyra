@@ -20,16 +20,16 @@ import dev.jdtech.jellyfin.models.SeasonEntity
 import dev.jdtech.jellyfin.models.SeasonEpisodeCounts
 import dev.jdtech.jellyfin.models.SegmentEntity
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
-import dev.jdtech.jellyfin.models.Server
-import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.ServerAddressEntity
+import dev.jdtech.jellyfin.models.ServerEntity
 import dev.jdtech.jellyfin.models.ServerId
-import dev.jdtech.jellyfin.models.ServerWithAddressAndUser
-import dev.jdtech.jellyfin.models.ServerWithAddresses
-import dev.jdtech.jellyfin.models.ServerWithAddressesAndUsers
+import dev.jdtech.jellyfin.models.ServerWithAddressAndUserDto
+import dev.jdtech.jellyfin.models.ServerWithAddressesAndUsersDto
+import dev.jdtech.jellyfin.models.ServerWithAddressesDto
 import dev.jdtech.jellyfin.models.ShowEntity
 import dev.jdtech.jellyfin.models.StoredItemDate
-import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserDataEntity
+import dev.jdtech.jellyfin.models.UserEntity
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.toPlayState
 import java.util.UUID
@@ -83,46 +83,47 @@ private const val SHOW_DOWNLOADED =
 
 @Dao
 interface ServerDatabaseDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertServer(server: Server)
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertServer(server: ServerEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertServerAddress(address: ServerAddress)
+    suspend fun insertServerAddress(address: ServerAddressEntity)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertUser(user: User)
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertUser(user: UserEntity)
 
-    @Update suspend fun updateServer(server: Server)
+    @Update suspend fun updateServer(server: ServerEntity)
 
-    @Query("SELECT * FROM servers WHERE id = :id") suspend fun getServer(id: ServerId): Server?
+    @Query("SELECT * FROM servers WHERE id = :id")
+    suspend fun getServer(id: ServerId): ServerEntity?
 
-    @Query("SELECT * FROM users WHERE id = :id") suspend fun getUser(id: UserId): User?
+    @Query("SELECT * FROM users WHERE id = :id") suspend fun getUser(id: UserId): UserEntity?
 
     @Transaction
     @Query("SELECT * FROM servers WHERE id = :id")
-    suspend fun getServerWithAddresses(id: ServerId): ServerWithAddresses
+    suspend fun getServerWithAddresses(id: ServerId): ServerWithAddressesDto
 
     @Query("SELECT * FROM serverAddresses WHERE id = :id")
-    suspend fun getAddress(id: UUID): ServerAddress
+    suspend fun getAddress(id: UUID): ServerAddressEntity
 
     @Query("SELECT * FROM users WHERE serverId = :serverId")
-    suspend fun getUsers(serverId: ServerId): List<User>
+    suspend fun getUsers(serverId: ServerId): List<UserEntity>
 
     @Transaction
     @Query("SELECT * FROM servers WHERE id = :id")
-    suspend fun getServerWithAddressesAndUsers(id: ServerId): ServerWithAddressesAndUsers?
+    suspend fun getServerWithAddressesAndUsers(id: ServerId): ServerWithAddressesAndUsersDto?
 
     @Transaction
     @Query("SELECT * FROM servers WHERE id = :id")
-    suspend fun getServerWithAddressAndUser(id: ServerId): ServerWithAddressAndUser?
+    suspend fun getServerWithAddressAndUser(id: ServerId): ServerWithAddressAndUserDto?
 
     @Transaction
     @Query("SELECT * FROM servers WHERE id = :id")
-    fun observeServerWithAddressAndUser(id: ServerId): Flow<ServerWithAddressAndUser?>
+    fun observeServerWithAddressAndUser(id: ServerId): Flow<ServerWithAddressAndUserDto?>
 
     @Transaction
     @Query("SELECT * FROM servers")
-    suspend fun getServersWithAddresses(): List<ServerWithAddresses>
+    suspend fun getServersWithAddresses(): List<ServerWithAddressesDto>
 
-    @Query("SELECT * FROM servers") suspend fun getServers(): List<Server>
+    @Query("SELECT * FROM servers") suspend fun getServers(): List<ServerEntity>
 
     @Query("SELECT COUNT(*) FROM servers") suspend fun getServersCount(): Int
 
@@ -131,7 +132,8 @@ interface ServerDatabaseDao {
     @Query("SELECT COUNT(*) FROM users WHERE serverId = :serverId")
     fun observeUsersCount(serverId: ServerId): Flow<Int>
 
-    @Query("SELECT * FROM servers WHERE id = :id") fun observeServer(id: ServerId): Flow<Server?>
+    @Query("SELECT * FROM servers WHERE id = :id")
+    fun observeServer(id: ServerId): Flow<ServerEntity?>
 
     @Query("SELECT currentUserId FROM servers WHERE id = :id")
     fun observeServerCurrentUserId(id: ServerId): Flow<UserId?>
@@ -165,17 +167,17 @@ interface ServerDatabaseDao {
     @Query(
         "SELECT * FROM users WHERE id = (SELECT currentUserId FROM servers WHERE id = :serverId)"
     )
-    fun observeServerCurrentUser(serverId: ServerId): Flow<User?>
+    fun observeServerCurrentUser(serverId: ServerId): Flow<UserEntity?>
 
     @Query(
         "SELECT * FROM users WHERE id = (SELECT currentUserId FROM servers WHERE id = :serverId)"
     )
-    suspend fun getServerCurrentUser(serverId: ServerId): User?
+    suspend fun getServerCurrentUser(serverId: ServerId): UserEntity?
 
     @Query(
         "SELECT * FROM serverAddresses WHERE id = (SELECT currentServerAddressId FROM servers WHERE id = :serverId)"
     )
-    suspend fun getServerCurrentAddress(serverId: ServerId): ServerAddress?
+    suspend fun getServerCurrentAddress(serverId: ServerId): ServerAddressEntity?
 
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun insertMovie(movie: MovieEntity)
 

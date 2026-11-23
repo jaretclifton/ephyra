@@ -1,26 +1,10 @@
 package dev.jdtech.jellyfin.models
 
-import androidx.room3.ColumnInfo
-import androidx.room3.Entity
-import androidx.room3.ForeignKey
-import androidx.room3.PrimaryKey
-
-@Entity(
-    tableName = "users",
-    foreignKeys =
-        [
-            ForeignKey(
-                entity = Server::class,
-                parentColumns = arrayOf("id"),
-                childColumns = arrayOf("serverId"),
-                onDelete = ForeignKey.CASCADE,
-            )
-        ],
-)
+/** A user saved on a [Server] (#899: the app's own model of a row of Room's `users` table). */
 data class User(
-    @PrimaryKey val id: UserId,
+    val id: UserId,
     val name: String,
-    @ColumnInfo(index = true) val serverId: ServerId,
+    val serverId: ServerId,
     val accessToken: String? = null,
     /** Tag of the user's Jellyfin profile picture; null when they have none. */
     val primaryImageTag: String? = null,
@@ -34,12 +18,12 @@ data class User(
      * Whether a profile with a PIN also asks for it when the app starts in it (not only on a
      * switch).
      */
-    @ColumnInfo(defaultValue = "1") val pinOnStart: Boolean = true,
+    val pinOnStart: Boolean = true,
     /**
      * CE (#330): what [pinHash] is the hash of, [ProfileLockType.value]: `pin` (digits) or
      * `pattern` (dots on a 3×3 grid). One lock type per profile; `pin` when the profile has none.
      */
-    @ColumnInfo(defaultValue = "pin") val lockType: String = ProfileLockType.PIN.value,
+    val lockType: String = ProfileLockType.PIN.value,
 )
 
 /** CE (#330): how a locked profile is unlocked. TV only offers [PIN]. */

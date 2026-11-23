@@ -1,7 +1,6 @@
 package dev.jdtech.jellyfin.di
 
 import dev.jdtech.jellyfin.core.server.CurrentServerType
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.domain.ports.SessionRestorer
 import dev.jdtech.jellyfin.models.ServerId
@@ -11,6 +10,7 @@ import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
+import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -68,7 +68,7 @@ internal fun ServerSession.holds(session: ApiSession): Boolean =
  */
 internal class SavedSessionRestorer(
     private val appPreferences: AppPreferences,
-    private val database: ServerDatabaseDao,
+    private val serverStore: ServerStore,
     private val currentType: CurrentServerType,
 ) : SessionRestorer {
     override fun restore(session: ServerSession) {
@@ -83,12 +83,12 @@ internal class SavedSessionRestorer(
                 // once, as every start used to.
                 else ->
                     runBlocking {
-                        database.getServerWithAddressAndUser(serverId).toApiSession(serverId)
+                        serverStore.serverWithAddressAndUser(serverId).toApiSession(serverId)
                     }
             }
         initial?.let { session.applySession(it, currentType) }
 
-        mirrorApiSession(session, appPreferences, database, initial, currentType)
+        mirrorApiSession(session, appPreferences, serverStore, initial, currentType)
     }
 }
 
@@ -135,7 +135,7 @@ internal fun AppPreferences.saveApiSession(session: ApiSession?) {
 internal fun mirrorApiSession(
     serverSession: ServerSession,
     appPreferences: AppPreferences,
-    database: ServerDatabaseDao,
+    serverStore: ServerStore,
     initial: ApiSession?,
     currentType: CurrentServerType,
 ) {
@@ -147,7 +147,7 @@ internal fun mirrorApiSession(
                 if (serverId == null) {
                     flowOf(null)
                 } else {
-                    database.observeServerWithAddressAndUser(serverId).map {
+                    serverStore.observeServerWithAddressAndUser(serverId).map {
                         it.toApiSession(serverId)
                     }
                 }

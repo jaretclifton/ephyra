@@ -1,11 +1,11 @@
 package dev.jdtech.jellyfin.film.presentation.home
 
 import android.content.SharedPreferences
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -76,7 +76,7 @@ class HomeViewModelServerNameTest {
             HomeViewModel(
                 repository = repository(),
                 appPreferences = AppPreferences(sharedPreferences()),
-                database = database(),
+                serverStore = database(),
             )
         viewModel.loadData()
         // loadData() runs on Dispatchers.Default; wait until it has finished.
@@ -107,19 +107,19 @@ class HomeViewModelServerNameTest {
         }
             as MediaRepository
 
-    private fun database(): ServerDatabaseDao =
-        fakeProxy(
-            ServerDatabaseDao::class.java.classLoader,
-            arrayOf(ServerDatabaseDao::class.java),
-        ) { _, method, args ->
+    private fun database(): ServerStore =
+        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
+            _,
+            method,
+            args ->
             when (method.kotlinName) {
-                "getServer" -> stored
-                "getServerCurrentUser" -> null
+                "server" -> stored
+                "currentUser" -> null
                 "updateServer" -> updated.add(args!![0] as Server).let { Unit }
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
+                else -> throw NotImplementedError("ServerStore.${method.kotlinName}")
             }
         }
-            as ServerDatabaseDao
+            as ServerStore
 
     private fun sharedPreferences(): SharedPreferences =
         fakeProxy(

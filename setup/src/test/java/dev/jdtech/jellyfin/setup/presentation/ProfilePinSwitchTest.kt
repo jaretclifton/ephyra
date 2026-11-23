@@ -1,6 +1,5 @@
 package dev.jdtech.jellyfin.setup.presentation
 
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.ProfileLockType
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerCapabilities
@@ -8,6 +7,7 @@ import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.profilelock.ProfileLock
+import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.presentation.pin.PinError
 import dev.jdtech.jellyfin.setup.presentation.pin.PinStep
@@ -59,14 +59,14 @@ class ProfilePinSwitchTest {
             serverId = "s".toServerId(),
         )
     private val users = mutableMapOf(adult.id to adult, kid.id to kid)
-    private val server =
+    private var server =
         Server(
             id = "s".toServerId(),
             name = "Home",
             currentServerAddressId = null,
             currentUserId = kid.id,
         )
-    private val lock = ProfileLock(fakeDao(), Dispatchers.Unconfined)
+    private val lock = ProfileLock(fakeStore(), Dispatchers.Unconfined)
     private val repository = fakeRepository()
 
     @BeforeEach
@@ -142,7 +142,7 @@ class ProfilePinSwitchTest {
     fun `a profile without a PIN switches straight away, and switching back asks again`() =
         runTest {
             lock.unlock(adult.id)
-            server.currentUserId = adult.id
+            server = server.copy(currentUserId = adult.id)
             val viewModel = UsersViewModel(repository, lock)
             viewModel.loadUsers()
 
@@ -157,8 +157,8 @@ class ProfilePinSwitchTest {
 
     @Test
     fun `the start lock opens with the right PIN and cancelling leaves the profile`() = runTest {
-        server.currentUserId = adult.id
-        val restarted = ProfileLock(fakeDao(), Dispatchers.Unconfined)
+        server = server.copy(currentUserId = adult.id)
+        val restarted = ProfileLock(fakeStore(), Dispatchers.Unconfined)
         assertTrue(ProfileLock.isLockedOnStart(users[adult.id], restarted.unlockedUserIds.value))
 
         val gate = ProfilePinGateViewModel(repository, restarted)
@@ -169,7 +169,7 @@ class ProfilePinSwitchTest {
         gate.onAction(ProfilePinGateAction.OnPinSubmit("2468"))
         assertFalse(ProfileLock.isLockedOnStart(users[adult.id], restarted.unlockedUserIds.value))
 
-        ProfilePinGateViewModel(repository, ProfileLock(fakeDao(), Dispatchers.Unconfined))
+        ProfilePinGateViewModel(repository, ProfileLock(fakeStore(), Dispatchers.Unconfined))
             .onAction(ProfilePinGateAction.OnCancel)
         assertNull(server.currentUserId)
     }
@@ -200,7 +200,7 @@ class ProfilePinSwitchTest {
 
     @Test
     fun `changing and removing a PIN ask for the current one`() = runTest {
-        server.currentUserId = adult.id
+        server = server.copy(currentUserId = adult.id)
         lock.unlock(adult.id)
         val viewModel = ProfilePinSettingsViewModel(repository, lock)
 
@@ -256,7 +256,7 @@ class ProfilePinSwitchTest {
 
     @Test
     fun `switching between PIN and pattern asks for the current lock`() = runTest {
-        server.currentUserId = adult.id
+        server = server.copy(currentUserId = adult.id)
         lock.unlock(adult.id)
         val viewModel = ProfilePinSettingsViewModel(repository, lock)
 
@@ -290,7 +290,7 @@ class ProfilePinSwitchTest {
 
     @Test
     fun `removing a pattern asks for it`() = runTest {
-        server.currentUserId = adult.id
+        server = server.copy(currentUserId = adult.id)
         lock.setPattern(adult.id, square)
         val viewModel = ProfilePinSettingsViewModel(repository, lock)
 
@@ -324,8 +324,8 @@ class ProfilePinSwitchTest {
     @Test
     fun `the start lock of a pattern profile shows the grid`() = runTest {
         lock.setPattern(adult.id, square)
-        server.currentUserId = adult.id
-        val restarted = ProfileLock(fakeDao(), Dispatchers.Unconfined)
+        server = server.copy(currentUserId = adult.id)
+        val restarted = ProfileLock(fakeStore(), Dispatchers.Unconfined)
 
         val gate = ProfilePinGateViewModel(repository, restarted)
         assertEquals(ProfileLockType.PATTERN, gate.state.value.prompt?.lockType)
@@ -337,14 +337,14 @@ class ProfilePinSwitchTest {
         assertFalse(ProfileLock.isLockedOnStart(users[adult.id], restarted.unlockedUserIds.value))
     }
 
-    private fun fakeDao(): ServerDatabaseDao =
-        fakeProxy(
-            ServerDatabaseDao::class.java.classLoader,
-            arrayOf(ServerDatabaseDao::class.java),
-        ) { _, method, args ->
+    private fun fakeStore(): ServerStore =
+        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
+            _,
+            method,
+            args ->
             when (method.kotlinName) {
-                "getUser" -> users[args[0].asUserId()]
-                "updateUserPin" -> {
+                "user" -> users[args[0].asUserId()]
+                "setUserPin" -> {
                     val id = args[0].asUserId()
                     users[id]?.let {
                         users[id] =
@@ -356,7 +356,7 @@ class ProfilePinSwitchTest {
                     }
                     Unit
                 }
-                "updateUserPattern" -> {
+                "setUserPattern" -> {
                     val id = args[0].asUserId()
                     users[id]?.let {
                         users[id] =
@@ -368,16 +368,16 @@ class ProfilePinSwitchTest {
                     }
                     Unit
                 }
-                "updateUserPinOnStart" -> {
+                "setUserPinOnStart" -> {
                     val id = args[0].asUserId()
                     users[id]?.let { users[id] = it.copy(pinOnStart = args[1] as Boolean) }
                     Unit
                 }
-                "toString" -> "FakeServerDatabaseDao"
+                "toString" -> "FakeServerStore"
                 else -> throw UnsupportedOperationException(method.kotlinName)
             }
         }
-            as ServerDatabaseDao
+            as ServerStore
 
     private fun fakeRepository(): SetupRepository =
         fakeProxy(SetupRepository::class.java.classLoader, arrayOf(SetupRepository::class.java)) {
@@ -391,11 +391,11 @@ class ProfilePinSwitchTest {
                 "getPublicUsers" -> emptyList<User>()
                 "getCurrentUser" -> server.currentUserId?.let { users[it] }
                 "setCurrentUser" -> {
-                    server.currentUserId = args[0].asUserId()
+                    server = server.copy(currentUserId = args[0].asUserId())
                     Unit
                 }
                 "clearCurrentUser" -> {
-                    server.currentUserId = null
+                    server = server.copy(currentUserId = null)
                     Unit
                 }
                 "toString" -> "FakeSetupRepository"

@@ -3,7 +3,6 @@ package dev.jdtech.jellyfin.film.presentation.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.film.R as FilmR
 import dev.jdtech.jellyfin.film.domain.homerows.HomeRowConfig
 import dev.jdtech.jellyfin.film.domain.homerows.HomeRowType
@@ -27,6 +26,7 @@ import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.ReloadPolicy
+import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.toView
 import java.util.concurrent.atomic.AtomicLong
@@ -59,7 +59,7 @@ class HomeViewModel
 constructor(
     private val repository: MediaRepository,
     private val appPreferences: AppPreferences,
-    private val database: ServerDatabaseDao,
+    private val serverStore: ServerStore,
     dataChanges: DataChangeEvents = DataChangeEvents(),
     private val homeCache: HomeCache? = null,
 ) : ViewModel() {
@@ -79,7 +79,7 @@ constructor(
         private const val CLIENT_SWITCH_POLL_MS = 20L
     }
 
-    private val homeRowsStore = HomeRowsStore(appPreferences, database)
+    private val homeRowsStore = HomeRowsStore(appPreferences, serverStore)
 
     private val reloadPolicy = ReloadPolicy(dataChanges)
     private var loadJob: Job? = null
@@ -139,7 +139,7 @@ constructor(
                     if (serverId == null) {
                         flowOf(null to null)
                     } else {
-                        database.observeServerCurrentUser(serverId).map { user -> serverId to user }
+                        serverStore.observeCurrentUser(serverId).map { user -> serverId to user }
                     }
                 }
                 .catch { e -> Timber.e(e, "Failed to follow the current user") }
@@ -251,7 +251,7 @@ constructor(
         try {
             server = appPreferences.currentServerId()?.let { serverId -> loadServerName(serverId) }
             if (server != null) {
-                val user = logFailure("user") { database.getServerCurrentUser(server.id) }
+                val user = logFailure("user") { serverStore.currentUser(server.id) }
                 updateState { it.copy(user = user.getOrNull()) }
                 // CE (#810): a login or switch writes Room before it switches the client, so a
                 // load that a new current user started can be early: what it fetched would be the
@@ -329,7 +329,7 @@ constructor(
     private suspend fun refreshUserImage(serverId: ServerId) {
         logFailure("user image") {
             repository.refreshCurrentUserImage()
-            database.getServerCurrentUser(serverId)?.let { user ->
+            serverStore.currentUser(serverId)?.let { user ->
                 // CE (#810): a new picture of the same user. Another user is a switch, which
                 // onCurrentUser handles, rows and all.
                 updateState {
@@ -346,7 +346,7 @@ constructor(
     private suspend fun refreshServerName(server: Server) {
         logFailure("server name") {
             val renamed = server.renamedTo(repository.getServerInfo()) ?: return@logFailure
-            database.updateServer(renamed)
+            serverStore.updateServer(renamed)
             updateState { if (it.server?.id == renamed.id) it.copy(server = renamed) else it }
         }
     }
@@ -415,7 +415,7 @@ constructor(
     }
 
     private suspend fun loadServerName(serverId: ServerId): Server? {
-        val server = database.getServer(serverId)
+        val server = serverStore.server(serverId)
         if (server != null) {
             updateState { it.copy(server = server) }
         }

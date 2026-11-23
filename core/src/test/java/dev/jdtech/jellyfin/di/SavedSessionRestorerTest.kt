@@ -7,11 +7,12 @@ import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.core.server.CurrentServerType
 import dev.jdtech.jellyfin.core.session.FakeServerSession
 import dev.jdtech.jellyfin.core.session.FakeServerSession.Use
+import dev.jdtech.jellyfin.database.RoomServerStore
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.Server
-import dev.jdtech.jellyfin.models.ServerAddress
-import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.ServerAddressEntity
+import dev.jdtech.jellyfin.models.ServerEntity
+import dev.jdtech.jellyfin.models.UserEntity
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toServerId
@@ -49,13 +50,13 @@ class SavedSessionRestorerTest {
         AppPreferences(context.getSharedPreferences("session-restorer", Context.MODE_PRIVATE))
     private val session = FakeServerSession()
     private val currentType = CurrentServerType()
-    private val restorer = SavedSessionRestorer(preferences, database, currentType)
+    private val restorer = SavedSessionRestorer(preferences, RoomServerStore(database), currentType)
 
     @After fun close() = room.close()
 
     private fun storeServer(token: String = TOKEN, type: String = "jellyfin") = runBlocking {
         database.insertServer(
-            Server(
+            ServerEntity(
                 id = SERVER.toServerId(),
                 name = "Home",
                 currentServerAddressId = ADDRESS_ID,
@@ -63,9 +64,14 @@ class SavedSessionRestorerTest {
                 type = type,
             )
         )
-        database.insertServerAddress(ServerAddress(ADDRESS_ID, SERVER.toServerId(), ADDRESS))
+        database.insertServerAddress(ServerAddressEntity(ADDRESS_ID, SERVER.toServerId(), ADDRESS))
         database.insertUser(
-            User(id = USER_ID, name = "User", serverId = SERVER.toServerId(), accessToken = token)
+            UserEntity(
+                id = USER_ID,
+                name = "User",
+                serverId = SERVER.toServerId(),
+                accessToken = token,
+            )
         )
         preferences.setValue(preferences.currentServer, SERVER)
     }

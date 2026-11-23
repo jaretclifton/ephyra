@@ -21,6 +21,7 @@ import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.ReloadPolicy
 import dev.jdtech.jellyfin.repository.serverOrStoredList
 import dev.jdtech.jellyfin.utils.Downloader
+import dev.jdtech.jellyfin.utils.TimberFallbackLog
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -180,7 +181,7 @@ constructor(
                         val episodes =
                             if (downloadsOnly) stored
                             else
-                                serverOrStoredList(stored) {
+                                serverOrStoredList(stored, log = TimberFallbackLog) {
                                     repository.getEpisodes(
                                         seriesId = resolvedSeriesId,
                                         seasonId = seasonId,
@@ -197,7 +198,7 @@ constructor(
                             val stored = repository.getSeasons(resolvedSeriesId, offline = true)
                             if (downloadsOnly) stored
                             else
-                                serverOrStoredList(stored) {
+                                serverOrStoredList(stored, log = TimberFallbackLog) {
                                     repository.getSeasons(resolvedSeriesId)
                                 }
                         }

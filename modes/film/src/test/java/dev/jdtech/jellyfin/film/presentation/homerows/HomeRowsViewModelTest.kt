@@ -1,6 +1,5 @@
 package dev.jdtech.jellyfin.film.presentation.homerows
 
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.film.domain.homerows.HomeRowsStore
 import dev.jdtech.jellyfin.film.domain.homerows.MemorySharedPreferences
 import dev.jdtech.jellyfin.models.CollectionType
@@ -13,6 +12,7 @@ import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.ReloadPolicy
+import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.asServerId
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -106,15 +106,15 @@ class HomeRowsViewModelTest {
         }
             as MediaRepository
 
-    private fun dao(server: Server): ServerDatabaseDao =
-        fakeProxy(
-            ServerDatabaseDao::class.java.classLoader,
-            arrayOf(ServerDatabaseDao::class.java),
-        ) { _, method, args ->
+    private fun dao(server: Server): ServerStore =
+        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
+            _,
+            method,
+            args ->
             when (method.kotlinName) {
-                "getServer" -> server.takeIf { it.id == args!![0].asServerId() }
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
+                "server" -> server.takeIf { it.id == args!![0].asServerId() }
+                else -> throw NotImplementedError("ServerStore.${method.kotlinName}")
             }
         }
-            as ServerDatabaseDao
+            as ServerStore
 }

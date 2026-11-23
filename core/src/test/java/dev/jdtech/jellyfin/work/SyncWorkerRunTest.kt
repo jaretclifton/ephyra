@@ -18,12 +18,12 @@ import dev.jdtech.jellyfin.domain.ports.UserDataSyncPort
 import dev.jdtech.jellyfin.domain.ports.UserDataSyncPorts
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.MovieEntity
-import dev.jdtech.jellyfin.models.Server
-import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.ServerAddressEntity
+import dev.jdtech.jellyfin.models.ServerEntity
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.ServerType
-import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserDataEntity
+import dev.jdtech.jellyfin.models.UserEntity
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
@@ -77,7 +77,7 @@ class SyncWorkerRunTest {
     /** The saved server with its address and one user. */
     private suspend fun storeServer(type: String = ServerType.JELLYFIN.value) {
         database.insertServer(
-            Server(
+            ServerEntity(
                 id = SERVER.toServerId(),
                 name = "Server",
                 currentServerAddressId = ADDRESS_ID,
@@ -85,9 +85,14 @@ class SyncWorkerRunTest {
                 type = type,
             )
         )
-        database.insertServerAddress(ServerAddress(ADDRESS_ID, SERVER.toServerId(), ADDRESS))
+        database.insertServerAddress(ServerAddressEntity(ADDRESS_ID, SERVER.toServerId(), ADDRESS))
         database.insertUser(
-            User(id = USER_ID, name = "User", serverId = SERVER.toServerId(), accessToken = TOKEN)
+            UserEntity(
+                id = USER_ID,
+                name = "User",
+                serverId = SERVER.toServerId(),
+                accessToken = TOKEN,
+            )
         )
     }
 

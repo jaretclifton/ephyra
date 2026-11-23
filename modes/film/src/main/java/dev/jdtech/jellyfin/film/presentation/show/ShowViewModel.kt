@@ -32,6 +32,7 @@ import dev.jdtech.jellyfin.repository.serverOrStored
 import dev.jdtech.jellyfin.repository.serverOrStoredList
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
+import dev.jdtech.jellyfin.utils.TimberFallbackLog
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -133,7 +134,8 @@ constructor(
                                 storedSeasonsAsync
                                     .await()
                                     .takeIf { it.isNotEmpty() }
-                                    ?.let { suspend { null } }
+                                    ?.let { suspend { null } },
+                                log = TimberFallbackLog,
                             ) {
                                 getNextUp(showId)
                             }
@@ -141,7 +143,10 @@ constructor(
                     val seasonsAsync = async {
                         if (downloadsOnly) storedSeasonsAsync.await()
                         else
-                            serverOrStoredList(storedSeasonsAsync.await()) {
+                            serverOrStoredList(
+                                storedSeasonsAsync.await(),
+                                log = TimberFallbackLog,
+                            ) {
                                 repository.getSeasons(showId)
                             }
                     }

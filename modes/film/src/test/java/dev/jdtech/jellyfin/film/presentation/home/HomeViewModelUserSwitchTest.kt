@@ -1,7 +1,6 @@
 package dev.jdtech.jellyfin.film.presentation.home
 
 import android.content.SharedPreferences
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.Server
@@ -12,6 +11,7 @@ import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
+import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -67,7 +67,7 @@ class HomeViewModelUserSwitchTest {
     private val aliceItem = item("Alice's movie")
     private val bobItem = item("Bob's movie")
 
-    private val server = Server(SERVER_ID.toServerId(), "Server", null, alice.id)
+    private var server = Server(SERVER_ID.toServerId(), "Server", null, alice.id)
     private val users = mutableMapOf(alice.id to alice)
     private val currentUser = MutableStateFlow<User?>(alice)
 
@@ -126,7 +126,7 @@ class HomeViewModelUserSwitchTest {
             HomeViewModel(
                 repository = repository(),
                 appPreferences = AppPreferences(sharedPreferences()),
-                database = database(),
+                serverStore = database(),
                 dataChanges = dataChanges,
             )
     }
@@ -238,7 +238,7 @@ class HomeViewModelUserSwitchTest {
     fun `signing the user out leaves no rows`() {
         homeShowsAlice()
 
-        server.currentUserId = null
+        server = server.copy(currentUserId = null)
         currentUser.value = null
 
         val state = waitFor { it.user == null }
@@ -320,7 +320,7 @@ class HomeViewModelUserSwitchTest {
     /** What `saveAuthenticationResult` writes before `session.use`. */
     private fun loginRoomOnly(user: User) {
         users[user.id] = user
-        server.currentUserId = user.id
+        server = server.copy(currentUserId = user.id)
         currentUser.value = user
     }
 
@@ -329,7 +329,7 @@ class HomeViewModelUserSwitchTest {
 
     /** `setCurrentUser`. */
     private fun pickOnUsersScreen(user: User) {
-        server.currentUserId = user.id
+        server = server.copy(currentUserId = user.id)
         currentUser.value = users.getValue(user.id)
         sessionUser = user
     }
@@ -395,19 +395,19 @@ class HomeViewModelUserSwitchTest {
         }
             as MediaRepository
 
-    private fun database(): ServerDatabaseDao =
-        fakeProxy(
-            ServerDatabaseDao::class.java.classLoader,
-            arrayOf(ServerDatabaseDao::class.java),
-        ) { _, method, _ ->
+    private fun database(): ServerStore =
+        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
+            _,
+            method,
+            _ ->
             when (method.kotlinName) {
-                "getServer" -> server.copy()
-                "getServerCurrentUser" -> server.currentUserId?.let { users[it] }
-                "observeServerCurrentUser" -> currentUser
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
+                "server" -> server.copy()
+                "currentUser" -> server.currentUserId?.let { users[it] }
+                "observeCurrentUser" -> currentUser
+                else -> throw NotImplementedError("ServerStore.${method.kotlinName}")
             }
         }
-            as ServerDatabaseDao
+            as ServerStore
 
     private fun sharedPreferences(): SharedPreferences =
         fakeProxy(

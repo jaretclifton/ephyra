@@ -5,7 +5,6 @@ import android.content.Context
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.server.CurrentServerType
 import dev.jdtech.jellyfin.core.server.ServerConnectors
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.ServerType
@@ -13,6 +12,7 @@ import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toServerId
+import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.data.FakeServerConnector
@@ -67,20 +67,20 @@ class ServerAddressesFeedbackTest {
 
     // The repository calls only these; suspend functions that do not suspend can return directly.
     private val database =
-        fakeProxy(
-            ServerDatabaseDao::class.java.classLoader,
-            arrayOf(ServerDatabaseDao::class.java),
-        ) { _, method, args ->
+        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
+            _,
+            method,
+            args ->
             when (method.kotlinName) {
-                "getServerCurrentAddress" -> inUse
+                "currentAddress" -> inUse
                 // CE (#770): for its type, which picks the connector.
-                "getServer" -> Server(serverId.toServerId(), "Ephyra Test", inUse.id, null)
-                "deleteServerAddress" -> {
+                "server" -> Server(serverId.toServerId(), "Ephyra Test", inUse.id, null)
+                "deleteAddress" -> {
                     deleted.add(args[0] as UUID)
                     addresses.removeAll { it.id == args[0] }
                     Unit
                 }
-                "getServerWithAddresses" -> {
+                "serverWithAddresses" -> {
                     failure?.let { throw it }
                     ServerWithAddresses(
                         server = Server(serverId.toServerId(), "Ephyra Test", inUse.id, null),
@@ -88,11 +88,11 @@ class ServerAddressesFeedbackTest {
                         user = null,
                     )
                 }
-                "toString" -> "FakeServerDatabaseDao"
+                "toString" -> "FakeServerStore"
                 else -> throw UnsupportedOperationException(method.kotlinName)
             }
         }
-            as ServerDatabaseDao
+            as ServerStore
 
     /** The address the saved server answers at; nothing answers anywhere else. */
     private val stubAddress = "http://127.0.0.1:8096"

@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.Context
 import dev.jdtech.jellyfin.core.server.CurrentServerType
 import dev.jdtech.jellyfin.core.server.ServerConnectors
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.ResolvedServer
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
@@ -16,6 +15,7 @@ import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
+import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -42,13 +42,13 @@ class AddSavedServerSessionTest {
     private val users = mutableMapOf<UserId, User>()
 
     private val database =
-        fakeProxy(
-            ServerDatabaseDao::class.java.classLoader,
-            arrayOf(ServerDatabaseDao::class.java),
-        ) { _, method, args ->
+        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
+            _,
+            method,
+            args ->
             when (method.kotlinName) {
-                "getServer" -> servers[args[0] as String]
-                "getServerWithAddresses" -> {
+                "server" -> servers[args[0] as String]
+                "serverWithAddresses" -> {
                     val server = servers.getValue(args[0] as String)
                     ServerWithAddresses(
                         server = server,
@@ -56,22 +56,21 @@ class AddSavedServerSessionTest {
                         user = server.currentUserId?.let { users[it] },
                     )
                 }
-                "getServerCurrentUser" ->
-                    servers[args[0] as String]?.currentUserId?.let { users[it] }
+                "currentUser" -> servers[args[0] as String]?.currentUserId?.let { users[it] }
                 "insertServer" -> {
                     val server = args[0] as Server
                     servers[server.id.asString()] = server
                     Unit
                 }
-                "insertServerAddress" -> {
+                "insertAddress" -> {
                     addresses += args[0] as ServerAddress
                     Unit
                 }
-                "toString" -> "FakeServerDatabaseDao"
+                "toString" -> "FakeServerStore"
                 else -> throw UnsupportedOperationException(method.kotlinName)
             }
         }
-            as ServerDatabaseDao
+            as ServerStore
 
     private val context: Context by lazy { RuntimeEnvironment.getApplication() }
 

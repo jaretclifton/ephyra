@@ -37,17 +37,6 @@ object StoredLibraries {
     fun isStored(id: ItemId?): Boolean = id == MOVIES || id == SHOWS
 }
 
-/** CE (#775): the names of [StoredLibraries], from the app's strings (the data module has none). */
-fun interface StoredLibraryNames {
-    fun nameOf(type: CollectionType): String
-
-    companion object {
-        val ENGLISH = StoredLibraryNames {
-            if (it == CollectionType.Movies) "Movies" else "TV Shows"
-        }
-    }
-}
-
 /**
  * CE (#775): the lists Room answers while the server is away: downloaded favourites, search results
  * and [StoredLibraries]. Only the rows of the given server and the user data of the given user

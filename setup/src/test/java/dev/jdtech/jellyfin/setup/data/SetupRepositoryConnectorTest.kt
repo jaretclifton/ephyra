@@ -5,7 +5,6 @@ import android.content.Context
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.server.CurrentServerType
 import dev.jdtech.jellyfin.core.server.ServerConnectors
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.AuthenticatedUser
 import dev.jdtech.jellyfin.domain.ports.PublicUser
 import dev.jdtech.jellyfin.domain.ports.ServerConnectException
@@ -24,6 +23,7 @@ import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
+import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.domain.AddressRejected
@@ -70,16 +70,16 @@ class SetupRepositoryConnectorTest {
     private val writes: MutableList<String> = Collections.synchronizedList(mutableListOf())
 
     private val database =
-        fakeProxy(
-            ServerDatabaseDao::class.java.classLoader,
-            arrayOf(ServerDatabaseDao::class.java),
-        ) { _, method, args ->
+        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
+            _,
+            method,
+            args ->
             when (method.kotlinName) {
-                "getServer" -> server.takeIf { it.id == args[0].asServerId() }
-                "getUser" -> users[args[0].asUserId()]
-                "getAddress" -> addresses.single { it.id == args[0] }
-                "getServerWithAddresses" -> ServerWithAddresses(server, addresses.toList(), null)
-                "getServerWithAddressAndUser" ->
+                "server" -> server.takeIf { it.id == args[0].asServerId() }
+                "user" -> users[args[0].asUserId()]
+                "address" -> addresses.single { it.id == args[0] }
+                "serverWithAddresses" -> ServerWithAddresses(server, addresses.toList(), null)
+                "serverWithAddressAndUser" ->
                     ServerWithAddressAndUser(
                         server,
                         addresses.single { it.id == server.currentServerAddressId },
@@ -91,12 +91,12 @@ class SetupRepositoryConnectorTest {
                     writes += "insertUser ${user.name}"
                     Unit
                 }
-                "updateServerCurrentUser" -> {
+                "setCurrentUser" -> {
                     server = server.copy(currentUserId = args[1].asUserId())
                     writes += "updateServerCurrentUser ${args[0]}"
                     Unit
                 }
-                "clearServerCurrentUser" -> {
+                "clearCurrentUser" -> {
                     server = server.copy(currentUserId = null)
                     writes += "clearServerCurrentUser ${args[0]}"
                     Unit
@@ -111,16 +111,16 @@ class SetupRepositoryConnectorTest {
                     writes += "deleteUser"
                     Unit
                 }
-                "insertServerAddress" -> {
+                "insertAddress" -> {
                     addresses += args[0] as ServerAddress
                     writes += "insertServerAddress ${(args[0] as ServerAddress).address}"
                     Unit
                 }
-                "toString" -> "FakeServerDatabaseDao"
+                "toString" -> "FakeServerStore"
                 else -> throw UnsupportedOperationException(method.kotlinName)
             }
         }
-            as ServerDatabaseDao
+            as ServerStore
 
     private val connector = FakeServerConnector()
 

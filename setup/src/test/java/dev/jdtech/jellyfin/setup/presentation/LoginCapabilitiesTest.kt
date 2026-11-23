@@ -1,12 +1,12 @@
 package dev.jdtech.jellyfin.setup.presentation
 
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.profilelock.ProfileLock
+import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.setup.domain.FakeLocalNetworkAccess
 import dev.jdtech.jellyfin.setup.domain.ServerLocalNetworkBlock
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
@@ -120,7 +120,7 @@ class LoginCapabilitiesTest {
     private fun usersViewModel(capabilities: ServerCapabilities) =
         UsersViewModel(
             fakeRepository(capabilities),
-            ProfileLock(unusedDao(), Dispatchers.Unconfined),
+            ProfileLock(unusedStore(), Dispatchers.Unconfined),
         )
 
     private fun fakeRepository(capabilities: ServerCapabilities): SetupRepository =
@@ -131,7 +131,7 @@ class LoginCapabilitiesTest {
             when (method.kotlinName) {
                 "getCapabilities" -> capabilities
                 "getCurrentServer" -> server
-                "getUsers" -> listOf(saved)
+                "users" -> listOf(saved)
                 "getIsQuickConnectEnabled" -> true.also { asked += method.kotlinName }
                 "loadDisclaimer" -> "For testing.".also { asked += method.kotlinName }
                 "getPublicUsers" -> listOf(saved, listed).also { asked += method.kotlinName }
@@ -143,12 +143,12 @@ class LoginCapabilitiesTest {
         }
             as SetupRepository
 
-    private fun unusedDao(): ServerDatabaseDao =
-        fakeProxy(
-            ServerDatabaseDao::class.java.classLoader,
-            arrayOf(ServerDatabaseDao::class.java),
-        ) { _, method, _ ->
+    private fun unusedStore(): ServerStore =
+        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
+            _,
+            method,
+            _ ->
             throw UnsupportedOperationException(method.kotlinName)
         }
-            as ServerDatabaseDao
+            as ServerStore
 }
