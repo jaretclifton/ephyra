@@ -1,0 +1,131 @@
+// Components inside some modules, written by hand (#928). Each element names its file, so a
+// rename shows up in review. Kept to the parts that explain the module; the guides in
+// docs/areas/ have the rest.
+
+model {
+  extend ephyra.domain {
+    mediaServer = port 'MediaServer' {
+      description 'One server: session, catalog, userData, playback. domain/ports/MediaServer.kt'
+    }
+    playbackPort = port 'PlaybackPort' {
+      description 'Playback info, stream URLs, reports to the server. domain/ports/PlaybackPort.kt'
+    }
+    serverConnector = port 'ServerConnector' {
+      description 'Finding a server and signing in, for setup. domain/ports/ServerConnector.kt'
+    }
+    downloadState = component 'DownloadState' {
+      description 'Whether a source is a finished download (domain model, rule R13)'
+    }
+    playState = component 'PlayState' {
+      description 'Played, favourite, resume position, the sync merge (domain model, rule R14)'
+    }
+  }
+
+  extend ephyra.application {
+    mediaRepository = port 'MediaRepository' {
+      description 'What the features call: the server in use composed with Room. repository/MediaRepository.kt'
+    }
+    downloadStore = port 'DownloadStore' {
+      description 'Downloads in Room, per account. repository/DownloadStore.kt'
+    }
+    downloadSettings = port 'DownloadSettings' {
+      description 'The download engine\'s settings (#918). repository/DownloadSettings.kt'
+    }
+  }
+
+  extend ephyra.playerLocal {
+    playerViewModel = component 'PlayerViewModel' {
+      description 'The player screen\'s state and actions. presentation/PlayerViewModel.kt'
+    }
+    resolvePlayback = component 'ResolvePlayback' {
+      description 'What to play: a download first, else the server\'s sources. domain/ResolvePlayback.kt'
+    }
+    playlistManager = component 'PlaylistManager' {
+      description 'The play queue: next and previous episodes. domain/PlaylistManager.kt'
+    }
+    playbackReporter = component 'PlaybackReporter' {
+      description 'Start, progress and stop reports to the server. domain/PlaybackReporter.kt'
+    }
+    trackPicks = component 'Track choice' {
+      description 'Audio and subtitle choice, remembered per series. domain/TrackPicks.kt, SeriesTrackPreference.kt'
+    }
+    playerEngine = port 'PlayerEngine' {
+      description 'The engine port: builds a media3 Player. engine/PlayerEngine.kt; rule R6 keeps the engines apart'
+    }
+    exoEngine = component 'ExoPlayer engine' {
+      description 'media3 ExoPlayer, subtitle delay and image subtitles. engine/exo/'
+    }
+    mpvEngine = component 'mpv engine' {
+      description 'libmpv behind media3\'s Player. engine/mpv/MPVPlayer.kt'
+    }
+    playbackService = component 'PlaybackService' {
+      description 'The media session for notifications and the lock screen. PlaybackService.kt'
+    }
+
+    playerViewModel -> resolvePlayback 'opens an item'
+    playerViewModel -> playlistManager 'next, previous'
+    playerViewModel -> playbackReporter 'position, pause, stop'
+    playerViewModel -> trackPicks 'picks tracks'
+    playerViewModel -> playerEngine 'builds the player'
+    exoEngine -> playerEngine 'implements'
+    mpvEngine -> playerEngine 'implements'
+    playbackService -> playerEngine 'publishes the player'
+  }
+
+  ephyra.playerLocal.resolvePlayback -> ephyra.application.mediaRepository 'getPlaybackSources'
+  ephyra.playerLocal.playlistManager -> ephyra.application.mediaRepository 'episodes'
+  ephyra.playerLocal.playbackReporter -> ephyra.application.mediaRepository 'reports, user data'
+
+  extend ephyra.downloads {
+    downloader = port 'Downloader' {
+      description 'What view models call to download or delete. utils/Downloader.kt'
+    }
+    downloaderImpl = component 'DownloaderImpl' {
+      description 'Stores the item in Room and queues its files. utils/DownloaderImpl.kt'
+    }
+    downloadQueue = component 'DownloadQueue' {
+      description 'The queue entries, their state and progress. core/presentation/downloader/DownloadQueue.kt'
+    }
+    downloadPump = component 'DownloadPumpService' {
+      description 'Foreground service that runs the queue. core/presentation/downloader/DownloadPumpService.kt'
+    }
+    mediaDownloadEngine = component 'MediaDownloadEngine' {
+      description 'Fetches a file with resume, checks what it resumes. utils/download/MediaDownloadEngine.kt'
+    }
+    smartDownloads = component 'Smart downloads' {
+      description 'Keeps the next episodes of what you watch. core/presentation/downloader/SmartDownloads.kt'
+    }
+
+    downloaderImpl -> downloader 'implements'
+    downloaderImpl -> downloadQueue 'enqueues'
+    downloadPump -> downloadQueue 'takes the next entry'
+    downloadPump -> mediaDownloadEngine 'downloads it'
+    smartDownloads -> downloader 'downloads the next episodes'
+  }
+
+  ephyra.downloads.downloaderImpl -> ephyra.application.downloadStore 'writes the item'
+  ephyra.downloads.downloaderImpl -> ephyra.application.mediaRepository 'item, sources'
+  ephyra.downloads.mediaDownloadEngine -> ephyra.application.downloadSettings 'reads'
+  ephyra.downloads.downloadQueue -> ephyra.domain.downloadState 'finished?'
+
+  extend ephyra.serverJellyfin {
+    jellyfinMediaServer = component 'Jellyfin MediaServer' {
+      description 'The port implementations over the Jellyfin SDK, mappers, device profiles'
+    }
+    jellyfinMediaServer -> ephyra.domain.mediaServer 'implements'
+    jellyfinMediaServer -> ephyra.domain.playbackPort 'implements'
+    jellyfinMediaServer -> ephyra.domain.serverConnector 'implements'
+  }
+
+  extend ephyra.data {
+    mediaRepositoryImpl = component 'MediaRepositoryImpl' {
+      description 'The server in use with Room: stored fallback, local sources, write then report'
+    }
+    roomStores = component 'Room stores' {
+      description 'RoomServerStore, RoomDownloadStore, RoomPendingUserDataStore'
+    }
+    mediaRepositoryImpl -> ephyra.application.mediaRepository 'implements'
+    mediaRepositoryImpl -> ephyra.domain.mediaServer 'calls the server in use'
+    roomStores -> ephyra.application.downloadStore 'implements'
+  }
+}

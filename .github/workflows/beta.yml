@@ -31,6 +31,7 @@ on:
       - "**"
       - "!docs/**"
       - "!site/**"
+      - "!devsite/**"
       - "!**.md"
       - "!images/**"
       - "!fastlane/**"

@@ -1,0 +1,122 @@
+// The C4 model of Ephyra (#928), written by hand: the element kinds, the system in its context,
+// and the arrows to the outside. The modules and the arrows between them are generated into
+// modules.generated.c4; components.c4 opens a few modules up; views.c4 has the views.
+// The site renders it with LikeC4 (https://likec4.dev). Colours are tokens of
+// docs/identity/VISION.md (dark scheme).
+
+specification {
+  color ephyra-primary #4FD8F0
+  color ephyra-primary-container #0E4F5C
+  color ephyra-secondary-container #232E66
+  color ephyra-tertiary-container #4A3A9A
+  color ephyra-surface-high #182238
+  color ephyra-surface-highest #1F2B45
+  color ephyra-outline #5A6B85
+
+  element person {
+    style {
+      shape person
+      color ephyra-tertiary-container
+    }
+  }
+  element system {
+    style {
+      color ephyra-primary-container
+    }
+  }
+  element external {
+    style {
+      color ephyra-surface-highest
+    }
+  }
+  element app {
+    notation 'Gradle module: app'
+    style {
+      color ephyra-primary-container
+    }
+  }
+  element feature {
+    notation 'Gradle module: feature'
+    style {
+      color ephyra-secondary-container
+    }
+  }
+  element application {
+    notation 'Gradle module: application ports'
+    style {
+      color ephyra-tertiary-container
+    }
+  }
+  element domain {
+    notation 'Gradle module: domain'
+    style {
+      color ephyra-tertiary-container
+    }
+  }
+  element adapter {
+    notation 'Gradle module: adapter'
+    style {
+      color ephyra-surface-highest
+    }
+  }
+  element tooling {
+    notation 'Gradle module: tests and tooling'
+    style {
+      color ephyra-surface-high
+      border dashed
+    }
+  }
+  element component {
+    style {
+      color ephyra-secondary-container
+    }
+  }
+  element port {
+    notation 'Port'
+    style {
+      shape rectangle
+      color ephyra-tertiary-container
+      border dashed
+    }
+  }
+
+  relationship test {
+    color gray
+    line dotted
+  }
+}
+
+model {
+  viewer = person 'Viewer' {
+    description 'Watches their Jellyfin library on a phone, tablet or Android TV'
+  }
+
+  ephyra = system 'Ephyra' {
+    description 'The Android app: a phone app and a TV app, built from the Gradle modules of this repository'
+    link https://github.com/midasvo/ephyra 'Source'
+  }
+
+  jellyfin = external 'Jellyfin server' {
+    description 'The user\'s media server: catalog, user data, streams, transcodes'
+    link https://jellyfin.org 'Jellyfin'
+  }
+  castReceiver = external 'Cast receiver' {
+    description 'A Chromecast or Google TV that plays a stream the phone hands it (proprietary flavor only)'
+  }
+  android = external 'Android' {
+    description 'Storage for downloads, WorkManager, media session, the TV launcher (Watch Next)'
+  }
+
+  viewer -> ephyra 'browses, plays, downloads'
+  ephyra -> jellyfin 'HTTP API (Jellyfin SDK), streams'
+  ephyra -> castReceiver 'Google Cast'
+  ephyra -> android 'files, workers, media session'
+
+  // The same arrows, from the modules that make them (the generated modules are inside ephyra).
+  ephyra.serverJellyfin -> jellyfin 'Jellyfin SDK'
+  ephyra.playerLocal -> jellyfin 'streams (ExoPlayer, mpv)'
+  ephyra.downloads -> jellyfin 'downloads files'
+  ephyra.playerCast -> castReceiver 'Cast SDK'
+  ephyra.downloads -> android 'files, WorkManager'
+  ephyra.data -> android 'Room database'
+}

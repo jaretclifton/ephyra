@@ -1,0 +1,106 @@
+/* The development site in the identity of the Ephyra site: docs/identity/VISION.md
+   ("Bioluminescence"). Every colour is a token of its §3 tables; site/style.css does the same. */
+
+@font-face {
+  font-family: 'Outfit';
+  src: url('/ephyra/dev/fonts/outfit.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+/* §3.1 dark scheme, the brand scheme. Starlight: black is the page, white the strongest text. */
+:root,
+::backdrop {
+  --sl-color-accent-low: #0e4f5c; /* primaryContainer */
+  --sl-color-accent: #4fd8f0; /* primary */
+  --sl-color-accent-high: #bdf4ff; /* onPrimaryContainer */
+  --sl-color-white: #e4fbff; /* onSurface */
+  --sl-color-gray-1: #e4fbff;
+  --sl-color-gray-2: #9fb3c8; /* onSurfaceVariant */
+  --sl-color-gray-3: #9fb3c8;
+  --sl-color-gray-4: #5a6b85; /* outline */
+  --sl-color-gray-5: #2a3650; /* outlineVariant */
+  --sl-color-gray-6: #121a2c; /* surfaceContainer */
+  --sl-color-black: #070b16; /* surface */
+  --sl-color-bg-nav: #0d1322; /* surfaceContainerLow */
+  --sl-color-bg-sidebar: #070b16;
+  --sl-color-hairline: #2a3650;
+  --sl-color-hairline-light: #2a3650;
+  --sl-color-text-accent: #4fd8f0;
+  --ephyra-glow: rgb(79 216 240 / 0.45); /* §3.3 glow */
+
+  --sl-font: system-ui, Roboto, 'Segoe UI', sans-serif;
+  --ephyra-display: 'Outfit', system-ui, Roboto, sans-serif;
+}
+
+/* §3.2 light scheme */
+:root[data-theme='light'],
+[data-theme='light'] ::backdrop {
+  --sl-color-accent-low: #bdf4ff;
+  --sl-color-accent: #007a8e;
+  --sl-color-accent-high: #00303a;
+  --sl-color-white: #0b1326;
+  --sl-color-gray-1: #0b1326;
+  --sl-color-gray-2: #3f4f64;
+  --sl-color-gray-3: #3f4f64;
+  --sl-color-gray-4: #6b7a90;
+  --sl-color-gray-5: #bcc9d8;
+  --sl-color-gray-6: #dfeff5;
+  --sl-color-gray-7: #e9f5fa;
+  --sl-color-black: #f3fbff;
+  --sl-color-bg-nav: #e9f5fa;
+  --sl-color-bg-sidebar: #f3fbff;
+  --sl-color-hairline: #bcc9d8;
+  --sl-color-hairline-light: #bcc9d8;
+  --sl-color-text-accent: #007a8e;
+  --ephyra-glow: transparent; /* §6: no glow in light */
+}
+
+/* §4 type: Outfit for display and titles, the system face for body text. */
+h1,
+h2,
+h3,
+.site-title,
+.sl-markdown-content :is(h1, h2, h3, h4) {
+  font-family: var(--ephyra-display);
+  font-weight: 600;
+  line-height: 1.15;
+}
+h1#_top {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* §5 shape: nothing sharper than 8px. */
+.sl-markdown-content :is(table, pre, .expressive-code .frame, blockquote, .mermaid) {
+  border-radius: 8px;
+}
+.sl-markdown-content table {
+  display: block;
+  overflow-x: auto;
+}
+.sl-markdown-content code:not(pre code) {
+  border-radius: 8px;
+}
+
+/* §3.4 chips: surfaceContainerHigh with onSurfaceVariant, never coloured. */
+.sl-badge {
+  border-radius: 999px;
+}
+
+.mermaid {
+  background: var(--sl-color-gray-6);
+  padding: 1rem;
+  overflow-x: auto;
+  text-align: center;
+}
+
+/* The C4 model, embedded from the LikeC4 build (src/content/docs/architecture/model.mdx). */
+.c4-frame {
+  width: 100%;
+  height: min(75vh, 720px);
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 16px;
+  background: var(--sl-color-black);
+  box-shadow: 0 0 24px var(--ephyra-glow);
+}

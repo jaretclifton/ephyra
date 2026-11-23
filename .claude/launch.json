@@ -6,6 +6,12 @@
       "runtimeExecutable": "C:/Users/midas/AppData/Local/Programs/Python/Python312/python.exe",
       "runtimeArgs": ["-m", "http.server", "8765", "--directory", "site"],
       "port": 8765
+    },
+    {
+      "name": "devsite",
+      "runtimeExecutable": "C:/Users/midas/AppData/Local/Programs/Python/Python312/python.exe",
+      "runtimeArgs": ["-m", "http.server", "8766", "--directory", "devsite/.pages"],
+      "port": 8766
     }
   ]
 }

@@ -1,6 +1,6 @@
 name: Build
 
-# Changes that touch only paths no Gradle build and no translation check reads (docs, the site,
+# Changes that touch only paths no Gradle build and no translation check reads (docs, the sites,
 # Markdown, store metadata, branding sources, the Claude skills other than translate-strings) don't
 # run this workflow. The last matching pattern wins, so the translate-strings skill is put back
 # after the Markdown and .claude/ exclusions: its script is the "Verify CE translations" job.
@@ -12,6 +12,7 @@ on:
       - "**"
       - "!docs/**"
       - "!site/**"
+      - "!devsite/**"
       - "!**.md"
       - "!images/**"
       - "!fastlane/**"

@@ -1,0 +1,32 @@
+---
+title: Architecture model
+description: The C4 model of Ephyra, from the system in its context down to components.
+editUrl: https://github.com/midasvo/ephyra/tree/main/docs/architecture/model
+tableOfContents: false
+---
+
+The model in three levels: **context** (Ephyra and what it talks to), **containers** (the Gradle
+modules and their dependencies) and **components** (inside `player/local`, `downloads`,
+`domain`, `application`, `data` and `server/jellyfin`). Click an element to open the level
+below it; the search (top left, or <kbd>Ctrl</kbd>+<kbd>K</kbd>) finds any element or view.
+
+<a href="/ephyra/dev/model/" target="_blank">Open the model full screen</a> ·
+[source in `docs/architecture/model/`](https://github.com/midasvo/ephyra/tree/main/docs/architecture/model)
+
+<iframe class="c4-frame" src="/ephyra/dev/model/#/view/index/" title="Ephyra architecture model" loading="lazy"></iframe>
+
+## Where it comes from
+
+| File | What | Written by |
+|---|---|---|
+| [`modules.generated.c4`](https://github.com/midasvo/ephyra/blob/main/docs/architecture/model/modules.generated.c4) | The modules and the arrows between them | `GeneratedDocsTest` in `architecture/`, from the `build.gradle.kts` files |
+| [`context.c4`](https://github.com/midasvo/ephyra/blob/main/docs/architecture/model/context.c4) | The element kinds and colours, the viewer, the server, Cast, Android | hand |
+| [`components.c4`](https://github.com/midasvo/ephyra/blob/main/docs/architecture/model/components.c4) | Components inside a few modules, each with its file | hand |
+| [`views.c4`](https://github.com/midasvo/ephyra/blob/main/docs/architecture/model/views.c4) | The views | hand |
+
+`./gradlew :architecture:test` fails when the generated file no longer matches the build files;
+the failure prints the command that regenerates it. The same test writes
+[Modules](/ephyra/dev/architecture/modules/) (a Mermaid graph for GitHub) and
+[Rules](/ephyra/dev/architecture/rules/). In `devsite/`, `npm run check-model` validates the
+model, and `npx likec4 start ../docs/architecture/model` opens it with live reload while you
+edit it.
