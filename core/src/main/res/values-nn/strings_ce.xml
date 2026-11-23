@@ -9,11 +9,9 @@
     <string name="download_cancelled">Nedlasting av %1$s avbroten</string>
     <string name="download_completed">Fullført</string>
     <string name="download_error_network">Nettverksfeil — kontroller tilkoplinga di</string>
-    <string name="download_error_no_sources">Ingen spelbare kjelder tilgjengelege for dette elementet</string>
     <string name="download_error_server_unreachable">Kan ikkje nå Jellyfin-tenaren</string>
     <string name="download_error_timeout">Tidsavbrot for tilkopling</string>
     <string name="download_failed_indicator">Nedlasting feila</string>
-    <string name="download_failures_channel_name">Mislykka nedlastingar</string>
     <string name="download_preparing_on_server">Førebur på tenaren</string>
     <string name="download_quality">Nedlastingskvalitet</string>
     <string name="download_quality_original">Opphavleg kvalitet</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">Ventar på nettverk</string>
     <string name="downloaded_to">Lagra i: %s</string>
     <string name="downloading_indicator">Lastar ned</string>
-    <string name="downloads_channel_description">Pågåande nedlastingsaktivitet</string>
-    <string name="downloads_channel_name">Nedlastingar</string>
     <string name="downloads_downloading">Lastar ned</string>
     <string name="downloads_empty_body">Last ned filmar og episodar for å sjå utan tilkopling, på fly, tog eller kvar som helst.</string>
     <string name="downloads_empty_title">Ingen nedlastingar enno</string>
@@ -67,10 +63,6 @@
         <item quantity="one">%d episode</item>
         <item quantity="other">%d episodar</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="one">Lastar ned %d element</item>
-        <item quantity="other">Lastar ned %d element</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="one">Fjerna %d nedlasting</item>
         <item quantity="other">Fjerna %d nedlastingar</item>
@@ -97,7 +89,6 @@
     <string name="item_included_in">Inngår i</string>
     <string name="item_more_like_this">Meir som dette</string>
     <string name="ce_session_revoked">%1$s logga deg ut. Logg inn att for å halde fram.</string>
-    <string name="ce_download_error_server">Tenaren avviste nedlastinga (HTTP %1$d)</string>
     <string name="ce_error_server_status">Tenaren svarte med ein feil (HTTP %1$d). Prøv igjen seinare.</string>
     <string name="ce_media_info">Medieinformasjon</string>
     <string name="ce_home_profile">Profil</string>

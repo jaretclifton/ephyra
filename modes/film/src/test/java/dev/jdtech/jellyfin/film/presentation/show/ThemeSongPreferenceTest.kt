@@ -15,6 +15,7 @@ import dev.jdtech.jellyfin.testing.FakeLibrary
 import dev.jdtech.jellyfin.testing.FakeMediaServer
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
+import dev.jdtech.jellyfin.utils.CoreDownloadTexts
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlinx.coroutines.Dispatchers
@@ -128,6 +129,7 @@ class ThemeSongPreferenceTest {
                     repositoryProvider = { repository },
                     downloadStore = unused<DownloadStore>(),
                     context = ContextWrapper(null) as Context,
+                    texts = CoreDownloadTexts,
                 ),
             downloadStore = unused(),
         )

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">Ingen afspillelige kilder tilgængelige for dette element</string>
+    <string name="ce_download_error_server">Serveren afviste downloadet (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">Downloadfejl</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="one">Downloader %d element</item>
+        <item quantity="other">Downloader %d elementer</item>
+    </plurals>
+    <string name="downloads_channel_name">Downloads</string>
+    <string name="downloads_channel_description">Igangværende downloadaktivitet</string>
+</resources>

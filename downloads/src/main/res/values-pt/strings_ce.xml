@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">Não há fontes reproduzíveis disponíveis para este item</string>
+    <string name="ce_download_error_server">O servidor recusou a transferência (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">Falhas de transferência</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="one">A transferir %d item</item>
+        <item quantity="other">A transferir %d itens</item>
+    </plurals>
+    <string name="downloads_channel_name">Transferências</string>
+    <string name="downloads_channel_description">Atividade de transferência em curso</string>
+</resources>

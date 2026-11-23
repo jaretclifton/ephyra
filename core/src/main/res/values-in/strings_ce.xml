@@ -9,11 +9,9 @@
     <string name="download_cancelled">Unduhan %1$s dibatalkan</string>
     <string name="download_completed">Selesai</string>
     <string name="download_error_network">Kesalahan jaringan — periksa koneksi Anda</string>
-    <string name="download_error_no_sources">Tidak ada sumber yang dapat diputar untuk item ini</string>
     <string name="download_error_server_unreachable">Tidak dapat menjangkau server Jellyfin</string>
     <string name="download_error_timeout">Waktu koneksi habis</string>
     <string name="download_failed_indicator">Unduhan gagal</string>
-    <string name="download_failures_channel_name">Unduhan gagal</string>
     <string name="download_preparing_on_server">Menyiapkan di server</string>
     <string name="download_quality">Kualitas unduhan</string>
     <string name="download_quality_original">Kualitas asli</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">Menunggu jaringan</string>
     <string name="downloaded_to">Disimpan ke: %s</string>
     <string name="downloading_indicator">Mengunduh</string>
-    <string name="downloads_channel_description">Aktivitas unduhan yang sedang berlangsung</string>
-    <string name="downloads_channel_name">Unduhan</string>
     <string name="downloads_downloading">Mengunduh</string>
     <string name="downloads_empty_body">Unduh film dan episode untuk ditonton tanpa koneksi internet, di pesawat, kereta, atau di mana saja.</string>
     <string name="downloads_empty_title">Belum ada unduhan</string>
@@ -66,9 +62,6 @@
     <plurals name="downloaded_episode_count">
         <item quantity="other">%d episode</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="other">Mengunduh %d item</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="other">%d unduhan dihapus</item>
     </plurals>
@@ -94,7 +87,6 @@
     <string name="item_included_in">Termasuk dalam</string>
     <string name="item_more_like_this">Lainnya yang serupa</string>
     <string name="ce_session_revoked">%1$s mengeluarkan Anda. Masuk lagi untuk melanjutkan.</string>
-    <string name="ce_download_error_server">Server menolak unduhan (HTTP %1$d)</string>
     <string name="ce_error_server_status">Server merespons dengan galat (HTTP %1$d). Coba lagi nanti.</string>
     <string name="ce_media_info">Info media</string>
     <string name="ce_home_profile">Profil</string>

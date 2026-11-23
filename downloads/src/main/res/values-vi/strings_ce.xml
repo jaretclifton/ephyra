@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">Không có nguồn phát nào cho mục này</string>
+    <string name="ce_download_error_server">Máy chủ đã từ chối tải xuống (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">Tải về thất bại</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="other">Đang tải về %d mục</item>
+    </plurals>
+    <string name="downloads_channel_name">Tải về</string>
+    <string name="downloads_channel_description">Hoạt động tải về đang diễn ra</string>
+</resources>

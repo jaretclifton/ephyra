@@ -9,11 +9,9 @@
     <string name="download_cancelled">ההורדה של %1$s בוטלה</string>
     <string name="download_completed">הושלם</string>
     <string name="download_error_network">שגיאת רשת — בדוק את החיבור שלך</string>
-    <string name="download_error_no_sources">אין מקורות זמינים לניגון עבור פריט זה</string>
     <string name="download_error_server_unreachable">לא ניתן להתחבר לשרת Jellyfin</string>
     <string name="download_error_timeout">פסק זמן בחיבור</string>
     <string name="download_failed_indicator">ההורדה נכשלה</string>
-    <string name="download_failures_channel_name">שגיאות הורדה</string>
     <string name="download_preparing_on_server">מכין בשרת</string>
     <string name="download_quality">איכות הורדה</string>
     <string name="download_quality_original">איכות מקורית</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">ממתין לרשת</string>
     <string name="downloaded_to">נשמר ב: %s</string>
     <string name="downloading_indicator">מוריד</string>
-    <string name="downloads_channel_description">פעילות הורדה פעילה</string>
-    <string name="downloads_channel_name">הורדות</string>
     <string name="downloads_downloading">מוריד</string>
     <string name="downloads_empty_body">הורד סרטים ופרקים לצפייה ללא חיבור לאינטרנט, במטוס, ברכבת או בכל מקום אחר.</string>
     <string name="downloads_empty_title">אין עדיין הורדות</string>
@@ -67,10 +63,6 @@
         <item quantity="one">פרק %d</item>
         <item quantity="other">%d פרקים</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="one">מוריד פריט %d</item>
-        <item quantity="other">מוריד %d פריטים</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="one">הורדה %d הוסרה</item>
         <item quantity="other">%d הורדות הוסרו</item>
@@ -97,7 +89,6 @@
     <string name="item_included_in">כלול ב</string>
     <string name="item_more_like_this">עוד בסגנון הזה</string>
     <string name="ce_session_revoked">%1$s ניתק אותך. יש להתחבר שוב כדי להמשיך.</string>
-    <string name="ce_download_error_server">השרת דחה את ההורדה (HTTP %1$d)</string>
     <string name="ce_error_server_status">השרת השיב בשגיאה (HTTP %1$d). יש לנסות שוב מאוחר יותר.</string>
     <string name="ce_media_info">פרטי מדיה</string>
     <string name="ce_home_profile">פרופיל</string>

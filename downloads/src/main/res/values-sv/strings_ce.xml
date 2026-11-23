@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">Inga uppspelningsbara källor tillgängliga för detta objekt</string>
+    <string name="ce_download_error_server">Servern nekade nedladdningen (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">Misslyckade nedladdningar</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="one">Laddar ner %d objekt</item>
+        <item quantity="other">Laddar ner %d objekt</item>
+    </plurals>
+    <string name="downloads_channel_name">Nedladdningar</string>
+    <string name="downloads_channel_description">Pågående nedladdningsaktivitet</string>
+</resources>

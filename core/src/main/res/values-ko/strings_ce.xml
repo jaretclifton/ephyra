@@ -9,11 +9,9 @@
     <string name="download_cancelled">%1$s 다운로드가 취소되었습니다</string>
     <string name="download_completed">완료됨</string>
     <string name="download_error_network">네트워크 오류 — 연결 상태를 확인하세요</string>
-    <string name="download_error_no_sources">이 항목에 대해 재생 가능한 소스가 없습니다</string>
     <string name="download_error_server_unreachable">Jellyfin 서버에 연결할 수 없습니다</string>
     <string name="download_error_timeout">연결 시간이 초과되었습니다</string>
     <string name="download_failed_indicator">다운로드 실패</string>
-    <string name="download_failures_channel_name">다운로드 실패</string>
     <string name="download_preparing_on_server">서버에서 준비 중</string>
     <string name="download_quality">다운로드 화질</string>
     <string name="download_quality_original">원본 화질</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">네트워크 대기 중</string>
     <string name="downloaded_to">저장 위치: %s</string>
     <string name="downloading_indicator">다운로드 중</string>
-    <string name="downloads_channel_description">진행 중인 다운로드 활동</string>
-    <string name="downloads_channel_name">다운로드</string>
     <string name="downloads_downloading">다운로드 중</string>
     <string name="downloads_empty_body">영화와 에피소드를 다운로드하여 비행기, 기차 등 인터넷 연결이 없는 곳에서도 시청하세요.</string>
     <string name="downloads_empty_title">아직 다운로드된 항목이 없습니다</string>
@@ -66,9 +62,6 @@
     <plurals name="downloaded_episode_count">
         <item quantity="other">에피소드 %d개</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="other">%d개 항목 다운로드 중</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="other">다운로드 %d개 삭제됨</item>
     </plurals>
@@ -94,7 +87,6 @@
     <string name="item_included_in">포함된 컬렉션</string>
     <string name="item_more_like_this">비슷한 콘텐츠</string>
     <string name="ce_session_revoked">%1$s에서 로그아웃되었습니다. 계속하려면 다시 로그인하세요.</string>
-    <string name="ce_download_error_server">서버가 다운로드를 거부했습니다 (HTTP %1$d)</string>
     <string name="ce_error_server_status">서버가 오류로 응답했습니다(HTTP %1$d). 나중에 다시 시도하세요.</string>
     <string name="ce_media_info">미디어 정보</string>
     <string name="ce_home_profile">프로필</string>

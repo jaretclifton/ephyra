@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">Nenhuma fonte reproduzível disponível para este item</string>
+    <string name="ce_download_error_server">O servidor recusou o download (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">Falhas no download</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="one">Baixando %d item</item>
+        <item quantity="other">Baixando %d itens</item>
+    </plurals>
+    <string name="downloads_channel_name">Downloads</string>
+    <string name="downloads_channel_description">Atividade de download em andamento</string>
+</resources>

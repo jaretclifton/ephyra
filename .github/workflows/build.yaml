@@ -81,6 +81,7 @@ jobs:
               :app:phone:assembleLibreDebug
               :core:assembleDebug
               :data:assembleDebug
+              :downloads:assembleDebug
               :modes:film:assembleDebug
               :player:cast:assembleLibreDebug
               :player:core:assembleDebug

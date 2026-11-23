@@ -22,6 +22,7 @@ android {
 dependencies {
     implementation(projects.core)
     implementation(projects.application)
+    implementation(projects.downloads)
     implementation(projects.domain)
     implementation(projects.settings)
     implementation(libs.timber)

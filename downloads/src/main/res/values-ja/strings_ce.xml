@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">このアイテムには再生可能なソースがありません</string>
+    <string name="ce_download_error_server">サーバーがダウンロードを拒否しました (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">ダウンロード失敗</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="other">%d件のアイテムをダウンロード中</item>
+    </plurals>
+    <string name="downloads_channel_name">ダウンロード</string>
+    <string name="downloads_channel_description">進行中のダウンロード状況</string>
+</resources>

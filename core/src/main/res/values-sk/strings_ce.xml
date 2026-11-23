@@ -9,11 +9,9 @@
     <string name="download_cancelled">Sťahovanie %1$s bolo zrušené</string>
     <string name="download_completed">Dokončené</string>
     <string name="download_error_network">Chyba siete — skontrolujte pripojenie</string>
-    <string name="download_error_no_sources">Pre túto položku nie sú k dispozícii žiadne prehrávateľné zdroje</string>
     <string name="download_error_server_unreachable">Nedá sa pripojiť k serveru Jellyfin</string>
     <string name="download_error_timeout">Časový limit pripojenia vypršal</string>
     <string name="download_failed_indicator">Sťahovanie zlyhalo</string>
-    <string name="download_failures_channel_name">Zlyhania sťahovania</string>
     <string name="download_preparing_on_server">Príprava na serveri</string>
     <string name="download_quality">Kvalita sťahovania</string>
     <string name="download_quality_original">Pôvodná kvalita</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">Čaká sa na sieť</string>
     <string name="downloaded_to">Uložené do: %s</string>
     <string name="downloading_indicator">Sťahuje sa</string>
-    <string name="downloads_channel_description">Prebiehajúce sťahovanie</string>
-    <string name="downloads_channel_name">Sťahovanie</string>
     <string name="downloads_downloading">Sťahovanie</string>
     <string name="downloads_empty_body">Sťahujte filmy a epizódy na sledovanie bez pripojenia: v lietadle, vlaku alebo kdekoľvek inde.</string>
     <string name="downloads_empty_title">Zatiaľ žiadne stiahnutia</string>
@@ -68,11 +64,6 @@
         <item quantity="few">%d epizódy</item>
         <item quantity="other">%d epizód</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="one">Sťahovanie %d položky</item>
-        <item quantity="few">Sťahovanie %d položiek</item>
-        <item quantity="other">Sťahovanie %d položiek</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="one">Odstránená %d stiahnutá položka</item>
         <item quantity="few">Odstránené %d stiahnuté položky</item>
@@ -100,7 +91,6 @@
     <string name="item_included_in">Súčasťou</string>
     <string name="item_more_like_this">Podobné tituly</string>
     <string name="ce_session_revoked">%1$s vás odhlásil. Ak chcete pokračovať, znova sa prihláste.</string>
-    <string name="ce_download_error_server">Server sťahovanie odmietol (HTTP %1$d)</string>
     <string name="ce_error_server_status">Server odpovedal chybou (HTTP %1$d). Skúste to neskôr.</string>
     <string name="ce_media_info">Informácie o médiu</string>
     <string name="ce_home_profile">Profil</string>

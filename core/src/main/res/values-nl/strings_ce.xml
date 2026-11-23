@@ -9,11 +9,9 @@
     <string name="download_cancelled">Download van %1$s geannuleerd</string>
     <string name="download_completed">Voltooid</string>
     <string name="download_error_network">Netwerkfout — controleer je verbinding</string>
-    <string name="download_error_no_sources">Geen afspeelbare bronnen beschikbaar voor dit item</string>
     <string name="download_error_server_unreachable">Kan de Jellyfin-server niet bereiken</string>
     <string name="download_error_timeout">Verbinding verlopen</string>
     <string name="download_failed_indicator">Download mislukt</string>
-    <string name="download_failures_channel_name">Mislukte downloads</string>
     <string name="download_preparing_on_server">Voorbereiden op server</string>
     <string name="download_quality">Downloadkwaliteit</string>
     <string name="download_quality_original">Originele kwaliteit</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">Wachten op netwerk</string>
     <string name="downloaded_to">Opgeslagen in: %s</string>
     <string name="downloading_indicator">Downloaden</string>
-    <string name="downloads_channel_description">Lopende downloadactiviteit</string>
-    <string name="downloads_channel_name">Downloads</string>
     <string name="downloads_downloading">Downloaden</string>
     <string name="downloads_empty_body">Download films en afleveringen om te bekijken zonder verbinding, in het vliegtuig, de trein of waar dan ook.</string>
     <string name="downloads_empty_title">Nog geen downloads</string>
@@ -67,10 +63,6 @@
         <item quantity="one">%d aflevering</item>
         <item quantity="other">%d afleveringen</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="one">%d item downloaden</item>
-        <item quantity="other">%d items downloaden</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="one">%d download verwijderd</item>
         <item quantity="other">%d downloads verwijderd</item>
@@ -97,7 +89,6 @@
     <string name="item_included_in">Onderdeel van</string>
     <string name="item_more_like_this">Meer zoals dit</string>
     <string name="ce_session_revoked">%1$s heeft je afgemeld. Meld je opnieuw aan om verder te gaan.</string>
-    <string name="ce_download_error_server">De server heeft de download geweigerd (HTTP %1$d)</string>
     <string name="ce_error_server_status">De server gaf een fout terug (HTTP %1$d). Probeer het later opnieuw.</string>
     <string name="ce_media_info">Media-info</string>
     <string name="ce_home_profile">Profiel</string>

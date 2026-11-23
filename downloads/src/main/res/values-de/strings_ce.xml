@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">Keine abspielbaren Quellen für diesen Titel verfügbar</string>
+    <string name="ce_download_error_server">Der Server hat den Download abgelehnt (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">Download-Fehler</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="one">%d Element wird heruntergeladen</item>
+        <item quantity="other">%d Elemente werden heruntergeladen</item>
+    </plurals>
+    <string name="downloads_channel_name">Downloads</string>
+    <string name="downloads_channel_description">Laufende Download-Aktivität</string>
+</resources>

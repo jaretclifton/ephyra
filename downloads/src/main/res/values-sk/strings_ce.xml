@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">Pre túto položku nie sú k dispozícii žiadne prehrávateľné zdroje</string>
+    <string name="ce_download_error_server">Server sťahovanie odmietol (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">Zlyhania sťahovania</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="one">Sťahovanie %d položky</item>
+        <item quantity="few">Sťahovanie %d položiek</item>
+        <item quantity="other">Sťahovanie %d položiek</item>
+    </plurals>
+    <string name="downloads_channel_name">Sťahovanie</string>
+    <string name="downloads_channel_description">Prebiehajúce sťahovanie</string>
+</resources>

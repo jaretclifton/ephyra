@@ -9,11 +9,9 @@
     <string name="download_cancelled">Téléchargement de %1$s annulé</string>
     <string name="download_completed">Terminé</string>
     <string name="download_error_network">Erreur réseau — vérifiez votre connexion</string>
-    <string name="download_error_no_sources">Aucune source lisible disponible pour cet élément</string>
     <string name="download_error_server_unreachable">Impossible de joindre le serveur Jellyfin</string>
     <string name="download_error_timeout">Délai de connexion dépassé</string>
     <string name="download_failed_indicator">Échec du téléchargement</string>
-    <string name="download_failures_channel_name">Échecs de téléchargement</string>
     <string name="download_preparing_on_server">Préparation sur le serveur</string>
     <string name="download_quality">Qualité de téléchargement</string>
     <string name="download_quality_original">Qualité originale</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">En attente du réseau</string>
     <string name="downloaded_to">Enregistré dans : %s</string>
     <string name="downloading_indicator">Téléchargement</string>
-    <string name="downloads_channel_description">Activité de téléchargement en cours</string>
-    <string name="downloads_channel_name">Téléchargements</string>
     <string name="downloads_downloading">Téléchargement en cours</string>
     <string name="downloads_empty_body">Téléchargez des films et des épisodes pour les regarder sans connexion, en avion, en train ou n\'importe où ailleurs.</string>
     <string name="downloads_empty_title">Aucun téléchargement pour le moment</string>
@@ -67,10 +63,6 @@
         <item quantity="one">%d épisode</item>
         <item quantity="other">%d épisodes</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="one">Téléchargement de %d élément</item>
-        <item quantity="other">Téléchargement de %d éléments</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="one">%d téléchargement supprimé</item>
         <item quantity="other">%d téléchargements supprimés</item>
@@ -97,7 +89,6 @@
     <string name="item_included_in">Inclus dans</string>
     <string name="item_more_like_this">Dans le même genre</string>
     <string name="ce_session_revoked">%1$s vous a déconnecté. Reconnectez-vous pour continuer.</string>
-    <string name="ce_download_error_server">Le serveur a refusé le téléchargement (HTTP %1$d)</string>
     <string name="ce_error_server_status">Le serveur a répondu par une erreur (HTTP %1$d). Réessayez plus tard.</string>
     <string name="ce_media_info">Infos sur le média</string>
     <string name="ce_home_profile">Profil</string>

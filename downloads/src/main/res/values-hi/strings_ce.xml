@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">इस आइटम के लिए कोई चलाने योग्य स्रोत उपलब्ध नहीं है</string>
+    <string name="ce_download_error_server">सर्वर ने डाउनलोड अस्वीकार कर दिया (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">विफल डाउनलोड</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="one">%d आइटम डाउनलोड हो रहा है</item>
+        <item quantity="other">%d आइटम डाउनलोड हो रहे हैं</item>
+    </plurals>
+    <string name="downloads_channel_name">डाउनलोड</string>
+    <string name="downloads_channel_description">चल रही डाउनलोड गतिविधि</string>
+</resources>

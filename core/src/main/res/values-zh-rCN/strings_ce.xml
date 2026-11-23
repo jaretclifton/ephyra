@@ -9,11 +9,9 @@
     <string name="download_cancelled">已取消下载 %1$s</string>
     <string name="download_completed">已完成</string>
     <string name="download_error_network">网络错误 — 请检查您的网络连接</string>
-    <string name="download_error_no_sources">该项目没有可用的播放源</string>
     <string name="download_error_server_unreachable">无法连接到 Jellyfin 服务器</string>
     <string name="download_error_timeout">连接超时</string>
     <string name="download_failed_indicator">下载失败</string>
-    <string name="download_failures_channel_name">下载失败</string>
     <string name="download_preparing_on_server">正在服务器上准备</string>
     <string name="download_quality">下载画质</string>
     <string name="download_quality_original">原始画质</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">等待网络连接</string>
     <string name="downloaded_to">保存至：%s</string>
     <string name="downloading_indicator">正在下载</string>
-    <string name="downloads_channel_description">进行中的下载活动</string>
-    <string name="downloads_channel_name">下载</string>
     <string name="downloads_downloading">正在下载</string>
     <string name="downloads_empty_body">下载电影和剧集，以便在飞机、火车或任何没有网络连接的地方离线观看。</string>
     <string name="downloads_empty_title">暂无下载内容</string>
@@ -66,9 +62,6 @@
     <plurals name="downloaded_episode_count">
         <item quantity="other">%d 集</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="other">正在下载 %d 个项目</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="other">已移除 %d 个下载</item>
     </plurals>
@@ -94,7 +87,6 @@
     <string name="item_included_in">收录于</string>
     <string name="item_more_like_this">更多类似内容</string>
     <string name="ce_session_revoked">%1$s 已将你退出登录。请重新登录以继续。</string>
-    <string name="ce_download_error_server">服务器拒绝了下载 (HTTP %1$d)</string>
     <string name="ce_error_server_status">服务器返回了错误 (HTTP %1$d)。请稍后再试。</string>
     <string name="ce_media_info">媒体信息</string>
     <string name="ce_home_profile">个人资料</string>
