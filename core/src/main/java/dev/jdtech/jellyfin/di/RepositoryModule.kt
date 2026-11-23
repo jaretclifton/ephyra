@@ -14,8 +14,8 @@ import dev.jdtech.jellyfin.domain.ports.MediaServer
 import dev.jdtech.jellyfin.models.CollectionType
 import dev.jdtech.jellyfin.player.DeviceCodecProbe
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.JellyfinRepository
-import dev.jdtech.jellyfin.repository.JellyfinRepositoryImpl
+import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.MediaRepositoryImpl
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.repository.StoredLibraryNames
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -53,16 +53,16 @@ object RepositoryModule {
      */
     @Singleton
     @Provides
-    fun provideJellyfinRepositoryImpl(
+    fun provideMediaRepositoryImpl(
         application: Application,
         server: MediaServer,
         serverDatabase: ServerDatabaseDao,
         appPreferences: AppPreferences,
         userDataSync: UserDataSync,
         serverReachability: ServerReachability,
-    ): JellyfinRepositoryImpl {
+    ): MediaRepositoryImpl {
 
-        return JellyfinRepositoryImpl(
+        return MediaRepositoryImpl(
             application,
             server,
             serverDatabase,
@@ -81,7 +81,6 @@ object RepositoryModule {
 
     /** CE (#281): one repository; downloaded items fall back to Room when the server is away. */
     @Provides
-    fun provideJellyfinRepository(
-        jellyfinRepositoryImpl: JellyfinRepositoryImpl
-    ): JellyfinRepository = jellyfinRepositoryImpl
+    fun provideMediaRepository(mediaRepositoryImpl: MediaRepositoryImpl): MediaRepository =
+        mediaRepositoryImpl
 }

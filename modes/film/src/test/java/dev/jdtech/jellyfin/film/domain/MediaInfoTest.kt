@@ -1,8 +1,8 @@
 package dev.jdtech.jellyfin.film.domain
 
-import dev.jdtech.jellyfin.models.FindroidMediaStream
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
 import java.util.Locale
 import kotlin.test.assertEquals
@@ -23,7 +23,7 @@ class MediaInfoTest {
         bitDepth: Int? = null,
         sampleRate: Int? = null,
     ) =
-        FindroidMediaStream(
+        MediaStream(
             title = title,
             displayTitle = displayTitle,
             language = "eng",
@@ -44,14 +44,14 @@ class MediaInfoTest {
         )
 
     private fun source(
-        vararg streams: FindroidMediaStream,
+        vararg streams: MediaStream,
         container: String? = null,
         bitrate: Int? = null,
     ) =
-        FindroidSource(
+        ItemSource(
             id = "s",
             name = "s",
-            type = FindroidSourceType.REMOTE,
+            type = ItemSourceType.REMOTE,
             path = "",
             size = 58_000_000_000,
             mediaStreams = streams.toList(),
@@ -234,13 +234,13 @@ class MediaInfoTest {
         val server = source(stream(MediaStreamType.VIDEO), stream(MediaStreamType.AUDIO))
         val download =
             source(stream(MediaStreamType.SUBTITLE, displayTitle = "German - SUBRIP - External"))
-                .copy(type = FindroidSourceType.LOCAL)
+                .copy(type = ItemSourceType.LOCAL)
         val audioOnly = source(stream(MediaStreamType.AUDIO))
 
         assertEquals(listOf(server), listOf(server, download).withMediaInfo())
         assertEquals(listOf(audioOnly), listOf(audioOnly).withMediaInfo())
         // Offline, the downloads are all there is.
-        assertEquals(emptyList<FindroidSource>(), listOf(download).withMediaInfo())
-        assertEquals(emptyList<FindroidSource>(), listOf(source()).withMediaInfo())
+        assertEquals(emptyList<ItemSource>(), listOf(download).withMediaInfo())
+        assertEquals(emptyList<ItemSource>(), listOf(source()).withMediaInfo())
     }
 }

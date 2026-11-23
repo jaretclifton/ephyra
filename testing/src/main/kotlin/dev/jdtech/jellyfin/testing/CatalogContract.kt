@@ -2,12 +2,12 @@ package dev.jdtech.jellyfin.testing
 
 import dev.jdtech.jellyfin.domain.ports.CatalogPort
 import dev.jdtech.jellyfin.domain.ports.ItemQuery
-import dev.jdtech.jellyfin.models.FindroidBoxSet
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.BoxSet
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.ServerException
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.asString
@@ -51,9 +51,9 @@ abstract class CatalogContract : MediaServerContract() {
     fun `item gives each item as its kind`() = runTest {
         val catalog = catalog()
 
-        assertIs<FindroidMovie>(catalog.item(library.favoriteMovie.id))
-        assertIs<FindroidShow>(catalog.item(library.series.id))
-        val episode = assertIs<FindroidEpisode>(catalog.item(library.nextUp.id))
+        assertIs<Movie>(catalog.item(library.favoriteMovie.id))
+        assertIs<Show>(catalog.item(library.series.id))
+        val episode = assertIs<Episode>(catalog.item(library.nextUp.id))
         assertEquals(library.season1.id, episode.seasonId)
         assertEquals(library.series.id, episode.seriesId)
     }
@@ -68,7 +68,7 @@ abstract class CatalogContract : MediaServerContract() {
     @Test
     fun `a box set is a box set`() = runTest {
         assumeOnServer(Part.BOX_SET)
-        val boxSet = assertIs<FindroidBoxSet>(catalog().item(library.boxSet.id))
+        val boxSet = assertIs<BoxSet>(catalog().item(library.boxSet.id))
 
         assertEquals(library.boxSet.name, boxSet.name)
     }
@@ -109,9 +109,9 @@ abstract class CatalogContract : MediaServerContract() {
             catalog.items(ItemQuery(kinds = listOf(ItemKind.SERIES), recursive = true, limit = 20))
 
         assertTrue(movies.items.isNotEmpty())
-        assertTrue(movies.items.all { it is FindroidMovie }, "movies: ${movies.items}")
+        assertTrue(movies.items.all { it is Movie }, "movies: ${movies.items}")
         assertTrue(shows.items.isNotEmpty())
-        assertTrue(shows.items.all { it is FindroidShow }, "shows: ${shows.items}")
+        assertTrue(shows.items.all { it is Show }, "shows: ${shows.items}")
     }
 
     private val season1Query =
@@ -207,7 +207,7 @@ abstract class CatalogContract : MediaServerContract() {
         val found = catalog().search("Test Show", kinds = listOf(ItemKind.SERIES))
 
         assertTrue(library.series.id in found.map { it.id }, "found: $found")
-        assertTrue(found.all { it is FindroidShow }, "found: $found")
+        assertTrue(found.all { it is Show }, "found: $found")
     }
 
     @Test

@@ -34,11 +34,11 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovies
 import dev.jdtech.jellyfin.film.presentation.collection.CollectionState
 import dev.jdtech.jellyfin.film.presentation.collection.CollectionViewModel
 import dev.jdtech.jellyfin.models.CollectionSection
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
@@ -68,9 +68,9 @@ fun CollectionScreen(
         state = state,
         onItemClick = { item ->
             when (item) {
-                is FindroidMovie -> navigateToMovie(item.id)
-                is FindroidShow -> navigateToShow(item.id)
-                is FindroidEpisode -> navigateToEpisode(item.id)
+                is Movie -> navigateToMovie(item.id)
+                is Show -> navigateToShow(item.id)
+                is Episode -> navigateToEpisode(item.id)
                 else -> Unit
             }
         },
@@ -81,7 +81,7 @@ fun CollectionScreen(
 internal fun CollectionScreenLayout(
     collectionName: String,
     state: CollectionState,
-    onItemClick: (FindroidItem) -> Unit,
+    onItemClick: (Item) -> Unit,
     gridState: LazyGridState = rememberLazyGridState(),
     focusPosition: FocusPosition = rememberFocusPosition(row = 0, column = 0),
 ) {
@@ -127,8 +127,7 @@ internal fun CollectionScreenLayout(
                         items(count = section.items.size, key = { i -> section.items[i].id }) { i ->
                             val item = section.items[i]
                             val direction =
-                                if (item is FindroidEpisode) Direction.HORIZONTAL
-                                else Direction.VERTICAL
+                                if (item is Episode) Direction.HORIZONTAL else Direction.VERTICAL
                             ItemCard(
                                 item = item,
                                 direction = direction,

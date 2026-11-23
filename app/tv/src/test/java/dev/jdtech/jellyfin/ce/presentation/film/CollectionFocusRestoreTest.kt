@@ -19,7 +19,7 @@ import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.film.presentation.collection.CollectionState
 import dev.jdtech.jellyfin.models.CollectionSection
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
@@ -36,13 +36,13 @@ import org.robolectric.annotation.Config
 class CollectionFocusRestoreTest {
     @get:Rule val rule = createComposeRule()
 
-    private val movies: List<FindroidItem> =
+    private val movies: List<Item> =
         (0 until 20).map {
             dummyMovie.copy(id = UUID(0, it.toLong()).toString().toItemId(), name = "Movie $it")
         }
 
     private var detailOpen by mutableStateOf(false)
-    private var opened: FindroidItem? = null
+    private var opened: Item? = null
 
     private fun setUpCollection() {
         val sections =
@@ -74,7 +74,7 @@ class CollectionFocusRestoreTest {
         }
     }
 
-    private fun card(item: FindroidItem): SemanticsMatcher =
+    private fun card(item: Item): SemanticsMatcher =
         hasAnyAncestor(hasTestTag(collectionCardTag(item.id))) and isFocusable()
 
     @Test

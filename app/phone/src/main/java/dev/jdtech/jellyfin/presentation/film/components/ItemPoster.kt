@@ -11,10 +11,10 @@ import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
 import dev.jdtech.jellyfin.core.presentation.spoiler.spoilerFreeName
 import dev.jdtech.jellyfin.core.presentation.spoiler.spoilerImage
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidSeason
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Season
 
 enum class Direction {
     HORIZONTAL,
@@ -27,7 +27,7 @@ enum class Direction {
  */
 @Composable
 fun ItemPoster(
-    item: FindroidItem,
+    item: Item,
     direction: Direction,
     modifier: Modifier = Modifier,
     preferThumb: Boolean = false,
@@ -62,7 +62,7 @@ fun ItemPoster(
  * says what the item is, and an episode's own image, a frame from the episode, comes last.
  */
 internal fun posterSources(
-    item: FindroidItem,
+    item: Item,
     direction: Direction,
     preferThumb: Boolean = false,
     hideStill: Boolean = false,
@@ -70,13 +70,13 @@ internal fun posterSources(
     when (direction) {
         Direction.HORIZONTAL ->
             when (item) {
-                is FindroidMovie ->
+                is Movie ->
                     if (preferThumb) {
                         listOf(item.images.thumb, item.images.backdrop, item.images.primary)
                     } else {
                         listOf(item.images.backdrop, item.images.primary)
                     }
-                is FindroidEpisode ->
+                is Episode ->
                     if (preferThumb && hideStill) {
                         listOf(item.images.showThumb, item.images.showBackdrop)
                     } else if (preferThumb) {
@@ -88,8 +88,8 @@ internal fun posterSources(
             }
         Direction.VERTICAL ->
             when (item) {
-                is FindroidEpisode -> listOf(item.images.showPrimary)
-                is FindroidSeason -> listOf(item.images.primary, item.images.showPrimary)
+                is Episode -> listOf(item.images.showPrimary)
+                is Season -> listOf(item.images.primary, item.images.showPrimary)
                 else -> listOf(item.images.primary)
             }
     }

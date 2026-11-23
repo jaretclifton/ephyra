@@ -1,8 +1,8 @@
 package dev.jdtech.jellyfin.film.presentation.search
 
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.repository.ItemsResult
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import kotlin.test.assertEquals
@@ -91,27 +91,24 @@ class SearchViewModelTest {
         advanceUntilIdle()
     }
 
-    private fun repository(): JellyfinRepository =
-        fakeProxy(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
-        ) { _, method, args ->
+    private fun repository(): MediaRepository =
+        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
+            _,
+            method,
+            args ->
             when (method.kotlinName) {
                 "getSearchItems" -> {
                     requests += args!![0] as String
                     ItemsResult(listOf(item()))
                 }
-                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
+                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
             }
         }
-            as JellyfinRepository
+            as MediaRepository
 
-    private fun item(): FindroidItem =
-        fakeProxy(FindroidItem::class.java.classLoader, arrayOf(FindroidItem::class.java)) {
-            _,
-            method,
-            _ ->
-            throw NotImplementedError("FindroidItem.${method.kotlinName}")
+    private fun item(): Item =
+        fakeProxy(Item::class.java.classLoader, arrayOf(Item::class.java)) { _, method, _ ->
+            throw NotImplementedError("Item.${method.kotlinName}")
         }
-            as FindroidItem
+            as Item
 }

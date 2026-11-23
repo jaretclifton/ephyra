@@ -6,12 +6,12 @@ import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.domain.ports.MediaServer
-import dev.jdtech.jellyfin.models.FindroidSourceDto
-import dev.jdtech.jellyfin.models.FindroidSourceType
-import dev.jdtech.jellyfin.models.FindroidTrickplayInfo
+import dev.jdtech.jellyfin.models.ItemSourceEntity
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.ItemTrickplayInfo
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.repository.JellyfinRepository
-import dev.jdtech.jellyfin.repository.JellyfinRepositoryImpl
+import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.MediaRepositoryImpl
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -50,7 +50,7 @@ class TrickplayDownloadTest {
 
     /** 10 x 10 thumbnails to a sheet, 250 thumbnails: sheets 0 and 1 full, sheet 2 half. */
     private val info =
-        FindroidTrickplayInfo(
+        ItemTrickplayInfo(
             width = 320,
             height = 180,
             tileWidth = 10,
@@ -73,11 +73,11 @@ class TrickplayDownloadTest {
             room
                 .getServerDatabaseDao()
                 .insertSource(
-                    FindroidSourceDto(
+                    ItemSourceEntity(
                         id = SOURCE_ID,
                         itemId = itemId,
                         name = "Original",
-                        type = FindroidSourceType.LOCAL,
+                        type = ItemSourceType.LOCAL,
                         path = "/downloads/Movie.mkv.download",
                     )
                 )
@@ -164,13 +164,13 @@ class TrickplayDownloadTest {
         assertEquals(sheet(1), readOffline(sheet))
     }
 
-    private fun download(failing: Set<Int>, info: FindroidTrickplayInfo = this.info) {
+    private fun download(failing: Set<Int>, info: ItemTrickplayInfo = this.info) {
         val tiles = info.tileWidth * info.tileHeight
         val sheetsOnServer = (info.thumbnailCount + tiles - 1) / tiles
         val server =
             fakeProxy(
-                JellyfinRepository::class.java.classLoader,
-                arrayOf(JellyfinRepository::class.java),
+                MediaRepository::class.java.classLoader,
+                arrayOf(MediaRepository::class.java),
             ) { _, method, args ->
                 when (method.kotlinName) {
                     "getTrickplayData" -> {
@@ -181,10 +181,10 @@ class TrickplayDownloadTest {
                         if (index in failing || index >= sheetsOnServer) null
                         else sheet(index).toByteArray()
                     }
-                    else -> throw IllegalStateException("JellyfinRepository.${method.kotlinName}")
+                    else -> throw IllegalStateException("MediaRepository.${method.kotlinName}")
                 }
             }
-                as JellyfinRepository
+                as MediaRepository
         val downloader =
             DownloaderImpl(
                 context,
@@ -215,7 +215,7 @@ class TrickplayDownloadTest {
             }
                 as MediaServer
         val repository =
-            JellyfinRepositoryImpl(
+            MediaRepositoryImpl(
                 context,
                 away,
                 room.getServerDatabaseDao(),

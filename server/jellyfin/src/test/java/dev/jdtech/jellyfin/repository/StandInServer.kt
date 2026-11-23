@@ -32,10 +32,9 @@ import kotlinx.serialization.json.jsonObject
 import org.robolectric.RuntimeEnvironment
 
 /**
- * A stand-in Jellyfin server on a [ServerSocket], for tests that run a real
- * [JellyfinRepositoryImpl] and read what it sent. It records every request and answers each with
- * [answer]: a JSON body with 200, or 204 when [answer] gives `null`. One connection per request
- * (`Connection: close`).
+ * A stand-in Jellyfin server on a [ServerSocket], for tests that run a real [MediaRepositoryImpl]
+ * and read what it sent. It records every request and answers each with [answer]: a JSON body with
+ * 200, or 204 when [answer] gives `null`. One connection per request (`Connection: close`).
  *
  * #771: the primary constructor answers with any status and body ([respond]), and with [concurrent]
  * each connection on a thread of its own, as the contract tests need: the SDK's server discovery
@@ -213,14 +212,14 @@ internal fun StandInServer.repository(
     preferences: AppPreferences = StandInServer.preferences(context),
     /** #769: what the server says it can do; a Jellyfin server can do everything. */
     capabilities: ServerCapabilities = ServerCapabilities.ALL,
-): JellyfinRepositoryImpl {
+): MediaRepositoryImpl {
     val api =
         JellyfinApi(context).apply {
             api.update(baseUrl = baseUrl, accessToken = "token")
             userId = StandInServer.USER_ID.toUuid()
         }
     val jellyfin = JellyfinMediaServer(api, JellyfinDeviceProfiles(DeviceCodecProbe(context)))
-    return JellyfinRepositoryImpl(
+    return MediaRepositoryImpl(
         context,
         object : MediaServer by jellyfin {
             override val capabilities = capabilities

@@ -33,8 +33,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.spoiler.revealOnLongClick
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.presentation.utils.FadeIntoPageHeight
 import dev.jdtech.jellyfin.presentation.utils.Layout
@@ -58,7 +58,7 @@ import dev.jdtech.jellyfin.utils.copyOnLongClick
  */
 @Composable
 fun ItemHeroHeader(
-    item: FindroidItem,
+    item: Item,
     scrollState: ScrollState,
     widthClass: WidthClass,
     title: @Composable ColumnScope.() -> Unit,
@@ -193,7 +193,7 @@ private fun ColumnScope.HeroText(
  * (#618) it stands in for a hidden episode's title, and a press and hold reveals that episode.
  */
 @Composable
-fun HeroTitle(text: String, widthClass: WidthClass, revealing: FindroidItem? = null) {
+fun HeroTitle(text: String, widthClass: WidthClass, revealing: Item? = null) {
     Text(
         text = text,
         modifier =
@@ -272,15 +272,15 @@ private fun heroTitleStyle(widthClass: WidthClass): TextStyle =
     }
 
 /** An episode shows its 16:9 still, 1.6 × the poster width; anything else a 2:3 poster. */
-private fun heroPosterWidth(item: FindroidItem, widthClass: WidthClass): Dp =
-    Layout.posterInHeader(widthClass) * if (item is FindroidEpisode) 1.6f else 1f
+private fun heroPosterWidth(item: Item, widthClass: WidthClass): Dp =
+    Layout.posterInHeader(widthClass) * if (item is Episode) 1.6f else 1f
 
-private fun heroPosterHeight(item: FindroidItem, posterWidth: Dp): Dp =
-    posterWidth / if (item is FindroidEpisode) 1.77f else 0.66f
+private fun heroPosterHeight(item: Item, posterWidth: Dp): Dp =
+    posterWidth / if (item is Episode) 1.77f else 0.66f
 
 @Composable
-private fun HeroPoster(item: FindroidItem, posterWidth: Dp) {
-    if (item is FindroidEpisode) {
+private fun HeroPoster(item: Item, posterWidth: Dp) {
+    if (item is Episode) {
         ItemPoster(
             item = item,
             direction = Direction.HORIZONTAL,

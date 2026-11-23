@@ -13,7 +13,7 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.DeviceCodecs
 import dev.jdtech.jellyfin.domain.ports.DeviceReportSource
 import dev.jdtech.jellyfin.player.ProbedCodecs
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
 import javax.inject.Provider
@@ -52,7 +52,7 @@ constructor(
     private val appPreferences: AppPreferences,
     private val database: ServerDatabaseDao,
     // A Provider, so the repository is only made when the info loads.
-    private val repository: Provider<JellyfinRepository>,
+    private val repository: Provider<MediaRepository>,
     val appVariant: AppVariant,
 ) : ViewModel() {
 

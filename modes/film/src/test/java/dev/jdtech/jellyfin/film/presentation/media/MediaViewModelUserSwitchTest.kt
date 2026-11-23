@@ -1,14 +1,14 @@
 package dev.jdtech.jellyfin.film.presentation.media
 
 import dev.jdtech.jellyfin.models.CollectionType
-import dev.jdtech.jellyfin.models.FindroidCollection
-import dev.jdtech.jellyfin.models.FindroidImages
+import dev.jdtech.jellyfin.models.ItemImages
+import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.ItemsResult
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
@@ -92,26 +92,26 @@ class MediaViewModelUserSwitchTest {
         assertEquals(unknown, unknown.shownTo(bob))
     }
 
-    private fun repository(): JellyfinRepository =
-        fakeProxy(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
-        ) { _, method, _ ->
+    private fun repository(): MediaRepository =
+        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
+            _,
+            method,
+            _ ->
             when (method.kotlinName) {
                 "getCapabilities" -> ServerCapabilities.ALL
                 "getUserId" -> sessionUser
                 "getLibraries" ->
                     ItemsResult(if (sessionUser == bob) bobLibraries else aliceLibraries)
-                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
+                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
             }
         }
-            as JellyfinRepository
+            as MediaRepository
 
     private fun library(name: String) =
-        FindroidCollection(
+        Library(
             id = UUID.randomUUID().toString().toItemId(),
             name = name,
             type = CollectionType.Movies,
-            images = FindroidImages(),
+            images = ItemImages(),
         )
 }

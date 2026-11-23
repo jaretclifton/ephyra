@@ -4,7 +4,7 @@ import android.app.Application
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
 import dev.jdtech.jellyfin.film.presentation.home.HomeCache
 import dev.jdtech.jellyfin.film.presentation.home.HomeState
-import dev.jdtech.jellyfin.models.FindroidEpisode
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.HomeItem
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
@@ -37,7 +37,7 @@ class HomeCacheIdsTest {
         val rows = cache.read("server", USER.toUserId())!!
         val suggestions = rows.suggestions!!
         assertEquals(SECTION.toItemId(), suggestions.id)
-        val episode = suggestions.items.single() as FindroidEpisode
+        val episode = suggestions.items.single() as Episode
         assertEquals(EPISODE.toItemId(), episode.id)
         assertEquals(SHOW.toItemId(), episode.seriesId)
         assertEquals(SEASON.toItemId(), episode.seasonId)

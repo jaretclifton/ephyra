@@ -1,7 +1,7 @@
 package dev.jdtech.jellyfin.player.cast
 
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.player.core.domain.models.Track
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -39,11 +39,11 @@ internal data class CastCustomData(
     val audio: List<CastTrackData> = emptyList(),
 ) {
     /** The source the item plays, as far as the reports and [CastMediaItem] need it. */
-    fun source(): FindroidSource =
-        FindroidSource(
+    fun source(): ItemSource =
+        ItemSource(
             id = mediaSourceId,
             name = "",
-            type = FindroidSourceType.REMOTE,
+            type = ItemSourceType.REMOTE,
             path = "",
             size = 0,
             mediaStreams = emptyList(),
@@ -72,7 +72,7 @@ internal data class CastCustomData(
 
         private val json = Json { ignoreUnknownKeys = true }
 
-        fun of(source: FindroidSource, tracks: CastTracks) =
+        fun of(source: ItemSource, tracks: CastTracks) =
             CastCustomData(
                 mediaSourceId = source.id,
                 playSessionId = source.playSessionId,

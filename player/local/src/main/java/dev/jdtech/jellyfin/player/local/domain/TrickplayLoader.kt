@@ -5,7 +5,7 @@ import android.graphics.BitmapFactory
 import android.util.LruCache
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.player.core.domain.models.TrickplayTileLoader
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -31,7 +31,7 @@ import timber.log.Timber
  * twice that as ARGB_8888, and a JPEG has no alpha to lose.
  */
 class TrickplayLoader(
-    private val repository: JellyfinRepository,
+    private val repository: MediaRepository,
     private val itemId: ItemId,
     private val width: Int,
     private val height: Int,

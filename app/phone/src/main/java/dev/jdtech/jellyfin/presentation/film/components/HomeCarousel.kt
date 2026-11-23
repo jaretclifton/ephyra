@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovies
 import dev.jdtech.jellyfin.film.presentation.home.HomeAction
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.presentation.utils.WidthClass
@@ -92,7 +92,7 @@ private fun carouselPageSize(pages: Int) =
 
 @Composable
 fun HomeCarousel(
-    items: List<FindroidItem>,
+    items: List<Item>,
     itemsPadding: PaddingValues,
     onAction: (HomeAction) -> Unit,
     isParentScrolling: () -> Boolean = { false },

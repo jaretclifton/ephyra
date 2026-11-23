@@ -4,11 +4,11 @@ import android.app.Application
 import android.content.Context
 import android.os.Environment
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidSourceDto
-import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSourceEntity
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -69,11 +69,11 @@ class OrphanSweepTest {
         }
 
     private fun source(file: File) =
-        FindroidSourceDto(
+        ItemSourceEntity(
             id = "source",
             itemId = trackedId,
             name = "Original",
-            type = FindroidSourceType.LOCAL,
+            type = ItemSourceType.LOCAL,
             path = file.absolutePath,
         )
 
@@ -132,7 +132,7 @@ class OrphanSweepTest {
         assertTrue(orphanArtwork.exists())
     }
 
-    private fun database(sources: List<FindroidSourceDto> = emptyList(), failOn: String? = null) =
+    private fun database(sources: List<ItemSourceEntity> = emptyList(), failOn: String? = null) =
         fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
@@ -141,7 +141,7 @@ class OrphanSweepTest {
                 throw IllegalStateException("database cannot be opened")
             when (method.kotlinName) {
                 "getCompletedDownloadSources" -> sources
-                "getActiveDownloadSources" -> emptyList<FindroidSourceDto>()
+                "getActiveDownloadSources" -> emptyList<ItemSourceEntity>()
                 "getMediaStreamsBySourceId" -> emptyList<Any>()
                 "getAllItemIds" -> listOf(trackedId)
                 else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
@@ -152,15 +152,15 @@ class OrphanSweepTest {
     private fun downloader(database: ServerDatabaseDao): DownloaderImpl {
         val repository =
             fakeProxy(
-                JellyfinRepository::class.java.classLoader,
-                arrayOf(JellyfinRepository::class.java),
+                MediaRepository::class.java.classLoader,
+                arrayOf(MediaRepository::class.java),
             ) { _, method, _ ->
                 when (method.kotlinName) {
                     "getUserId" -> UUID.randomUUID().toString().toItemId()
-                    else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
+                    else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
                 }
             }
-                as JellyfinRepository
+                as MediaRepository
         val preferences = context.getSharedPreferences("orphan-sweep-test", Context.MODE_PRIVATE)
         return DownloaderImpl(
             context,

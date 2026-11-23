@@ -3,12 +3,12 @@ package dev.jdtech.jellyfin.film.presentation.library
 import android.content.SharedPreferences
 import androidx.paging.PagingData
 import dev.jdtech.jellyfin.models.CollectionType
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -89,20 +89,20 @@ class LibraryLoadOnceTest {
 
     private fun viewModel() = LibraryViewModel(repository(), appPreferences())
 
-    private fun repository(): JellyfinRepository =
-        fakeProxy(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
-        ) { _, method, args ->
+    private fun repository(): MediaRepository =
+        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
+            _,
+            method,
+            args ->
             when (method.kotlinName) {
                 "getItemsPaging" -> {
                     requests.add(args!![0].asItemIdOrNull())
-                    flowOf(PagingData.empty<FindroidItem>())
+                    flowOf(PagingData.empty<Item>())
                 }
-                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
+                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
             }
         }
-            as JellyfinRepository
+            as MediaRepository
 
     private fun appPreferences(): AppPreferences {
         lateinit var editor: SharedPreferences.Editor

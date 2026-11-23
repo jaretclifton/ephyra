@@ -83,7 +83,7 @@ class TrickplayWidthTest {
                     ),
             )
 
-        val info = item.toFindroidTrickplayInfo()
+        val info = item.toItemTrickplayInfo()
 
         assertEquals(mapOf("a" to 1280, "b" to 320), info?.mapValues { it.value.width })
     }

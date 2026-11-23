@@ -3,8 +3,8 @@ package dev.jdtech.jellyfin.repository
 import android.app.Application
 import android.content.Context
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidSourceDto
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemSourceEntity
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.toItemId
@@ -33,11 +33,11 @@ class UnfinishedDownloadPlaybackTest {
     private val episodeId = "33333333-3333-3333-3333-333333333333".toItemId()
 
     private val partial =
-        FindroidSourceDto(
+        ItemSourceEntity(
             id = "source",
             itemId = episodeId,
             name = "Original",
-            type = FindroidSourceType.LOCAL,
+            type = ItemSourceType.LOCAL,
             path = "/storage/downloads/Show/S01/S01E01 - Episode.ts.download",
             downloadId = 1L,
         )
@@ -72,7 +72,7 @@ class UnfinishedDownloadPlaybackTest {
     fun `online, an unfinished download is not played and the server is asked instead`() =
         runBlocking {
             val repository =
-                JellyfinRepositoryImpl(context, UnansweredServer(userId), database, preferences())
+                MediaRepositoryImpl(context, UnansweredServer(userId), database, preferences())
 
             val result = runCatching {
                 repository.getPlaybackSources(episodeId, LOCAL_PLAYER, null)

@@ -6,7 +6,7 @@ import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.repository.ReloadPolicy
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -70,15 +70,15 @@ class PlaybackReporterTest {
 
         private val unused =
             fakeProxy(
-                JellyfinRepository::class.java.classLoader,
-                arrayOf(JellyfinRepository::class.java),
+                MediaRepository::class.java.classLoader,
+                arrayOf(MediaRepository::class.java),
             ) { _, method, _ ->
                 error("Unexpected call to ${method.kotlinName}")
             }
-                as JellyfinRepository
+                as MediaRepository
 
-        val repository: JellyfinRepository =
-            object : JellyfinRepository by unused {
+        val repository: MediaRepository =
+            object : MediaRepository by unused {
                 override fun setPlaySession(
                     itemId: ItemId,
                     playSessionId: String?,

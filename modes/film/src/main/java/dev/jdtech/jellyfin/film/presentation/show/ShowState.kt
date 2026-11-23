@@ -1,11 +1,11 @@
 package dev.jdtech.jellyfin.film.presentation.show
 
 import dev.jdtech.jellyfin.film.presentation.RelatedItems
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItemPerson
-import dev.jdtech.jellyfin.models.FindroidSeason
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemPerson
+import dev.jdtech.jellyfin.models.Season
+import dev.jdtech.jellyfin.models.Show
 
 data class SeasonDownloadInfo(
     val downloadedCount: Int = 0,
@@ -15,13 +15,13 @@ data class SeasonDownloadInfo(
 )
 
 data class ShowState(
-    val show: FindroidShow? = null,
-    val nextUp: FindroidEpisode? = null,
-    val seasons: List<FindroidSeason> = emptyList(),
+    val show: Show? = null,
+    val nextUp: Episode? = null,
+    val seasons: List<Season> = emptyList(),
     val seasonDownloadInfo: Map<ItemId, SeasonDownloadInfo> = emptyMap(),
-    val actors: List<FindroidItemPerson> = emptyList(),
-    val director: FindroidItemPerson? = null,
-    val writers: List<FindroidItemPerson> = emptyList(),
+    val actors: List<ItemPerson> = emptyList(),
+    val director: ItemPerson? = null,
+    val writers: List<ItemPerson> = emptyList(),
     val hasDownloads: Boolean = false,
     // CE (#141): the TV show page's theme song, null when off or the server has none.
     val themeSongUrl: String? = null,
@@ -42,6 +42,6 @@ data class ShowState(
         get() = seasonDownloadInfo.values.any { it.canDownload }
 
     /** The seasons the season picker of a show download lists. */
-    val downloadableSeasons: List<FindroidSeason>
+    val downloadableSeasons: List<Season>
         get() = seasons.filter { seasonDownloadInfo[it.id]?.canDownload == true }
 }

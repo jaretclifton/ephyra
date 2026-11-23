@@ -3,7 +3,7 @@ package dev.jdtech.jellyfin.server.jellyfin.cast
 import android.app.Application
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.domain.ports.PlaybackRequest
-import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.asString
@@ -71,7 +71,7 @@ class CastPlaybackRequestTest {
         val streams: List<String>,
     )
 
-    private fun FindroidSource.seen() =
+    private fun ItemSource.seen() =
         Seen(
             path = path,
             transcoded = transcoded,

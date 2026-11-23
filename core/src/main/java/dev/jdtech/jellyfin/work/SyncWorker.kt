@@ -12,10 +12,10 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.ServerUserData
 import dev.jdtech.jellyfin.domain.ports.UserDataSyncPort
 import dev.jdtech.jellyfin.domain.ports.UserDataSyncPorts
-import dev.jdtech.jellyfin.models.FindroidUserDataDto
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.ServerType
+import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.serverExceptionOrNull
@@ -190,7 +190,7 @@ constructor(
     private suspend fun keepServerProgress(
         port: UserDataSyncPort,
         userId: UserId,
-        row: FindroidUserDataDto,
+        row: UserDataEntity,
         server: ServerUserData,
         leftPlaying: ItemId?,
     ): Boolean {
@@ -222,7 +222,7 @@ constructor(
     private suspend fun syncUserData(
         port: UserDataSyncPort,
         userId: UserId,
-        items: List<FindroidUserDataDto>,
+        items: List<UserDataEntity>,
     ): SyncOutcome {
         // The item the server still has "playing" for this device: its stop report did not get
         // through. Asked first, so an unreachable server ends the run after one request.
@@ -443,8 +443,8 @@ internal fun afterStatus(status: Int): AfterStatus =
  * that failure decides for itself.
  */
 internal fun needsAnotherRun(
-    sent: List<FindroidUserDataDto>,
-    stillMarked: List<FindroidUserDataDto>,
+    sent: List<UserDataEntity>,
+    stillMarked: List<UserDataEntity>,
 ): Boolean = stillMarked.any { it !in sent }
 
 private const val HTTP_UNAUTHORIZED = 401

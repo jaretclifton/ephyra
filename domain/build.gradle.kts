@@ -3,7 +3,7 @@
 // way.
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    // For FindroidChapter (see below).
+    // For Chapter (see below).
     alias(libs.plugins.kotlin.serialization)
 }
 
@@ -11,7 +11,7 @@ java { toolchain { languageVersion = Versions.JAVA } }
 
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
-    // FindroidChapter is @Serializable: the Room converters in data store the chapters as JSON.
+    // Chapter is @Serializable: the Room converters in data store the chapters as JSON.
     implementation(libs.kotlinx.serialization.json)
     // For the MediaHttpClient port alone. It returns an OkHttpClient, hence `api`: a module that
     // uses the port compiles without declaring OkHttp. A plain JVM library, so R5 allows it.

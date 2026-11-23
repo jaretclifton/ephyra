@@ -25,7 +25,7 @@ import dev.jdtech.jellyfin.ce.ui.components.TV_TEXT_DIALOG_TEXT_TAG
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyPersonDetail
 import dev.jdtech.jellyfin.film.presentation.person.PersonState
-import dev.jdtech.jellyfin.models.FindroidMovie
+import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
@@ -49,7 +49,7 @@ import org.robolectric.shadows.ShadowDialog
 class PersonHeaderTest {
     @get:Rule val rule = createComposeRule()
 
-    private val movies: List<FindroidMovie> =
+    private val movies: List<Movie> =
         (0 until 6).map {
             dummyMovie.copy(id = UUID(0, it.toLong()).toString().toItemId(), name = "Movie $it")
         }

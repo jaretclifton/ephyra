@@ -15,7 +15,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.models.asString
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.util.concurrent.TimeUnit
@@ -88,7 +88,7 @@ constructor(
     @Assisted workerParams: WorkerParameters,
     private val appPreferences: AppPreferences,
     private val serverSession: ServerSession,
-    private val repositoryProvider: Provider<JellyfinRepository>,
+    private val repositoryProvider: Provider<MediaRepository>,
     private val publisher: WatchNextPublisher,
     private val store: WatchNextStore,
 ) : CoroutineWorker(context, workerParams) {

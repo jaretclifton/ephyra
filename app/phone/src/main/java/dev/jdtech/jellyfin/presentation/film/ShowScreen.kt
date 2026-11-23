@@ -52,10 +52,10 @@ import dev.jdtech.jellyfin.film.presentation.show.ShowAction
 import dev.jdtech.jellyfin.film.presentation.show.ShowEvent
 import dev.jdtech.jellyfin.film.presentation.show.ShowState
 import dev.jdtech.jellyfin.film.presentation.show.ShowViewModel
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.cast.LocalCastPlayback
 import dev.jdtech.jellyfin.presentation.film.components.ActorsRow
@@ -95,7 +95,7 @@ fun ShowScreen(
     showId: ItemId,
     navigateBack: () -> Unit,
     navigateHome: () -> Unit,
-    navigateToItem: (item: FindroidItem) -> Unit,
+    navigateToItem: (item: Item) -> Unit,
     navigateToPerson: (personId: ItemId) -> Unit,
     downloadsOnly: Boolean = false,
     viewModel: ShowViewModel = hiltViewModel(),
@@ -483,7 +483,7 @@ private fun ShowScreenLayout(
 
 /** CE (#332): the show's outside links, below the info text. */
 @Composable
-internal fun ShowLinks(show: FindroidShow, onAction: (ShowAction) -> Unit) {
+internal fun ShowLinks(show: Show, onAction: (ShowAction) -> Unit) {
     if (show.externalLinks.isEmpty()) return
     Spacer(Modifier.height(MaterialTheme.spacings.medium))
     ExternalLinksRow(show.externalLinks) { url -> onAction(ShowAction.OpenExternalLink(url)) }

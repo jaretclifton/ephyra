@@ -29,13 +29,13 @@ import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
 import dev.jdtech.jellyfin.core.presentation.spoiler.spoilerFreeName
 import dev.jdtech.jellyfin.core.presentation.spoiler.spoilerImage
-import dev.jdtech.jellyfin.models.FindroidBoxSet
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidFolder
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidSeason
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.BoxSet
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Folder
+import dev.jdtech.jellyfin.models.Item
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Season
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.presentation.theme.spacings
 
 enum class Direction {
@@ -45,7 +45,7 @@ enum class Direction {
 
 @Composable
 fun ItemPoster(
-    item: FindroidItem,
+    item: Item,
     direction: Direction,
     modifier: Modifier = Modifier,
     // CE (#608): see posterSources.
@@ -77,7 +77,7 @@ fun ItemPoster(
                 // A vertical episode poster is the show's, a horizontal one the episode's own,
                 // unless the card prefers the show's thumb.
                 title =
-                    if (item is FindroidEpisode && (direction == Direction.VERTICAL || preferThumb))
+                    if (item is Episode && (direction == Direction.VERTICAL || preferThumb))
                         item.seriesName
                     else spoilerFreeName(item, hidden),
                 modifier = Modifier.fillMaxSize(),
@@ -110,7 +110,7 @@ fun ItemPoster(
  * from the episode, comes last. The Continue Watching and Next Up rows ask for it.
  */
 internal fun posterSources(
-    item: FindroidItem,
+    item: Item,
     direction: Direction,
     preferThumb: Boolean = false,
     hideStill: Boolean = false,
@@ -118,10 +118,10 @@ internal fun posterSources(
     when (direction) {
         Direction.HORIZONTAL ->
             when (item) {
-                is FindroidMovie ->
+                is Movie ->
                     if (preferThumb) listOf(item.images.thumb, item.images.backdrop)
                     else listOf(item.images.backdrop)
-                is FindroidEpisode ->
+                is Episode ->
                     if (preferThumb && hideStill) {
                         listOf(item.images.showThumb, item.images.showBackdrop)
                     } else if (preferThumb) {
@@ -133,21 +133,21 @@ internal fun posterSources(
             }
         Direction.VERTICAL ->
             when (item) {
-                is FindroidEpisode -> listOf(item.images.showPrimary)
-                is FindroidSeason -> listOf(item.images.primary, item.images.showPrimary)
+                is Episode -> listOf(item.images.showPrimary)
+                is Season -> listOf(item.images.primary, item.images.showPrimary)
                 else -> listOf(item.images.primary)
             }
     }.filterNotNull()
 
 @Composable
-private fun PosterPlaceholder(item: FindroidItem, title: String, modifier: Modifier = Modifier) {
+private fun PosterPlaceholder(item: Item, title: String, modifier: Modifier = Modifier) {
     val icon =
         when (item) {
-            is FindroidShow,
-            is FindroidSeason,
-            is FindroidEpisode -> CoreR.drawable.ic_tv
-            is FindroidFolder,
-            is FindroidBoxSet -> CoreR.drawable.ic_library
+            is Show,
+            is Season,
+            is Episode -> CoreR.drawable.ic_tv
+            is Folder,
+            is BoxSet -> CoreR.drawable.ic_library
             else -> CoreR.drawable.ic_film
         }
     Column(

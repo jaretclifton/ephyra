@@ -6,9 +6,9 @@ import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidMovieDto
-import dev.jdtech.jellyfin.models.FindroidUserDataDto
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.MovieEntity
+import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
 import java.io.IOException
@@ -48,7 +48,7 @@ class UserDataReportTest {
 
     private suspend fun storeMovie(positionTicks: Long = 0L, toBeSynced: Boolean = false) {
         database.insertMovie(
-            FindroidMovieDto(
+            MovieEntity(
                 id = movieId,
                 serverId = SERVER,
                 name = "Movie",
@@ -65,7 +65,7 @@ class UserDataReportTest {
             )
         )
         database.insertUserData(
-            FindroidUserDataDto(
+            UserDataEntity(
                 userId = userId,
                 itemId = movieId,
                 played = false,
@@ -95,7 +95,7 @@ class UserDataReportTest {
     @Test
     fun `the change is written and marked before the server is asked`() = runBlocking {
         storeMovie()
-        var seen: FindroidUserDataDto? = null
+        var seen: UserDataEntity? = null
 
         report(600_000_000L) { seen = row() }
 

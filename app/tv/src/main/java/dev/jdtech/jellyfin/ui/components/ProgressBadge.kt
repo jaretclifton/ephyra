@@ -20,12 +20,12 @@ import androidx.tv.material3.Text
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyShow
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 
 @Composable
-fun ProgressBadge(item: FindroidItem, modifier: Modifier = Modifier) {
+fun ProgressBadge(item: Item, modifier: Modifier = Modifier) {
     if (!(!item.played && item.unplayedItemCount == null)) {
         Box(
             modifier =

@@ -2,8 +2,8 @@ package dev.jdtech.jellyfin.player.local.domain
 
 import android.content.Context
 import android.content.pm.ApplicationInfo
-import dev.jdtech.jellyfin.models.FindroidSegment
-import dev.jdtech.jellyfin.models.FindroidSegmentType
+import dev.jdtech.jellyfin.models.Segment
+import dev.jdtech.jellyfin.models.SegmentType
 import java.io.File
 import timber.log.Timber
 
@@ -25,7 +25,7 @@ object DebugSegments {
     private const val FILE_NAME = "fake_segments.txt"
 
     /** The fake segments, or null when there are none or this isn't a debuggable build. */
-    fun read(context: Context): List<FindroidSegment>? {
+    fun read(context: Context): List<Segment>? {
         if (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0) return null
         val file = File(context.filesDir, FILE_NAME)
         if (!file.isFile) return null
@@ -38,15 +38,15 @@ object DebugSegments {
     }
 
     /** `TYPE,startSeconds,endSeconds` per line; blank lines and lines starting with # skipped. */
-    fun parse(text: String): List<FindroidSegment> =
+    fun parse(text: String): List<Segment> =
         text
             .lineSequence()
             .map { it.trim() }
             .filter { it.isNotEmpty() && !it.startsWith("#") }
             .map { line ->
                 val (type, start, end) = line.split(",").map { it.trim() }
-                FindroidSegment(
-                    type = FindroidSegmentType.valueOf(type.uppercase()),
+                Segment(
+                    type = SegmentType.valueOf(type.uppercase()),
                     startTicks = start.toLong() * 1000L,
                     endTicks = end.toLong() * 1000L,
                 )

@@ -1,12 +1,12 @@
 package dev.jdtech.jellyfin.server.jellyfin.mappers
 
-import dev.jdtech.jellyfin.models.FindroidSeason
+import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.server.jellyfin.toItemId
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.PlayAccess
 
-internal fun BaseItemDto.toFindroidSeason(baseUrl: String): FindroidSeason {
-    return FindroidSeason(
+internal fun BaseItemDto.toSeason(baseUrl: String): Season {
+    return Season(
         id = id.toItemId(),
         name = name.orEmpty(),
         originalTitle = originalTitle,
@@ -21,6 +21,6 @@ internal fun BaseItemDto.toFindroidSeason(baseUrl: String): FindroidSeason {
         episodes = emptyList(),
         seriesId = seriesId!!.toItemId(),
         seriesName = seriesName.orEmpty(),
-        images = toFindroidImages(baseUrl),
+        images = toItemImages(baseUrl),
     )
 }

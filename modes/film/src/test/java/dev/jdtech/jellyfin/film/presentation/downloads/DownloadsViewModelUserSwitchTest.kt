@@ -7,16 +7,16 @@ import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.CollectionSection
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidSourceDto
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSourceEntity
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -81,7 +81,7 @@ class DownloadsViewModelUserSwitchTest {
         // The screen's first ON_RESUME, which leaves the load to the ViewModel's own.
         viewModel.onScreenResumed()
         val first = withTimeout(5_000) { viewModel.state.first { it.sections.isNotEmpty() } }
-        assertEquals(listOf<FindroidItem>(aliceMovie), items(first))
+        assertEquals(listOf<Item>(aliceMovie), items(first))
 
         // Home's profile sheet, a login or the Users screen: the client acts for Bob now.
         sessionUser = bob
@@ -97,7 +97,7 @@ class DownloadsViewModelUserSwitchTest {
             withTimeout(5_000) {
                 viewModel.state.first { it.userId == bob && it.sections.isNotEmpty() }
             }
-        assertEquals(listOf<FindroidItem>(bobMovie), items(after))
+        assertEquals(listOf<Item>(bobMovie), items(after))
 
         // The load ends with the storage walk, which comes back on Dispatchers.Main: wait for
         // it before tearDown resets Main, or it fails in the next test. Without a real Context
@@ -112,7 +112,7 @@ class DownloadsViewModelUserSwitchTest {
         val viewModel = viewModel()
         viewModel.onScreenResumed()
         withTimeout(5_000) { viewModel.state.first { it.error != null } }
-        assertEquals(listOf<FindroidItem>(aliceMovie), items(viewModel.state.value))
+        assertEquals(listOf<Item>(aliceMovie), items(viewModel.state.value))
 
         // The session is cleared (token revoked, current user removed), and a load runs in that
         // gap, such as the queue's reload when a download finishes. It fails without a user.
@@ -158,8 +158,7 @@ class DownloadsViewModelUserSwitchTest {
         assertEquals(unknown, unknown.shownTo(bob))
     }
 
-    private fun items(state: DownloadsState): List<FindroidItem> =
-        state.sections.flatMap { it.items }
+    private fun items(state: DownloadsState): List<Item> = state.sections.flatMap { it.items }
 
     private fun viewModel(): DownloadsViewModel {
         val repository = repository()
@@ -183,11 +182,11 @@ class DownloadsViewModelUserSwitchTest {
         )
     }
 
-    private fun repository(): JellyfinRepository =
-        fakeProxy(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
-        ) { _, method, _ ->
+    private fun repository(): MediaRepository =
+        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
+            _,
+            method,
+            _ ->
             when (method.kotlinName) {
                 "getCapabilities" -> ServerCapabilities.ALL
                 "getUserId" -> sessionUser ?: throw IllegalStateException("No user")
@@ -201,10 +200,10 @@ class DownloadsViewModelUserSwitchTest {
                     } else {
                         listOf(aliceMovie)
                     }
-                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
+                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
             }
         }
-            as JellyfinRepository
+            as MediaRepository
 
     private fun database(): ServerDatabaseDao =
         fakeProxy(
@@ -217,11 +216,11 @@ class DownloadsViewModelUserSwitchTest {
                 // A finished download of every item asked for.
                 "getSourcesForItems" ->
                     (args!![0] as List<*>).map { id ->
-                        FindroidSourceDto(
+                        ItemSourceEntity(
                             id = "source-$id",
                             itemId = id as ItemId,
                             name = "source",
-                            type = FindroidSourceType.LOCAL,
+                            type = ItemSourceType.LOCAL,
                             path = "/nowhere/$id.mkv",
                         )
                     }

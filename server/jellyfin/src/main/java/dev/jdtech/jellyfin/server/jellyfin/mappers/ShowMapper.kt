@@ -1,13 +1,13 @@
 package dev.jdtech.jellyfin.server.jellyfin.mappers
 
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.firstTagline
 import dev.jdtech.jellyfin.server.jellyfin.toItemId
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.PlayAccess
 
-internal fun BaseItemDto.toFindroidShow(baseUrl: String): FindroidShow {
-    return FindroidShow(
+internal fun BaseItemDto.toShow(baseUrl: String): Show {
+    return Show(
         id = id.toItemId(),
         name = name.orEmpty(),
         originalTitle = originalTitle,
@@ -20,7 +20,7 @@ internal fun BaseItemDto.toFindroidShow(baseUrl: String): FindroidShow {
         sources = emptyList(),
         seasons = emptyList(),
         genres = genres ?: emptyList(),
-        people = people?.map { it.toFindroidPerson(baseUrl) } ?: emptyList(),
+        people = people?.map { it.toPerson(baseUrl) } ?: emptyList(),
         runtimeTicks = runTimeTicks ?: 0,
         communityRating = communityRating,
         officialRating = officialRating,
@@ -28,7 +28,7 @@ internal fun BaseItemDto.toFindroidShow(baseUrl: String): FindroidShow {
         productionYear = productionYear,
         endDate = endDate,
         trailer = remoteTrailers?.getOrNull(0)?.url,
-        trailers = remoteTrailers.toFindroidTrailers(),
+        trailers = remoteTrailers.toTrailers(),
         tagline = taglines.firstTagline(),
         criticRating = criticRating,
         studios = studioNames(),
@@ -37,6 +37,6 @@ internal fun BaseItemDto.toFindroidShow(baseUrl: String): FindroidShow {
         airTime = airTime?.takeIf { it.isNotBlank() }?.trim(),
         localTrailerCount = localTrailerCount ?: 0,
         specialFeatureCount = specialFeatureCount,
-        images = toFindroidImages(baseUrl),
+        images = toItemImages(baseUrl),
     )
 }

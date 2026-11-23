@@ -27,19 +27,19 @@ import dev.jdtech.jellyfin.core.R
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidSeason
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Season
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 
 @Composable
 fun ItemCard(
-    item: FindroidItem,
+    item: Item,
     direction: Direction,
-    onClick: (FindroidItem) -> Unit,
+    onClick: (Item) -> Unit,
     modifier: Modifier = Modifier,
     showSeriesName: Boolean = false,
     showYear: Boolean = false,
@@ -100,13 +100,13 @@ fun ItemCard(
         Spacer(modifier = Modifier.height(MaterialTheme.spacings.small))
         val title =
             when (item) {
-                is FindroidEpisode -> item.seriesName
-                is FindroidSeason -> if (showSeriesName) item.seriesName else item.name
+                is Episode -> item.seriesName
+                is Season -> if (showSeriesName) item.seriesName else item.name
                 else -> item.name
             }
         val subtitle =
             when (item) {
-                is FindroidEpisode ->
+                is Episode ->
                     if (hidden) {
                         stringResource(
                             id = R.string.season_episode_number,
@@ -121,10 +121,10 @@ fun ItemCard(
                             item.name,
                         )
                     }
-                is FindroidSeason -> if (showSeriesName) item.name else null
+                is Season -> if (showSeriesName) item.name else null
                 // CE (#135): the year below the title, a range for a show.
-                is FindroidMovie -> if (showYear) item.productionYear?.toString() else null
-                is FindroidShow -> if (showYear) showYears(item) else null
+                is Movie -> if (showYear) item.productionYear?.toString() else null
+                is Show -> if (showYear) showYears(item) else null
                 else -> null
             }
         Text(
@@ -147,7 +147,7 @@ fun ItemCard(
 
 /** `2019`, `2019 – 2023`, or `2019 – present` while the show is still running. */
 @Composable
-private fun showYears(show: FindroidShow): String? {
+private fun showYears(show: Show): String? {
     val start = show.productionYear ?: return null
     val end = show.endDate?.year
     return when {

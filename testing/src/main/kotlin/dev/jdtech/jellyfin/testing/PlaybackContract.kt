@@ -3,8 +3,8 @@ package dev.jdtech.jellyfin.testing
 import dev.jdtech.jellyfin.domain.ports.PlaybackPort
 import dev.jdtech.jellyfin.domain.ports.PlaybackReport
 import dev.jdtech.jellyfin.domain.ports.PlaybackRequest
-import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
@@ -36,7 +36,7 @@ abstract class PlaybackContract : MediaServerContract() {
                 .sources(PlaybackRequest(library.movieWithResume.id, player, includePath = true))
 
         val source = sources.single()
-        assertEquals(FindroidSourceType.REMOTE, source.type)
+        assertEquals(ItemSourceType.REMOTE, source.type)
         assertTrue(source.path.isNotBlank(), "no URL: $source")
         assertFalse(source.transcoded)
         assertNull(source.playSessionId)
@@ -86,7 +86,7 @@ abstract class PlaybackContract : MediaServerContract() {
     fun `audioStreamIndex without mediaSourceId is ignored`() = runTest {
         val playback = server().playback
         val id = library.movieWithExternalSubtitle.id
-        fun List<dev.jdtech.jellyfin.models.FindroidSource>.decision() = map {
+        fun List<dev.jdtech.jellyfin.models.ItemSource>.decision() = map {
             Triple(it.id, it.transcoded, it.defaultAudioStreamIndex)
         }
 

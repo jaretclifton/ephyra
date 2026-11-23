@@ -22,12 +22,12 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import dev.jdtech.jellyfin.core.R as CoreR
-import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.presentation.theme.spacings
 
 @Composable
 fun VersionDialog(
-    versions: List<FindroidSource>,
+    versions: List<ItemSource>,
     onSelect: (mediaSourceId: String) -> Unit,
     onDismiss: () -> Unit,
 ) {

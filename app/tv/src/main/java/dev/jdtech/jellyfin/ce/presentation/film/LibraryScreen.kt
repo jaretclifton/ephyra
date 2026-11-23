@@ -73,13 +73,13 @@ import dev.jdtech.jellyfin.film.presentation.library.LetterIndex
 import dev.jdtech.jellyfin.film.presentation.library.LibraryAction
 import dev.jdtech.jellyfin.film.presentation.library.LibraryState
 import dev.jdtech.jellyfin.film.presentation.library.LibraryViewModel
+import dev.jdtech.jellyfin.models.BoxSet
 import dev.jdtech.jellyfin.models.CollectionType
-import dev.jdtech.jellyfin.models.FindroidBoxSet
-import dev.jdtech.jellyfin.models.FindroidFolder
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.Folder
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
@@ -123,11 +123,11 @@ fun LibraryScreen(
             when (action) {
                 is LibraryAction.OnItemClick -> {
                     when (action.item) {
-                        is FindroidMovie -> navigateToMovie(action.item.id)
-                        is FindroidShow -> navigateToShow(action.item.id)
-                        is FindroidFolder ->
+                        is Movie -> navigateToMovie(action.item.id)
+                        is Show -> navigateToShow(action.item.id)
+                        is Folder ->
                             navigateToLibrary(action.item.id, action.item.name, libraryType)
-                        is FindroidBoxSet -> navigateToCollection(action.item.id, action.item.name)
+                        is BoxSet -> navigateToCollection(action.item.id, action.item.name)
                     }
                 }
                 else -> Unit
@@ -356,7 +356,7 @@ private val LETTER_BAR_WIDTH = 32.dp
 /** About two seconds at 60 fps, for the page of a jump to come in on a slow box. */
 private const val JUMP_FOCUS_FRAMES = 120
 
-private fun LazyPagingItems<FindroidItem>.peekId(index: Int): String? = peek(index)?.id?.asString()
+private fun LazyPagingItems<Item>.peekId(index: Int): String? = peek(index)?.id?.asString()
 
 /** Scrolls only when [index] isn't on screen, so a return keeps the old scroll position. */
 private suspend fun LazyGridState.scrollIntoView(index: Int) {
@@ -499,7 +499,7 @@ private fun ItemCardSkeleton(modifier: Modifier = Modifier) {
 @Preview(device = "id:tv_1080p")
 @Composable
 private fun LibraryScreenLayoutPreview() {
-    val items: Flow<PagingData<FindroidItem>> = flowOf(PagingData.from(dummyMovies))
+    val items: Flow<PagingData<Item>> = flowOf(PagingData.from(dummyMovies))
     FindroidTheme {
         LibraryScreenLayout(
             libraryName = "Movies",

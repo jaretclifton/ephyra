@@ -23,9 +23,9 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import dev.jdtech.jellyfin.core.presentation.ephyra.backdropCrossfadeMillis
 import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidSeason
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
+import dev.jdtech.jellyfin.models.Season
 
 /**
  * CE (#433): the artwork behind an item's header and its Suggestions card. Without a backdrop the
@@ -68,19 +68,19 @@ enum class ArtworkPlacement {
  * show's backdrop or no artwork.
  */
 fun artworkSources(
-    item: FindroidItem,
+    item: Item,
     placement: ArtworkPlacement,
     canBlur: Boolean = HeroArtwork.canBlur,
     episodeImageFirst: Boolean = true,
     hideStill: Boolean = false,
 ): List<ArtworkSource> {
     val images = item.images
-    if (item is FindroidEpisode && hideStill) {
+    if (item is Episode && hideStill) {
         return listOfNotNull(images.showBackdrop).map { ArtworkSource(it) }
     }
     val backdrops =
         when (item) {
-            is FindroidEpisode ->
+            is Episode ->
                 when (placement) {
                     // The hero shows the still beside the text, so the show's backdrop goes behind.
                     ArtworkPlacement.Hero -> listOf(images.showBackdrop, images.primary)
@@ -92,13 +92,13 @@ fun artworkSources(
                         }
                     ArtworkPlacement.Carousel -> listOf(images.primary, images.showBackdrop)
                 }
-            is FindroidSeason -> listOf(images.backdrop, images.showBackdrop)
+            is Season -> listOf(images.backdrop, images.showBackdrop)
             else -> listOf(images.backdrop)
         }
     val standIns =
         when {
-            !canBlur || item is FindroidEpisode -> emptyList()
-            item is FindroidSeason -> listOf(images.primary, images.showPrimary)
+            !canBlur || item is Episode -> emptyList()
+            item is Season -> listOf(images.primary, images.showPrimary)
             else -> listOf(images.primary)
         }
     val seen = mutableSetOf<String>()
@@ -131,7 +131,7 @@ class ArtworkState internal constructor(internal val sources: List<ArtworkSource
 /** The artwork of [item] at [placement]; none while there is no item (loading, an error). */
 @Composable
 fun rememberArtworkState(
-    item: FindroidItem?,
+    item: Item?,
     placement: ArtworkPlacement,
     episodeImageFirst: Boolean = true,
 ): ArtworkState {

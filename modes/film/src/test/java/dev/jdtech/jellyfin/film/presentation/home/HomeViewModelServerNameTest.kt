@@ -4,7 +4,7 @@ import android.content.SharedPreferences
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerInfo
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -89,11 +89,11 @@ class HomeViewModelServerNameTest {
 
     private fun info(id: String, name: String) = ServerInfo(id, name, null, null)
 
-    private fun repository(): JellyfinRepository =
-        fakeProxy(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
-        ) { _, method, _ ->
+    private fun repository(): MediaRepository =
+        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
+            _,
+            method,
+            _ ->
             when (method.kotlinName) {
                 "getServerInfo" -> systemInfo()
                 "refreshCurrentUserImage" -> Unit
@@ -101,10 +101,10 @@ class HomeViewModelServerNameTest {
                 "getResumeItems",
                 "getNextUp",
                 "getUserViews" -> emptyList<Any>()
-                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
+                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
             }
         }
-            as JellyfinRepository
+            as MediaRepository
 
     private fun database(): ServerDatabaseDao =
         fakeProxy(

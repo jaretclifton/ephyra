@@ -22,7 +22,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.film.presentation.collection.CollectionState
 import dev.jdtech.jellyfin.models.CollectionSection
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
@@ -39,17 +39,17 @@ import org.robolectric.annotation.Config
 class FavoritesFocusRestoreTest {
     @get:Rule val rule = createComposeRule()
 
-    private val movies: List<FindroidItem> =
+    private val movies: List<Item> =
         (0 until 5).map {
             dummyMovie.copy(id = UUID(0, it.toLong()).toString().toItemId(), name = "Movie $it")
         }
-    private val episodes: List<FindroidItem> =
+    private val episodes: List<Item> =
         (0 until 3).map {
             dummyEpisode.copy(id = UUID(1, it.toLong()).toString().toItemId(), name = "Episode $it")
         }
 
     private var detailOpen by mutableStateOf(false)
-    private var opened: FindroidItem? = null
+    private var opened: Item? = null
 
     private fun setUpFavorites(state: CollectionState) {
         rule.setContent {
@@ -73,7 +73,7 @@ class FavoritesFocusRestoreTest {
         }
     }
 
-    private fun card(item: FindroidItem): SemanticsMatcher =
+    private fun card(item: Item): SemanticsMatcher =
         hasAnyAncestor(hasTestTag(favoritesCardTag(item.id))) and isFocusable()
 
     @Test

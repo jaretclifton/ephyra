@@ -1,24 +1,24 @@
 package dev.jdtech.jellyfin.testing
 
+import dev.jdtech.jellyfin.models.BoxSet
 import dev.jdtech.jellyfin.models.CollectionType
-import dev.jdtech.jellyfin.models.FindroidBoxSet
-import dev.jdtech.jellyfin.models.FindroidCollection
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMediaStream
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidPerson
-import dev.jdtech.jellyfin.models.FindroidSeason
-import dev.jdtech.jellyfin.models.FindroidSegment
-import dev.jdtech.jellyfin.models.FindroidSegmentType
-import dev.jdtech.jellyfin.models.FindroidShow
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
-import dev.jdtech.jellyfin.models.FindroidTrickplayInfo
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemImages
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.ItemTrickplayInfo
+import dev.jdtech.jellyfin.models.Library
+import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Person
+import dev.jdtech.jellyfin.models.Season
+import dev.jdtech.jellyfin.models.Segment
+import dev.jdtech.jellyfin.models.SegmentType
 import dev.jdtech.jellyfin.models.ServerInfo
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.SubtitleDeliveryMethod
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
@@ -86,20 +86,10 @@ object ContractLibrary : FakeLibrary {
     private const val MINUTE = 600_000_000L
 
     val moviesLibrary =
-        FindroidCollection(
-            id = id(11),
-            name = "Movies",
-            type = CollectionType.Movies,
-            images = FindroidImages(),
-        )
+        Library(id = id(11), name = "Movies", type = CollectionType.Movies, images = ItemImages())
 
     val showsLibrary =
-        FindroidCollection(
-            id = id(12),
-            name = "Shows",
-            type = CollectionType.TvShows,
-            images = FindroidImages(),
-        )
+        Library(id = id(12), name = "Shows", type = CollectionType.TvShows, images = ItemImages())
 
     /** Long Movie: twelve minutes, resumed at two (20 %). */
     val movieWithResume =
@@ -159,7 +149,7 @@ object ContractLibrary : FakeLibrary {
 
     /** Test Show: Specials, two seasons with episodes and an empty Season 3. S01E01 is played. */
     val series =
-        FindroidShow(
+        Show(
             id = id(201),
             name = "Test Show",
             originalTitle = null,
@@ -180,7 +170,7 @@ object ContractLibrary : FakeLibrary {
             productionYear = null,
             endDate = null,
             trailer = null,
-            images = FindroidImages(),
+            images = ItemImages(),
         )
 
     val specials = season(id(210), "Specials", 0)
@@ -199,32 +189,25 @@ object ContractLibrary : FakeLibrary {
     val season2Episodes = (1..2).map { n -> episode(id(320 + n), season2, n, "Episode 0$n") }
 
     /** The first unplayed episode after the played one. */
-    val nextUp: FindroidEpisode = season1Episodes[1]
+    val nextUp: Episode = season1Episodes[1]
 
-    val episodeWithSegments: FindroidEpisode = season1Episodes[1]
+    val episodeWithSegments: Episode = season1Episodes[1]
 
-    /** In milliseconds, as `FindroidSegment` keeps them. */
-    val introOfEpisodeWithSegments = FindroidSegment(FindroidSegmentType.INTRO, 0L, 30_000L)
+    /** In milliseconds, as `Segment` keeps them. */
+    val introOfEpisodeWithSegments = Segment(SegmentType.INTRO, 0L, 30_000L)
 
-    val boxSet =
-        FindroidBoxSet(id = id(501), name = "Contract Collection", images = FindroidImages())
+    val boxSet = BoxSet(id = id(501), name = "Contract Collection", images = ItemImages())
 
-    val person =
-        FindroidPerson(
-            id = id(401),
-            name = "Bryan Cranston",
-            overview = "",
-            images = FindroidImages(),
-        )
+    val person = Person(id = id(401), name = "Bryan Cranston", overview = "", images = ItemImages())
 
     val movies =
         listOf(movieWithResume, favoriteMovie, movieWithTwoVersions, movieWithExternalSubtitle)
 
-    val episodes: List<FindroidEpisode> = listOf(special) + season1Episodes + season2Episodes
+    val episodes: List<Episode> = listOf(special) + season1Episodes + season2Episodes
 
     override val libraries = listOf(moviesLibrary, showsLibrary)
 
-    override val items: List<FindroidItem> = movies + series + seasons + episodes + boxSet
+    override val items: List<Item> = movies + series + seasons + episodes + boxSet
 
     override val children =
         mapOf(
@@ -256,7 +239,7 @@ object ContractLibrary : FakeLibrary {
         favorite: Boolean = false,
         bitrate: Int? = null,
     ) =
-        FindroidMovie(
+        Movie(
             id = id,
             name = name,
             originalTitle = null,
@@ -277,13 +260,13 @@ object ContractLibrary : FakeLibrary {
             productionYear = null,
             endDate = null,
             trailer = null,
-            images = FindroidImages(),
+            images = ItemImages(),
             chapters = emptyList(),
             trickplayInfo = trickplay(id),
         )
 
     private fun season(id: ItemId, name: String, index: Int) =
-        FindroidSeason(
+        Season(
             id = id,
             name = name,
             seriesId = series.id,
@@ -298,19 +281,19 @@ object ContractLibrary : FakeLibrary {
             canPlay = true,
             canDownload = false,
             unplayedItemCount = null,
-            images = FindroidImages(),
+            images = ItemImages(),
         )
 
     private fun episode(
         id: ItemId,
-        season: FindroidSeason,
+        season: Season,
         index: Int,
         title: String,
         played: Boolean = false,
         runtimeTicks: Long = 900_230_000L,
-    ): FindroidEpisode {
+    ): Episode {
         val name = "Test Show - S%02dE%02d - %s".format(season.indexNumber, index, title)
-        return FindroidEpisode(
+        return Episode(
             id = id,
             name = name,
             originalTitle = null,
@@ -332,17 +315,17 @@ object ContractLibrary : FakeLibrary {
             seasonName = season.name,
             communityRating = null,
             people = emptyList(),
-            images = FindroidImages(),
+            images = ItemImages(),
             chapters = emptyList(),
             trickplayInfo = trickplay(id),
         )
     }
 
     private fun source(id: String, name: String, bitrate: Int?) =
-        FindroidSource(
+        ItemSource(
             id = id,
             name = name,
-            type = FindroidSourceType.REMOTE,
+            type = ItemSourceType.REMOTE,
             path = "",
             size = 0L,
             mediaStreams =
@@ -355,7 +338,7 @@ object ContractLibrary : FakeLibrary {
         )
 
     private fun stream(type: MediaStreamType, codec: String, index: Int, external: Boolean) =
-        FindroidMediaStream(
+        MediaStream(
             title = "",
             displayTitle = null,
             language = "",
@@ -375,5 +358,5 @@ object ContractLibrary : FakeLibrary {
 
     /** The test server makes trickplay images 320 wide, ten seconds apart. */
     private fun trickplay(id: ItemId) =
-        mapOf(id.toN() to FindroidTrickplayInfo(320, 180, 10, 10, 9, 10_000, 892))
+        mapOf(id.toN() to ItemTrickplayInfo(320, 180, 10, 10, 9, 10_000, 892))
 }

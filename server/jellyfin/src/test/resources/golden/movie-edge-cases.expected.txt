@@ -1,17 +1,17 @@
-FindroidMovie(
+Movie(
   id = aaaaaaaa-0000-0000-0000-000000000001
   name = "The Test Movie"
   originalTitle = "Le Film de Test"
   overview = "A test movie that exercises every mapper."
   sources = [
-    - FindroidSource(
+    - ItemSource(
         id = "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a1"
         name = "The Test Movie (1080p)"
         type = REMOTE
         path = ""
         size = 4294967296
         mediaStreams = [
-          - FindroidMediaStream(
+          - MediaStream(
               title = ""
               displayTitle = "1080p HEVC HDR10"
               language = ""
@@ -36,7 +36,7 @@ FindroidMovie(
               isDefault = true
               isHearingImpaired = false
             )
-          - FindroidMediaStream(
+          - MediaStream(
               title = ""
               displayTitle = "English - EAC3 - 5.1 - Default"
               language = "eng"
@@ -61,7 +61,7 @@ FindroidMovie(
               isDefault = true
               isHearingImpaired = false
             )
-          - FindroidMediaStream(
+          - MediaStream(
               title = "Full"
               displayTitle = "English - Full - SUBRIP"
               language = "eng"
@@ -86,7 +86,7 @@ FindroidMovie(
               isDefault = false
               isHearingImpaired = false
             )
-          - FindroidMediaStream(
+          - MediaStream(
               title = ""
               displayTitle = "Dutch - SRT - External"
               language = "nld"
@@ -120,7 +120,7 @@ FindroidMovie(
         playSessionId = null
         defaultSubtitleStreamIndex = null
       )
-    - FindroidSource(
+    - ItemSource(
         id = "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a2"
         name = "The Test Movie (4K, transcoded)"
         type = REMOTE
@@ -144,22 +144,22 @@ FindroidMovie(
   playbackPositionTicks = 18000000000
   premiereDate = 2021-05-14T00:00
   people = [
-    - FindroidItemPerson(
+    - ItemPerson(
         id = cccccccc-0000-0000-0000-000000000001
         name = "Ada Actor"
         type = ACTOR
         role = "Lead"
-        image = FindroidItemPersonImage(
+        image = ItemPersonImage(
           uri = "https://server.test/items/cccccccc-0000-0000-0000-000000000001/Images/Primary?tag=pimg1"
           blurHash = "LKO2?U%2Tw=w]~RBVZRi};RPxuwH"
         )
       )
-    - FindroidItemPerson(
+    - ItemPerson(
         id = cccccccc-0000-0000-0000-000000000002
         name = "Dan Director"
         type = DIRECTOR
         role = ""
-        image = FindroidItemPersonImage(
+        image = ItemPersonImage(
           uri = null
           blurHash = null
         )
@@ -178,11 +178,11 @@ FindroidMovie(
   unplayedItemCount = null
   lastPlayedDate = 2024-03-01T20:15:30
   trailers = [
-    - FindroidTrailer(
+    - Trailer(
         name = "Official Trailer"
         url = "https://www.youtube.com/watch?v=aaaaaaaaaaa"
       )
-    - FindroidTrailer(
+    - Trailer(
         name = null
         url = "https://www.youtube.com/watch?v=bbbbbbbbbbb"
       )
@@ -193,11 +193,11 @@ FindroidMovie(
     - "Test Pictures"
   ]
   externalLinks = [
-    - FindroidExternalLink(
+    - ExternalLink(
         name = "IMDb"
         url = "https://www.imdb.com/title/tt0000001"
       )
-    - FindroidExternalLink(
+    - ExternalLink(
         name = "TheMovieDb"
         url = "https://www.themoviedb.org/movie/1001"
       )
@@ -206,7 +206,7 @@ FindroidMovie(
   is3D = true
   localTrailerCount = 2
   specialFeatureCount = 3
-  images = FindroidImages(
+  images = ItemImages(
     primary = "https://server.test/items/aaaaaaaa-0000-0000-0000-000000000001/Images/Primary?tag=ptag"
     backdrop = "https://server.test/items/aaaaaaaa-0000-0000-0000-000000000001/Images/Backdrop/0?tag=btag0"
     logo = "https://server.test/items/aaaaaaaa-0000-0000-0000-000000000001/Images/Logo?tag=ltag"
@@ -217,19 +217,19 @@ FindroidMovie(
     showThumb = null
   )
   chapters = [
-    - FindroidChapter(
+    - Chapter(
         startPosition = 0
         name = "Opening"
         imageTag = "ch0"
       )
-    - FindroidChapter(
+    - Chapter(
         startPosition = 600000
         name = "Middle"
         imageTag = null
       )
   ]
   trickplayInfo = {
-    "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a1": FindroidTrickplayInfo(
+    "a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a1": ItemTrickplayInfo(
       width = 640
       height = 360
       tileWidth = 5

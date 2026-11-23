@@ -1,6 +1,6 @@
 package dev.jdtech.jellyfin.utils
 
-import dev.jdtech.jellyfin.models.FindroidTrickplayInfo
+import dev.jdtech.jellyfin.models.ItemTrickplayInfo
 import kotlin.test.assertEquals
 import org.junit.Test
 
@@ -8,7 +8,7 @@ import org.junit.Test
 class TrickplaySheetCountTest {
     private fun count(thumbnails: Int, tileWidth: Int = 10, tileHeight: Int = 10) =
         trickplaySheetCount(
-            FindroidTrickplayInfo(
+            ItemTrickplayInfo(
                 width = 320,
                 height = 180,
                 tileWidth = tileWidth,

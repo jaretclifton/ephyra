@@ -86,12 +86,12 @@ import dev.jdtech.jellyfin.film.presentation.home.HomeAction
 import dev.jdtech.jellyfin.film.presentation.home.HomeState
 import dev.jdtech.jellyfin.film.presentation.home.HomeViewModel
 import dev.jdtech.jellyfin.film.presentation.home.orderedRows
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.HomeItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
@@ -150,9 +150,9 @@ fun HomeScreen(
             when (action) {
                 is HomeAction.OnItemClick -> {
                     when (action.item) {
-                        is FindroidMovie -> navigateToMovie(action.item.id)
-                        is FindroidShow -> navigateToShow(action.item.id)
-                        is FindroidEpisode -> navigateToEpisode(action.item.id)
+                        is Movie -> navigateToMovie(action.item.id)
+                        is Show -> navigateToShow(action.item.id)
+                        is Episode -> navigateToEpisode(action.item.id)
                     }
                 }
                 is HomeAction.OnRetryClick -> onRetry()
@@ -166,18 +166,18 @@ fun HomeScreen(
 
 /** The focused card. Written on focus changes and read only by the hero and its prefetch. */
 @Stable
-private class HeroFocus(initialRow: List<FindroidItem> = emptyList(), initialColumn: Int = 0) {
-    var item by mutableStateOf<FindroidItem?>(initialRow.getOrNull(initialColumn))
+private class HeroFocus(initialRow: List<Item> = emptyList(), initialColumn: Int = 0) {
+    var item by mutableStateOf<Item?>(initialRow.getOrNull(initialColumn))
         private set
 
     /** The focused card's row and place in it, for the prefetch. Plain fields: no recomposition. */
-    var row: List<FindroidItem> = initialRow
+    var row: List<Item> = initialRow
         private set
 
     var column = initialColumn
         private set
 
-    fun focus(row: List<FindroidItem>, column: Int) {
+    fun focus(row: List<Item>, column: Int) {
         this.row = row
         this.column = column
         item = row.getOrNull(column)
@@ -187,7 +187,7 @@ private class HeroFocus(initialRow: List<FindroidItem> = emptyList(), initialCol
 private class HomeRow(
     val key: ItemId,
     val title: UiText,
-    val items: List<FindroidItem>,
+    val items: List<Item>,
     val direction: Direction,
     // #608: Continue Watching and Next Up show the thumb, unless the user chose episode images.
     val preferThumb: Boolean = false,
@@ -250,7 +250,7 @@ internal fun HomeScreenLayout(
                     ?: if (rows.isNotEmpty() && rows.first().items.isNotEmpty()) {
                         rows.first().items to 0
                     } else {
-                        emptyList<FindroidItem>() to 0
+                        emptyList<Item>() to 0
                     }
             HeroFocus(row, col)
         }
@@ -473,7 +473,7 @@ internal fun homeCardTag(id: ItemId) = "ce_home_card_${id.asString()}"
 @Composable
 private fun HomeHero(hero: HeroFocus, images: HeroImages) {
     val item by
-        produceState<FindroidItem?>(initialValue = hero.item, hero, images) {
+        produceState<Item?>(initialValue = hero.item, hero, images) {
             snapshotFlow { hero.item }
                 .collectLatest { focused ->
                     // The first card shows straight away.
@@ -502,7 +502,7 @@ private fun HomeHero(hero: HeroFocus, images: HeroImages) {
         HeroTitle(item = shown, images = images)
         // CE (#618): a hidden episode is "Episode 5", without its overview.
         val hidden = LocalSpoilers.current.hides(shown)
-        if (shown is FindroidEpisode) {
+        if (shown is Episode) {
             Text(
                 text = spoilerFreeName(shown, hidden),
                 style = MaterialTheme.typography.titleMedium,
@@ -540,7 +540,7 @@ private fun HomeHero(hero: HeroFocus, images: HeroImages) {
  * background.
  */
 @Composable
-private fun HeroBackdrop(item: FindroidItem, images: HeroImages) {
+private fun HeroBackdrop(item: Item, images: HeroImages) {
     val previous = remember { PreviousImage() }
     val crossfadeMillis = backdropCrossfadeMillis()
     val hideStill = LocalSpoilers.current.hides(item)
@@ -598,8 +598,8 @@ private class PreviousImage {
 
 /** The logo, at the size it's shown, or the title while there's no logo. */
 @Composable
-private fun HeroTitle(item: FindroidItem, images: HeroImages) {
-    val title = if (item is FindroidEpisode) item.seriesName else item.name
+private fun HeroTitle(item: Item, images: HeroImages) {
+    val title = if (item is Episode) item.seriesName else item.name
     val logo = remember(item, images) { images.logo(item) }
     var logoFailed by remember(logo) { mutableStateOf(logo == null) }
     if (logoFailed) {

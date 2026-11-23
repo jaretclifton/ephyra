@@ -37,7 +37,7 @@ import androidx.tv.material3.Text
 import dev.jdtech.jellyfin.ce.ui.focus.FocusPosition
 import dev.jdtech.jellyfin.ce.ui.focus.focusPosition
 import dev.jdtech.jellyfin.core.R as CoreR
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.ui.components.Direction
@@ -145,7 +145,7 @@ data class RelatedRow(
     val row: Int,
     @StringRes val title: Int,
     val direction: Direction,
-    val items: List<FindroidItem>,
+    val items: List<Item>,
 )
 
 /**
@@ -164,13 +164,13 @@ fun List<RelatedRow>.relatedLazyIndex(row: Int, firstIndex: Int): Int? =
 @Composable
 fun TvItemsRow(
     title: String,
-    items: List<FindroidItem>,
+    items: List<Item>,
     direction: Direction,
     focusPosition: FocusPosition,
     row: Int,
     rowSpec: BringIntoViewSpec,
     onFocused: () -> Unit,
-    onClick: (FindroidItem) -> Unit,
+    onClick: (Item) -> Unit,
 ) {
     Column {
         Text(

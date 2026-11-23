@@ -1,7 +1,7 @@
 package dev.jdtech.jellyfin.film.domain
 
-import dev.jdtech.jellyfin.models.FindroidMediaStream
-import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
 import java.text.NumberFormat
 import java.util.Locale
@@ -36,11 +36,11 @@ data class MediaInfoTrack(
  * download stores only its sidecar subtitles, so the copy on the device is not among them, and
  * offline, where the downloads are all there is, the list is empty.
  */
-fun List<FindroidSource>.withMediaInfo(): List<FindroidSource> = filter { source ->
+fun List<ItemSource>.withMediaInfo(): List<ItemSource> = filter { source ->
     source.mediaStreams.any { it.type == MediaStreamType.VIDEO || it.type == MediaStreamType.AUDIO }
 }
 
-fun FindroidSource.toMediaInfo(locale: Locale = Locale.getDefault()): MediaInfo {
+fun ItemSource.toMediaInfo(locale: Locale = Locale.getDefault()): MediaInfo {
     val numbers = MediaInfoNumbers(locale)
     fun tracks(type: MediaStreamType) =
         mediaStreams.filter { it.type == type }.map { it.toTrack(numbers) }
@@ -60,7 +60,7 @@ fun FindroidSource.toMediaInfo(locale: Locale = Locale.getDefault()): MediaInfo 
     )
 }
 
-private fun FindroidMediaStream.toTrack(numbers: MediaInfoNumbers): MediaInfoTrack {
+private fun MediaStream.toTrack(numbers: MediaInfoNumbers): MediaInfoTrack {
     val name =
         displayTitle?.takeIf { it.isNotBlank() }
             ?: title.takeIf { it.isNotBlank() }

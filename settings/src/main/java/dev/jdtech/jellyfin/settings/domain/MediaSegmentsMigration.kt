@@ -4,8 +4,8 @@ package dev.jdtech.jellyfin.settings.domain
  * CE (#271): maps the old global media segment switches onto one action per segment type. Pure, so
  * it is tested without SharedPreferences; [AppPreferences.migrateMediaSegmentActions] runs it once.
  *
- * The values are the names of `dev.jdtech.jellyfin.models.MediaSegmentAction` and
- * `FindroidSegmentType`, which live in the data module, a module this one can't see.
+ * The values are the names of `dev.jdtech.jellyfin.models.MediaSegmentAction` and `SegmentType`,
+ * which live in the data module, a module this one can't see.
  */
 object MediaSegmentsMigration {
     const val SKIP = "SKIP"

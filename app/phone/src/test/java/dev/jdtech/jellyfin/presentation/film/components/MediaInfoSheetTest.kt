@@ -21,9 +21,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyVideoMetadata
-import dev.jdtech.jellyfin.models.FindroidMediaStream
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import kotlin.test.assertEquals
@@ -40,7 +40,7 @@ class MediaInfoSheetTest {
     @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
 
     private fun stream(type: MediaStreamType, title: String, bitRate: Int? = null) =
-        FindroidMediaStream(
+        MediaStream(
             title = "",
             displayTitle = title,
             language = "eng",
@@ -61,12 +61,12 @@ class MediaInfoSheetTest {
         name: String,
         container: String?,
         bitrate: Int?,
-        vararg streams: FindroidMediaStream,
+        vararg streams: MediaStream,
     ) =
-        FindroidSource(
+        ItemSource(
             id = name,
             name = name,
-            type = FindroidSourceType.REMOTE,
+            type = ItemSourceType.REMOTE,
             path = "",
             size = 0,
             mediaStreams = streams.toList(),

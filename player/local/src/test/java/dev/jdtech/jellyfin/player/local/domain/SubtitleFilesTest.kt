@@ -1,9 +1,9 @@
 package dev.jdtech.jellyfin.player.local.domain
 
 import androidx.media3.common.MimeTypes
-import dev.jdtech.jellyfin.models.FindroidMediaStream
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.SubtitleDeliveryMethod
 import kotlin.test.assertEquals
@@ -131,8 +131,7 @@ class SubtitleFilesTest {
         // whatever is in it.
         val streams =
             listOf(subtitle(0, "deu", codec = "subrip", path = "/downloads/Movie.source.id.sub"))
-        val source =
-            source(transcoded = false, streams = streams).copy(type = FindroidSourceType.LOCAL)
+        val source = source(transcoded = false, streams = streams).copy(type = ItemSourceType.LOCAL)
 
         val files = subtitleFiles(source)
 
@@ -186,7 +185,7 @@ class SubtitleFilesTest {
     private fun source(
         transcoded: Boolean,
         method: SubtitleDeliveryMethod = SubtitleDeliveryMethod.EXTERNAL,
-        streams: List<FindroidMediaStream> =
+        streams: List<MediaStream> =
             listOf(
                 subtitle(0, "deu", external = true, method = SubtitleDeliveryMethod.EXTERNAL),
                 subtitle(2, "eng", method = null).copy(type = MediaStreamType.AUDIO),
@@ -205,10 +204,10 @@ class SubtitleFilesTest {
                 ),
             ),
     ) =
-        FindroidSource(
+        ItemSource(
             id = "source",
             name = "Source",
-            type = FindroidSourceType.REMOTE,
+            type = ItemSourceType.REMOTE,
             path = "http://server/stream",
             size = 0L,
             mediaStreams = streams,
@@ -224,7 +223,7 @@ class SubtitleFilesTest {
         method: SubtitleDeliveryMethod? = null,
         forced: Boolean = false,
     ) =
-        FindroidMediaStream(
+        MediaStream(
             title = "",
             displayTitle = null,
             language = language,

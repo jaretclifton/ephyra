@@ -8,15 +8,15 @@ import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidMediaStreamDto
-import dev.jdtech.jellyfin.models.FindroidMovieDto
-import dev.jdtech.jellyfin.models.FindroidSourceDto
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemSourceEntity
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.MediaStreamEntity
 import dev.jdtech.jellyfin.models.MediaStreamType
+import dev.jdtech.jellyfin.models.MovieEntity
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -222,12 +222,12 @@ class DownloadFinalizeFailureTest {
         assertEquals(source.path, sourceRow().path)
     }
 
-    private fun assertKeptForRetry(source: FindroidSourceDto) {
+    private fun assertKeptForRetry(source: ItemSourceEntity) {
         assertEquals(source.path, sourceRow().path)
         assertTrue(File(source.path).readBytes().contentEquals(VIDEO), "the finished file is gone")
     }
 
-    private fun assertFinalized(source: FindroidSourceDto) {
+    private fun assertFinalized(source: ItemSourceEntity) {
         assertEquals(final(source), sourceRow().path)
         assertTrue(File(final(source)).readBytes().contentEquals(VIDEO))
         assertFalse(File(source.path).exists())
@@ -237,12 +237,12 @@ class DownloadFinalizeFailureTest {
         room.getServerDatabaseDao().getSources(itemId).single()
     }
 
-    private fun final(source: FindroidSourceDto) = source.path.removeSuffix(".download")
+    private fun final(source: ItemSourceEntity) = source.path.removeSuffix(".download")
 
-    private fun subtitleRow(source: FindroidSourceDto): FindroidMediaStreamDto {
+    private fun subtitleRow(source: ItemSourceEntity): MediaStreamEntity {
         val id = UUID.randomUUID()
         val row =
-            FindroidMediaStreamDto(
+            MediaStreamEntity(
                 id = id,
                 sourceId = source.id,
                 title = "Deutsch",
@@ -263,7 +263,7 @@ class DownloadFinalizeFailureTest {
         return row
     }
 
-    private fun transfer(source: FindroidSourceDto) = transfer(VIDEO_ID, source.path)
+    private fun transfer(source: ItemSourceEntity) = transfer(VIDEO_ID, source.path)
 
     private fun transfer(id: Long, path: String) {
         engine.start(
@@ -282,15 +282,15 @@ class DownloadFinalizeFailureTest {
         }
     }
 
-    private fun downloadingSource(): FindroidSourceDto {
+    private fun downloadingSource(): ItemSourceEntity {
         val file = File(root, "Movie (2024)/Movie (2024).mkv.download")
         file.parentFile!!.mkdirs()
         val source =
-            FindroidSourceDto(
+            ItemSourceEntity(
                 id = "source",
                 itemId = itemId,
                 name = "Original",
-                type = FindroidSourceType.LOCAL,
+                type = ItemSourceType.LOCAL,
                 path = file.absolutePath,
                 downloadId = VIDEO_ID,
             )
@@ -299,7 +299,7 @@ class DownloadFinalizeFailureTest {
     }
 
     private fun movie() =
-        FindroidMovieDto(
+        MovieEntity(
             id = itemId,
             serverId = "server",
             name = "Movie",
@@ -340,15 +340,15 @@ class DownloadFinalizeFailureTest {
     private fun downloader(): DownloaderImpl {
         val repository =
             fakeProxy(
-                JellyfinRepository::class.java.classLoader,
-                arrayOf(JellyfinRepository::class.java),
+                MediaRepository::class.java.classLoader,
+                arrayOf(MediaRepository::class.java),
             ) { _, method, _ ->
                 when (method.kotlinName) {
                     "getUserId" -> USER_ID
-                    else -> throw IllegalStateException("JellyfinRepository.${method.kotlinName}")
+                    else -> throw IllegalStateException("MediaRepository.${method.kotlinName}")
                 }
             }
-                as JellyfinRepository
+                as MediaRepository
         val preferences =
             context.getSharedPreferences("download-finalize-failure-test", Context.MODE_PRIVATE)
         return DownloaderImpl(

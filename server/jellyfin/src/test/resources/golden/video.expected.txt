@@ -1,17 +1,17 @@
-FindroidMovie(
+Movie(
   id = e1efa999-9944-2ea3-7876-ddc6c8a83a2c
   name = "Beach"
   originalTitle = null
   overview = ""
   sources = [
-    - FindroidSource(
+    - ItemSource(
         id = "e1efa99999442ea37876ddc6c8a83a2c"
         name = "Beach"
         type = REMOTE
         path = ""
         size = 1600714
         mediaStreams = [
-          - FindroidMediaStream(
+          - MediaStream(
               title = ""
               displayTitle = "360p H264 SDR"
               language = ""
@@ -36,7 +36,7 @@ FindroidMovie(
               isDefault = false
               isHearingImpaired = false
             )
-          - FindroidMediaStream(
+          - MediaStream(
               title = ""
               displayTitle = "AAC - Mono"
               language = ""
@@ -97,7 +97,7 @@ FindroidMovie(
   is3D = false
   localTrailerCount = 0
   specialFeatureCount = 0
-  images = FindroidImages(
+  images = ItemImages(
     primary = "https://server.test/items/e1efa999-9944-2ea3-7876-ddc6c8a83a2c/Images/Primary?tag=4d10c0a1b128a2fb05549708b08e2238"
     backdrop = null
     logo = null

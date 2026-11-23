@@ -34,13 +34,13 @@ import dev.jdtech.jellyfin.ce.presentation.settings.about.LicenseScreen
 import dev.jdtech.jellyfin.ce.presentation.settings.about.LicensesScreen
 import dev.jdtech.jellyfin.ce.watchnext.WatchNextItemType
 import dev.jdtech.jellyfin.ce.watchnext.WatchNextLink
-import dev.jdtech.jellyfin.models.FindroidBoxSet
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidSeason
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.BoxSet
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Season
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.navigation.navigateOrReuse
@@ -188,11 +188,11 @@ private fun episodePlayerAction(
     }
 
 /** CE (#332): the page of a movie, show or collection picked from a row on a detail page. */
-private fun navigateToDetail(navigate: (NavKey) -> Unit, item: FindroidItem) {
+private fun navigateToDetail(navigate: (NavKey) -> Unit, item: Item) {
     when (item) {
-        is FindroidMovie -> navigate(MovieRoute(item.id.asString()))
-        is FindroidShow -> navigate(ShowRoute(item.id.asString()))
-        is FindroidBoxSet ->
+        is Movie -> navigate(MovieRoute(item.id.asString()))
+        is Show -> navigate(ShowRoute(item.id.asString()))
+        is BoxSet ->
             navigate(CollectionRoute(collectionId = item.id.asString(), collectionName = item.name))
         else -> Unit
     }
@@ -385,7 +385,7 @@ private fun EntryProviderScope<NavKey>.tvEntries(
             navigateToItem =
                 resumedAction { item ->
                     when (item) {
-                        is FindroidSeason ->
+                        is Season ->
                             navigate(
                                 SeasonRoute(
                                     seasonId = item.id.asString(),

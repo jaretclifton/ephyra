@@ -4,16 +4,16 @@ import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.domain.ports.PlaybackPort
 import dev.jdtech.jellyfin.domain.ports.PlaybackReport
 import dev.jdtech.jellyfin.domain.ports.PlaybackRequest
-import dev.jdtech.jellyfin.models.FindroidSegment
-import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
+import dev.jdtech.jellyfin.models.Segment
 import dev.jdtech.jellyfin.repository.ResumeThresholds
 import dev.jdtech.jellyfin.server.jellyfin.cast.toReceiverSource
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSegment
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSource
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toItemSource
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toSegment
 import java.util.UUID
 import org.jellyfin.sdk.model.api.GeneralCommandType
 import org.jellyfin.sdk.model.api.MediaType
@@ -36,7 +36,7 @@ class JellyfinPlayback(
     private val deviceProfiles: JellyfinDeviceProfiles,
 ) : PlaybackPort {
 
-    override suspend fun sources(request: PlaybackRequest): List<FindroidSource> = call {
+    override suspend fun sources(request: PlaybackRequest): List<ItemSource> = call {
         val playbackInfo =
             api.mediaInfoApi
                 .getPostedPlaybackInfo(request.itemId.toUuid(), playbackInfoOf(request))
@@ -53,7 +53,7 @@ class JellyfinPlayback(
                 if (request.target is PlaybackTarget.CastReceiver) {
                     it.toReceiverSource(api.mapperContext(), request.itemId, api.api.accessToken)
                 } else {
-                    it.toFindroidSource(api.mapperContext(), request.itemId, request.includePath)
+                    it.toItemSource(api.mapperContext(), request.itemId, request.includePath)
                 }
             if (source.transcoded && playSessionId != null) {
                 source.copy(playSessionId = playSessionId)
@@ -139,10 +139,8 @@ class JellyfinPlayback(
         )
     }
 
-    override suspend fun segments(itemId: ItemId): List<FindroidSegment> = call {
-        api.mediaSegmentApi.getItemSegments(itemId.toUuid()).content.items.map {
-            it.toFindroidSegment()
-        }
+    override suspend fun segments(itemId: ItemId): List<Segment> = call {
+        api.mediaSegmentApi.getItemSegments(itemId.toUuid()).content.items.map { it.toSegment() }
     }
 
     override suspend fun trickplayTile(

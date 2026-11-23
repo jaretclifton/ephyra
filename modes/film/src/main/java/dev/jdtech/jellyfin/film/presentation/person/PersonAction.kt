@@ -1,6 +1,6 @@
 package dev.jdtech.jellyfin.film.presentation.person
 
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 
 sealed interface PersonAction {
     data object OnRetryClick : PersonAction
@@ -9,5 +9,5 @@ sealed interface PersonAction {
 
     data object NavigateHome : PersonAction
 
-    data class NavigateToItem(val item: FindroidItem) : PersonAction
+    data class NavigateToItem(val item: Item) : PersonAction
 }

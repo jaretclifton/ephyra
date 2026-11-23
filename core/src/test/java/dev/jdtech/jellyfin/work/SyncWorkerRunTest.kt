@@ -15,20 +15,20 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.ServerUserData
 import dev.jdtech.jellyfin.domain.ports.UserDataSyncPort
 import dev.jdtech.jellyfin.domain.ports.UserDataSyncPorts
-import dev.jdtech.jellyfin.models.FindroidMovieDto
-import dev.jdtech.jellyfin.models.FindroidUserDataDto
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.MovieEntity
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -92,7 +92,7 @@ class SyncWorkerRunTest {
     /** A downloaded movie, so its row outlives the sync. */
     private suspend fun storeMovie() {
         database.insertMovie(
-            FindroidMovieDto(
+            MovieEntity(
                 id = ITEM_ID,
                 serverId = SERVER,
                 name = "Movie",
@@ -113,7 +113,7 @@ class SyncWorkerRunTest {
     /** The row as playback wrote it while the server was away. */
     private suspend fun storeMarkedRow() {
         database.insertUserData(
-            FindroidUserDataDto(
+            UserDataEntity(
                 userId = USER_ID,
                 itemId = ITEM_ID,
                 played = false,
@@ -171,7 +171,7 @@ class SyncWorkerRunTest {
     /** Off, as it is by default: its check after the sync does nothing. */
     private fun smartDownloads(): SmartDownloads {
         val downloader = unused<Downloader>()
-        val repository = Provider { unused<JellyfinRepository>() }
+        val repository = Provider { unused<MediaRepository>() }
         val connectivity = unused<NetworkConnectivity>()
         return SmartDownloads(
             DownloadQueue(downloader, preferences, repository, database, context),

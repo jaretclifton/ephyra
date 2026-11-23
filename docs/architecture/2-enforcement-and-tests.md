@@ -48,6 +48,7 @@ them, so these rules have no exceptions:
 | R5. `domain` imports nothing from `android.`, `androidx.` (except `androidx.paging`), `org.jellyfin.sdk`, `dev.jdtech.jellyfin.database`, `dev.jdtech.jellyfin.api` | 0 | none allowed |
 | R6. In `player/local`, engine packages do not import each other and shared code imports neither (`PlayerEngineBoundaryTest`, #764; `engine.di` binds both) | added in #764 | none allowed |
 | R7. No module but `app/phone` and `app/tv` depends on `server/jellyfin` | added in #758 | exactly the two apps, no baseline |
+| R11. No production class, interface, object or typealias is named `Findroid…` (but `FindroidTheme`), and none is named `Jellyfin…` outside `server/jellyfin` (`NamesTest`, #774) | added in #774 | none allowed, no baseline |
 
 **A baseline is exact.** The test fails when a file that is not listed violates a rule, and it
 also fails when a listed file no longer does ("remove it from the baseline"). So a baseline can
@@ -184,12 +185,12 @@ available since #720; #699 tracks the move to Jupiter. The adapter needs an Andr
 the SDK client, so its tests need Robolectric, which has no Jupiter runner yet. The contract
 classes therefore use JUnit 4 annotations and `kotlin.test` assertions, and move with #699.
 
-33 test files fake `JellyfinRepository` today, 27 of them through `java.lang.reflect.Proxy`
-(`JellyfinRepository::class.java`), dispatching on the method name: 11 in `modes/film`, 8 in
+33 test files fake `MediaRepository` today, 27 of them through `java.lang.reflect.Proxy`
+(`MediaRepository::class.java`), dispatching on the method name: 11 in `modes/film`, 8 in
 `player/local`, 4 in `data`, 3 in `core`, 1 in `app/tv`. A proxy keeps compiling when a signature
 changes and then fails at run time, or passes for the wrong reason when a method is renamed.
 Every task that changes the interface lists this as a trap, and the command to find them:
-`grep -rl "JellyfinRepository::class.java" --include=*.kt . | grep /src/test`.
+`grep -rl "MediaRepository::class.java" --include=*.kt . | grep /src/test`.
 
 ## 2.3 Test gaps
 
@@ -200,7 +201,7 @@ What the tests do not cover, by phase:
 |---|---|---|
 | `PlayerViewModel` (2,836 lines) has no test of its own. `PlayerInvariantsTest` reads source text for 16 invariants. Untested: engine construction, `toMediaItem`, the order of start, progress and stop reports, `onMediaItemTransition`, quality and audio switches | Phase 5 (playback) | Extract-and-test, one piece at a time: the reporter is moved out together with its tests, not refactored in place. `PlayerInvariantsTest` greps `PlayerViewModel.kt` and `MPVPlayer.kt` by path and content, so moved code needs the invariant moved with it |
 | The playback info request: which device profile, `enableTranscoding`, the bitrate cap, the `mediaSourceId` and `audioStreamIndex` pair. No test | Phase 3 (splitting the repository) and phase 5 | A characterization test over a stand-in server that records the request body, for ExoPlayer, mpv and mpv with a cap, and for the three download cases |
-| `MediaSourceInfo.toFindroidSource`: transcode, file or HTTP path. No test | Phase 3 | Part of the same characterization test |
+| `MediaSourceInfo.toItemSource`: transcode, file or HTTP path. No test | Phase 3 | Part of the same characterization test |
 | `postPlaybackStart`, `postPlaybackProgress`, `postPlaybackStop`: request bodies and the Room writes. Only the helpers (`PlaySessions`, `stopUserData`) are tested | Phase 3 | The same |
 | The mappers `BaseItemDto.toFindroid*`. A few fields are tested (`HomeRowFieldsTest`, `SegmentsTest`, `ServerUrlTest`); no test maps a whole item | Phase 3 (moving the mappers) | Golden tests: recorded JSON for one item of each kind, mapped and compared with a stored result |
 | `SyncWorker.doWork` against a server. The decisions are tested (`SyncWorkerDecisionsTest`, `LastPlayedDateSyncTest`), the calls are not | Phase 4 | A test of the new port's fake taking the place of the calls; the decisions stay as they are |

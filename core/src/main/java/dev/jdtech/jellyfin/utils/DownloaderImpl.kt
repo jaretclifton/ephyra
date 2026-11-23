@@ -10,35 +10,35 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMediaStreamDto
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceDto
-import dev.jdtech.jellyfin.models.FindroidSources
-import dev.jdtech.jellyfin.models.FindroidTrickplayInfo
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceEntity
+import dev.jdtech.jellyfin.models.ItemTrickplayInfo
+import dev.jdtech.jellyfin.models.MediaStreamEntity
 import dev.jdtech.jellyfin.models.MediaStreamType
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Playable
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.looksLikeJellyfinId
-import dev.jdtech.jellyfin.models.toFindroidEpisode
-import dev.jdtech.jellyfin.models.toFindroidEpisodeDto
-import dev.jdtech.jellyfin.models.toFindroidMediaStreamDto
-import dev.jdtech.jellyfin.models.toFindroidMovie
-import dev.jdtech.jellyfin.models.toFindroidMovieDto
-import dev.jdtech.jellyfin.models.toFindroidSeasonDto
-import dev.jdtech.jellyfin.models.toFindroidSegmentsDto
-import dev.jdtech.jellyfin.models.toFindroidShowDto
-import dev.jdtech.jellyfin.models.toFindroidSource
-import dev.jdtech.jellyfin.models.toFindroidSourceDto
-import dev.jdtech.jellyfin.models.toFindroidTrickplayInfoDto
-import dev.jdtech.jellyfin.models.toFindroidUserDataDto
+import dev.jdtech.jellyfin.models.toEpisode
+import dev.jdtech.jellyfin.models.toEpisodeEntity
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toItemSource
+import dev.jdtech.jellyfin.models.toItemSourceEntity
+import dev.jdtech.jellyfin.models.toItemTrickplayInfoEntity
+import dev.jdtech.jellyfin.models.toMediaStreamEntity
+import dev.jdtech.jellyfin.models.toMovie
+import dev.jdtech.jellyfin.models.toMovieEntity
+import dev.jdtech.jellyfin.models.toSeasonEntity
+import dev.jdtech.jellyfin.models.toSegmentEntity
+import dev.jdtech.jellyfin.models.toShowEntity
+import dev.jdtech.jellyfin.models.toUserDataEntity
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
@@ -157,11 +157,11 @@ internal fun isUnderMountedRoot(path: String, mountedRoots: List<String>): Boole
     }
 
 /**
- * CE (#849): how many trickplay sheets [info] has: [FindroidTrickplayInfo.thumbnailCount]
- * thumbnails, [FindroidTrickplayInfo.tileWidth] x [FindroidTrickplayInfo.tileHeight] to a sheet,
- * the last one partly filled. The same count as the player's `TrickplayTiles.sheetCount`.
+ * CE (#849): how many trickplay sheets [info] has: [ItemTrickplayInfo.thumbnailCount] thumbnails,
+ * [ItemTrickplayInfo.tileWidth] x [ItemTrickplayInfo.tileHeight] to a sheet, the last one partly
+ * filled. The same count as the player's `TrickplayTiles.sheetCount`.
  */
-internal fun trickplaySheetCount(info: FindroidTrickplayInfo): Int {
+internal fun trickplaySheetCount(info: ItemTrickplayInfo): Int {
     if (info.thumbnailCount <= 0) return 0
     val tilesPerSheet = (info.tileWidth * info.tileHeight).coerceAtLeast(1)
     return (info.thumbnailCount - 1) / tilesPerSheet + 1
@@ -186,7 +186,7 @@ internal fun downloadErrorText(e: Throwable): UiText =
 class DownloaderImpl(
     private val context: Context,
     private val database: ServerDatabaseDao,
-    private val jellyfinRepositoryProvider: Provider<JellyfinRepository>,
+    private val mediaRepositoryProvider: Provider<MediaRepository>,
     private val appPreferences: AppPreferences,
     // A Provider, so building this @Singleton (during Application.onCreate's field injection) does
     // not set up WorkManager; it is only needed once an image download is started (#250).
@@ -212,8 +212,8 @@ class DownloaderImpl(
     // Resolved per use, never captured: which repository is active (online vs offline) can
     // change at runtime without this @Singleton being recreated. Capturing a fixed instance
     // here goes stale after an offline -> online switch.
-    private val jellyfinRepository: JellyfinRepository
-        get() = jellyfinRepositoryProvider.get()
+    private val mediaRepository: MediaRepository
+        get() = mediaRepositoryProvider.get()
 
     /**
      * Monotonically-increasing download id counter. Seeded at System.currentTimeMillis() so that
@@ -227,7 +227,7 @@ class DownloaderImpl(
     //  At this moment it is possible that some things are not downloaded due to the user leaving
     //  the current screen
     override suspend fun downloadItem(
-        item: FindroidItem,
+        item: Item,
         sourceId: String,
         storageIndex: Int,
         maxBitrate: Int?,
@@ -267,7 +267,7 @@ class DownloaderImpl(
                 // disk was written at the row's quality, and mixing URL kinds would
                 // append mismatched bytes.
                 val sources =
-                    jellyfinRepository.getMediaSources(
+                    mediaRepository.getMediaSources(
                         item.id,
                         true,
                         transcodeDolbyVision,
@@ -290,7 +290,7 @@ class DownloaderImpl(
                     )
                 )
                 // Resume external streams: restart any still-in-progress subtitle transfers.
-                val resolvedSource = existingSource.toFindroidSource(database)
+                val resolvedSource = existingSource.toItemSource(database)
                 resumeExternalMediaStreams(item, resolvedSource, source, allowMetered, allowRoaming)
                 Pair(existingDownloadId, null)
             } catch (e: Exception) {
@@ -308,19 +308,18 @@ class DownloaderImpl(
         var mintedDownloadId: Long? = null
         try {
             val source =
-                jellyfinRepository
+                mediaRepository
                     .getMediaSources(item.id, true, transcodeDolbyVision, maxBitrate)
                     .first { it.id == sourceId }
-            val segments = jellyfinRepository.getServerSegments(item.id)
+            val segments = mediaRepository.getServerSegments(item.id)
             // CE (#718): what the rows below need from the server, asked before another server's
             // copy gives way, so a server that stops answering here leaves that copy alone.
             val showAndSeason =
-                (item as? FindroidEpisode)?.let {
-                    jellyfinRepository.getShow(it.seriesId) to
-                        jellyfinRepository.getSeason(it.seasonId)
+                (item as? Episode)?.let {
+                    mediaRepository.getShow(it.seriesId) to mediaRepository.getSeason(it.seasonId)
                 }
             val trickplayInfo =
-                if (item is FindroidSources) {
+                if (item is Playable) {
                     item.trickplayInfo?.get(sourceId)
                 } else {
                     null
@@ -395,14 +394,14 @@ class DownloaderImpl(
             )
 
             when (item) {
-                is FindroidMovie -> {
-                    database.insertMovie(item.toFindroidMovieDto(serverId))
+                is Movie -> {
+                    database.insertMovie(item.toMovieEntity(serverId))
                 }
-                is FindroidEpisode -> {
+                is Episode -> {
                     val (show, season) = showAndSeason!!
-                    database.insertShow(show.toFindroidShowDto(serverId))
-                    database.insertSeason(season.toFindroidSeasonDto())
-                    database.insertEpisode(item.toFindroidEpisodeDto(serverId))
+                    database.insertShow(show.toShowEntity(serverId))
+                    database.insertSeason(season.toSeasonEntity())
+                    database.insertEpisode(item.toEpisodeEntity(serverId))
 
                     startImagesDownloader(show)
                     startImagesDownloader(season)
@@ -411,9 +410,9 @@ class DownloaderImpl(
 
             // Before the source row: once that exists, a restart resumes the download and never
             // gets here again (#693).
-            database.replaceSegments(item.id, segments.map { it.toFindroidSegmentsDto(item.id) })
+            database.replaceSegments(item.id, segments.map { it.toSegmentEntity(item.id) })
 
-            val sourceDto = source.toFindroidSourceDto(item.id, destFile.absolutePath)
+            val sourceDto = source.toItemSourceEntity(item.id, destFile.absolutePath)
 
             database.insertSource(
                 sourceDto.copy(
@@ -424,9 +423,9 @@ class DownloaderImpl(
             )
             // Progress from an earlier download of this item that has not reached the server yet
             // is newer than what the server sent with the item: keep it.
-            val userId = jellyfinRepository.getUserId()
+            val userId = mediaRepository.getUserId()
             if (database.getUserDataToBeSynced(userId, item.id) == null) {
-                database.insertUserData(item.toFindroidUserDataDto(userId))
+                database.insertUserData(item.toUserDataEntity(userId))
             }
 
             val resolvedStorageIndex = dirs.indexOf(storageLocation)
@@ -459,7 +458,7 @@ class DownloaderImpl(
                 // nothing of its own in Room; deleting by the item's id would take that copy.
                 if (!isStoredForAnotherServer(item, serverId)) {
                     val source =
-                        jellyfinRepository.getMediaSources(item.id).first { it.id == sourceId }
+                        mediaRepository.getMediaSources(item.id).first { it.id == sourceId }
                     deleteItem(item, source)
                 }
             } catch (e: Exception) {
@@ -471,14 +470,14 @@ class DownloaderImpl(
     }
 
     override suspend fun downloadItem(
-        item: FindroidItem,
+        item: Item,
         storageIndex: Int,
         maxBitrate: Int?,
         smartQueued: Boolean,
     ): Pair<Long, UiText?> {
         val sources =
             try {
-                jellyfinRepository.getMediaSources(
+                mediaRepository.getMediaSources(
                     item.id,
                     includePath = true,
                     transcodeDolbyVision =
@@ -501,12 +500,11 @@ class DownloaderImpl(
         )
     }
 
-    override suspend fun cancelDownload(item: FindroidItem, downloadId: Long) {
+    override suspend fun cancelDownload(item: Item, downloadId: Long) {
         // First, and even when the row is already gone: a resume started while the queue entry
         // was being removed (#426) must not keep writing.
         engine.cancel(downloadId)
-        val source =
-            database.getSourceByDownloadId(downloadId)?.toFindroidSource(database) ?: return
+        val source = database.getSourceByDownloadId(downloadId)?.toItemSource(database) ?: return
         deleteItem(item, source)
     }
 
@@ -514,7 +512,7 @@ class DownloaderImpl(
      * The item's download in progress, when it is [serverId]'s (#718): another server's partial
      * file is not resumed or completed with this server's URLs.
      */
-    private suspend fun partialSourceOfServer(item: FindroidItem, serverId: String?) =
+    private suspend fun partialSourceOfServer(item: Item, serverId: String?) =
         serverId
             ?.let { database.getSourcesOfServer(item.id, it) }
             .orEmpty()
@@ -522,7 +520,7 @@ class DownloaderImpl(
                 source.path.endsWith(".download") && source.downloadId != null
             }
 
-    override suspend fun deleteItem(item: FindroidItem, source: FindroidSource) {
+    override suspend fun deleteItem(item: Item, source: ItemSource) {
         deleteItemRows(item, source)
         dataChanges.onChanged()
     }
@@ -535,38 +533,37 @@ class DownloaderImpl(
      * downloaded it last, and the other server shows it as not downloaded. Its progress still to be
      * sent stays, and the sync sends it to that server.
      */
-    internal suspend fun releaseOtherServersCopy(item: FindroidItem, serverId: String?) {
+    internal suspend fun releaseOtherServersCopy(item: Item, serverId: String?) {
         if (!isStoredForAnotherServer(item, serverId)) return
         Timber.i("Replacing the copy of ${item.id.asString()} stored for another server")
         val sources = database.getSources(item.id)
         for (source in sources) {
             source.downloadId?.let { engine.cancel(it) }
-            deleteItemRows(item, source.toFindroidSource(database))
+            deleteItemRows(item, source.toItemSource(database))
         }
         if (sources.isEmpty()) deleteItemRows(item, source = null)
         dataChanges.onChanged()
     }
 
     /** CE (#718): whether Room holds [item] for a server other than [serverId]. */
-    private suspend fun isStoredForAnotherServer(item: FindroidItem, serverId: String?): Boolean {
+    private suspend fun isStoredForAnotherServer(item: Item, serverId: String?): Boolean {
         if (serverId == null) return false
         // A row from before rows carried a server ("") belongs to no server: another one.
         val storedFor =
             when (item) {
-                is FindroidMovie -> database.getMovieOrNull(item.id)?.let { it.serverId.orEmpty() }
-                is FindroidEpisode ->
-                    database.getEpisodeOrNull(item.id)?.let { it.serverId.orEmpty() }
+                is Movie -> database.getMovieOrNull(item.id)?.let { it.serverId.orEmpty() }
+                is Episode -> database.getEpisodeOrNull(item.id)?.let { it.serverId.orEmpty() }
                 else -> null
             }
         return storedFor != null && storedFor != serverId
     }
 
-    private suspend fun deleteItemRows(item: FindroidItem, source: FindroidSource?) {
+    private suspend fun deleteItemRows(item: Item, source: ItemSource?) {
         when (item) {
-            is FindroidMovie -> {
+            is Movie -> {
                 database.deleteMovie(item.id)
             }
-            is FindroidEpisode -> {
+            is Episode -> {
                 database.deleteEpisode(item.id)
                 val remainingEpisodes = database.getEpisodesBySeasonId(item.seasonId)
                 if (remainingEpisodes.isEmpty()) {
@@ -686,8 +683,8 @@ class DownloaderImpl(
     }
 
     private suspend fun downloadExternalMediaStreams(
-        item: FindroidItem,
-        source: FindroidSource,
+        item: Item,
+        source: ItemSource,
         storageIndex: Int = 0,
         allowMetered: Boolean = false,
         allowRoaming: Boolean = false,
@@ -730,7 +727,7 @@ class DownloaderImpl(
                         )
                         .absolutePath
                 database.insertMediaStream(
-                    mediaStream.toFindroidMediaStreamDto(id, source.id, streamPath)
+                    mediaStream.toMediaStreamEntity(id, source.id, streamPath)
                 )
                 val downloadId = idCounter.incrementAndGet()
                 engine.start(
@@ -769,9 +766,9 @@ class DownloaderImpl(
      * found is simply dropped (its partial discarded).
      */
     private suspend fun resumeExternalMediaStreams(
-        item: FindroidItem,
-        dbSource: FindroidSource,
-        serverSource: FindroidSource,
+        item: Item,
+        dbSource: ItemSource,
+        serverSource: ItemSource,
         allowMetered: Boolean,
         allowRoaming: Boolean,
     ) {
@@ -803,7 +800,7 @@ class DownloaderImpl(
      * Finds the source the same way the resume branch of [downloadItem] does: the queue dedups by
      * item id, so there is at most one in-progress (`.download`-suffixed) source per item.
      */
-    override suspend fun retryFailedMediaStreams(item: FindroidItem) {
+    override suspend fun retryFailedMediaStreams(item: Item) {
         val dbSourceDto =
             try {
                 partialSourceOfServer(item, appPreferences.getValue(appPreferences.currentServer))
@@ -832,7 +829,7 @@ class DownloaderImpl(
         if (failedRows.isEmpty()) return
         val serverSource =
             try {
-                jellyfinRepository
+                mediaRepository
                     .getMediaSources(
                         item.id,
                         true,
@@ -859,8 +856,8 @@ class DownloaderImpl(
      * dropped (its partial discarded).
      */
     private suspend fun restartExternalMediaStreamRows(
-        rows: List<FindroidMediaStreamDto>,
-        serverSource: FindroidSource,
+        rows: List<MediaStreamEntity>,
+        serverSource: ItemSource,
         allowMetered: Boolean,
         allowRoaming: Boolean,
     ) {
@@ -914,11 +911,11 @@ class DownloaderImpl(
     internal suspend fun downloadTrickplayData(
         itemId: ItemId,
         sourceId: String,
-        trickplayInfo: FindroidTrickplayInfo,
+        trickplayInfo: ItemTrickplayInfo,
     ) {
         val sheets = mutableMapOf<Int, ByteArray>()
         for (index in 0 until trickplaySheetCount(trickplayInfo)) {
-            jellyfinRepository.getTrickplayData(itemId, trickplayInfo.width, index, sourceId)?.let {
+            mediaRepository.getTrickplayData(itemId, trickplayInfo.width, index, sourceId)?.let {
                 sheets[index] = it
             }
         }
@@ -928,27 +925,23 @@ class DownloaderImpl(
     private suspend fun saveTrickplayData(
         itemId: ItemId,
         sourceId: String,
-        trickplayInfo: FindroidTrickplayInfo,
+        trickplayInfo: ItemTrickplayInfo,
         sheets: Map<Int, ByteArray>,
     ) {
         val basePath = "trickplay/${itemId.asString()}/$sourceId"
-        database.insertTrickplayInfo(trickplayInfo.toFindroidTrickplayInfoDto(sourceId))
+        database.insertTrickplayInfo(trickplayInfo.toItemTrickplayInfoEntity(sourceId))
         File(context.filesDir, basePath).mkdirs()
         for ((index, bytes) in sheets) {
             File(context.filesDir, "$basePath/$index").writeBytes(bytes)
         }
     }
 
-    override suspend fun savePendingDownload(
-        item: FindroidItem,
-        maxBitrate: Int?,
-        smartQueued: Boolean,
-    ) =
+    override suspend fun savePendingDownload(item: Item, maxBitrate: Int?, smartQueued: Boolean) =
         withContext(Dispatchers.IO) {
             val kind =
                 when (item) {
-                    is FindroidMovie -> "MOVIE"
-                    is FindroidEpisode -> "EPISODE"
+                    is Movie -> "MOVIE"
+                    is Episode -> "EPISODE"
                     else -> return@withContext
                 }
             database.insertPendingDownload(
@@ -975,11 +968,11 @@ class DownloaderImpl(
                     database.deletePendingDownload(row.itemId)
                     continue
                 }
-                val resolved: FindroidItem? =
+                val resolved: Item? =
                     try {
                         when (row.itemKind) {
-                            "MOVIE" -> jellyfinRepository.getMovie(row.itemId)
-                            else -> jellyfinRepository.getEpisode(row.itemId)
+                            "MOVIE" -> mediaRepository.getMovie(row.itemId)
+                            else -> mediaRepository.getEpisode(row.itemId)
                         }
                     } catch (e: Exception) {
                         // Transient (offline, server down) or permanent (item deleted) —
@@ -1015,7 +1008,7 @@ class DownloaderImpl(
 
     override suspend fun getActiveDownloads(): List<Downloader.ActiveDownload> =
         withContext(Dispatchers.IO) {
-            val userId = jellyfinRepository.getUserId()
+            val userId = mediaRepository.getUserId()
             val sources = database.getActiveDownloadSources()
             val result = mutableListOf<Downloader.ActiveDownload>()
             for (source in sources) {
@@ -1032,12 +1025,12 @@ class DownloaderImpl(
                     }
                     continue
                 }
-                val item: FindroidItem? =
+                val item: Item? =
                     try {
-                        database.getMovie(source.itemId).toFindroidMovie(database, userId)
+                        database.getMovie(source.itemId).toMovie(database, userId)
                     } catch (_: Exception) {
                         try {
-                            database.getEpisode(source.itemId).toFindroidEpisode(database, userId)
+                            database.getEpisode(source.itemId).toEpisode(database, userId)
                         } catch (_: Exception) {
                             null
                         }
@@ -1060,7 +1053,7 @@ class DownloaderImpl(
      * A `.download` row whose file has its final name already: only the rename of a finished
      * transfer makes that file. A task the engine knows is still this session's, and left alone.
      */
-    private fun renamedBeforeStop(source: FindroidSourceDto, downloadId: Long): Boolean {
+    private fun renamedBeforeStop(source: ItemSourceEntity, downloadId: Long): Boolean {
         if (engine.snapshot(downloadId) != null) return false
         val finalFile = File(source.path.removeSuffix(".download"))
         return !File(source.path).exists() && finalFile.isFile && finalFile.length() > 0
@@ -1070,7 +1063,7 @@ class DownloaderImpl(
 
     override suspend fun sweepOrphans() =
         withContext(Dispatchers.IO) {
-            val userId = jellyfinRepository.getUserId()
+            val userId = mediaRepository.getUserId()
 
             // CE (#573): first, so the rows below have the subtitles' final names. Either name is
             // safe: the sweep keeps a file a row names with or without `.download`.
@@ -1098,7 +1091,7 @@ class DownloaderImpl(
                     .map { File(it, "downloads").absolutePath }
 
             val knownPaths = mutableSetOf<String>()
-            suspend fun remember(source: FindroidSourceDto) {
+            suspend fun remember(source: ItemSourceEntity) {
                 knownPaths.add(source.path)
                 for (stream in database.getMediaStreamsBySourceId(source.id)) {
                     knownPaths.add(stream.path)
@@ -1236,7 +1229,7 @@ class DownloaderImpl(
             false
         }
 
-    private suspend fun finalizeSource(source: FindroidSourceDto): Boolean {
+    private suspend fun finalizeSource(source: ItemSourceEntity): Boolean {
         if (!source.path.endsWith(".download")) return true
         val finalPath = source.path.removeSuffix(".download")
         val downloadFile = File(source.path)
@@ -1283,7 +1276,7 @@ class DownloaderImpl(
      * each with a download id of its own, kept their `.download` name. Finalizes the ones that are
      * done, and hands the rest to one background job for [source].
      */
-    private suspend fun finalizeMediaStreamsOf(source: FindroidSourceDto) {
+    private suspend fun finalizeMediaStreamsOf(source: ItemSourceEntity) {
         val rows =
             try {
                 unfinishedMediaStreams(source.id)
@@ -1316,7 +1309,7 @@ class DownloaderImpl(
         if (left) finalizeMediaStreamsLater(source)
     }
 
-    private suspend fun unfinishedMediaStreams(sourceId: String): List<FindroidMediaStreamDto> =
+    private suspend fun unfinishedMediaStreams(sourceId: String): List<MediaStreamEntity> =
         database.getMediaStreamsBySourceId(sourceId).filter { it.path.endsWith(".download") }
 
     /**
@@ -1326,7 +1319,7 @@ class DownloaderImpl(
      * are gone (the download was deleted). What it leaves behind keeps its `.download` name for
      * [finalizeFinishedMediaStreams] at the next start.
      */
-    private fun finalizeMediaStreamsLater(source: FindroidSourceDto) {
+    private fun finalizeMediaStreamsLater(source: ItemSourceEntity) {
         mediaStreamFinalizeJobs.compute(source.id) { _, running ->
             running?.takeIf { it.isActive }
                 ?: mediaStreamFinalizeScope.launch {
@@ -1376,7 +1369,7 @@ class DownloaderImpl(
     }
 
     /** Starts the failed or lost subtitle transfers of a finished [source] once more. */
-    private suspend fun restartFailedMediaStreams(source: FindroidSourceDto) {
+    private suspend fun restartFailedMediaStreams(source: ItemSourceEntity) {
         val rows = unfinishedMediaStreams(source.id)
         val snapshots = engine.snapshots(rows.mapNotNull { it.downloadId })
         val failed = rows.filter { row ->
@@ -1386,7 +1379,7 @@ class DownloaderImpl(
         if (failed.isEmpty()) return
         val serverSource =
             try {
-                jellyfinRepository
+                mediaRepository
                     .getMediaSources(
                         source.itemId,
                         true,
@@ -1429,7 +1422,7 @@ class DownloaderImpl(
      * failed rename keeps the row, which still points at a readable file.
      */
     private suspend fun finalizeMediaStream(
-        mediaStream: FindroidMediaStreamDto,
+        mediaStream: MediaStreamEntity,
         taskGone: Boolean = false,
     ): Boolean {
         if (!mediaStream.path.endsWith(".download")) return true
@@ -1486,14 +1479,14 @@ class DownloaderImpl(
     }
 
     private suspend fun cleanupOrphanSource(itemId: ItemId, userId: UserId) {
-        val item: FindroidItem? =
+        val item: Item? =
             try {
-                database.getMovieOrNull(itemId)?.toFindroidMovie(database, userId)
+                database.getMovieOrNull(itemId)?.toMovie(database, userId)
             } catch (_: Exception) {
                 null
             }
                 ?: try {
-                    database.getEpisodeOrNull(itemId)?.toFindroidEpisode(database, userId)
+                    database.getEpisodeOrNull(itemId)?.toEpisode(database, userId)
                 } catch (_: Exception) {
                     null
                 }
@@ -1505,7 +1498,7 @@ class DownloaderImpl(
             }
             return
         }
-        for (source in database.getSources(itemId).map { it.toFindroidSource(database) }) {
+        for (source in database.getSources(itemId).map { it.toItemSource(database) }) {
             try {
                 deleteItem(item, source)
             } catch (e: Exception) {
@@ -1520,16 +1513,16 @@ class DownloaderImpl(
      * Movies: `Movie Name (2024)/Movie Name (2024).mkv` Episodes: `Series Name/S01/S01E05 - Episode
      * Name.mkv`
      */
-    private fun buildDownloadPath(item: FindroidItem, sourceId: String, extension: String): String {
+    private fun buildDownloadPath(item: Item, sourceId: String, extension: String): String {
         return when (item) {
-            is FindroidEpisode -> {
+            is Episode -> {
                 val series = sanitize(item.seriesName.ifBlank { "Unknown Series" })
                 val sNum = "S%02d".format(item.parentIndexNumber)
                 val eNum = "E%02d".format(item.indexNumber)
                 val epName = sanitize(item.name)
                 "$series/$sNum/$sNum$eNum - $epName.$extension"
             }
-            is FindroidMovie -> {
+            is Movie -> {
                 val year = item.productionYear
                 val title = sanitize(item.name)
                 val folder = if (year != null) "$title ($year)" else title
@@ -1551,7 +1544,7 @@ class DownloaderImpl(
         return if (ext.length in 1..5 && ext.all { it.isLetterOrDigit() }) ext else "mkv"
     }
 
-    private fun startImagesDownloader(item: FindroidItem) {
+    private fun startImagesDownloader(item: Item) {
         val downloadImagesRequest =
             OneTimeWorkRequestBuilder<ImagesDownloaderWorker>()
                 .setInputData(workDataOf(ImagesDownloaderWorker.KEY_ITEM_ID to item.id.asString()))

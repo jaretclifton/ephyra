@@ -2,22 +2,22 @@ package dev.jdtech.jellyfin.player.local.domain
 
 import androidx.core.net.toUri
 import androidx.media3.common.C
+import dev.jdtech.jellyfin.models.Chapter
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.EpisodeField
-import dev.jdtech.jellyfin.models.FindroidChapter
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
-import dev.jdtech.jellyfin.models.FindroidSources
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Playable
 import dev.jdtech.jellyfin.player.core.domain.models.ExternalSubtitle
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerChapter
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.player.core.domain.models.ServerAudioTrack
 import dev.jdtech.jellyfin.player.core.domain.models.TrickplayInfo
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import javax.inject.Inject
 import kotlin.random.Random
 import kotlinx.coroutines.CancellationException
@@ -30,11 +30,11 @@ import timber.log.Timber
 class PlaylistManager
 @Inject
 internal constructor(
-    private val repository: JellyfinRepository,
+    private val repository: MediaRepository,
     private val resolvePlayback: ResolvePlayback,
 ) {
-    private var startItem: FindroidItem? = null
-    private var items: List<FindroidItem> = emptyList()
+    private var startItem: Item? = null
+    private var items: List<Item> = emptyList()
 
     /** CE (#638): the order of a shuffle; tests set a seeded one. */
     internal var random: Random = Random.Default
@@ -59,7 +59,7 @@ internal constructor(
      * Fetches the full episode list for the queue. Set when the first item could start playing
      * without it (an episode already knows its season); run by [loadQueue].
      */
-    private var queueLoader: (suspend () -> List<FindroidItem>)? = null
+    private var queueLoader: (suspend () -> List<Item>)? = null
     private val queueMutex = Mutex()
 
     /** CE (#657): one [appendNextSeason] at a time; see [getNextPlayerItem]. */
@@ -72,7 +72,7 @@ internal constructor(
      */
     private val requestedAudio = HashMap<ItemId, Int>()
 
-    private suspend fun fetchEpisodes(seriesId: ItemId, seasonId: ItemId): List<FindroidEpisode> =
+    private suspend fun fetchEpisodes(seriesId: ItemId, seasonId: ItemId): List<Episode> =
         repository
             .getEpisodes(
                 seriesId = seriesId,
@@ -85,7 +85,7 @@ internal constructor(
      * CE (#594): [partial] as the server has it in full, with its trickplay and chapters. If that
      * fails, [partial] itself: playback without thumbnails is better than none.
      */
-    private suspend fun fullEpisode(partial: FindroidEpisode): FindroidEpisode =
+    private suspend fun fullEpisode(partial: Episode): Episode =
         try {
             repository.getEpisode(partial.id)
         } catch (e: CancellationException) {
@@ -114,7 +114,7 @@ internal constructor(
         lightQueue = false
         fetchedInFull.clear()
         // Playback sources fetched while the item itself was still loading.
-        var prefetchedSources: List<FindroidSource>? = null
+        var prefetchedSources: List<ItemSource>? = null
 
         val initialItem =
             when (itemKind) {
@@ -273,8 +273,8 @@ internal constructor(
         val itemIndex = index - 1
         val playerItem =
             when (startItem) {
-                is FindroidMovie -> null
-                is FindroidEpisode -> {
+                is Movie -> null
+                is Episode -> {
                     if (index <= 0) {
                         null
                     } else {
@@ -310,8 +310,8 @@ internal constructor(
         val itemIndex = index + 1
         val playerItem =
             when (startItem) {
-                is FindroidMovie -> null
-                is FindroidEpisode -> {
+                is Movie -> null
+                is Episode -> {
                     if (index >= 0 && index == items.lastIndex && !shuffled) {
                         // CE (#657): two lookups for the last episode can overlap (the user left
                         // it and came back while the first waited on the server). The second
@@ -352,7 +352,7 @@ internal constructor(
      * only when the current one runs out. Specials (season 0) do not roll over into season 1.
      */
     private suspend fun appendNextSeason() {
-        val queuedEpisodes = items.filterIsInstance<FindroidEpisode>()
+        val queuedEpisodes = items.filterIsInstance<Episode>()
         val seriesId = queuedEpisodes.lastOrNull()?.seriesId ?: return
 
         try {
@@ -404,7 +404,7 @@ internal constructor(
     }
 
     /** CE (#131): the queued items after the current one, for the TV player's queue row. */
-    fun upcomingItems(): List<FindroidItem> =
+    fun upcomingItems(): List<Item> =
         if (currentItemIndex < 0) emptyList() else items.drop(currentItemIndex + 1)
 
     /**
@@ -458,22 +458,22 @@ internal constructor(
      * full episode replaces the light one in [items], so it is fetched once, however often the item
      * is converted (Previous, Next, a jump in the queue, a quality or audio switch).
      */
-    private suspend fun queued(item: FindroidItem): FindroidItem {
-        if (!lightQueue || item !is FindroidEpisode || item.id in fetchedInFull) return item
+    private suspend fun queued(item: Item): Item {
+        if (!lightQueue || item !is Episode || item.id in fetchedInFull) return item
         val full = fullEpisode(item)
         fetchedInFull += full.id
         items = items.map { if (it.id == full.id) full else it }
         return full
     }
 
-    private suspend fun FindroidItem.toPlayerItem(
+    private suspend fun Item.toPlayerItem(
         mediaSourceId: String?,
         playbackPosition: Long,
-        prefetchedSources: List<FindroidSource>? = null,
+        prefetchedSources: List<ItemSource>? = null,
         selectedAudio: StoredChoice? = null,
         audioStreamIndex: Int? = null,
     ): PlayerItem {
-        Timber.d("Converting FindroidItem ${this.id} to PlayerItem")
+        Timber.d("Converting Item ${this.id} to PlayerItem")
 
         // CE (#766): the pick is ResolvePlayback's; it only returns a local source that is a
         // finished download. With no source (offline) there is nothing to play: the exception
@@ -483,7 +483,7 @@ internal constructor(
                 prefetchedSources ?: resolvePlayback.sources(id, mediaSourceId),
                 mediaSourceId,
             )
-        val local = picked?.takeIf { it.type == FindroidSourceType.LOCAL }
+        val local = picked?.takeIf { it.type == ItemSourceType.LOCAL }
         val remote =
             if (local != null) {
                 null
@@ -505,7 +505,7 @@ internal constructor(
             }
         val trickplayInfo =
             when (this) {
-                is FindroidSources -> {
+                is Playable -> {
                     this.trickplayInfo?.get(mediaSource.id)?.let {
                         TrickplayInfo(
                             width = it.width,
@@ -535,21 +535,21 @@ internal constructor(
                 },
             audioStreamIndex = remote?.audioStreamIndex,
             playbackPosition = playbackPosition,
-            parentIndexNumber = if (this is FindroidEpisode) parentIndexNumber else null,
-            indexNumber = if (this is FindroidEpisode) indexNumber else null,
-            indexNumberEnd = if (this is FindroidEpisode) indexNumberEnd else null,
+            parentIndexNumber = if (this is Episode) parentIndexNumber else null,
+            indexNumber = if (this is Episode) indexNumber else null,
+            indexNumberEnd = if (this is Episode) indexNumberEnd else null,
             externalSubtitles = externalSubtitles,
             chapters = chapters.toPlayerChapters(),
             trickplayInfo = trickplayInfo,
-            seriesName = if (this is FindroidEpisode) seriesName else null,
-            seriesId = if (this is FindroidEpisode) seriesId else null,
-            seasonId = if (this is FindroidEpisode) seasonId else null,
+            seriesName = if (this is Episode) seriesName else null,
+            seriesId = if (this is Episode) seriesId else null,
+            seasonId = if (this is Episode) seasonId else null,
             artworkUri = (images.primary ?: images.showPrimary)?.toUri(),
         )
     }
 
     /** A server source, and the audio stream the server put in it when it is a transcode. */
-    private class RemoteSource(val source: FindroidSource, val audioStreamIndex: Int?)
+    private class RemoteSource(val source: ItemSource, val audioStreamIndex: Int?)
 
     /**
      * CE (#580): a transcode carries one audio track, the server's default unless the request names
@@ -561,8 +561,8 @@ internal constructor(
      * pick is kept as the last requested track. A source that plays directly is returned as it is:
      * the player selects among its tracks itself.
      */
-    private suspend fun FindroidItem.withChosenAudio(
-        source: FindroidSource,
+    private suspend fun Item.withChosenAudio(
+        source: ItemSource,
         selectedAudio: StoredChoice?,
         pickedIndex: Int?,
     ): RemoteSource {
@@ -582,7 +582,7 @@ internal constructor(
         return try {
             resolvePlayback
                 .sources(id, source.id, audioStreamIndex = index)
-                .firstOrNull { it.id == source.id && it.type != FindroidSourceType.LOCAL }
+                .firstOrNull { it.id == source.id && it.type != ItemSourceType.LOCAL }
                 ?.let { RemoteSource(it, index) } ?: default
         } catch (e: CancellationException) {
             throw e
@@ -598,7 +598,7 @@ internal constructor(
      * matched as a saved choice of only a language is. Null without a preference, without such a
      * track, or when the server's default track has that language already.
      */
-    private fun preferredAudio(source: FindroidSource): Int? {
+    private fun preferredAudio(source: ItemSource): Int? {
         val language = normalizeLanguage(resolvePlayback.preferredAudioLanguage()) ?: return null
         val defaultTrack =
             serverAudioTracks(source.mediaStreams).firstOrNull {
@@ -611,8 +611,8 @@ internal constructor(
     }
 
     /** The audio track saved for this episode's series, or null: a movie has none. */
-    private suspend fun FindroidItem.savedAudioChoice(): StoredChoice? {
-        if (this !is FindroidEpisode) return null
+    private suspend fun Item.savedAudioChoice(): StoredChoice? {
+        if (this !is Episode) return null
         val preference =
             try {
                 repository.getSeriesTrackPreferences(seriesId).firstOrNull {
@@ -627,7 +627,7 @@ internal constructor(
         return StoredChoice(preference.language, preference.title, preference.positionInLanguage)
     }
 
-    private fun List<FindroidChapter>.toPlayerChapters(): List<PlayerChapter> {
+    private fun List<Chapter>.toPlayerChapters(): List<PlayerChapter> {
         return this.map { chapter ->
             PlayerChapter(
                 startPosition = chapter.startPosition,

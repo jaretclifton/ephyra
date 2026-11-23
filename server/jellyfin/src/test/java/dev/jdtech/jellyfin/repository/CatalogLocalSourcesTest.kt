@@ -2,12 +2,12 @@ package dev.jdtech.jellyfin.repository
 
 import android.app.Application
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidShow
-import dev.jdtech.jellyfin.models.FindroidSourceDto
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSourceEntity
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -73,11 +73,11 @@ class CatalogLocalSourcesTest {
             as ServerDatabaseDao
 
     private fun localSource(itemId: ItemId) =
-        FindroidSourceDto(
+        ItemSourceEntity(
             id = "download-${itemId.asString()}",
             itemId = itemId,
             name = "Original",
-            type = FindroidSourceType.LOCAL,
+            type = ItemSourceType.LOCAL,
             path = "/storage/downloads/${itemId.asString()}.mkv",
         )
 
@@ -101,7 +101,7 @@ class CatalogLocalSourcesTest {
         val result = repository.getMovie(movieId)
 
         assertEquals(
-            listOf(FindroidSourceType.REMOTE, FindroidSourceType.LOCAL),
+            listOf(ItemSourceType.REMOTE, ItemSourceType.LOCAL),
             result.sources.map { it.type },
         )
         assertEquals("download-${movieId.asString()}", result.sources.last().id)
@@ -111,15 +111,15 @@ class CatalogLocalSourcesTest {
     fun `a list adds the downloads of its movies and episodes in one lookup`() = runBlocking {
         val items = repository.getItems()
 
-        val movie = items.filterIsInstance<FindroidMovie>().single()
-        val episode = items.filterIsInstance<FindroidEpisode>().single()
-        val show = items.filterIsInstance<FindroidShow>().single()
+        val movie = items.filterIsInstance<Movie>().single()
+        val episode = items.filterIsInstance<Episode>().single()
+        val show = items.filterIsInstance<Show>().single()
         assertEquals(
-            listOf(FindroidSourceType.REMOTE, FindroidSourceType.LOCAL),
+            listOf(ItemSourceType.REMOTE, ItemSourceType.LOCAL),
             movie.sources.map { it.type },
         )
         assertEquals(
-            listOf(FindroidSourceType.REMOTE, FindroidSourceType.LOCAL),
+            listOf(ItemSourceType.REMOTE, ItemSourceType.LOCAL),
             episode.sources.map { it.type },
         )
         assertEquals(emptyList(), show.sources)
@@ -132,7 +132,7 @@ class CatalogLocalSourcesTest {
             val result = repository.getEpisodes(seriesId, seasonId = null).single()
 
             assertEquals(
-                listOf(FindroidSourceType.REMOTE, FindroidSourceType.LOCAL),
+                listOf(ItemSourceType.REMOTE, ItemSourceType.LOCAL),
                 result.sources.map { it.type },
             )
         }

@@ -1,6 +1,6 @@
 package dev.jdtech.jellyfin.player.local.domain
 
-import dev.jdtech.jellyfin.models.FindroidMediaStream
+import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -99,7 +99,7 @@ class SeriesTrackPreferenceTest {
         type: MediaStreamType = MediaStreamType.AUDIO,
         external: Boolean = false,
     ) =
-        FindroidMediaStream(
+        MediaStream(
             title = title,
             displayTitle = null,
             language = language,

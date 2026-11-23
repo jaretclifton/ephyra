@@ -7,10 +7,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dev.jdtech.jellyfin.models.FindroidSegment
-import dev.jdtech.jellyfin.models.FindroidSegmentType
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.Segment
+import dev.jdtech.jellyfin.models.SegmentType
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.player.cast.CastPlayerController
 import dev.jdtech.jellyfin.player.cast.CastSessionManager
@@ -24,7 +24,7 @@ import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.player.core.domain.models.Track
 import dev.jdtech.jellyfin.player.local.R as PlayerLocalR
 import dev.jdtech.jellyfin.player.local.domain.DebugSegments
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -87,8 +87,8 @@ data class CastUiState(
     val player: CastPlayerState = CastPlayerState(),
     val chapters: List<PlayerChapter> = emptyList(),
     /** CE (#681): every segment of the item, for the seek bar. */
-    val segments: List<FindroidSegment> = emptyList(),
-    val segment: FindroidSegment? = null,
+    val segments: List<Segment> = emptyList(),
+    val segment: Segment? = null,
     @param:StringRes val skipSegmentLabel: Int = PlayerLocalR.string.player_controls_skip_intro,
     val audioTracks: List<Track> = emptyList(),
     val subtitleTracks: List<Track> = emptyList(),
@@ -116,7 +116,7 @@ class CastViewModel
 constructor(
     private val sessionManager: CastSessionManager,
     private val playerController: CastPlayerController,
-    private val repository: JellyfinRepository,
+    private val repository: MediaRepository,
     private val appPreferences: AppPreferences,
     @param:ApplicationContext private val context: Context,
 ) : ViewModel() {
@@ -143,7 +143,7 @@ constructor(
     private val _events = Channel<CastEvent>(Channel.BUFFERED)
     val events: Flow<CastEvent> = _events.receiveAsFlow()
 
-    private var segments: List<FindroidSegment> = emptyList()
+    private var segments: List<Segment> = emptyList()
     /** The item [segments] belongs to, or is being loaded for. */
     private var segmentsItemId: ItemId? = null
     private var segmentsJob: Job? = null
@@ -355,13 +355,12 @@ constructor(
                 segment = active,
                 skipSegmentLabel =
                     when (active?.type) {
-                        FindroidSegmentType.OUTRO -> PlayerLocalR.string.player_controls_skip_outro
-                        FindroidSegmentType.RECAP -> PlayerLocalR.string.player_controls_skip_recap
-                        FindroidSegmentType.PREVIEW ->
-                            PlayerLocalR.string.player_controls_skip_preview
-                        FindroidSegmentType.COMMERCIAL ->
+                        SegmentType.OUTRO -> PlayerLocalR.string.player_controls_skip_outro
+                        SegmentType.RECAP -> PlayerLocalR.string.player_controls_skip_recap
+                        SegmentType.PREVIEW -> PlayerLocalR.string.player_controls_skip_preview
+                        SegmentType.COMMERCIAL ->
                             PlayerLocalR.string.player_controls_skip_commercial
-                        FindroidSegmentType.INTRO -> PlayerLocalR.string.player_controls_skip_intro
+                        SegmentType.INTRO -> PlayerLocalR.string.player_controls_skip_intro
                         else -> PlayerLocalR.string.player_controls_skip_unknown
                     },
             )

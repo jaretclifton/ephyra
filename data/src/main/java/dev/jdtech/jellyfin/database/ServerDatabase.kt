@@ -9,20 +9,20 @@ import androidx.room3.migration.AutoMigrationSpec
 import androidx.room3.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
-import dev.jdtech.jellyfin.models.FindroidEpisodeDto
-import dev.jdtech.jellyfin.models.FindroidMediaStreamDto
-import dev.jdtech.jellyfin.models.FindroidMovieDto
-import dev.jdtech.jellyfin.models.FindroidSeasonDto
-import dev.jdtech.jellyfin.models.FindroidSegmentDto
-import dev.jdtech.jellyfin.models.FindroidShowDto
-import dev.jdtech.jellyfin.models.FindroidSourceDto
-import dev.jdtech.jellyfin.models.FindroidTrickplayInfoDto
-import dev.jdtech.jellyfin.models.FindroidUserDataDto
+import dev.jdtech.jellyfin.models.EpisodeEntity
+import dev.jdtech.jellyfin.models.ItemSourceEntity
+import dev.jdtech.jellyfin.models.ItemTrickplayInfoEntity
+import dev.jdtech.jellyfin.models.MediaStreamEntity
+import dev.jdtech.jellyfin.models.MovieEntity
 import dev.jdtech.jellyfin.models.PendingDownloadDto
+import dev.jdtech.jellyfin.models.SeasonEntity
+import dev.jdtech.jellyfin.models.SegmentEntity
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.ShowEntity
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.UserDataEntity
 
 @Database(
     entities =
@@ -30,15 +30,15 @@ import dev.jdtech.jellyfin.models.User
             Server::class,
             ServerAddress::class,
             User::class,
-            FindroidMovieDto::class,
-            FindroidShowDto::class,
-            FindroidSeasonDto::class,
-            FindroidEpisodeDto::class,
-            FindroidSourceDto::class,
-            FindroidMediaStreamDto::class,
-            FindroidUserDataDto::class,
-            FindroidTrickplayInfoDto::class,
-            FindroidSegmentDto::class,
+            MovieEntity::class,
+            ShowEntity::class,
+            SeasonEntity::class,
+            EpisodeEntity::class,
+            ItemSourceEntity::class,
+            MediaStreamEntity::class,
+            UserDataEntity::class,
+            ItemTrickplayInfoEntity::class,
+            SegmentEntity::class,
             PendingDownloadDto::class,
             SeriesTrackPreferenceDto::class,
         ],

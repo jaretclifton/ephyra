@@ -1,8 +1,8 @@
 package dev.jdtech.jellyfin.film.presentation
 
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 
 /**
@@ -35,7 +35,7 @@ fun AppPreferences.detailSections() =
         similar = getValue(detailSimilar),
     )
 
-fun FindroidMovie.shownIn(sections: DetailSections) =
+fun Movie.shownIn(sections: DetailSections) =
     copy(
         criticRating = criticRating.takeIf { sections.criticRating },
         tagline = tagline.takeIf { sections.tagline },
@@ -44,7 +44,7 @@ fun FindroidMovie.shownIn(sections: DetailSections) =
         externalLinks = if (sections.externalLinks) externalLinks else emptyList(),
     )
 
-fun FindroidShow.shownIn(sections: DetailSections) =
+fun Show.shownIn(sections: DetailSections) =
     copy(
         criticRating = criticRating.takeIf { sections.criticRating },
         tagline = tagline.takeIf { sections.tagline },
@@ -54,7 +54,7 @@ fun FindroidShow.shownIn(sections: DetailSections) =
         externalLinks = if (sections.externalLinks) externalLinks else emptyList(),
     )
 
-fun FindroidEpisode.shownIn(sections: DetailSections) =
+fun Episode.shownIn(sections: DetailSections) =
     copy(
         playCount = if (sections.watchHistory) playCount else 0,
         externalLinks = if (sections.externalLinks) externalLinks else emptyList(),

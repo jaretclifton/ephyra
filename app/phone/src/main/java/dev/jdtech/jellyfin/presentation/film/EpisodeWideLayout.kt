@@ -37,7 +37,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyVideoMetadata
 import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
 import dev.jdtech.jellyfin.film.presentation.episode.EpisodeAction
 import dev.jdtech.jellyfin.film.presentation.episode.EpisodeState
-import dev.jdtech.jellyfin.models.FindroidEpisode
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.presentation.film.components.ActorsRow
 import dev.jdtech.jellyfin.presentation.film.components.ArtworkPlacement
 import dev.jdtech.jellyfin.presentation.film.components.ArtworkState
@@ -112,10 +112,7 @@ fun EpisodeWideLayout(
  * season. A long show name gives way first, so the season button always stays whole.
  */
 @Composable
-internal fun RowScope.EpisodeTopBarLinks(
-    episode: FindroidEpisode,
-    onAction: (EpisodeAction) -> Unit,
-) {
+internal fun RowScope.EpisodeTopBarLinks(episode: Episode, onAction: (EpisodeAction) -> Unit) {
     val colors =
         ButtonDefaults.buttonColors(
             containerColor = Color.Black.copy(alpha = 0.5f),
@@ -291,7 +288,7 @@ fun EpisodeWideContent(
 }
 
 @Composable
-private fun seasonName(episode: FindroidEpisode): String =
+private fun seasonName(episode: Episode): String =
     episode.seasonName ?: stringResource(CoreR.string.season_number, episode.parentIndexNumber)
 
 @PreviewScreenSizes

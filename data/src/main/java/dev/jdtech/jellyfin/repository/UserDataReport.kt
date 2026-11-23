@@ -1,8 +1,8 @@
 package dev.jdtech.jellyfin.repository
 
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidUserDataDto
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.UserId
 import kotlinx.coroutines.CancellationException
 
@@ -31,7 +31,7 @@ internal suspend fun writeAndReport(
     write: suspend ServerDatabaseDao.() -> Unit,
     report: suspend () -> Unit,
 ): Boolean {
-    var written: FindroidUserDataDto? = null
+    var written: UserDataEntity? = null
     val marked =
         database.writeAndMarkToBeSynced(userId, itemId) {
             write()

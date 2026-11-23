@@ -43,7 +43,7 @@ import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
 import dev.jdtech.jellyfin.core.presentation.spoiler.spoilerImage
 import dev.jdtech.jellyfin.core.presentation.spoiler.upNext
 import dev.jdtech.jellyfin.core.presentation.spoiler.upNextTitle
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.player.local.R as PlayerR
 import dev.jdtech.jellyfin.player.local.presentation.PlayerViewModel.UpNextState
 import dev.jdtech.jellyfin.presentation.theme.spacings
@@ -59,7 +59,7 @@ import dev.jdtech.jellyfin.presentation.theme.spacings
 @Composable
 internal fun TvUpNextCard(
     state: UpNextState,
-    queue: List<FindroidItem>,
+    queue: List<Item>,
     playNowFocus: FocusRequester,
     onPlayNow: () -> Unit,
     onCancel: () -> Unit,

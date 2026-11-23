@@ -5,7 +5,7 @@ import androidx.compose.ui.unit.dp
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.core.presentation.dummy.dummySeason
-import dev.jdtech.jellyfin.models.FindroidImages
+import dev.jdtech.jellyfin.models.ItemImages
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -30,7 +30,7 @@ class HeroArtworkTest {
 
     @Test
     fun `a movie with a backdrop shows it, then its poster`() {
-        val movie = dummyMovie.copy(images = FindroidImages(primary = poster, backdrop = backdrop))
+        val movie = dummyMovie.copy(images = ItemImages(primary = poster, backdrop = backdrop))
 
         assertEquals(
             listOf(ArtworkSource(backdrop), ArtworkSource(poster, standIn = true)),
@@ -40,7 +40,7 @@ class HeroArtworkTest {
 
     @Test
     fun `a movie without a backdrop shows its poster blurred`() {
-        val movie = dummyMovie.copy(images = FindroidImages(primary = poster))
+        val movie = dummyMovie.copy(images = ItemImages(primary = poster))
 
         assertEquals(
             listOf(ArtworkSource(poster, standIn = true)),
@@ -50,7 +50,7 @@ class HeroArtworkTest {
 
     @Test
     fun `without blur a poster never stands in`() {
-        val movie = dummyMovie.copy(images = FindroidImages(primary = poster))
+        val movie = dummyMovie.copy(images = ItemImages(primary = poster))
 
         assertEquals(
             emptyList<ArtworkSource>(),
@@ -63,7 +63,7 @@ class HeroArtworkTest {
         val season =
             dummySeason.copy(
                 images =
-                    FindroidImages(
+                    ItemImages(
                         primary = poster,
                         backdrop = backdrop,
                         showPrimary = showPoster,
@@ -87,7 +87,7 @@ class HeroArtworkTest {
         val episode =
             dummyEpisode.copy(
                 images =
-                    FindroidImages(
+                    ItemImages(
                         primary = still,
                         showPrimary = showPoster,
                         showBackdrop = showBackdrop,
@@ -108,7 +108,7 @@ class HeroArtworkTest {
     @Test
     fun `an episode's header starts with the show's backdrop unless episode images are asked for`() {
         val episode =
-            dummyEpisode.copy(images = FindroidImages(primary = still, showBackdrop = showBackdrop))
+            dummyEpisode.copy(images = ItemImages(primary = still, showBackdrop = showBackdrop))
 
         assertEquals(
             listOf(ArtworkSource(showBackdrop), ArtworkSource(still)),
@@ -137,7 +137,7 @@ class HeroArtworkTest {
 
     @Test
     fun `an episode without a show backdrop keeps its still in the header`() {
-        val episode = dummyEpisode.copy(images = FindroidImages(primary = still))
+        val episode = dummyEpisode.copy(images = ItemImages(primary = still))
 
         assertEquals(
             listOf(ArtworkSource(still)),

@@ -1,7 +1,7 @@
 package dev.jdtech.jellyfin.film.presentation
 
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
-import dev.jdtech.jellyfin.models.FindroidEpisode
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.isDownloaded
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /** What a season or show download adds to the queue, and how many it skipped. */
-internal data class EpisodeDownloadSelection(val toQueue: List<FindroidEpisode>, val skipped: Int)
+internal data class EpisodeDownloadSelection(val toQueue: List<Episode>, val skipped: Int)
 
 /**
  * CE (#636): the question a season or show download asks when some of its episodes are watched:
@@ -27,11 +27,11 @@ data class EpisodeDownloadChoice(val allCount: Int, val unwatchedCount: Int)
  * unwatched and still queued.
  */
 internal fun selectEpisodesToDownload(
-    episodes: List<FindroidEpisode>,
+    episodes: List<Episode>,
     inFlightIds: Set<ItemId>,
     unwatchedOnly: Boolean = false,
 ): EpisodeDownloadSelection {
-    val toQueue = mutableListOf<FindroidEpisode>()
+    val toQueue = mutableListOf<Episode>()
     var skipped = 0
     for (episode in episodes) {
         when {
@@ -48,7 +48,7 @@ internal fun selectEpisodesToDownload(
  * because none of the episodes the download would queue are watched.
  */
 internal fun downloadChoiceFor(
-    episodes: List<FindroidEpisode>,
+    episodes: List<Episode>,
     inFlightIds: Set<ItemId>,
 ): EpisodeDownloadChoice? {
     val all = selectEpisodesToDownload(episodes, inFlightIds).toQueue.size
@@ -88,13 +88,9 @@ sealed interface DownloadPrompt {
  */
 internal class EpisodeDownloadPrompts {
     /** What to queue once both questions are answered. */
-    data class Answer(
-        val episodes: List<FindroidEpisode>,
-        val maxBitrate: Int?,
-        val unwatchedOnly: Boolean,
-    )
+    data class Answer(val episodes: List<Episode>, val maxBitrate: Int?, val unwatchedOnly: Boolean)
 
-    private var episodes: List<FindroidEpisode> = emptyList()
+    private var episodes: List<Episode> = emptyList()
     private var unwatchedOnly = false
     private val _prompt = MutableStateFlow<DownloadPrompt?>(null)
 
@@ -106,7 +102,7 @@ internal class EpisodeDownloadPrompts {
      * (one whose episodes were still loading) is ignored, so the question on screen never changes
      * under the user's answer.
      */
-    fun start(episodes: List<FindroidEpisode>, inFlightIds: Set<ItemId>) {
+    fun start(episodes: List<Episode>, inFlightIds: Set<ItemId>) {
         if (_prompt.value != null) return
         this.episodes = episodes
         unwatchedOnly = false

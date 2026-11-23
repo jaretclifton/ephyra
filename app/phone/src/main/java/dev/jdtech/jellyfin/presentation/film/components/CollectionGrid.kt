@@ -13,7 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import dev.jdtech.jellyfin.film.presentation.collection.CollectionAction
 import dev.jdtech.jellyfin.models.CollectionSection
-import dev.jdtech.jellyfin.models.FindroidEpisode
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.presentation.utils.GridCellsAdaptiveWithMinColumns
 import dev.jdtech.jellyfin.presentation.utils.Layout
@@ -54,8 +54,7 @@ fun CollectionGrid(
             items(items = section.items, key = { it.id }) { item ->
                 ItemCard(
                     item = item,
-                    direction =
-                        if (item is FindroidEpisode) Direction.HORIZONTAL else Direction.VERTICAL,
+                    direction = if (item is Episode) Direction.HORIZONTAL else Direction.VERTICAL,
                     onClick = { onAction(CollectionAction.OnItemClick(item)) },
                     modifier = Modifier.animateItem(),
                 )

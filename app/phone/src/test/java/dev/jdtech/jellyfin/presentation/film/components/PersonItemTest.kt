@@ -13,8 +13,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyPerson
-import dev.jdtech.jellyfin.models.FindroidItemPerson
-import dev.jdtech.jellyfin.models.FindroidItemPersonImage
+import dev.jdtech.jellyfin.models.ItemPerson
+import dev.jdtech.jellyfin.models.ItemPersonImage
 import java.io.File
 import kotlin.test.assertEquals
 import org.junit.Rule
@@ -109,9 +109,9 @@ class PersonItemTest {
     }
 
     private fun withPhoto(uri: String?) =
-        dummyPerson.copy(image = FindroidItemPersonImage(uri = uri, blurHash = null))
+        dummyPerson.copy(image = ItemPersonImage(uri = uri, blurHash = null))
 
-    private fun show(person: FindroidItemPerson = dummyPerson, enabled: Boolean = true) {
+    private fun show(person: ItemPerson = dummyPerson, enabled: Boolean = true) {
         rule.setContent { PersonItem(person = person, onClick = { clicks++ }, enabled = enabled) }
     }
 }

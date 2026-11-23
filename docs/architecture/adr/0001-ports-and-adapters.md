@@ -10,7 +10,7 @@ engines that are one idea. Today:
 - Nine of ten modules declare the Jellyfin SDK; 85 production files mention it, 56 outside `data`;
   25 more reach it through the `JellyfinApi` wrapper
   ([1-inventory.md](../1-inventory.md), 1.1).
-- `JellyfinRepository` has one implementation that mixes server calls with Room (1.2).
+- `MediaRepository` has one implementation that mixes server calls with Room (1.2).
 - `setup`, the sync worker, the session keeper and Cast call the SDK themselves (1.1, 1.4).
 - Both engines implement media3's `Player`, but `PlayerViewModel` builds them, checks for
   `MPVPlayer` in three places and has no unit test of its own (1.3).

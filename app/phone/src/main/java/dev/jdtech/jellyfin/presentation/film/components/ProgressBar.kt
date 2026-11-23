@@ -13,11 +13,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 
 @Composable
-fun ProgressBar(item: FindroidItem, width: Dp, modifier: Modifier = Modifier) {
+fun ProgressBar(item: Item, width: Dp, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         val progress =
             if (item.runtimeTicks > 0) {

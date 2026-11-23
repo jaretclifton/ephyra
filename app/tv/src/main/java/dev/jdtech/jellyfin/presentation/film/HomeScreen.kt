@@ -21,11 +21,11 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyHomeView
 import dev.jdtech.jellyfin.film.presentation.home.HomeAction
 import dev.jdtech.jellyfin.film.presentation.home.HomeState
 import dev.jdtech.jellyfin.film.presentation.home.HomeViewModel
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.presentation.film.components.HomeCarousel
 import dev.jdtech.jellyfin.presentation.film.components.HomeSection
 import dev.jdtech.jellyfin.presentation.film.components.HomeView
@@ -52,9 +52,9 @@ fun HomeScreen(
             when (action) {
                 is HomeAction.OnItemClick -> {
                     when (action.item) {
-                        is FindroidMovie -> navigateToMovie(action.item.id)
-                        is FindroidShow -> navigateToShow(action.item.id)
-                        is FindroidEpisode -> {
+                        is Movie -> navigateToMovie(action.item.id)
+                        is Show -> navigateToShow(action.item.id)
+                        is Episode -> {
                             navigateToPlayer(action.item.id, ItemKind.EPISODE)
                         }
                     }

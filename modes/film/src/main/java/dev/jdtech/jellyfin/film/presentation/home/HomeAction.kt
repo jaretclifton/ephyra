@@ -1,12 +1,12 @@
 package dev.jdtech.jellyfin.film.presentation.home
 
-import dev.jdtech.jellyfin.models.FindroidCollection
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
+import dev.jdtech.jellyfin.models.Library
 
 sealed interface HomeAction {
-    data class OnItemClick(val item: FindroidItem) : HomeAction
+    data class OnItemClick(val item: Item) : HomeAction
 
-    data class OnLibraryClick(val library: FindroidCollection) : HomeAction
+    data class OnLibraryClick(val library: Library) : HomeAction
 
     data object OnRetryClick : HomeAction
 

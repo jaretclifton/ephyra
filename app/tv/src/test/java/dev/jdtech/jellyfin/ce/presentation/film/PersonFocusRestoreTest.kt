@@ -22,7 +22,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyPersonDetail
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyShow
 import dev.jdtech.jellyfin.film.presentation.person.PersonState
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
@@ -39,22 +39,20 @@ import org.robolectric.annotation.Config
 class PersonFocusRestoreTest {
     @get:Rule val rule = createComposeRule()
 
-    private val movies: List<dev.jdtech.jellyfin.models.FindroidMovie> =
+    private val movies: List<dev.jdtech.jellyfin.models.Movie> =
         (0 until 10).map {
             dummyMovie.copy(id = UUID(0, it.toLong()).toString().toItemId(), name = "Movie $it")
         }
 
-    private val shows: List<dev.jdtech.jellyfin.models.FindroidShow> =
+    private val shows: List<dev.jdtech.jellyfin.models.Show> =
         (0 until 10).map {
             dummyShow.copy(id = UUID(1, it.toLong()).toString().toItemId(), name = "Show $it")
         }
 
     private var detailOpen by mutableStateOf(false)
-    private var opened: FindroidItem? = null
+    private var opened: Item? = null
 
-    private fun setUpPerson(
-        starredInShows: List<dev.jdtech.jellyfin.models.FindroidShow> = emptyList()
-    ) {
+    private fun setUpPerson(starredInShows: List<dev.jdtech.jellyfin.models.Show> = emptyList()) {
         rule.setContent {
             val stateHolder = rememberSaveableStateHolder()
             FindroidTheme {
@@ -82,7 +80,7 @@ class PersonFocusRestoreTest {
         }
     }
 
-    private fun card(item: FindroidItem): SemanticsMatcher =
+    private fun card(item: Item): SemanticsMatcher =
         hasAnyAncestor(hasTestTag(personMediaCardTag(item.id))) and isFocusable()
 
     @Test

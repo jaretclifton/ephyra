@@ -25,9 +25,9 @@ import dev.jdtech.jellyfin.core.presentation.rows.animateRowItem
 import dev.jdtech.jellyfin.core.presentation.rows.rememberLazyListStateAtStart
 import dev.jdtech.jellyfin.film.R as FilmR
 import dev.jdtech.jellyfin.film.presentation.home.HomeAction
-import dev.jdtech.jellyfin.models.FindroidCollection
-import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.HomeItem
+import dev.jdtech.jellyfin.models.ItemImages
+import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.presentation.theme.spacings
 
 @Composable
@@ -48,10 +48,10 @@ fun HomeView(
                 onClick = {
                     onAction(
                         HomeAction.OnLibraryClick(
-                            FindroidCollection(
+                            Library(
                                 id = view.view.id,
                                 name = view.view.name,
-                                images = FindroidImages(),
+                                images = ItemImages(),
                                 type = view.view.type,
                             )
                         )

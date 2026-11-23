@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.randomItemId
-import dev.jdtech.jellyfin.models.FindroidItemPerson
+import dev.jdtech.jellyfin.models.ItemPerson
 import dev.jdtech.jellyfin.models.PersonKind
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
@@ -41,8 +41,8 @@ const val INFO_CREDIT_TAG = "info_credit"
 @Composable
 fun InfoText(
     genres: List<String>,
-    director: FindroidItemPerson?,
-    writers: List<FindroidItemPerson>,
+    director: ItemPerson?,
+    writers: List<ItemPerson>,
     // CE (#332): the studios of a movie, or the networks of a show.
     studios: List<String> = emptyList(),
     studiosAreNetworks: Boolean = false,
@@ -133,12 +133,12 @@ private val MaxLabelColumnWidth = 140.dp
 @Composable
 private fun InfoTextPreview() {
     fun person(name: String) =
-        FindroidItemPerson(
+        ItemPerson(
             id = randomItemId(),
             name = name,
             type = PersonKind.DIRECTOR,
             role = "",
-            image = dev.jdtech.jellyfin.models.FindroidItemPersonImage(null, null),
+            image = dev.jdtech.jellyfin.models.ItemPersonImage(null, null),
         )
     FindroidTheme {
         InfoText(

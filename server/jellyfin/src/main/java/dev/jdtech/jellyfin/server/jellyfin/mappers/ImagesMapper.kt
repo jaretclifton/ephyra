@@ -1,11 +1,11 @@
 package dev.jdtech.jellyfin.server.jellyfin.mappers
 
 import android.net.Uri
-import dev.jdtech.jellyfin.models.FindroidImages
+import dev.jdtech.jellyfin.models.ItemImages
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.ImageType
 
-internal fun BaseItemDto.toFindroidImages(baseUrl: String): FindroidImages {
+internal fun BaseItemDto.toItemImages(baseUrl: String): ItemImages {
     val baseUri = Uri.parse(baseUrl)
     val primary =
         imageTags?.get(ImageType.PRIMARY)?.let { tag ->
@@ -97,7 +97,7 @@ internal fun BaseItemDto.toFindroidImages(baseUrl: String): FindroidImages {
                     .toString()
             }
 
-    return FindroidImages(
+    return ItemImages(
         primary = primary,
         backdrop = backdrop,
         logo = logo,

@@ -1,10 +1,10 @@
 package dev.jdtech.jellyfin.domain.ports
 
-import dev.jdtech.jellyfin.models.FindroidSegment
-import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.PlaybackTarget
+import dev.jdtech.jellyfin.models.Segment
 import dev.jdtech.jellyfin.repository.ResumeThresholds
 
 /** What to ask the server for the sources of [itemId] (#757). */
@@ -51,15 +51,15 @@ data class PlaybackReport(
  */
 interface PlaybackPort {
     /**
-     * The server's sources for [request], with finished URLs. `FindroidSource.transcoded` and
+     * The server's sources for [request], with finished URLs. `ItemSource.transcoded` and
      * `.playSessionId` say what the server chose; a download's sources carry no play session.
      */
-    suspend fun sources(request: PlaybackRequest): List<FindroidSource>
+    suspend fun sources(request: PlaybackRequest): List<ItemSource>
 
     /** The URL of the original file of [mediaSourceId]. */
     suspend fun streamUrl(itemId: ItemId, mediaSourceId: MediaSourceId): String
 
-    suspend fun segments(itemId: ItemId): List<FindroidSegment>
+    suspend fun segments(itemId: ItemId): List<Segment>
 
     /**
      * Sheet [index] of the trickplay images [width] wide of [mediaSourceId], the version that is

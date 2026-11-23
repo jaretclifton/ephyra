@@ -29,7 +29,7 @@ private val SIZED_IMAGE_URL =
  * asked for, which costs a busy server more than the smaller download saves.
  *
  * Lives in the image loader so nothing else sees the sized URLs: downloads fetch the URLs in
- * `FindroidImages` directly and keep storing the original.
+ * `ItemImages` directly and keep storing the original.
  */
 class JellyfinImageSizeInterceptor(private val isEnabled: () -> Boolean) : Interceptor {
     override suspend fun intercept(chain: Interceptor.Chain): ImageResult {

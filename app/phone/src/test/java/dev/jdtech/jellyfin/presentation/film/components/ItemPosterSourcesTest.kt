@@ -3,7 +3,7 @@ package dev.jdtech.jellyfin.presentation.film.components
 import android.app.Application
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
-import dev.jdtech.jellyfin.models.FindroidImages
+import dev.jdtech.jellyfin.models.ItemImages
 import kotlin.test.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -26,13 +26,10 @@ class ItemPosterSourcesTest {
 
     private val episode =
         dummyEpisode.copy(
-            images =
-                FindroidImages(primary = still, showBackdrop = showBackdrop, showThumb = showThumb)
+            images = ItemImages(primary = still, showBackdrop = showBackdrop, showThumb = showThumb)
         )
     private val movie =
-        dummyMovie.copy(
-            images = FindroidImages(primary = poster, backdrop = backdrop, thumb = thumb)
-        )
+        dummyMovie.copy(images = ItemImages(primary = poster, backdrop = backdrop, thumb = thumb))
 
     @Test
     fun `an episode that prefers the thumb tries the series art before its own frame`() {

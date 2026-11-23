@@ -5,12 +5,12 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
-import dev.jdtech.jellyfin.models.toFindroidEpisode
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.models.toEpisode
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
 import java.io.File
@@ -26,7 +26,7 @@ import kotlinx.coroutines.withContext
 class DownloadedShowViewModel
 @Inject
 constructor(
-    private val repository: JellyfinRepository,
+    private val repository: MediaRepository,
     private val downloadQueue: DownloadQueue,
     private val downloader: Downloader,
     private val database: ServerDatabaseDao,
@@ -57,7 +57,7 @@ constructor(
                                     !it.path.endsWith(".download")
                                 }
                             }
-                            .map { it.toFindroidEpisode(database, userId, sourcesByEpisode) }
+                            .map { it.toEpisode(database, userId, sourcesByEpisode) }
                             .sortedWith(compareBy({ it.parentIndexNumber }, { it.indexNumber }))
                     val sizes = episodes.associate { ep ->
                         ep.id to
@@ -83,12 +83,12 @@ constructor(
         }
     }
 
-    fun deleteEpisodes(showId: ItemId, episodes: List<FindroidEpisode>) {
+    fun deleteEpisodes(showId: ItemId, episodes: List<Episode>) {
         downloadDeletionScope.launch {
             for (episode in episodes) {
                 downloadQueue.remove(episode.id)
                 val source =
-                    episode.sources.firstOrNull { it.type == FindroidSourceType.LOCAL } ?: continue
+                    episode.sources.firstOrNull { it.type == ItemSourceType.LOCAL } ?: continue
                 downloader.deleteItem(episode, source)
             }
             loadEpisodes(showId)

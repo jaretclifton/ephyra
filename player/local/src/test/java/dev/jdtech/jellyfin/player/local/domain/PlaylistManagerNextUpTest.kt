@@ -3,11 +3,11 @@ package dev.jdtech.jellyfin.player.local.domain
 import android.content.ContextWrapper
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidChapter
-import dev.jdtech.jellyfin.models.FindroidEpisode
+import dev.jdtech.jellyfin.models.Chapter
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.ServerException
-import dev.jdtech.jellyfin.repository.JellyfinRepositoryImpl
+import dev.jdtech.jellyfin.repository.MediaRepositoryImpl
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.ContractLibrary
 import dev.jdtech.jellyfin.testing.FakeLibrary
@@ -38,12 +38,8 @@ class PlaylistManagerNextUpTest {
             override val items =
                 ContractLibrary.items.map {
                     if (it.id == episodeId) {
-                        (it as FindroidEpisode).copy(
-                            chapters =
-                                listOf(
-                                    FindroidChapter(0L, "Opening"),
-                                    FindroidChapter(60_000L, "Part One"),
-                                )
+                        (it as Episode).copy(
+                            chapters = listOf(Chapter(0L, "Opening"), Chapter(60_000L, "Part One"))
                         )
                     } else it
                 }
@@ -77,7 +73,7 @@ class PlaylistManagerNextUpTest {
     }
 
     private fun repository() =
-        JellyfinRepositoryImpl(
+        MediaRepositoryImpl(
             context = ContextWrapper(null),
             server = server,
             database = noDownloads(),

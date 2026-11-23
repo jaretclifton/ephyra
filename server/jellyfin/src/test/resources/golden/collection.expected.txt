@@ -1,4 +1,4 @@
-FindroidCollection(
+Library(
   id = f137a2dd-21bb-c1b9-9aa5-c0f6bf02a805
   name = "Movies"
   originalTitle = null
@@ -12,7 +12,7 @@ FindroidCollection(
   playbackPositionTicks = 0
   unplayedItemCount = null
   type = Movies
-  images = FindroidImages(
+  images = ItemImages(
     primary = null
     backdrop = null
     logo = null

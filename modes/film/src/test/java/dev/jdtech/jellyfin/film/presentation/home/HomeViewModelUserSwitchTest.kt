@@ -2,14 +2,14 @@ package dev.jdtech.jellyfin.film.presentation.home
 
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -370,11 +370,11 @@ class HomeViewModelUserSwitchTest {
         }
     }
 
-    private fun repository(): JellyfinRepository =
-        fakeProxy(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
-        ) { _, method, args ->
+    private fun repository(): MediaRepository =
+        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
+            _,
+            method,
+            args ->
             when (method.kotlinName) {
                 "getResumeItems",
                 "getNextUp" ->
@@ -385,10 +385,10 @@ class HomeViewModelUserSwitchTest {
                 "refreshCurrentUserImage" -> Unit
                 "getUserId" -> sessionUser?.id ?: throw IllegalStateException("signed out")
                 "getServerInfo" -> throw IOException("not needed here")
-                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
+                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
             }
         }
-            as JellyfinRepository
+            as MediaRepository
 
     private fun database(): ServerDatabaseDao =
         fakeProxy(
@@ -422,19 +422,16 @@ class HomeViewModelUserSwitchTest {
         }
             as SharedPreferences
 
-    private fun item(name: String): FindroidItem =
-        fakeProxy(FindroidItem::class.java.classLoader, arrayOf(FindroidItem::class.java)) {
-            proxy,
-            method,
-            args ->
+    private fun item(name: String): Item =
+        fakeProxy(Item::class.java.classLoader, arrayOf(Item::class.java)) { proxy, method, args ->
             when (method.kotlinName) {
                 "equals" -> proxy === args?.getOrNull(0)
                 "hashCode" -> System.identityHashCode(proxy)
                 "toString" -> name
-                else -> throw NotImplementedError("FindroidItem.${method.kotlinName}")
+                else -> throw NotImplementedError("Item.${method.kotlinName}")
             }
         }
-            as FindroidItem
+            as Item
 
     private companion object {
         const val SERVER_ID = "0123456789abcdef0123456789abcdef"

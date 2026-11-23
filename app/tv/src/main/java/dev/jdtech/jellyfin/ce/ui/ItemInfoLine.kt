@@ -6,10 +6,10 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import dev.jdtech.jellyfin.core.R as CoreR
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.utils.format
 import java.util.Date
 
@@ -18,14 +18,14 @@ import java.util.Date
  * ends at` for a movie and `year · rating` for a show, leaving out what isn't known.
  */
 @Composable
-fun itemInfoLine(item: FindroidItem): String {
+fun itemInfoLine(item: Item): String {
     val context = LocalContext.current
     val locale = LocalConfiguration.current.locales.get(0)
     val remainingTicks = (item.runtimeTicks - item.playbackPositionTicks).coerceAtLeast(0)
     val inProgress = item.playbackPositionTicks > 0 && !item.played
     val parts = buildList {
         when (item) {
-            is FindroidEpisode -> {
+            is Episode -> {
                 add(
                     stringResource(
                         CoreR.string.season_episode_number,
@@ -35,14 +35,14 @@ fun itemInfoLine(item: FindroidItem): String {
                 )
                 item.premiereDate?.let { add(it.format(locale)) }
             }
-            is FindroidMovie -> item.productionYear?.let { add(it.toString()) }
-            is FindroidShow -> {
+            is Movie -> item.productionYear?.let { add(it.toString()) }
+            is Show -> {
                 item.productionYear?.let { add(it.toString()) }
                 item.officialRating?.let { add(it) }
             }
         }
         // A show's runtime is that of one episode, so it says nothing about when it ends.
-        if (item.runtimeTicks > 0 && item !is FindroidShow) {
+        if (item.runtimeTicks > 0 && item !is Show) {
             add(stringResource(CoreR.string.runtime_minutes, minutes(item.runtimeTicks)))
             if (inProgress) {
                 add(stringResource(CoreR.string.runtime_minutes_left, minutes(remainingTicks)))

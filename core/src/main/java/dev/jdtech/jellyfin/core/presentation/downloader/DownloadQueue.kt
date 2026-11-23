@@ -9,14 +9,14 @@ import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidSources
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.Playable
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.NetworkConnectivity
@@ -65,7 +65,7 @@ class DownloadQueue
 constructor(
     private val downloader: Downloader,
     private val appPreferences: AppPreferences,
-    private val repositoryProvider: Provider<JellyfinRepository>,
+    private val repositoryProvider: Provider<MediaRepository>,
     private val database: ServerDatabaseDao,
     @ApplicationContext private val context: Context,
     private val dataChanges: DataChangeEvents = DataChangeEvents(),
@@ -73,7 +73,7 @@ constructor(
 ) {
     // Resolved per use, never captured: the active repository can change at runtime without
     // this @Singleton being recreated (offline <-> online switch).
-    private val repository: JellyfinRepository
+    private val repository: MediaRepository
         get() = repositoryProvider.get()
 
     sealed interface EntryState {
@@ -90,7 +90,7 @@ constructor(
 
     data class Entry(
         val id: ItemId,
-        val item: FindroidItem,
+        val item: Item,
         val addedAt: Long,
         val state: EntryState,
         val downloadId: Long? = null,
@@ -155,7 +155,7 @@ constructor(
     /** Previous bytes + wall-clock (ms) sample per downloadId, for speed calc. */
     private val lastSamples = mutableMapOf<Long, Pair<Long, Long>>()
 
-    suspend fun enqueue(item: FindroidItem, maxBitrate: Int? = null, smartQueued: Boolean = false) {
+    suspend fun enqueue(item: Item, maxBitrate: Int? = null, smartQueued: Boolean = false) {
         var persisted = false
         var claimed = false
         mutex.withLock {
@@ -215,7 +215,7 @@ constructor(
      * Re-attaches an in-flight download started in a previous app session. No-op if the item is
      * already tracked.
      */
-    suspend fun restore(item: FindroidItem, downloadId: Long) {
+    suspend fun restore(item: Item, downloadId: Long) {
         mutex.withLock {
             val existing = _entries.value.firstOrNull { it.id == item.id }
             // If it's already live (pending/downloading), leave it alone.
@@ -315,8 +315,8 @@ constructor(
         ensurePump()
     }
 
-    suspend fun enqueueAll(items: List<FindroidItem>, maxBitrate: Int? = null) {
-        val persistedItems = mutableListOf<FindroidItem>()
+    suspend fun enqueueAll(items: List<Item>, maxBitrate: Int? = null) {
+        val persistedItems = mutableListOf<Item>()
         // Already queued by Smart Downloads; the user asking for them makes them theirs.
         val claimedIds = mutableSetOf<ItemId>()
         mutex.withLock {
@@ -467,8 +467,8 @@ constructor(
      * True when the item has a Dolby Vision video stream. Those downloads are transcoded
      * server-side (so they play offline), which makes their final size unknown while in flight.
      */
-    private fun FindroidItem.hasDolbyVision(): Boolean =
-        (this as? FindroidSources)?.sources?.any { source ->
+    private fun Item.hasDolbyVision(): Boolean =
+        (this as? Playable)?.sources?.any { source ->
             source.mediaStreams.any { it.videoDoViTitle != null }
         } == true
 
@@ -560,7 +560,7 @@ constructor(
                     // Fall back to the item's original file size as an estimate, so the
                     // UI can show an approximate %/ETA instead of a frozen 0%.
                     val originalSize =
-                        (entry.item as? FindroidSources)?.sources?.maxOfOrNull { it.size } ?: 0L
+                        (entry.item as? Playable)?.sources?.maxOfOrNull { it.size } ?: 0L
                     // A quality-capped transcode is far smaller than the original, so
                     // estimate it from the cap instead (never above the original size).
                     val cappedSize =
@@ -873,7 +873,7 @@ constructor(
     private fun serverRefused(httpStatus: Int): UiText =
         UiText.StringResource(CoreR.string.ce_download_error_server, httpStatus)
 
-    private fun notifyFailure(item: FindroidItem) {
+    private fun notifyFailure(item: Item) {
         val nm = context.getSystemService<NotificationManager>() ?: return
         if (
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
@@ -888,7 +888,7 @@ constructor(
             )
         }
         val title =
-            if (item is FindroidEpisode) {
+            if (item is Episode) {
                 "${item.seriesName} · S%02dE%02d".format(item.parentIndexNumber, item.indexNumber)
             } else {
                 item.name

@@ -6,7 +6,7 @@ import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.ItemsResult
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
@@ -147,19 +147,19 @@ class SearchViewModelUserSwitchTest {
         assertEquals(unknown, unknown.shownTo(bob))
     }
 
-    private fun repository(): JellyfinRepository =
-        fakeProxy(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
-        ) { _, method, _ ->
+    private fun repository(): MediaRepository =
+        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
+            _,
+            method,
+            _ ->
             when (method.kotlinName) {
                 "getCapabilities" -> ServerCapabilities.ALL
                 "getUserId" -> sessionUser
                 "getSearchItems" ->
                     if (searchFails) throw IllegalStateException("No connection")
                     else ItemsResult(if (sessionUser == bob) bobResults else aliceResults)
-                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
+                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
             }
         }
-            as JellyfinRepository
+            as MediaRepository
 }

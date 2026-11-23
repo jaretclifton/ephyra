@@ -8,13 +8,13 @@ import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.film.presentation.ServerAwayReload
 import dev.jdtech.jellyfin.film.presentation.collection.CollectionState
 import dev.jdtech.jellyfin.models.CollectionSection
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.ReloadPolicy
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -31,14 +31,14 @@ import kotlinx.coroutines.withContext
 @HiltViewModel
 class FavoritesViewModel
 internal constructor(
-    private val repository: JellyfinRepository,
+    private val repository: MediaRepository,
     dataChanges: DataChangeEvents,
     /** CE (#779): where the sections are sorted out; the tests run it on their own dispatcher. */
     private val sectionsDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
     @Inject
     constructor(
-        repository: JellyfinRepository,
+        repository: MediaRepository,
         dataChanges: DataChangeEvents = DataChangeEvents(),
     ) : this(repository, dataChanges, Dispatchers.Default)
 
@@ -132,7 +132,7 @@ internal constructor(
                 CollectionSection(
                         Constants.FAVORITE_TYPE_MOVIES,
                         UiText.StringResource(CoreR.string.movies_label),
-                        items.filterIsInstance<FindroidMovie>(),
+                        items.filterIsInstance<Movie>(),
                     )
                     .let {
                         if (it.items.isNotEmpty()) {
@@ -142,7 +142,7 @@ internal constructor(
                 CollectionSection(
                         Constants.FAVORITE_TYPE_SHOWS,
                         UiText.StringResource(CoreR.string.shows_label),
-                        items.filterIsInstance<FindroidShow>(),
+                        items.filterIsInstance<Show>(),
                     )
                     .let {
                         if (it.items.isNotEmpty()) {
@@ -152,7 +152,7 @@ internal constructor(
                 CollectionSection(
                         Constants.FAVORITE_TYPE_EPISODES,
                         UiText.StringResource(CoreR.string.episodes_label),
-                        items.filterIsInstance<FindroidEpisode>(),
+                        items.filterIsInstance<Episode>(),
                     )
                     .let {
                         if (it.items.isNotEmpty()) {

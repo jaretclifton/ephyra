@@ -62,11 +62,11 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovies
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyPersonDetail
 import dev.jdtech.jellyfin.film.presentation.person.PersonState
 import dev.jdtech.jellyfin.film.presentation.person.PersonViewModel
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
@@ -95,20 +95,16 @@ fun PersonScreen(
         onRetryClick = { viewModel.loadPerson(personId) },
         onItemClick = { item ->
             when (item) {
-                is FindroidMovie -> navigateToMovie(item.id)
-                is FindroidShow -> navigateToShow(item.id)
-                is FindroidEpisode -> navigateToEpisode(item.id)
+                is Movie -> navigateToMovie(item.id)
+                is Show -> navigateToShow(item.id)
+                is Episode -> navigateToEpisode(item.id)
                 else -> Unit
             }
         },
     )
 }
 
-internal data class PersonMediaSection(
-    val id: String,
-    val titleRes: Int,
-    val items: List<FindroidItem>,
-)
+internal data class PersonMediaSection(val id: String, val titleRes: Int, val items: List<Item>)
 
 internal fun personMediaCardTag(id: ItemId) = "ce_person_media_card_${id.asString()}"
 
@@ -117,7 +113,7 @@ internal fun personMediaCardTag(id: ItemId) = "ce_person_media_card_${id.asStrin
 internal fun PersonScreenLayout(
     state: PersonState,
     onRetryClick: () -> Unit,
-    onItemClick: (FindroidItem) -> Unit,
+    onItemClick: (Item) -> Unit,
     focusPosition: FocusPosition = rememberFocusPosition(row = 0, column = 0),
 ) {
     val sections =

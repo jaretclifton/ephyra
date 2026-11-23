@@ -43,8 +43,8 @@ class CancellationNotSwallowedTest {
 
     private val server = UnansweredServer(userId)
 
-    private val repository: JellyfinRepository by lazy {
-        JellyfinRepositoryImpl(context, server, room.getServerDatabaseDao(), preferences)
+    private val repository: MediaRepository by lazy {
+        MediaRepositoryImpl(context, server, room.getServerDatabaseDao(), preferences)
     }
 
     @After fun close() = room.close()

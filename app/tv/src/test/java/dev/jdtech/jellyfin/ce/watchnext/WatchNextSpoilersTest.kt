@@ -2,7 +2,7 @@ package dev.jdtech.jellyfin.ce.watchnext
 
 import android.app.Application
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
-import dev.jdtech.jellyfin.models.FindroidImages
+import dev.jdtech.jellyfin.models.ItemImages
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import org.junit.Test
@@ -19,7 +19,7 @@ class WatchNextSpoilersTest {
             played = false,
             runtimeTicks = 12_000_000_000,
             images =
-                FindroidImages(
+                ItemImages(
                     primary = "https://server/still",
                     showBackdrop = "https://server/show-backdrop",
                 ),

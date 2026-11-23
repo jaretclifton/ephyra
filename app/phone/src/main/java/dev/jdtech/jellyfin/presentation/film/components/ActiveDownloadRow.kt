@@ -23,8 +23,8 @@ import dev.jdtech.jellyfin.core.presentation.downloader.DownloadStatus
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
 import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
 import dev.jdtech.jellyfin.film.presentation.downloads.ActiveDownload
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import kotlin.math.roundToInt
 
@@ -119,8 +119,8 @@ fun ActiveDownloadRow(
  * episode on its own line, so a long series name can't truncate away which episode it is.
  */
 @Composable
-fun downloadTitles(item: FindroidItem): Pair<String, String?> {
-    if (item !is FindroidEpisode) return item.name to null
+fun downloadTitles(item: Item): Pair<String, String?> {
+    if (item !is Episode) return item.name to null
     // CE (#618): a hidden episode is only its number.
     val episodeLabel =
         if (LocalSpoilers.current.hides(item)) {

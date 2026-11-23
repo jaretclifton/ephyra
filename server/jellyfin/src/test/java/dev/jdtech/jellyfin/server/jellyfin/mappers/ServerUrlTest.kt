@@ -72,14 +72,14 @@ class ServerUrlTest {
 
     private fun transcodePath(base: String) = runBlocking {
         source("/videos/${itemId.asString()}/master.m3u8?VideoCodec=h264")
-            .toFindroidSource(context(base), itemId)
+            .toItemSource(context(base), itemId)
             .path
     }
 
     private fun subtitlePath(
         base: String,
         deliveryUrl: String? = "/Videos/${itemId.asString()}/source/Subtitles/2/0/Stream.srt",
-    ) = subtitle(deliveryUrl).toFindroidMediaStream(base).path
+    ) = subtitle(deliveryUrl).toMediaStream(base).path
 
     @Test
     fun `serverUrl joins with one slash whatever the two sides bring`() {
@@ -146,7 +146,7 @@ class ServerUrlTest {
                     "/videos/${itemId.asString()}/stream.mp4",
                     listOf(subtitle("/Videos/${itemId.asString()}/source/Subtitles/2/0/Stream.srt")),
                 )
-                .toFindroidSource(context("https://host/jellyfin/"), itemId)
+                .toItemSource(context("https://host/jellyfin/"), itemId)
         }
 
         assertEquals("https://host/jellyfin/videos/${itemId.asString()}/stream.mp4", mapped.path)

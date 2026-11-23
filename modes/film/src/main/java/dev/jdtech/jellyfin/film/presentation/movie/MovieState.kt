@@ -1,16 +1,16 @@
 package dev.jdtech.jellyfin.film.presentation.movie
 
 import dev.jdtech.jellyfin.film.presentation.RelatedItems
-import dev.jdtech.jellyfin.models.FindroidItemPerson
-import dev.jdtech.jellyfin.models.FindroidMovie
+import dev.jdtech.jellyfin.models.ItemPerson
+import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.VideoMetadata
 
 data class MovieState(
-    val movie: FindroidMovie? = null,
+    val movie: Movie? = null,
     val videoMetadata: VideoMetadata? = null,
-    val actors: List<FindroidItemPerson> = emptyList(),
-    val director: FindroidItemPerson? = null,
-    val writers: List<FindroidItemPerson> = emptyList(),
+    val actors: List<ItemPerson> = emptyList(),
+    val director: ItemPerson? = null,
+    val writers: List<ItemPerson> = emptyList(),
     // CE (#332): loaded after the page is shown, see MovieViewModel.loadRelated.
     val related: RelatedItems = RelatedItems(),
     val error: Exception? = null,

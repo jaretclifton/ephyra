@@ -48,8 +48,8 @@ Rules that follow from it:
 - `data` depends on `domain` and `settings`, not on a server module.
 - No feature module depends on a server module.
 
-**Moved files keep their package.** `dev.jdtech.jellyfin.models.FindroidMovie` stays
-`dev.jdtech.jellyfin.models.FindroidMovie` when its file moves from `data` to `domain`. A move
+**Moved files keep their package.** `dev.jdtech.jellyfin.models.Movie` stays
+`dev.jdtech.jellyfin.models.Movie` when its file moves from `data` to `domain`. A move
 then changes no import anywhere, git records it as a pure rename, and an upstream change to the
 file still merges. Packages are only named anew for new code
 (`dev.jdtech.jellyfin.server.jellyfin`, `dev.jdtech.jellyfin.domain.ports`).
@@ -130,7 +130,7 @@ data class ServerCapabilities(
 )
 ```
 
-`FindroidImages` and `FindroidItemPerson` carry image URLs as `String` instead of
+`ItemImages` and `ItemPerson` carry image URLs as `String` instead of
 `android.net.Uri`, so the models compile without Android.
 
 ## 3.3 Server ports (`domain`, implemented by `server/jellyfin`)
@@ -163,37 +163,37 @@ data class ItemQuery(
 
 interface CatalogPort {
     suspend fun serverInfo(): ServerInfo
-    suspend fun libraries(): List<FindroidCollection>
-    suspend fun userViews(): List<FindroidCollection>
-    suspend fun item(id: ItemId): FindroidItem?
-    suspend fun movie(id: ItemId): FindroidMovie
-    suspend fun show(id: ItemId): FindroidShow
-    suspend fun season(id: ItemId): FindroidSeason
-    suspend fun episode(id: ItemId): FindroidEpisode
+    suspend fun libraries(): List<Library>
+    suspend fun userViews(): List<Library>
+    suspend fun item(id: ItemId): Item?
+    suspend fun movie(id: ItemId): Movie
+    suspend fun show(id: ItemId): Show
+    suspend fun season(id: ItemId): Season
+    suspend fun episode(id: ItemId): Episode
     suspend fun items(query: ItemQuery, includeTotal: Boolean = false): ItemsPage
     suspend fun itemCount(query: ItemQuery, nameLessThan: String? = null): Int
-    suspend fun randomItemsWithBackdrop(kinds: List<ItemKind>, limit: Int): List<FindroidItem>
-    suspend fun person(id: ItemId): FindroidPerson
-    suspend fun personItems(personIds: List<ItemId>, kinds: List<ItemKind>?, recursive: Boolean, limit: Int?): List<FindroidItem>
-    suspend fun favorites(): List<FindroidItem>
-    suspend fun search(query: String, kinds: List<ItemKind>? = null): List<FindroidItem>
-    suspend fun suggestions(): List<FindroidItem>
-    suspend fun resumeItems(): List<FindroidItem>
-    suspend fun latest(parentId: ItemId, kinds: List<ItemKind>?): List<FindroidItem>
-    suspend fun seasons(seriesId: ItemId): List<FindroidSeason>
+    suspend fun randomItemsWithBackdrop(kinds: List<ItemKind>, limit: Int): List<Item>
+    suspend fun person(id: ItemId): Person
+    suspend fun personItems(personIds: List<ItemId>, kinds: List<ItemKind>?, recursive: Boolean, limit: Int?): List<Item>
+    suspend fun favorites(): List<Item>
+    suspend fun search(query: String, kinds: List<ItemKind>? = null): List<Item>
+    suspend fun suggestions(): List<Item>
+    suspend fun resumeItems(): List<Item>
+    suspend fun latest(parentId: ItemId, kinds: List<ItemKind>?): List<Item>
+    suspend fun seasons(seriesId: ItemId): List<Season>
     /** [dateCutoff] comes from a preference; the repository computes it. */
-    suspend fun nextUp(seriesId: ItemId?, dateCutoff: java.time.LocalDateTime?): List<FindroidEpisode>
+    suspend fun nextUp(seriesId: ItemId?, dateCutoff: java.time.LocalDateTime?): List<Episode>
     suspend fun episodes(
         seriesId: ItemId,
         seasonId: ItemId?,
         fields: Set<EpisodeField>?,
         startItemId: ItemId? = null,
         limit: Int? = null,
-    ): List<FindroidEpisode>
+    ): List<Episode>
     // Empty or null when the capability is off.
-    suspend fun similar(itemId: ItemId, limit: Int): List<FindroidItem>
-    suspend fun extras(itemId: ItemId, localTrailers: Boolean, specialFeatures: Boolean): List<FindroidMovie>
-    suspend fun collectionsOf(itemId: ItemId): List<FindroidItem>
+    suspend fun similar(itemId: ItemId, limit: Int): List<Item>
+    suspend fun extras(itemId: ItemId, localTrailers: Boolean, specialFeatures: Boolean): List<Movie>
+    suspend fun collectionsOf(itemId: ItemId): List<Item>
     suspend fun themeSongUrl(itemId: ItemId): String?
 }
 
@@ -251,10 +251,10 @@ data class PlaybackReport(
 )
 
 interface PlaybackPort {
-    /** Sources with finished URLs. `FindroidSource.transcoded` and `.playSessionId` say what the server chose. */
-    suspend fun sources(request: PlaybackRequest): List<FindroidSource>
+    /** Sources with finished URLs. `ItemSource.transcoded` and `.playSessionId` say what the server chose. */
+    suspend fun sources(request: PlaybackRequest): List<ItemSource>
     suspend fun streamUrl(itemId: ItemId, mediaSourceId: MediaSourceId): String
-    suspend fun segments(itemId: ItemId): List<FindroidSegment>
+    suspend fun segments(itemId: ItemId): List<Segment>
     suspend fun trickplayTile(itemId: ItemId, width: Int, index: Int): ByteArray?
     fun chapterImageUrl(itemId: ItemId, chapterIndex: Int, tag: String): String?
     fun seasonBackdropUrl(seasonId: ItemId): String?
@@ -368,18 +368,18 @@ fun interface SessionRestorer { fun restore(session: ServerSession) }
 
 ## 3.4 The repository (`data`)
 
-ViewModels keep calling one interface. It is today's `JellyfinRepository` without SDK types; it
+ViewModels keep calling one interface. It is today's `MediaRepository` without SDK types; it
 keeps its name until the Emby work starts (decision D2, #774). Its one implementation composes a `MediaServer` with Room:
 
 ```kotlin
-class JellyfinRepositoryImpl(          // no SDK import
+class MediaRepositoryImpl(          // no SDK import
     private val context: Context,          // for the trickplay files of downloads
     private val server: MediaServer,
     private val database: ServerDatabaseDao,
     private val appPreferences: AppPreferences,
     private val syncRequester: UserDataSyncRequester,
-) : JellyfinRepository {
-    override suspend fun getMovie(itemId: ItemId): FindroidMovie =
+) : MediaRepository {
+    override suspend fun getMovie(itemId: ItemId): Movie =
         serverOrStored(stored = storedMovie(itemId)) {
             server.catalog.movie(itemId).withLocalSources(localSourcesFor(itemId))   // remote sources first, then local
         }
@@ -441,7 +441,7 @@ own unit tests; none is an interface.
 
 | Use case | From | What it decides |
 |---|---|---|
-| `ResolvePlayback` | `PlaylistManager.toPlayerItem`, the profile choice in `JellyfinRepositoryImpl.getPlaybackSources` | Which source plays (a finished download first), for which target, with which cap and audio stream |
+| `ResolvePlayback` | `PlaylistManager.toPlayerItem`, the profile choice in `MediaRepositoryImpl.getPlaybackSources` | Which source plays (a finished download first), for which target, with which cap and audio stream |
 | `PlaybackReporter` | `PlayerViewModel.sendPlaybackStart`, `reportProgress`, `reportStopped`, with `PlaybackStartGate`, `ReportedPause`, `PlaybackStopReport` | When start, progress and stop are sent, in what order, with which session |
 | `PlayQueue` | `PlaylistManager` (queue, shuffle, next season, next up) | What plays next |
 | `DownloadQueue` | Exists (`core/.../downloader/DownloadQueue.kt`) | Scheduling, retry, restore. Unchanged |
@@ -452,6 +452,6 @@ Everything else is a ViewModel calling the repository or a port.
 
 `CastSessionManager` and `CastPlayerController` stay as they are. `CastPlayerControllerImpl`
 asks `PlaybackPort.sources(PlaybackRequest(target = CastReceiver(supportsHevc)))` instead of the
-SDK, builds its tracks from `FindroidSource.mediaStreams` instead of `MediaSourceInfo`, and takes
+SDK, builds its tracks from `ItemSource.mediaStreams` instead of `MediaSourceInfo`, and takes
 stream URLs from the source. The two Chromecast device profiles move into the Jellyfin adapter,
 which is where `PlaybackTarget.CastReceiver` is turned into a profile.

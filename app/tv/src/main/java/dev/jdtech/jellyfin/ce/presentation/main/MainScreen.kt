@@ -82,8 +82,8 @@ import dev.jdtech.jellyfin.core.presentation.ephyra.reducedMotion
 import dev.jdtech.jellyfin.core.presentation.session.LocalServerSession
 import dev.jdtech.jellyfin.film.presentation.media.MediaViewModel
 import dev.jdtech.jellyfin.models.CollectionType
-import dev.jdtech.jellyfin.models.FindroidCollection
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.asString
@@ -286,7 +286,7 @@ internal fun drawerEndPadding(drawerValue: DrawerValue): Dp =
 fun MainScreenLayout(
     user: User?,
     server: Server?,
-    libraries: List<FindroidCollection>,
+    libraries: List<Library>,
     navigateToSettings: () -> Unit,
     navigateToUsers: () -> Unit,
     modifier: Modifier = Modifier,
@@ -294,7 +294,7 @@ fun MainScreenLayout(
     homeContent: @Composable () -> Unit,
     searchContent: @Composable () -> Unit,
     favoritesContent: @Composable () -> Unit,
-    libraryContent: @Composable (library: FindroidCollection) -> Unit,
+    libraryContent: @Composable (library: Library) -> Unit,
 ) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current

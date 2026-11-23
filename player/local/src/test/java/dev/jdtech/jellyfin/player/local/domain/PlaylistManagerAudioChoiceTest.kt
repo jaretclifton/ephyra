@@ -1,17 +1,17 @@
 package dev.jdtech.jellyfin.player.local.domain
 
 import androidx.media3.common.C
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidMediaStream
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -300,7 +300,7 @@ class PlaylistManagerAudioChoiceTest {
     }
 
     /** A [PlaylistManager] over [repository] with [language] as the preferred audio language. */
-    private fun preferring(language: String, repository: JellyfinRepository) =
+    private fun preferring(language: String, repository: MediaRepository) =
         playlistManager(repository, testPreferences(mapOf("pref_audio_language" to language)))
 
     private fun repository(
@@ -309,10 +309,10 @@ class PlaylistManagerAudioChoiceTest {
         failWithAudio: Boolean = false,
         downloaded: Boolean = false,
     ) =
-        fakeProxy(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
-        ) { _, method, args ->
+        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
+            _,
+            method,
+            args ->
             when (method.kotlinName) {
                 "getEpisode" -> episode
                 "getEpisodes" -> listOf(episode)
@@ -333,7 +333,7 @@ class PlaylistManagerAudioChoiceTest {
                 else -> error("Unexpected call to ${method.kotlinName}")
             }
         }
-            as JellyfinRepository
+            as MediaRepository
 
     private fun dutch() =
         SeriesTrackPreferenceDto(
@@ -348,10 +348,10 @@ class PlaylistManagerAudioChoiceTest {
         )
 
     private fun source(transcodes: Boolean, audio: Int?) =
-        FindroidSource(
+        ItemSource(
             id = SOURCE,
             name = "Source",
-            type = FindroidSourceType.REMOTE,
+            type = ItemSourceType.REMOTE,
             path = path(audio),
             size = 0L,
             mediaStreams =
@@ -365,10 +365,10 @@ class PlaylistManagerAudioChoiceTest {
     private fun session(audio: Int?) = "session-$audio"
 
     private fun download() =
-        FindroidSource(
+        ItemSource(
             id = SOURCE,
             name = "Source",
-            type = FindroidSourceType.LOCAL,
+            type = ItemSourceType.LOCAL,
             path = DOWNLOAD,
             size = 0L,
             mediaStreams = emptyList(),
@@ -376,7 +376,7 @@ class PlaylistManagerAudioChoiceTest {
         )
 
     private fun audio(index: Int, language: String, title: String) =
-        FindroidMediaStream(
+        MediaStream(
             title = title,
             displayTitle = title,
             language = language,
@@ -394,7 +394,7 @@ class PlaylistManagerAudioChoiceTest {
         )
 
     private fun episode() =
-        FindroidEpisode(
+        Episode(
             id = UUID.randomUUID().toString().toItemId(),
             name = "Episode 1",
             originalTitle = null,
@@ -417,7 +417,7 @@ class PlaylistManagerAudioChoiceTest {
             communityRating = null,
             people = emptyList(),
             missing = false,
-            images = FindroidImages(),
+            images = ItemImages(),
             chapters = emptyList(),
             trickplayInfo = null,
         )

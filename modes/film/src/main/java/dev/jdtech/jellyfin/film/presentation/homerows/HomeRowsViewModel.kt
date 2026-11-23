@@ -13,7 +13,7 @@ import dev.jdtech.jellyfin.film.domain.homerows.homeLibraries
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,7 +31,7 @@ import timber.log.Timber
 class HomeRowsViewModel
 @Inject
 constructor(
-    private val repository: JellyfinRepository,
+    private val repository: MediaRepository,
     private val store: HomeRowsStore,
     private val dataChanges: DataChangeEvents = DataChangeEvents(),
 ) : ViewModel() {

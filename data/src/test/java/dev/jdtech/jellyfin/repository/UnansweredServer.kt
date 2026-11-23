@@ -10,23 +10,23 @@ import dev.jdtech.jellyfin.domain.ports.RequestWatcher
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.domain.ports.UserDataPort
 import dev.jdtech.jellyfin.domain.ports.UserImage
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.EpisodeField
-import dev.jdtech.jellyfin.models.FindroidCollection
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidPerson
-import dev.jdtech.jellyfin.models.FindroidSeason
-import dev.jdtech.jellyfin.models.FindroidSegment
-import dev.jdtech.jellyfin.models.FindroidShow
-import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.models.MediaSourceId
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Person
+import dev.jdtech.jellyfin.models.Season
+import dev.jdtech.jellyfin.models.Segment
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.ServerType
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.UserId
 import java.time.LocalDateTime
 import kotlinx.coroutines.flow.Flow
@@ -85,19 +85,19 @@ internal class UnansweredServer(
         object : CatalogPort {
             override suspend fun serverInfo(): ServerInfo = fail()
 
-            override suspend fun libraries(): List<FindroidCollection> = fail()
+            override suspend fun libraries(): List<Library> = fail()
 
-            override suspend fun userViews(): List<FindroidCollection> = fail()
+            override suspend fun userViews(): List<Library> = fail()
 
-            override suspend fun item(id: ItemId): FindroidItem? = fail()
+            override suspend fun item(id: ItemId): Item? = fail()
 
-            override suspend fun movie(id: ItemId): FindroidMovie = fail()
+            override suspend fun movie(id: ItemId): Movie = fail()
 
-            override suspend fun show(id: ItemId): FindroidShow = fail()
+            override suspend fun show(id: ItemId): Show = fail()
 
-            override suspend fun season(id: ItemId): FindroidSeason = fail()
+            override suspend fun season(id: ItemId): Season = fail()
 
-            override suspend fun episode(id: ItemId): FindroidEpisode = fail()
+            override suspend fun episode(id: ItemId): Episode = fail()
 
             override suspend fun items(query: ItemQuery, includeTotal: Boolean): ItemsPage = fail()
 
@@ -106,37 +106,34 @@ internal class UnansweredServer(
             override suspend fun randomItemsWithBackdrop(
                 kinds: List<ItemKind>,
                 limit: Int,
-            ): List<FindroidItem> = fail()
+            ): List<Item> = fail()
 
-            override suspend fun person(id: ItemId): FindroidPerson = fail()
+            override suspend fun person(id: ItemId): Person = fail()
 
             override suspend fun personItems(
                 personIds: List<ItemId>,
                 kinds: List<ItemKind>?,
                 recursive: Boolean,
                 limit: Int?,
-            ): List<FindroidItem> = fail()
+            ): List<Item> = fail()
 
-            override suspend fun favorites(): List<FindroidItem> = fail()
+            override suspend fun favorites(): List<Item> = fail()
 
-            override suspend fun search(query: String, kinds: List<ItemKind>?): List<FindroidItem> =
+            override suspend fun search(query: String, kinds: List<ItemKind>?): List<Item> = fail()
+
+            override suspend fun suggestions(): List<Item> = fail()
+
+            override suspend fun resumeItems(): List<Item> = fail()
+
+            override suspend fun latest(parentId: ItemId, kinds: List<ItemKind>?): List<Item> =
                 fail()
 
-            override suspend fun suggestions(): List<FindroidItem> = fail()
-
-            override suspend fun resumeItems(): List<FindroidItem> = fail()
-
-            override suspend fun latest(
-                parentId: ItemId,
-                kinds: List<ItemKind>?,
-            ): List<FindroidItem> = fail()
-
-            override suspend fun seasons(seriesId: ItemId): List<FindroidSeason> = fail()
+            override suspend fun seasons(seriesId: ItemId): List<Season> = fail()
 
             override suspend fun nextUp(
                 seriesId: ItemId?,
                 dateCutoff: LocalDateTime?,
-            ): List<FindroidEpisode> = fail()
+            ): List<Episode> = fail()
 
             override suspend fun episodes(
                 seriesId: ItemId,
@@ -144,17 +141,17 @@ internal class UnansweredServer(
                 fields: Set<EpisodeField>?,
                 startItemId: ItemId?,
                 limit: Int?,
-            ): List<FindroidEpisode> = fail()
+            ): List<Episode> = fail()
 
-            override suspend fun similar(itemId: ItemId, limit: Int): List<FindroidItem> = fail()
+            override suspend fun similar(itemId: ItemId, limit: Int): List<Item> = fail()
 
             override suspend fun extras(
                 itemId: ItemId,
                 localTrailers: Boolean,
                 specialFeatures: Boolean,
-            ): List<FindroidMovie> = fail()
+            ): List<Movie> = fail()
 
-            override suspend fun collectionsOf(itemId: ItemId): List<FindroidItem> = fail()
+            override suspend fun collectionsOf(itemId: ItemId): List<Item> = fail()
 
             override suspend fun themeSongUrl(itemId: ItemId): String? = fail()
         }
@@ -168,12 +165,12 @@ internal class UnansweredServer(
 
     override val playback =
         object : PlaybackPort {
-            override suspend fun sources(request: PlaybackRequest): List<FindroidSource> = fail()
+            override suspend fun sources(request: PlaybackRequest): List<ItemSource> = fail()
 
             override suspend fun streamUrl(itemId: ItemId, mediaSourceId: MediaSourceId): String =
                 fail()
 
-            override suspend fun segments(itemId: ItemId): List<FindroidSegment> = fail()
+            override suspend fun segments(itemId: ItemId): List<Segment> = fail()
 
             override suspend fun trickplayTile(
                 itemId: ItemId,

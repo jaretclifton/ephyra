@@ -20,7 +20,7 @@ import dev.jdtech.jellyfin.player.cast.models.Device
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.player.core.domain.models.Track
 import dev.jdtech.jellyfin.player.local.domain.PlaylistManager
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import javax.inject.Provider
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
@@ -55,7 +55,7 @@ object FakeCastModule {
     @Singleton
     fun provideCastStandIn(
         playlistManagers: Provider<PlaylistManager>,
-        repository: JellyfinRepository,
+        repository: MediaRepository,
     ): CastStandIn {
         if (scenario() == null) {
             return object : CastStandIn {
@@ -176,7 +176,7 @@ internal class FakeCastSessionManager : CastSessionManager {
 internal class FakeCastPlayerController(
     private val session: FakeCastSessionManager,
     private val playlistManagers: Provider<PlaylistManager>,
-    private val repository: JellyfinRepository,
+    private val repository: MediaRepository,
 ) : CastPlayerController {
     private val scope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
     private var playJob: Job? = null

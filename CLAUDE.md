@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-The app is **Ephyra**, a fork of [Findroid](https://github.com/jarnedemeulemeester/findroid). It was called Findroid CE until #172. The repo is `midasvo/ephyra` (renamed from `midasvo/findroid-ce` in #174; GitHub redirects the old URL). The application ID, the Kotlin packages and internal names (`FindroidItem`, `FindroidTheme`, `Theme.Findroid`) keep the old names on purpose.
+The app is **Ephyra**, a fork of [Findroid](https://github.com/jarnedemeulemeester/findroid). It was called Findroid CE until #172. The repo is `midasvo/ephyra` (renamed from `midasvo/findroid-ce` in #174; GitHub redirects the old URL). The application ID, the Kotlin packages and internal names (`FindroidTheme`, `Theme.Findroid`) keep the old names on purpose. The repository and the models do not: since #774 they are `MediaRepository`, `Item`, `Movie`, `ItemSource`, `Library`, … (upstream calls them `JellyfinRepository` and `Findroid*`), and the architecture rule R11 allows no other `Findroid*` type.
 
 ## Build Commands
 
@@ -48,7 +48,7 @@ app/phone        — Phone UI: screens, navigation, Compose layouts
 app/tv           — TV UI: separate screen implementations for Android TV
 core             — Shared DI modules, DownloaderViewModel, MainViewModel, common Composables
 domain           — pure Kotlin: the app's own models and the ports. No Android, no SDK
-data             — JellyfinRepository interface + Room database + the repository over a server's ports. No SDK
+data             — MediaRepository interface + Room database + the repository over a server's ports. No SDK
 server/jellyfin  — the Jellyfin adapter: the only module with the Jellyfin SDK (JellyfinApi, mappers, ports, device profiles) and its own Hilt module. Only app/phone and app/tv depend on it
 modes/film       — Feature ViewModels and State/Action classes for home, library, search, episode, movie, show, season
 player/core      — Player models shared by the player and its callers (PlayerItem, Track, Trickplay)
@@ -81,7 +81,7 @@ Events that fire once (navigation, toasts) use a `Channel<FooEvent>` exposed as 
 
 **Navigation:** Navigation 3 with `@Serializable` route objects. `NavigationRoot.kt` in `app/phone` is the single source of truth for the nav graph.
 
-**Downloads without the server:** there is no offline mode (#281). `RepositoryModule` always provides `JellyfinRepositoryImpl`. Its item getters (`getMovie`, `getEpisode`, `getShow`, `getSeason`, `getItem`) return the Room copy of a downloaded item when the server fails or takes over 3 s (`StoredFallback.kt`), `getPlaybackSources` picks a finished download before asking the server, and user data written while the server is away is marked `toBeSynced` and sent by `UserDataSync`/`SyncWorker`. The Downloads screens read Room only. Screens that need the server show the unreachable banner (see below).
+**Downloads without the server:** there is no offline mode (#281). `RepositoryModule` always provides `MediaRepositoryImpl`. Its item getters (`getMovie`, `getEpisode`, `getShow`, `getSeason`, `getItem`) return the Room copy of a downloaded item when the server fails or takes over 3 s (`StoredFallback.kt`), `getPlaybackSources` picks a finished download before asking the server, and user data written while the server is away is marked `toBeSynced` and sent by `UserDataSync`/`SyncWorker`. The Downloads screens read Room only. Screens that need the server show the unreachable banner (see below).
 
 **Server reachability:** `ServerReachability` (in `core`) follows the app's own requests and probes the server on a network change, on return to the app and after a failed request. Phone screens read it through `LocalServerStatus` and show the unreachable banner (`ServerOrErrorCard`) with a way to Downloads. It is not started on TV.
 

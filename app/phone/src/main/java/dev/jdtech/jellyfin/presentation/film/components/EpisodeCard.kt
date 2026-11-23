@@ -23,14 +23,14 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
 import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
 import dev.jdtech.jellyfin.core.presentation.spoiler.spoilerFreeName
 import dev.jdtech.jellyfin.core.presentation.spoiler.spoilerFreeOverview
-import dev.jdtech.jellyfin.models.FindroidEpisode
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import kotlin.math.roundToInt
 
 /** One episode of a season, in the row style of the Downloads screen. */
 @Composable
 fun EpisodeCard(
-    episode: FindroidEpisode,
+    episode: Episode,
     shape: Shape,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -91,7 +91,7 @@ fun EpisodeCard(
  * download started then would be stopped by it). Cancel, Retry and Remove don't depend on it.
  */
 fun episodeRowDownloadClick(
-    episode: FindroidEpisode,
+    episode: Episode,
     removalPending: Boolean,
     onDownloadClick: () -> Unit,
 ): (() -> Unit)? = if (!episode.canDownload || removalPending) null else onDownloadClick

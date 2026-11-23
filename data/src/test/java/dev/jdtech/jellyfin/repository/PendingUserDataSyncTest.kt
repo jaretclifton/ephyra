@@ -6,10 +6,10 @@ import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidMovieDto
-import dev.jdtech.jellyfin.models.FindroidShowDto
-import dev.jdtech.jellyfin.models.FindroidUserDataDto
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.MovieEntity
+import dev.jdtech.jellyfin.models.ShowEntity
+import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -48,8 +48,8 @@ class PendingUserDataSyncTest {
 
     private var syncRequests = 0
 
-    private val repository: JellyfinRepository by lazy {
-        JellyfinRepositoryImpl(
+    private val repository: MediaRepository by lazy {
+        MediaRepositoryImpl(
             context,
             UnansweredServer(userId),
             database,
@@ -62,7 +62,7 @@ class PendingUserDataSyncTest {
 
     private suspend fun storeMovie(positionTicks: Long = 0L, toBeSynced: Boolean = false) {
         database.insertMovie(
-            FindroidMovieDto(
+            MovieEntity(
                 id = movieId,
                 serverId = SERVER,
                 name = "Movie",
@@ -82,7 +82,7 @@ class PendingUserDataSyncTest {
     }
 
     private fun userData(itemId: ItemId, positionTicks: Long, toBeSynced: Boolean) =
-        FindroidUserDataDto(
+        UserDataEntity(
             userId = userId,
             itemId = itemId,
             played = false,
@@ -386,7 +386,7 @@ class PendingUserDataSyncTest {
     @Test
     fun `a show's row is not synced`() = runBlocking {
         database.insertShow(
-            FindroidShowDto(
+            ShowEntity(
                 id = showId,
                 serverId = SERVER,
                 name = "Show",

@@ -54,8 +54,8 @@ import dev.jdtech.jellyfin.film.presentation.season.SeasonAction
 import dev.jdtech.jellyfin.film.presentation.season.SeasonEvent
 import dev.jdtech.jellyfin.film.presentation.season.SeasonState
 import dev.jdtech.jellyfin.film.presentation.season.SeasonViewModel
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.asString
@@ -92,7 +92,7 @@ fun SeasonScreen(
     seasonId: ItemId,
     navigateBack: () -> Unit,
     navigateHome: () -> Unit,
-    navigateToItem: (item: FindroidItem) -> Unit,
+    navigateToItem: (item: Item) -> Unit,
     navigateToSeries: (seriesId: ItemId) -> Unit,
     seriesId: ItemId? = null,
     downloadsOnly: Boolean = false,
@@ -241,7 +241,7 @@ private fun SeasonScreenLayout(
     val paddingEnd = safePadding.end + MaterialTheme.spacings.default
     val paddingBottom = safePadding.bottom + MaterialTheme.spacings.default
 
-    var episodeQualityTarget by remember { mutableStateOf<FindroidEpisode?>(null) }
+    var episodeQualityTarget by remember { mutableStateOf<Episode?>(null) }
 
     // Removing a download is deferred behind an Undo snackbar. Until it resolves the episode
     // already shows as not downloaded. Ids stay in the list afterwards, so they are released
@@ -270,7 +270,7 @@ private fun SeasonScreenLayout(
     val hasDownloads =
         remember(episodes, hiddenIds) { episodes.any { it.isDownloaded() && it.id !in hiddenIds } }
     val anyCanDownload = remember(episodes) { episodes.any { it.canDownload } }
-    fun removeDownload(episode: FindroidEpisode, @StringRes message: Int) {
+    fun removeDownload(episode: Episode, @StringRes message: Int) {
         undo.run(ids = setOf(episode.id), message = context.getString(message, episode.name)) {
             onAction(SeasonAction.DeleteEpisodeDownload(episode))
         }

@@ -3,16 +3,16 @@ package dev.jdtech.jellyfin.repository
 import android.app.Application
 import android.content.Context
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidEpisodeDto
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidMovieDto
-import dev.jdtech.jellyfin.models.FindroidSeasonDto
-import dev.jdtech.jellyfin.models.FindroidShowDto
-import dev.jdtech.jellyfin.models.FindroidSourceDto
-import dev.jdtech.jellyfin.models.FindroidSourceType
-import dev.jdtech.jellyfin.models.FindroidUserDataDto
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.EpisodeEntity
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSourceEntity
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.MovieEntity
+import dev.jdtech.jellyfin.models.SeasonEntity
+import dev.jdtech.jellyfin.models.ShowEntity
+import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
@@ -47,7 +47,7 @@ class StoredItemFallbackTest {
     private val unknownId = "55555555-5555-5555-5555-555555555555".toItemId()
 
     private val show =
-        FindroidShowDto(
+        ShowEntity(
             id = showId,
             serverId = "server",
             name = "Bluey",
@@ -61,7 +61,7 @@ class StoredItemFallbackTest {
             endDate = null,
         )
     private val season =
-        FindroidSeasonDto(
+        SeasonEntity(
             id = seasonId,
             seriesId = showId,
             name = "Season 3",
@@ -70,7 +70,7 @@ class StoredItemFallbackTest {
             indexNumber = 3,
         )
     private val episode =
-        FindroidEpisodeDto(
+        EpisodeEntity(
             id = episodeId,
             serverId = "server",
             seasonId = seasonId,
@@ -87,7 +87,7 @@ class StoredItemFallbackTest {
             chapters = null,
         )
     private val movie =
-        FindroidMovieDto(
+        MovieEntity(
             id = movieId,
             serverId = "server",
             name = "Movie",
@@ -104,11 +104,11 @@ class StoredItemFallbackTest {
         )
 
     private fun localSource(itemId: ItemId) =
-        FindroidSourceDto(
+        ItemSourceEntity(
             id = "source-${itemId.asString()}",
             itemId = itemId,
             name = "Original",
-            type = FindroidSourceType.LOCAL,
+            type = ItemSourceType.LOCAL,
             path = "/storage/downloads/${itemId.asString()}.mkv",
         )
 
@@ -126,7 +126,7 @@ class StoredItemFallbackTest {
                 "getShowOfServer" -> show.takeIf { it.id == id }
                 "getSeasonOfServer" -> season.takeIf { it.id == id }
                 "getUserDataOrCreateNew" ->
-                    FindroidUserDataDto(
+                    UserDataEntity(
                         userId = userId,
                         itemId = id!!,
                         played = false,
@@ -146,10 +146,10 @@ class StoredItemFallbackTest {
         }
             as ServerDatabaseDao
 
-    private val repository: JellyfinRepository by lazy {
+    private val repository: MediaRepository by lazy {
         val context = RuntimeEnvironment.getApplication()
         // Every request to the server fails, as with the server unreachable.
-        JellyfinRepositoryImpl(
+        MediaRepositoryImpl(
             context,
             UnansweredServer(userId),
             database,
@@ -166,7 +166,7 @@ class StoredItemFallbackTest {
         assertEquals("Obstacle Course", result.name)
         assertEquals(seasonId, result.seasonId)
         assertEquals(1_200_000_000L, result.playbackPositionTicks)
-        assertEquals(listOf(FindroidSourceType.LOCAL), result.sources.map { it.type })
+        assertEquals(listOf(ItemSourceType.LOCAL), result.sources.map { it.type })
         assertEquals("/storage/downloads/${episodeId.asString()}.mkv", result.sources.single().path)
     }
 
@@ -175,7 +175,7 @@ class StoredItemFallbackTest {
         val result = repository.getMovie(movieId)
 
         assertEquals("Movie", result.name)
-        assertEquals(listOf(FindroidSourceType.LOCAL), result.sources.map { it.type })
+        assertEquals(listOf(ItemSourceType.LOCAL), result.sources.map { it.type })
     }
 
     @Test
@@ -188,8 +188,8 @@ class StoredItemFallbackTest {
 
     @Test
     fun `getItem finds every kind in Room`() = runBlocking {
-        assertTrue(repository.getItem(episodeId) is FindroidEpisode)
-        assertTrue(repository.getItem(movieId) is FindroidMovie)
+        assertTrue(repository.getItem(episodeId) is Episode)
+        assertTrue(repository.getItem(movieId) is Movie)
         assertEquals(showId, repository.getItem(showId)?.id)
         assertEquals(seasonId, repository.getItem(seasonId)?.id)
     }

@@ -8,19 +8,19 @@ import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.CollectionType
-import dev.jdtech.jellyfin.models.FindroidEpisodeDto
-import dev.jdtech.jellyfin.models.FindroidMovieDto
-import dev.jdtech.jellyfin.models.FindroidSeasonDto
-import dev.jdtech.jellyfin.models.FindroidShowDto
-import dev.jdtech.jellyfin.models.FindroidSourceDto
-import dev.jdtech.jellyfin.models.FindroidSourceType
-import dev.jdtech.jellyfin.models.FindroidUserDataDto
+import dev.jdtech.jellyfin.models.EpisodeEntity
 import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.ItemSourceEntity
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.MovieEntity
+import dev.jdtech.jellyfin.models.SeasonEntity
 import dev.jdtech.jellyfin.models.ServerException
+import dev.jdtech.jellyfin.models.ShowEntity
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
+import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
@@ -79,8 +79,8 @@ class StoredListsFallbackTest {
     /** Requests go unanswered by default. */
     private val server = UnansweredServer(userId)
 
-    private val repository: JellyfinRepository by lazy {
-        JellyfinRepositoryImpl(
+    private val repository: MediaRepository by lazy {
+        MediaRepositoryImpl(
             context,
             server,
             database,
@@ -106,7 +106,7 @@ class StoredListsFallbackTest {
         download: Download = Download.FINISHED,
     ) {
         database.insertMovie(
-            FindroidMovieDto(
+            MovieEntity(
                 id = id,
                 serverId = serverId,
                 name = name,
@@ -150,7 +150,7 @@ class StoredListsFallbackTest {
         download: Download = Download.FINISHED,
     ) {
         database.insertShow(
-            FindroidShowDto(
+            ShowEntity(
                 id = showId,
                 serverId = serverId,
                 name = "Bluey",
@@ -165,7 +165,7 @@ class StoredListsFallbackTest {
             )
         )
         database.insertSeason(
-            FindroidSeasonDto(
+            SeasonEntity(
                 id = seasonId,
                 seriesId = showId,
                 name = "Season 1",
@@ -175,7 +175,7 @@ class StoredListsFallbackTest {
             )
         )
         database.insertEpisode(
-            FindroidEpisodeDto(
+            EpisodeEntity(
                 id = episodeId,
                 serverId = serverId,
                 seasonId = seasonId,
@@ -203,7 +203,7 @@ class StoredListsFallbackTest {
         lastPlayed: Long? = null,
     ) =
         database.insertUserData(
-            FindroidUserDataDto(
+            UserDataEntity(
                 userId = user,
                 itemId = itemId,
                 played = played,
@@ -214,11 +214,11 @@ class StoredListsFallbackTest {
         )
 
     private fun source(itemId: ItemId, downloadedAt: Long?) =
-        FindroidSourceDto(
+        ItemSourceEntity(
             id = "source-${itemId.asString()}",
             itemId = itemId,
             name = "Original",
-            type = FindroidSourceType.LOCAL,
+            type = ItemSourceType.LOCAL,
             path = "/storage/downloads/${itemId.asString()}.mkv",
             downloadedAt = downloadedAt,
         )

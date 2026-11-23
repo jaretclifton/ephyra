@@ -1,15 +1,15 @@
 package dev.jdtech.jellyfin.film.presentation.season
 
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadProgress
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidSeason
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.Season
 
 data class SeasonState(
-    val season: FindroidSeason? = null,
-    val episodes: List<FindroidEpisode> = emptyList(),
+    val season: Season? = null,
+    val episodes: List<Episode> = emptyList(),
     /** All seasons of the series, only loaded with `includeSeriesSeasons` (TV season tabs). */
-    val seriesSeasons: List<FindroidSeason> = emptyList(),
+    val seriesSeasons: List<Season> = emptyList(),
     val episodeDownloadProgress: Map<ItemId, DownloadProgress> = emptyMap(),
     val error: Exception? = null,
     /**

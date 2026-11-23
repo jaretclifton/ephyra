@@ -29,7 +29,7 @@ class HomeRowFieldsTest {
         server.close()
     }
 
-    private fun repository(): JellyfinRepositoryImpl = server.repository()
+    private fun repository(): MediaRepositoryImpl = server.repository()
 
     private fun assertAsksForOverview(endpoint: String) {
         val request = server.requests.single { it.target.contains(endpoint) }.decodedTarget
