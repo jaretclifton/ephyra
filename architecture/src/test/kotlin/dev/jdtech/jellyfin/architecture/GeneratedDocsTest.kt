@@ -126,70 +126,85 @@ object ArchitectureModel {
                     Layer.APP,
                     "The phone app: screens, navigation and layouts; with app/tv the composition root.",
                 ),
-            "app/tv" to Module(Layer.APP, "The Android TV app, with its own screens."),
+            "app/tv" to
+                Module(
+                    Layer.APP,
+                    "The Android TV app: its own screens in its ce package, next to upstream's (TV ADR 0001).",
+                ),
             "modes/film" to
                 Module(
                     Layer.FEATURE,
-                    "The view models of home, library, search, the item screens and downloads.",
+                    "The view models with their State and Action classes for home, library, search, the item screens and downloads.",
                 ),
-            "setup" to Module(Layer.FEATURE, "Finding a server and signing in."),
-            "settings" to Module(Layer.FEATURE, "The app's preferences and the settings screen."),
+            "setup" to
+                Module(Layer.FEATURE, "Server discovery, signing in and the onboarding flow."),
+            "settings" to
+                Module(Layer.FEATURE, "AppPreferences (DataStore) and the settings screens."),
             "player/local" to
                 Module(
                     Layer.FEATURE,
-                    "The player: PlayerViewModel and playback, on ExoPlayer or mpv behind PlayerEngine.",
+                    "The player: PlayerViewModel and playback, on ExoPlayer or mpv behind PlayerEngine (in its engine package).",
                 ),
             "player/cast" to
                 Module(
                     Layer.FEATURE,
-                    "Google Cast: the session and playback on a receiver (stubs in the libre flavour).",
+                    "Google Cast: the session and playback on a receiver; real in the proprietary flavour, stubs in libre.",
                 ),
             "player/core" to
-                Module(Layer.FEATURE, "The player models shared by the player and its callers."),
+                Module(
+                    Layer.FEATURE,
+                    "The player models shared by the player and its callers: PlayerItem, Track, Trickplay.",
+                ),
             "core" to
                 Module(
                     Layer.FEATURE,
-                    "Hilt modules, the server in use, its session and reachability, the sync, shared Composables.",
+                    "Hilt modules, the server in use (CurrentMediaServer), its session keeper and reachability, the sync worker, DownloaderViewModel, MainViewModel and shared Composables.",
                 ),
             "downloads" to
                 Module(
                     Layer.FEATURE,
-                    "The download engine, the download queue and smart downloads.",
+                    "The download engine (Downloader, DownloaderImpl, MediaDownloadEngine), DownloadQueue, smart downloads and their workers.",
                 ),
             "application" to
                 Module(
                     Layer.APPLICATION,
-                    "Pure Kotlin: MediaRepository, the store ports and the event flows.",
+                    "Pure Kotlin: MediaRepository, the store ports (ServerStore, DownloadStore, PendingUserDataStore) and the event flows (DataChangeEvents, ReloadPolicy, …).",
                 ),
             "domain" to
                 Module(
                     Layer.DOMAIN,
-                    "Pure Kotlin: the models, the ids, the rules of user data and downloads, the server ports.",
+                    "Pure Kotlin, no Android or SDK: the models (Item, Movie, ItemSource, …), the ids, PlayState, DownloadState, Ticks, ActiveServer and the server ports.",
                 ),
             "data" to
                 Module(
                     Layer.ADAPTER,
-                    "Room: the database, the stores, and MediaRepositoryImpl over the server's ports.",
+                    "Room: the database, the stores (Room*Store) and MediaRepositoryImpl over the server's ports; no SDK.",
                 ),
             "server/jellyfin" to
                 Module(
                     Layer.ADAPTER,
-                    "The Jellyfin adapter, the only module with the Jellyfin SDK.",
+                    "The Jellyfin adapter, the only module with the Jellyfin SDK: JellyfinApi, the mappers, the port implementations, the device profiles and its own Hilt module.",
                 ),
             "testing" to
                 Module(
                     Layer.TOOLING,
-                    "Test only: a fake server and the contract suites a server adapter passes.",
+                    "Test only (R8): FakeMediaServer, FakeServerConnector and the contract suites a server adapter passes.",
                 ),
             "architecture" to
                 Module(
                     Layer.TOOLING,
-                    "The Konsist rules over the source tree, and the generated architecture docs.",
+                    "The Konsist rules over the source tree, their allowlists in architecture/baseline/, and the generated architecture docs.",
                 ),
             "baselineprofile" to
-                Module(Layer.TOOLING, "The baseline profile and startup benchmark of app/phone."),
+                Module(
+                    Layer.TOOLING,
+                    "Macrobenchmark: the baseline profile and startup benchmark of app/phone.",
+                ),
             "baselineprofile-tv" to
-                Module(Layer.TOOLING, "The baseline profile and startup benchmark of app/tv."),
+                Module(
+                    Layer.TOOLING,
+                    "Macrobenchmark: the baseline profile and startup benchmark of app/tv.",
+                ),
         )
 
     data class Module(val layer: Layer, val what: String)

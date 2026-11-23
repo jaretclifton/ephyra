@@ -8,71 +8,71 @@ model {
       link https://github.com/midasvo/ephyra/tree/main/app/phone 'Source'
     }
     appTv = app 'app/tv' {
-      description 'The Android TV app, with its own screens.'
+      description 'The Android TV app: its own screens in its ce package, next to upstream\'s (TV ADR 0001).'
       link https://github.com/midasvo/ephyra/tree/main/app/tv 'Source'
     }
     application = application 'application' {
-      description 'Pure Kotlin: MediaRepository, the store ports and the event flows.'
+      description 'Pure Kotlin: MediaRepository, the store ports (ServerStore, DownloadStore, PendingUserDataStore) and the event flows (DataChangeEvents, ReloadPolicy, …).'
       link https://github.com/midasvo/ephyra/tree/main/application 'Source'
     }
     architecture = tooling 'architecture' {
-      description 'The Konsist rules over the source tree, and the generated architecture docs.'
+      description 'The Konsist rules over the source tree, their allowlists in architecture/baseline/, and the generated architecture docs.'
       link https://github.com/midasvo/ephyra/tree/main/architecture 'Source'
     }
     baselineprofile = tooling 'baselineprofile' {
-      description 'The baseline profile and startup benchmark of app/phone.'
+      description 'Macrobenchmark: the baseline profile and startup benchmark of app/phone.'
       link https://github.com/midasvo/ephyra/tree/main/baselineprofile 'Source'
     }
     baselineprofileTv = tooling 'baselineprofile-tv' {
-      description 'The baseline profile and startup benchmark of app/tv.'
+      description 'Macrobenchmark: the baseline profile and startup benchmark of app/tv.'
       link https://github.com/midasvo/ephyra/tree/main/baselineprofile-tv 'Source'
     }
     core = feature 'core' {
-      description 'Hilt modules, the server in use, its session and reachability, the sync, shared Composables.'
+      description 'Hilt modules, the server in use (CurrentMediaServer), its session keeper and reachability, the sync worker, DownloaderViewModel, MainViewModel and shared Composables.'
       link https://github.com/midasvo/ephyra/tree/main/core 'Source'
     }
     data = adapter 'data' {
-      description 'Room: the database, the stores, and MediaRepositoryImpl over the server\'s ports.'
+      description 'Room: the database, the stores (Room*Store) and MediaRepositoryImpl over the server\'s ports; no SDK.'
       link https://github.com/midasvo/ephyra/tree/main/data 'Source'
     }
     domain = domain 'domain' {
-      description 'Pure Kotlin: the models, the ids, the rules of user data and downloads, the server ports.'
+      description 'Pure Kotlin, no Android or SDK: the models (Item, Movie, ItemSource, …), the ids, PlayState, DownloadState, Ticks, ActiveServer and the server ports.'
       link https://github.com/midasvo/ephyra/tree/main/domain 'Source'
     }
     downloads = feature 'downloads' {
-      description 'The download engine, the download queue and smart downloads.'
+      description 'The download engine (Downloader, DownloaderImpl, MediaDownloadEngine), DownloadQueue, smart downloads and their workers.'
       link https://github.com/midasvo/ephyra/tree/main/downloads 'Source'
     }
     modesFilm = feature 'modes/film' {
-      description 'The view models of home, library, search, the item screens and downloads.'
+      description 'The view models with their State and Action classes for home, library, search, the item screens and downloads.'
       link https://github.com/midasvo/ephyra/tree/main/modes/film 'Source'
     }
     playerCast = feature 'player/cast' {
-      description 'Google Cast: the session and playback on a receiver (stubs in the libre flavour).'
+      description 'Google Cast: the session and playback on a receiver; real in the proprietary flavour, stubs in libre.'
       link https://github.com/midasvo/ephyra/tree/main/player/cast 'Source'
     }
     playerCore = feature 'player/core' {
-      description 'The player models shared by the player and its callers.'
+      description 'The player models shared by the player and its callers: PlayerItem, Track, Trickplay.'
       link https://github.com/midasvo/ephyra/tree/main/player/core 'Source'
     }
     playerLocal = feature 'player/local' {
-      description 'The player: PlayerViewModel and playback, on ExoPlayer or mpv behind PlayerEngine.'
+      description 'The player: PlayerViewModel and playback, on ExoPlayer or mpv behind PlayerEngine (in its engine package).'
       link https://github.com/midasvo/ephyra/tree/main/player/local 'Source'
     }
     serverJellyfin = adapter 'server/jellyfin' {
-      description 'The Jellyfin adapter, the only module with the Jellyfin SDK.'
+      description 'The Jellyfin adapter, the only module with the Jellyfin SDK: JellyfinApi, the mappers, the port implementations, the device profiles and its own Hilt module.'
       link https://github.com/midasvo/ephyra/tree/main/server/jellyfin 'Source'
     }
     settings = feature 'settings' {
-      description 'The app\'s preferences and the settings screen.'
+      description 'AppPreferences (DataStore) and the settings screens.'
       link https://github.com/midasvo/ephyra/tree/main/settings 'Source'
     }
     setup = feature 'setup' {
-      description 'Finding a server and signing in.'
+      description 'Server discovery, signing in and the onboarding flow.'
       link https://github.com/midasvo/ephyra/tree/main/setup 'Source'
     }
     testing = tooling 'testing' {
-      description 'Test only: a fake server and the contract suites a server adapter passes.'
+      description 'Test only (R8): FakeMediaServer, FakeServerConnector and the contract suites a server adapter passes.'
       link https://github.com/midasvo/ephyra/tree/main/testing 'Source'
     }
 

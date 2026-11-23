@@ -106,6 +106,7 @@ Then walk the flow on an emulator: add the server, log in, switch user, switch s
 - **Checking another server's address must run unwatched**, or its silence shows the unreachable banner for the server in use ([#819](https://github.com/midasvo/ephyra/issues/819), `addAddress`).
 - **Deleting the active user is allowed**: the guard in `SetupRepositoryImpl.deleteUser` is commented out (setup-02 in [`docs/open-decisions.md`](../open-decisions.md)). It now clears the current user and the token.
 - **A server type without an adapter** gets `UnsupportedMediaServer`: every request fails; its downloads open from Room.
+- **Reachability follows the app's own requests.** `ServerReachability` also probes the server on a network change, on return to the app and after a failed request. Phone screens read it through `LocalServerStatus` and show the unreachable banner (`ServerOrErrorCard`) with a way to Downloads.
 - **Reachability does not run on TV** (`serverReachability.start()` is only in `app/phone`'s `BaseApplication`).
 - **Profile switch race**: an unplayed mark during a profile switch may clear the other user's last-played date ([#907](https://github.com/midasvo/ephyra/issues/907), open).
 - **Downgrade**: an older build over a newer Room schema can drop the database and the login (`docs/dev-environment.md`).
