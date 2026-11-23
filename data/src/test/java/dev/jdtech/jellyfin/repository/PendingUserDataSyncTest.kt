@@ -48,8 +48,8 @@ class PendingUserDataSyncTest {
 
     private var syncRequests = 0
 
-    private val repository: JellyfinRepository by lazy {
-        JellyfinRepositoryImpl(
+    private val repository: MediaRepository by lazy {
+        MediaRepositoryImpl(
             context,
             UnansweredServer(userId),
             database,

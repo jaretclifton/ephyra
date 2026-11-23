@@ -56,7 +56,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-class JellyfinRepositoryImpl(
+class MediaRepositoryImpl(
     private val context: Context,
     private val server: MediaServer,
     private val database: ServerDatabaseDao,
@@ -67,7 +67,7 @@ class JellyfinRepositoryImpl(
     /** CE (#637): the resume settings read from each server, kept for the stops made offline. */
     private val resumeThresholds: ResumeThresholdsStore =
         ResumeThresholdsStore(appPreferences.sharedPreferences),
-) : JellyfinRepository {
+) : MediaRepository {
     override val capabilities: ServerCapabilities
         get() = server.capabilities
 

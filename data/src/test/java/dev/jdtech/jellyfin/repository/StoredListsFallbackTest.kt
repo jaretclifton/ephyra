@@ -79,8 +79,8 @@ class StoredListsFallbackTest {
     /** Requests go unanswered by default. */
     private val server = UnansweredServer(userId)
 
-    private val repository: JellyfinRepository by lazy {
-        JellyfinRepositoryImpl(
+    private val repository: MediaRepository by lazy {
+        MediaRepositoryImpl(
             context,
             server,
             database,

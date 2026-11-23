@@ -1,14 +1,14 @@
 package dev.jdtech.jellyfin.player.local.domain
 
 import android.content.SharedPreferences
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 
 /** A [PlaylistManager] over [repository] that resolves playback with [preferences] (#766). */
 internal fun playlistManager(
-    repository: JellyfinRepository,
+    repository: MediaRepository,
     preferences: AppPreferences = testPreferences(),
 ) = PlaylistManager(repository, ResolvePlayback(repository, preferences))
 

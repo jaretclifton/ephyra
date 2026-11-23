@@ -5,7 +5,7 @@ import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -135,8 +135,8 @@ class ResolvePlaybackTest {
     private fun resolve(vararg values: Pair<String, Any>): ResolvePlayback {
         val repository =
             fakeProxy(
-                JellyfinRepository::class.java.classLoader,
-                arrayOf(JellyfinRepository::class.java),
+                MediaRepository::class.java.classLoader,
+                arrayOf(MediaRepository::class.java),
             ) { _, method, args ->
                 when (method.kotlinName) {
                     "getPlaybackSources" -> {
@@ -148,7 +148,7 @@ class ResolvePlaybackTest {
                     else -> error("Unexpected call to ${method.kotlinName}")
                 }
             }
-                as JellyfinRepository
+                as MediaRepository
         return ResolvePlayback(repository, testPreferences(values.toMap()))
     }
 

@@ -44,8 +44,8 @@ class SeriesTrackPreferenceTest {
 
     private val server = UnansweredServer(userId)
 
-    private val repository: JellyfinRepository by lazy {
-        JellyfinRepositoryImpl(context, server, database, preferences)
+    private val repository: MediaRepository by lazy {
+        MediaRepositoryImpl(context, server, database, preferences)
     }
 
     @After fun close() = room.close()

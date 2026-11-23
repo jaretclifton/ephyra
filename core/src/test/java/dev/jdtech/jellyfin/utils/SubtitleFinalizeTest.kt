@@ -9,7 +9,7 @@ import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -389,16 +389,16 @@ class SubtitleFinalizeTest {
     private fun downloader(timeoutMs: Long = 5_000): DownloaderImpl {
         val repository =
             fakeProxy(
-                JellyfinRepository::class.java.classLoader,
-                arrayOf(JellyfinRepository::class.java),
+                MediaRepository::class.java.classLoader,
+                arrayOf(MediaRepository::class.java),
             ) { _, method, _ ->
                 when (method.kotlinName) {
                     "getUserId" -> UUID.randomUUID().toString().toItemId()
                     // The server is not there: a failed subtitle cannot be started again.
-                    else -> throw IllegalStateException("JellyfinRepository.${method.kotlinName}")
+                    else -> throw IllegalStateException("MediaRepository.${method.kotlinName}")
                 }
             }
-                as JellyfinRepository
+                as MediaRepository
         val preferences =
             context.getSharedPreferences("subtitle-finalize-test", Context.MODE_PRIVATE)
         return DownloaderImpl(

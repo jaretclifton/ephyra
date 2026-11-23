@@ -2,7 +2,7 @@ package dev.jdtech.jellyfin.film.presentation.home
 
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -103,11 +103,11 @@ class HomeViewModelOfflineCrashTest {
      * the Jellyfin SDK fails. [HomeViewModel] only calls a handful of these (getSuggestions /
      * getResumeItems / getNextUp / getUserViews); the rest are never reached.
      */
-    private fun offlineRepository(): JellyfinRepository =
-        fakeProxy(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
-        ) { proxy, method, args ->
+    private fun offlineRepository(): MediaRepository =
+        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
+            proxy,
+            method,
+            args ->
             when {
                 method.declaringClass == Any::class.java ->
                     when (method.kotlinName) {
@@ -119,7 +119,7 @@ class HomeViewModelOfflineCrashTest {
                 else -> throw IOException("Simulated offline: ${method.kotlinName}")
             }
         }
-            as JellyfinRepository
+            as MediaRepository
 
     /**
      * Not used by `loadData()` when there is no current server (see

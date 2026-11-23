@@ -45,11 +45,11 @@ Goal: the SDK's enums and exception types are gone outside `data`. R1 goes from 
 - #745 `ServerException` for the SDK's exception types.
 
 Each of these is independent of the others. They touch different lines of some of the same files
-(`JellyfinRepository.kt` most of all), so two running at once will need a rebase, not a redesign.
+(`MediaRepository.kt` most of all), so two running at once will need a rebase, not a redesign.
 
 ### Phase 2: a repository interface with no SDK type, and no wrapper in the UI
 
-Goal: `JellyfinRepository` imports nothing from the SDK; composables and the player stop using
+Goal: `MediaRepository` imports nothing from the SDK; composables and the player stop using
 `JellyfinApi`. `app/phone`, `app/tv`, `modes/film` and `player/local` lose their SDK dependency.
 R3 goes from 8 to 4.
 
@@ -160,7 +160,7 @@ rewritten.
 |---|---|---|
 | 0 | None | New files only. `settings.gradle.kts` gets three `include` lines |
 | 1 | Low | Import lines and type names in about 50 files, 30 of which upstream also has. A conflict needs upstream to edit the same lines |
-| 2 | Low | `JellyfinRepository.kt` and the home ViewModel, both already far from upstream |
+| 2 | Low | `MediaRepository.kt` and the home ViewModel, both already far from upstream |
 | 3 | Medium | About 35 files move from `data` to `domain` or `server/jellyfin`. Their packages do not change, so git follows them as renames and an upstream edit still lands in the moved file. A model field that upstream adds needs its mapper line added in the adapter by hand. A file upstream *adds* to a moved package arrives in the old directory and has to be put in the right module |
 | 4 | Low | `setup` moves one file's content. Upstream's `SetupRepositoryImpl` changes rarely |
 | 5 | High, but not new | The player is already on the skill's list of code to cherry-pick around. After this phase an upstream change to `PlayerViewModel` cannot be merged at all, only re-applied |
@@ -181,7 +181,7 @@ text).
 2. With phase 7: add the moved packages to step 2 ("Judge compatibility") as a class of their
    own (where a new upstream file in `data/models`, `data/repository` or `core/di` belongs now),
    add the module layout to the background section, and put `PlayerViewModel` and
-   `JellyfinRepositoryImpl` on the cherry-pick list by name.
+   `MediaRepositoryImpl` on the cherry-pick list by name.
 
 ## 4.5 Options that were rejected
 

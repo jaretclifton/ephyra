@@ -9,7 +9,7 @@ functions and give the search command instead.
 
 | Document | Contents |
 |---|---|
-| [1-inventory.md](1-inventory.md) | What the code does today: every place the Jellyfin SDK crosses a module boundary, what `JellyfinRepository` exposes, how playback, setup, downloads and Cast are tied to Jellyfin, which features need a capability flag |
+| [1-inventory.md](1-inventory.md) | What the code does today: every place the Jellyfin SDK crosses a module boundary, what `MediaRepository` exposes, how playback, setup, downloads and Cast are tied to Jellyfin, which features need a capability flag |
 | [2-enforcement-and-tests.md](2-enforcement-and-tests.md) | How the build enforces the boundaries (Gradle and Konsist, with the Konsist/ArchUnit comparison), the contract test suites, and the test gaps that make a phase risky |
 | [3-target.md](3-target.md) | The target module layout and the port interfaces as Kotlin signatures |
 | [4-migration.md](4-migration.md) | The phases, what each one costs an upstream sync, and the options that were rejected |
@@ -44,7 +44,7 @@ and the download queue.
   `ServerSessionKeeper` in `core` call it, Cast asks for playback info itself, and
   `PlayerViewModel` (2,836 lines, no unit test of its own) builds both engines and does the
   reporting.
-- There is no offline repository any more (#281). `JellyfinRepositoryImpl` is one class that mixes
+- There is no offline repository any more (#281). `MediaRepositoryImpl` is one class that mixes
   server calls with Room. The first real cut is inside that class: a server-only part that an Emby
   adapter can replace, and a Room part that stays shared.
 - Both engines already implement media3's `Player`. That interface stays the engine port; what is

@@ -14,7 +14,7 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.SeasonEpisodeCounts
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -212,11 +212,11 @@ class ShowLoadingTest {
         )
     }
 
-    private fun repository(): JellyfinRepository =
-        fakeProxy(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
-        ) { _, method, args ->
+    private fun repository(): MediaRepository =
+        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
+            _,
+            method,
+            args ->
             // #769: Jellyfin can do everything.
             if (method.kotlinName == "getCapabilities") return@fakeProxy ServerCapabilities.ALL
             synchronized(calls) { calls.add(method.kotlinName) }
@@ -235,10 +235,10 @@ class ShowLoadingTest {
                         List(2) { episode(season2, season2CanDownload) }
                 }
                 "markAsFavorite" -> Unit
-                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
+                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
             }
         }
-            as JellyfinRepository
+            as MediaRepository
 
     private fun database(counts: List<SeasonEpisodeCounts>): ServerDatabaseDao =
         fakeProxy(

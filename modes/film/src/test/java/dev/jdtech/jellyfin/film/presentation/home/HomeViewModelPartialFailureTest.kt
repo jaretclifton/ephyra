@@ -8,7 +8,7 @@ import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.asItemId
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -158,11 +158,11 @@ class HomeViewModelPartialFailureTest {
             images = FindroidImages(),
         )
 
-    private fun repository(): JellyfinRepository =
-        fakeProxy(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
-        ) { _, method, args ->
+    private fun repository(): MediaRepository =
+        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
+            _,
+            method,
+            args ->
             if (method.kotlinName in failing) throw IllegalStateException(method.kotlinName)
             when (method.kotlinName) {
                 "getSuggestions",
@@ -173,10 +173,10 @@ class HomeViewModelPartialFailureTest {
                     if (args!![0].asItemId() in failingLibraries) throw IOException("library")
                     listOf(item())
                 }
-                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
+                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
             }
         }
-            as JellyfinRepository
+            as MediaRepository
 
     private fun item(): FindroidItem =
         fakeProxy(FindroidItem::class.java.classLoader, arrayOf(FindroidItem::class.java)) {

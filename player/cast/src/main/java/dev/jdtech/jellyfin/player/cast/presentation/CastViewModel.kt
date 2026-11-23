@@ -24,7 +24,7 @@ import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.player.core.domain.models.Track
 import dev.jdtech.jellyfin.player.local.R as PlayerLocalR
 import dev.jdtech.jellyfin.player.local.domain.DebugSegments
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -116,7 +116,7 @@ class CastViewModel
 constructor(
     private val sessionManager: CastSessionManager,
     private val playerController: CastPlayerController,
-    private val repository: JellyfinRepository,
+    private val repository: MediaRepository,
     private val appPreferences: AppPreferences,
     @param:ApplicationContext private val context: Context,
 ) : ViewModel() {

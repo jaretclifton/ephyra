@@ -10,7 +10,7 @@ import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
 import dev.jdtech.jellyfin.models.toFindroidEpisode
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
 import java.io.File
@@ -26,7 +26,7 @@ import kotlinx.coroutines.withContext
 class DownloadedShowViewModel
 @Inject
 constructor(
-    private val repository: JellyfinRepository,
+    private val repository: MediaRepository,
     private val downloadQueue: DownloadQueue,
     private val downloader: Downloader,
     private val database: ServerDatabaseDao,

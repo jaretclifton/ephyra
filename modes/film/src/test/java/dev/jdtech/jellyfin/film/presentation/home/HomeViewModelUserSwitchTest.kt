@@ -9,7 +9,7 @@ import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -370,11 +370,11 @@ class HomeViewModelUserSwitchTest {
         }
     }
 
-    private fun repository(): JellyfinRepository =
-        fakeProxy(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
-        ) { _, method, args ->
+    private fun repository(): MediaRepository =
+        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
+            _,
+            method,
+            args ->
             when (method.kotlinName) {
                 "getResumeItems",
                 "getNextUp" ->
@@ -385,10 +385,10 @@ class HomeViewModelUserSwitchTest {
                 "refreshCurrentUserImage" -> Unit
                 "getUserId" -> sessionUser?.id ?: throw IllegalStateException("signed out")
                 "getServerInfo" -> throw IOException("not needed here")
-                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
+                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
             }
         }
-            as JellyfinRepository
+            as MediaRepository
 
     private fun database(): ServerDatabaseDao =
         fakeProxy(

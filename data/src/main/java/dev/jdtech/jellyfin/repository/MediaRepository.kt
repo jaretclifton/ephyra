@@ -23,7 +23,7 @@ import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.UserId
 import kotlinx.coroutines.flow.Flow
 
-interface JellyfinRepository {
+interface MediaRepository {
     /**
      * #769: what the server in use can do. It changes with the server: read it when a screen loads.
      */

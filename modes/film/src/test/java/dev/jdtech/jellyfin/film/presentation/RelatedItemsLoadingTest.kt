@@ -15,7 +15,7 @@ import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -346,11 +346,11 @@ class RelatedItemsLoadingTest {
         )
     }
 
-    private fun repository(movie: FindroidMovie): JellyfinRepository =
-        fakeProxy(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
-        ) { _, method, args ->
+    private fun repository(movie: FindroidMovie): MediaRepository =
+        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
+            _,
+            method,
+            args ->
             // #769: not a request of the server, so not in [calls].
             if (method.kotlinName == "getCapabilities") return@fakeProxy capabilities
             synchronized(calls) { calls.add(method.kotlinName) }
@@ -370,10 +370,10 @@ class RelatedItemsLoadingTest {
                 "getItemCollections" -> listOf(collection)
                 // The server may return the item itself; the row leaves it out.
                 "getSimilarItems" -> listOf(similar, movie(itemId, "Self"))
-                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
+                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
             }
         }
-            as JellyfinRepository
+            as MediaRepository
 
     private fun noDownloads(): ServerDatabaseDao =
         fakeProxy(

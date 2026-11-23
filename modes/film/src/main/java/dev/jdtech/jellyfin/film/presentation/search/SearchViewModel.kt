@@ -6,7 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.film.presentation.ServerAwayReload
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.UserId
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -17,8 +17,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @HiltViewModel
-class SearchViewModel @Inject constructor(private val repository: JellyfinRepository) :
-    ViewModel() {
+class SearchViewModel @Inject constructor(private val repository: MediaRepository) : ViewModel() {
     private val _state = MutableStateFlow(SearchState())
     val state = _state.asStateFlow()
 

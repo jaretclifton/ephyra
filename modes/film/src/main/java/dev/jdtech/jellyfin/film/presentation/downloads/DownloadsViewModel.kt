@@ -25,7 +25,7 @@ import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
 import dev.jdtech.jellyfin.models.toFindroidEpisode
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
 import java.io.File
@@ -53,7 +53,7 @@ class DownloadsViewModel
 @Inject
 constructor(
     @ApplicationContext private val context: Context,
-    private val repository: JellyfinRepository,
+    private val repository: MediaRepository,
     private val appPreferences: AppPreferences,
     private val downloadQueue: DownloadQueue,
     private val downloader: Downloader,

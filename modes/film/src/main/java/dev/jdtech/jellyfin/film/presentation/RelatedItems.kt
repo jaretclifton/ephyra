@@ -4,7 +4,7 @@ import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ServerCapabilities
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -71,7 +71,7 @@ fun RelatedItems.keeping(request: RelatedItemsRequest) =
  * logged and leaves its row empty, since none of these rows is worth an error on the page.
  */
 fun CoroutineScope.launchRelatedItems(
-    repository: JellyfinRepository,
+    repository: MediaRepository,
     itemId: ItemId,
     request: RelatedItemsRequest,
     update: ((RelatedItems) -> RelatedItems) -> Unit,

@@ -368,17 +368,17 @@ fun interface SessionRestorer { fun restore(session: ServerSession) }
 
 ## 3.4 The repository (`data`)
 
-ViewModels keep calling one interface. It is today's `JellyfinRepository` without SDK types; it
+ViewModels keep calling one interface. It is today's `MediaRepository` without SDK types; it
 keeps its name until the Emby work starts (decision D2, #774). Its one implementation composes a `MediaServer` with Room:
 
 ```kotlin
-class JellyfinRepositoryImpl(          // no SDK import
+class MediaRepositoryImpl(          // no SDK import
     private val context: Context,          // for the trickplay files of downloads
     private val server: MediaServer,
     private val database: ServerDatabaseDao,
     private val appPreferences: AppPreferences,
     private val syncRequester: UserDataSyncRequester,
-) : JellyfinRepository {
+) : MediaRepository {
     override suspend fun getMovie(itemId: ItemId): FindroidMovie =
         serverOrStored(stored = storedMovie(itemId)) {
             server.catalog.movie(itemId).withLocalSources(localSourcesFor(itemId))   // remote sources first, then local
@@ -441,7 +441,7 @@ own unit tests; none is an interface.
 
 | Use case | From | What it decides |
 |---|---|---|
-| `ResolvePlayback` | `PlaylistManager.toPlayerItem`, the profile choice in `JellyfinRepositoryImpl.getPlaybackSources` | Which source plays (a finished download first), for which target, with which cap and audio stream |
+| `ResolvePlayback` | `PlaylistManager.toPlayerItem`, the profile choice in `MediaRepositoryImpl.getPlaybackSources` | Which source plays (a finished download first), for which target, with which cap and audio stream |
 | `PlaybackReporter` | `PlayerViewModel.sendPlaybackStart`, `reportProgress`, `reportStopped`, with `PlaybackStartGate`, `ReportedPause`, `PlaybackStopReport` | When start, progress and stop are sent, in what order, with which session |
 | `PlayQueue` | `PlaylistManager` (queue, shuffle, next season, next up) | What plays next |
 | `DownloadQueue` | Exists (`core/.../downloader/DownloadQueue.kt`) | Scheduling, retry, restore. Unchanged |

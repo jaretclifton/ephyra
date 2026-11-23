@@ -17,7 +17,7 @@ import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.isDownloaded
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.ReloadPolicy
 import dev.jdtech.jellyfin.repository.serverOrStoredList
 import dev.jdtech.jellyfin.utils.Downloader
@@ -44,7 +44,7 @@ internal val seasonEpisodeFields = setOf(EpisodeField.OVERVIEW, EpisodeField.CAN
 class SeasonViewModel
 @Inject
 constructor(
-    private val repository: JellyfinRepository,
+    private val repository: MediaRepository,
     private val downloader: Downloader,
     private val downloadQueue: DownloadQueue,
     dataChanges: DataChangeEvents = DataChangeEvents(),

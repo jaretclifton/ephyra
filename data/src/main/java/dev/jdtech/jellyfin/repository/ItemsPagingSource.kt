@@ -11,7 +11,7 @@ import dev.jdtech.jellyfin.models.SortOrder
 import timber.log.Timber
 
 class ItemsPagingSource(
-    private val jellyfinRepository: JellyfinRepository,
+    private val mediaRepository: MediaRepository,
     private val parentId: ItemId?,
     private val includeTypes: List<ItemKind>?,
     private val recursive: Boolean,
@@ -26,7 +26,7 @@ class ItemsPagingSource(
 
         return try {
             val items =
-                jellyfinRepository.getItems(
+                mediaRepository.getItems(
                     parentId = parentId,
                     includeTypes = includeTypes,
                     recursive = recursive,

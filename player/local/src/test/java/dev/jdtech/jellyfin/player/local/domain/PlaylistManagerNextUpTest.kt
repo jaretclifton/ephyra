@@ -7,7 +7,7 @@ import dev.jdtech.jellyfin.models.FindroidChapter
 import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.ServerException
-import dev.jdtech.jellyfin.repository.JellyfinRepositoryImpl
+import dev.jdtech.jellyfin.repository.MediaRepositoryImpl
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.ContractLibrary
 import dev.jdtech.jellyfin.testing.FakeLibrary
@@ -77,7 +77,7 @@ class PlaylistManagerNextUpTest {
     }
 
     private fun repository() =
-        JellyfinRepositoryImpl(
+        MediaRepositoryImpl(
             context = ContextWrapper(null),
             server = server,
             database = noDownloads(),

@@ -88,7 +88,7 @@ import dev.jdtech.jellyfin.player.local.domain.trackPreferenceKey
 import dev.jdtech.jellyfin.player.local.engine.EnginePlayer
 import dev.jdtech.jellyfin.player.local.engine.PlayerEngine
 import dev.jdtech.jellyfin.player.local.engine.PlayerEngineConfig
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.settings.domain.Constants
@@ -130,7 +130,7 @@ class PlayerViewModel
 constructor(
     private val application: Application,
     private val playlistManager: PlaylistManager,
-    private val repository: JellyfinRepository,
+    private val repository: MediaRepository,
     private val appPreferences: AppPreferences,
     private val savedStateHandle: SavedStateHandle,
     private val playbackEvents: PlaybackEvents,

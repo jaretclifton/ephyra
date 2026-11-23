@@ -12,7 +12,7 @@ import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.UiText
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @HiltViewModel
-class CollectionViewModel @Inject constructor(private val repository: JellyfinRepository) :
+class CollectionViewModel @Inject constructor(private val repository: MediaRepository) :
     ViewModel() {
     private val _state = MutableStateFlow(CollectionState())
     val state = _state.asStateFlow()

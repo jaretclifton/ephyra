@@ -17,7 +17,7 @@ import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 
 @EntryPoint
@@ -25,7 +25,7 @@ import dev.jdtech.jellyfin.settings.domain.AppPreferences
 interface ScreensaverEntryPoint {
     fun serverSession(): ServerSession
 
-    fun repository(): JellyfinRepository
+    fun repository(): MediaRepository
 
     fun appPreferences(): AppPreferences
 }

@@ -5,7 +5,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.jdtech.jellyfin.player.local.domain.PlaybackReporter
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import javax.inject.Qualifier
 import javax.inject.Singleton
@@ -32,7 +32,7 @@ object PlaybackReporterModule {
     /** Not scoped: each player gets its own, with the state of its own reports. */
     @Provides
     fun providePlaybackReporter(
-        repository: JellyfinRepository,
+        repository: MediaRepository,
         playbackEvents: PlaybackEvents,
         @ApplicationScope reportScope: CoroutineScope,
     ): PlaybackReporter = PlaybackReporter(repository, playbackEvents, reportScope, Dispatchers.IO)

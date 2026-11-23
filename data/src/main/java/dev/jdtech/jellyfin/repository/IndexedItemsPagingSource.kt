@@ -14,12 +14,12 @@ import dev.jdtech.jellyfin.models.SortOrder
 import kotlinx.coroutines.flow.Flow
 
 /**
- * CE: like [JellyfinRepository.getItemsPaging], but with placeholders for the items that aren't
- * loaded yet. The list then has its full length from the first page, so a screen can show a
- * position counter and scroll straight to any index (a letter of the A–Z jump bar). Paging loads
- * the pages around that index instead of every page before it.
+ * CE: like [MediaRepository.getItemsPaging], but with placeholders for the items that aren't loaded
+ * yet. The list then has its full length from the first page, so a screen can show a position
+ * counter and scroll straight to any index (a letter of the A–Z jump bar). Paging loads the pages
+ * around that index instead of every page before it.
  */
-fun JellyfinRepository.getItemsPagingIndexed(
+fun MediaRepository.getItemsPagingIndexed(
     parentId: ItemId? = null,
     includeTypes: List<ItemKind>? = null,
     recursive: Boolean = false,

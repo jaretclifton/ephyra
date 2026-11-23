@@ -28,7 +28,7 @@ import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -171,7 +171,7 @@ class SyncWorkerRunTest {
     /** Off, as it is by default: its check after the sync does nothing. */
     private fun smartDownloads(): SmartDownloads {
         val downloader = unused<Downloader>()
-        val repository = Provider { unused<JellyfinRepository>() }
+        val repository = Provider { unused<MediaRepository>() }
         val connectivity = unused<NetworkConnectivity>()
         return SmartDownloads(
             DownloadQueue(downloader, preferences, repository, database, context),

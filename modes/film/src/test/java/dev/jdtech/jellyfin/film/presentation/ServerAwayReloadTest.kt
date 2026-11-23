@@ -11,7 +11,7 @@ import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.ItemsResult
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.StoredLibraries
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -632,11 +632,11 @@ class ServerAwayReloadTest {
     private fun favorites(dataChanges: DataChangeEvents = DataChangeEvents()) =
         FavoritesViewModel(repository(), dataChanges, dispatcher)
 
-    private fun repository(): JellyfinRepository =
-        fakeProxy(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
-        ) { _, method, args ->
+    private fun repository(): MediaRepository =
+        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
+            _,
+            method,
+            args ->
             // #769: Jellyfin can do everything.
             if (method.kotlinName == "getCapabilities") return@fakeProxy ServerCapabilities.ALL
             // #810: Media asks whom the client acts for; always the same user here.
@@ -663,10 +663,10 @@ class ServerAwayReloadTest {
                     calls += args!![0] as String
                     ItemsResult(emptyList<Any>(), fromStore)
                 }
-                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
+                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
             }
         }
-            as JellyfinRepository
+            as MediaRepository
 
     private companion object {
         val USER_ID: UserId = java.util.UUID.randomUUID().toString().toUserId()

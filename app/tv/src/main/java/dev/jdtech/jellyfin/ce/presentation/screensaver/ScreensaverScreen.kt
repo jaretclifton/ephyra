@@ -48,7 +48,7 @@ import dev.jdtech.jellyfin.core.presentation.ephyra.drawSpecks
 import dev.jdtech.jellyfin.core.presentation.ephyra.reducedMotion
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.util.Date
 import kotlinx.coroutines.delay
@@ -57,7 +57,7 @@ import kotlinx.coroutines.isActive
 @Composable
 fun ScreensaverScreen(
     serverSession: ServerSession,
-    repository: JellyfinRepository,
+    repository: MediaRepository,
     appPreferences: AppPreferences,
     modifier: Modifier = Modifier,
 ) {

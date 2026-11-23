@@ -22,7 +22,7 @@ import dev.jdtech.jellyfin.models.toFindroidEpisode
 import dev.jdtech.jellyfin.models.toFindroidMovie
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -76,12 +76,12 @@ class OtherServersCopyTest {
     private val downloader: DownloaderImpl by lazy {
         val repository =
             fakeProxy(
-                JellyfinRepository::class.java.classLoader,
-                arrayOf(JellyfinRepository::class.java),
+                MediaRepository::class.java.classLoader,
+                arrayOf(MediaRepository::class.java),
             ) { _, method, _ ->
-                server("JellyfinRepository.${method.kotlinName}")
+                server("MediaRepository.${method.kotlinName}")
             }
-                as JellyfinRepository
+                as MediaRepository
         DownloaderImpl(
             context,
             database,
@@ -274,8 +274,8 @@ class OtherServersCopyTest {
             val movie = database.getMovie(movieId).toFindroidMovie(database, userB)
             server = { name ->
                 when (name) {
-                    "JellyfinRepository.getMediaSources" -> listOf(serverSource(Long.MAX_VALUE / 4))
-                    "JellyfinRepository.getServerSegments" -> emptyList<Any>()
+                    "MediaRepository.getMediaSources" -> listOf(serverSource(Long.MAX_VALUE / 4))
+                    "MediaRepository.getServerSegments" -> emptyList<Any>()
                     else -> throw IllegalStateException(name)
                 }
             }
@@ -296,7 +296,7 @@ class OtherServersCopyTest {
         // The source comes, then the server stops answering.
         server = { name ->
             when (name) {
-                "JellyfinRepository.getMediaSources" -> listOf(serverSource(1L))
+                "MediaRepository.getMediaSources" -> listOf(serverSource(1L))
                 else -> throw IllegalStateException(name)
             }
         }

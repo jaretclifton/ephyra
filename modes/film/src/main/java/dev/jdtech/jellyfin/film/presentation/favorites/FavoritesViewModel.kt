@@ -14,7 +14,7 @@ import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.ReloadPolicy
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -31,14 +31,14 @@ import kotlinx.coroutines.withContext
 @HiltViewModel
 class FavoritesViewModel
 internal constructor(
-    private val repository: JellyfinRepository,
+    private val repository: MediaRepository,
     dataChanges: DataChangeEvents,
     /** CE (#779): where the sections are sorted out; the tests run it on their own dispatcher. */
     private val sectionsDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
     @Inject
     constructor(
-        repository: JellyfinRepository,
+        repository: MediaRepository,
         dataChanges: DataChangeEvents = DataChangeEvents(),
     ) : this(repository, dataChanges, Dispatchers.Default)
 

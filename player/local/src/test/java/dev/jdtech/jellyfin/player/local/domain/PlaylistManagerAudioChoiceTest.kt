@@ -11,7 +11,7 @@ import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -300,7 +300,7 @@ class PlaylistManagerAudioChoiceTest {
     }
 
     /** A [PlaylistManager] over [repository] with [language] as the preferred audio language. */
-    private fun preferring(language: String, repository: JellyfinRepository) =
+    private fun preferring(language: String, repository: MediaRepository) =
         playlistManager(repository, testPreferences(mapOf("pref_audio_language" to language)))
 
     private fun repository(
@@ -309,10 +309,10 @@ class PlaylistManagerAudioChoiceTest {
         failWithAudio: Boolean = false,
         downloaded: Boolean = false,
     ) =
-        fakeProxy(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
-        ) { _, method, args ->
+        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
+            _,
+            method,
+            args ->
             when (method.kotlinName) {
                 "getEpisode" -> episode
                 "getEpisodes" -> listOf(episode)
@@ -333,7 +333,7 @@ class PlaylistManagerAudioChoiceTest {
                 else -> error("Unexpected call to ${method.kotlinName}")
             }
         }
-            as JellyfinRepository
+            as MediaRepository
 
     private fun dutch() =
         SeriesTrackPreferenceDto(

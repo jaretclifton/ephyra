@@ -10,8 +10,8 @@ import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.FindroidTrickplayInfo
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.repository.JellyfinRepository
-import dev.jdtech.jellyfin.repository.JellyfinRepositoryImpl
+import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.MediaRepositoryImpl
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -169,8 +169,8 @@ class TrickplayDownloadTest {
         val sheetsOnServer = (info.thumbnailCount + tiles - 1) / tiles
         val server =
             fakeProxy(
-                JellyfinRepository::class.java.classLoader,
-                arrayOf(JellyfinRepository::class.java),
+                MediaRepository::class.java.classLoader,
+                arrayOf(MediaRepository::class.java),
             ) { _, method, args ->
                 when (method.kotlinName) {
                     "getTrickplayData" -> {
@@ -181,10 +181,10 @@ class TrickplayDownloadTest {
                         if (index in failing || index >= sheetsOnServer) null
                         else sheet(index).toByteArray()
                     }
-                    else -> throw IllegalStateException("JellyfinRepository.${method.kotlinName}")
+                    else -> throw IllegalStateException("MediaRepository.${method.kotlinName}")
                 }
             }
-                as JellyfinRepository
+                as MediaRepository
         val downloader =
             DownloaderImpl(
                 context,
@@ -215,7 +215,7 @@ class TrickplayDownloadTest {
             }
                 as MediaServer
         val repository =
-            JellyfinRepositoryImpl(
+            MediaRepositoryImpl(
                 context,
                 away,
                 room.getServerDatabaseDao(),

@@ -38,7 +38,7 @@ import dev.jdtech.jellyfin.models.toFindroidTrickplayInfoDto
 import dev.jdtech.jellyfin.models.toFindroidUserDataDto
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
@@ -186,7 +186,7 @@ internal fun downloadErrorText(e: Throwable): UiText =
 class DownloaderImpl(
     private val context: Context,
     private val database: ServerDatabaseDao,
-    private val jellyfinRepositoryProvider: Provider<JellyfinRepository>,
+    private val mediaRepositoryProvider: Provider<MediaRepository>,
     private val appPreferences: AppPreferences,
     // A Provider, so building this @Singleton (during Application.onCreate's field injection) does
     // not set up WorkManager; it is only needed once an image download is started (#250).
@@ -212,8 +212,8 @@ class DownloaderImpl(
     // Resolved per use, never captured: which repository is active (online vs offline) can
     // change at runtime without this @Singleton being recreated. Capturing a fixed instance
     // here goes stale after an offline -> online switch.
-    private val jellyfinRepository: JellyfinRepository
-        get() = jellyfinRepositoryProvider.get()
+    private val mediaRepository: MediaRepository
+        get() = mediaRepositoryProvider.get()
 
     /**
      * Monotonically-increasing download id counter. Seeded at System.currentTimeMillis() so that
@@ -267,7 +267,7 @@ class DownloaderImpl(
                 // disk was written at the row's quality, and mixing URL kinds would
                 // append mismatched bytes.
                 val sources =
-                    jellyfinRepository.getMediaSources(
+                    mediaRepository.getMediaSources(
                         item.id,
                         true,
                         transcodeDolbyVision,
@@ -308,16 +308,15 @@ class DownloaderImpl(
         var mintedDownloadId: Long? = null
         try {
             val source =
-                jellyfinRepository
+                mediaRepository
                     .getMediaSources(item.id, true, transcodeDolbyVision, maxBitrate)
                     .first { it.id == sourceId }
-            val segments = jellyfinRepository.getServerSegments(item.id)
+            val segments = mediaRepository.getServerSegments(item.id)
             // CE (#718): what the rows below need from the server, asked before another server's
             // copy gives way, so a server that stops answering here leaves that copy alone.
             val showAndSeason =
                 (item as? FindroidEpisode)?.let {
-                    jellyfinRepository.getShow(it.seriesId) to
-                        jellyfinRepository.getSeason(it.seasonId)
+                    mediaRepository.getShow(it.seriesId) to mediaRepository.getSeason(it.seasonId)
                 }
             val trickplayInfo =
                 if (item is FindroidSources) {
@@ -424,7 +423,7 @@ class DownloaderImpl(
             )
             // Progress from an earlier download of this item that has not reached the server yet
             // is newer than what the server sent with the item: keep it.
-            val userId = jellyfinRepository.getUserId()
+            val userId = mediaRepository.getUserId()
             if (database.getUserDataToBeSynced(userId, item.id) == null) {
                 database.insertUserData(item.toFindroidUserDataDto(userId))
             }
@@ -459,7 +458,7 @@ class DownloaderImpl(
                 // nothing of its own in Room; deleting by the item's id would take that copy.
                 if (!isStoredForAnotherServer(item, serverId)) {
                     val source =
-                        jellyfinRepository.getMediaSources(item.id).first { it.id == sourceId }
+                        mediaRepository.getMediaSources(item.id).first { it.id == sourceId }
                     deleteItem(item, source)
                 }
             } catch (e: Exception) {
@@ -478,7 +477,7 @@ class DownloaderImpl(
     ): Pair<Long, UiText?> {
         val sources =
             try {
-                jellyfinRepository.getMediaSources(
+                mediaRepository.getMediaSources(
                     item.id,
                     includePath = true,
                     transcodeDolbyVision =
@@ -832,7 +831,7 @@ class DownloaderImpl(
         if (failedRows.isEmpty()) return
         val serverSource =
             try {
-                jellyfinRepository
+                mediaRepository
                     .getMediaSources(
                         item.id,
                         true,
@@ -918,7 +917,7 @@ class DownloaderImpl(
     ) {
         val sheets = mutableMapOf<Int, ByteArray>()
         for (index in 0 until trickplaySheetCount(trickplayInfo)) {
-            jellyfinRepository.getTrickplayData(itemId, trickplayInfo.width, index, sourceId)?.let {
+            mediaRepository.getTrickplayData(itemId, trickplayInfo.width, index, sourceId)?.let {
                 sheets[index] = it
             }
         }
@@ -978,8 +977,8 @@ class DownloaderImpl(
                 val resolved: FindroidItem? =
                     try {
                         when (row.itemKind) {
-                            "MOVIE" -> jellyfinRepository.getMovie(row.itemId)
-                            else -> jellyfinRepository.getEpisode(row.itemId)
+                            "MOVIE" -> mediaRepository.getMovie(row.itemId)
+                            else -> mediaRepository.getEpisode(row.itemId)
                         }
                     } catch (e: Exception) {
                         // Transient (offline, server down) or permanent (item deleted) —
@@ -1015,7 +1014,7 @@ class DownloaderImpl(
 
     override suspend fun getActiveDownloads(): List<Downloader.ActiveDownload> =
         withContext(Dispatchers.IO) {
-            val userId = jellyfinRepository.getUserId()
+            val userId = mediaRepository.getUserId()
             val sources = database.getActiveDownloadSources()
             val result = mutableListOf<Downloader.ActiveDownload>()
             for (source in sources) {
@@ -1070,7 +1069,7 @@ class DownloaderImpl(
 
     override suspend fun sweepOrphans() =
         withContext(Dispatchers.IO) {
-            val userId = jellyfinRepository.getUserId()
+            val userId = mediaRepository.getUserId()
 
             // CE (#573): first, so the rows below have the subtitles' final names. Either name is
             // safe: the sweep keeps a file a row names with or without `.download`.
@@ -1386,7 +1385,7 @@ class DownloaderImpl(
         if (failed.isEmpty()) return
         val serverSource =
             try {
-                jellyfinRepository
+                mediaRepository
                     .getMediaSources(
                         source.itemId,
                         true,

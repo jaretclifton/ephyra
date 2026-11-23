@@ -72,7 +72,7 @@ class UnfinishedDownloadPlaybackTest {
     fun `online, an unfinished download is not played and the server is asked instead`() =
         runBlocking {
             val repository =
-                JellyfinRepositoryImpl(context, UnansweredServer(userId), database, preferences())
+                MediaRepositoryImpl(context, UnansweredServer(userId), database, preferences())
 
             val result = runCatching {
                 repository.getPlaybackSources(episodeId, LOCAL_PLAYER, null)

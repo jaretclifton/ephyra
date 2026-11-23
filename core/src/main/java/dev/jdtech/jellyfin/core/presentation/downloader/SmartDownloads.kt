@@ -8,7 +8,7 @@ import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toFindroidSource
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
@@ -41,7 +41,7 @@ constructor(
     private val downloader: Downloader,
     private val appPreferences: AppPreferences,
     private val database: ServerDatabaseDao,
-    private val repositoryProvider: Provider<JellyfinRepository>,
+    private val repositoryProvider: Provider<MediaRepository>,
     private val networkConnectivity: NetworkConnectivity,
     private val playbackEvents: PlaybackEvents,
 ) {

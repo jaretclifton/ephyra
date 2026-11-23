@@ -10,7 +10,7 @@ import dev.jdtech.jellyfin.di.DownloadHttpClient
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import java.io.File
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +25,7 @@ class ImagesDownloaderWorker
 constructor(
     @Assisted private val appContext: Context,
     @Assisted private val params: WorkerParameters,
-    private val repository: JellyfinRepository,
+    private val repository: MediaRepository,
     @DownloadHttpClient private val client: OkHttpClient,
 ) : CoroutineWorker(appContext, params) {
     override suspend fun doWork(): Result {

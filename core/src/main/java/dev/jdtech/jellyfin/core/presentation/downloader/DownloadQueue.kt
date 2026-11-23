@@ -16,7 +16,7 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.NetworkConnectivity
@@ -65,7 +65,7 @@ class DownloadQueue
 constructor(
     private val downloader: Downloader,
     private val appPreferences: AppPreferences,
-    private val repositoryProvider: Provider<JellyfinRepository>,
+    private val repositoryProvider: Provider<MediaRepository>,
     private val database: ServerDatabaseDao,
     @ApplicationContext private val context: Context,
     private val dataChanges: DataChangeEvents = DataChangeEvents(),
@@ -73,7 +73,7 @@ constructor(
 ) {
     // Resolved per use, never captured: the active repository can change at runtime without
     // this @Singleton being recreated (offline <-> online switch).
-    private val repository: JellyfinRepository
+    private val repository: MediaRepository
         get() = repositoryProvider.get()
 
     sealed interface EntryState {

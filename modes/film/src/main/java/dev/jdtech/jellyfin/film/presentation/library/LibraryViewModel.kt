@@ -10,7 +10,7 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.getItemsPagingIndexed
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
@@ -29,7 +29,7 @@ import timber.log.Timber
 class LibraryViewModel
 @Inject
 constructor(
-    private val jellyfinRepository: JellyfinRepository,
+    private val mediaRepository: MediaRepository,
     private val appPreferences: AppPreferences,
 ) : ViewModel() {
     private val _state = MutableStateFlow(LibraryState())
@@ -123,7 +123,7 @@ constructor(
             try {
                 val items =
                     if (indexed) {
-                            jellyfinRepository.getItemsPagingIndexed(
+                            mediaRepository.getItemsPagingIndexed(
                                 parentId = parentId,
                                 includeTypes = itemType,
                                 recursive = recursive,
@@ -145,7 +145,7 @@ constructor(
                                 },
                             )
                         } else {
-                            jellyfinRepository.getItemsPaging(
+                            mediaRepository.getItemsPaging(
                                 parentId = parentId,
                                 includeTypes = itemType,
                                 recursive = recursive,
@@ -208,7 +208,7 @@ constructor(
                         val before =
                             LetterIndex.BOUNDARIES.map { boundary ->
                                 async {
-                                    jellyfinRepository.getItemCount(
+                                    mediaRepository.getItemCount(
                                         parentId = parentId,
                                         includeTypes = itemType,
                                         recursive = recursive,

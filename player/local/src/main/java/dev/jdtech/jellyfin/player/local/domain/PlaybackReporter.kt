@@ -5,7 +5,7 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -52,7 +52,7 @@ data class PlayingSnapshot(
  * thread only. The repository calls of the start and stop run on [ioDispatcher].
  */
 class PlaybackReporter(
-    private val repository: JellyfinRepository,
+    private val repository: MediaRepository,
     private val playbackEvents: PlaybackEvents,
     private val reportScope: CoroutineScope,
     private val ioDispatcher: CoroutineDispatcher,
@@ -202,8 +202,8 @@ class PlaybackReporter(
 
     /**
      * Tell the server (and the local database) that [snapshot]'s item stopped playing. The only
-     * caller of [JellyfinRepository.postPlaybackStop]. Before the duration is known the stop is
-     * only sent if the start was, and it leaves the local database alone ([playbackStopReport]).
+     * caller of [MediaRepository.postPlaybackStop]. Before the duration is known the stop is only
+     * sent if the start was, and it leaves the local database alone ([playbackStopReport]).
      *
      * Runs in [reportScope] because it must outlive the ViewModel's scope: the player is released
      * from its `onCleared`, and the player can be closed right after an item change. It waits up to

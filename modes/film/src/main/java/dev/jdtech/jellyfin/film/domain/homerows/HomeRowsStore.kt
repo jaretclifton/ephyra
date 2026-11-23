@@ -5,7 +5,7 @@ import dev.jdtech.jellyfin.models.FindroidCollection
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.settings.domain.models.Preference
 import javax.inject.Inject
@@ -51,4 +51,4 @@ constructor(private val appPreferences: AppPreferences, private val database: Se
 }
 
 /** The libraries that can have a Latest row on Home. */
-suspend fun JellyfinRepository.homeLibraries(): List<FindroidCollection> = getUserViews()
+suspend fun MediaRepository.homeLibraries(): List<FindroidCollection> = getUserViews()

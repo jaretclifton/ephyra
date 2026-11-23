@@ -184,12 +184,12 @@ available since #720; #699 tracks the move to Jupiter. The adapter needs an Andr
 the SDK client, so its tests need Robolectric, which has no Jupiter runner yet. The contract
 classes therefore use JUnit 4 annotations and `kotlin.test` assertions, and move with #699.
 
-33 test files fake `JellyfinRepository` today, 27 of them through `java.lang.reflect.Proxy`
-(`JellyfinRepository::class.java`), dispatching on the method name: 11 in `modes/film`, 8 in
+33 test files fake `MediaRepository` today, 27 of them through `java.lang.reflect.Proxy`
+(`MediaRepository::class.java`), dispatching on the method name: 11 in `modes/film`, 8 in
 `player/local`, 4 in `data`, 3 in `core`, 1 in `app/tv`. A proxy keeps compiling when a signature
 changes and then fails at run time, or passes for the wrong reason when a method is renamed.
 Every task that changes the interface lists this as a trap, and the command to find them:
-`grep -rl "JellyfinRepository::class.java" --include=*.kt . | grep /src/test`.
+`grep -rl "MediaRepository::class.java" --include=*.kt . | grep /src/test`.
 
 ## 2.3 Test gaps
 

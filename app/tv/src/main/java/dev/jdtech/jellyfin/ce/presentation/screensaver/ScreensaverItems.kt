@@ -4,7 +4,7 @@ import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import kotlinx.coroutines.CancellationException
 import timber.log.Timber
 
@@ -19,7 +19,7 @@ private const val SCREENSAVER_LIMIT = 100
  * of the alphabet). "Recently added" keeps the newest first. Empty when loading fails.
  */
 internal suspend fun loadScreensaverItems(
-    repository: JellyfinRepository,
+    repository: MediaRepository,
     source: String,
 ): List<FindroidItem> =
     try {

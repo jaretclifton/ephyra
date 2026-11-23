@@ -17,7 +17,7 @@ import dev.jdtech.jellyfin.player.core.domain.models.PlayerChapter
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.player.core.domain.models.ServerAudioTrack
 import dev.jdtech.jellyfin.player.core.domain.models.TrickplayInfo
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import javax.inject.Inject
 import kotlin.random.Random
 import kotlinx.coroutines.CancellationException
@@ -30,7 +30,7 @@ import timber.log.Timber
 class PlaylistManager
 @Inject
 internal constructor(
-    private val repository: JellyfinRepository,
+    private val repository: MediaRepository,
     private val resolvePlayback: ResolvePlayback,
 ) {
     private var startItem: FindroidItem? = null

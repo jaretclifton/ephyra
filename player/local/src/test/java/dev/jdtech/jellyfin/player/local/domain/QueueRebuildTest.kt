@@ -8,7 +8,7 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.testing.asItemId
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -161,10 +161,10 @@ class QueueRebuildTest {
 
     @Suppress("UNCHECKED_CAST")
     private fun fakeRepository() =
-        fakeProxy(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
-        ) { _, method, args ->
+        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
+            _,
+            method,
+            args ->
             val answer: Any =
                 when (method.kotlinName) {
                     "getEpisode" -> episodes.first { it.id == args[0].asItemIdOrNull() }
@@ -185,7 +185,7 @@ class QueueRebuildTest {
                 answer
             }
         }
-            as JellyfinRepository
+            as MediaRepository
 
     private fun episode(number: Int) =
         FindroidEpisode(

@@ -5,7 +5,7 @@ import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
 
@@ -16,10 +16,7 @@ import javax.inject.Inject
  */
 class ResolvePlayback
 @Inject
-constructor(
-    private val repository: JellyfinRepository,
-    private val appPreferences: AppPreferences,
-) {
+constructor(private val repository: MediaRepository, private val appPreferences: AppPreferences) {
     /**
      * The target of the local player as the settings have it now. Any backend value other than
      * mpv's plays on ExoPlayer, as before.

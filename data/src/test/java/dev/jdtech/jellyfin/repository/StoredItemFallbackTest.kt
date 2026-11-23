@@ -146,10 +146,10 @@ class StoredItemFallbackTest {
         }
             as ServerDatabaseDao
 
-    private val repository: JellyfinRepository by lazy {
+    private val repository: MediaRepository by lazy {
         val context = RuntimeEnvironment.getApplication()
         // Every request to the server fails, as with the server unreachable.
-        JellyfinRepositoryImpl(
+        MediaRepositoryImpl(
             context,
             UnansweredServer(userId),
             database,

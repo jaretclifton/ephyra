@@ -8,7 +8,7 @@ import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -189,10 +189,10 @@ class PlaylistManagerShuffleTest {
     }
 
     private fun fakeRepository(show: Map<FindroidSeason, List<FindroidEpisode>>) =
-        fakeProxy(
-            JellyfinRepository::class.java.classLoader,
-            arrayOf(JellyfinRepository::class.java),
-        ) { _, method, args ->
+        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
+            _,
+            method,
+            args ->
             when (method.kotlinName) {
                 "getSeasons" -> show.keys.toList()
                 "getSeason" -> show.keys.first { it.id == args[0].asItemIdOrNull() }
@@ -213,7 +213,7 @@ class PlaylistManagerShuffleTest {
                 else -> error("Unexpected call to ${method.kotlinName}")
             }
         }
-            as JellyfinRepository
+            as MediaRepository
 
     private fun season(number: Int) =
         FindroidSeason(

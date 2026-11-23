@@ -26,7 +26,7 @@ import dev.jdtech.jellyfin.models.PersonKind
 import dev.jdtech.jellyfin.models.SeasonEpisodeCounts
 import dev.jdtech.jellyfin.models.mergeDuplicateRoles
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.ReloadPolicy
 import dev.jdtech.jellyfin.repository.serverOrStored
 import dev.jdtech.jellyfin.repository.serverOrStoredList
@@ -58,7 +58,7 @@ internal val showEpisodeFields = setOf(EpisodeField.CAN_DOWNLOAD)
 class ShowViewModel
 @Inject
 constructor(
-    private val repository: JellyfinRepository,
+    private val repository: MediaRepository,
     private val appPreferences: AppPreferences,
     private val downloader: Downloader,
     private val downloadQueue: DownloadQueue,

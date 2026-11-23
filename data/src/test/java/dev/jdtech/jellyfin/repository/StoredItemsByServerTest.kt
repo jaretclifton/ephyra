@@ -57,8 +57,8 @@ class StoredItemsByServerTest {
     private val preferences =
         AppPreferences(context.getSharedPreferences("stored-by-server", Context.MODE_PRIVATE))
 
-    private val repository: JellyfinRepository by lazy {
-        JellyfinRepositoryImpl(context, UnansweredServer(userId), database, preferences)
+    private val repository: MediaRepository by lazy {
+        MediaRepositoryImpl(context, UnansweredServer(userId), database, preferences)
     }
 
     @After fun close() = room.close()

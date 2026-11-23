@@ -37,7 +37,7 @@ import dev.jdtech.jellyfin.player.cast.models.CastPlayerState
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.player.core.domain.models.Track
 import dev.jdtech.jellyfin.player.local.domain.PlaylistManager
-import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
@@ -80,7 +80,7 @@ class CastPlayerControllerImpl
 constructor(
     @param:ApplicationContext private val context: Context,
     private val mediaServer: MediaServer,
-    private val repository: JellyfinRepository,
+    private val repository: MediaRepository,
     private val sessionManager: CastSessionManager,
     private val playlistManagers: Provider<PlaylistManager>,
     private val appPreferences: AppPreferences,
