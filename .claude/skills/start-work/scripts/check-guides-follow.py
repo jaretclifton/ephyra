@@ -40,7 +40,8 @@ NOT_COUNTED = [
     re.compile(r"/res/values-[^/]+/"),
 ]
 # The reason may not be the template's placeholder (<…>).
-NO_CHANGE = re.compile(r"^\s*Docs:\s*no change needed\s*[—–:-]+\s*([^\s<].{9,})$", re.I | re.M)
+NO_CHANGE = re.compile(r"^[ \t]*Docs:[ \t]*no change needed[ \t]*[—–:-]+[ \t]*([^\s<][^\n]*)$", re.I | re.M)
+MIN_REASON = 10
 
 
 def areas() -> list[tuple[str, list[str], range]]:
@@ -57,26 +58,37 @@ def areas() -> list[tuple[str, list[str], range]]:
         for line in lines[start:end]:
             if re.match(r"^    \w+:", line):
                 in_paths = line.startswith("    paths:")
+                inline = line.removeprefix("    paths:").strip()
+                if in_paths and inline.startswith("["):
+                    paths += inline.strip("[]").split(",")
             elif in_paths and line.startswith("      - "):
-                paths.append(line.removeprefix("      - ").strip())
+                paths.append(line.removeprefix("      - "))
+        paths = [unquote(item) for item in paths if item.strip()]
         # Line numbers are 1-based, as in a diff.
         result.append((area, paths, range(start + 1, end + 1)))
     return result
 
 
+def unquote(item: str) -> str:
+    item = item.strip()
+    return item[1:-1] if len(item) > 1 and item[0] == item[-1] and item[0] in "'\"" else item
+
+
 def changed_lines(patch: str) -> set[int]:
-    """The lines of the new file a unified diff touches (a deletion counts at its position)."""
+    """The lines of the new file a unified diff touches (a deletion counts on the line before it)."""
     touched: set[int] = set()
     new = 0
     for line in patch.splitlines():
-        hunk = re.match(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@", line)
+        hunk = re.match(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", line)
         if hunk:
-            new = int(hunk.group(1))
+            # With no new lines in the hunk, its start is the line before the deletion.
+            new = int(hunk.group(1)) + (1 if hunk.group(2) == "0" else 0)
         elif line.startswith("+"):
             touched.add(new)
             new += 1
         elif line.startswith("-"):
-            touched.add(new)
+            # The deleted line sat after line new - 1: count it there.
+            touched.add(max(new - 1, 1))
         elif not line.startswith("\\"):
             new += 1
     return touched
@@ -147,9 +159,10 @@ def main() -> int:
     if not owed:
         print("The area guides follow this change.")
         return 0
-    reason = NO_CHANGE.search(body)
+    reasons = [m.group(1).strip() for m in NO_CHANGE.finditer(body)]
+    reason = next((r for r in reasons if len(r) >= MIN_REASON), None)
     if reason:
-        print(f"Guides not changed, with a reason: {reason.group(1).strip()}")
+        print(f"Guides not changed, with a reason: {reason}")
         for area, _ in owed:
             print(f"  docs/areas/{area}.md")
         return 0

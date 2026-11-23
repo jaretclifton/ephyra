@@ -93,6 +93,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          # The head, not the merge commit: the map's line numbers must match the PR's patch.
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Check that the area guides follow the change
         env:
