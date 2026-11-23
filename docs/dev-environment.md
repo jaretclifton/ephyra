@@ -12,13 +12,9 @@ environment", "start the test server", "give me a TV emulator"): the `test-serve
 
 ## What you need
 
-| For | Needs |
-|---|---|
-| Building | JDK 21 and the Android SDK (`ANDROID_HOME` set) |
-| The test server | Docker and `python3`. On Windows: inside WSL, with Docker in WSL or Docker Desktop's WSL integration |
-| The emulators | The SDK's `emulator`, `platform-tools` and `cmdline-tools`, hardware acceleration (KVM, HVF or WHPX), and two system images |
-
-The server needs about 1.5 GB of disk, each system image over 1 GB, each AVD a few GB once used.
+[get-started.md](get-started.md) lists what to install per system and the order of the steps;
+`scripts/doctor.sh` checks a machine against it. The server needs about 1.5 GB of disk, each
+system image over 1 GB, each AVD a few GB once used.
 
 ## The test server
 
@@ -57,7 +53,10 @@ tools/test-server/setup.sh wipe --media  # also regenerate the media
 
 `EPHYRA_TEST_SERVER_DIR`, `EPHYRA_TEST_SERVER_PORT`, `EPHYRA_TEST_SERVER_NAME` and
 `EPHYRA_TEST_SERVER_IMAGE` change the folder, the port, the container name and the image. With a
-different folder, port and name you can run a second server next to the first.
+different folder, port and name you can run a second server next to the first. Pick a port
+nothing else holds: on Windows a process listening on `0.0.0.0:<port>` wins over WSL for IPv4,
+so an emulator (`10.0.2.2` is IPv4) reaches that process while `curl localhost` on the host
+reaches the new server. `netstat -ano | grep :<port>` on Windows, `ss -ltn` on Linux.
 
 ### Users
 

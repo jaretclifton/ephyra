@@ -69,6 +69,8 @@ if [ ! -f "$CREDS" ]; then
   } > "$CREDS"
   umask 022
 fi
+# The addresses follow EPHYRA_TEST_SERVER_PORT, also when it changed since creds.env was written.
+sed -i "s|^JF_URL_HOST=.*|JF_URL_HOST=http://localhost:$PORT|; s|^JF_URL_EMULATOR=.*|JF_URL_EMULATOR=http://10.0.2.2:$PORT|" "$CREDS"
 # shellcheck disable=SC1090
 source "$CREDS"
 
