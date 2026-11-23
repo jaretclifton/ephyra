@@ -521,6 +521,9 @@ class MPVPlayer(
     private var currentDurationMs: Long? = null
     private var currentCacheDurationMs: Long? = null
 
+    /** CE (#869): the position of the item being left until mpv names the next one. */
+    private val itemLeftPosition = MpvItemLeftPosition()
+
     /**
      * CE (#711): the subtitle files of the item being loaded, which are fetched when wanted instead
      * of all at the start. See [MpvSubtitleFiles].
@@ -827,6 +830,7 @@ class MPVPlayer(
                         return@post
                     }
                     val indexChanged = currentMediaItemIndex != value.toInt()
+                    if (indexChanged) itemLeftPosition.clear()
                     currentMediaItemIndex = value.toInt()
                     itemTransitions.currentPositionChanged(timeline, currentMediaItem, indexChanged)
                     listeners.flushEvents()
@@ -1002,6 +1006,7 @@ class MPVPlayer(
      */
     private fun failPlayback(error: PlaybackException, stop: Boolean = true) {
         playerError = error
+        itemLeftPosition.clear()
         errorRecovery.onError(currentMediaItemIndex, error.errorCode)
         loadState.expectEndFile()
         if (stop) {
@@ -1632,6 +1637,7 @@ class MPVPlayer(
      */
     private fun startNewLoad(index: Int?) {
         loadState.newLoad(index)
+        itemLeftPosition.clear()
         handler.removeCallbacks(loadErrorHoldTimeout)
     }
 
@@ -1947,8 +1953,12 @@ class MPVPlayer(
      */
     private fun prepareMediaItem(index: Int, play: Boolean = currentMediaItemIndex != index) {
         internalMediaItems.getOrNull(index)?.let { mediaItem ->
+            // CE (#869): read before the reset forgets it; see MpvItemLeftPosition.
+            val positionLeftMs =
+                itemLeftPosition.positionMs(currentMediaItemIndex) ?: currentPositionMs
             startNewLoad(index)
             resetInternalState()
+            itemLeftPosition.onLoad(index, currentMediaItemIndex, positionLeftMs)
             // CE (#711): the files are fetched when wanted, see MpvSubtitleFiles.
             subtitles.reset(
                 mediaItem.localConfiguration?.subtitleConfigurations.orEmpty().map { subtitle ->
@@ -2177,7 +2187,11 @@ class MPVPlayer(
     override fun getCurrentPosition(): Long {
         // Before mpv's first time-pos, report the pending start position like ExoPlayer does,
         // never TIME_UNSET: the media session and the seek-by-offset methods use it as is.
-        return (currentPositionMs ?: initialSeekTo).coerceAtLeast(0L)
+        // CE (#869): the item still named while mpv moves to the next one keeps its position.
+        return (itemLeftPosition.positionMs(currentMediaItemIndex)
+                ?: currentPositionMs
+                ?: initialSeekTo)
+            .coerceAtLeast(0L)
     }
 
     /**
