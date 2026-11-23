@@ -7,9 +7,9 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.jdtech.jellyfin.repository.DataChangeEvents
+import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.DownloaderImpl
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine

@@ -14,9 +14,9 @@ import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.IOException

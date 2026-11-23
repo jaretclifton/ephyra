@@ -23,9 +23,9 @@ import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.utils.Downloader
 import java.io.File
 import javax.inject.Inject

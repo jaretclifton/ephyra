@@ -7,9 +7,9 @@ import androidx.lifecycle.viewModelScope
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.ServerCapabilities
+import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.repository.MediaRepositoryImpl
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.testing.ContractLibrary
 import dev.jdtech.jellyfin.testing.FakeLibrary
 import dev.jdtech.jellyfin.testing.FakeMediaServer

@@ -16,9 +16,9 @@ import dev.jdtech.jellyfin.models.Playable
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.repository.DataChangeEvents
+import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.NetworkConnectivity
 import dev.jdtech.jellyfin.utils.download.DownloadStatus

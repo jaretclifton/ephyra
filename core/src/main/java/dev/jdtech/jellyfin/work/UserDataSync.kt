@@ -8,8 +8,8 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import dev.jdtech.jellyfin.core.reachability.ServerReachability
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.ServerSession
+import dev.jdtech.jellyfin.repository.PendingUserDataStore
 import dev.jdtech.jellyfin.repository.UserDataSyncRequester
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -46,7 +46,7 @@ class UserDataSync
 @Inject
 constructor(
     private val workManager: Provider<WorkManager>,
-    private val database: ServerDatabaseDao,
+    private val store: PendingUserDataStore,
     private val serverSession: ServerSession,
     private val serverReachability: ServerReachability,
 ) : UserDataSyncRequester {
@@ -77,7 +77,7 @@ constructor(
     private suspend fun restartIfWaiting(reason: String) {
         try {
             // First, and without WorkManager: most of the time nothing is waiting.
-            if (!database.hasUserDataToBeSynced()) {
+            if (!store.hasUserDataToBeSynced()) {
                 refreshIfDue(reason)
                 return
             }
@@ -109,7 +109,7 @@ constructor(
     private suspend fun refreshIfDue(reason: String) {
         val now = System.currentTimeMillis()
         if (!refreshDue(lastRefreshRequestAt, now, REFRESH_INTERVAL_MILLIS)) return
-        if (!database.hasSyncedUserData()) return
+        if (!store.hasSyncedUserData()) return
         lastRefreshRequestAt = now
         Timber.d("User data sync: %s, refreshing downloads", reason)
         enqueue(ExistingWorkPolicy.KEEP, RESTART_DELAY_SECONDS)

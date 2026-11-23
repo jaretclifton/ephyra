@@ -25,12 +25,12 @@ import dev.jdtech.jellyfin.models.SeasonEpisodeCounts
 import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.mergeDuplicateRoles
 import dev.jdtech.jellyfin.repository.DataChangeEvents
+import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.ReloadPolicy
 import dev.jdtech.jellyfin.repository.serverOrStored
 import dev.jdtech.jellyfin.repository.serverOrStoredList
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.utils.Downloader
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
