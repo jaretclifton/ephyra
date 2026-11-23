@@ -300,6 +300,10 @@ def check_areas(rel: str, text: str) -> list[str]:
         for needed in AREA_REQUIRED:
             if needed not in fields:
                 problems.append(f"area {area}: no `{needed}`")
+        for field in ("keywords", "paths", "docs", "rules", "tests"):
+            value = re.search(rf"^    {field}:[ \t]*(\S.*)?$", entry, re.M)
+            if value and value.group(1) and not value.group(1).startswith("["):
+                problems.append(f"area {area}: `{field}` must be a list, not `{value.group(1)}`")
         paths = area_list(entry, "paths")
         for needed in ("keywords", "paths"):
             if needed in fields and not area_list(entry, needed):
