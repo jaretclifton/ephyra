@@ -202,6 +202,50 @@ class CastPlaylistOrderTest {
     }
 
     @Test
+    fun `a load whose queue the receiver has not sent yet still gets its neighbours`() {
+        // #922: right after a load the status names queue item 1 and carries its media, but lists
+        // no queue items. The neighbours go around that one item.
+        val queue = receiverQueue(emptyList(), 1, loadedItemId = episode2.itemId)
+
+        assertEquals(listOf(ReceiverQueueItem(1, episode2.itemId)), queue)
+        assertEquals(
+            QueueInsert.AtEnd,
+            queueInsertPosition(queue, 1, episode2.itemId, episode3.itemId, before = false),
+        )
+        assertEquals(
+            QueueInsert.Before(1),
+            queueInsertPosition(queue, 1, episode2.itemId, episode1.itemId, before = true),
+        )
+    }
+
+    @Test
+    fun `the queue the receiver sent is taken as it is`() {
+        val items = listOf(ReceiverQueueItem(1, episode1.itemId), ReceiverQueueItem(2, null))
+
+        assertEquals(items, receiverQueue(items, 2, loadedItemId = episode2.itemId))
+        // Without a current queue item or media there is nothing to stand in for the queue.
+        assertEquals(
+            emptyList<ReceiverQueueItem>(),
+            receiverQueue(emptyList(), NO_QUEUE_ITEM, episode1.itemId),
+        )
+        assertEquals(
+            emptyList<ReceiverQueueItem>(),
+            receiverQueue(emptyList(), 1, loadedItemId = null),
+        )
+    }
+
+    @Test
+    fun `a load of another item does not get the neighbours of this one`() {
+        // The receiver already loaded something else when the neighbours of episode 2 came back.
+        val queue = receiverQueue(emptyList(), 1, loadedItemId = movie.itemId)
+
+        assertEquals(
+            QueueInsert.Skip,
+            queueInsertPosition(queue, 1, episode2.itemId, episode3.itemId, before = false),
+        )
+    }
+
+    @Test
     fun `nothing is queued when the receiver's current item is not known`() {
         // No queue yet, a current id that is not in the queue, or an item of another sender.
         assertEquals(

@@ -70,6 +70,25 @@ internal sealed interface QueueInsert {
 }
 
 /**
+ * The id the Cast SDK gives a queue item that does not exist (`MediaQueueItem.INVALID_ITEM_ID`).
+ */
+internal const val NO_QUEUE_ITEM = 0
+
+/**
+ * The receiver's queue as its status tells it. Right after a load the status names the queue item
+ * the receiver plays and carries its media, while its list of queue items can still be empty: the
+ * receiver had not sent it, and does not until the queue changes (#922). The queue is then that one
+ * item, [loadedItemId] the item its media is for.
+ */
+internal fun receiverQueue(
+    items: List<ReceiverQueueItem>,
+    currentQueueItemId: Int,
+    loadedItemId: ItemId?,
+): List<ReceiverQueueItem> =
+    if (items.isNotEmpty() || loadedItemId == null || currentQueueItemId == NO_QUEUE_ITEM) items
+    else listOf(ReceiverQueueItem(currentQueueItemId, loadedItemId))
+
+/**
  * Where [itemId] goes in the receiver's [queue] to sit right [before] or after [current], the item
  * the neighbours were looked up for. [currentQueueItemId] is the queue item the receiver plays. If
  * that is no longer [current], the user started something else or the receiver moved on, and the
