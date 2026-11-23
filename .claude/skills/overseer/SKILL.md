@@ -55,7 +55,9 @@ instructions or memory; this skill holds the project's rules only.
 Merge a pull request when all of these hold:
 
 1. The review bots have reviewed it (`CLAUDE.md` says which and how). A review that is still
-   running counts as not reviewed.
+   running counts as not reviewed. When no bot reviewed it (out of budget, `skipping`), follow
+   `CLAUDE.md`: a change of a few lines is read by whoever merges it, with a comment on the PR
+   saying so; anything larger gets an independent review on the PR first.
 2. Every inline comment has an answer in its thread. Count the unanswered ones as a step of its
    own, right before the merge, not in the same command: a comment can arrive late.
 3. The checks are green. A test that fails now and then (it has an issue) may be rerun once.
@@ -74,9 +76,12 @@ Merge with a merge commit (`CLAUDE.md`).
   `refactor/` branch, a merge commit with `[skip beta]`, and a change only to the docs paths. Use
   `[skip beta]` for tests, CI, and docs that touch files outside those paths (a workflow,
   `.github/`).
-- Follow the owner's beta policy (for example one beta at the end of a series of fixes). To hold
-  back a beta, cancel the Beta run of that merge commit (`gh run cancel <run>`) and check with
-  `gh run view <run>` that it really stopped.
+- Follow the owner's beta policy (for example one beta at the end of a series of fixes). The
+  Beta workflow keeps one waiting run: a new publishing merge replaces the beta that was waiting,
+  and cancelling the new run does not bring the old one back. So hold back a beta at the merge,
+  with `[skip beta]` in the merge commit (it runs in a group of its own), when the owner's policy
+  allows that for the change. If a run must still be stopped, cancel it (`gh run cancel <run>`),
+  check with `gh run view <run>` that it really stopped, and check what is left waiting.
 
 ## Devices
 
