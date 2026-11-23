@@ -32,13 +32,3 @@ data/src/main/java/dev/jdtech/jellyfin/models/MediaStreamEntity.kt
 data/src/main/java/dev/jdtech/jellyfin/database/Converters.kt
 data/src/main/java/dev/jdtech/jellyfin/database/ServerDatabaseDao.kt
 
-# Random names that are not ids of anything stored: the media session, mpv's subtitle files.
-player/local/src/main/java/dev/jdtech/jellyfin/player/local/engine/mpv/MPVPlayer.kt
-player/local/src/main/java/dev/jdtech/jellyfin/player/local/presentation/PlayerViewModel.kt
-
-# Random ids for previews: the dummies' item and user ids, in a Jellyfin id's form.
-core/src/main/java/dev/jdtech/jellyfin/core/presentation/dummy/DummyIds.kt
-
-# The test fakes' random tokens and secrets (the testing module is test-only, rule R8).
-testing/src/main/kotlin/dev/jdtech/jellyfin/testing/FakeMediaServer.kt
-testing/src/main/kotlin/dev/jdtech/jellyfin/testing/FakeServerConnector.kt
