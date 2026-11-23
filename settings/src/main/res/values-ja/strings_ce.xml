@@ -209,4 +209,10 @@
     <string name="ce_pref_hide_spoilers_summary">未視聴のエピソードの画像をぼかし、タイトルとあらすじを隠します。長押しすると表示されます</string>
     <string name="ce_pref_side_backdrop">背景画像をテキストの横に表示</string>
     <string name="ce_pref_side_backdrop_summary">横向きのタブレットで、アイテムの背景画像を全幅ではなく元の形のままタイトルの横に表示します</string>
+    <string name="ce_pref_player_quality_group">ストリーミング画質</string>
+    <string name="ce_pref_player_quality_wifi">Wi-Fi 接続時</string>
+    <string name="ce_pref_player_quality_wifi_summary">イーサネットも含みます。プレーヤーで選んだ画質は、そのとき接続しているネットワーク用に保存されます</string>
+    <string name="ce_pref_player_quality_mobile">モバイルデータ通信時</string>
+    <string name="ce_pref_player_quality_mobile_summary">テザリングや、従量制に設定した Wi-Fi ネットワークも含みます</string>
+    <string name="ce_pref_player_quality_original">オリジナル画質</string>
 </resources>

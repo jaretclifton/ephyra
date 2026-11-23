@@ -209,4 +209,10 @@
     <string name="ce_pref_hide_spoilers_summary">模糊未观看剧集的图片，并隐藏其标题和简介。长按某一集即可显示</string>
     <string name="ce_pref_side_backdrop">背景图显示在文字旁</string>
     <string name="ce_pref_side_backdrop_summary">在横屏平板上，将项目的背景图以原始比例显示在标题旁边，而不是铺满整个宽度</string>
+    <string name="ce_pref_player_quality_group">流媒体画质</string>
+    <string name="ce_pref_player_quality_wifi">使用 WLAN 时</string>
+    <string name="ce_pref_player_quality_wifi_summary">也包括以太网。在播放器中选择的画质会保存给当前所在的网络</string>
+    <string name="ce_pref_player_quality_mobile">使用移动数据时</string>
+    <string name="ce_pref_player_quality_mobile_summary">也包括热点，或标记为按流量计费的 WLAN 网络</string>
+    <string name="ce_pref_player_quality_original">原始画质</string>
 </resources>

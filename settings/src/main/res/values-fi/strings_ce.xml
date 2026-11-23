@@ -211,4 +211,10 @@
     <string name="ce_pref_hide_spoilers_summary">Sumentaa kuvan ja piilottaa katsomattomien jaksojen nimen ja kuvauksen. Näytä jakso painamalla sitä pitkään</string>
     <string name="ce_pref_side_backdrop">Taustakuva tekstin vieressä</string>
     <string name="ce_pref_side_backdrop_summary">Näytä tabletilla vaakatilassa kohteen taustakuva sen omassa muodossa otsikon vieressä koko leveyden sijaan</string>
+    <string name="ce_pref_player_quality_group">Suoratoiston laatu</string>
+    <string name="ce_pref_player_quality_wifi">Wi-Fi-yhteydellä</string>
+    <string name="ce_pref_player_quality_wifi_summary">Myös Ethernet. Soittimessa valittu laatu tallennetaan verkolle, jossa olet</string>
+    <string name="ce_pref_player_quality_mobile">Mobiilidatalla</string>
+    <string name="ce_pref_player_quality_mobile_summary">Myös hotspot tai käyttöpohjaiseksi merkitty Wi-Fi-verkko</string>
+    <string name="ce_pref_player_quality_original">Alkuperäinen laatu</string>
 </resources>

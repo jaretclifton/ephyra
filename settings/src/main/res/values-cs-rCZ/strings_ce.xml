@@ -215,4 +215,10 @@
     <string name="ce_pref_hide_spoilers_summary">Rozmaže obrázek a skryje název a popis epizod, které jste neviděli. Podržením epizodu odkryjete</string>
     <string name="ce_pref_side_backdrop">Pozadí vedle textu</string>
     <string name="ce_pref_side_backdrop_summary">Na tabletu na šířku zobrazit pozadí položky v jeho vlastním tvaru vedle názvu místo přes celou šířku</string>
+    <string name="ce_pref_player_quality_group">Kvalita streamování</string>
+    <string name="ce_pref_player_quality_wifi">Na Wi-Fi</string>
+    <string name="ce_pref_player_quality_wifi_summary">Také Ethernet. Kvalita vybraná v přehrávači se uloží pro síť, ve které jste</string>
+    <string name="ce_pref_player_quality_mobile">Na mobilních datech</string>
+    <string name="ce_pref_player_quality_mobile_summary">Také hotspot nebo síť Wi-Fi označená jako měřená</string>
+    <string name="ce_pref_player_quality_original">Původní kvalita</string>
 </resources>

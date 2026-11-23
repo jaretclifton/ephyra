@@ -22,6 +22,11 @@ data class PlayerItem(
     /** CE (#728): the server's play session of a transcode, which the playback reports name. */
     val playSessionId: String? = null,
     /**
+     * CE (#837): the cap this server stream was asked for with, in bits per second (0 = original):
+     * the one of the network in use then. Null for a download, which no cap changes.
+     */
+    val streamCap: Int? = null,
+    /**
      * CE (#596): the file's audio streams when the server transcodes, and the one this stream was
      * requested with ([ServerAudioTrack.index]). Empty for a stream that plays directly: the player
      * lists and selects its tracks itself.

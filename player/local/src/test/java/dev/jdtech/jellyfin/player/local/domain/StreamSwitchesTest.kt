@@ -29,6 +29,8 @@ class StreamSwitchesTest {
 
     /** The quality setting, as the host stores it. */
     private var setting = 0
+    /** The quality the player shows as playing. */
+    private var shown = 0
     private val settingChanges = mutableListOf<Int>()
     private val swaps = mutableListOf<List<PlayerItem>>()
     private val errors = mutableListOf<Exception>()
@@ -62,17 +64,21 @@ class StreamSwitchesTest {
 
                 override suspend fun recreate(
                     item: PlayerItem,
+                    bitrate: Int,
                     playingAudio: StoredChoice?,
                     pickedAudio: Int?,
                 ): PlayerItem {
-                    val request = Request(item, setting, playingAudio, pickedAudio)
+                    val request = Request(item, bitrate, playingAudio, pickedAudio)
                     requests += request
                     return request.response.await()
                 }
 
-                override fun setBitrate(bitrate: Int) {
-                    setting = bitrate
-                    settingChanges += bitrate
+                override fun setBitrate(bitrate: Int, store: Boolean) {
+                    shown = bitrate
+                    if (store) {
+                        setting = bitrate
+                        settingChanges += bitrate
+                    }
                 }
 
                 override fun swapIn(rebuilt: List<PlayerItem>) {
@@ -125,7 +131,7 @@ class StreamSwitchesTest {
     @Test
     fun `a second quality switch wins when the first one's streams come in last`() {
         switches.selectBitrate(360)
-        // The cap is read with each request: e1 and e2 come in, e3 is asked for under 360.
+        // e1 and e2 come in, e3 is asked for under 360.
         answer(360)
         answer(360)
         switches.selectBitrate(720)
@@ -226,5 +232,48 @@ class StreamSwitchesTest {
         switches.selectBitrate(720)
 
         assertEquals(listOf(e1), forgotten, "items forgotten")
+    }
+
+    @Test
+    fun `following the network asks for the queue under its cap and stores nothing`() {
+        // CE (#837): the setting of the network in use is 720; the player moved on to an item
+        // asked for under 0.
+        switches.followBitrate(720)
+        answerAll(720)
+
+        assertEquals(List(3) { "bitrate=720&audio=null" }, lastSwap(), "the streams that play")
+        assertEquals(720, shown, "the quality shown")
+        assertEquals(emptyList(), settingChanges, "the quality setting's changes")
+    }
+
+    @Test
+    fun `a failed follow stores nothing`() {
+        switches.followBitrate(720)
+        fail(720)
+
+        assertEquals(1, errors.size, "errors shown")
+        assertEquals(0, shown, "the quality shown")
+        assertEquals(emptyList(), settingChanges, "the quality setting's changes")
+    }
+
+    @Test
+    fun `a pick after a follow is stored and wins`() {
+        switches.followBitrate(720)
+        switches.selectBitrate(360)
+        answerAll(720)
+        answerAll(360)
+
+        assertEquals(1, swaps.size, "queues swapped in")
+        assertEquals(List(3) { "bitrate=360&audio=null" }, lastSwap(), "the streams that play")
+        assertEquals(listOf(360), settingChanges, "the quality setting's changes")
+    }
+
+    @Test
+    fun `following again while that follow is on its way asks once`() {
+        switches.followBitrate(720)
+        switches.followBitrate(720)
+        answerAll(720)
+
+        assertEquals(3, requests.size, "stream requests")
     }
 }

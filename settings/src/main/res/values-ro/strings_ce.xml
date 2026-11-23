@@ -213,4 +213,10 @@
     <string name="ce_pref_hide_spoilers_summary">Estompează imaginea și ascunde titlul și descrierea episoadelor pe care nu le-ai văzut. Ține apăsat pe unul pentru a-l afișa</string>
     <string name="ce_pref_side_backdrop">Fundal lângă text</string>
     <string name="ce_pref_side_backdrop_summary">Pe o tabletă în modul peisaj, afișează fundalul unui element în forma sa proprie lângă titlu în loc de pe toată lățimea</string>
+    <string name="ce_pref_player_quality_group">Calitatea streamingului</string>
+    <string name="ce_pref_player_quality_wifi">Pe Wi-Fi</string>
+    <string name="ce_pref_player_quality_wifi_summary">Și Ethernet. Calitatea aleasă în player se salvează pentru rețeaua pe care ești</string>
+    <string name="ce_pref_player_quality_mobile">Pe date mobile</string>
+    <string name="ce_pref_player_quality_mobile_summary">Și un hotspot sau o rețea Wi-Fi marcată ca contorizată</string>
+    <string name="ce_pref_player_quality_original">Calitate originală</string>
 </resources>

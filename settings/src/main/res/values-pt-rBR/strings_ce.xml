@@ -211,4 +211,10 @@
     <string name="ce_pref_hide_spoilers_summary">Desfoca a imagem e oculta o título e a sinopse dos episódios que você não assistiu. Toque e segure um episódio para mostrá-lo</string>
     <string name="ce_pref_side_backdrop">Fundo ao lado do texto</string>
     <string name="ce_pref_side_backdrop_summary">Em um tablet na horizontal, mostrar o fundo de um item no próprio formato ao lado do título em vez de em toda a largura</string>
+    <string name="ce_pref_player_quality_group">Qualidade de streaming</string>
+    <string name="ce_pref_player_quality_wifi">No Wi-Fi</string>
+    <string name="ce_pref_player_quality_wifi_summary">Também Ethernet. A qualidade escolhida no player é salva para a rede em que você está</string>
+    <string name="ce_pref_player_quality_mobile">Nos dados móveis</string>
+    <string name="ce_pref_player_quality_mobile_summary">Também um ponto de acesso ou uma rede Wi-Fi marcada como limitada</string>
+    <string name="ce_pref_player_quality_original">Qualidade original</string>
 </resources>

@@ -211,4 +211,10 @@
     <string name="ce_pref_hide_spoilers_summary">Sfoca l\'immagine e nasconde il titolo e la trama degli episodi che non hai visto. Tieni premuto un episodio per mostrarlo</string>
     <string name="ce_pref_side_backdrop">Sfondo accanto al testo</string>
     <string name="ce_pref_side_backdrop_summary">Su un tablet in orizzontale, mostra lo sfondo di un elemento nella sua forma accanto al titolo invece che a tutta larghezza</string>
+    <string name="ce_pref_player_quality_group">Qualità dello streaming</string>
+    <string name="ce_pref_player_quality_wifi">Su Wi-Fi</string>
+    <string name="ce_pref_player_quality_wifi_summary">Anche Ethernet. La qualità scelta nel lettore viene salvata per la rete su cui sei</string>
+    <string name="ce_pref_player_quality_mobile">Su dati mobili</string>
+    <string name="ce_pref_player_quality_mobile_summary">Anche un hotspot o una rete Wi-Fi impostata come a consumo</string>
+    <string name="ce_pref_player_quality_original">Qualità originale</string>
 </resources>

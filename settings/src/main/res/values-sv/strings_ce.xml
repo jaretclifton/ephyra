@@ -211,4 +211,10 @@
     <string name="ce_pref_hide_spoilers_summary">Gör bilden suddig och dölj titel och beskrivning för avsnitt du inte har sett. Tryck länge på ett för att visa det</string>
     <string name="ce_pref_side_backdrop">Bakgrund bredvid texten</string>
     <string name="ce_pref_side_backdrop_summary">På en surfplatta i liggande läge visas ett objekts bakgrund i sin egen form bredvid titeln i stället för över hela bredden</string>
+    <string name="ce_pref_player_quality_group">Streamingkvalitet</string>
+    <string name="ce_pref_player_quality_wifi">På wifi</string>
+    <string name="ce_pref_player_quality_wifi_summary">Även Ethernet. En kvalitet du väljer i spelaren sparas för nätverket du är på</string>
+    <string name="ce_pref_player_quality_mobile">På mobildata</string>
+    <string name="ce_pref_player_quality_mobile_summary">Även en surfzon eller ett wifi-nätverk som är markerat som med datapriser</string>
+    <string name="ce_pref_player_quality_original">Originalkvalitet</string>
 </resources>

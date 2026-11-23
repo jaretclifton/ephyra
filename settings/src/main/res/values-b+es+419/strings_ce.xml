@@ -211,4 +211,10 @@
     <string name="ce_pref_hide_spoilers_summary">Difumina la imagen y oculta el título y la sinopsis de los episodios que no has visto. Mantén presionado uno para mostrarlo</string>
     <string name="ce_pref_side_backdrop">Fondo junto al texto</string>
     <string name="ce_pref_side_backdrop_summary">En una tableta en horizontal, muestra el fondo de un elemento con su propia forma junto al título en lugar de a todo el ancho</string>
+    <string name="ce_pref_player_quality_group">Calidad de transmisión</string>
+    <string name="ce_pref_player_quality_wifi">Con Wi-Fi</string>
+    <string name="ce_pref_player_quality_wifi_summary">También Ethernet. La calidad que elijas en el reproductor se guarda para la red en la que estás</string>
+    <string name="ce_pref_player_quality_mobile">Con datos móviles</string>
+    <string name="ce_pref_player_quality_mobile_summary">También un hotspot o una red Wi-Fi marcada como de uso medido</string>
+    <string name="ce_pref_player_quality_original">Calidad original</string>
 </resources>

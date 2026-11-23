@@ -1,5 +1,6 @@
 package dev.jdtech.jellyfin.presentation.utils
 
+import dev.jdtech.jellyfin.settings.domain.VideoQualities
 import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
 

@@ -219,4 +219,10 @@
     <string name="ce_pref_hide_spoilers_summary">تمويه الصورة وإخفاء عنوان ونبذة الحلقات التي لم تشاهدها. اضغط مطولًا على إحداها لإظهارها</string>
     <string name="ce_pref_side_backdrop">الخلفية بجانب النص</string>
     <string name="ce_pref_side_backdrop_summary">على الجهاز اللوحي في الوضع الأفقي، اعرض خلفية العنصر بشكلها الأصلي بجانب العنوان بدلاً من امتدادها على كامل العرض</string>
+    <string name="ce_pref_player_quality_group">جودة البث</string>
+    <string name="ce_pref_player_quality_wifi">على Wi-Fi</string>
+    <string name="ce_pref_player_quality_wifi_summary">وEthernet أيضًا. الجودة التي تختارها في المشغّل تُحفظ للشبكة التي تستخدمها</string>
+    <string name="ce_pref_player_quality_mobile">على بيانات الجوّال</string>
+    <string name="ce_pref_player_quality_mobile_summary">ونقطة اتصال أيضًا، أو شبكة Wi-Fi محددة كمحدودة الاستخدام</string>
+    <string name="ce_pref_player_quality_original">الجودة الأصلية</string>
 </resources>

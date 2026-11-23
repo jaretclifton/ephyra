@@ -10,6 +10,9 @@ import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.downloadState
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.settings.domain.QualityNetwork
+import dev.jdtech.jellyfin.settings.presentation.enums.AppVariant
+import dev.jdtech.jellyfin.utils.NetworkConnectivity
 import javax.inject.Inject
 
 /**
@@ -19,7 +22,12 @@ import javax.inject.Inject
  */
 class ResolvePlayback
 @Inject
-constructor(private val repository: MediaRepository, private val appPreferences: AppPreferences) {
+constructor(
+    private val repository: MediaRepository,
+    private val appPreferences: AppPreferences,
+    private val connectivity: NetworkConnectivity,
+    private val appVariant: AppVariant,
+) {
     /**
      * The target of the local player as the settings have it now. Any backend value other than
      * mpv's plays on ExoPlayer, as before.
@@ -34,10 +42,28 @@ constructor(private val repository: MediaRepository, private val appPreferences:
         )
 
     /**
-     * The user-selected cap (player quality selector) in bits per second, or null. 0 = original.
+     * CE (#837): the network whose quality applies now. Mobile data is a metered network on the
+     * phone app; a TV has no mobile data, so it keeps the one value it always had.
      */
-    fun maxBitrate(): Int? =
-        appPreferences.getValue(appPreferences.playerMaxBitrate).takeIf { it > 0 }
+    fun qualityNetwork(): QualityNetwork =
+        if (appVariant == AppVariant.PHONE) QualityNetwork.of(connectivity.isMetered())
+        else QualityNetwork.WIFI
+
+    /**
+     * The user-selected cap (player quality selector, or the settings) for the network in use now,
+     * in bits per second. 0 = original.
+     */
+    fun maxBitrateSetting(): Int =
+        appPreferences.getValue(appPreferences.maxBitrate(qualityNetwork()))
+
+    /**
+     * CE (#837): stores [bitrate] as the cap for [network], as the player's quality picker does.
+     */
+    fun storeMaxBitrate(network: QualityNetwork, bitrate: Int) =
+        appPreferences.setValue(appPreferences.maxBitrate(network), bitrate)
+
+    /** [maxBitrateSetting] as the request has it: null for no cap. */
+    fun maxBitrate(): Int? = maxBitrateSetting().takeIf { it > 0 }
 
     /**
      * CE (#834): the audio language the user prefers, as the settings store it ("nld"), or null. A
@@ -47,24 +73,23 @@ constructor(private val repository: MediaRepository, private val appPreferences:
         appPreferences.getValue(appPreferences.preferredAudioLanguage)
 
     /**
-     * The sources to play [itemId] on the local player, with the target and cap the settings have
-     * when this is called (a quality switch writes its cap first).
+     * The sources to play [itemId] on the local player, with the target the settings have and the
+     * cap [maxBitrate] (0 = original), by default the setting for the network in use when this is
+     * called (a quality switch writes its cap first).
      */
     suspend fun sources(
         itemId: ItemId,
         mediaSourceId: MediaSourceId? = null,
         audioStreamIndex: Int? = null,
-    ): List<ItemSource> {
-        // The cap first, then the target: the order the repository read them in before #766.
-        val maxBitrate = maxBitrate()
-        return repository.getPlaybackSources(
+        maxBitrate: Int = maxBitrateSetting(),
+    ): List<ItemSource> =
+        repository.getPlaybackSources(
             itemId = itemId,
             target = localTarget(),
             mediaSourceId = mediaSourceId,
             audioStreamIndex = audioStreamIndex,
-            maxBitrate = maxBitrate,
+            maxBitrate = maxBitrate.takeIf { it > 0 },
         )
-    }
 
     /**
      * The source that plays: a finished download first, else the first remote one. Null when there

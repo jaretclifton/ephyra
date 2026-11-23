@@ -117,6 +117,8 @@ internal constructor(
         fetchedInFull.clear()
         // Playback sources fetched while the item itself was still loading.
         var prefetchedSources: List<ItemSource>? = null
+        // CE (#837): the cap of the network in use now, read once for the sources and the item.
+        val maxBitrate = resolvePlayback.maxBitrateSetting()
 
         val initialItem =
             when (itemKind) {
@@ -124,7 +126,13 @@ internal constructor(
                     val (movie, sources) =
                         coroutineScope {
                             val movie = async { repository.getMovie(itemId) }
-                            val sources = async { resolvePlayback.sources(itemId, mediaSourceId) }
+                            val sources = async {
+                                resolvePlayback.sources(
+                                    itemId,
+                                    mediaSourceId,
+                                    maxBitrate = maxBitrate,
+                                )
+                            }
                             movie.await() to sources.await()
                         }
                     prefetchedSources = sources
@@ -167,7 +175,11 @@ internal constructor(
                                 coroutineScope {
                                     val episode = async { fullEpisode(nextUpEpisode) }
                                     val sources = async {
-                                        resolvePlayback.sources(nextUpEpisode.id, mediaSourceId)
+                                        resolvePlayback.sources(
+                                            nextUpEpisode.id,
+                                            mediaSourceId,
+                                            maxBitrate = maxBitrate,
+                                        )
                                     }
                                     episode.await() to sources.await()
                                 }
@@ -211,7 +223,13 @@ internal constructor(
                     val (episode, sources) =
                         coroutineScope {
                             val episode = async { repository.getEpisode(itemId) }
-                            val sources = async { resolvePlayback.sources(itemId, mediaSourceId) }
+                            val sources = async {
+                                resolvePlayback.sources(
+                                    itemId,
+                                    mediaSourceId,
+                                    maxBitrate = maxBitrate,
+                                )
+                            }
                             episode.await() to sources.await()
                         }
                     prefetchedSources = sources
@@ -236,7 +254,12 @@ internal constructor(
             if (shuffle || startFromBeginning) 0L
             else Ticks.toMilliseconds(initialItem.playbackPositionTicks)
         val playerItem =
-            initialItem.toPlayerItem(mediaSourceId, playbackPosition, prefetchedSources)
+            initialItem.toPlayerItem(
+                mediaSourceId,
+                playbackPosition,
+                prefetchedSources,
+                maxBitrate = maxBitrate,
+            )
         playerItems.add(playerItem)
 
         return playerItem
@@ -441,6 +464,7 @@ internal constructor(
         playerItem: PlayerItem,
         selectedAudio: StoredChoice? = null,
         audioStreamIndex: Int? = null,
+        maxBitrate: Int = resolvePlayback.maxBitrateSetting(),
     ): PlayerItem {
         val item = items.firstOrNull { it.id == playerItem.itemId } ?: return playerItem
         val recreated =
@@ -450,6 +474,7 @@ internal constructor(
                     playerItem.playbackPosition,
                     selectedAudio = selectedAudio,
                     audioStreamIndex = audioStreamIndex,
+                    maxBitrate = maxBitrate,
                 )
         playerItems.removeAll { it.itemId == playerItem.itemId }
         playerItems.add(recreated)
@@ -475,6 +500,8 @@ internal constructor(
         prefetchedSources: List<ItemSource>? = null,
         selectedAudio: StoredChoice? = null,
         audioStreamIndex: Int? = null,
+        // CE (#837): the cap the sources are asked for with, the one of the network in use now.
+        maxBitrate: Int = resolvePlayback.maxBitrateSetting(),
     ): PlayerItem {
         Timber.d("Converting Item ${this.id} to PlayerItem")
 
@@ -483,7 +510,8 @@ internal constructor(
         // carries no message, so the player shows its own error instead of a raw one.
         val picked =
             resolvePlayback.pick(
-                prefetchedSources ?: resolvePlayback.sources(id, mediaSourceId),
+                prefetchedSources
+                    ?: resolvePlayback.sources(id, mediaSourceId, maxBitrate = maxBitrate),
                 mediaSourceId,
             )
         val local = picked?.takeIf { it.type == ItemSourceType.LOCAL }
@@ -491,7 +519,7 @@ internal constructor(
             if (local != null) {
                 null
             } else {
-                picked?.let { withChosenAudio(it, selectedAudio, audioStreamIndex) }
+                picked?.let { withChosenAudio(it, selectedAudio, audioStreamIndex, maxBitrate) }
             }
         val mediaSource = local ?: remote?.source ?: throw NoSuchElementException()
         val externalSubtitles =
@@ -530,6 +558,7 @@ internal constructor(
             mediaSourceUri = mediaSource.path,
             isTranscoded = mediaSource.transcoded,
             playSessionId = mediaSource.playSessionId,
+            streamCap = if (local != null) null else maxBitrate,
             audioTracks =
                 if (remote != null && mediaSource.transcoded) {
                     serverAudioTracks(mediaSource.mediaStreams)
@@ -568,6 +597,7 @@ internal constructor(
         source: ItemSource,
         selectedAudio: StoredChoice?,
         pickedIndex: Int?,
+        maxBitrate: Int,
     ): RemoteSource {
         if (!source.transcoded) return RemoteSource(source, null)
         val default = RemoteSource(source, source.defaultAudioStreamIndex)
@@ -584,7 +614,7 @@ internal constructor(
         if (index == source.defaultAudioStreamIndex) return default
         return try {
             resolvePlayback
-                .sources(id, source.id, audioStreamIndex = index)
+                .sources(id, source.id, audioStreamIndex = index, maxBitrate = maxBitrate)
                 .firstOrNull { it.id == source.id && it.type != ItemSourceType.LOCAL }
                 ?.let { RemoteSource(it, index) } ?: default
         } catch (e: CancellationException) {

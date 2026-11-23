@@ -27,6 +27,7 @@ import dev.jdtech.jellyfin.settings.presentation.models.PreferenceDynamicSelect
 import dev.jdtech.jellyfin.settings.presentation.models.PreferenceFileEdit
 import dev.jdtech.jellyfin.settings.presentation.models.PreferenceGroup
 import dev.jdtech.jellyfin.settings.presentation.models.PreferenceIntInput
+import dev.jdtech.jellyfin.settings.presentation.models.PreferenceIntSelect
 import dev.jdtech.jellyfin.settings.presentation.models.PreferenceLongInput
 import dev.jdtech.jellyfin.settings.presentation.models.PreferenceMultiSelect
 import dev.jdtech.jellyfin.settings.presentation.models.PreferencePermission
@@ -89,6 +90,14 @@ fun SettingsGroupCard(
                             onUpdate = { value ->
                                 onAction(SettingsAction.OnUpdate(preference.copy(value = value)))
                                 preference.onUpdate(value)
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    is PreferenceIntSelect ->
+                        SettingsIntSelectCard(
+                            preference = preference,
+                            onUpdate = { value ->
+                                onAction(SettingsAction.OnUpdate(preference.copy(value = value)))
                             },
                             modifier = Modifier.fillMaxWidth(),
                         )

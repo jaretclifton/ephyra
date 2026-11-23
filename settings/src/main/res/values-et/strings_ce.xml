@@ -211,4 +211,10 @@
     <string name="ce_pref_hide_spoilers_summary">Hägustab pildi ning peidab vaatamata episoodide pealkirja ja kirjelduse. Näitamiseks vajuta ja hoia</string>
     <string name="ce_pref_side_backdrop">Taust teksti kõrval</string>
     <string name="ce_pref_side_backdrop_summary">Näita tahvelarvutil rõhtpaigutuses üksuse tausta selle enda kujul pealkirja kõrval, mitte kogu laiuses</string>
+    <string name="ce_pref_player_quality_group">Voogedastuse kvaliteet</string>
+    <string name="ce_pref_player_quality_wifi">WiFi-võrgus</string>
+    <string name="ce_pref_player_quality_wifi_summary">Ka Ethernet. Pleieris valitud kvaliteet salvestatakse võrgu jaoks, milles parajasti oled</string>
+    <string name="ce_pref_player_quality_mobile">Mobiilse andmesidega</string>
+    <string name="ce_pref_player_quality_mobile_summary">Ka kuumkoht või mahupõhiseks märgitud WiFi-võrk</string>
+    <string name="ce_pref_player_quality_original">Originaalkvaliteet</string>
 </resources>
