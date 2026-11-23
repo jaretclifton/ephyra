@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * R15 (#899). The server in use, its type, address and token and the user, is one value
+ * R16 (#899). The server in use, its type, address and token and the user, is one value
  * (`ActiveServer`) on one holder (`ActiveServerHolder`, in `domain`), written as a whole. Before,
  * the type was set on one field and then the address and token on the client, and a request in
  * between got one server's adapter with the other's address and token. In production code:
@@ -24,7 +24,7 @@ import kotlin.test.assertTrue
 class ActiveServerTest {
 
     @Test
-    fun `R15 the server in use is written as one value, in one place`() {
+    fun `R16 the server in use is written as one value, in one place`() {
         val files = ProjectTree.productionKotlinFiles
         assertTrue(files.size >= MIN_FILES, "Only ${files.size} production Kotlin files found")
         assertTrue(
@@ -70,7 +70,7 @@ class ActiveServerTest {
     }
 
     @Test
-    fun `R15 finds each kind of write, and nothing else`() {
+    fun `R16 finds each kind of write, and nothing else`() {
         fun finds(regex: Regex, source: String) = regex.containsMatchIn(code(source))
 
         assertTrue(finds(MUTABLE_COPY, "val s = MutableStateFlow<ActiveServer>(x)"))

@@ -112,7 +112,7 @@ From the comments on #733 (2026-11-22), still true:
   `session.use(…)`, in `SetupRepositoryImpl` and `ApiSession.kt`). With two adapters a request in
   between gets the new adapter with the old address and token. Fixed in #899 (T7): one
   `ActiveServer` value on an `ActiveServerHolder`, which `CurrentMediaServer` reads once per
-  access and hands to the adapter (`MediaServer.at`); rule R15.
+  access and hands to the adapter (`MediaServer.at`); rule R16.
 - Downloads of a server whose type this build does not know cannot be listed or played.
 
 ## 5.2 What DDD means here
