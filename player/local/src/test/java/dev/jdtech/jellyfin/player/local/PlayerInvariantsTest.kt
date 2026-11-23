@@ -245,7 +245,8 @@ class PlayerInvariantsTest {
         assertTrue(transition != null, message = "PlayerViewModel.onMediaItemTransition not found")
         assertTrue(
             transition!!.value.contains("playbackReporter.onTransitionHandled(") &&
-                !Regex("""\n\s*(playbackReporter\.)?sendPlaybackStart\(item\)""")
+                // #868: the start takes the player as well.
+                !Regex("""\n\s*(playbackReporter\.)?sendPlaybackStart\(item[,)]""")
                     .containsMatchIn(transition.value),
             message = "onMediaItemTransition must hand the start to the reporter's gate (#601)",
         )

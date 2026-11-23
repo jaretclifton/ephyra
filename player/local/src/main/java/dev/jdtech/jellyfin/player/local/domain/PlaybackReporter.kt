@@ -57,7 +57,10 @@ class PlaybackReporter(
     private val reportScope: CoroutineScope,
     private val ioDispatcher: CoroutineDispatcher,
 ) {
-    /** What the reporter reads of the player while a progress report waits. Main thread only. */
+    /**
+     * What the reporter reads of the player while a progress report waits, and when a start is
+     * sent. Main thread only.
+     */
     interface ReportedPlayer {
         /** The player's current media item's id, or `null` without a media item. */
         fun currentMediaId(): String?
@@ -143,10 +146,11 @@ class PlaybackReporter(
     /**
      * The player's transition to [item] is handled, after the previous item's stop. CE (#601): the
      * start waits for the item to load ([PlaybackStartGate]); [ready] is whether it already has.
+     * Call it on the main thread: a start sent now reads [player]'s position.
      */
-    suspend fun onTransitionHandled(item: PlayerItem, ready: Boolean) {
+    suspend fun onTransitionHandled(item: PlayerItem, ready: Boolean, player: ReportedPlayer) {
         startGate.onTransition(item, ready = ready, current = playing?.itemId == item.itemId)?.let {
-            sendPlaybackStart(it)
+            sendPlaybackStart(it, player)
         }
     }
 
@@ -173,10 +177,14 @@ class PlaybackReporter(
      * Sent once the player has loaded the item ([startGate], #601): an item that never opens sends
      * no start, no progress and no stop.
      *
+     * The report carries [player]'s position when it is sent (#868): the resume position after a
+     * resume, where playback was after a quality switch. Call it on the main thread, which reads
+     * [player], as [reportProgress] does.
+     *
      * The report runs in [reportScope] so that closing the player does not cut it off halfway;
      * [reportStopped] waits for it (with a time limit) to keep the stop behind it.
      */
-    suspend fun sendPlaybackStart(item: PlayerItem) {
+    suspend fun sendPlaybackStart(item: PlayerItem, player: ReportedPlayer) {
         // The player moved on while the previous item's stop was being sent (Previous or Next
         // pressed while this item was loading). A start now would arrive after the next item's,
         // and nothing would stop it.
@@ -184,10 +192,11 @@ class PlaybackReporter(
             Timber.d("No playback start for ${item.itemId.asString()}: left before it was sent")
             return
         }
+        val positionTicks = player.currentPositionMs().times(10000)
         val start =
             reportScope.launch(ioDispatcher) {
                 try {
-                    repository.postPlaybackStart(item.itemId, item.isTranscoded)
+                    repository.postPlaybackStart(item.itemId, positionTicks, item.isTranscoded)
                 } catch (e: Exception) {
                     Timber.e(e)
                 }
