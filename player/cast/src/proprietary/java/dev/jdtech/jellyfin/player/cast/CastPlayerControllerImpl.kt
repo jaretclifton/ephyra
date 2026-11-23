@@ -26,6 +26,7 @@ import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.PlaybackTarget
+import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.looksLikeJellyfinId
 import dev.jdtech.jellyfin.models.toItemId
@@ -459,7 +460,7 @@ constructor(
             try {
                 repository.postPlaybackProgress(
                     itemId = report.itemId,
-                    positionTicks = report.positionMs * 10_000L,
+                    positionTicks = Ticks.fromMilliseconds(report.positionMs),
                     isPaused = report.isPaused,
                     transcoded = transcoded,
                 )
@@ -474,7 +475,7 @@ constructor(
             try {
                 repository.postPlaybackStop(
                     itemId = report.itemId,
-                    positionTicks = report.positionMs * 10_000L,
+                    positionTicks = Ticks.fromMilliseconds(report.positionMs),
                     playedPercentage = report.playedPercentage,
                 )
             } catch (e: Exception) {

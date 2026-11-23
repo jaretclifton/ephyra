@@ -82,6 +82,7 @@ import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Show
+import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
@@ -570,7 +571,7 @@ private fun LibraryRow(
                             add(
                                 stringResource(
                                     CoreR.string.runtime_minutes,
-                                    (item.runtimeTicks / Constants.TICKS_PER_MINUTE).toInt(),
+                                    Ticks.toMinutes(item.runtimeTicks).toInt(),
                                 )
                             )
                         }

@@ -38,7 +38,6 @@ import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.jdtech.jellyfin.PlayerActivity
-import dev.jdtech.jellyfin.core.Constants
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloaderAction
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloaderEvent
@@ -56,6 +55,7 @@ import dev.jdtech.jellyfin.film.presentation.episode.EpisodeViewModel
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.cast.LocalCastPlayback
 import dev.jdtech.jellyfin.presentation.film.components.ActorsRow
@@ -315,7 +315,7 @@ private fun EpisodeScreenLayout(
                         val runtimeText =
                             stringResource(
                                 CoreR.string.runtime_minutes,
-                                episode.runtimeTicks.div(Constants.TICKS_PER_MINUTE),
+                                Ticks.toMinutes(episode.runtimeTicks),
                             )
                         Text(
                             text = runtimeText,

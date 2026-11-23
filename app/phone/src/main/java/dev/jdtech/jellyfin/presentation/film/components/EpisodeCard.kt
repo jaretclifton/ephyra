@@ -15,7 +15,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import dev.jdtech.jellyfin.core.Constants
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadProgress
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadStatus
@@ -24,6 +23,7 @@ import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
 import dev.jdtech.jellyfin.core.presentation.spoiler.spoilerFreeName
 import dev.jdtech.jellyfin.core.presentation.spoiler.spoilerFreeOverview
 import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import kotlin.math.roundToInt
 
@@ -48,7 +48,7 @@ fun EpisodeCard(
                     add(
                         stringResource(
                             CoreR.string.runtime_minutes,
-                            (episode.runtimeTicks / Constants.TICKS_PER_MINUTE).toInt(),
+                            Ticks.toMinutes(episode.runtimeTicks).toInt(),
                         )
                     )
                 }

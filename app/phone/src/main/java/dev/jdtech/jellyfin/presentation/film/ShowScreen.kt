@@ -40,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.jdtech.jellyfin.PlayerActivity
-import dev.jdtech.jellyfin.core.Constants
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloaderState
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyShow
@@ -56,6 +55,7 @@ import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.Show
+import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.cast.LocalCastPlayback
 import dev.jdtech.jellyfin.presentation.film.components.ActorsRow
@@ -281,7 +281,7 @@ private fun ShowScreenLayout(
                         val runtimeText =
                             stringResource(
                                 CoreR.string.runtime_minutes,
-                                show.runtimeTicks.div(Constants.TICKS_PER_MINUTE),
+                                Ticks.toMinutes(show.runtimeTicks),
                             )
                         Text(
                             text = runtimeText,

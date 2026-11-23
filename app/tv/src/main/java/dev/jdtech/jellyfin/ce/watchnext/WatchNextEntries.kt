@@ -4,6 +4,7 @@ import androidx.core.net.toUri
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.models.asString
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -27,8 +28,9 @@ fun watchNextCandidates(
 fun Item.toWatchNextEntry(kind: WatchNextKind, hideSpoilers: Boolean = false): WatchNextEntry? {
     if (runtimeTicks <= 0) return null
     if (kind == WatchNextKind.CONTINUE && (played || playbackPositionTicks <= 0)) return null
-    val durationMs = runtimeTicks / TICKS_PER_MS
-    val positionMs = if (kind == WatchNextKind.CONTINUE) playbackPositionTicks / TICKS_PER_MS else 0
+    val durationMs = Ticks.toMilliseconds(runtimeTicks)
+    val positionMs =
+        if (kind == WatchNextKind.CONTINUE) Ticks.toMilliseconds(playbackPositionTicks) else 0
     return when (this) {
         is Episode -> {
             // The episode's own thumbnail is landscape; the series poster is the fallback.
@@ -88,7 +90,6 @@ private fun String.sized(portrait: Boolean): String =
 private fun LocalDateTime.toEpochMs(): Long =
     atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-private const val TICKS_PER_MS = 10_000L
 private const val MAX_DESCRIPTION_LENGTH = 300
 private const val ARTWORK_SIZE = 480
 private const val ARTWORK_QUALITY = 90

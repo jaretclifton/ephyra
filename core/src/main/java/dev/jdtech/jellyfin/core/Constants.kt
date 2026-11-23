@@ -21,7 +21,6 @@ object Constants {
 
     // downloads
     const val DOWNLOAD_POLL_INTERVAL_MS = 1000L
-    const val TICKS_PER_MINUTE = 600_000_000L
 
     // favorites
     const val FAVORITE_TYPE_MOVIES = 0

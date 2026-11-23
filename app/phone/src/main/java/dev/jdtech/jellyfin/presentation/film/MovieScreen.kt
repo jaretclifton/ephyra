@@ -36,7 +36,6 @@ import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.jdtech.jellyfin.PlayerActivity
-import dev.jdtech.jellyfin.core.Constants
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloaderAction
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloaderEvent
@@ -52,6 +51,7 @@ import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.cast.LocalCastPlayback
 import dev.jdtech.jellyfin.presentation.film.components.ActorsRow
@@ -274,7 +274,7 @@ private fun MovieScreenLayout(
                         val runtimeText =
                             stringResource(
                                 CoreR.string.runtime_minutes,
-                                movie.runtimeTicks.div(Constants.TICKS_PER_MINUTE),
+                                Ticks.toMinutes(movie.runtimeTicks),
                             )
                         Text(
                             text = runtimeText,

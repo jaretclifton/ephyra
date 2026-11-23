@@ -14,6 +14,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.film.presentation.movie.MovieAction
 import dev.jdtech.jellyfin.film.presentation.movie.MovieState
 import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import kotlin.test.assertEquals
 import org.junit.Rule
@@ -34,8 +35,8 @@ class MovieResumeTest {
     private val partlyWatched =
         dummyMovie.copy(
             trailer = null,
-            runtimeTicks = 12 * TICKS_PER_MINUTE,
-            playbackPositionTicks = 4 * TICKS_PER_MINUTE,
+            runtimeTicks = 12 * Ticks.PER_MINUTE,
+            playbackPositionTicks = 4 * Ticks.PER_MINUTE,
             played = false,
         )
 
@@ -133,9 +134,5 @@ class MovieResumeTest {
             ),
             actions,
         )
-    }
-
-    private companion object {
-        const val TICKS_PER_MINUTE = 600_000_000L
     }
 }

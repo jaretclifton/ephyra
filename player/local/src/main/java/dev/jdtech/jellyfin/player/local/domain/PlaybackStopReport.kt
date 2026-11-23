@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.player.local.domain
 
 import androidx.media3.common.C
+import dev.jdtech.jellyfin.models.Ticks
 
 /**
  * The playback stop to send for an item: [positionTicks] for the server, and the [playedPercentage]
@@ -29,10 +30,13 @@ fun playbackStopReport(
     if (durationMs != C.TIME_UNSET && durationMs > 0) {
         val reportedMs = if (finished) durationMs else positionMs
         return PlaybackStopReport(
-            positionTicks = reportedMs.times(10000),
+            positionTicks = Ticks.fromMilliseconds(reportedMs),
             playedPercentage = reportedMs.div(durationMs.toFloat()).times(100).toInt(),
         )
     }
     if (!startSent) return null
-    return PlaybackStopReport(positionTicks = positionMs.times(10000), playedPercentage = null)
+    return PlaybackStopReport(
+        positionTicks = Ticks.fromMilliseconds(positionMs),
+        playedPercentage = null,
+    )
 }

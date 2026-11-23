@@ -20,6 +20,7 @@ import dev.jdtech.jellyfin.models.SegmentType
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.SubtitleDeliveryMethod
+import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
@@ -83,7 +84,7 @@ object ContractLibrary : FakeLibrary {
 
     override val users = mapOf(USER_NAME to PASSWORD)
 
-    private const val MINUTE = 600_000_000L
+    private const val MINUTE = Ticks.PER_MINUTE
 
     val moviesLibrary =
         Library(id = id(11), name = "Movies", type = CollectionType.Movies, images = ItemImages())

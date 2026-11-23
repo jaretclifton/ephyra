@@ -74,6 +74,7 @@ import dev.jdtech.jellyfin.film.presentation.movie.MovieViewModel
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.getVersions
 import dev.jdtech.jellyfin.presentation.film.components.VersionDialog
@@ -274,7 +275,7 @@ private fun MovieScreenContent(
                                     text =
                                         stringResource(
                                             CoreR.string.runtime_minutes,
-                                            movie.runtimeTicks.div(600000000),
+                                            Ticks.toMinutes(movie.runtimeTicks),
                                         ),
                                     style = MaterialTheme.typography.labelMedium,
                                 )
@@ -612,9 +613,7 @@ private fun MovieScreenContent(
 
 /** Whole minutes left of a partly watched movie, at least 1, as the season page counts them. */
 private fun minutesLeft(movie: Movie): Long =
-    ((movie.runtimeTicks - movie.playbackPositionTicks) / TICKS_PER_MINUTE).coerceAtLeast(1)
-
-private const val TICKS_PER_MINUTE = 600_000_000L
+    Ticks.toMinutes(movie.runtimeTicks - movie.playbackPositionTicks).coerceAtLeast(1)
 
 private const val ROW_BUTTONS = 0
 private const val ROW_CAST = 1

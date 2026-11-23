@@ -19,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
-import dev.jdtech.jellyfin.core.Constants
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloaderAction
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloaderState
@@ -27,6 +26,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyVideoMetadata
 import dev.jdtech.jellyfin.film.presentation.movie.MovieAction
 import dev.jdtech.jellyfin.film.presentation.movie.MovieState
+import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.presentation.film.components.ActorsRow
 import dev.jdtech.jellyfin.presentation.film.components.ArtworkPlacement
 import dev.jdtech.jellyfin.presentation.film.components.DownloadQualityDialog
@@ -99,7 +99,7 @@ fun MovieWideLayout(
                                 movie.premiereDate?.year?.toString(),
                                 stringResource(
                                     CoreR.string.runtime_minutes,
-                                    movie.runtimeTicks.div(Constants.TICKS_PER_MINUTE),
+                                    Ticks.toMinutes(movie.runtimeTicks),
                                 ),
                                 movie.officialRating,
                             ),

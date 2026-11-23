@@ -1,5 +1,7 @@
 package dev.jdtech.jellyfin.utils.download
 
+import dev.jdtech.jellyfin.models.Ticks
+
 /**
  * Estimates the size in bytes of a download transcoded down to a quality cap.
  *
@@ -9,6 +11,6 @@ package dev.jdtech.jellyfin.utils.download
  */
 internal fun estimateCappedDownloadSize(runtimeTicks: Long, maxBitrate: Int): Long {
     if (runtimeTicks <= 0L || maxBitrate <= 0) return 0L
-    val durationSeconds = runtimeTicks / 10_000_000.0
+    val durationSeconds = Ticks.toSeconds(runtimeTicks)
     return (maxBitrate / 8.0 * durationSeconds).toLong()
 }

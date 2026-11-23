@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.player.local.domain
 
 import androidx.media3.common.C
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
@@ -192,7 +193,7 @@ class PlaybackReporter(
             Timber.d("No playback start for ${item.itemId.asString()}: left before it was sent")
             return
         }
-        val positionTicks = player.currentPositionMs().times(10000)
+        val positionTicks = Ticks.fromMilliseconds(player.currentPositionMs())
         val start =
             reportScope.launch(ioDispatcher) {
                 try {
@@ -333,7 +334,7 @@ class PlaybackReporter(
                 try {
                     repository.postPlaybackProgress(
                         itemId,
-                        player.currentPositionMs().times(10000),
+                        Ticks.fromMilliseconds(player.currentPositionMs()),
                         isPaused,
                         transcoded,
                     )

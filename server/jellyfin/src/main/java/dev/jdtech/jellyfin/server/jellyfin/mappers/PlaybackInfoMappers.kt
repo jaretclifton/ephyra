@@ -4,6 +4,7 @@ import dev.jdtech.jellyfin.models.Chapter
 import dev.jdtech.jellyfin.models.ItemTrickplayInfo
 import dev.jdtech.jellyfin.models.Segment
 import dev.jdtech.jellyfin.models.SegmentType
+import dev.jdtech.jellyfin.models.Ticks
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.MediaSegmentDto
 import org.jellyfin.sdk.model.api.MediaSegmentType
@@ -14,7 +15,7 @@ import org.jellyfin.sdk.model.api.TrickplayInfoDto
 internal fun BaseItemDto.toChapters(): List<Chapter> {
     return chapters?.map { chapter ->
         Chapter(
-            startPosition = chapter.startPositionTicks / 10000,
+            startPosition = Ticks.toMilliseconds(chapter.startPositionTicks),
             name = chapter.name,
             imageTag = chapter.imageTag,
         )
@@ -34,8 +35,8 @@ private fun MediaSegmentType.toSegmentType(): SegmentType =
 internal fun MediaSegmentDto.toSegment(): Segment {
     return Segment(
         type = type.toSegmentType(),
-        startTicks = startTicks / 10000,
-        endTicks = endTicks / 10000,
+        startTicks = Ticks.toMilliseconds(startTicks),
+        endTicks = Ticks.toMilliseconds(endTicks),
     )
 }
 
