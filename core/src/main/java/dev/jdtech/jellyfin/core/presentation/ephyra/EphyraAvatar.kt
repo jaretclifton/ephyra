@@ -57,7 +57,9 @@ data class AvatarColors(
 
 /** Which of [count] colours a user gets. Deterministic, so a user keeps their colour. */
 fun avatarColorIndex(seed: UserId, count: Int): Int =
-    abs(idHash(seed.asString()).toLong()).toInt() % count
+    // The remainder before toInt(): abs(Int.MIN_VALUE) does not fit in an Int. The same index as
+    // before for every other hash.
+    (abs(idHash(seed.asString()).toLong()) % count).toInt()
 
 /**
  * The hash a user's colour comes from. CE (#773): user ids were `java.util.UUID`s, and the colour

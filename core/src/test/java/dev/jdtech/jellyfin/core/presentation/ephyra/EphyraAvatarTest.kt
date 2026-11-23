@@ -60,5 +60,8 @@ class EphyraAvatarTest {
     fun `an id that is not a UUID still gets a colour in range`() {
         assertTrue(avatarColorIndex("12345".toUserId(), 4) in 0..3)
         assertTrue(avatarColorIndex("".toUserId(), 4) in 0..3)
+        // Its string hash is Int.MIN_VALUE, whose absolute value is no Int.
+        assertEquals(Int.MIN_VALUE, "polygenelubricants".hashCode())
+        assertTrue(avatarColorIndex("polygenelubricants".toUserId(), 7) in 0..6)
     }
 }
