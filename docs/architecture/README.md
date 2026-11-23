@@ -90,6 +90,7 @@ line is added only with a reason of the same kind, given in the PR.
 | R14 | The play state rules are declared in `domain` alone; `data` and the sync compare no dates |
 | R15 | `downloads` depends on no adapter, not on `core` and not on an app, and nothing else names its engine's implementation |
 | R16 | The server in use is written as one `ActiveServer` value, in one place |
+| R17 | `data`, `server/jellyfin` and `downloads` read no `AppPreferences`: their settings come through ports of `application` |
 
 ## Not done
 
@@ -103,10 +104,6 @@ line is added only with a reason of the same kind, given in the PR.
   - Downloads of a server whose type this build does not know could not be listed or played in
     the emulator check of #835; `UnsupportedMediaServer` says they open from Room. Not checked
     again since: decide when Emby starts whether they should stay playable.
-- **Preferences in the adapters** (#918). File 5 (5.1, point 3) wanted `data` and the adapter to
-  stop reading `AppPreferences`. They read the settings through ports of `application` now
-  (`CurrentServerId`, `NextUpMaxDays`, `ResumeThresholdsStore`, `NetworkTimeouts`), bound in
-  `core` (`SettingsPortsModule`). The download engine still reads its settings itself.
 - **Issues filed on the way**, real bugs outside the refactoring: #907 (an unplayed mark during a
   profile switch may clear the other user's last-played date), #909 (playback reports do not name
   the chosen version), #912 (a download cut off by an unreachable server does not resume when it

@@ -169,7 +169,7 @@ that is a complete sync.
 python3 .claude/skills/translate-strings/scripts/check-translations.py
 ```
 
-`testDebugUnitTest` includes the architecture rules (`:architecture:test`, R1–R16). A sync only
+`testDebugUnitTest` includes the architecture rules (`:architecture:test`, R1–R17). A sync only
 brings `strings.xml` files, so they should not fail; if one does, upstream code came in by
 mistake. When a re-implement PR later brings upstream code that imports the SDK outside the
 adapter, fix it by mapping the type in `server/jellyfin` and using Ephyra's own type, never with a
