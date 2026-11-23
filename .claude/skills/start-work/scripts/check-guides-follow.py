@@ -75,22 +75,35 @@ def unquote(item: str) -> str:
 
 
 def changed_lines(patch: str) -> set[int]:
-    """The lines of the new file a unified diff touches (a deletion counts on the line before it)."""
+    """The lines of the new file a unified diff touches.
+
+    A replaced line counts where its new text is. A line only deleted has no place in the new file:
+    it counts on the line before it (the entry it was in, unless it was an entry's first line).
+    """
     touched: set[int] = set()
     new = 0
+    deleted: list[int] = []  # positions of a run of deletions not yet followed by an addition
+
+    def flush() -> None:
+        touched.update(max(n - 1, 1) for n in deleted)
+        deleted.clear()
+
     for line in patch.splitlines():
         hunk = re.match(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", line)
         if hunk:
+            flush()
             # With no new lines in the hunk, its start is the line before the deletion.
             new = int(hunk.group(1)) + (1 if hunk.group(2) == "0" else 0)
         elif line.startswith("+"):
+            deleted.clear()  # a replacement: the new text says where it belongs
             touched.add(new)
             new += 1
         elif line.startswith("-"):
-            # The deleted line sat after line new - 1: count it there.
-            touched.add(max(new - 1, 1))
+            deleted.append(new)
         elif not line.startswith("\\"):
+            flush()
             new += 1
+    flush()
     return touched
 
 
@@ -154,7 +167,7 @@ def main() -> int:
             (name, path)
             for name in counted
             for path in paths
-            if name == path or (path.endswith("/") and name.startswith(path))
+            if name == path.rstrip("/") or name.startswith(path.rstrip("/") + "/")
         ]
         if not hits:
             continue
