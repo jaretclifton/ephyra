@@ -9,6 +9,7 @@ import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.ItemTrickplayInfo
 import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.MediaStream
+import dev.jdtech.jellyfin.models.MediaStreamId
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Season
@@ -17,7 +18,6 @@ import dev.jdtech.jellyfin.models.Segment
 import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.UserId
-import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -91,17 +91,17 @@ interface DownloadStore {
 
     /** Stores [stream] of source [sourceId] under [id], downloaded to [path]. */
     suspend fun insertMediaStream(
-        id: UUID,
+        id: MediaStreamId,
         sourceId: MediaSourceId,
         stream: MediaStream,
         path: String,
     )
 
-    suspend fun setMediaStreamDownloadId(id: UUID, downloadId: Long)
+    suspend fun setMediaStreamDownloadId(id: MediaStreamId, downloadId: Long)
 
-    suspend fun setMediaStreamPath(id: UUID, path: String)
+    suspend fun setMediaStreamPath(id: MediaStreamId, path: String)
 
-    suspend fun deleteMediaStream(id: UUID)
+    suspend fun deleteMediaStream(id: MediaStreamId)
 
     suspend fun deleteMediaStreamsOfSource(sourceId: MediaSourceId)
 
@@ -232,7 +232,7 @@ data class StoredSource(
 
 /** A stored media stream (an external subtitle) of a downloaded source. */
 data class StoredMediaStream(
-    val id: UUID,
+    val id: MediaStreamId,
     val sourceId: MediaSourceId,
     val title: String,
     val language: String,

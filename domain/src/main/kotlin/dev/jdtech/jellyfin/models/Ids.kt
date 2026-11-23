@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.models
 
 import java.io.Serializable
+import kotlin.uuid.Uuid
 
 // The ids of the domain (#773, #902). An item, user, server or media source id is an opaque string
 // wrapped in its own type, so one kind of id cannot go where another belongs, and a server whose
@@ -62,6 +63,50 @@ value class MediaSourceId(val value: String) : Serializable {
 }
 
 /**
+ * The id the app gives each server address it saves (Room's `serverAddresses.id` and
+ * `servers.currentServerAddressId`), #918. It is the app's own id, not the server's: [random] makes
+ * a new one in the dashed lowercase form the `UUID` column converter stored before, and a stored id
+ * reads back as the text it is. Nothing parses it. Make one from stored text with
+ * [toServerAddressId], read it with [asString]. [toString] and [Serializable] as for [ItemId] (the
+ * address list keys its rows by it).
+ */
+@JvmInline
+value class ServerAddressId(val value: String) : Serializable {
+    override fun toString(): String = value
+
+    companion object {
+        /**
+         * A new random id, in the form `UUID.randomUUID().toString()` gave (see [randomIdText]).
+         */
+        fun random(): ServerAddressId = ServerAddressId(randomIdText())
+    }
+}
+
+/**
+ * The id the downloader gives each media stream (an external subtitle) it stores (Room's
+ * `mediastreams.id`), #918. The app's own id, made by [random] in the same form as
+ * [ServerAddressId]; it is also part of the stream's file name. Make one from stored text with
+ * [toMediaStreamId], read it with [asString]. [toString] and [Serializable] as for [ItemId].
+ */
+@JvmInline
+value class MediaStreamId(val value: String) : Serializable {
+    override fun toString(): String = value
+
+    companion object {
+        /**
+         * A new random id, in the form `UUID.randomUUID().toString()` gave (see [randomIdText]).
+         */
+        fun random(): MediaStreamId = MediaStreamId(randomIdText())
+    }
+}
+
+/**
+ * A random version 4 UUID as text, made with Kotlin's own [Uuid]: 36 characters, lowercase hex,
+ * dashed 8-4-4-4-12, the form `java.util.UUID.toString()` gives and the old Room converter stored.
+ */
+internal fun randomIdText(): String = Uuid.random().toString()
+
+/**
  * The item id whose string form is this text (see the top of this file). It only wraps the text and
  * does not validate it: give it the stored or sent form, which for Jellyfin is the dashed lowercase
  * one the adapter produces.
@@ -76,6 +121,12 @@ fun String.toServerId(): ServerId = ServerId(this)
 
 /** The media source id whose string form is this text. It only wraps the text, as [toItemId]. */
 fun String.toMediaSourceId(): MediaSourceId = MediaSourceId(this)
+
+/** The server address id whose stored text is this. It only wraps the text, as [toItemId]. */
+fun String.toServerAddressId(): ServerAddressId = ServerAddressId(this)
+
+/** The media stream id whose stored text is this. It only wraps the text, as [toItemId]. */
+fun String.toMediaStreamId(): MediaStreamId = MediaStreamId(this)
 
 private val JELLYFIN_ID_FORM = Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 
@@ -102,3 +153,9 @@ fun ServerId.asString(): String = value
 
 /** The string form of the id, as the server sent it; see [ItemId.asString]. */
 fun MediaSourceId.asString(): String = value
+
+/** The text of the id, as Room stores it; see [ItemId.asString]. */
+fun ServerAddressId.asString(): String = value
+
+/** The text of the id, as Room stores it and the stream's file name holds it. */
+fun MediaStreamId.asString(): String = value

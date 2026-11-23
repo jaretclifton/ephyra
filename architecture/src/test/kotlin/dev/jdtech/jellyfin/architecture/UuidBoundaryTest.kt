@@ -14,9 +14,10 @@ import kotlin.test.assertTrue
  * `java.util.*` and say `UUID`. Comments do not count.
  *
  * Since the flip to value classes (#773), `architecture/baseline/uuid-imports.txt` is an allowlist,
- * not debt: the files that name `UUID` for an id the app makes itself (server addresses, stored
- * media streams, random names, preview dummies), grouped under the reason. An item or user id is
- * never a reason. The check stays exact both ways, so a file that stops naming `UUID` loses its
+ * not debt: the files that name `UUID` for a random value the app makes itself (random names,
+ * preview dummies, the test fakes' tokens), grouped under the reason. An item, user, server address
+ * or media stream id is never a reason: since #918 the last two are `ServerAddressId` and
+ * `MediaStreamId`. The check stays exact both ways, so a file that stops naming `UUID` loses its
  * line.
  */
 class UuidBoundaryTest {
