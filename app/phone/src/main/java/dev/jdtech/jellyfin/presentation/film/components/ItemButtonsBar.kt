@@ -35,12 +35,13 @@ import androidx.window.core.layout.WindowSizeClass
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloaderState
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
+import dev.jdtech.jellyfin.models.DownloadState
 import dev.jdtech.jellyfin.models.Item
-import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.models.Trailer
+import dev.jdtech.jellyfin.models.downloadState
 import dev.jdtech.jellyfin.models.getVersions
 import dev.jdtech.jellyfin.models.isDownloaded
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
@@ -299,9 +300,7 @@ fun ItemButtonsBar(
                     isDownloaded
             ) {
                 val localSource =
-                    item.sources.firstOrNull {
-                        it.type == ItemSourceType.LOCAL && !it.path.endsWith(".download")
-                    }
+                    item.sources.firstOrNull { it.downloadState == DownloadState.FINISHED }
                 if (localSource != null) {
                     val label =
                         remember(localSource.path) {

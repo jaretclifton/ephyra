@@ -10,6 +10,7 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.models.DownloadFiles
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
@@ -94,14 +95,14 @@ internal fun shouldDeleteOrphanFile(
     minAgeMs: Long = ORPHAN_MIN_AGE_MS,
 ): Boolean {
     if (!isUnderMountedRoot(path, downloadRoots)) return false
-    if (path.endsWith(".download")) {
+    if (DownloadFiles.isPartial(path)) {
         if (path in knownPaths) return false
         if (path in livePaths) return false
         return true
     }
     if (knownPaths.any { sameSweepPath(it, path) }) return false
     if (knownFinalPaths.any { sameSweepPath(it, path) }) return false
-    if (livePaths.any { sameSweepPath(it.removeSuffix(".download"), path) }) return false
+    if (livePaths.any { sameSweepPath(DownloadFiles.finalPath(it), path) }) return false
     return isOldEnough(lastModified, now, minAgeMs)
 }
 
@@ -347,7 +348,8 @@ class DownloaderImpl(
                     )
             val extension = guessExtension(source.path)
             val relativePath = buildDownloadPath(item, source.id, extension)
-            val destFile = File(storageLocation, "downloads/$relativePath.download")
+            val destFile =
+                File(storageLocation, DownloadFiles.partialPath("downloads/$relativePath"))
             // source.size is always the original file size, even when a quality cap
             // makes the server transcode to a smaller file — estimate the capped
             // download's size from the bitrate cap instead of flagging false positives.
@@ -517,7 +519,7 @@ class DownloaderImpl(
             ?.let { database.getSourcesOfServer(item.id, it) }
             .orEmpty()
             .firstOrNull { source ->
-                source.path.endsWith(".download") && source.downloadId != null
+                DownloadFiles.isPartial(source.path) && source.downloadId != null
             }
 
     override suspend fun deleteItem(item: Item, source: ItemSource) {
@@ -723,7 +725,9 @@ class DownloaderImpl(
                 val streamPath =
                     File(
                             downloadsDir,
-                            "${sanitize(item.name)}.${source.id}.$id.$streamExt.download",
+                            DownloadFiles.partialPath(
+                                "${sanitize(item.name)}.${source.id}.$id.$streamExt"
+                            ),
                         )
                         .absolutePath
                 database.insertMediaStream(
@@ -782,7 +786,7 @@ class DownloaderImpl(
         restartExternalMediaStreamRows(
             // Process just died — every engine task is gone, so every still-incomplete
             // row needs restarting, regardless of what state it was last left in.
-            rows = rows.filter { it.path.endsWith(".download") },
+            rows = rows.filter { DownloadFiles.isPartial(it.path) },
             serverSource = serverSource,
             allowMetered = allowMetered,
             allowRoaming = allowRoaming,
@@ -815,7 +819,7 @@ class DownloaderImpl(
                     Timber.w(e, "Failed to load media streams for retry check on ${item.name}")
                     return
                 }
-                .filter { it.path.endsWith(".download") }
+                .filter { DownloadFiles.isPartial(it.path) }
         if (rows.isEmpty()) return
         val failedRows =
             engine.snapshots(rows.mapNotNull { it.downloadId }).let { snapshots ->
@@ -1055,7 +1059,7 @@ class DownloaderImpl(
      */
     private fun renamedBeforeStop(source: ItemSourceEntity, downloadId: Long): Boolean {
         if (engine.snapshot(downloadId) != null) return false
-        val finalFile = File(source.path.removeSuffix(".download"))
+        val finalFile = File(DownloadFiles.finalPath(source.path))
         return !File(source.path).exists() && finalFile.isFile && finalFile.length() > 0
     }
 
@@ -1130,7 +1134,7 @@ class DownloaderImpl(
             // CE (#379): read before anything below is deleted, so a database that cannot be read
             // deletes nothing.
             val knownItemIds = database.getAllItemIds().toSet()
-            val knownFinalPaths = knownPaths.map { it.removeSuffix(".download") }.toSet()
+            val knownFinalPaths = knownPaths.map { DownloadFiles.finalPath(it) }.toSet()
             val now = System.currentTimeMillis()
             var deletedFiles = 0
             var deletedBytes = 0L
@@ -1230,8 +1234,8 @@ class DownloaderImpl(
         }
 
     private suspend fun finalizeSource(source: ItemSourceEntity): Boolean {
-        if (!source.path.endsWith(".download")) return true
-        val finalPath = source.path.removeSuffix(".download")
+        if (!DownloadFiles.isPartial(source.path)) return true
+        val finalPath = DownloadFiles.finalPath(source.path)
         val downloadFile = File(source.path)
         val finalFile = File(finalPath)
 
@@ -1310,7 +1314,7 @@ class DownloaderImpl(
     }
 
     private suspend fun unfinishedMediaStreams(sourceId: String): List<MediaStreamEntity> =
-        database.getMediaStreamsBySourceId(sourceId).filter { it.path.endsWith(".download") }
+        database.getMediaStreamsBySourceId(sourceId).filter { DownloadFiles.isPartial(it.path) }
 
     /**
      * Waits, at most [mediaStreamFinalizeTimeoutMs], for the subtitles of [source] that were not
@@ -1410,7 +1414,7 @@ class DownloaderImpl(
                     // never finalized subtitles, or a job that gave up.
                     if (status != null && status != DownloadStatus.SUCCESSFUL) continue
                     if (finalizeMediaStream(row, taskGone = status == null)) {
-                        Timber.i("Finalized the subtitle at ${row.path.removeSuffix(".download")}")
+                        Timber.i("Finalized the subtitle at ${DownloadFiles.finalPath(row.path)}")
                     }
                 }
             }
@@ -1425,8 +1429,8 @@ class DownloaderImpl(
         mediaStream: MediaStreamEntity,
         taskGone: Boolean = false,
     ): Boolean {
-        if (!mediaStream.path.endsWith(".download")) return true
-        val finalPath = mediaStream.path.removeSuffix(".download")
+        if (!DownloadFiles.isPartial(mediaStream.path)) return true
+        val finalPath = DownloadFiles.finalPath(mediaStream.path)
         val downloadFile = File(mediaStream.path)
         val finalFile = File(finalPath)
 

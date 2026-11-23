@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.core.presentation.downloader
 
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.models.DownloadFiles
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.EpisodeField
 import dev.jdtech.jellyfin.models.ItemId
@@ -148,7 +149,7 @@ constructor(
         }
         val completed =
             sourcesByEpisode
-                .mapValues { (_, sources) -> sources.filter { !it.path.endsWith(".download") } }
+                .mapValues { (_, sources) -> sources.filter { !DownloadFiles.isPartial(it.path) } }
                 .filterValues { it.isNotEmpty() }
         val downloads = completed.mapValues { (_, sources) ->
             SmartDownload(

@@ -14,6 +14,7 @@ import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadStatus
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.CollectionSection
+import dev.jdtech.jellyfin.models.DownloadFiles
 import dev.jdtech.jellyfin.models.EpisodeEntity
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
@@ -232,7 +233,7 @@ constructor(
     private suspend fun reconcileStuckDownloads() =
         withContext(Dispatchers.IO) {
             for (src in database.getActiveDownloadSources()) {
-                val finalPath = src.path.removeSuffix(".download")
+                val finalPath = DownloadFiles.finalPath(src.path)
                 val finalFile = File(finalPath)
                 if (finalFile.exists() && finalFile.length() > 0) {
                     database.setSourceDownloaded(src.id, finalPath, System.currentTimeMillis())
@@ -402,7 +403,7 @@ constructor(
             }
 
             fun hasCompletedSource(id: ItemId) =
-                sourcesByItem[id].orEmpty().any { !it.path.endsWith(".download") }
+                sourcesByItem[id].orEmpty().any { !DownloadFiles.isPartial(it.path) }
             // A movie/show with ONLY a .download source is still being downloaded
             // and belongs in the Queue tab, not the Library tab.
             val movies = items.filterIsInstance<Movie>().filter { hasCompletedSource(it.id) }
