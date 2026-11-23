@@ -22,7 +22,6 @@ android {
 dependencies {
     implementation(projects.core)
     implementation(projects.application)
-    implementation(projects.data)
     implementation(projects.domain)
     implementation(projects.settings)
     implementation(libs.timber)
@@ -41,6 +40,8 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     // #771: FakeMediaServer.
+    // #899 (R9): the tests build the real stores over Room; the production code cannot see data.
+    testImplementation(projects.data)
     testImplementation(projects.testing)
     implementation(libs.kotlinx.coroutines.android)
 }

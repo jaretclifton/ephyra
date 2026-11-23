@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteFullException
 import android.os.Environment
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
+import dev.jdtech.jellyfin.database.RoomDownloadStore
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.ItemSourceEntity
@@ -355,7 +356,7 @@ class DownloadFinalizeFailureTest {
             context.getSharedPreferences("download-finalize-failure-test", Context.MODE_PRIVATE)
         return DownloaderImpl(
             context,
-            database(),
+            RoomDownloadStore(database()),
             Provider { repository },
             AppPreferences(preferences),
             Provider { error("No WorkManager in this test") },

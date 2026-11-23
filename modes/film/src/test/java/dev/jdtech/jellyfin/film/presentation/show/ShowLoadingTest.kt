@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.EpisodeField
 import dev.jdtech.jellyfin.models.ItemId
@@ -14,6 +13,7 @@ import dev.jdtech.jellyfin.models.SeasonEpisodeCounts
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
@@ -205,10 +205,10 @@ class ShowLoadingTest {
                     downloader = unused(),
                     appPreferences = preferences,
                     repositoryProvider = { repository },
-                    database = unused<ServerDatabaseDao>(),
+                    downloadStore = unused<DownloadStore>(),
                     context = ContextWrapper(null) as Context,
                 ),
-            database = database(counts.toList()),
+            downloadStore = downloadStore(counts.toList()),
         )
     }
 
@@ -240,17 +240,17 @@ class ShowLoadingTest {
         }
             as MediaRepository
 
-    private fun database(counts: List<SeasonEpisodeCounts>): ServerDatabaseDao =
-        fakeProxy(
-            ServerDatabaseDao::class.java.classLoader,
-            arrayOf(ServerDatabaseDao::class.java),
-        ) { _, method, _ ->
+    private fun downloadStore(counts: List<SeasonEpisodeCounts>): DownloadStore =
+        fakeProxy(DownloadStore::class.java.classLoader, arrayOf(DownloadStore::class.java)) {
+            _,
+            method,
+            _ ->
             when (method.kotlinName) {
-                "getSeasonEpisodeCounts" -> counts
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
+                "seasonEpisodeCounts" -> counts
+                else -> throw NotImplementedError("DownloadStore.${method.kotlinName}")
             }
         }
-            as ServerDatabaseDao
+            as DownloadStore
 
     private fun show() =
         Show(

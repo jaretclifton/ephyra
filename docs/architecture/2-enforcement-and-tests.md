@@ -44,12 +44,12 @@ them, so these rules have no exceptions:
 | R1. No production file outside `server/jellyfin` mentions `org.jellyfin.sdk` | 56 files outside `data` | none allowed, no baseline (#768) |
 | R2. No production file outside `server/jellyfin` imports `dev.jdtech.jellyfin.api.JellyfinApi` | 25 files | none allowed, no baseline (#768) |
 | R3. No build file but `server/jellyfin`'s declares the SDK (`libs.jellyfin.core`, any SDK alias or the Maven group, any configuration, the root build file included) | 9 modules | exactly `server/jellyfin`, a constant in the test (#768) |
-| R4. No file outside `data` imports `ServerDatabaseDao` | 22 files | frozen in `architecture/baseline/dao-imports.txt`; not part of this migration |
+| R4. No file outside `data` imports `ServerDatabaseDao` | 22 files | none allowed, no baseline since #899 (the store ports) |
 | R5. `domain` imports nothing from `android.`, `androidx.` (except `androidx.paging`), `org.jellyfin.sdk`, `dev.jdtech.jellyfin.database`, `dev.jdtech.jellyfin.api` | 0 | none allowed |
 | R6. In `player/local`, engine packages do not import each other and shared code imports neither (`PlayerEngineBoundaryTest`, #764; `engine.di` binds both) | added in #764 | none allowed |
 | R7. No module but `app/phone` and `app/tv` depends on `server/jellyfin` | added in #758 | exactly the two apps, no baseline |
 | R5 also holds for `application` (the repository interface, #896), which imports nothing `data` declares either | added in #896 | none allowed |
-| R9. No module but `app/phone` and `app/tv` depends on `data` outside its tests (`DataDependencyTest`, #896) | 3 modules | frozen in `architecture/baseline/data-dependents.txt` (`core`, `modes/film`, `setup`), which #899 empties |
+| R9. No module but `app/phone` and `app/tv` depends on `data` outside its tests (`DataDependencyTest`, #896) | 3 modules | exactly the two apps, no baseline since #899 |
 | R11. No production class, interface, object or typealias is named `Findroid…` (but `FindroidTheme`), and none is named `Jellyfin…` outside `server/jellyfin` (`NamesTest`, #774) | added in #774 | none allowed, no baseline |
 | R14. The play state rules are in `PlayState` (`domain/.../domain/userdata/`): no production file outside `domain` declares a function with the name of one of them (`stopUserData`, `serverIsNewer`, `isNewerThanServer`, `keepServerProgress`, `serverUserDataToStore`, `mergeWithServer`, `playedAfter`, `refreshedFromServer`, and `PlayState`'s transitions `markedPlayed`, `markedUnplayed`, `afterUnplayedReport`, `withFavorite`, `progressed`, `stopped`), and `data` and `core`'s `work` package neither compare nor fall back from a `lastPlayed…` value nor keep one with `COALESCE(lastPlayedDate` (`PlayStateRulesTest`, #898). By names and text: a date under another name is not found | added in #898 | none allowed, no baseline |
 
@@ -58,7 +58,7 @@ also fails when a listed file no longer does ("remove it from the baseline"). So
 only shrink, a cleanup PR shows its progress as deleted lines, and nobody can add an entry
 without a reviewer seeing it in the diff. `main` stayed green throughout; "red turning green" was
 the baselines going from 56 lines to none, after which #768 deleted the files and the exceptions
-for them. `dao-imports.txt` (R4) and `data-dependents.txt` (R9) are the baselines left.
+for them. #899 emptied the baselines of R4 and R9 and deleted them.
 
 The "adapter" in R1 and R2 narrows as the work goes on: the whole `data` module at first; from
 #753 the packages `dev.jdtech.jellyfin.server.jellyfin` and `dev.jdtech.jellyfin.api` inside

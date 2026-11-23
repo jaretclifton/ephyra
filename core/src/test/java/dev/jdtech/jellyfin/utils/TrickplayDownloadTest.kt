@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
+import dev.jdtech.jellyfin.database.RoomDownloadStore
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.domain.ports.MediaServer
 import dev.jdtech.jellyfin.models.ItemSourceEntity
@@ -189,7 +190,7 @@ class TrickplayDownloadTest {
         val downloader =
             DownloaderImpl(
                 context,
-                room.getServerDatabaseDao(),
+                RoomDownloadStore(room.getServerDatabaseDao()),
                 Provider { server },
                 AppPreferences(
                     context.getSharedPreferences("trickplay-download-test", Context.MODE_PRIVATE)

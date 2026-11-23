@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.utils
 import android.app.Application
 import android.content.Context
 import android.os.Environment
+import dev.jdtech.jellyfin.database.RoomDownloadStore
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemSourceType
@@ -405,7 +406,7 @@ class SubtitleFinalizeTest {
             context.getSharedPreferences("subtitle-finalize-test", Context.MODE_PRIVATE)
         return DownloaderImpl(
             context,
-            database(),
+            RoomDownloadStore(database()),
             Provider { repository },
             AppPreferences(preferences),
             Provider { error("No WorkManager in this test") },

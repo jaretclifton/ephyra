@@ -10,6 +10,7 @@ import androidx.work.WorkerParameters
 import androidx.work.testing.TestListenableWorkerBuilder
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.core.presentation.downloader.SmartDownloads
+import dev.jdtech.jellyfin.database.RoomDownloadStore
 import dev.jdtech.jellyfin.database.RoomPendingUserDataStore
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
@@ -181,10 +182,16 @@ class SyncWorkerRunTest {
         val repository = Provider { unused<MediaRepository>() }
         val connectivity = unused<NetworkConnectivity>()
         return SmartDownloads(
-            DownloadQueue(downloader, preferences, repository, database, context),
+            DownloadQueue(
+                downloader,
+                preferences,
+                repository,
+                RoomDownloadStore(database),
+                context,
+            ),
             downloader,
             preferences,
-            database,
+            RoomDownloadStore(database),
             repository,
             connectivity,
             PlaybackEvents(),

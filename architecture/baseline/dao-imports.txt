@@ -1,7 +1,0 @@
-core/src/main/java/dev/jdtech/jellyfin/core/presentation/downloader/DownloadQueue.kt
-core/src/main/java/dev/jdtech/jellyfin/core/presentation/downloader/SmartDownloads.kt
-core/src/main/java/dev/jdtech/jellyfin/di/DownloaderModule.kt
-core/src/main/java/dev/jdtech/jellyfin/utils/DownloaderImpl.kt
-modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/downloads/DownloadedShowViewModel.kt
-modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/downloads/DownloadsViewModel.kt
-modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/show/ShowViewModel.kt

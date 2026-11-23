@@ -1,4 +1,0 @@
-# R9 (#896): the modules that still depend on data outside their tests. They use Room (the DAO,
-# the entities) until T7 (#899) puts it behind store ports. May only shrink.
-core
-modes/film

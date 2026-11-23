@@ -131,7 +131,7 @@ class LoginCapabilitiesTest {
             when (method.kotlinName) {
                 "getCapabilities" -> capabilities
                 "getCurrentServer" -> server
-                "users" -> listOf(saved)
+                "getUsers" -> listOf(saved)
                 "getIsQuickConnectEnabled" -> true.also { asked += method.kotlinName }
                 "loadDisclaimer" -> "For testing.".also { asked += method.kotlinName }
                 "getPublicUsers" -> listOf(saved, listed).also { asked += method.kotlinName }

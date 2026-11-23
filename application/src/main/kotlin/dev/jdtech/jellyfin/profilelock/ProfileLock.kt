@@ -23,7 +23,7 @@ import kotlinx.coroutines.withContext
  * Since #330 the lock can also be an unlock pattern ([User.lockType]), offered on phone only. A
  * profile has one lock at a time: setting a pattern replaces its PIN and the other way round.
  *
- * One instance per process: `core` provides it as a singleton.
+ * One instance per process: `data`'s `DatabaseModule` provides it as a singleton.
  */
 class ProfileLock(
     private val store: ServerStore,

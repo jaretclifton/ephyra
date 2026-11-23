@@ -38,6 +38,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(libs.junit)
+    // #899 (R9): the tests build the real stores over Room; the production code cannot see data.
     testImplementation(projects.data)
     testImplementation(projects.testing)
     testImplementation(libs.kotlinx.coroutines.test)

@@ -38,7 +38,6 @@ android {
 
 dependencies {
     implementation(projects.application)
-    implementation(projects.data)
     implementation(projects.domain)
     implementation(projects.player.core)
     implementation(projects.settings)
@@ -54,7 +53,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel)
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.paging)
-    implementation(libs.androidx.room3.runtime)
+    // #899: the tests build Room in memory; the production code goes through the store ports.
+    testImplementation(libs.androidx.room3.runtime)
     implementation(libs.androidx.work)
     implementation(libs.coil.compose)
     implementation(libs.hilt.android)
@@ -69,6 +69,8 @@ dependencies {
 
     testImplementation(libs.androidx.work.testing)
     testImplementation(libs.junit)
+    // #899 (R9): the tests build the real stores over Room; the production code cannot see data.
+    testImplementation(projects.data)
     testImplementation(projects.testing)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)

@@ -5,11 +5,11 @@ import android.content.ContextWrapper
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -134,7 +134,7 @@ class SeasonLoadingTest {
                     downloader = unused(),
                     appPreferences = preferences,
                     repositoryProvider = { repository },
-                    database = unused<ServerDatabaseDao>(),
+                    downloadStore = unused<DownloadStore>(),
                     context = ContextWrapper(null) as Context,
                 ),
         )

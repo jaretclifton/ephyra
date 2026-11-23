@@ -78,7 +78,7 @@ Each screen follows this pattern:
 
 Events that fire once (navigation, toasts) use a `Channel<FooEvent>` exposed as `Flow`, observed via `ObserveAsEvents()`.
 
-**Dependency Injection:** Hilt throughout. DI modules are in `core/src/main/java/dev/jdtech/jellyfin/di/`, except the Jellyfin adapter's `JellyfinServerModule` in `server/jellyfin`.
+**Dependency Injection:** Hilt throughout. DI modules are in `core/src/main/java/dev/jdtech/jellyfin/di/`, except the Jellyfin adapter's `JellyfinServerModule` in `server/jellyfin` and `data`'s own `DatabaseModule` (Room, the store ports, `ProfileLock`) and `MediaRepositoryModule` in `data/src/main/java/dev/jdtech/jellyfin/data/di/` (#899).
 
 **Navigation:** Navigation 3 with `@Serializable` route objects. `NavigationRoot.kt` in `app/phone` is the single source of truth for the nav graph.
 
