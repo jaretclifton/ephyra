@@ -6,16 +6,16 @@ import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidEpisodeDto
-import dev.jdtech.jellyfin.models.FindroidMovieDto
-import dev.jdtech.jellyfin.models.FindroidSeasonDto
-import dev.jdtech.jellyfin.models.FindroidShowDto
-import dev.jdtech.jellyfin.models.FindroidSourceDto
-import dev.jdtech.jellyfin.models.FindroidUserDataDto
+import dev.jdtech.jellyfin.models.EpisodeEntity
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.MovieEntity
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
+import dev.jdtech.jellyfin.models.SeasonEntity
+import dev.jdtech.jellyfin.models.ShowEntity
+import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
 import dev.jdtech.jellyfin.models.toItemId
@@ -68,7 +68,7 @@ class StoredItemsByServerTest {
 
     private suspend fun storeMovie(serverId: String) {
         database.insertMovie(
-            FindroidMovieDto(
+            MovieEntity(
                 id = movieId,
                 serverId = serverId,
                 name = "Movie",
@@ -95,7 +95,7 @@ class StoredItemsByServerTest {
         index: Int,
     ) {
         database.insertShow(
-            FindroidShowDto(
+            ShowEntity(
                 id = showId,
                 serverId = serverId,
                 name = "Bluey",
@@ -110,7 +110,7 @@ class StoredItemsByServerTest {
             )
         )
         database.insertSeason(
-            FindroidSeasonDto(
+            SeasonEntity(
                 id = season,
                 seriesId = showId,
                 name = "Season $index",
@@ -120,7 +120,7 @@ class StoredItemsByServerTest {
             )
         )
         database.insertEpisode(
-            FindroidEpisodeDto(
+            EpisodeEntity(
                 id = episode,
                 serverId = serverId,
                 seasonId = season,
@@ -141,7 +141,7 @@ class StoredItemsByServerTest {
     }
 
     private fun source(itemId: ItemId) =
-        FindroidSourceDto(
+        ItemSourceEntity(
             id = "source-${itemId.asString()}",
             itemId = itemId,
             name = "Original",
@@ -297,7 +297,7 @@ class StoredItemsByServerTest {
             // A's user watched the movie offline; then B's download of the same id took the row.
             storeMovie(SERVER_B)
             database.insertUserData(
-                FindroidUserDataDto(
+                UserDataEntity(
                     userId = userId,
                     itemId = movieId,
                     played = false,

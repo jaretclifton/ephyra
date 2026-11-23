@@ -3,8 +3,8 @@ package dev.jdtech.jellyfin.database
 import android.app.Application
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
-import dev.jdtech.jellyfin.models.FindroidSegmentDto
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.SegmentEntity
 import dev.jdtech.jellyfin.models.SegmentType
 import dev.jdtech.jellyfin.models.toItemId
 import kotlin.test.assertEquals
@@ -38,7 +38,7 @@ class SegmentsTest {
     @After fun close() = room.close()
 
     private fun segment(id: ItemId, type: SegmentType, start: Long, end: Long) =
-        FindroidSegmentDto(itemId = id, type = type, startTicks = start, endTicks = end)
+        SegmentEntity(itemId = id, type = type, startTicks = start, endTicks = end)
 
     @Test
     fun `two segments of one type are both kept, in playback order`() = runBlocking {
@@ -75,7 +75,7 @@ class SegmentsTest {
 
         database.deleteSegments(itemId)
 
-        assertEquals(emptyList<FindroidSegmentDto>(), database.getSegments(itemId))
+        assertEquals(emptyList<SegmentEntity>(), database.getSegments(itemId))
         assertEquals(listOf(other), database.getSegments(otherId))
     }
 }

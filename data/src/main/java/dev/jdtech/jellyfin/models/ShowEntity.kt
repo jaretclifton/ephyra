@@ -6,7 +6,7 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import java.time.LocalDateTime
 
 @Entity(tableName = "shows")
-data class FindroidShowDto(
+data class ShowEntity(
     @PrimaryKey val id: ItemId,
     val serverId: String?,
     val name: String,
@@ -21,8 +21,8 @@ data class FindroidShowDto(
     val genres: List<String>? = null,
 )
 
-fun Show.toFindroidShowDto(serverId: String? = null): FindroidShowDto {
-    return FindroidShowDto(
+fun Show.toShowEntity(serverId: String? = null): ShowEntity {
+    return ShowEntity(
         id = id,
         serverId = serverId,
         name = name,
@@ -38,7 +38,7 @@ fun Show.toFindroidShowDto(serverId: String? = null): FindroidShowDto {
     )
 }
 
-suspend fun FindroidShowDto.toShow(database: ServerDatabaseDao, userId: UserId): Show {
+suspend fun ShowEntity.toShow(database: ServerDatabaseDao, userId: UserId): Show {
     val userData = database.getUserDataOrCreateNew(id, userId)
     return Show(
         id = id,
@@ -65,7 +65,7 @@ suspend fun FindroidShowDto.toShow(database: ServerDatabaseDao, userId: UserId):
     )
 }
 
-fun FindroidShowDto.toLocalItemImages(itemId: ItemId): ItemImages {
+fun ShowEntity.toLocalItemImages(itemId: ItemId): ItemImages {
     return ItemImages(
         primary = localImagePath(itemId, "primary"),
         backdrop = localImagePath(itemId, "backdrop"),

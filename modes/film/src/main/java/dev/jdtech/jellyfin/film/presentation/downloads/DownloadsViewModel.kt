@@ -14,7 +14,7 @@ import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadStatus
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.CollectionSection
-import dev.jdtech.jellyfin.models.FindroidEpisodeDto
+import dev.jdtech.jellyfin.models.EpisodeEntity
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSource
@@ -291,7 +291,7 @@ constructor(
     }
 
     /** CE (#718): the stored episodes of [showId] that the current server downloaded. */
-    private suspend fun storedEpisodes(showId: ItemId): List<FindroidEpisodeDto> {
+    private suspend fun storedEpisodes(showId: ItemId): List<EpisodeEntity> {
         val serverId = appPreferences.getValue(appPreferences.currentServer) ?: return emptyList()
         return database.getEpisodesByShowIdOfServer(showId, serverId)
     }
@@ -345,7 +345,7 @@ constructor(
     private class LoadedLibrary(
         val movies: List<Movie>,
         val shows: List<Show>,
-        val episodesByShow: Map<ItemId, List<FindroidEpisodeDto>>,
+        val episodesByShow: Map<ItemId, List<EpisodeEntity>>,
         val sourcesByItem: Map<ItemId, List<ItemSource>>,
         val itemSizes: Map<ItemId, Long>,
         val episodeCounts: Map<ItemId, Int>,

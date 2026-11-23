@@ -6,7 +6,7 @@ import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.domain.ports.MediaServer
-import dev.jdtech.jellyfin.models.FindroidSourceDto
+import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.ItemTrickplayInfo
 import dev.jdtech.jellyfin.models.toItemId
@@ -73,7 +73,7 @@ class TrickplayDownloadTest {
             room
                 .getServerDatabaseDao()
                 .insertSource(
-                    FindroidSourceDto(
+                    ItemSourceEntity(
                         id = SOURCE_ID,
                         itemId = itemId,
                         name = "Original",

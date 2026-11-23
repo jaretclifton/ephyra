@@ -3,8 +3,8 @@ package dev.jdtech.jellyfin.core.presentation.downloader
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.EpisodeField
-import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemSource
@@ -203,7 +203,7 @@ constructor(
      * The quality of the most recent download of the series, or of any source of it. Null, which
      * means original quality, when there is none: there is no default download quality to use.
      */
-    private fun qualityOf(sources: List<FindroidSourceDto>): Int? {
+    private fun qualityOf(sources: List<ItemSourceEntity>): Int? {
         val latest =
             sources.filter { it.downloadedAt != null }.maxByOrNull { it.downloadedAt ?: 0L }
                 ?: sources.firstOrNull()

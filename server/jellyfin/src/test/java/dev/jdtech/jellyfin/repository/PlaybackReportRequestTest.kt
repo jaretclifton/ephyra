@@ -4,8 +4,8 @@ import android.app.Application
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
-import dev.jdtech.jellyfin.models.FindroidMovieDto
-import dev.jdtech.jellyfin.models.FindroidUserDataDto
+import dev.jdtech.jellyfin.models.MovieEntity
+import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.toItemId
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -151,7 +151,7 @@ class PlaybackReportRequestTest {
     fun `the stop of a downloaded item writes its row`() = runBlocking {
         preferences.setValue(preferences.currentServer, SERVER)
         database.insertMovie(
-            FindroidMovieDto(
+            MovieEntity(
                 id = itemId,
                 serverId = SERVER,
                 name = "Libass Sidecar Movie",
@@ -168,7 +168,7 @@ class PlaybackReportRequestTest {
             )
         )
         database.insertUserData(
-            FindroidUserDataDto(
+            UserDataEntity(
                 userId = StandInServer.USER_ID,
                 itemId = itemId,
                 played = false,

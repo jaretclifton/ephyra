@@ -3,7 +3,7 @@ package dev.jdtech.jellyfin.repository
 import android.app.Application
 import android.content.Context
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidSourceDto
+import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
@@ -33,7 +33,7 @@ class UnfinishedDownloadPlaybackTest {
     private val episodeId = "33333333-3333-3333-3333-333333333333".toItemId()
 
     private val partial =
-        FindroidSourceDto(
+        ItemSourceEntity(
             id = "source",
             itemId = episodeId,
             name = "Original",

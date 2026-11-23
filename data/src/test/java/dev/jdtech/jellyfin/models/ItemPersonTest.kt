@@ -3,7 +3,7 @@ package dev.jdtech.jellyfin.models
 import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
 
-class FindroidItemPersonTest {
+class ItemPersonTest {
     private val tomKane = "0bc3e80a-9daa-0c55-1914-59f19cd90460".toItemId()
     private val mattLanter = "11111111-1111-1111-1111-111111111111".toItemId()
     private val ashleyEckstein = "22222222-2222-2222-2222-222222222222".toItemId()

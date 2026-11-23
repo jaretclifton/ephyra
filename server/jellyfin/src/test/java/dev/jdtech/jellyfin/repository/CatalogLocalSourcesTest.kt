@@ -3,8 +3,8 @@ package dev.jdtech.jellyfin.repository
 import android.app.Application
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Episode
-import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Show
@@ -73,7 +73,7 @@ class CatalogLocalSourcesTest {
             as ServerDatabaseDao
 
     private fun localSource(itemId: ItemId) =
-        FindroidSourceDto(
+        ItemSourceEntity(
             id = "download-${itemId.asString()}",
             itemId = itemId,
             name = "Original",

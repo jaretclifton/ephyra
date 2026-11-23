@@ -7,15 +7,15 @@ import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidEpisodeDto
-import dev.jdtech.jellyfin.models.FindroidMovieDto
-import dev.jdtech.jellyfin.models.FindroidSeasonDto
-import dev.jdtech.jellyfin.models.FindroidShowDto
-import dev.jdtech.jellyfin.models.FindroidSourceDto
-import dev.jdtech.jellyfin.models.FindroidUserDataDto
+import dev.jdtech.jellyfin.models.EpisodeEntity
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.MovieEntity
+import dev.jdtech.jellyfin.models.SeasonEntity
+import dev.jdtech.jellyfin.models.ShowEntity
+import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toEpisode
@@ -107,7 +107,7 @@ class OtherServersCopyTest {
     private suspend fun storeSource(itemId: ItemId): File {
         val file = file(itemId)
         database.insertSource(
-            FindroidSourceDto(
+            ItemSourceEntity(
                 id = "source-${itemId.asString()}",
                 itemId = itemId,
                 name = "Original",
@@ -120,7 +120,7 @@ class OtherServersCopyTest {
 
     private suspend fun storeMovie(serverId: String): File {
         database.insertMovie(
-            FindroidMovieDto(
+            MovieEntity(
                 id = movieId,
                 serverId = serverId,
                 name = "Movie",
@@ -141,7 +141,7 @@ class OtherServersCopyTest {
 
     private suspend fun storeEpisode(serverId: String, id: ItemId, index: Int): File {
         database.insertShow(
-            FindroidShowDto(
+            ShowEntity(
                 id = showId,
                 serverId = serverId,
                 name = "Bluey",
@@ -156,7 +156,7 @@ class OtherServersCopyTest {
             )
         )
         database.insertSeason(
-            FindroidSeasonDto(
+            SeasonEntity(
                 id = seasonId,
                 seriesId = showId,
                 name = "Season 1",
@@ -166,7 +166,7 @@ class OtherServersCopyTest {
             )
         )
         database.insertEpisode(
-            FindroidEpisodeDto(
+            EpisodeEntity(
                 id = id,
                 serverId = serverId,
                 seasonId = seasonId,
@@ -188,7 +188,7 @@ class OtherServersCopyTest {
 
     private suspend fun userData(userId: UserId, itemId: ItemId, toBeSynced: Boolean) =
         database.insertUserData(
-            FindroidUserDataDto(
+            UserDataEntity(
                 userId = userId,
                 itemId = itemId,
                 played = false,

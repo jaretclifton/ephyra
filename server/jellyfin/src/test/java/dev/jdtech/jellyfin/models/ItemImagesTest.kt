@@ -18,7 +18,7 @@ import org.robolectric.annotation.Config
 // Robolectric for android.net.Uri, which the mapper builds the URLs with.
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
-class FindroidImagesTest {
+class ItemImagesTest {
     private val base = "https://jf.example"
     private val seriesId = UUID.fromString("11111111-1111-1111-1111-111111111111")
     private val episodeId = UUID.fromString("22222222-2222-2222-2222-222222222222")
@@ -132,7 +132,7 @@ class FindroidImagesTest {
     @Test
     fun `a downloaded movie's images are the paths the Uri builder gave`() {
         val images =
-            FindroidMovieDto(
+            MovieEntity(
                     id = episodeId.toItemId(),
                     serverId = null,
                     name = "Movie",

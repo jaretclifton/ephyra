@@ -6,7 +6,7 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import java.time.LocalDateTime
 
 @Entity(tableName = "movies")
-data class FindroidMovieDto(
+data class MovieEntity(
     @PrimaryKey val id: ItemId,
     val serverId: String?,
     val name: String,
@@ -23,8 +23,8 @@ data class FindroidMovieDto(
     val genres: List<String>? = null,
 )
 
-fun Movie.toFindroidMovieDto(serverId: String? = null): FindroidMovieDto {
-    return FindroidMovieDto(
+fun Movie.toMovieEntity(serverId: String? = null): MovieEntity {
+    return MovieEntity(
         id = id,
         serverId = serverId,
         name = name,
@@ -42,11 +42,11 @@ fun Movie.toFindroidMovieDto(serverId: String? = null): FindroidMovieDto {
     )
 }
 
-suspend fun FindroidMovieDto.toMovie(database: ServerDatabaseDao, userId: UserId): Movie =
+suspend fun MovieEntity.toMovie(database: ServerDatabaseDao, userId: UserId): Movie =
     toMovie(database, userId, database.getLocalSourcesForItems(listOf(id)))
 
 /** For lists: [localSources] comes from one [getLocalSourcesForItems] call for all items. */
-suspend fun FindroidMovieDto.toMovie(
+suspend fun MovieEntity.toMovie(
     database: ServerDatabaseDao,
     userId: UserId,
     localSources: Map<ItemId, List<ItemSource>>,
@@ -86,7 +86,7 @@ suspend fun FindroidMovieDto.toMovie(
     )
 }
 
-fun FindroidMovieDto.toLocalItemImages(itemId: ItemId): ItemImages {
+fun MovieEntity.toLocalItemImages(itemId: ItemId): ItemImages {
     return ItemImages(
         primary = localImagePath(itemId, "primary"),
         backdrop = localImagePath(itemId, "backdrop"),

@@ -11,7 +11,7 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
     foreignKeys =
         [
             ForeignKey(
-                entity = FindroidShowDto::class,
+                entity = ShowEntity::class,
                 parentColumns = arrayOf("id"),
                 childColumns = arrayOf("seriesId"),
                 onDelete = ForeignKey.CASCADE,
@@ -19,7 +19,7 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
         ],
     indices = [Index("seriesId")],
 )
-data class FindroidSeasonDto(
+data class SeasonEntity(
     @PrimaryKey val id: ItemId,
     val seriesId: ItemId,
     val name: String,
@@ -28,8 +28,8 @@ data class FindroidSeasonDto(
     val indexNumber: Int,
 )
 
-fun Season.toFindroidSeasonDto(): FindroidSeasonDto {
-    return FindroidSeasonDto(
+fun Season.toSeasonEntity(): SeasonEntity {
+    return SeasonEntity(
         id = id,
         seriesId = seriesId,
         name = name,
@@ -39,7 +39,7 @@ fun Season.toFindroidSeasonDto(): FindroidSeasonDto {
     )
 }
 
-suspend fun FindroidSeasonDto.toSeason(database: ServerDatabaseDao, userId: UserId): Season {
+suspend fun SeasonEntity.toSeason(database: ServerDatabaseDao, userId: UserId): Season {
     val userData = database.getUserDataOrCreateNew(id, userId)
     return Season(
         id = id,
@@ -60,7 +60,7 @@ suspend fun FindroidSeasonDto.toSeason(database: ServerDatabaseDao, userId: User
     )
 }
 
-fun FindroidSeasonDto.toLocalItemImages(itemId: ItemId): ItemImages {
+fun SeasonEntity.toLocalItemImages(itemId: ItemId): ItemImages {
     return ItemImages(
         primary = localImagePath(itemId, "primary"),
         backdrop = localImagePath(itemId, "backdrop"),

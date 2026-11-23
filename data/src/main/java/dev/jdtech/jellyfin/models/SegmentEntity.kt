@@ -7,22 +7,17 @@ import androidx.room3.Entity
  * commercial breaks) keeps both.
  */
 @Entity(tableName = "segments", primaryKeys = ["itemId", "type", "startTicks"])
-data class FindroidSegmentDto(
+data class SegmentEntity(
     val itemId: ItemId,
     val type: SegmentType,
     val startTicks: Long,
     val endTicks: Long,
 )
 
-fun Segment.toFindroidSegmentsDto(itemId: ItemId): FindroidSegmentDto {
-    return FindroidSegmentDto(
-        itemId = itemId,
-        type = type,
-        startTicks = startTicks,
-        endTicks = endTicks,
-    )
+fun Segment.toSegmentEntity(itemId: ItemId): SegmentEntity {
+    return SegmentEntity(itemId = itemId, type = type, startTicks = startTicks, endTicks = endTicks)
 }
 
-fun FindroidSegmentDto.toSegment(): Segment {
+fun SegmentEntity.toSegment(): Segment {
     return Segment(type = type, startTicks = startTicks, endTicks = endTicks)
 }

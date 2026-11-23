@@ -8,7 +8,7 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import java.io.File
 
 @Entity(tableName = "sources", indices = [Index("itemId")])
-data class FindroidSourceDto(
+data class ItemSourceEntity(
     @PrimaryKey val id: String,
     val itemId: ItemId,
     val name: String,
@@ -31,8 +31,8 @@ data class FindroidSourceDto(
     @ColumnInfo(defaultValue = "0") val smartQueued: Boolean = false,
 )
 
-fun ItemSource.toFindroidSourceDto(itemId: ItemId, path: String): FindroidSourceDto {
-    return FindroidSourceDto(
+fun ItemSource.toItemSourceEntity(itemId: ItemId, path: String): ItemSourceEntity {
+    return ItemSourceEntity(
         id = id,
         itemId = itemId,
         name = name,
@@ -41,11 +41,11 @@ fun ItemSource.toFindroidSourceDto(itemId: ItemId, path: String): FindroidSource
     )
 }
 
-suspend fun FindroidSourceDto.toItemSource(serverDatabaseDao: ServerDatabaseDao): ItemSource =
+suspend fun ItemSourceEntity.toItemSource(serverDatabaseDao: ServerDatabaseDao): ItemSource =
     toItemSource(serverDatabaseDao.getMediaStreamsBySourceId(id))
 
 /** Maps with already-fetched [streams], so a list of sources costs no query per source. */
-fun FindroidSourceDto.toItemSource(streams: List<FindroidMediaStreamDto>): ItemSource {
+fun ItemSourceEntity.toItemSource(streams: List<MediaStreamEntity>): ItemSource {
     return ItemSource(
         id = id,
         name = name,
@@ -77,7 +77,7 @@ suspend fun ServerDatabaseDao.getLocalSourcesForItems(
 
 private suspend fun ServerDatabaseDao.localSourcesForItems(
     itemIds: Collection<ItemId>,
-    read: suspend (List<ItemId>) -> List<FindroidSourceDto>,
+    read: suspend (List<ItemId>) -> List<ItemSourceEntity>,
 ): Map<ItemId, List<ItemSource>> {
     if (itemIds.isEmpty()) return emptyMap()
     val dtos = itemIds.distinct().chunked(SQL_CHUNK).flatMap { read(it) }

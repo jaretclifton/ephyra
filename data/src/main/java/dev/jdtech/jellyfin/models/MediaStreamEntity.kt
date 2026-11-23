@@ -6,7 +6,7 @@ import androidx.room3.PrimaryKey
 import java.util.UUID
 
 @Entity(tableName = "mediastreams", indices = [Index("sourceId")])
-data class FindroidMediaStreamDto(
+data class MediaStreamEntity(
     @PrimaryKey val id: UUID,
     val sourceId: String,
     val title: String,
@@ -25,12 +25,8 @@ data class FindroidMediaStreamDto(
     val downloadId: Long? = null,
 )
 
-fun MediaStream.toFindroidMediaStreamDto(
-    id: UUID,
-    sourceId: String,
-    path: String,
-): FindroidMediaStreamDto {
-    return FindroidMediaStreamDto(
+fun MediaStream.toMediaStreamEntity(id: UUID, sourceId: String, path: String): MediaStreamEntity {
+    return MediaStreamEntity(
         id = id,
         sourceId = sourceId,
         title = title,
@@ -49,7 +45,7 @@ fun MediaStream.toFindroidMediaStreamDto(
     )
 }
 
-fun FindroidMediaStreamDto.toMediaStream(): MediaStream {
+fun MediaStreamEntity.toMediaStream(): MediaStream {
     return MediaStream(
         title = title,
         displayTitle = displayTitle,
@@ -68,10 +64,9 @@ fun FindroidMediaStreamDto.toMediaStream(): MediaStream {
 }
 
 /**
- * The stored column holds the constant name ([toFindroidMediaStreamDto] writes `name`). It was read
- * by the server's serial name, so `DOVI_WITH_HDR10`, `HDR10_PLUS` and the other values whose two
- * names differ came back as null (#776). The serial name is accepted too, for a row written that
- * way.
+ * The stored column holds the constant name ([toMediaStreamEntity] writes `name`). It was read by
+ * the server's serial name, so `DOVI_WITH_HDR10`, `HDR10_PLUS` and the other values whose two names
+ * differ came back as null (#776). The serial name is accepted too, for a row written that way.
  */
 internal fun storedVideoRangeType(value: String): VideoRangeType? =
     VideoRangeType.entries.firstOrNull { it.name == value }

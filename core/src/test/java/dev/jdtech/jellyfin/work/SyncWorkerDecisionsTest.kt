@@ -1,7 +1,7 @@
 package dev.jdtech.jellyfin.work
 
-import dev.jdtech.jellyfin.models.FindroidUserDataDto
 import dev.jdtech.jellyfin.models.ServerException
+import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
 import java.util.UUID
@@ -15,7 +15,7 @@ class SyncWorkerDecisionsTest {
     private val userId = "00000000-0000-0000-0000-000000000001".toUserId()
 
     private fun row(item: Int, positionTicks: Long = 100L) =
-        FindroidUserDataDto(
+        UserDataEntity(
             userId = userId,
             itemId = UUID(0L, item.toLong()).toString().toItemId(),
             played = false,

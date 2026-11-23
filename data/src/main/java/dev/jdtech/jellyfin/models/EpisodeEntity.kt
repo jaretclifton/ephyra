@@ -12,13 +12,13 @@ import java.time.LocalDateTime
     foreignKeys =
         [
             ForeignKey(
-                entity = FindroidSeasonDto::class,
+                entity = SeasonEntity::class,
                 parentColumns = arrayOf("id"),
                 childColumns = arrayOf("seasonId"),
                 onDelete = ForeignKey.CASCADE,
             ),
             ForeignKey(
-                entity = FindroidShowDto::class,
+                entity = ShowEntity::class,
                 parentColumns = arrayOf("id"),
                 childColumns = arrayOf("seriesId"),
                 onDelete = ForeignKey.CASCADE,
@@ -26,7 +26,7 @@ import java.time.LocalDateTime
         ],
     indices = [Index("seasonId"), Index("seriesId")],
 )
-data class FindroidEpisodeDto(
+data class EpisodeEntity(
     @PrimaryKey val id: ItemId,
     val serverId: String?,
     val seasonId: ItemId,
@@ -43,8 +43,8 @@ data class FindroidEpisodeDto(
     val chapters: List<Chapter>?,
 )
 
-fun Episode.toFindroidEpisodeDto(serverId: String? = null): FindroidEpisodeDto {
-    return FindroidEpisodeDto(
+fun Episode.toEpisodeEntity(serverId: String? = null): EpisodeEntity {
+    return EpisodeEntity(
         id = id,
         serverId = serverId,
         seasonId = seasonId,
@@ -62,11 +62,11 @@ fun Episode.toFindroidEpisodeDto(serverId: String? = null): FindroidEpisodeDto {
     )
 }
 
-suspend fun FindroidEpisodeDto.toEpisode(database: ServerDatabaseDao, userId: UserId): Episode =
+suspend fun EpisodeEntity.toEpisode(database: ServerDatabaseDao, userId: UserId): Episode =
     toEpisode(database, userId, database.getLocalSourcesForItems(listOf(id)))
 
 /** For lists: [localSources] comes from one [getLocalSourcesForItems] call for all items. */
-suspend fun FindroidEpisodeDto.toEpisode(
+suspend fun EpisodeEntity.toEpisode(
     database: ServerDatabaseDao,
     userId: UserId,
     localSources: Map<ItemId, List<ItemSource>>,
@@ -107,7 +107,7 @@ suspend fun FindroidEpisodeDto.toEpisode(
     )
 }
 
-fun FindroidEpisodeDto.toLocalItemImages(itemId: ItemId): ItemImages {
+fun EpisodeEntity.toLocalItemImages(itemId: ItemId): ItemImages {
     return ItemImages(
         primary = localImagePath(itemId, "primary"),
         backdrop = localImagePath(itemId, "backdrop"),

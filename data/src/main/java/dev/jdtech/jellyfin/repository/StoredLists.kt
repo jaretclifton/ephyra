@@ -2,18 +2,18 @@ package dev.jdtech.jellyfin.repository
 
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.CollectionType
-import dev.jdtech.jellyfin.models.FindroidEpisodeDto
-import dev.jdtech.jellyfin.models.FindroidMovieDto
-import dev.jdtech.jellyfin.models.FindroidShowDto
-import dev.jdtech.jellyfin.models.FindroidUserDataDto
+import dev.jdtech.jellyfin.models.EpisodeEntity
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.Library
+import dev.jdtech.jellyfin.models.MovieEntity
+import dev.jdtech.jellyfin.models.ShowEntity
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
+import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
 import dev.jdtech.jellyfin.models.localImagePath
@@ -164,8 +164,8 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
             database.getLocalSourcesForItems(
                 dtos.mapNotNull {
                     when (it) {
-                        is FindroidMovieDto -> it.id
-                        is FindroidEpisodeDto -> it.id
+                        is MovieEntity -> it.id
+                        is EpisodeEntity -> it.id
                         else -> null
                     }
                 },
@@ -173,9 +173,9 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
             )
         return dtos.map {
             when (it) {
-                is FindroidMovieDto -> it.toMovie(database, userId, local)
-                is FindroidShowDto -> it.toShow(database, userId)
-                is FindroidEpisodeDto -> it.toEpisode(database, userId, local)
+                is MovieEntity -> it.toMovie(database, userId, local)
+                is ShowEntity -> it.toShow(database, userId)
+                is EpisodeEntity -> it.toEpisode(database, userId, local)
                 else -> error("Not a stored item: $it")
             }
         }
@@ -188,7 +188,7 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
         name: String,
         val rating: Float?,
         val released: LocalDateTime?,
-        val userData: FindroidUserDataDto?,
+        val userData: UserDataEntity?,
     ) {
         val sortName = sortName(name)
     }
@@ -221,7 +221,7 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
         return entries.filter { entry -> filters.all { entry.userData.matches(it) } }
     }
 
-    private fun FindroidUserDataDto?.matches(filter: ItemFilter): Boolean =
+    private fun UserDataEntity?.matches(filter: ItemFilter): Boolean =
         when (filter) {
             ItemFilter.IS_UNPLAYED -> this?.played != true
         }

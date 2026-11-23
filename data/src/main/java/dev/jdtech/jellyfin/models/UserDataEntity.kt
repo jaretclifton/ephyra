@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 
 @Entity(tableName = "userdata", primaryKeys = ["userId", "itemId"])
-data class FindroidUserDataDto(
+data class UserDataEntity(
     val userId: UserId,
     val itemId: ItemId,
     val played: Boolean,
@@ -20,8 +20,8 @@ data class FindroidUserDataDto(
     val lastPlayedDate: Long? = null,
 )
 
-fun Item.toFindroidUserDataDto(userId: UserId): FindroidUserDataDto {
-    return FindroidUserDataDto(
+fun Item.toUserDataEntity(userId: UserId): UserDataEntity {
+    return UserDataEntity(
         userId = userId,
         itemId = id,
         played = played,

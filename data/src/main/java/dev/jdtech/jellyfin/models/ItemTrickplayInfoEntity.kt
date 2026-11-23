@@ -9,14 +9,14 @@ import androidx.room3.PrimaryKey
     foreignKeys =
         [
             ForeignKey(
-                entity = FindroidSourceDto::class,
+                entity = ItemSourceEntity::class,
                 parentColumns = arrayOf("id"),
                 childColumns = arrayOf("sourceId"),
                 onDelete = ForeignKey.CASCADE,
             )
         ],
 )
-data class FindroidTrickplayInfoDto(
+data class ItemTrickplayInfoEntity(
     @PrimaryKey val sourceId: String,
     val width: Int,
     val height: Int,
@@ -27,8 +27,8 @@ data class FindroidTrickplayInfoDto(
     val bandwidth: Int,
 )
 
-fun ItemTrickplayInfo.toFindroidTrickplayInfoDto(sourceId: String): FindroidTrickplayInfoDto {
-    return FindroidTrickplayInfoDto(
+fun ItemTrickplayInfo.toItemTrickplayInfoEntity(sourceId: String): ItemTrickplayInfoEntity {
+    return ItemTrickplayInfoEntity(
         sourceId = sourceId,
         width = width,
         height = height,
@@ -40,7 +40,7 @@ fun ItemTrickplayInfo.toFindroidTrickplayInfoDto(sourceId: String): FindroidTric
     )
 }
 
-fun FindroidTrickplayInfoDto.toItemTrickplayInfo(): ItemTrickplayInfo {
+fun ItemTrickplayInfoEntity.toItemTrickplayInfo(): ItemTrickplayInfo {
     return ItemTrickplayInfo(
         width = width,
         height = height,

@@ -7,9 +7,9 @@ import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.CollectionSection
-import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.UiText
@@ -216,7 +216,7 @@ class DownloadsViewModelUserSwitchTest {
                 // A finished download of every item asked for.
                 "getSourcesForItems" ->
                     (args!![0] as List<*>).map { id ->
-                        FindroidSourceDto(
+                        ItemSourceEntity(
                             id = "source-$id",
                             itemId = id as ItemId,
                             name = "source",

@@ -4,8 +4,8 @@ import android.app.Application
 import android.content.Context
 import android.os.Environment
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.MediaRepository
@@ -69,7 +69,7 @@ class OrphanSweepTest {
         }
 
     private fun source(file: File) =
-        FindroidSourceDto(
+        ItemSourceEntity(
             id = "source",
             itemId = trackedId,
             name = "Original",
@@ -132,7 +132,7 @@ class OrphanSweepTest {
         assertTrue(orphanArtwork.exists())
     }
 
-    private fun database(sources: List<FindroidSourceDto> = emptyList(), failOn: String? = null) =
+    private fun database(sources: List<ItemSourceEntity> = emptyList(), failOn: String? = null) =
         fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
@@ -141,7 +141,7 @@ class OrphanSweepTest {
                 throw IllegalStateException("database cannot be opened")
             when (method.kotlinName) {
                 "getCompletedDownloadSources" -> sources
-                "getActiveDownloadSources" -> emptyList<FindroidSourceDto>()
+                "getActiveDownloadSources" -> emptyList<ItemSourceEntity>()
                 "getMediaStreamsBySourceId" -> emptyList<Any>()
                 "getAllItemIds" -> listOf(trackedId)
                 else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")

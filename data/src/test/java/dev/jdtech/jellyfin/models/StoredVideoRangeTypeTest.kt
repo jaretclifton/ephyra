@@ -54,12 +54,12 @@ class StoredVideoRangeTypeTest {
     @Test
     fun `every range type survives the entity mappers`() {
         VideoRangeType.entries.forEach { range ->
-            val dto = video(range).toFindroidMediaStreamDto(UUID.randomUUID(), "source", "path")
+            val dto = video(range).toMediaStreamEntity(UUID.randomUUID(), "source", "path")
 
             assertEquals(range.name, dto.videoRangeType)
             assertEquals(range, dto.toMediaStream().videoRangeType)
         }
-        val none = video(null).toFindroidMediaStreamDto(UUID.randomUUID(), "source", "path")
+        val none = video(null).toMediaStreamEntity(UUID.randomUUID(), "source", "path")
         assertNull(none.videoRangeType)
         assertNull(none.toMediaStream().videoRangeType)
     }
@@ -70,7 +70,7 @@ class StoredVideoRangeTypeTest {
         VideoRangeType.entries.forEach { range ->
             val sourceId = "source-${range.name}"
             database.insertMediaStream(
-                video(range).toFindroidMediaStreamDto(UUID.randomUUID(), sourceId, "path")
+                video(range).toMediaStreamEntity(UUID.randomUUID(), sourceId, "path")
             )
 
             val stored = database.getMediaStreamsBySourceId(sourceId).single()

@@ -4,11 +4,11 @@ import android.app.Application
 import android.content.Context
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Episode
-import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.toItemId
@@ -41,7 +41,7 @@ class DownloadQueueCancelTest {
 
     /** The row an earlier attempt left: a partial file and the id of that attempt. */
     private val partialRow =
-        FindroidSourceDto(
+        ItemSourceEntity(
             id = "source",
             itemId = item.id,
             name = "Original",

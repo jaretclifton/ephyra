@@ -4,9 +4,9 @@ import android.app.Application
 import android.content.Context
 import android.os.Environment
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidMediaStreamDto
-import dev.jdtech.jellyfin.models.FindroidSourceDto
+import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.MediaStreamEntity
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.MediaRepository
@@ -52,8 +52,8 @@ class SubtitleFinalizeTest {
     private val itemId = UUID.randomUUID().toString().toItemId()
     private val slowSubtitle = CountDownLatch(1)
 
-    private val sources = ConcurrentHashMap<String, FindroidSourceDto>()
-    private val streams = ConcurrentHashMap<UUID, FindroidMediaStreamDto>()
+    private val sources = ConcurrentHashMap<String, ItemSourceEntity>()
+    private val streams = ConcurrentHashMap<UUID, MediaStreamEntity>()
     private val streamReads = AtomicInteger()
     private val pathUpdates = AtomicInteger()
 
@@ -263,7 +263,7 @@ class SubtitleFinalizeTest {
         assertTrue(File(subtitle.path).exists())
     }
 
-    private fun assertFinalized(row: FindroidMediaStreamDto) {
+    private fun assertFinalized(row: MediaStreamEntity) {
         val finalPath = row.path.removeSuffix(".download")
         assertEquals(finalPath, streams.getValue(row.id).path)
         assertTrue(File(finalPath).length() > 0)
@@ -273,17 +273,17 @@ class SubtitleFinalizeTest {
     private fun downloadingSource() =
         addSource(SOURCE_ID, File(root, "Tracks Movie/Tracks Movie.mkv.download"), VIDEO_ID)
 
-    private fun finishedSource(id: String = SOURCE_ID): FindroidSourceDto {
+    private fun finishedSource(id: String = SOURCE_ID): ItemSourceEntity {
         val file = File(root, "$id/Tracks Movie.mkv")
         file.parentFile!!.mkdirs()
         file.writeBytes(ByteArray(10))
         return addSource(id, file, VIDEO_ID)
     }
 
-    private fun addSource(id: String, file: File, downloadId: Long): FindroidSourceDto {
+    private fun addSource(id: String, file: File, downloadId: Long): ItemSourceEntity {
         file.parentFile!!.mkdirs()
         val source =
-            FindroidSourceDto(
+            ItemSourceEntity(
                 id = id,
                 itemId = itemId,
                 name = "Original",
@@ -295,10 +295,10 @@ class SubtitleFinalizeTest {
         return source
     }
 
-    private fun subtitleRow(source: FindroidSourceDto, downloadId: Long): FindroidMediaStreamDto {
+    private fun subtitleRow(source: ItemSourceEntity, downloadId: Long): MediaStreamEntity {
         val id = UUID.randomUUID()
         val row =
-            FindroidMediaStreamDto(
+            MediaStreamEntity(
                 id = id,
                 sourceId = source.id,
                 title = "Deutsch",

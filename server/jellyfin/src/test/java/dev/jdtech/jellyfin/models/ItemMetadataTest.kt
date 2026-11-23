@@ -35,7 +35,7 @@ import org.robolectric.annotation.Config
 // Robolectric for android.net.Uri, which the image mapping uses.
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
-class FindroidItemMetadataTest {
+class ItemMetadataTest {
     private val id = UUID.fromString("11111111-1111-1111-1111-111111111111")
 
     private val baseUrl = "https://jf.example"
@@ -245,9 +245,9 @@ class FindroidItemMetadataTest {
 
             assertEquals(
                 Instant.parse("2026-11-13T03:02:51Z").toEpochMilli(),
-                movie.toFindroidUserDataDto(id.toUserId()).lastPlayedDate,
+                movie.toUserDataEntity(id.toUserId()).lastPlayedDate,
             )
-            assertNull(never.toFindroidUserDataDto(id.toUserId()).lastPlayedDate)
+            assertNull(never.toUserDataEntity(id.toUserId()).lastPlayedDate)
         } finally {
             TimeZone.setDefault(default)
         }

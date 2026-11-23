@@ -11,12 +11,12 @@ import androidx.work.workDataOf
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Episode
-import dev.jdtech.jellyfin.models.FindroidMediaStreamDto
-import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemTrickplayInfo
+import dev.jdtech.jellyfin.models.MediaStreamEntity
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Playable
@@ -25,18 +25,18 @@ import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.looksLikeJellyfinId
 import dev.jdtech.jellyfin.models.toEpisode
-import dev.jdtech.jellyfin.models.toFindroidEpisodeDto
-import dev.jdtech.jellyfin.models.toFindroidMediaStreamDto
-import dev.jdtech.jellyfin.models.toFindroidMovieDto
-import dev.jdtech.jellyfin.models.toFindroidSeasonDto
-import dev.jdtech.jellyfin.models.toFindroidSegmentsDto
-import dev.jdtech.jellyfin.models.toFindroidShowDto
-import dev.jdtech.jellyfin.models.toFindroidSourceDto
-import dev.jdtech.jellyfin.models.toFindroidTrickplayInfoDto
-import dev.jdtech.jellyfin.models.toFindroidUserDataDto
+import dev.jdtech.jellyfin.models.toEpisodeEntity
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toItemSource
+import dev.jdtech.jellyfin.models.toItemSourceEntity
+import dev.jdtech.jellyfin.models.toItemTrickplayInfoEntity
+import dev.jdtech.jellyfin.models.toMediaStreamEntity
 import dev.jdtech.jellyfin.models.toMovie
+import dev.jdtech.jellyfin.models.toMovieEntity
+import dev.jdtech.jellyfin.models.toSeasonEntity
+import dev.jdtech.jellyfin.models.toSegmentEntity
+import dev.jdtech.jellyfin.models.toShowEntity
+import dev.jdtech.jellyfin.models.toUserDataEntity
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -395,13 +395,13 @@ class DownloaderImpl(
 
             when (item) {
                 is Movie -> {
-                    database.insertMovie(item.toFindroidMovieDto(serverId))
+                    database.insertMovie(item.toMovieEntity(serverId))
                 }
                 is Episode -> {
                     val (show, season) = showAndSeason!!
-                    database.insertShow(show.toFindroidShowDto(serverId))
-                    database.insertSeason(season.toFindroidSeasonDto())
-                    database.insertEpisode(item.toFindroidEpisodeDto(serverId))
+                    database.insertShow(show.toShowEntity(serverId))
+                    database.insertSeason(season.toSeasonEntity())
+                    database.insertEpisode(item.toEpisodeEntity(serverId))
 
                     startImagesDownloader(show)
                     startImagesDownloader(season)
@@ -410,9 +410,9 @@ class DownloaderImpl(
 
             // Before the source row: once that exists, a restart resumes the download and never
             // gets here again (#693).
-            database.replaceSegments(item.id, segments.map { it.toFindroidSegmentsDto(item.id) })
+            database.replaceSegments(item.id, segments.map { it.toSegmentEntity(item.id) })
 
-            val sourceDto = source.toFindroidSourceDto(item.id, destFile.absolutePath)
+            val sourceDto = source.toItemSourceEntity(item.id, destFile.absolutePath)
 
             database.insertSource(
                 sourceDto.copy(
@@ -425,7 +425,7 @@ class DownloaderImpl(
             // is newer than what the server sent with the item: keep it.
             val userId = mediaRepository.getUserId()
             if (database.getUserDataToBeSynced(userId, item.id) == null) {
-                database.insertUserData(item.toFindroidUserDataDto(userId))
+                database.insertUserData(item.toUserDataEntity(userId))
             }
 
             val resolvedStorageIndex = dirs.indexOf(storageLocation)
@@ -727,7 +727,7 @@ class DownloaderImpl(
                         )
                         .absolutePath
                 database.insertMediaStream(
-                    mediaStream.toFindroidMediaStreamDto(id, source.id, streamPath)
+                    mediaStream.toMediaStreamEntity(id, source.id, streamPath)
                 )
                 val downloadId = idCounter.incrementAndGet()
                 engine.start(
@@ -856,7 +856,7 @@ class DownloaderImpl(
      * dropped (its partial discarded).
      */
     private suspend fun restartExternalMediaStreamRows(
-        rows: List<FindroidMediaStreamDto>,
+        rows: List<MediaStreamEntity>,
         serverSource: ItemSource,
         allowMetered: Boolean,
         allowRoaming: Boolean,
@@ -929,7 +929,7 @@ class DownloaderImpl(
         sheets: Map<Int, ByteArray>,
     ) {
         val basePath = "trickplay/${itemId.asString()}/$sourceId"
-        database.insertTrickplayInfo(trickplayInfo.toFindroidTrickplayInfoDto(sourceId))
+        database.insertTrickplayInfo(trickplayInfo.toItemTrickplayInfoEntity(sourceId))
         File(context.filesDir, basePath).mkdirs()
         for ((index, bytes) in sheets) {
             File(context.filesDir, "$basePath/$index").writeBytes(bytes)
@@ -1053,7 +1053,7 @@ class DownloaderImpl(
      * A `.download` row whose file has its final name already: only the rename of a finished
      * transfer makes that file. A task the engine knows is still this session's, and left alone.
      */
-    private fun renamedBeforeStop(source: FindroidSourceDto, downloadId: Long): Boolean {
+    private fun renamedBeforeStop(source: ItemSourceEntity, downloadId: Long): Boolean {
         if (engine.snapshot(downloadId) != null) return false
         val finalFile = File(source.path.removeSuffix(".download"))
         return !File(source.path).exists() && finalFile.isFile && finalFile.length() > 0
@@ -1091,7 +1091,7 @@ class DownloaderImpl(
                     .map { File(it, "downloads").absolutePath }
 
             val knownPaths = mutableSetOf<String>()
-            suspend fun remember(source: FindroidSourceDto) {
+            suspend fun remember(source: ItemSourceEntity) {
                 knownPaths.add(source.path)
                 for (stream in database.getMediaStreamsBySourceId(source.id)) {
                     knownPaths.add(stream.path)
@@ -1229,7 +1229,7 @@ class DownloaderImpl(
             false
         }
 
-    private suspend fun finalizeSource(source: FindroidSourceDto): Boolean {
+    private suspend fun finalizeSource(source: ItemSourceEntity): Boolean {
         if (!source.path.endsWith(".download")) return true
         val finalPath = source.path.removeSuffix(".download")
         val downloadFile = File(source.path)
@@ -1276,7 +1276,7 @@ class DownloaderImpl(
      * each with a download id of its own, kept their `.download` name. Finalizes the ones that are
      * done, and hands the rest to one background job for [source].
      */
-    private suspend fun finalizeMediaStreamsOf(source: FindroidSourceDto) {
+    private suspend fun finalizeMediaStreamsOf(source: ItemSourceEntity) {
         val rows =
             try {
                 unfinishedMediaStreams(source.id)
@@ -1309,7 +1309,7 @@ class DownloaderImpl(
         if (left) finalizeMediaStreamsLater(source)
     }
 
-    private suspend fun unfinishedMediaStreams(sourceId: String): List<FindroidMediaStreamDto> =
+    private suspend fun unfinishedMediaStreams(sourceId: String): List<MediaStreamEntity> =
         database.getMediaStreamsBySourceId(sourceId).filter { it.path.endsWith(".download") }
 
     /**
@@ -1319,7 +1319,7 @@ class DownloaderImpl(
      * are gone (the download was deleted). What it leaves behind keeps its `.download` name for
      * [finalizeFinishedMediaStreams] at the next start.
      */
-    private fun finalizeMediaStreamsLater(source: FindroidSourceDto) {
+    private fun finalizeMediaStreamsLater(source: ItemSourceEntity) {
         mediaStreamFinalizeJobs.compute(source.id) { _, running ->
             running?.takeIf { it.isActive }
                 ?: mediaStreamFinalizeScope.launch {
@@ -1369,7 +1369,7 @@ class DownloaderImpl(
     }
 
     /** Starts the failed or lost subtitle transfers of a finished [source] once more. */
-    private suspend fun restartFailedMediaStreams(source: FindroidSourceDto) {
+    private suspend fun restartFailedMediaStreams(source: ItemSourceEntity) {
         val rows = unfinishedMediaStreams(source.id)
         val snapshots = engine.snapshots(rows.mapNotNull { it.downloadId })
         val failed = rows.filter { row ->
@@ -1422,7 +1422,7 @@ class DownloaderImpl(
      * failed rename keeps the row, which still points at a readable file.
      */
     private suspend fun finalizeMediaStream(
-        mediaStream: FindroidMediaStreamDto,
+        mediaStream: MediaStreamEntity,
         taskGone: Boolean = false,
     ): Boolean {
         if (!mediaStream.path.endsWith(".download")) return true
