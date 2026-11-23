@@ -27,8 +27,17 @@ class StreamSwitchesTest {
     /** The queue: e2 plays, at 0 (original quality), with its default audio track. */
     private var queue = listOf(e1, e2, e3).map { item(it, bitrate = 0, audio = null) }
 
-    /** The quality setting, as the host stores it. */
-    private var setting = 0
+    /** The network in use, and the quality setting of each (CE #837), as the host stores them. */
+    private var network = "wifi"
+    private val settings = mutableMapOf("wifi" to 0, "mobile" to 0)
+
+    /** The quality setting of the network in use. */
+    private var setting: Int
+        get() = settings.getValue(network)
+        set(value) {
+            settings[network] = value
+        }
+
     /** The quality the player shows as playing. */
     private var shown = 0
     private val settingChanges = mutableListOf<Int>()
@@ -77,12 +86,13 @@ class StreamSwitchesTest {
                     shown = bitrate
                 }
 
-                override fun storeBitrate(bitrate: Int) {
-                    setting = bitrate
+                override fun storeBitrate(bitrate: Int): () -> Unit {
+                    val storedIn = network
+                    val before = settings.getValue(storedIn)
+                    settings[storedIn] = bitrate
                     settingChanges += bitrate
+                    return { settings[storedIn] = before }
                 }
-
-                override fun storedBitrate() = setting
 
                 override fun swapIn(rebuilt: List<PlayerItem>) {
                     swaps += rebuilt
@@ -311,6 +321,37 @@ class StreamSwitchesTest {
         fail(360)
 
         assertEquals(720, shown, "the quality shown after the failed pick")
+    }
+
+    @Test
+    fun `a failed pick puts back each network's own setting`() {
+        settings["mobile"] = 720
+        switches.selectBitrate(360)
+        // The network changes and the user picks again before the first switch is in.
+        network = "mobile"
+        switches.selectBitrate(1500)
+        fail(1500)
+
+        assertEquals(mapOf("wifi" to 0, "mobile" to 720), settings, "the settings")
+    }
+
+    @Test
+    fun `a follow keeps the pick it cancels, also when it fails`() {
+        switches.selectBitrate(360)
+        switches.followBitrate(720)
+        fail(720)
+
+        assertEquals(360, setting, "the quality setting")
+        assertEquals(0, shown, "the quality shown")
+    }
+
+    @Test
+    fun `a failed switch goes back to the cap of an item that started meanwhile`() {
+        switches.selectBitrate(360)
+        switches.playingAt(720)
+        fail(360)
+
+        assertEquals(720, shown, "the quality shown")
     }
 
     @Test

@@ -2231,11 +2231,12 @@ constructor(
                         maxBitrate = bitrate
                     }
 
-                    override fun storeBitrate(bitrate: Int) =
-                        resolvePlayback.storeMaxBitrate(pickedNetwork(), bitrate)
-
-                    override fun storedBitrate(): Int =
-                        resolvePlayback.storedMaxBitrate(pickedNetwork())
+                    override fun storeBitrate(bitrate: Int): () -> Unit {
+                        val network = pickedNetwork()
+                        val before = resolvePlayback.storedMaxBitrate(network)
+                        resolvePlayback.storeMaxBitrate(network, bitrate)
+                        return { resolvePlayback.storeMaxBitrate(network, before) }
+                    }
 
                     override fun swapIn(rebuilt: List<PlayerItem>) = swapInQueue(rebuilt)
 
