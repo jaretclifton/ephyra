@@ -3,12 +3,34 @@
 // src/content/docs before each build (those copies are not committed). See devsite/README.md.
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import { execFileSync } from 'node:child_process';
+import path from 'node:path';
+
+/**
+ * In `npm run dev`, copies the repository's Markdown again when it changes, so a refresh shows
+ * the edit. The build runs scripts/sync-docs.mjs once before Astro instead.
+ */
+const syncOnChange = {
+  name: 'ephyra-sync-docs',
+  hooks: {
+    'astro:server:setup': ({ server }) => {
+      const root = path.resolve('..');
+      const sources = [path.join(root, 'docs'), path.join(root, 'CLAUDE.md')];
+      server.watcher.add(sources);
+      server.watcher.on('change', (file) => {
+        if (!sources.some((s) => file.startsWith(s)) || file.includes(`${path.sep}model${path.sep}`)) return;
+        execFileSync(process.execPath, ['scripts/sync-docs.mjs'], { stdio: 'inherit' });
+      });
+    },
+  },
+};
 
 export default defineConfig({
   site: 'https://midasvo.nl',
   base: '/ephyra/dev',
   trailingSlash: 'always',
   integrations: [
+    syncOnChange,
     starlight({
       title: 'Ephyra development',
       description: 'How Ephyra is built: the architecture, the areas of the app, the decisions and how to test a change.',

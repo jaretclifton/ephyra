@@ -18,7 +18,7 @@ Node 24. From this folder:
 
 ```sh
 npm ci                # once
-npm run dev           # live preview of the pages at http://localhost:4321/ephyra/dev/ (no model)
+npm run dev           # live preview at http://localhost:4321/ephyra/dev/ (no model); copies an edited doc again
 npm run build         # pages and model into dist/
 npm run pages         # dist/ and site/ into .pages/ephyra/, as Pages serves them
 npm run check-model   # validate the LikeC4 model
@@ -36,8 +36,9 @@ Links between Markdown files keep working on GitHub; on the site they point at t
 GitHub for a file that is not a page.
 
 When a module or a dependency between modules changes, `./gradlew :architecture:test` fails until
-the generated files are written again:
+the generated files are written again. From the repository root, not `devsite/`:
 
 ```sh
+cd ..
 EPHYRA_WRITE_GENERATED=1 ./gradlew :architecture:test --rerun --tests '*GeneratedDocsTest*'
 ```
