@@ -4,9 +4,11 @@ import android.app.Application
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.MovieEntity
 import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.models.toServerId
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -62,6 +64,8 @@ class PlaybackReportRequestTest {
         val isPaused: String?,
         val playMethod: String?,
         val playSessionId: String?,
+        /** #909: the version the report names. */
+        val mediaSourceId: String? = null,
     )
 
     private fun JsonObject.value(name: String): String? =
@@ -79,14 +83,20 @@ class PlaybackReportRequestTest {
                     isPaused = body.value("IsPaused"),
                     playMethod = body.value("PlayMethod"),
                     playSessionId = body.value("PlaySessionId"),
+                    mediaSourceId = body.value("MediaSourceId"),
                 )
             }
 
     /** Asks for the item's stream and loads it, as the player does, then plays and stops it. */
-    private suspend fun playAndStop(answer: String) {
+    private suspend fun playAndStop(answer: String, version: MediaSourceId? = null) {
         this.answer = answer
         val source = repository.getPlaybackSources(itemId, StandInServer.LOCAL_PLAYER).single()
-        repository.setPlaySession(itemId, source.playSessionId, source.transcoded)
+        repository.setPlaySession(
+            itemId,
+            source.playSessionId,
+            source.transcoded,
+            version ?: source.id,
+        )
         repository.postPlaybackStart(itemId, START, source.transcoded)
         repository.postPlaybackProgress(itemId, PROGRESS, isPaused = true, source.transcoded)
         repository.postPlaybackStop(itemId, STOP, playedPercentage = 30)
@@ -98,7 +108,15 @@ class PlaybackReportRequestTest {
 
         assertEquals(
             listOf(
-                Report("POST /Sessions/Playing", ITEM, "$START", "false", "DirectPlay", null),
+                Report(
+                    "POST /Sessions/Playing",
+                    ITEM,
+                    "$START",
+                    "false",
+                    "DirectPlay",
+                    null,
+                    SOURCE,
+                ),
                 Report(
                     "POST /Sessions/Playing/Progress",
                     ITEM,
@@ -106,8 +124,9 @@ class PlaybackReportRequestTest {
                     "true",
                     "DirectPlay",
                     null,
+                    SOURCE,
                 ),
-                Report("POST /Sessions/Playing/Stopped", ITEM, "$STOP", null, null, null),
+                Report("POST /Sessions/Playing/Stopped", ITEM, "$STOP", null, null, null, SOURCE),
             ),
             reports(),
         )
@@ -119,7 +138,15 @@ class PlaybackReportRequestTest {
 
         assertEquals(
             listOf(
-                Report("POST /Sessions/Playing", ITEM, "$START", "false", "Transcode", SESSION),
+                Report(
+                    "POST /Sessions/Playing",
+                    ITEM,
+                    "$START",
+                    "false",
+                    "Transcode",
+                    SESSION,
+                    SOURCE,
+                ),
                 Report(
                     "POST /Sessions/Playing/Progress",
                     ITEM,
@@ -127,11 +154,24 @@ class PlaybackReportRequestTest {
                     "true",
                     "Transcode",
                     SESSION,
+                    SOURCE,
                 ),
                 // The stop names the session, so the server ends the transcode now.
-                Report("POST /Sessions/Playing/Stopped", ITEM, "$STOP", null, null, SESSION),
+                Report("POST /Sessions/Playing/Stopped", ITEM, "$STOP", null, null, SESSION, SOURCE),
             ),
             reports(),
+        )
+    }
+
+    @Test
+    fun `every report names the version that plays, not the item's first`() = runBlocking {
+        // #909: 360p of an item whose first version is 720p. Without the version the server shows
+        // the 720p one as playing.
+        playAndStop(DIRECT_FILE, version = OTHER_VERSION.toMediaSourceId())
+
+        assertEquals(
+            listOf(OTHER_VERSION, OTHER_VERSION, OTHER_VERSION),
+            reports().map { it.mediaSourceId },
         )
     }
 
@@ -197,6 +237,9 @@ class PlaybackReportRequestTest {
         /** The item id as the reports send it: with dashes, unlike the server's own ids. */
         const val ITEM = "8f086228-6a92-020d-0cb7-35d734765afe"
         const val SESSION = "51c3f794f3da47dcb92c5c42f43f8c88"
+        /** The source of the fixtures: the item's own version. */
+        const val SOURCE = "8f0862286a92020d0cb735d734765afe"
+        const val OTHER_VERSION = "1ddde49396a21990482e6e875764881f"
         const val SERVER = "server"
         const val RUNTIME = 6_000_000_000L // 10 minutes
         /** #868: the start carries the position, here a resume at 1 minute. */

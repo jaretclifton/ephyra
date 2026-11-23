@@ -715,8 +715,12 @@ class MediaRepositoryImpl(
         server.playback.announceCapabilities()
     }
 
-    override fun setPlaySession(itemId: ItemId, playSessionId: String?, transcodes: Boolean) =
-        playSessions.onPlaybackInfo(itemId, playSessionId, transcodes)
+    override fun setPlaySession(
+        itemId: ItemId,
+        playSessionId: String?,
+        transcodes: Boolean,
+        mediaSourceId: MediaSourceId?,
+    ) = playSessions.onPlaybackInfo(itemId, playSessionId, transcodes, mediaSourceId)
 
     override suspend fun postPlaybackStart(
         itemId: ItemId,
@@ -741,6 +745,7 @@ class MediaRepositoryImpl(
                         isPaused = false,
                         transcoded = report.transcoded,
                         playSessionId = report.playSessionId,
+                        mediaSourceId = report.mediaSourceId,
                     )
                 )
             }
@@ -764,6 +769,8 @@ class MediaRepositoryImpl(
                     thresholds = resumeThresholds.get(currentServerId()),
                 )
             val stop = suspend {
+                // CE (#909): the session and the version of one stream, read once.
+                val stream = playSessions.streamOf(itemId)
                 server.playback.reportStopped(
                     PlaybackReport(
                         itemId = itemId,
@@ -771,7 +778,8 @@ class MediaRepositoryImpl(
                         isPaused = false,
                         transcoded = false,
                         // With it the server ends the item's transcode now, not a minute later.
-                        playSessionId = playSessions.sessionOf(itemId),
+                        playSessionId = stream?.playSessionId,
+                        mediaSourceId = stream?.mediaSourceId,
                     )
                 )
             }
@@ -809,6 +817,7 @@ class MediaRepositoryImpl(
                             isPaused = isPaused,
                             transcoded = report.transcoded,
                             playSessionId = report.playSessionId,
+                            mediaSourceId = report.mediaSourceId,
                         )
                     )
                 },

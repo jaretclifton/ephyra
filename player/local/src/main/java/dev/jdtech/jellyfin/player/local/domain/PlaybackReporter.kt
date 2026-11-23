@@ -86,7 +86,12 @@ class PlaybackReporter(
      * so this is where its play session becomes the one the reports name (#728).
      */
     fun onStreamQueued(item: PlayerItem) {
-        repository.setPlaySession(item.itemId, item.playSessionId, item.isTranscoded)
+        repository.setPlaySession(
+            item.itemId,
+            item.playSessionId,
+            item.isTranscoded,
+            item.mediaSourceId,
+        )
     }
 
     /** The player's position and duration on [playing]'s item, both known. */
