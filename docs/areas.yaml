@@ -205,7 +205,7 @@ areas:
 
   - id: settings
     title: Settings
-    summary: "`AppPreferences` (DataStore), the settings tree and its screens on phone and TV."
+    summary: "`AppPreferences` (over SharedPreferences), the settings tree and its screens on phone and TV."
     keywords: [settings, setting, add a setting, preference, preferences, option, toggle, datastore, instellingen, instelling, voorkeur, voorkeuren, optie, schakelaar, AppPreferences, SettingsViewModel, AppPreferencesPorts]
     paths:
       - settings/src/main/java/dev/jdtech/jellyfin/settings/domain/AppPreferences.kt
