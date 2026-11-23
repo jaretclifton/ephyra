@@ -9,6 +9,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 /**
  * The string form of the ids is what Room stores and routes carry (#773): it must come back
@@ -79,6 +81,46 @@ class IdsTest {
         assertEquals(STORED, STORED.toMediaSourceId().asString())
         assertEquals(ServerId("Server-1"), serverId)
         assertNotEquals(dashless.toMediaSourceId(), STORED.toMediaSourceId())
+    }
+
+    /** #918: a route or the Cast custom data holds an id where it held the id's String. */
+    @Serializable
+    private data class WithIds(
+        val itemId: ItemId,
+        val userId: UserId,
+        val serverId: ServerId,
+        val mediaSourceId: MediaSourceId?,
+    )
+
+    @Serializable
+    private data class WithStrings(
+        val itemId: String,
+        val userId: String,
+        val serverId: String,
+        val mediaSourceId: String?,
+    )
+
+    @Test
+    fun `kotlinx-serialization writes and reads an id as the plain string`() {
+        val ids =
+            WithIds(
+                STORED.toItemId(),
+                OTHER.toUserId(),
+                "Server-1".toServerId(),
+                "a".toMediaSourceId(),
+            )
+        val strings = WithStrings(STORED, OTHER, "Server-1", "a")
+        val text = Json.encodeToString(WithStrings.serializer(), strings)
+
+        assertEquals(text, Json.encodeToString(WithIds.serializer(), ids))
+        assertEquals(ids, Json.decodeFromString(WithIds.serializer(), text))
+        assertEquals("\"$STORED\"", Json.encodeToString(ItemId.serializer(), STORED.toItemId()))
+        val noSource =
+            Json.encodeToString(WithStrings.serializer(), strings.copy(mediaSourceId = null))
+        assertEquals(
+            ids.copy(mediaSourceId = null),
+            Json.decodeFromString(WithIds.serializer(), noSource),
+        )
     }
 
     private companion object {

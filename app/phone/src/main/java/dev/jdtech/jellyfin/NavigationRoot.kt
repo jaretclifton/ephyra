@@ -52,9 +52,6 @@ import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.Show
-import dev.jdtech.jellyfin.models.asString
-import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.navigation.navigateOrReuse
 import dev.jdtech.jellyfin.navigation.resumedAction
 import dev.jdtech.jellyfin.presentation.cast.CastHost
@@ -595,9 +592,7 @@ private fun EntryProviderScope<NavKey>.setupEntries(
         ServersScreen(
             navigateToUsers = dropUnlessResumed { navigate(UsersRoute) },
             navigateToAddresses =
-                resumedAction { serverId: ServerId ->
-                    navigate(ServerAddressesRoute(serverId.asString()))
-                },
+                resumedAction { serverId: ServerId -> navigate(ServerAddressesRoute(serverId)) },
             onAddClick = dropUnlessResumed { navigate(AddServerRoute) },
             onBackClick = dropUnlessResumed { goBack() },
             showBack = showBack,
@@ -611,7 +606,7 @@ private fun EntryProviderScope<NavKey>.setupEntries(
     }
     entry<ServerAddressesRoute> { key ->
         ServerAddressesScreen(
-            serverId = key.serverId.toServerId(),
+            serverId = key.serverId,
             navigateBack = dropUnlessResumed { goBack() },
         )
     }
@@ -658,7 +653,7 @@ private fun EntryProviderScope<NavKey>.mainEntries(
                 resumedAction { library ->
                     navigator.navigate(
                         LibraryRoute(
-                            libraryId = library.id.asString(),
+                            libraryId = library.id,
                             libraryName = library.name,
                             libraryType = library.type,
                         )
@@ -692,9 +687,7 @@ private fun EntryProviderScope<NavKey>.mainEntries(
                 resumedAction { item -> navigateToItem(navigator, item, downloadsOnly = true) },
             onShowClick =
                 resumedAction { show ->
-                    navigator.navigate(
-                        DownloadedShowRoute(showId = show.id.asString(), showName = show.name)
-                    )
+                    navigator.navigate(DownloadedShowRoute(showId = show.id, showName = show.name))
                 },
             onBrowseLibraryClick = dropUnlessResumed { navigator.navigate(MediaRoute) },
             onStorageClick =
@@ -705,7 +698,7 @@ private fun EntryProviderScope<NavKey>.mainEntries(
     }
     entry<DownloadedShowRoute> { key ->
         DownloadedShowScreen(
-            showId = key.showId.toItemId(),
+            showId = key.showId,
             showName = key.showName,
             navigateBack = dropUnlessResumed { navigator.goBack() },
             onEpisodeClick = resumedAction { item -> navigateToItem(navigator, item) },
@@ -713,7 +706,7 @@ private fun EntryProviderScope<NavKey>.mainEntries(
     }
     entry<LibraryRoute> { key ->
         LibraryScreen(
-            libraryId = key.libraryId.toItemId(),
+            libraryId = key.libraryId,
             libraryName = key.libraryName,
             libraryType = key.libraryType,
             onItemClick = resumedAction { item -> navigateToItem(navigator, item) },
@@ -722,7 +715,7 @@ private fun EntryProviderScope<NavKey>.mainEntries(
     }
     entry<CollectionRoute> { key ->
         CollectionScreen(
-            collectionId = key.collectionId.toItemId(),
+            collectionId = key.collectionId,
             collectionName = key.collectionName,
             onItemClick = resumedAction { item -> navigateToItem(navigator, item) },
             navigateBack = dropUnlessResumed { navigator.goBack() },
@@ -733,19 +726,17 @@ private fun EntryProviderScope<NavKey>.mainEntries(
     }
     entry<MovieRoute> { key ->
         MovieScreen(
-            movieId = key.movieId.toItemId(),
+            movieId = key.movieId,
             navigateBack = dropUnlessResumed { navigator.goBack() },
             navigateHome = dropUnlessResumed { navigator.navigateHome() },
             navigateToItem = resumedAction { item -> navigateToItem(navigator, item) },
             navigateToPerson =
-                resumedAction { personId ->
-                    navigator.navigate(PersonRoute(personId = personId.asString()))
-                },
+                resumedAction { personId -> navigator.navigate(PersonRoute(personId = personId)) },
         )
     }
     entry<ShowRoute> { key ->
         ShowScreen(
-            showId = key.showId.toItemId(),
+            showId = key.showId,
             downloadsOnly = key.downloadsOnly,
             navigateBack = dropUnlessResumed { navigator.goBack() },
             navigateHome = dropUnlessResumed { navigator.navigateHome() },
@@ -754,15 +745,13 @@ private fun EntryProviderScope<NavKey>.mainEntries(
                     navigateToItem(navigator, item, downloadsOnly = key.downloadsOnly)
                 },
             navigateToPerson =
-                resumedAction { personId ->
-                    navigator.navigate(PersonRoute(personId = personId.asString()))
-                },
+                resumedAction { personId -> navigator.navigate(PersonRoute(personId = personId)) },
         )
     }
     entry<SeasonRoute> { key ->
         SeasonScreen(
-            seasonId = key.seasonId.toItemId(),
-            seriesId = key.seriesId?.toItemId(),
+            seasonId = key.seasonId,
+            seriesId = key.seriesId,
             downloadsOnly = key.downloadsOnly,
             navigateBack = dropUnlessResumed { navigator.goBack() },
             navigateHome = dropUnlessResumed { navigator.navigateHome() },
@@ -773,39 +762,33 @@ private fun EntryProviderScope<NavKey>.mainEntries(
             navigateToSeries =
                 resumedAction { seriesId ->
                     navigator.navigateOrReuse(
-                        ShowRoute(showId = seriesId.asString(), downloadsOnly = key.downloadsOnly)
+                        ShowRoute(showId = seriesId, downloadsOnly = key.downloadsOnly)
                     )
                 },
             navigateToPerson =
-                resumedAction { personId ->
-                    navigator.navigate(PersonRoute(personId = personId.asString()))
-                },
+                resumedAction { personId -> navigator.navigate(PersonRoute(personId = personId)) },
         )
     }
     entry<EpisodeRoute> { key ->
         EpisodeScreen(
-            episodeId = key.episodeId.toItemId(),
+            episodeId = key.episodeId,
             navigateBack = dropUnlessResumed { navigator.goBack() },
             navigateHome = dropUnlessResumed { navigator.navigateHome() },
             navigateToPerson =
-                resumedAction { personId ->
-                    navigator.navigate(PersonRoute(personId = personId.asString()))
-                },
+                resumedAction { personId -> navigator.navigate(PersonRoute(personId = personId)) },
             navigateToSeason =
                 resumedAction { seasonId, seriesId ->
-                    navigator.navigateOrReuse(
-                        SeasonRoute(seasonId = seasonId.asString(), seriesId = seriesId.asString())
-                    )
+                    navigator.navigateOrReuse(SeasonRoute(seasonId = seasonId, seriesId = seriesId))
                 },
             navigateToSeries =
                 resumedAction { seriesId ->
-                    navigator.navigateOrReuse(ShowRoute(showId = seriesId.asString()))
+                    navigator.navigateOrReuse(ShowRoute(showId = seriesId))
                 },
         )
     }
     entry<PersonRoute> { key ->
         PersonScreen(
-            personId = key.personId.toItemId(),
+            personId = key.personId,
             navigateBack = dropUnlessResumed { navigator.goBack() },
             navigateHome = dropUnlessResumed { navigator.navigateHome() },
             navigateToItem = resumedAction { item -> navigateToItem(navigator, item) },
@@ -854,35 +837,26 @@ private fun EntryProviderScope<NavKey>.mainEntries(
 private fun navigateToItem(navigator: Navigator, item: Item, downloadsOnly: Boolean = false) {
     when (item) {
         is BoxSet ->
-            navigator.navigate(
-                CollectionRoute(collectionId = item.id.asString(), collectionName = item.name)
-            )
-        is Movie -> navigator.navigate(MovieRoute(movieId = item.id.asString()))
-        is Show ->
-            navigator.navigate(
-                ShowRoute(showId = item.id.asString(), downloadsOnly = downloadsOnly)
-            )
+            navigator.navigate(CollectionRoute(collectionId = item.id, collectionName = item.name))
+        is Movie -> navigator.navigate(MovieRoute(movieId = item.id))
+        is Show -> navigator.navigate(ShowRoute(showId = item.id, downloadsOnly = downloadsOnly))
         is Season ->
             navigator.navigate(
                 SeasonRoute(
-                    seasonId = item.id.asString(),
+                    seasonId = item.id,
                     downloadsOnly = downloadsOnly,
-                    seriesId = item.seriesId.asString(),
+                    seriesId = item.seriesId,
                 )
             )
-        is Episode -> navigator.navigate(EpisodeRoute(episodeId = item.id.asString()))
+        is Episode -> navigator.navigate(EpisodeRoute(episodeId = item.id))
         is Library ->
             navigator.navigate(
-                LibraryRoute(
-                    libraryId = item.id.asString(),
-                    libraryName = item.name,
-                    libraryType = item.type,
-                )
+                LibraryRoute(libraryId = item.id, libraryName = item.name, libraryType = item.type)
             )
         is Folder ->
             navigator.navigate(
                 LibraryRoute(
-                    libraryId = item.id.asString(),
+                    libraryId = item.id,
                     libraryName = item.name,
                     libraryType = CollectionType.Folders,
                 )

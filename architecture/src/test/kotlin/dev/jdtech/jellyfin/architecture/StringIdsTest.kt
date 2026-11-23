@@ -12,9 +12,9 @@ import kotlin.test.assertTrue
  * adapter (`server/jellyfin`, which maps the SDK's strings) declares one of these names with a
  * `String` type.
  *
- * `architecture/baseline/string-ids.txt` is an allowlist: the serialized forms that carry the id as
- * text by design (navigation routes, the Cast receiver's custom data), each with its reason. A text
- * check, as R1 and R10; comments do not count.
+ * No exceptions. The serialized forms that once kept the id as text (the navigation routes, the
+ * Cast receiver's custom data) hold the typed id since #918: the ids are `@Serializable` and write
+ * the same plain string. A text check, as R1 and R10; comments do not count.
  */
 class StringIdsTest {
 
@@ -35,20 +35,14 @@ class StringIdsTest {
                 "the wrong text",
         )
 
-        val baseline = Baseline("string-ids.txt")
-        baseline.assertExactly(
-            files.filterValues { typesIdAsString(it.readText()) }.keys,
-            unlisted = {
-                "$it declares a server or media source id as a String outside the Jellyfin " +
-                    "adapter (${ProjectTree.JELLYFIN_ADAPTER_MODULE}). Use ServerId or " +
-                    "MediaSourceId and their helpers (toServerId(), toMediaSourceId(), " +
-                    "asString(), see Ids.kt). Only a serialized form of the kind " +
-                    "${baseline.path} gives a reason for belongs in that list."
-            },
-            stale = {
-                "$it is in the allowlist but no longer types a server or source id as a String: " +
-                    "delete its line from ${baseline.path}."
-            },
+        val offenders = files.filterValues { typesIdAsString(it.readText()) }.keys.sorted()
+        assertEquals(
+            emptyList(),
+            offenders,
+            "These files declare a server or media source id as a String outside the Jellyfin " +
+                "adapter (${ProjectTree.JELLYFIN_ADAPTER_MODULE}). Use ServerId or MediaSourceId " +
+                "and their helpers (toServerId(), toMediaSourceId(), asString(), see Ids.kt). A " +
+                "@Serializable class can hold them too: they serialize as their plain string.",
         )
     }
 

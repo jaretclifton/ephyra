@@ -68,10 +68,9 @@ ids opaque and renamed the repository and the models at once.
 ## The rules
 
 `./gradlew :architecture:test` (part of `testDebugUnitTest`) runs them over the source tree. When
-one fails, fix the code. `architecture/baseline/` has two allowlists, not debt: `uuid-imports.txt`
-(files that may name `java.util.UUID`, for ids the app makes itself) and `string-ids.txt` (files
-that may type a server or source id as `String`: the navigation routes, the Cast custom data). A
-line is added only with a reason of the same kind, given in the PR.
+one fails, fix the code. `architecture/baseline/` has one allowlist, not debt: `uuid-imports.txt`
+(files that may name `java.util.UUID`, for ids the app makes itself). A line is added only with a
+reason of the same kind, given in the PR.
 
 | Rule | Says |
 |---|---|
@@ -83,7 +82,7 @@ line is added only with a reason of the same kind, given in the PR.
 | R7 | Only the apps depend on `server/jellyfin` |
 | R8 | `testing` is only a test dependency |
 | R9 | Only the apps depend on `data` |
-| R10 | No `java.util.UUID` outside the adapter, and no server or source id typed as `String` (the two allowlists) |
+| R10 | No `java.util.UUID` outside the adapter (an allowlist), and no server or source id typed as `String` (no exceptions) |
 | R11 | No production type is named `Findroid*`, and none `Jellyfin*` outside the adapter |
 | R12 | Only `Ticks` declares tick constants and converts ticks by a literal |
 | R13 | Only `DownloadState` (`DownloadFiles`) names the partial download suffix |

@@ -2,8 +2,7 @@ package dev.jdtech.jellyfin.player.cast
 
 import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemSourceType
-import dev.jdtech.jellyfin.models.asString
-import dev.jdtech.jellyfin.models.toMediaSourceId
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.player.core.domain.models.Track
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -33,7 +32,7 @@ internal data class CastTrackData(
  */
 @Serializable
 internal data class CastCustomData(
-    val mediaSourceId: String,
+    val mediaSourceId: MediaSourceId,
     val playSessionId: String? = null,
     val transcoded: Boolean = false,
     val defaultAudioStreamIndex: Int? = null,
@@ -43,7 +42,7 @@ internal data class CastCustomData(
     /** The source the item plays, as far as the reports and [CastMediaItem] need it. */
     fun source(): ItemSource =
         ItemSource(
-            id = mediaSourceId.toMediaSourceId(),
+            id = mediaSourceId,
             name = "",
             type = ItemSourceType.REMOTE,
             path = "",
@@ -76,7 +75,7 @@ internal data class CastCustomData(
 
         fun of(source: ItemSource, tracks: CastTracks) =
             CastCustomData(
-                mediaSourceId = source.id.asString(),
+                mediaSourceId = source.id,
                 playSessionId = source.playSessionId,
                 transcoded = source.transcoded,
                 defaultAudioStreamIndex = source.defaultAudioStreamIndex,
