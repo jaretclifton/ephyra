@@ -5,7 +5,7 @@ import android.content.Context
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
-import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
+import dev.jdtech.jellyfin.models.SeriesTrackPreference
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -51,7 +51,7 @@ class SeriesTrackPreferenceTest {
     @After fun close() = room.close()
 
     private val audio =
-        SeriesTrackPreferenceDto(
+        SeriesTrackPreference(
             userId = userId,
             seriesId = seriesId,
             trackType = TRACK_TYPE_AUDIO,
@@ -81,7 +81,7 @@ class SeriesTrackPreferenceTest {
     fun `a new choice replaces the one before for the same track type`() = runBlocking {
         repository.saveSeriesTrackPreference(audio)
         val subtitlesOff =
-            SeriesTrackPreferenceDto(userId, seriesId, TRACK_TYPE_TEXT, disabled = true)
+            SeriesTrackPreference(userId, seriesId, TRACK_TYPE_TEXT, disabled = true)
         repository.saveSeriesTrackPreference(subtitlesOff)
         val english = audio.copy(language = "eng", title = "English")
         repository.saveSeriesTrackPreference(english)

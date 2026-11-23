@@ -23,8 +23,8 @@ android {
 
 dependencies {
     implementation(projects.player.core)
+    implementation(projects.application)
     implementation(projects.core)
-    implementation(projects.data)
     implementation(projects.domain)
     implementation(projects.settings)
     implementation(libs.androidx.lifecycle.runtime)
@@ -42,6 +42,8 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
+    // #896: PlaylistManagerNextUpTest builds the real MediaRepositoryImpl. Tests only (rule R9).
+    testImplementation(projects.data)
     // #771: FakeMediaServer.
     testImplementation(projects.testing)
 }

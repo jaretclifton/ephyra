@@ -17,6 +17,7 @@ include(":baselineprofile")
 include(":baselineprofile-tv")
 include(":architecture")
 include(":domain")
+include(":application")
 include(":testing")
 
 pluginManagement {

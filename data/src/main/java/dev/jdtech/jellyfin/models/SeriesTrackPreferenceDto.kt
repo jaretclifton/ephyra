@@ -20,3 +20,27 @@ data class SeriesTrackPreferenceDto(
     /** Zero-based position among the tracks with the same language. */
     val positionInLanguage: Int? = null,
 )
+
+/** CE (#896): the stored row as the repository hands it out. */
+fun SeriesTrackPreferenceDto.toSeriesTrackPreference(): SeriesTrackPreference =
+    SeriesTrackPreference(
+        userId = userId,
+        seriesId = seriesId,
+        trackType = trackType,
+        disabled = disabled,
+        language = language,
+        title = title,
+        positionInLanguage = positionInLanguage,
+    )
+
+/** CE (#896): the row that stores [SeriesTrackPreference]. */
+fun SeriesTrackPreference.toSeriesTrackPreferenceDto(): SeriesTrackPreferenceDto =
+    SeriesTrackPreferenceDto(
+        userId = userId,
+        seriesId = seriesId,
+        trackType = trackType,
+        disabled = disabled,
+        language = language,
+        title = title,
+        positionInLanguage = positionInLanguage,
+    )

@@ -8,7 +8,7 @@ import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
-import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
+import dev.jdtech.jellyfin.models.SeriesTrackPreference
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.MediaRepository
@@ -305,7 +305,7 @@ class PlaylistManagerAudioChoiceTest {
 
     private fun repository(
         transcodes: Boolean,
-        saved: SeriesTrackPreferenceDto?,
+        saved: SeriesTrackPreference?,
         failWithAudio: Boolean = false,
         downloaded: Boolean = false,
     ) =
@@ -336,7 +336,7 @@ class PlaylistManagerAudioChoiceTest {
             as MediaRepository
 
     private fun dutch() =
-        SeriesTrackPreferenceDto(
+        SeriesTrackPreference(
             userId = UUID.randomUUID().toString().toUserId(),
             seriesId = episode.seriesId,
             trackType = C.TRACK_TYPE_AUDIO,

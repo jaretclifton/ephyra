@@ -37,6 +37,7 @@ android {
 }
 
 dependencies {
+    implementation(projects.application)
     implementation(projects.data)
     implementation(projects.domain)
     implementation(projects.player.core)

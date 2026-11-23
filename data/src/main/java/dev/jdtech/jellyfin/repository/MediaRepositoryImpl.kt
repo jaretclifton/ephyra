@@ -23,7 +23,7 @@ import dev.jdtech.jellyfin.models.Person
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.models.Segment
-import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
+import dev.jdtech.jellyfin.models.SeriesTrackPreference
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.Show
@@ -37,6 +37,8 @@ import dev.jdtech.jellyfin.models.toItemSource
 import dev.jdtech.jellyfin.models.toMovie
 import dev.jdtech.jellyfin.models.toSeason
 import dev.jdtech.jellyfin.models.toSegment
+import dev.jdtech.jellyfin.models.toSeriesTrackPreference
+import dev.jdtech.jellyfin.models.toSeriesTrackPreferenceDto
 import dev.jdtech.jellyfin.models.toShow
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.File
@@ -578,12 +580,18 @@ class MediaRepositoryImpl(
 
     override suspend fun getSeriesTrackPreferences(
         seriesId: ItemId
-    ): List<SeriesTrackPreferenceDto> =
-        withContext(Dispatchers.IO) { database.getSeriesTrackPreferences(currentUserId, seriesId) }
-
-    override suspend fun saveSeriesTrackPreference(preference: SeriesTrackPreferenceDto) =
+    ): List<SeriesTrackPreference> =
         withContext(Dispatchers.IO) {
-            database.insertSeriesTrackPreference(preference.copy(userId = currentUserId))
+            database.getSeriesTrackPreferences(currentUserId, seriesId).map {
+                it.toSeriesTrackPreference()
+            }
+        }
+
+    override suspend fun saveSeriesTrackPreference(preference: SeriesTrackPreference) =
+        withContext(Dispatchers.IO) {
+            database.insertSeriesTrackPreference(
+                preference.copy(userId = currentUserId).toSeriesTrackPreferenceDto()
+            )
         }
 
     override suspend fun getStreamUrl(itemId: ItemId, mediaSourceId: String): String =
