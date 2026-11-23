@@ -5,6 +5,7 @@ import android.content.ContextWrapper
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
+import dev.jdtech.jellyfin.di.AppPreferencesDownloadSettings
 import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.models.ServerCapabilities
@@ -133,7 +134,7 @@ class SeasonLoadingTest {
             downloadQueue =
                 DownloadQueue(
                     downloader = unused(),
-                    appPreferences = preferences,
+                    settings = AppPreferencesDownloadSettings(preferences),
                     repositoryProvider = { repository },
                     downloadStore = unused<DownloadStore>(),
                     context = ContextWrapper(null) as Context,

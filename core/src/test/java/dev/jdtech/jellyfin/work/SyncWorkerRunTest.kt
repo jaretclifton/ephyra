@@ -14,6 +14,8 @@ import dev.jdtech.jellyfin.database.RoomDownloadStore
 import dev.jdtech.jellyfin.database.RoomPendingUserDataStore
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.di.AppPreferencesCurrentServerId
+import dev.jdtech.jellyfin.di.AppPreferencesDownloadSettings
 import dev.jdtech.jellyfin.domain.ports.ServerUserData
 import dev.jdtech.jellyfin.domain.ports.UserDataSyncPort
 import dev.jdtech.jellyfin.domain.ports.UserDataSyncPorts
@@ -185,14 +187,15 @@ class SyncWorkerRunTest {
         return SmartDownloads(
             DownloadQueue(
                 downloader,
-                preferences,
+                AppPreferencesDownloadSettings(preferences),
                 repository,
                 RoomDownloadStore(database),
                 context,
                 CoreDownloadTexts,
             ),
             downloader,
-            preferences,
+            AppPreferencesDownloadSettings(preferences),
+            AppPreferencesCurrentServerId(preferences),
             RoomDownloadStore(database),
             repository,
             connectivity,

@@ -18,6 +18,8 @@ import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
+import dev.jdtech.jellyfin.utils.download.TestCurrentServerId
+import dev.jdtech.jellyfin.utils.download.TestDownloadSettings
 import dev.jdtech.jellyfin.utils.download.TestDownloadTexts
 import java.io.File
 import java.util.UUID
@@ -193,9 +195,8 @@ class TrickplayDownloadTest {
                 context,
                 RoomDownloadStore(room.getServerDatabaseDao()),
                 Provider { server },
-                AppPreferences(
-                    context.getSharedPreferences("trickplay-download-test", Context.MODE_PRIVATE)
-                ),
+                TestDownloadSettings(),
+                TestCurrentServerId(),
                 Provider { error("No WorkManager in this test") },
                 MediaDownloadEngine(OkHttpClient(), Online),
                 TestDownloadTexts,

@@ -26,10 +26,11 @@ import dev.jdtech.jellyfin.models.toMovie
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.MediaRepository
-import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
+import dev.jdtech.jellyfin.utils.download.TestCurrentServerId
+import dev.jdtech.jellyfin.utils.download.TestDownloadSettings
 import dev.jdtech.jellyfin.utils.download.TestDownloadTexts
 import java.io.File
 import javax.inject.Provider
@@ -70,8 +71,7 @@ class OtherServersCopyTest {
             .setDriver(AndroidSQLiteDriver())
             .build()
     private val database: ServerDatabaseDao = room.getServerDatabaseDao()
-    private val preferences =
-        AppPreferences(context.getSharedPreferences("other-servers-copy", Context.MODE_PRIVATE))
+    private val currentServer = TestCurrentServerId()
     private val dir = File(context.cacheDir, "other-servers-copy").apply { mkdirs() }
 
     /** What the server answers; anything else fails, as with the server gone. */
@@ -90,7 +90,8 @@ class OtherServersCopyTest {
             context,
             RoomDownloadStore(database),
             Provider { repository },
-            preferences,
+            TestDownloadSettings(),
+            currentServer,
             Provider { error("No WorkManager in this test") },
             MediaDownloadEngine(OkHttpClient(), Online),
             TestDownloadTexts,
@@ -103,8 +104,9 @@ class OtherServersCopyTest {
         dir.deleteRecursively()
     }
 
-    private fun current(serverId: String) =
-        preferences.setValue(preferences.currentServer, serverId)
+    private fun current(serverId: String) {
+        currentServer.id = serverId.toServerId()
+    }
 
     private fun file(itemId: ItemId) =
         File(dir, "${itemId.asString()}.mkv").apply { writeText("video") }

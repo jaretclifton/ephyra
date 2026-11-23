@@ -5,6 +5,7 @@ import android.content.ContextWrapper
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
+import dev.jdtech.jellyfin.di.AppPreferencesDownloadSettings
 import dev.jdtech.jellyfin.models.CollectionSection
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
@@ -174,7 +175,7 @@ class DownloadsViewModelUserSwitchTest {
             downloadQueue =
                 DownloadQueue(
                     downloader = unused(),
-                    appPreferences = preferences,
+                    settings = AppPreferencesDownloadSettings(preferences),
                     repositoryProvider = { repository },
                     downloadStore = downloadStore,
                     context = context,

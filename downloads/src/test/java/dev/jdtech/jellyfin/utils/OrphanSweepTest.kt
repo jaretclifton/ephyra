@@ -11,10 +11,11 @@ import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.repository.MediaRepository
-import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
+import dev.jdtech.jellyfin.utils.download.TestCurrentServerId
+import dev.jdtech.jellyfin.utils.download.TestDownloadSettings
 import dev.jdtech.jellyfin.utils.download.TestDownloadTexts
 import java.io.File
 import java.util.UUID
@@ -164,12 +165,12 @@ class OrphanSweepTest {
                 }
             }
                 as MediaRepository
-        val preferences = context.getSharedPreferences("orphan-sweep-test", Context.MODE_PRIVATE)
         return DownloaderImpl(
             context,
             RoomDownloadStore(database),
             Provider { repository },
-            AppPreferences(preferences),
+            TestDownloadSettings(),
+            TestCurrentServerId(),
             Provider { error("No WorkManager in this test") },
             MediaDownloadEngine(OkHttpClient(), Offline),
             TestDownloadTexts,

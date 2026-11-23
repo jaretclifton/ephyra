@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
+import dev.jdtech.jellyfin.di.AppPreferencesDownloadSettings
 import dev.jdtech.jellyfin.film.domain.VideoMetadataParser
 import dev.jdtech.jellyfin.film.presentation.episode.EpisodeViewModel
 import dev.jdtech.jellyfin.film.presentation.movie.MovieViewModel
@@ -146,7 +147,7 @@ class CastAndCrewPreferenceTest {
                 downloadQueue =
                     DownloadQueue(
                         downloader = unused(),
-                        appPreferences = preferences,
+                        settings = AppPreferencesDownloadSettings(preferences),
                         repositoryProvider = { repository },
                         downloadStore = unused<DownloadStore>(),
                         context = ContextWrapper(null) as Context,

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
+import dev.jdtech.jellyfin.di.AppPreferencesDownloadSettings
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.EpisodeField
 import dev.jdtech.jellyfin.models.ItemId
@@ -204,7 +205,7 @@ class ShowLoadingTest {
             downloadQueue =
                 DownloadQueue(
                     downloader = unused(),
-                    appPreferences = preferences,
+                    settings = AppPreferencesDownloadSettings(preferences),
                     repositoryProvider = { repository },
                     downloadStore = unused<DownloadStore>(),
                     context = ContextWrapper(null) as Context,
