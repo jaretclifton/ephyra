@@ -11,7 +11,8 @@ import kotlin.test.assertTrue
  * - no production file outside `domain` declares a function with the name of one of the rules, the
  *   old ones (`stopUserData`, `serverIsNewer`, `isNewerThanServer`, `keepServerProgress`,
  *   `serverUserDataToStore`) or the new ones (`mergeWithServer`, `playedAfter`,
- *   `refreshedFromServer`);
+ *   `refreshedFromServer`, and `PlayState`'s transitions `markedPlayed`, `markedUnplayed`,
+ *   `afterUnplayedReport`, `withFavorite`, `progressed`, `stopped`);
  * - the production code of `data` and of `core`'s `work` package does not compare a `lastPlayed…`
  *   value (`<`, `>`, `<=`, `>=`, `compareTo`) or fall back from one (`?:`), and no query there
  *   keeps a date with `COALESCE(lastPlayedDate, …)`: those decide which date wins, which is what
@@ -65,6 +66,8 @@ class PlayStateRulesTest {
             fun PlayState.mergeWithServer(server: PlayState?): SyncMerge = TODO()
             fun <T> stopUserData(a: T) {}
             fun isNewerThanServerAgain() {}
+            private fun PlayState.withFavorite(favorite: Boolean) = copy(favorite = favorite)
+            fun of(x: Int) = x
             val a = row.lastPlayedDate > server
             val b = local < userData.lastPlayedDate
             val c = lastPlayedMillis ?: now
@@ -79,7 +82,13 @@ class PlayStateRulesTest {
             """
                 .trimIndent()
         assertEquals(
-            listOf("serverIsNewer", "keepServerProgress", "mergeWithServer", "stopUserData"),
+            listOf(
+                "serverIsNewer",
+                "keepServerProgress",
+                "mergeWithServer",
+                "stopUserData",
+                "withFavorite",
+            ),
             declaredRules(source),
         )
         assertEquals(
@@ -113,6 +122,13 @@ class PlayStateRulesTest {
                 "mergeWithServer",
                 "playedAfter",
                 "refreshedFromServer",
+                // PlayState's own transitions. `PlayStop.of` is left out: `of` is a common name.
+                "markedPlayed",
+                "markedUnplayed",
+                "afterUnplayedReport",
+                "withFavorite",
+                "progressed",
+                "stopped",
             )
 
         /** `fun`, type parameters, a receiver, then the name and its parameter list. */
