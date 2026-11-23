@@ -26,15 +26,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummySeason
 import dev.jdtech.jellyfin.film.presentation.show.SeasonDownloadInfo
-import dev.jdtech.jellyfin.models.FindroidSeason
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.presentation.components.BaseDialog
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 
 @Composable
 fun SeasonSelectionDialog(
-    seasons: List<FindroidSeason>,
+    seasons: List<Season>,
     onConfirm: (selectedSeasonIds: Set<ItemId>) -> Unit,
     onDismiss: () -> Unit,
     initialSelection: Set<ItemId> = seasons.map { it.id }.toSet(),
@@ -90,7 +90,7 @@ fun SeasonSelectionDialog(
 
 @Composable
 private fun SeasonSelectionDialogItem(
-    season: FindroidSeason,
+    season: Season,
     checked: Boolean,
     downloadInfo: SeasonDownloadInfo?,
     onCheckedChange: (ItemId) -> Unit,

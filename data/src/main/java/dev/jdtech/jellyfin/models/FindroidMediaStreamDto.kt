@@ -25,7 +25,7 @@ data class FindroidMediaStreamDto(
     val downloadId: Long? = null,
 )
 
-fun FindroidMediaStream.toFindroidMediaStreamDto(
+fun MediaStream.toFindroidMediaStreamDto(
     id: UUID,
     sourceId: String,
     path: String,
@@ -49,8 +49,8 @@ fun FindroidMediaStream.toFindroidMediaStreamDto(
     )
 }
 
-fun FindroidMediaStreamDto.toFindroidMediaStream(): FindroidMediaStream {
-    return FindroidMediaStream(
+fun FindroidMediaStreamDto.toMediaStream(): MediaStream {
+    return MediaStream(
         title = title,
         displayTitle = displayTitle,
         language = language,

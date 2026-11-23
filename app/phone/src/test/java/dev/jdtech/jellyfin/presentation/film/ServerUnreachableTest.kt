@@ -43,9 +43,9 @@ import dev.jdtech.jellyfin.film.presentation.library.LibraryState
 import dev.jdtech.jellyfin.film.presentation.media.MediaState
 import dev.jdtech.jellyfin.film.presentation.search.SearchState
 import dev.jdtech.jellyfin.models.CollectionSection
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidTrailer
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ServerException
+import dev.jdtech.jellyfin.models.Trailer
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.presentation.film.components.ErrorState
 import dev.jdtech.jellyfin.presentation.film.components.ItemButtonsBar
@@ -700,7 +700,7 @@ class ServerUnreachableTest {
 
     private fun setLibrary(
         downloadsOnly: Boolean,
-        items: PagingData<FindroidItem> = PagingData.from(listOf<FindroidItem>(dummyMovie)),
+        items: PagingData<Item> = PagingData.from(listOf<Item>(dummyMovie)),
     ) = setContent {
         LibraryScreenLayout(
             libraryName = "Movies",
@@ -711,7 +711,7 @@ class ServerUnreachableTest {
     }
 
     /** A real library whose first load found the server away. */
-    private val failedLibrary: PagingData<FindroidItem>
+    private val failedLibrary: PagingData<Item>
         get() =
             PagingData.from(
                 emptyList(),
@@ -864,7 +864,7 @@ class ServerUnreachableTest {
             item =
                 dummyMovie.copy(
                     canDownload = true,
-                    trailers = listOf(FindroidTrailer(name = null, url = "https://example.org/t")),
+                    trailers = listOf(Trailer(name = null, url = "https://example.org/t")),
                 ),
             onPlayClick = {},
             onMarkAsPlayedClick = {},

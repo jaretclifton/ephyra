@@ -1,8 +1,8 @@
 package dev.jdtech.jellyfin.presentation.cast
 
-import dev.jdtech.jellyfin.models.FindroidSegment
-import dev.jdtech.jellyfin.models.FindroidSegmentType
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.Segment
+import dev.jdtech.jellyfin.models.SegmentType
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.cast.models.CastAvailability
 import dev.jdtech.jellyfin.player.cast.models.CastConnectionState
@@ -52,10 +52,10 @@ internal object CastPreviews {
                 ),
             segments =
                 listOf(
-                    FindroidSegment(FindroidSegmentType.RECAP, 0L, 60_000L),
-                    FindroidSegment(FindroidSegmentType.INTRO, 60_000L, 120_000L),
-                    FindroidSegment(FindroidSegmentType.OUTRO, 2_160_000L, 2_250_000L),
-                    FindroidSegment(FindroidSegmentType.PREVIEW, 2_250_000L, 2_280_000L),
+                    Segment(SegmentType.RECAP, 0L, 60_000L),
+                    Segment(SegmentType.INTRO, 60_000L, 120_000L),
+                    Segment(SegmentType.OUTRO, 2_160_000L, 2_250_000L),
+                    Segment(SegmentType.PREVIEW, 2_250_000L, 2_280_000L),
                 ),
             audioTracks =
                 listOf(

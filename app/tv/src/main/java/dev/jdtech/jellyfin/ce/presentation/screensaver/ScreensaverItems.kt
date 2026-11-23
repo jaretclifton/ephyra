@@ -1,6 +1,6 @@
 package dev.jdtech.jellyfin.ce.presentation.screensaver
 
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
@@ -18,10 +18,7 @@ private const val SCREENSAVER_LIMIT = 100
  * server pick from the whole library (sorting by name and shuffling would only ever show the start
  * of the alphabet). "Recently added" keeps the newest first. Empty when loading fails.
  */
-internal suspend fun loadScreensaverItems(
-    repository: MediaRepository,
-    source: String,
-): List<FindroidItem> =
+internal suspend fun loadScreensaverItems(repository: MediaRepository, source: String): List<Item> =
     try {
         if (source == SCREENSAVER_SOURCE_RECENTLY_ADDED) {
             repository

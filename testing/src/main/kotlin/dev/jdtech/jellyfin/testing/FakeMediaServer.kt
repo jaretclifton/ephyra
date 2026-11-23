@@ -12,26 +12,26 @@ import dev.jdtech.jellyfin.domain.ports.RequestWatcher
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.domain.ports.UserDataPort
 import dev.jdtech.jellyfin.domain.ports.UserImage
+import dev.jdtech.jellyfin.models.BoxSet
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.EpisodeField
-import dev.jdtech.jellyfin.models.FindroidBoxSet
-import dev.jdtech.jellyfin.models.FindroidCollection
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidPerson
-import dev.jdtech.jellyfin.models.FindroidSeason
-import dev.jdtech.jellyfin.models.FindroidSegment
-import dev.jdtech.jellyfin.models.FindroidShow
-import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.models.MediaSourceId
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Person
 import dev.jdtech.jellyfin.models.PlaybackTarget
+import dev.jdtech.jellyfin.models.Season
+import dev.jdtech.jellyfin.models.Segment
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.ServerType
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.UserId
@@ -143,20 +143,20 @@ class FakeMediaServer(
 
     private fun notFound(): Nothing = throw ServerException.HttpStatus(404)
 
-    private fun stored(id: ItemId): FindroidItem? =
+    private fun stored(id: ItemId): Item? =
         library.items.firstOrNull { it.id == id } ?: library.libraries.firstOrNull { it.id == id }
 
-    private fun episodesOf(seriesId: ItemId): List<FindroidEpisode> =
+    private fun episodesOf(seriesId: ItemId): List<Episode> =
         library.items
-            .filterIsInstance<FindroidEpisode>()
+            .filterIsInstance<Episode>()
             .filter { it.seriesId == seriesId }
             .sortedWith(compareBy({ it.parentIndexNumber }, { it.indexNumber }))
-            .map { current(it) as FindroidEpisode }
+            .map { current(it) as Episode }
 
-    private fun current(item: FindroidItem): FindroidItem {
+    private fun current(item: Item): Item {
         val mark = marks[item.id]
         return when (item) {
-            is FindroidMovie ->
+            is Movie ->
                 mark?.let {
                     item.copy(
                         played = it.played,
@@ -164,7 +164,7 @@ class FakeMediaServer(
                         playbackPositionTicks = it.positionTicks,
                     )
                 } ?: item
-            is FindroidEpisode ->
+            is Episode ->
                 mark?.let {
                     item.copy(
                         played = it.played,
@@ -172,7 +172,7 @@ class FakeMediaServer(
                         playbackPositionTicks = it.positionTicks,
                     )
                 } ?: item
-            is FindroidShow -> {
+            is Show -> {
                 val unplayed = episodesOf(item.id).count { !it.played }
                 item.copy(
                     played = unplayed == 0,
@@ -180,9 +180,9 @@ class FakeMediaServer(
                     unplayedItemCount = unplayed,
                 )
             }
-            is FindroidSeason -> {
+            is Season -> {
                 val unplayed =
-                    library.items.filterIsInstance<FindroidEpisode>().count {
+                    library.items.filterIsInstance<Episode>().count {
                         it.seasonId == item.id && marks[it.id]?.played != true
                     }
                 item.copy(
@@ -191,60 +191,60 @@ class FakeMediaServer(
                     unplayedItemCount = unplayed,
                 )
             }
-            is FindroidBoxSet -> mark?.let { item.copy(favorite = it.favorite) } ?: item
+            is BoxSet -> mark?.let { item.copy(favorite = it.favorite) } ?: item
             else -> item
         }
     }
 
-    private fun currentItem(id: ItemId): FindroidItem = current(stored(id) ?: notFound())
+    private fun currentItem(id: ItemId): Item = current(stored(id) ?: notFound())
 
-    private fun kindOf(item: FindroidItem): ItemKind =
+    private fun kindOf(item: Item): ItemKind =
         when (item) {
-            is FindroidMovie -> ItemKind.MOVIE
-            is FindroidShow -> ItemKind.SERIES
-            is FindroidSeason -> ItemKind.SEASON
-            is FindroidEpisode -> ItemKind.EPISODE
-            is FindroidBoxSet -> ItemKind.BOX_SET
-            is FindroidCollection -> ItemKind.COLLECTION_FOLDER
+            is Movie -> ItemKind.MOVIE
+            is Show -> ItemKind.SERIES
+            is Season -> ItemKind.SEASON
+            is Episode -> ItemKind.EPISODE
+            is BoxSet -> ItemKind.BOX_SET
+            is Library -> ItemKind.COLLECTION_FOLDER
             else -> ItemKind.UNKNOWN
         }
 
     /** The direct children of [id], or of the user's root (the libraries) for null. */
-    private fun childrenOf(id: ItemId?): List<FindroidItem> {
+    private fun childrenOf(id: ItemId?): List<Item> {
         if (id == null) return library.libraries
         library.children[id]?.let { ids ->
             return ids.mapNotNull(::stored)
         }
         val parent = stored(id) ?: notFound()
         return when (parent) {
-            is FindroidShow ->
+            is Show ->
                 library.items
-                    .filterIsInstance<FindroidSeason>()
+                    .filterIsInstance<Season>()
                     .filter { it.seriesId == id }
                     .sortedBy { it.indexNumber }
-            is FindroidSeason ->
+            is Season ->
                 library.items
-                    .filterIsInstance<FindroidEpisode>()
+                    .filterIsInstance<Episode>()
                     .filter { it.seasonId == id }
                     .sortedBy { it.indexNumber }
             else -> emptyList()
         }
     }
 
-    private fun descendantsOf(id: ItemId?): List<FindroidItem> =
+    private fun descendantsOf(id: ItemId?): List<Item> =
         childrenOf(id).flatMap { listOf(it) + descendantsOf(it.id) }.distinctBy { it.id }
 
-    private fun select(query: ItemQuery): List<FindroidItem> {
+    private fun select(query: ItemQuery): List<Item> {
         val candidates =
             when {
                 query.parentId == null && query.recursive -> library.items
                 query.recursive -> descendantsOf(query.parentId)
                 else -> childrenOf(query.parentId)
             }
-        val comparator: Comparator<FindroidItem> =
+        val comparator: Comparator<Item> =
             when (query.sortBy) {
                 SortBy.NAME -> compareBy { it.name.lowercase() }
-                else -> compareBy<FindroidItem> { it.name.lowercase() }
+                else -> compareBy<Item> { it.name.lowercase() }
             }
         return candidates
             .map(::current)
@@ -258,27 +258,25 @@ class FakeMediaServer(
     private inner class Catalog : CatalogPort {
         override suspend fun serverInfo(): ServerInfo = call("serverInfo") { library.server }
 
-        override suspend fun libraries(): List<FindroidCollection> =
-            call("libraries") { library.libraries }
+        override suspend fun libraries(): List<Library> = call("libraries") { library.libraries }
 
-        override suspend fun userViews(): List<FindroidCollection> =
-            call("userViews") { library.libraries }
+        override suspend fun userViews(): List<Library> = call("userViews") { library.libraries }
 
         /** A person is a kind the app does not handle as an item: null, as from an adapter. */
-        override suspend fun item(id: ItemId): FindroidItem? =
+        override suspend fun item(id: ItemId): Item? =
             call("item") { if (library.people.any { it.id == id }) null else currentItem(id) }
 
-        override suspend fun movie(id: ItemId): FindroidMovie =
-            call("movie") { currentItem(id) as? FindroidMovie ?: notFound() }
+        override suspend fun movie(id: ItemId): Movie =
+            call("movie") { currentItem(id) as? Movie ?: notFound() }
 
-        override suspend fun show(id: ItemId): FindroidShow =
-            call("show") { currentItem(id) as? FindroidShow ?: notFound() }
+        override suspend fun show(id: ItemId): Show =
+            call("show") { currentItem(id) as? Show ?: notFound() }
 
-        override suspend fun season(id: ItemId): FindroidSeason =
-            call("season") { currentItem(id) as? FindroidSeason ?: notFound() }
+        override suspend fun season(id: ItemId): Season =
+            call("season") { currentItem(id) as? Season ?: notFound() }
 
-        override suspend fun episode(id: ItemId): FindroidEpisode =
-            call("episode") { currentItem(id) as? FindroidEpisode ?: notFound() }
+        override suspend fun episode(id: ItemId): Episode =
+            call("episode") { currentItem(id) as? Episode ?: notFound() }
 
         override suspend fun items(query: ItemQuery, includeTotal: Boolean): ItemsPage =
             call("items") {
@@ -295,7 +293,7 @@ class FakeMediaServer(
         override suspend fun randomItemsWithBackdrop(
             kinds: List<ItemKind>,
             limit: Int,
-        ): List<FindroidItem> =
+        ): List<Item> =
             call("randomItemsWithBackdrop") {
                 library.items
                     .filter { kindOf(it) in kinds && it.images.backdrop != null }
@@ -304,7 +302,7 @@ class FakeMediaServer(
                     .take(limit)
             }
 
-        override suspend fun person(id: ItemId): FindroidPerson =
+        override suspend fun person(id: ItemId): Person =
             call("person") { library.people.firstOrNull { it.id == id } ?: notFound() }
 
         override suspend fun personItems(
@@ -312,7 +310,7 @@ class FakeMediaServer(
             kinds: List<ItemKind>?,
             recursive: Boolean,
             limit: Int?,
-        ): List<FindroidItem> =
+        ): List<Item> =
             call("personItems") {
                 personIds
                     .flatMap { library.personItems[it].orEmpty() }
@@ -323,7 +321,7 @@ class FakeMediaServer(
                     .take(limit ?: Int.MAX_VALUE)
             }
 
-        override suspend fun favorites(): List<FindroidItem> =
+        override suspend fun favorites(): List<Item> =
             call("favorites") {
                 library.items.map(::current).filter {
                     it.favorite &&
@@ -331,7 +329,7 @@ class FakeMediaServer(
                 }
             }
 
-        override suspend fun search(query: String, kinds: List<ItemKind>?): List<FindroidItem> =
+        override suspend fun search(query: String, kinds: List<ItemKind>?): List<Item> =
             call("search") {
                 fun matching(kind: ItemKind, limit: Int) =
                     library.items
@@ -347,7 +345,7 @@ class FakeMediaServer(
                 }
             }
 
-        override suspend fun suggestions(): List<FindroidItem> =
+        override suspend fun suggestions(): List<Item> =
             call("suggestions") {
                 library.items
                     .filter { kindOf(it) == ItemKind.MOVIE || kindOf(it) == ItemKind.SERIES }
@@ -355,19 +353,17 @@ class FakeMediaServer(
                     .take(6)
             }
 
-        override suspend fun resumeItems(): List<FindroidItem> =
+        override suspend fun resumeItems(): List<Item> =
             call("resumeItems") {
                 library.items
                     .map(::current)
                     .filter {
-                        (it is FindroidMovie || it is FindroidEpisode) &&
-                            !it.played &&
-                            it.playbackPositionTicks > 0
+                        (it is Movie || it is Episode) && !it.played && it.playbackPositionTicks > 0
                     }
                     .take(12)
             }
 
-        override suspend fun latest(parentId: ItemId, kinds: List<ItemKind>?): List<FindroidItem> =
+        override suspend fun latest(parentId: ItemId, kinds: List<ItemKind>?): List<Item> =
             call("latest") {
                 childrenOf(parentId)
                     .map(::current)
@@ -375,10 +371,10 @@ class FakeMediaServer(
                     .take(16)
             }
 
-        override suspend fun seasons(seriesId: ItemId): List<FindroidSeason> =
+        override suspend fun seasons(seriesId: ItemId): List<Season> =
             call("seasons") {
-                if (stored(seriesId) !is FindroidShow) notFound()
-                childrenOf(seriesId).map { current(it) as FindroidSeason }
+                if (stored(seriesId) !is Show) notFound()
+                childrenOf(seriesId).map { current(it) as Season }
             }
 
         /**
@@ -386,14 +382,11 @@ class FakeMediaServer(
          * a series asked for by id also when none is played. As Jellyfin sends them: without
          * trickplay and chapters, which the player fetches with the episode itself.
          */
-        override suspend fun nextUp(
-            seriesId: ItemId?,
-            dateCutoff: LocalDateTime?,
-        ): List<FindroidEpisode> =
+        override suspend fun nextUp(seriesId: ItemId?, dateCutoff: LocalDateTime?): List<Episode> =
             call("nextUp") {
                 val series =
                     if (seriesId != null) listOf(seriesId)
-                    else library.items.filterIsInstance<FindroidShow>().map { it.id }
+                    else library.items.filterIsInstance<Show>().map { it.id }
                 series
                     .mapNotNull { id ->
                         val episodes = episodesOf(id).filter { it.parentIndexNumber > 0 }
@@ -410,16 +403,16 @@ class FakeMediaServer(
             fields: Set<EpisodeField>?,
             startItemId: ItemId?,
             limit: Int?,
-        ): List<FindroidEpisode> =
+        ): List<Episode> =
             call("episodes") {
-                if (stored(seriesId) !is FindroidShow) notFound()
+                if (stored(seriesId) !is Show) notFound()
                 val episodes =
                     episodesOf(seriesId).filter { seasonId == null || it.seasonId == seasonId }
                 val start = startItemId?.let { id -> episodes.indexOfFirst { it.id == id } } ?: 0
                 episodes.drop(start.coerceAtLeast(0)).take(limit ?: Int.MAX_VALUE)
             }
 
-        override suspend fun similar(itemId: ItemId, limit: Int): List<FindroidItem> =
+        override suspend fun similar(itemId: ItemId, limit: Int): List<Item> =
             call("similar") {
                 if (!capabilities.similarItems) return@call emptyList()
                 val item = stored(itemId) ?: notFound()
@@ -433,17 +426,17 @@ class FakeMediaServer(
             itemId: ItemId,
             localTrailers: Boolean,
             specialFeatures: Boolean,
-        ): List<FindroidMovie> =
+        ): List<Movie> =
             call("extras") {
                 if (capabilities.extras) stored(itemId) ?: notFound()
                 emptyList()
             }
 
-        override suspend fun collectionsOf(itemId: ItemId): List<FindroidItem> =
+        override suspend fun collectionsOf(itemId: ItemId): List<Item> =
             call("collectionsOf") {
                 if (!capabilities.itemCollections) return@call emptyList()
                 library.children
-                    .filter { (id, children) -> itemId in children && stored(id) is FindroidBoxSet }
+                    .filter { (id, children) -> itemId in children && stored(id) is BoxSet }
                     .keys
                     .mapNotNull(::stored)
                     .map(::current)
@@ -471,7 +464,7 @@ class FakeMediaServer(
     }
 
     private inner class Playback : PlaybackPort {
-        override suspend fun sources(request: PlaybackRequest): List<FindroidSource> =
+        override suspend fun sources(request: PlaybackRequest): List<ItemSource> =
             call("sources") {
                 val item = stored(request.itemId) ?: notFound()
                 val target = request.target
@@ -515,7 +508,7 @@ class FakeMediaServer(
         override suspend fun streamUrl(itemId: ItemId, mediaSourceId: MediaSourceId): String =
             call("streamUrl") { streamUrlOf(itemId, mediaSourceId) }
 
-        override suspend fun segments(itemId: ItemId): List<FindroidSegment> =
+        override suspend fun segments(itemId: ItemId): List<Segment> =
             call("segments") {
                 stored(itemId) ?: notFound()
                 if (capabilities.mediaSegments) library.segments[itemId].orEmpty() else emptyList()
@@ -529,7 +522,7 @@ class FakeMediaServer(
         ): ByteArray? =
             call("trickplayTile") {
                 val item = stored(itemId) ?: notFound()
-                val info = (item as? dev.jdtech.jellyfin.models.FindroidSources)?.trickplayInfo
+                val info = (item as? dev.jdtech.jellyfin.models.Playable)?.trickplayInfo
                 // #860: a version has the images of its own entry; without one, any entry.
                 val entries =
                     if (mediaSourceId == null) info?.values

@@ -53,7 +53,7 @@ Goal: `MediaRepository` imports nothing from the SDK; composables and the player
 `JellyfinApi`. `app/phone`, `app/tv`, `modes/film` and `player/local` lose their SDK dependency.
 R3 goes from 8 to 4.
 
-- #746 Libraries as `FindroidCollection` instead of `BaseItemDto`.
+- #746 Libraries as `Library` instead of `BaseItemDto`.
 - #747 `ServerInfo` and `autoPlayNextEpisode()` instead of `PublicSystemInfo` and
   `UserConfiguration`.
 - #748 `ServerSession` (read side) for the base URL and the user id.

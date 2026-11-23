@@ -85,10 +85,10 @@ import dev.jdtech.jellyfin.film.presentation.episode.EpisodeAction
 import dev.jdtech.jellyfin.film.presentation.episode.EpisodeViewModel
 import dev.jdtech.jellyfin.film.presentation.season.SeasonAction
 import dev.jdtech.jellyfin.film.presentation.season.SeasonState
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidSeason
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.isDownloaded
 import dev.jdtech.jellyfin.presentation.cast.LocalCastPlayback
@@ -130,7 +130,7 @@ private fun listPaneWidth(windowWidth: Dp): Dp = (windowWidth * 0.4f).coerceIn(3
  * first one not watched yet (the one the user most likely plays next), else the first. Missing
  * episodes (known to the server, no file) are only picked when there is nothing else.
  */
-internal fun defaultSelectedEpisode(episodes: List<FindroidEpisode>): FindroidEpisode? =
+internal fun defaultSelectedEpisode(episodes: List<Episode>): Episode? =
     episodes.firstOrNull { !it.played && !it.missing }
         ?: episodes.firstOrNull { !it.missing }
         ?: episodes.firstOrNull()
@@ -306,7 +306,7 @@ fun SeasonWideLayout(
     // CE (#437): the artwork under the top bar, if any; shared by the header and the bar.
     val artwork = rememberArtworkState(state.season, ArtworkPlacement.Header)
 
-    var episodeQualityTarget by remember { mutableStateOf<FindroidEpisode?>(null) }
+    var episodeQualityTarget by remember { mutableStateOf<Episode?>(null) }
 
     // Downloads removed from the list wait behind an Undo snackbar, as on the single-column page.
     val snackbarHostState = remember { SnackbarHostState() }
@@ -332,7 +332,7 @@ fun SeasonWideLayout(
     val hasDownloads =
         remember(episodes, hiddenIds) { episodes.any { it.isDownloaded() && it.id !in hiddenIds } }
     val anyCanDownload = remember(episodes) { episodes.any { it.canDownload } }
-    fun removeDownload(episode: FindroidEpisode, @StringRes message: Int) {
+    fun removeDownload(episode: Episode, @StringRes message: Int) {
         undo.run(ids = setOf(episode.id), message = context.getString(message, episode.name)) {
             onAction(SeasonAction.DeleteEpisodeDownload(episode))
         }
@@ -576,7 +576,7 @@ fun SeasonWideLayout(
 /** The season's backdrop header with its poster and names, as on the single-column page. */
 @Composable
 private fun SeasonListHeader(
-    season: FindroidSeason,
+    season: Season,
     artwork: ArtworkState,
     lazyListState: LazyListState,
     paddingStart: Dp,
@@ -656,7 +656,7 @@ private fun DownloadSummary(state: SeasonState, totalCount: Int, modifier: Modif
  */
 @Composable
 internal fun CompactEpisodeRow(
-    episode: FindroidEpisode,
+    episode: Episode,
     selected: Boolean,
     shape: Shape,
     onClick: () -> Unit,
@@ -731,7 +731,7 @@ private fun SeasonEpisodeDetailPane(
     episodeId: ItemId,
     navigateToPerson: (personId: ItemId) -> Unit,
     onOverArtworkChange: (Boolean) -> Unit,
-    onEpisodeChanged: (FindroidEpisode) -> Unit,
+    onEpisodeChanged: (Episode) -> Unit,
     onDownloadChanged: () -> Unit,
 ) {
     val context = LocalContext.current

@@ -1,10 +1,10 @@
 package dev.jdtech.jellyfin.ce.presentation.screensaver
 
 import android.app.Application
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
+import dev.jdtech.jellyfin.models.Item
+import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.toItemId
@@ -79,7 +79,7 @@ class ScreensaverItemsTest {
     }
 
     /** A repository whose item calls are recorded and answered by [answer]. */
-    private fun repository(answer: () -> List<FindroidItem>): MediaRepository =
+    private fun repository(answer: () -> List<Item>): MediaRepository =
         fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
             _,
             method,
@@ -96,7 +96,7 @@ class ScreensaverItemsTest {
             as MediaRepository
 
     private fun movie(name: String, backdrop: String?) =
-        FindroidMovie(
+        Movie(
             id = UUID.nameUUIDFromBytes(name.toByteArray()).toString().toItemId(),
             name = name,
             originalTitle = null,
@@ -117,7 +117,7 @@ class ScreensaverItemsTest {
             productionYear = null,
             endDate = null,
             trailer = null,
-            images = FindroidImages(backdrop = backdrop),
+            images = ItemImages(backdrop = backdrop),
             chapters = emptyList(),
             trickplayInfo = null,
         )

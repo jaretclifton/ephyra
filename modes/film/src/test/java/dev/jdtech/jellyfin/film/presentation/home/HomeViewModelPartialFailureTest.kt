@@ -3,10 +3,10 @@ package dev.jdtech.jellyfin.film.presentation.home
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.CollectionType
-import dev.jdtech.jellyfin.models.FindroidCollection
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemImages
+import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -151,11 +151,11 @@ class HomeViewModelPartialFailureTest {
     }
 
     private fun library() =
-        FindroidCollection(
+        Library(
             id = UUID.randomUUID().toString().toItemId(),
             name = "Movies",
             type = CollectionType.Movies,
-            images = FindroidImages(),
+            images = ItemImages(),
         )
 
     private fun repository(): MediaRepository =
@@ -178,19 +178,16 @@ class HomeViewModelPartialFailureTest {
         }
             as MediaRepository
 
-    private fun item(): FindroidItem =
-        fakeProxy(FindroidItem::class.java.classLoader, arrayOf(FindroidItem::class.java)) {
-            proxy,
-            method,
-            args ->
+    private fun item(): Item =
+        fakeProxy(Item::class.java.classLoader, arrayOf(Item::class.java)) { proxy, method, args ->
             // StateFlow compares each new state with the last one.
             when (method.kotlinName) {
                 "equals" -> proxy === args?.getOrNull(0)
                 "hashCode" -> System.identityHashCode(proxy)
-                else -> throw NotImplementedError("FindroidItem.${method.kotlinName}")
+                else -> throw NotImplementedError("Item.${method.kotlinName}")
             }
         }
-            as FindroidItem
+            as Item
 
     private fun unusedDao(): ServerDatabaseDao =
         fakeProxy(

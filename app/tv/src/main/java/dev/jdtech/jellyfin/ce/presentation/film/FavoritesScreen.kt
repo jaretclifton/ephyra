@@ -54,11 +54,11 @@ import dev.jdtech.jellyfin.core.presentation.session.LocalServerSession
 import dev.jdtech.jellyfin.film.presentation.collection.CollectionState
 import dev.jdtech.jellyfin.film.presentation.favorites.FavoritesViewModel
 import dev.jdtech.jellyfin.models.CollectionSection
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
@@ -102,9 +102,9 @@ fun FavoritesScreen(
         loaded = loaded,
         onItemClick = { item ->
             when (item) {
-                is FindroidMovie -> navigateToMovie(item.id)
-                is FindroidShow -> navigateToShow(item.id)
-                is FindroidEpisode -> navigateToEpisode(item.id)
+                is Movie -> navigateToMovie(item.id)
+                is Show -> navigateToShow(item.id)
+                is Episode -> navigateToEpisode(item.id)
             }
         },
         onRetry = { viewModel.loadItems() },
@@ -120,7 +120,7 @@ internal fun favoritesCardTag(id: ItemId) = "ce_favorites_card_${id.asString()}"
 internal fun FavoritesScreenLayout(
     state: CollectionState,
     loaded: Boolean = true,
-    onItemClick: (FindroidItem) -> Unit,
+    onItemClick: (Item) -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
@@ -250,7 +250,7 @@ private fun FavoritesRowContent(
     rowIndex: Int,
     focusPosition: FocusPosition,
     rowStates: MutableMap<Int, LazyListState>,
-    onItemClick: (FindroidItem) -> Unit,
+    onItemClick: (Item) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val rowState = rememberLazyListState()

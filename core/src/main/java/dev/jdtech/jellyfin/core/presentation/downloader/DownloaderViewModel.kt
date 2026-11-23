@@ -3,9 +3,9 @@ package dev.jdtech.jellyfin.core.presentation.downloader
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.isDownloading
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
@@ -33,7 +33,7 @@ constructor(private val downloader: Downloader, private val downloadQueue: Downl
     private var wasCompleted = false
     private var wasFailed = false
 
-    fun update(item: FindroidItem) {
+    fun update(item: Item) {
         if (trackedItemId == item.id && observerJob?.isActive == true) return
         trackedItemId = item.id
         wasCompleted = false
@@ -41,7 +41,7 @@ constructor(private val downloader: Downloader, private val downloadQueue: Downl
 
         // Restore if in-flight from a previous session
         if (item.isDownloading()) {
-            val localSource = item.sources.firstOrNull { it.type == FindroidSourceType.LOCAL }
+            val localSource = item.sources.firstOrNull { it.type == ItemSourceType.LOCAL }
             val dlId = localSource?.downloadId
             if (dlId != null) {
                 viewModelScope.launch { downloadQueue.restore(item, dlId) }
@@ -99,7 +99,7 @@ constructor(private val downloader: Downloader, private val downloadQueue: Downl
         }
     }
 
-    private fun download(item: FindroidItem, maxBitrate: Int?) {
+    private fun download(item: Item, maxBitrate: Int?) {
         trackedItemId = item.id
         wasCompleted = false
         wasFailed = false
@@ -107,16 +107,16 @@ constructor(private val downloader: Downloader, private val downloadQueue: Downl
         startObserving(item.id)
     }
 
-    private fun cancelDownload(item: FindroidItem) {
+    private fun cancelDownload(item: Item) {
         downloadQueue.remove(item.id)
     }
 
-    private fun deleteDownload(item: FindroidItem) {
+    private fun deleteDownload(item: Item) {
         viewModelScope.launch {
             // Ensure it's not tracked as an active download anymore
             downloadQueue.remove(item.id)
             val source =
-                item.sources.firstOrNull { it.type == FindroidSourceType.LOCAL } ?: return@launch
+                item.sources.firstOrNull { it.type == ItemSourceType.LOCAL } ?: return@launch
             downloader.deleteItem(item = item, source = source)
             eventsChannel.send(DownloaderEvent.Deleted)
         }

@@ -5,14 +5,14 @@ import android.content.ContextWrapper
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.EpisodeField
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidSeason
-import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemImages
+import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.models.SeasonEpisodeCounts
 import dev.jdtech.jellyfin.models.ServerCapabilities
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -253,7 +253,7 @@ class ShowLoadingTest {
             as ServerDatabaseDao
 
     private fun show() =
-        FindroidShow(
+        Show(
             id = showId,
             name = "Show",
             originalTitle = null,
@@ -274,11 +274,11 @@ class ShowLoadingTest {
             productionYear = null,
             endDate = null,
             trailer = null,
-            images = FindroidImages(),
+            images = ItemImages(),
         )
 
     private fun season(id: ItemId, index: Int) =
-        FindroidSeason(
+        Season(
             id = id,
             name = "Season $index",
             seriesId = showId,
@@ -293,11 +293,11 @@ class ShowLoadingTest {
             canPlay = true,
             canDownload = true,
             unplayedItemCount = null,
-            images = FindroidImages(),
+            images = ItemImages(),
         )
 
     private fun episode(seasonId: ItemId, canDownload: Boolean = true) =
-        FindroidEpisode(
+        Episode(
             id = UUID.randomUUID().toString().toItemId(),
             name = "Episode",
             originalTitle = null,
@@ -320,7 +320,7 @@ class ShowLoadingTest {
             communityRating = null,
             people = emptyList(),
             missing = false,
-            images = FindroidImages(),
+            images = ItemImages(),
             chapters = emptyList(),
             trickplayInfo = null,
         )

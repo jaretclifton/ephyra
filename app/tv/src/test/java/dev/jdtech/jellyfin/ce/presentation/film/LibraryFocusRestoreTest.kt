@@ -19,7 +19,7 @@ import androidx.paging.PagingData
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.film.presentation.library.LibraryAction
 import dev.jdtech.jellyfin.film.presentation.library.LibraryState
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
@@ -40,13 +40,13 @@ import org.robolectric.annotation.Config
 class LibraryFocusRestoreTest {
     @get:Rule val rule = createComposeRule()
 
-    private val movies: List<FindroidItem> =
+    private val movies: List<Item> =
         (0 until 40).map {
             dummyMovie.copy(id = UUID(0, it.toLong()).toString().toItemId(), name = "Movie $it")
         }
 
     private var detailOpen by mutableStateOf(false)
-    private var opened: FindroidItem? = null
+    private var opened: Item? = null
 
     private fun setUpLibrary() {
         val items = flowOf(PagingData.from(movies))
@@ -73,7 +73,7 @@ class LibraryFocusRestoreTest {
         }
     }
 
-    private fun card(item: FindroidItem): SemanticsMatcher =
+    private fun card(item: Item): SemanticsMatcher =
         hasAnyAncestor(hasTestTag(libraryCardTag(item.id))) and isFocusable()
 
     @Test

@@ -10,34 +10,34 @@ import dev.jdtech.jellyfin.domain.ports.ItemQuery
 import dev.jdtech.jellyfin.domain.ports.MediaServer
 import dev.jdtech.jellyfin.domain.ports.PlaybackReport
 import dev.jdtech.jellyfin.domain.ports.PlaybackRequest
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.EpisodeField
-import dev.jdtech.jellyfin.models.FindroidCollection
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidPerson
-import dev.jdtech.jellyfin.models.FindroidSeason
-import dev.jdtech.jellyfin.models.FindroidSegment
-import dev.jdtech.jellyfin.models.FindroidShow
-import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.Library
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Person
 import dev.jdtech.jellyfin.models.PlaybackTarget
+import dev.jdtech.jellyfin.models.Season
+import dev.jdtech.jellyfin.models.Segment
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerInfo
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
-import dev.jdtech.jellyfin.models.toFindroidEpisode
-import dev.jdtech.jellyfin.models.toFindroidMovie
-import dev.jdtech.jellyfin.models.toFindroidSeason
-import dev.jdtech.jellyfin.models.toFindroidSegment
-import dev.jdtech.jellyfin.models.toFindroidShow
-import dev.jdtech.jellyfin.models.toFindroidSource
+import dev.jdtech.jellyfin.models.toEpisode
+import dev.jdtech.jellyfin.models.toItemSource
+import dev.jdtech.jellyfin.models.toMovie
+import dev.jdtech.jellyfin.models.toSeason
+import dev.jdtech.jellyfin.models.toSegment
+import dev.jdtech.jellyfin.models.toShow
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.File
 import java.time.LocalDateTime
@@ -120,7 +120,7 @@ class MediaRepositoryImpl(
         serverId: String?,
         dtos: List<Any>,
         emptyIsAnAnswer: Boolean = false,
-    ): (suspend () -> List<FindroidItem>)? {
+    ): (suspend () -> List<Item>)? {
         if (serverId == null) return null
         if (dtos.isEmpty()) return if (emptyIsAnAnswer) suspend { emptyList() } else null
         return suspend { storedLists.toItems(dtos, serverId, currentUserId) }
@@ -155,53 +155,51 @@ class MediaRepositoryImpl(
 
     override suspend fun getServerInfo(): ServerInfo = catalog.serverInfo()
 
-    override suspend fun getUserViews(): List<FindroidCollection> = catalog.userViews()
+    override suspend fun getUserViews(): List<Library> = catalog.userViews()
 
     // CE (#281): the item getters fall back to the copy in Room (a download, or the show and season
     // of a downloaded episode) when the server fails or is slow, see serverOrStored. CE (#718):
     // only
     // a copy stored for the current server: another server can have the same item ids.
-    override suspend fun getEpisode(itemId: ItemId): FindroidEpisode =
+    override suspend fun getEpisode(itemId: ItemId): Episode =
         withContext(Dispatchers.IO) {
             val stored = currentServerId()?.let { database.getEpisodeOfServer(itemId, it) }
             serverOrStored(
-                stored?.let { dto -> suspend { dto.toFindroidEpisode(database, currentUserId) } }
+                stored?.let { dto -> suspend { dto.toEpisode(database, currentUserId) } }
             ) {
                 catalog.episode(itemId).withLocalSources(localSourcesFor(listOf(itemId)))
             }
         }
 
-    override suspend fun getMovie(itemId: ItemId): FindroidMovie =
+    override suspend fun getMovie(itemId: ItemId): Movie =
         withContext(Dispatchers.IO) {
             val stored = currentServerId()?.let { database.getMovieOfServer(itemId, it) }
             serverOrStored(
-                stored?.let { dto -> suspend { dto.toFindroidMovie(database, currentUserId) } }
+                stored?.let { dto -> suspend { dto.toMovie(database, currentUserId) } }
             ) {
                 catalog.movie(itemId).withLocalSources(localSourcesFor(listOf(itemId)))
             }
         }
 
-    override suspend fun getShow(itemId: ItemId): FindroidShow =
+    override suspend fun getShow(itemId: ItemId): Show =
         withContext(Dispatchers.IO) {
             val stored = currentServerId()?.let { database.getShowOfServer(itemId, it) }
-            serverOrStored(
-                stored?.let { dto -> suspend { dto.toFindroidShow(database, currentUserId) } }
-            ) {
+            serverOrStored(stored?.let { dto -> suspend { dto.toShow(database, currentUserId) } }) {
                 catalog.show(itemId)
             }
         }
 
-    override suspend fun getSeason(itemId: ItemId): FindroidSeason =
+    override suspend fun getSeason(itemId: ItemId): Season =
         withContext(Dispatchers.IO) {
             val stored = currentServerId()?.let { database.getSeasonOfServer(itemId, it) }
             serverOrStored(
-                stored?.let { dto -> suspend { dto.toFindroidSeason(database, currentUserId) } }
+                stored?.let { dto -> suspend { dto.toSeason(database, currentUserId) } }
             ) {
                 catalog.season(itemId)
             }
         }
 
-    override suspend fun getLibraries(): ItemsResult<FindroidCollection> =
+    override suspend fun getLibraries(): ItemsResult<Library> =
         withContext(Dispatchers.IO) {
             // CE (#775): without the server, a Movies and a Shows library of what is downloaded.
             // CE (#781): built only when Room answers, as they look for their artwork.
@@ -212,26 +210,26 @@ class MediaRepositoryImpl(
             serverOrStoredItems(stored) { catalog.libraries() }
         }
 
-    override suspend fun getItem(itemId: ItemId): FindroidItem? =
+    override suspend fun getItem(itemId: ItemId): Item? =
         withContext(Dispatchers.IO) { serverOrStored(storedItem(itemId)) { catalog.item(itemId) } }
 
     /**
      * CE (#281): builds [itemId] from Room, or null when Room doesn't have it for the current
      * server (#718).
      */
-    private suspend fun storedItem(itemId: ItemId): (suspend () -> FindroidItem)? {
+    private suspend fun storedItem(itemId: ItemId): (suspend () -> Item)? {
         val serverId = currentServerId() ?: return null
         database.getMovieOfServer(itemId, serverId)?.let {
-            return suspend { it.toFindroidMovie(database, currentUserId) }
+            return suspend { it.toMovie(database, currentUserId) }
         }
         database.getEpisodeOfServer(itemId, serverId)?.let {
-            return suspend { it.toFindroidEpisode(database, currentUserId) }
+            return suspend { it.toEpisode(database, currentUserId) }
         }
         database.getShowOfServer(itemId, serverId)?.let {
-            return suspend { it.toFindroidShow(database, currentUserId) }
+            return suspend { it.toShow(database, currentUserId) }
         }
         database.getSeasonOfServer(itemId, serverId)?.let {
-            return suspend { it.toFindroidSeason(database, currentUserId) }
+            return suspend { it.toSeason(database, currentUserId) }
         }
         return null
     }
@@ -245,7 +243,7 @@ class MediaRepositoryImpl(
         filters: Set<ItemFilter>,
         startIndex: Int?,
         limit: Int?,
-    ): List<FindroidItem> =
+    ): List<Item> =
         getItemsPage(
                 parentId,
                 includeTypes,
@@ -327,7 +325,7 @@ class MediaRepositoryImpl(
     override suspend fun getRandomItemsWithBackdrop(
         includeTypes: List<ItemKind>,
         limit: Int,
-    ): List<FindroidItem> =
+    ): List<Item> =
         withContext(Dispatchers.IO) {
             catalog.randomItemsWithBackdrop(includeTypes, limit).withLocalSources()
         }
@@ -339,7 +337,7 @@ class MediaRepositoryImpl(
         sortBy: SortBy,
         sortOrder: SortOrder,
         filters: Set<ItemFilter>,
-    ): Flow<PagingData<FindroidItem>> {
+    ): Flow<PagingData<Item>> {
         return Pager(
                 config =
                     PagingConfig(
@@ -393,19 +391,19 @@ class MediaRepositoryImpl(
             )
         }
 
-    override suspend fun getPerson(personId: ItemId): FindroidPerson = catalog.person(personId)
+    override suspend fun getPerson(personId: ItemId): Person = catalog.person(personId)
 
     override suspend fun getPersonItems(
         personIds: List<ItemId>,
         includeTypes: List<ItemKind>?,
         recursive: Boolean,
         limit: Int?,
-    ): List<FindroidItem> =
+    ): List<Item> =
         withContext(Dispatchers.IO) {
             catalog.personItems(personIds, includeTypes, recursive, limit).withLocalSources()
         }
 
-    override suspend fun getFavoriteItems(): ItemsResult<FindroidItem> =
+    override suspend fun getFavoriteItems(): ItemsResult<Item> =
         withContext(Dispatchers.IO) {
             // CE (#775): without the server, the downloaded favourites, also when there are none
             // but something else is downloaded: the screen says that none are downloaded. With
@@ -423,7 +421,7 @@ class MediaRepositoryImpl(
     override suspend fun getSearchItems(
         query: String,
         itemKinds: List<ItemKind>?,
-    ): ItemsResult<FindroidItem> =
+    ): ItemsResult<Item> =
         withContext(Dispatchers.IO) {
             // CE (#775): without the server, the downloads by name.
             val serverId = currentServerId()
@@ -444,21 +442,21 @@ class MediaRepositoryImpl(
             }
         }
 
-    override suspend fun getSuggestions(): List<FindroidItem> =
+    override suspend fun getSuggestions(): List<Item> =
         withContext(Dispatchers.IO) { catalog.suggestions().withLocalSources() }
 
-    override suspend fun getResumeItems(): List<FindroidItem> =
+    override suspend fun getResumeItems(): List<Item> =
         withContext(Dispatchers.IO) { catalog.resumeItems().withLocalSources() }
 
     override suspend fun getLatestMedia(
         parentId: ItemId,
         includeItemTypes: List<ItemKind>?,
-    ): List<FindroidItem> =
+    ): List<Item> =
         withContext(Dispatchers.IO) {
             catalog.latest(parentId, includeItemTypes).withLocalSources()
         }
 
-    override suspend fun getSeasons(seriesId: ItemId, offline: Boolean): List<FindroidSeason> =
+    override suspend fun getSeasons(seriesId: ItemId, offline: Boolean): List<Season> =
         withContext(Dispatchers.IO) {
             if (!offline) {
                 catalog.seasons(seriesId)
@@ -466,12 +464,12 @@ class MediaRepositoryImpl(
                 // CE (#718): the current server's stored seasons only.
                 val serverId = currentServerId() ?: return@withContext emptyList()
                 database.getSeasonsByShowIdOfServer(seriesId, serverId).map {
-                    it.toFindroidSeason(database, currentUserId)
+                    it.toSeason(database, currentUserId)
                 }
             }
         }
 
-    override suspend fun getNextUp(seriesId: ItemId?): List<FindroidEpisode> =
+    override suspend fun getNextUp(seriesId: ItemId?): List<Episode> =
         withContext(Dispatchers.IO) {
             catalog.nextUp(
                 seriesId,
@@ -491,7 +489,7 @@ class MediaRepositoryImpl(
         startItemId: ItemId?,
         limit: Int?,
         offline: Boolean,
-    ): List<FindroidEpisode> =
+    ): List<Episode> =
         withContext(Dispatchers.IO) {
             if (!offline) {
                 val episodes = catalog.episodes(seriesId, seasonId, fields, startItemId, limit)
@@ -503,7 +501,7 @@ class MediaRepositoryImpl(
                 val episodes =
                     if (seasonId != null) database.getEpisodesBySeasonIdOfServer(seasonId, serverId)
                     else database.getEpisodesByShowIdOfServer(seriesId, serverId)
-                episodes.map { it.toFindroidEpisode(database, currentUserId) }
+                episodes.map { it.toEpisode(database, currentUserId) }
             }
         }
 
@@ -512,11 +510,11 @@ class MediaRepositoryImpl(
         includePath: Boolean,
         transcodeDolbyVision: Boolean,
         maxBitrate: Int?,
-    ): List<FindroidSource> =
+    ): List<ItemSource> =
         withContext(Dispatchers.IO) {
             // The downloader's path: the original file, or a transcode for Dolby Vision or a
             // download quality cap (JellyfinPlayback).
-            val sources = mutableListOf<FindroidSource>()
+            val sources = mutableListOf<ItemSource>()
             sources.addAll(
                 server.playback.sources(
                     PlaybackRequest(
@@ -530,9 +528,7 @@ class MediaRepositoryImpl(
             // CE (#718): the current server's download of the item, not another server's.
             currentServerId()?.let { serverId ->
                 sources.addAll(
-                    database.getSourcesOfServer(itemId, serverId).map {
-                        it.toFindroidSource(database)
-                    }
+                    database.getSourcesOfServer(itemId, serverId).map { it.toItemSource(database) }
                 )
             }
             sources
@@ -544,7 +540,7 @@ class MediaRepositoryImpl(
         mediaSourceId: String?,
         audioStreamIndex: Int?,
         maxBitrate: Int?,
-    ): List<FindroidSource> =
+    ): List<ItemSource> =
         withContext(Dispatchers.IO) {
             // A downloaded copy wins over any server source (see ResolvePlayback.pick), so do not
             // wait
@@ -555,7 +551,7 @@ class MediaRepositoryImpl(
                 currentServerId()
                     ?.let { database.getCompletedSources(itemId, it) }
                     .orEmpty()
-                    .map { it.toFindroidSource(database) }
+                    .map { it.toItemSource(database) }
             if (
                 localSources.isNotEmpty() &&
                     (mediaSourceId == null || localSources.any { it.id == mediaSourceId })
@@ -563,7 +559,7 @@ class MediaRepositoryImpl(
                 return@withContext localSources
             }
 
-            val sources = mutableListOf<FindroidSource>()
+            val sources = mutableListOf<ItemSource>()
             sources.addAll(
                 server.playback.sources(
                     PlaybackRequest(
@@ -602,9 +598,9 @@ class MediaRepositoryImpl(
             }
         }
 
-    override suspend fun getSegments(itemId: ItemId): List<FindroidSegment> =
+    override suspend fun getSegments(itemId: ItemId): List<Segment> =
         withContext(Dispatchers.IO) {
-            val databaseSegments = database.getSegments(itemId).map { it.toFindroidSegment() }
+            val databaseSegments = database.getSegments(itemId).map { it.toSegment() }
 
             if (databaseSegments.isNotEmpty()) {
                 return@withContext databaseSegments
@@ -613,7 +609,7 @@ class MediaRepositoryImpl(
             getServerSegments(itemId)
         }
 
-    override suspend fun getServerSegments(itemId: ItemId): List<FindroidSegment> =
+    override suspend fun getServerSegments(itemId: ItemId): List<Segment> =
         withContext(Dispatchers.IO) {
             // #769: the player and the downloads ask here; without segments they get none.
             if (!capabilities.mediaSegments) return@withContext emptyList()
@@ -681,16 +677,16 @@ class MediaRepositoryImpl(
             }
         }
 
-    override suspend fun getSimilarItems(itemId: ItemId, limit: Int): List<FindroidItem> =
+    override suspend fun getSimilarItems(itemId: ItemId, limit: Int): List<Item> =
         withContext(Dispatchers.IO) { catalog.similar(itemId, limit).withLocalSources() }
 
     override suspend fun getExtras(
         itemId: ItemId,
         localTrailers: Boolean,
         specialFeatures: Boolean,
-    ): List<FindroidMovie> = catalog.extras(itemId, localTrailers, specialFeatures)
+    ): List<Movie> = catalog.extras(itemId, localTrailers, specialFeatures)
 
-    override suspend fun getItemCollections(itemId: ItemId): List<FindroidItem> =
+    override suspend fun getItemCollections(itemId: ItemId): List<Item> =
         withContext(Dispatchers.IO) { catalog.collectionsOf(itemId).withLocalSources() }
 
     override suspend fun postCapabilities() {
@@ -888,21 +884,17 @@ class MediaRepositoryImpl(
     override suspend fun autoPlayNextEpisode(): Boolean? =
         if (capabilities.autoPlayNextSetting) server.session.autoPlayNextEpisode() else null
 
-    override suspend fun getDownloads(): List<FindroidItem> =
+    override suspend fun getDownloads(): List<Item> =
         withContext(Dispatchers.IO) {
             val serverId =
                 appPreferences.getValue(appPreferences.currentServer)
                     ?: return@withContext emptyList()
-            val items = mutableListOf<FindroidItem>()
+            val items = mutableListOf<Item>()
             items.addAll(
-                database.getMoviesByServerId(serverId).map {
-                    it.toFindroidMovie(database, currentUserId)
-                }
+                database.getMoviesByServerId(serverId).map { it.toMovie(database, currentUserId) }
             )
             items.addAll(
-                database.getShowsByServerId(serverId).map {
-                    it.toFindroidShow(database, currentUserId)
-                }
+                database.getShowsByServerId(serverId).map { it.toShow(database, currentUserId) }
             )
             items
         }
@@ -928,7 +920,7 @@ class MediaRepositoryImpl(
      * at all (the usual case for a user who doesn't download). CE (#718): only the current server's
      * downloads.
      */
-    private suspend fun localSourcesFor(itemIds: List<ItemId>): Map<ItemId, List<FindroidSource>> {
+    private suspend fun localSourcesFor(itemIds: List<ItemId>): Map<ItemId, List<ItemSource>> {
         val serverId = currentServerId() ?: return emptyMap()
         val any = hasLocalSources.value ?: database.hasSources()
         return if (any) database.getLocalSourcesForItems(itemIds, serverId) else emptyMap()
@@ -938,14 +930,13 @@ class MediaRepositoryImpl(
      * CE (#756): adds the downloaded sources of the movies and episodes the catalog gave, with one
      * batched lookup for the whole list instead of one query per item.
      */
-    private suspend fun List<FindroidItem>.withLocalSources(): List<FindroidItem> {
-        val local =
-            localSourcesFor(filter { it is FindroidMovie || it is FindroidEpisode }.map { it.id })
+    private suspend fun List<Item>.withLocalSources(): List<Item> {
+        val local = localSourcesFor(filter { it is Movie || it is Episode }.map { it.id })
         if (local.isEmpty()) return this
         return map { item ->
             when (item) {
-                is FindroidMovie -> item.withLocalSources(local)
-                is FindroidEpisode -> item.withLocalSources(local)
+                is Movie -> item.withLocalSources(local)
+                is Episode -> item.withLocalSources(local)
                 else -> item
             }
         }
@@ -961,14 +952,12 @@ class MediaRepositoryImpl(
  * CE (#756): the movie with its downloads of [local] after the server's sources, the order the
  * mappers kept before the catalog moved out (the player picks the local one, not the first).
  */
-private fun FindroidMovie.withLocalSources(
-    local: Map<ItemId, List<FindroidSource>>
-): FindroidMovie = local[id]?.let { copy(sources = sources + it) } ?: this
+private fun Movie.withLocalSources(local: Map<ItemId, List<ItemSource>>): Movie =
+    local[id]?.let { copy(sources = sources + it) } ?: this
 
 /** CE (#756): as for a movie, the server's sources first, then the downloads of [local]. */
-private fun FindroidEpisode.withLocalSources(
-    local: Map<ItemId, List<FindroidSource>>
-): FindroidEpisode = local[id]?.let { copy(sources = sources + it) } ?: this
+private fun Episode.withLocalSources(local: Map<ItemId, List<ItemSource>>): Episode =
+    local[id]?.let { copy(sources = sources + it) } ?: this
 
 /**
  * The Home row only shows series watched in the last [maxDays] days, as the web client's "Max days

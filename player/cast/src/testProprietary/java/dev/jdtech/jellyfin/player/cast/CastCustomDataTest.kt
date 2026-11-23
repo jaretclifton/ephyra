@@ -1,8 +1,8 @@
 package dev.jdtech.jellyfin.player.cast
 
-import dev.jdtech.jellyfin.models.FindroidMediaStream
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -17,10 +17,10 @@ import org.junit.jupiter.api.Test
 class CastCustomDataTest {
 
     private val source =
-        FindroidSource(
+        ItemSource(
             id = "abc",
             name = "Movie",
-            type = FindroidSourceType.REMOTE,
+            type = ItemSourceType.REMOTE,
             path = "https://jellyfin.example/videos/1/master.m3u8?AudioStreamIndex=2&ApiKey=token",
             size = 1,
             mediaStreams =
@@ -98,7 +98,7 @@ class CastCustomDataTest {
     }
 
     private fun stream(index: Int, type: MediaStreamType, title: String, path: String? = null) =
-        FindroidMediaStream(
+        MediaStream(
             title = title,
             displayTitle = null,
             language = "eng",

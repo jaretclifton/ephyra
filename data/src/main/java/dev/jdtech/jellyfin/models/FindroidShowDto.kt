@@ -21,7 +21,7 @@ data class FindroidShowDto(
     val genres: List<String>? = null,
 )
 
-fun FindroidShow.toFindroidShowDto(serverId: String? = null): FindroidShowDto {
+fun Show.toFindroidShowDto(serverId: String? = null): FindroidShowDto {
     return FindroidShowDto(
         id = id,
         serverId = serverId,
@@ -38,12 +38,9 @@ fun FindroidShow.toFindroidShowDto(serverId: String? = null): FindroidShowDto {
     )
 }
 
-suspend fun FindroidShowDto.toFindroidShow(
-    database: ServerDatabaseDao,
-    userId: UserId,
-): FindroidShow {
+suspend fun FindroidShowDto.toShow(database: ServerDatabaseDao, userId: UserId): Show {
     val userData = database.getUserDataOrCreateNew(id, userId)
-    return FindroidShow(
+    return Show(
         id = id,
         name = name,
         originalTitle = originalTitle,
@@ -64,12 +61,12 @@ suspend fun FindroidShowDto.toFindroidShow(
         productionYear = productionYear,
         endDate = endDate,
         trailer = null,
-        images = toLocalFindroidImages(itemId = id),
+        images = toLocalItemImages(itemId = id),
     )
 }
 
-fun FindroidShowDto.toLocalFindroidImages(itemId: ItemId): FindroidImages {
-    return FindroidImages(
+fun FindroidShowDto.toLocalItemImages(itemId: ItemId): ItemImages {
+    return ItemImages(
         primary = localImagePath(itemId, "primary"),
         backdrop = localImagePath(itemId, "backdrop"),
     )

@@ -11,9 +11,9 @@ import dev.jdtech.jellyfin.film.presentation.keeping
 import dev.jdtech.jellyfin.film.presentation.launchRelatedItems
 import dev.jdtech.jellyfin.film.presentation.shownIn
 import dev.jdtech.jellyfin.film.presentation.within
-import dev.jdtech.jellyfin.models.FindroidItemPerson
-import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemPerson
+import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.PersonKind
 import dev.jdtech.jellyfin.models.mergeDuplicateRoles
 import dev.jdtech.jellyfin.repository.DataChangeEvents
@@ -148,19 +148,19 @@ constructor(
             }
     }
 
-    private suspend fun getActors(item: FindroidMovie): List<FindroidItemPerson> {
+    private suspend fun getActors(item: Movie): List<ItemPerson> {
         return withContext(Dispatchers.Default) {
             item.people.mergeDuplicateRoles().filter { it.type == PersonKind.ACTOR }
         }
     }
 
-    private suspend fun getDirector(item: FindroidMovie): FindroidItemPerson? {
+    private suspend fun getDirector(item: Movie): ItemPerson? {
         return withContext(Dispatchers.Default) {
             item.people.mergeDuplicateRoles().firstOrNull { it.type == PersonKind.DIRECTOR }
         }
     }
 
-    private suspend fun getWriters(item: FindroidMovie): List<FindroidItemPerson> {
+    private suspend fun getWriters(item: Movie): List<ItemPerson> {
         return withContext(Dispatchers.Default) {
             item.people.mergeDuplicateRoles().filter { it.type == PersonKind.WRITER }
         }

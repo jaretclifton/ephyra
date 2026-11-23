@@ -3,10 +3,10 @@ package dev.jdtech.jellyfin.film.presentation.person
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidShow
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.repository.MediaRepository
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
@@ -42,8 +42,8 @@ class PersonViewModel @Inject internal constructor(private val repository: Media
                     val person = personAsync.await()
                     val items = itemsAsync.await()
 
-                    val movies = items.filterIsInstance<FindroidMovie>()
-                    val shows = items.filterIsInstance<FindroidShow>()
+                    val movies = items.filterIsInstance<Movie>()
+                    val shows = items.filterIsInstance<Show>()
 
                     _state.emit(
                         _state.value.copy(

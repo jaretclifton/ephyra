@@ -5,8 +5,8 @@ import android.content.BroadcastReceiver
 import android.content.Intent
 import android.content.res.Resources
 import android.util.Base64
-import dev.jdtech.jellyfin.models.FindroidCollection
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
+import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.models.View
 import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
@@ -16,7 +16,7 @@ import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-fun FindroidCollection.toView(items: List<FindroidItem>): View {
+fun Library.toView(items: List<Item>): View {
     return View(id = id, name = name, items = items, type = type)
 }
 

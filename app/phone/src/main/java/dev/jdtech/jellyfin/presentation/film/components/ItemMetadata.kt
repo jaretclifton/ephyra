@@ -30,9 +30,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextDirection
 import dev.jdtech.jellyfin.core.R as CoreR
-import dev.jdtech.jellyfin.models.FindroidExternalLink
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.ExternalLink
+import dev.jdtech.jellyfin.models.Item
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.airSchedule
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.utils.copyOnLongClick
@@ -109,7 +109,7 @@ fun WatchHistoryText(playCount: Int, lastPlayedDate: LocalDateTime?) {
 
 /** "Airs Thursday 21:00", only while the show is still running. */
 @Composable
-fun AirScheduleText(show: FindroidShow) {
+fun AirScheduleText(show: Show) {
     val schedule =
         show.airSchedule(currentLocale(), stringResource(CoreR.string.item_airs_daily)) ?: return
     val text = stringResource(CoreR.string.item_airs, schedule)
@@ -122,7 +122,7 @@ fun AirScheduleText(show: FindroidShow) {
 
 /** "Open on IMDb / TMDB / TVDB / Trakt" as pill chips that open the browser. */
 @Composable
-fun ExternalLinksRow(links: List<FindroidExternalLink>, onLinkClick: (url: String) -> Unit) {
+fun ExternalLinksRow(links: List<ExternalLink>, onLinkClick: (url: String) -> Unit) {
     if (links.isEmpty()) return
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacings.small),
@@ -161,9 +161,9 @@ fun ExternalLinksRow(links: List<FindroidExternalLink>, onLinkClick: (url: Strin
 @Composable
 fun ItemsRow(
     title: String,
-    items: List<FindroidItem>,
+    items: List<Item>,
     direction: Direction,
-    onItemClick: (FindroidItem) -> Unit,
+    onItemClick: (Item) -> Unit,
     contentPadding: PaddingValues,
 ) {
     if (items.isEmpty()) return

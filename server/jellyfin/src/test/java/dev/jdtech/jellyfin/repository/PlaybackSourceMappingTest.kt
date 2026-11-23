@@ -1,8 +1,8 @@
 package dev.jdtech.jellyfin.repository
 
 import android.app.Application
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.SubtitleDeliveryMethod
 import dev.jdtech.jellyfin.models.toItemId
@@ -19,9 +19,9 @@ import org.robolectric.annotation.Config
 
 /**
  * Architecture 0.4 (#738): pins what the app makes of a playback info answer
- * (`MediaSourceInfo.toFindroidSource`): which path plays, whether it is a transcode, and the
- * subtitle paths. The answers are recorded from the test server (`resources/playback/`); the HTTP
- * one is the file answer with its source moved to HTTP, as the test server has no remote item.
+ * (`MediaSourceInfo.toItemSource`): which path plays, whether it is a transcode, and the subtitle
+ * paths. The answers are recorded from the test server (`resources/playback/`); the HTTP one is the
+ * file answer with its source moved to HTTP, as the test server has no remote item.
  *
  * No current server is set, so no download is read or added.
  */
@@ -41,12 +41,12 @@ class PlaybackSourceMappingTest {
         server.close()
     }
 
-    private suspend fun playbackSource(answer: String): FindroidSource {
+    private suspend fun playbackSource(answer: String): ItemSource {
         this.answer = answer
         return repository.getPlaybackSources(itemId, StandInServer.LOCAL_PLAYER).single()
     }
 
-    private suspend fun downloadSource(answer: String, includePath: Boolean): FindroidSource {
+    private suspend fun downloadSource(answer: String, includePath: Boolean): ItemSource {
         this.answer = answer
         return repository.getMediaSources(itemId, includePath).single()
     }
@@ -70,7 +70,7 @@ class PlaybackSourceMappingTest {
         assertEquals(TRANSCODE_SESSION, source.playSessionId)
         assertEquals(SOURCE_ID, source.id)
         assertEquals("Libass Sidecar Movie (2026)", source.name)
-        assertEquals(FindroidSourceType.REMOTE, source.type)
+        assertEquals(ItemSourceType.REMOTE, source.type)
         assertEquals(46_587_363L, source.size)
         assertEquals("mkv", source.container, message = "the file's container, not the transcode's")
         assertEquals(3_105_229, source.bitrate)

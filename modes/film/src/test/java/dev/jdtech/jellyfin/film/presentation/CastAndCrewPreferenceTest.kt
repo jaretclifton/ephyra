@@ -9,14 +9,14 @@ import dev.jdtech.jellyfin.film.domain.VideoMetadataParser
 import dev.jdtech.jellyfin.film.presentation.episode.EpisodeViewModel
 import dev.jdtech.jellyfin.film.presentation.movie.MovieViewModel
 import dev.jdtech.jellyfin.film.presentation.show.ShowViewModel
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidItemPerson
-import dev.jdtech.jellyfin.models.FindroidItemPersonImage
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.ItemImages
+import dev.jdtech.jellyfin.models.ItemPerson
+import dev.jdtech.jellyfin.models.ItemPersonImage
+import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.PersonKind
 import dev.jdtech.jellyfin.models.ServerCapabilities
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -163,12 +163,12 @@ class CastAndCrewPreferenceTest {
     }
 
     private fun person(name: String, type: PersonKind) =
-        FindroidItemPerson(
+        ItemPerson(
             id = UUID.nameUUIDFromBytes(name.toByteArray()).toString().toItemId(),
             name = name,
             type = type,
             role = "",
-            image = FindroidItemPersonImage(uri = null, blurHash = null),
+            image = ItemPersonImage(uri = null, blurHash = null),
         )
 
     private fun repository(): MediaRepository =
@@ -191,7 +191,7 @@ class CastAndCrewPreferenceTest {
             as MediaRepository
 
     private fun movie() =
-        FindroidMovie(
+        Movie(
             id = itemId,
             name = "Movie",
             originalTitle = null,
@@ -212,13 +212,13 @@ class CastAndCrewPreferenceTest {
             productionYear = null,
             endDate = null,
             trailer = null,
-            images = FindroidImages(),
+            images = ItemImages(),
             chapters = emptyList(),
             trickplayInfo = null,
         )
 
     private fun show() =
-        FindroidShow(
+        Show(
             id = itemId,
             name = "Show",
             originalTitle = null,
@@ -239,11 +239,11 @@ class CastAndCrewPreferenceTest {
             productionYear = null,
             endDate = null,
             trailer = null,
-            images = FindroidImages(),
+            images = ItemImages(),
         )
 
     private fun episode() =
-        FindroidEpisode(
+        Episode(
             id = itemId,
             name = "Episode",
             originalTitle = null,
@@ -266,7 +266,7 @@ class CastAndCrewPreferenceTest {
             communityRating = null,
             people = people,
             missing = false,
-            images = FindroidImages(),
+            images = ItemImages(),
             chapters = emptyList(),
             trickplayInfo = null,
         )

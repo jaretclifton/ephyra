@@ -1,7 +1,7 @@
 package dev.jdtech.jellyfin.player.cast
 
-import dev.jdtech.jellyfin.models.FindroidMediaStream
-import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.player.cast.models.CastMediaItem
 import dev.jdtech.jellyfin.player.core.domain.models.Track
@@ -28,11 +28,11 @@ internal data class CastTracks(
 }
 
 /** The id of the subtitle track the server picks for this user, `null` when it picks none. */
-internal fun defaultSubtitleTrackId(source: FindroidSource): Int? =
+internal fun defaultSubtitleTrackId(source: ItemSource): Int? =
     source.defaultSubtitleStreamIndex?.takeIf { it >= 0 }?.let { it + SUBTITLE_TRACK_ID_OFFSET }
 
 /** The stream's own title, else the one the server makes up for it. */
-private val FindroidMediaStream.label: String?
+private val MediaStream.label: String?
     get() = title.ifEmpty { displayTitle }
 
 /**
@@ -43,7 +43,7 @@ private val FindroidMediaStream.label: String?
  * index plus [SUBTITLE_TRACK_ID_OFFSET]; the receiver gets only those with a URL.
  */
 internal fun castTracks(
-    source: FindroidSource,
+    source: ItemSource,
     audioStreamIndex: Int?,
     subtitleTrackId: Int?,
 ): CastTracks {

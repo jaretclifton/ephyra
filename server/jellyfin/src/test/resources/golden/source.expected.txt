@@ -1,12 +1,12 @@
 == direct, includePath = false
-FindroidSource(
+ItemSource(
   id = "7cfc27a508187be5210c6df99c9d6102"
   name = "Tracks Movie (2022)"
   type = REMOTE
   path = ""
   size = 34360993
   mediaStreams = [
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "German - SUBRIP - External"
         language = "deu"
@@ -31,7 +31,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "French - SUBRIP - External"
         language = "fra"
@@ -56,7 +56,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "Dutch - Forced - SUBRIP - External"
         language = "nld"
@@ -81,7 +81,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "360p H264 SDR"
         language = ""
@@ -106,7 +106,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = "English Stereo"
         displayTitle = "English Stereo - AAC - Mono"
         language = "eng"
@@ -131,7 +131,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = "Dutch 5.1"
         displayTitle = "Dutch 5.1 - Dolby Digital"
         language = "nld"
@@ -156,7 +156,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "English - SUBRIP"
         language = "eng"
@@ -181,7 +181,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "Dutch - Forced - SUBRIP"
         language = "nld"
@@ -217,14 +217,14 @@ FindroidSource(
 )
 
 == direct, includePath = true
-FindroidSource(
+ItemSource(
   id = "7cfc27a508187be5210c6df99c9d6102"
   name = "Tracks Movie (2022)"
   type = REMOTE
   path = "https://server.test/Videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/stream?mediaSourceId=7cfc27a508187be5210c6df99c9d6102"
   size = 34360993
   mediaStreams = [
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "German - SUBRIP - External"
         language = "deu"
@@ -249,7 +249,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "French - SUBRIP - External"
         language = "fra"
@@ -274,7 +274,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "Dutch - Forced - SUBRIP - External"
         language = "nld"
@@ -299,7 +299,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "360p H264 SDR"
         language = ""
@@ -324,7 +324,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = "English Stereo"
         displayTitle = "English Stereo - AAC - Mono"
         language = "eng"
@@ -349,7 +349,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = "Dutch 5.1"
         displayTitle = "Dutch 5.1 - Dolby Digital"
         language = "nld"
@@ -374,7 +374,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "English - SUBRIP"
         language = "eng"
@@ -399,7 +399,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "Dutch - Forced - SUBRIP"
         language = "nld"
@@ -435,14 +435,14 @@ FindroidSource(
 )
 
 == transcode, includePath = false
-FindroidSource(
+ItemSource(
   id = "7cfc27a508187be5210c6df99c9d6102"
   name = "Tracks Movie (2022)"
   type = REMOTE
   path = "https://server.test/videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/master.m3u8?DeviceId=ephyra-golden-recorder-739&MediaSourceId=7cfc27a508187be5210c6df99c9d6102&VideoCodec=h264&AudioCodec=aac&AudioStreamIndex=4&VideoBitrate=172000&AudioBitrate=128000&MaxFramerate=24&SegmentContainer=ts&MinSegments=1&PlaySessionId=c96dd9e2c9c344a2aec79fb2123a971d&ApiKey=REDACTED&TranscodingMaxAudioChannels=6&RequireAvc=false&EnableAudioVbrEncoding=true&Tag=f3c63449aceb38772b7e8b2c8516426e&h264-level=30&h264-videobitdepth=8&h264-profile=constrainedbaseline&TranscodeReasons=AudioCodecNotSupported,ContainerBitrateExceedsLimit"
   size = 34360993
   mediaStreams = [
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "German - SUBRIP - External"
         language = "deu"
@@ -467,7 +467,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "French - SUBRIP - External"
         language = "fra"
@@ -492,7 +492,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "Dutch - Forced - SUBRIP - External"
         language = "nld"
@@ -517,7 +517,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "360p H264 SDR"
         language = ""
@@ -542,7 +542,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = "English Stereo"
         displayTitle = "English Stereo - AAC - Mono"
         language = "eng"
@@ -567,7 +567,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = "Dutch 5.1"
         displayTitle = "Dutch 5.1 - Dolby Digital"
         language = "nld"
@@ -592,7 +592,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "English - SUBRIP"
         language = "eng"
@@ -617,7 +617,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "Dutch - Forced - SUBRIP"
         language = "nld"
@@ -653,14 +653,14 @@ FindroidSource(
 )
 
 == transcode, includePath = true
-FindroidSource(
+ItemSource(
   id = "7cfc27a508187be5210c6df99c9d6102"
   name = "Tracks Movie (2022)"
   type = REMOTE
   path = "https://server.test/videos/7cfc27a5-0818-7be5-210c-6df99c9d6102/master.m3u8?DeviceId=ephyra-golden-recorder-739&MediaSourceId=7cfc27a508187be5210c6df99c9d6102&VideoCodec=h264&AudioCodec=aac&AudioStreamIndex=4&VideoBitrate=172000&AudioBitrate=128000&MaxFramerate=24&SegmentContainer=ts&MinSegments=1&PlaySessionId=c96dd9e2c9c344a2aec79fb2123a971d&ApiKey=REDACTED&TranscodingMaxAudioChannels=6&RequireAvc=false&EnableAudioVbrEncoding=true&Tag=f3c63449aceb38772b7e8b2c8516426e&h264-level=30&h264-videobitdepth=8&h264-profile=constrainedbaseline&TranscodeReasons=AudioCodecNotSupported,ContainerBitrateExceedsLimit"
   size = 34360993
   mediaStreams = [
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "German - SUBRIP - External"
         language = "deu"
@@ -685,7 +685,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "French - SUBRIP - External"
         language = "fra"
@@ -710,7 +710,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "Dutch - Forced - SUBRIP - External"
         language = "nld"
@@ -735,7 +735,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "360p H264 SDR"
         language = ""
@@ -760,7 +760,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = "English Stereo"
         displayTitle = "English Stereo - AAC - Mono"
         language = "eng"
@@ -785,7 +785,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = "Dutch 5.1"
         displayTitle = "Dutch 5.1 - Dolby Digital"
         language = "nld"
@@ -810,7 +810,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "English - SUBRIP"
         language = "eng"
@@ -835,7 +835,7 @@ FindroidSource(
         isDefault = false
         isHearingImpaired = false
       )
-    - FindroidMediaStream(
+    - MediaStream(
         title = ""
         displayTitle = "Dutch - Forced - SUBRIP"
         language = "nld"

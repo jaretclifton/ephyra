@@ -1,23 +1,23 @@
 package dev.jdtech.jellyfin.repository
 
 import androidx.paging.PagingData
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.EpisodeField
-import dev.jdtech.jellyfin.models.FindroidCollection
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidPerson
-import dev.jdtech.jellyfin.models.FindroidSeason
-import dev.jdtech.jellyfin.models.FindroidSegment
-import dev.jdtech.jellyfin.models.FindroidShow
-import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.Library
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Person
 import dev.jdtech.jellyfin.models.PlaybackTarget
+import dev.jdtech.jellyfin.models.Season
+import dev.jdtech.jellyfin.models.Segment
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerInfo
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.UserId
@@ -32,23 +32,23 @@ interface MediaRepository {
     suspend fun getServerInfo(): ServerInfo
 
     /** The libraries the current user sees, in the server's order, of the supported types only. */
-    suspend fun getUserViews(): List<FindroidCollection>
+    suspend fun getUserViews(): List<Library>
 
     /** Stores the current user's profile picture tag, as the server has it now. */
     suspend fun refreshCurrentUserImage()
 
-    suspend fun getEpisode(itemId: ItemId): FindroidEpisode
+    suspend fun getEpisode(itemId: ItemId): Episode
 
-    suspend fun getMovie(itemId: ItemId): FindroidMovie
+    suspend fun getMovie(itemId: ItemId): Movie
 
-    suspend fun getShow(itemId: ItemId): FindroidShow
+    suspend fun getShow(itemId: ItemId): Show
 
-    suspend fun getSeason(itemId: ItemId): FindroidSeason
+    suspend fun getSeason(itemId: ItemId): Season
 
     /** CE (#779): with where the list came from: Room answers it while the server is away. */
-    suspend fun getLibraries(): ItemsResult<FindroidCollection>
+    suspend fun getLibraries(): ItemsResult<Library>
 
-    suspend fun getItem(itemId: ItemId): FindroidItem?
+    suspend fun getItem(itemId: ItemId): Item?
 
     suspend fun getItems(
         parentId: ItemId? = null,
@@ -59,7 +59,7 @@ interface MediaRepository {
         filters: Set<ItemFilter> = emptySet(),
         startIndex: Int? = null,
         limit: Int? = null,
-    ): List<FindroidItem>
+    ): List<Item>
 
     /**
      * CE: like [getItems], but with the number of items that match in total (ignoring [startIndex]
@@ -83,10 +83,7 @@ interface MediaRepository {
      * CE (#140): up to [limit] items of [includeTypes] from all libraries, in random order, that
      * have a backdrop. Online the server picks them; the default (offline) shuffles local items.
      */
-    suspend fun getRandomItemsWithBackdrop(
-        includeTypes: List<ItemKind>,
-        limit: Int,
-    ): List<FindroidItem> =
+    suspend fun getRandomItemsWithBackdrop(includeTypes: List<ItemKind>, limit: Int): List<Item> =
         getItems(includeTypes = includeTypes, recursive = true)
             .filter { it.images.backdrop != null }
             .shuffled()
@@ -99,7 +96,7 @@ interface MediaRepository {
         sortBy: SortBy = SortBy.defaultValue,
         sortOrder: SortOrder = SortOrder.ASCENDING,
         filters: Set<ItemFilter> = emptySet(),
-    ): Flow<PagingData<FindroidItem>>
+    ): Flow<PagingData<Item>>
 
     /**
      * CE: the number of items that [getItems] would return, without fetching them. With
@@ -113,41 +110,38 @@ interface MediaRepository {
         nameLessThan: String? = null,
     ): Int
 
-    suspend fun getPerson(personId: ItemId): FindroidPerson
+    suspend fun getPerson(personId: ItemId): Person
 
     suspend fun getPersonItems(
         personIds: List<ItemId>,
         includeTypes: List<ItemKind>? = null,
         recursive: Boolean = true,
         limit: Int? = null,
-    ): List<FindroidItem>
+    ): List<Item>
 
     /** CE (#779): with where the list came from: Room answers it while the server is away. */
-    suspend fun getFavoriteItems(): ItemsResult<FindroidItem>
+    suspend fun getFavoriteItems(): ItemsResult<Item>
 
     /**
      * Searches movies and shows. With [itemKinds], it searches those kinds instead, with a separate
      * limit per kind so one kind (episodes) can't push the others out (CE, TV search). CE (#779):
      * with where the list came from, as [getFavoriteItems].
      */
-    suspend fun getSearchItems(
-        query: String,
-        itemKinds: List<ItemKind>? = null,
-    ): ItemsResult<FindroidItem>
+    suspend fun getSearchItems(query: String, itemKinds: List<ItemKind>? = null): ItemsResult<Item>
 
-    suspend fun getSuggestions(): List<FindroidItem>
+    suspend fun getSuggestions(): List<Item>
 
-    suspend fun getResumeItems(): List<FindroidItem>
+    suspend fun getResumeItems(): List<Item>
 
     /** [includeItemTypes] null leaves the choice to the server. */
     suspend fun getLatestMedia(
         parentId: ItemId,
         includeItemTypes: List<ItemKind>? = null,
-    ): List<FindroidItem>
+    ): List<Item>
 
-    suspend fun getSeasons(seriesId: ItemId, offline: Boolean = false): List<FindroidSeason>
+    suspend fun getSeasons(seriesId: ItemId, offline: Boolean = false): List<Season>
 
-    suspend fun getNextUp(seriesId: ItemId? = null): List<FindroidEpisode>
+    suspend fun getNextUp(seriesId: ItemId? = null): List<Episode>
 
     /** The episodes of one season, or with a null [seasonId] (CE, #252) of the whole series. */
     suspend fun getEpisodes(
@@ -157,7 +151,7 @@ interface MediaRepository {
         startItemId: ItemId? = null,
         limit: Int? = null,
         offline: Boolean = false,
-    ): List<FindroidEpisode>
+    ): List<Episode>
 
     /**
      * Resolves the sources for downloading an item. Always asks for the original file, except —
@@ -174,7 +168,7 @@ interface MediaRepository {
         includePath: Boolean = false,
         transcodeDolbyVision: Boolean = false,
         maxBitrate: Int? = null,
-    ): List<FindroidSource>
+    ): List<ItemSource>
 
     /**
      * Resolves the sources to play an item. Unlike [getMediaSources] (which always asks for the
@@ -198,7 +192,7 @@ interface MediaRepository {
         mediaSourceId: String? = null,
         audioStreamIndex: Int? = null,
         maxBitrate: Int? = null,
-    ): List<FindroidSource>
+    ): List<ItemSource>
 
     /** CE (#580): the tracks the user last picked by hand in [seriesId], one per track type. */
     suspend fun getSeriesTrackPreferences(seriesId: ItemId): List<SeriesTrackPreferenceDto>
@@ -211,13 +205,13 @@ interface MediaRepository {
 
     suspend fun getStreamUrl(itemId: ItemId, mediaSourceId: String): String
 
-    suspend fun getSegments(itemId: ItemId): List<FindroidSegment>
+    suspend fun getSegments(itemId: ItemId): List<Segment>
 
     /**
      * CE (#693): the item's segments as the server has them now, not the ones stored with a
      * download. A new download saves these.
      */
-    suspend fun getServerSegments(itemId: ItemId): List<FindroidSegment> = getSegments(itemId)
+    suspend fun getServerSegments(itemId: ItemId): List<Segment> = getSegments(itemId)
 
     /**
      * Sheet [index] of the trickplay images [width] wide of [itemId]. CE (#860): [mediaSourceId] is
@@ -241,10 +235,8 @@ interface MediaRepository {
      * CE (#332): up to [limit] items like [itemId], for "More like this". The detail pages load it
      * after they are shown. Offline there is nothing to compare with, so the default is empty.
      */
-    suspend fun getSimilarItems(
-        itemId: ItemId,
-        limit: Int = SIMILAR_ITEMS_LIMIT,
-    ): List<FindroidItem> = emptyList()
+    suspend fun getSimilarItems(itemId: ItemId, limit: Int = SIMILAR_ITEMS_LIMIT): List<Item> =
+        emptyList()
 
     /**
      * CE (#332): the extras of [itemId] — its local trailers, then its special features (behind the
@@ -255,14 +247,14 @@ interface MediaRepository {
         itemId: ItemId,
         localTrailers: Boolean,
         specialFeatures: Boolean,
-    ): List<FindroidMovie> = emptyList()
+    ): List<Movie> = emptyList()
 
     /**
      * CE (#332): the collections (box sets) that contain [itemId], as jellyfin-web's "Included in"
      * finds them (`/Items/{id}/Collections`, Jellyfin 12 and later). Online only; the default is
      * empty.
      */
-    suspend fun getItemCollections(itemId: ItemId): List<FindroidItem> = emptyList()
+    suspend fun getItemCollections(itemId: ItemId): List<Item> = emptyList()
 
     suspend fun postCapabilities()
 
@@ -330,7 +322,7 @@ interface MediaRepository {
      */
     suspend fun autoPlayNextEpisode(): Boolean?
 
-    suspend fun getDownloads(): List<FindroidItem>
+    suspend fun getDownloads(): List<Item>
 
     fun getUserId(): UserId
 }

@@ -4,13 +4,13 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.jdtech.jellyfin.film.R as FilmR
 import dev.jdtech.jellyfin.models.CollectionType
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.HomeItem
 import dev.jdtech.jellyfin.models.HomeSection
+import dev.jdtech.jellyfin.models.Item
+import dev.jdtech.jellyfin.models.ItemImages
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.View
@@ -145,10 +145,10 @@ class HomeCache @Inject constructor(@ApplicationContext context: Context) {
             )
         )
 
-    private fun items(list: List<FindroidItem>): JSONArray =
+    private fun items(list: List<Item>): JSONArray =
         JSONArray(list.mapNotNull { runCatching { item(it) }.getOrNull() })
 
-    private fun item(item: FindroidItem): JSONObject? {
+    private fun item(item: Item): JSONObject? {
         val obj =
             JSONObject()
                 .put("id", item.id.asString())
@@ -163,11 +163,9 @@ class HomeCache @Inject constructor(@ApplicationContext context: Context) {
                 .put("unplayed", item.unplayedItemCount ?: JSONObject.NULL)
                 .put("images", images(item.images))
         when (item) {
-            is FindroidMovie ->
-                obj.put("kind", "movie").put("year", item.productionYear ?: JSONObject.NULL)
-            is FindroidShow ->
-                obj.put("kind", "show").put("year", item.productionYear ?: JSONObject.NULL)
-            is FindroidEpisode ->
+            is Movie -> obj.put("kind", "movie").put("year", item.productionYear ?: JSONObject.NULL)
+            is Show -> obj.put("kind", "show").put("year", item.productionYear ?: JSONObject.NULL)
+            is Episode ->
                 obj.put("kind", "episode")
                     .put("index", item.indexNumber)
                     .put("indexEnd", item.indexNumberEnd ?: JSONObject.NULL)
@@ -181,17 +179,17 @@ class HomeCache @Inject constructor(@ApplicationContext context: Context) {
         return obj
     }
 
-    private fun items(parent: JSONObject): List<FindroidItem> =
+    private fun items(parent: JSONObject): List<Item> =
         parent.getJSONArray("items").objects().mapNotNull { runCatching { item(it) }.getOrNull() }
 
-    private fun item(obj: JSONObject): FindroidItem? {
+    private fun item(obj: JSONObject): Item? {
         val id = obj.getString("id").toItemId()
         val images = images(obj.getJSONObject("images"))
         val unplayed = obj.optIntOrNull("unplayed")
         val year = obj.optIntOrNull("year")
         return when (obj.getString("kind")) {
             "movie" ->
-                FindroidMovie(
+                Movie(
                     id = id,
                     name = obj.getString("name"),
                     originalTitle = null,
@@ -218,7 +216,7 @@ class HomeCache @Inject constructor(@ApplicationContext context: Context) {
                     trickplayInfo = null,
                 )
             "show" ->
-                FindroidShow(
+                Show(
                     id = id,
                     name = obj.getString("name"),
                     originalTitle = null,
@@ -243,7 +241,7 @@ class HomeCache @Inject constructor(@ApplicationContext context: Context) {
                     images = images,
                 )
             "episode" ->
-                FindroidEpisode(
+                Episode(
                     id = id,
                     name = obj.getString("name"),
                     originalTitle = null,
@@ -275,7 +273,7 @@ class HomeCache @Inject constructor(@ApplicationContext context: Context) {
         }
     }
 
-    private fun images(images: FindroidImages) =
+    private fun images(images: ItemImages) =
         JSONObject()
             .put("primary", images.primary ?: JSONObject.NULL)
             .put("backdrop", images.backdrop ?: JSONObject.NULL)
@@ -286,9 +284,9 @@ class HomeCache @Inject constructor(@ApplicationContext context: Context) {
             .put("thumb", images.thumb ?: JSONObject.NULL)
             .put("showThumb", images.showThumb ?: JSONObject.NULL)
 
-    private fun images(obj: JSONObject): FindroidImages {
+    private fun images(obj: JSONObject): ItemImages {
         fun uri(key: String): String? = if (obj.isNull(key)) null else obj.getString(key)
-        return FindroidImages(
+        return ItemImages(
             primary = uri("primary"),
             backdrop = uri("backdrop"),
             logo = uri("logo"),

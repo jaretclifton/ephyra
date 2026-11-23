@@ -1,12 +1,12 @@
 package dev.jdtech.jellyfin.player.local.domain
 
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidSeason
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.repository.MediaRepository
@@ -45,7 +45,7 @@ class NeighbourLoaderTest {
     /** The next season, there only for the tests that set [seasons]. */
     private val season2Id = UUID.randomUUID().toString().toItemId()
     private val season2 = List(3) { episode(it + 1, season2Id, seasonNumber = 2) }
-    private var seasons: List<FindroidSeason> = emptyList()
+    private var seasons: List<Season> = emptyList()
 
     /** Requests to hold, as the method name and the item id it asks about. */
     private val slow = mutableListOf<Pair<String, ItemId>>()
@@ -271,7 +271,7 @@ class NeighbourLoaderTest {
             as MediaRepository
 
     private fun episode(number: Int, season: ItemId = seasonId, seasonNumber: Int = 1) =
-        FindroidEpisode(
+        Episode(
             id = UUID.randomUUID().toString().toItemId(),
             name = "Episode $number",
             originalTitle = null,
@@ -294,13 +294,13 @@ class NeighbourLoaderTest {
             communityRating = null,
             people = emptyList(),
             missing = false,
-            images = FindroidImages(),
+            images = ItemImages(),
             chapters = emptyList(),
             trickplayInfo = null,
         )
 
     private fun season(id: ItemId, number: Int) =
-        FindroidSeason(
+        Season(
             id = id,
             name = "Season $number",
             seriesId = seriesId,
@@ -315,14 +315,14 @@ class NeighbourLoaderTest {
             canPlay = true,
             canDownload = false,
             unplayedItemCount = null,
-            images = FindroidImages(),
+            images = ItemImages(),
         )
 
     private fun source() =
-        FindroidSource(
+        ItemSource(
             id = "source",
             name = "Source",
-            type = FindroidSourceType.REMOTE,
+            type = ItemSourceType.REMOTE,
             path = "http://server/video",
             size = 0L,
             mediaStreams = emptyList(),

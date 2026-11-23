@@ -12,8 +12,8 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import dev.jdtech.jellyfin.models.FindroidItemPerson
-import dev.jdtech.jellyfin.models.FindroidItemPersonImage
+import dev.jdtech.jellyfin.models.ItemPerson
+import dev.jdtech.jellyfin.models.ItemPersonImage
 import dev.jdtech.jellyfin.models.PersonKind
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
@@ -31,12 +31,12 @@ class InfoTextTest {
     @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
 
     private fun person(name: String) =
-        FindroidItemPerson(
+        ItemPerson(
             id = UUID.randomUUID().toString().toItemId(),
             name = name,
             type = PersonKind.DIRECTOR,
             role = "",
-            image = FindroidItemPersonImage(null, null),
+            image = ItemPersonImage(null, null),
         )
 
     @Test

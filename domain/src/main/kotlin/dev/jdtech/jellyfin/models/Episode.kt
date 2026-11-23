@@ -2,7 +2,7 @@ package dev.jdtech.jellyfin.models
 
 import java.time.LocalDateTime
 
-data class FindroidEpisode(
+data class Episode(
     override val id: ItemId,
     override val name: String,
     override val originalTitle: String?,
@@ -10,7 +10,7 @@ data class FindroidEpisode(
     val indexNumber: Int,
     val indexNumberEnd: Int?,
     val parentIndexNumber: Int,
-    override val sources: List<FindroidSource>,
+    override val sources: List<ItemSource>,
     override val played: Boolean,
     override val favorite: Boolean,
     override val canPlay: Boolean,
@@ -23,16 +23,16 @@ data class FindroidEpisode(
     val seasonId: ItemId,
     val seasonName: String?,
     val communityRating: Float?,
-    val people: List<FindroidItemPerson>,
+    val people: List<ItemPerson>,
     override val unplayedItemCount: Int? = null,
     val missing: Boolean = false,
     /** When the server last saw this episode played; null if never, or when read offline. */
     val lastPlayedDate: LocalDateTime? = null,
     // CE (#332): from the item response, not stored offline.
-    val externalLinks: List<FindroidExternalLink> = emptyList(),
+    val externalLinks: List<ExternalLink> = emptyList(),
     /** How often the server saw this episode played to the end. */
     val playCount: Int = 0,
-    override val images: FindroidImages,
-    override val chapters: List<FindroidChapter>,
-    override val trickplayInfo: Map<String, FindroidTrickplayInfo>?,
-) : FindroidItem, FindroidSources
+    override val images: ItemImages,
+    override val chapters: List<Chapter>,
+    override val trickplayInfo: Map<String, ItemTrickplayInfo>?,
+) : Item, Playable

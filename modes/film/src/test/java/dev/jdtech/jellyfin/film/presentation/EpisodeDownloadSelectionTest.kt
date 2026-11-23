@@ -1,9 +1,9 @@
 package dev.jdtech.jellyfin.film.presentation
 
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.ItemImages
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.toItemId
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -35,7 +35,7 @@ class EpisodeDownloadSelectionTest {
 
         val selection = selectEpisodesToDownload(episodes, emptySet())
 
-        assertEquals(emptyList<FindroidEpisode>(), selection.toQueue)
+        assertEquals(emptyList<Episode>(), selection.toQueue)
         assertEquals(0, selection.skipped)
     }
 
@@ -191,7 +191,7 @@ class EpisodeDownloadSelectionTest {
         played: Boolean = false,
         positionTicks: Long = 0L,
     ) =
-        FindroidEpisode(
+        Episode(
             id = UUID.randomUUID().toString().toItemId(),
             name = "Episode",
             originalTitle = null,
@@ -202,10 +202,10 @@ class EpisodeDownloadSelectionTest {
             sources =
                 if (downloaded) {
                     listOf(
-                        FindroidSource(
+                        ItemSource(
                             id = "local",
                             name = "",
-                            type = FindroidSourceType.LOCAL,
+                            type = ItemSourceType.LOCAL,
                             path = "/downloads/Episode.mkv",
                             size = 0L,
                             mediaStreams = emptyList(),
@@ -226,7 +226,7 @@ class EpisodeDownloadSelectionTest {
             communityRating = null,
             people = emptyList(),
             missing = false,
-            images = FindroidImages(),
+            images = ItemImages(),
             chapters = emptyList(),
             trickplayInfo = null,
         )

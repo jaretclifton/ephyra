@@ -19,8 +19,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.jdtech.jellyfin.core.R
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 
 /**
@@ -51,10 +51,10 @@ internal object SpoilerReveals {
 @Immutable
 data class Spoilers(val enabled: Boolean) {
     /** Whether [item]'s still, title and overview are hidden. Reads snapshot state. */
-    fun hides(item: FindroidItem?): Boolean =
-        enabled && item is FindroidEpisode && !item.played && !SpoilerReveals.isRevealed(item.id)
+    fun hides(item: Item?): Boolean =
+        enabled && item is Episode && !item.played && !SpoilerReveals.isRevealed(item.id)
 
-    fun reveal(item: FindroidItem) = SpoilerReveals.reveal(item.id)
+    fun reveal(item: Item) = SpoilerReveals.reveal(item.id)
 
     companion object {
         val Off = Spoilers(enabled = false)
@@ -99,8 +99,8 @@ private val SpoilerBlur = 32.dp
 
 /** The title [item] is shown with: its name, or "Episode 5" while it is hidden. */
 @Composable
-fun spoilerFreeName(item: FindroidItem, hidden: Boolean): String =
-    if (hidden && item is FindroidEpisode) {
+fun spoilerFreeName(item: Item, hidden: Boolean): String =
+    if (hidden && item is Episode) {
         stringResource(R.string.episode_number, item.indexNumber)
     } else item.name
 
@@ -109,7 +109,7 @@ fun spoilerFreeName(item: FindroidItem, hidden: Boolean): String =
  * of a long press that copies its text, which would give the hidden title away.
  */
 @Composable
-fun Modifier.revealOnLongClick(item: FindroidItem, onClick: (() -> Unit)? = null): Modifier {
+fun Modifier.revealOnLongClick(item: Item, onClick: (() -> Unit)? = null): Modifier {
     val spoilers = LocalSpoilers.current
     return this.combinedClickable(
         onClick = onClick ?: {},
@@ -120,7 +120,7 @@ fun Modifier.revealOnLongClick(item: FindroidItem, onClick: (() -> Unit)? = null
 
 /** "S1:E5 - Title", or "S1 E5" while [episode] is hidden. */
 @Composable
-fun spoilerFreeEpisodeLine(episode: FindroidEpisode, hidden: Boolean): String =
+fun spoilerFreeEpisodeLine(episode: Episode, hidden: Boolean): String =
     if (hidden) {
         stringResource(
             R.string.season_episode_number,
@@ -159,10 +159,10 @@ data class UpNextSpoiler(val hidden: Boolean, val episodeNumber: Int?) {
  * in it yet cannot be told from an unwatched episode, so it stays hidden while the setting is on.
  * Reads snapshot state.
  */
-fun Spoilers.upNext(itemId: ItemId, queue: List<FindroidItem>): UpNextSpoiler {
+fun Spoilers.upNext(itemId: ItemId, queue: List<Item>): UpNextSpoiler {
     if (!enabled) return UpNextSpoiler.Shown
     val next = queue.firstOrNull { it.id == itemId } ?: return UpNextSpoiler(true, null)
-    return UpNextSpoiler(hides(next), (next as? FindroidEpisode)?.indexNumber)
+    return UpNextSpoiler(hides(next), (next as? Episode)?.indexNumber)
 }
 
 /** The title of the up-next card: [title], "Episode 5" while [spoiler] hides it, or none. */

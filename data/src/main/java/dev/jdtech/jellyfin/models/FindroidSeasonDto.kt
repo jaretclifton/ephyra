@@ -28,7 +28,7 @@ data class FindroidSeasonDto(
     val indexNumber: Int,
 )
 
-fun FindroidSeason.toFindroidSeasonDto(): FindroidSeasonDto {
+fun Season.toFindroidSeasonDto(): FindroidSeasonDto {
     return FindroidSeasonDto(
         id = id,
         seriesId = seriesId,
@@ -39,12 +39,9 @@ fun FindroidSeason.toFindroidSeasonDto(): FindroidSeasonDto {
     )
 }
 
-suspend fun FindroidSeasonDto.toFindroidSeason(
-    database: ServerDatabaseDao,
-    userId: UserId,
-): FindroidSeason {
+suspend fun FindroidSeasonDto.toSeason(database: ServerDatabaseDao, userId: UserId): Season {
     val userData = database.getUserDataOrCreateNew(id, userId)
-    return FindroidSeason(
+    return Season(
         id = id,
         name = name,
         originalTitle = null,
@@ -59,12 +56,12 @@ suspend fun FindroidSeasonDto.toFindroidSeason(
         episodes = emptyList(),
         seriesId = seriesId,
         seriesName = seriesName,
-        images = toLocalFindroidImages(itemId = id),
+        images = toLocalItemImages(itemId = id),
     )
 }
 
-fun FindroidSeasonDto.toLocalFindroidImages(itemId: ItemId): FindroidImages {
-    return FindroidImages(
+fun FindroidSeasonDto.toLocalItemImages(itemId: ItemId): ItemImages {
+    return ItemImages(
         primary = localImagePath(itemId, "primary"),
         backdrop = localImagePath(itemId, "backdrop"),
         showPrimary = localImagePath(seriesId, "primary"),

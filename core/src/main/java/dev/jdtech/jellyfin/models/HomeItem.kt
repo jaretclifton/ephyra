@@ -5,7 +5,7 @@ sealed class HomeItem {
         override val id: ItemId = "dbfef8a9-7ff0-4c36-9e36-81dfd65fdd46".toItemId()
     }
 
-    data class Suggestions(override val id: ItemId, val items: List<FindroidItem>) : HomeItem()
+    data class Suggestions(override val id: ItemId, val items: List<Item>) : HomeItem()
 
     data class Section(val homeSection: HomeSection) : HomeItem() {
         override val id = homeSection.id

@@ -35,7 +35,7 @@ class StoredVideoRangeTypeTest {
     @After fun close() = room.close()
 
     private fun video(range: VideoRangeType?) =
-        FindroidMediaStream(
+        MediaStream(
             title = "",
             displayTitle = "4K",
             language = "",
@@ -57,11 +57,11 @@ class StoredVideoRangeTypeTest {
             val dto = video(range).toFindroidMediaStreamDto(UUID.randomUUID(), "source", "path")
 
             assertEquals(range.name, dto.videoRangeType)
-            assertEquals(range, dto.toFindroidMediaStream().videoRangeType)
+            assertEquals(range, dto.toMediaStream().videoRangeType)
         }
         val none = video(null).toFindroidMediaStreamDto(UUID.randomUUID(), "source", "path")
         assertNull(none.videoRangeType)
-        assertNull(none.toFindroidMediaStream().videoRangeType)
+        assertNull(none.toMediaStream().videoRangeType)
     }
 
     @Test
@@ -74,7 +74,7 @@ class StoredVideoRangeTypeTest {
             )
 
             val stored = database.getMediaStreamsBySourceId(sourceId).single()
-            assertEquals(range, stored.toFindroidMediaStream().videoRangeType)
+            assertEquals(range, stored.toMediaStream().videoRangeType)
         }
     }
 

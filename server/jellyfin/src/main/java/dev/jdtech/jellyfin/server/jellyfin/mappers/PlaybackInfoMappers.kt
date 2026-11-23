@@ -1,9 +1,9 @@
 package dev.jdtech.jellyfin.server.jellyfin.mappers
 
-import dev.jdtech.jellyfin.models.FindroidChapter
-import dev.jdtech.jellyfin.models.FindroidSegment
-import dev.jdtech.jellyfin.models.FindroidSegmentType
-import dev.jdtech.jellyfin.models.FindroidTrickplayInfo
+import dev.jdtech.jellyfin.models.Chapter
+import dev.jdtech.jellyfin.models.ItemTrickplayInfo
+import dev.jdtech.jellyfin.models.Segment
+import dev.jdtech.jellyfin.models.SegmentType
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.MediaSegmentDto
 import org.jellyfin.sdk.model.api.MediaSegmentType
@@ -11,9 +11,9 @@ import org.jellyfin.sdk.model.api.TrickplayInfoDto
 
 // What the player shows on the seek bar: chapters, segments and trickplay thumbnails.
 
-internal fun BaseItemDto.toFindroidChapters(): List<FindroidChapter> {
+internal fun BaseItemDto.toChapters(): List<Chapter> {
     return chapters?.map { chapter ->
-        FindroidChapter(
+        Chapter(
             startPosition = chapter.startPositionTicks / 10000,
             name = chapter.name,
             imageTag = chapter.imageTag,
@@ -21,19 +21,19 @@ internal fun BaseItemDto.toFindroidChapters(): List<FindroidChapter> {
     } ?: emptyList()
 }
 
-private fun MediaSegmentType.toFindroidSegmentType(): FindroidSegmentType =
+private fun MediaSegmentType.toSegmentType(): SegmentType =
     when (this) {
-        MediaSegmentType.UNKNOWN -> FindroidSegmentType.UNKNOWN
-        MediaSegmentType.INTRO -> FindroidSegmentType.INTRO
-        MediaSegmentType.OUTRO -> FindroidSegmentType.OUTRO
-        MediaSegmentType.RECAP -> FindroidSegmentType.RECAP
-        MediaSegmentType.PREVIEW -> FindroidSegmentType.PREVIEW
-        MediaSegmentType.COMMERCIAL -> FindroidSegmentType.COMMERCIAL
+        MediaSegmentType.UNKNOWN -> SegmentType.UNKNOWN
+        MediaSegmentType.INTRO -> SegmentType.INTRO
+        MediaSegmentType.OUTRO -> SegmentType.OUTRO
+        MediaSegmentType.RECAP -> SegmentType.RECAP
+        MediaSegmentType.PREVIEW -> SegmentType.PREVIEW
+        MediaSegmentType.COMMERCIAL -> SegmentType.COMMERCIAL
     }
 
-internal fun MediaSegmentDto.toFindroidSegment(): FindroidSegment {
-    return FindroidSegment(
-        type = type.toFindroidSegmentType(),
+internal fun MediaSegmentDto.toSegment(): Segment {
+    return Segment(
+        type = type.toSegmentType(),
         startTicks = startTicks / 10000,
         endTicks = endTicks / 10000,
     )
@@ -44,10 +44,10 @@ internal fun MediaSegmentDto.toFindroidSegment(): FindroidSegment {
  * one width each (#860): see [preferredTrickplayInfo]. A version without a usable width is left
  * out, as one without trickplay.
  */
-internal fun BaseItemDto.toFindroidTrickplayInfo(): Map<String, FindroidTrickplayInfo>? =
+internal fun BaseItemDto.toItemTrickplayInfo(): Map<String, ItemTrickplayInfo>? =
     trickplay
         ?.mapNotNull { (sourceId, widths) ->
-            widths?.preferredTrickplayInfo()?.let { sourceId to it.toFindroidTrickplayInfo() }
+            widths?.preferredTrickplayInfo()?.let { sourceId to it.toItemTrickplayInfo() }
         }
         ?.toMap()
 
@@ -76,8 +76,8 @@ private fun TrickplayInfoDto.sheetPixels(): Long =
 /** A sheet of Jellyfin's default trickplay: 10 x 10 tiles of 320 x 180. */
 internal const val MAX_TRICKPLAY_SHEET_PIXELS = 3200L * 1800L
 
-internal fun TrickplayInfoDto.toFindroidTrickplayInfo(): FindroidTrickplayInfo {
-    return FindroidTrickplayInfo(
+internal fun TrickplayInfoDto.toItemTrickplayInfo(): ItemTrickplayInfo {
+    return ItemTrickplayInfo(
         width = width,
         height = height,
         tileWidth = tileWidth,

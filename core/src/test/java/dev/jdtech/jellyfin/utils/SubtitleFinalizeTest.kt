@@ -6,7 +6,7 @@ import android.os.Environment
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidMediaStreamDto
 import dev.jdtech.jellyfin.models.FindroidSourceDto
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.MediaRepository
@@ -287,7 +287,7 @@ class SubtitleFinalizeTest {
                 id = id,
                 itemId = itemId,
                 name = "Original",
-                type = FindroidSourceType.LOCAL,
+                type = ItemSourceType.LOCAL,
                 path = file.absolutePath,
                 downloadId = downloadId,
             )

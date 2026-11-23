@@ -1,16 +1,16 @@
 package dev.jdtech.jellyfin.server.jellyfin.mappers
 
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
 import org.jellyfin.sdk.model.api.MediaProtocol
 import org.jellyfin.sdk.model.api.MediaSourceInfo
 
-internal suspend fun MediaSourceInfo.toFindroidSource(
+internal suspend fun MediaSourceInfo.toItemSource(
     context: MapperContext,
     itemId: ItemId,
     includePath: Boolean = false,
-): FindroidSource {
+): ItemSource {
     // When the server decided this source needs transcoding it returns a (relative)
     // transcodingUrl — an HLS manifest on the playback path, a progressive stream
     // on the download path. Honor it over the original file.
@@ -29,14 +29,13 @@ internal suspend fun MediaSourceInfo.toFindroidSource(
             protocol == MediaProtocol.HTTP -> this.path.orEmpty()
             else -> ""
         }
-    return FindroidSource(
+    return ItemSource(
         id = id.orEmpty(),
         name = name.orEmpty(),
-        type = FindroidSourceType.REMOTE,
+        type = ItemSourceType.REMOTE,
         path = path,
         size = size ?: 0,
-        mediaStreams =
-            mediaStreams?.map { it.toFindroidMediaStream(context.baseUrl) } ?: emptyList(),
+        mediaStreams = mediaStreams?.map { it.toMediaStream(context.baseUrl) } ?: emptyList(),
         transcoded = transcoded,
         container = container,
         bitrate = bitrate,

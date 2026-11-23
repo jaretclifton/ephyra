@@ -1,10 +1,10 @@
 package dev.jdtech.jellyfin.player.local.domain
 
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -43,7 +43,7 @@ class PlaylistManagerUnfinishedDownloadTest {
         }
     }
 
-    private fun fakeRepository(sources: List<FindroidSource>) =
+    private fun fakeRepository(sources: List<ItemSource>) =
         fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
             _,
             method,
@@ -57,10 +57,10 @@ class PlaylistManagerUnfinishedDownloadTest {
             as MediaRepository
 
     private fun partial() =
-        FindroidSource(
+        ItemSource(
             id = "source",
             name = "Source",
-            type = FindroidSourceType.LOCAL,
+            type = ItemSourceType.LOCAL,
             path = "/downloads/Show/S01/S01E01 - Episode.ts.download",
             size = 0L,
             mediaStreams = emptyList(),
@@ -68,17 +68,17 @@ class PlaylistManagerUnfinishedDownloadTest {
         )
 
     private fun remote() =
-        FindroidSource(
+        ItemSource(
             id = "source",
             name = "Source",
-            type = FindroidSourceType.REMOTE,
+            type = ItemSourceType.REMOTE,
             path = REMOTE_PATH,
             size = 0L,
             mediaStreams = emptyList(),
         )
 
     private fun episode() =
-        FindroidEpisode(
+        Episode(
             id = UUID.randomUUID().toString().toItemId(),
             name = "Episode 1",
             originalTitle = null,
@@ -101,7 +101,7 @@ class PlaylistManagerUnfinishedDownloadTest {
             communityRating = null,
             people = emptyList(),
             missing = false,
-            images = FindroidImages(),
+            images = ItemImages(),
             chapters = emptyList(),
             trickplayInfo = null,
         )

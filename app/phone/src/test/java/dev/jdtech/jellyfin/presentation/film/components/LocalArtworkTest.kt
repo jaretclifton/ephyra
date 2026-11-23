@@ -21,7 +21,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * #754: the image a download stored loads from its path in `FindroidImages`, as the poster cards (a
+ * #754: the image a download stored loads from its path in `ItemImages`, as the poster cards (a
  * `Uri` model) and the header artwork (a `String` model) hand it to Coil.
  */
 @RunWith(RobolectricTestRunner::class)

@@ -6,8 +6,8 @@ import android.content.SharedPreferences
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidSeason
+import dev.jdtech.jellyfin.models.ItemImages
+import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.MediaRepository
@@ -160,7 +160,7 @@ class SeasonLoadingTest {
             as MediaRepository
 
     private fun season() =
-        FindroidSeason(
+        Season(
             id = seasonId,
             name = "Season 3",
             seriesId = seriesId,
@@ -175,7 +175,7 @@ class SeasonLoadingTest {
             canPlay = true,
             canDownload = false,
             unplayedItemCount = null,
-            images = FindroidImages(),
+            images = ItemImages(),
         )
 
     private fun appPreferences(): AppPreferences {

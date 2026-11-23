@@ -3,13 +3,13 @@ package dev.jdtech.jellyfin.core.presentation.downloader
 import android.app.Application
 import android.content.Context
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.FindroidSourceDto
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemImages
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -45,7 +45,7 @@ class DownloadQueueCancelTest {
             id = "source",
             itemId = item.id,
             name = "Original",
-            type = FindroidSourceType.LOCAL,
+            type = ItemSourceType.LOCAL,
             path = "/downloads/Show/S01/S01E01 - Episode.ts.download",
             downloadId = ROW_DOWNLOAD_ID,
         )
@@ -147,7 +147,7 @@ class DownloadQueueCancelTest {
         val cancelled = CopyOnWriteArrayList<Pair<ItemId, Long>>()
 
         override suspend fun downloadItem(
-            item: FindroidItem,
+            item: Item,
             sourceId: String,
             storageIndex: Int,
             maxBitrate: Int?,
@@ -155,19 +155,19 @@ class DownloadQueueCancelTest {
         ) = startResult
 
         override suspend fun downloadItem(
-            item: FindroidItem,
+            item: Item,
             storageIndex: Int,
             maxBitrate: Int?,
             smartQueued: Boolean,
         ) = startResult
 
-        override suspend fun cancelDownload(item: FindroidItem, downloadId: Long) {
+        override suspend fun cancelDownload(item: Item, downloadId: Long) {
             cancelled.add(item.id to downloadId)
         }
 
-        override suspend fun retryFailedMediaStreams(item: FindroidItem) = Unit
+        override suspend fun retryFailedMediaStreams(item: Item) = Unit
 
-        override suspend fun deleteItem(item: FindroidItem, source: FindroidSource) = Unit
+        override suspend fun deleteItem(item: Item, source: ItemSource) = Unit
 
         override suspend fun getProgress(downloadId: Long?) =
             Downloader.Progress(progressStatus, 0, 0L, -1L)
@@ -179,7 +179,7 @@ class DownloadQueueCancelTest {
         override suspend fun getActiveDownloads() = active
 
         override suspend fun savePendingDownload(
-            item: FindroidItem,
+            item: Item,
             maxBitrate: Int?,
             smartQueued: Boolean,
         ) = Unit
@@ -196,7 +196,7 @@ class DownloadQueueCancelTest {
     }
 
     private fun episode() =
-        FindroidEpisode(
+        Episode(
             id = UUID.randomUUID().toString().toItemId(),
             name = "Episode 1",
             originalTitle = null,
@@ -219,7 +219,7 @@ class DownloadQueueCancelTest {
             communityRating = null,
             people = emptyList(),
             missing = false,
-            images = FindroidImages(),
+            images = ItemImages(),
             chapters = emptyList(),
             trickplayInfo = null,
         )

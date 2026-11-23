@@ -11,10 +11,10 @@ import dev.jdtech.jellyfin.film.presentation.EpisodeDownloadPrompts
 import dev.jdtech.jellyfin.film.presentation.downloads.downloadDeletionScope
 import dev.jdtech.jellyfin.film.presentation.inFlightIds
 import dev.jdtech.jellyfin.film.presentation.selectEpisodesToDownload
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.EpisodeField
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.isDownloaded
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.MediaRepository
@@ -316,7 +316,7 @@ constructor(
      * CE (#636): asks the questions of a download of [episodes], or, when every one of them is
      * downloaded or in flight already, says so at once without asking anything.
      */
-    private suspend fun startDownload(episodes: List<FindroidEpisode>) {
+    private suspend fun startDownload(episodes: List<Episode>) {
         val inFlightIds = downloadQueue.inFlightIds()
         if (selectEpisodesToDownload(episodes, inFlightIds).toQueue.isEmpty()) {
             enqueue(episodes, maxBitrate = null, unwatchedOnly = false)
@@ -329,11 +329,7 @@ constructor(
         viewModelScope.launch(Dispatchers.IO) { startDownload(_state.value.episodes) }
     }
 
-    private suspend fun enqueue(
-        episodes: List<FindroidEpisode>,
-        maxBitrate: Int?,
-        unwatchedOnly: Boolean,
-    ) {
+    private suspend fun enqueue(episodes: List<Episode>, maxBitrate: Int?, unwatchedOnly: Boolean) {
         // An episode already enqueued (pending/downloading/paused) is "in progress" from the
         // user's perspective, so it counts as skipped rather than being enqueued again.
         val (toQueue, skipped) =
@@ -354,8 +350,7 @@ constructor(
         viewModelScope.launch(Dispatchers.IO) {
             for (episode in _state.value.episodes) {
                 downloadQueue.remove(episode.id)
-                val localSource =
-                    episode.sources.firstOrNull { it.type == FindroidSourceType.LOCAL }
+                val localSource = episode.sources.firstOrNull { it.type == ItemSourceType.LOCAL }
                 if (localSource != null) {
                     downloader.deleteItem(item = episode, source = localSource)
                 }
@@ -365,7 +360,7 @@ constructor(
     }
 
     private fun buildDownloadProgressMap(
-        episodes: List<FindroidEpisode>,
+        episodes: List<Episode>,
         entries: List<DownloadQueue.Entry>,
     ): Map<ItemId, DownloadProgress> {
         val byId = entries.associateBy { it.id }
@@ -408,7 +403,7 @@ constructor(
             is SeasonAction.DownloadEpisode -> {
                 viewModelScope.launch(Dispatchers.IO) {
                     val episode = action.episode
-                    if (episode is FindroidEpisode) {
+                    if (episode is Episode) {
                         downloadQueue.enqueue(episode, action.maxBitrate)
                     }
                 }
@@ -417,8 +412,7 @@ constructor(
                 downloadDeletionScope.launch {
                     val item = action.episode
                     downloadQueue.remove(item.id)
-                    val localSource =
-                        item.sources.firstOrNull { it.type == FindroidSourceType.LOCAL }
+                    val localSource = item.sources.firstOrNull { it.type == ItemSourceType.LOCAL }
                     if (localSource != null) {
                         downloader.deleteItem(item = item, source = localSource)
                     }

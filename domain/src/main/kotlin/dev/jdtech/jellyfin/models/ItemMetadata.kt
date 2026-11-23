@@ -10,10 +10,10 @@ import java.util.Locale
  */
 
 /** A link to the item on an outside site (IMDb, TMDB, TVDB, Trakt…), named after that site. */
-data class FindroidExternalLink(val name: String, val url: String)
+data class ExternalLink(val name: String, val url: String)
 
 /** A trailer hosted elsewhere (usually YouTube). [name] is the server's title for it, if any. */
-data class FindroidTrailer(val name: String?, val url: String)
+data class Trailer(val name: String?, val url: String)
 
 /** The first tagline, or null when there is none. */
 fun List<String>?.firstTagline(): String? = orEmpty().firstOrNull { it.isNotBlank() }?.trim()
@@ -23,7 +23,7 @@ fun List<String>?.firstTagline(): String? = orEmpty().firstOrNull { it.isNotBlan
  * airs every day, "[daily] 21:00"; Monday first. Null when the show has ended or the server has no
  * schedule.
  */
-fun FindroidShow.airSchedule(locale: Locale, daily: String): String? {
+fun Show.airSchedule(locale: Locale, daily: String): String? {
     if (!status.equals("Continuing", ignoreCase = true)) return null
     val days = airDays.sorted()
     val style = if (days.size == 1) TextStyle.FULL else TextStyle.SHORT

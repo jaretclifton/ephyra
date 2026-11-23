@@ -11,7 +11,7 @@ import androidx.media3.ui.R as Media3R
 import dev.jdtech.jellyfin.core.presentation.ephyra.SeekBarSegment
 import dev.jdtech.jellyfin.core.presentation.ephyra.seekBarSegmentColor
 import dev.jdtech.jellyfin.core.presentation.ephyra.seekBarSegments
-import dev.jdtech.jellyfin.models.FindroidSegment
+import dev.jdtech.jellyfin.models.Segment
 import dev.jdtech.jellyfin.presentation.theme.darkScheme
 import kotlin.math.max
 
@@ -34,7 +34,7 @@ constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
     private val scrubberPadding: Int
     private val paint = Paint()
     private var durationMs = 0L
-    private var segments: List<FindroidSegment> = emptyList()
+    private var segments: List<Segment> = emptyList()
     private var ranges: List<SeekBarSegment> = emptyList()
 
     init {
@@ -80,7 +80,7 @@ constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
     }
 
     /** The current item's segments; an empty list clears them. */
-    fun setSegments(segments: List<FindroidSegment>) {
+    fun setSegments(segments: List<Segment>) {
         if (segments == this.segments) return
         this.segments = segments
         updateRanges()

@@ -2,7 +2,7 @@ package dev.jdtech.jellyfin.models
 
 import android.app.Application
 import android.net.Uri
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidImages
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toItemImages
 import dev.jdtech.jellyfin.server.jellyfin.toItemId
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -45,7 +45,7 @@ class FindroidImagesTest {
 
     @Test
     fun `episode of a series with backdrop and logo uses the series own tags`() {
-        val images = dto(BaseItemKind.EPISODE, listOf("bd", "bd2"), "lg").toFindroidImages(base)
+        val images = dto(BaseItemKind.EPISODE, listOf("bd", "bd2"), "lg").toItemImages(base)
 
         assertEquals("$base/items/$seriesId/Images/Backdrop/0?tag=bd", images.showBackdrop)
         assertEquals("$base/items/$seriesId/Images/Logo?tag=lg", images.showLogo)
@@ -54,7 +54,7 @@ class FindroidImagesTest {
 
     @Test
     fun `season of a series with backdrop and logo uses the series own tags`() {
-        val images = dto(BaseItemKind.SEASON, listOf("bd"), "lg").toFindroidImages(base)
+        val images = dto(BaseItemKind.SEASON, listOf("bd"), "lg").toItemImages(base)
 
         assertEquals("$base/items/$seriesId/Images/Backdrop/0?tag=bd", images.showBackdrop)
         assertEquals("$base/items/$seriesId/Images/Logo?tag=lg", images.showLogo)
@@ -62,7 +62,7 @@ class FindroidImagesTest {
 
     @Test
     fun `episode of a series without backdrop or logo leaves them null despite a poster`() {
-        val images = dto(BaseItemKind.EPISODE).toFindroidImages(base)
+        val images = dto(BaseItemKind.EPISODE).toItemImages(base)
 
         assertNull(images.showBackdrop)
         assertNull(images.showLogo)
@@ -72,7 +72,7 @@ class FindroidImagesTest {
 
     @Test
     fun `season of a series without backdrop or logo leaves them null despite a poster`() {
-        val images = dto(BaseItemKind.SEASON, backdropTags = emptyList()).toFindroidImages(base)
+        val images = dto(BaseItemKind.SEASON, backdropTags = emptyList()).toItemImages(base)
 
         assertNull(images.showBackdrop)
         assertNull(images.showLogo)
@@ -88,7 +88,7 @@ class FindroidImagesTest {
                     backdropItemId = otherId,
                     logoItemId = otherId,
                 )
-                .toFindroidImages(base)
+                .toItemImages(base)
 
         assertEquals("$base/items/$otherId/Images/Backdrop/0?tag=bd", images.showBackdrop)
         assertEquals("$base/items/$otherId/Images/Logo?tag=lg", images.showLogo)
@@ -97,8 +97,7 @@ class FindroidImagesTest {
     // #608
     @Test
     fun `an episode names its series thumb, a movie its own`() {
-        val episode =
-            dto(BaseItemKind.EPISODE).copy(seriesThumbImageTag = "th").toFindroidImages(base)
+        val episode = dto(BaseItemKind.EPISODE).copy(seriesThumbImageTag = "th").toItemImages(base)
         assertEquals("$base/items/$seriesId/Images/Thumb?tag=th", episode.showThumb)
         assertNull(episode.thumb)
 
@@ -108,7 +107,7 @@ class FindroidImagesTest {
                     type = BaseItemKind.MOVIE,
                     imageTags = mapOf(ImageType.THUMB to "mt"),
                 )
-                .toFindroidImages(base)
+                .toItemImages(base)
         assertEquals("$base/items/$otherId/Images/Thumb?tag=mt", movie.thumb)
         assertNull(movie.showThumb)
     }
@@ -118,13 +117,13 @@ class FindroidImagesTest {
         val images =
             dto(BaseItemKind.SEASON)
                 .copy(parentThumbImageTag = "pt", parentThumbItemId = otherId)
-                .toFindroidImages(base)
+                .toItemImages(base)
         assertEquals("$base/items/$otherId/Images/Thumb?tag=pt", images.showThumb)
     }
 
     @Test
     fun `without thumb tags there is no thumb`() {
-        val images = dto(BaseItemKind.EPISODE, listOf("bd"), "lg").toFindroidImages(base)
+        val images = dto(BaseItemKind.EPISODE, listOf("bd"), "lg").toItemImages(base)
         assertNull(images.thumb)
         assertNull(images.showThumb)
     }
@@ -148,7 +147,7 @@ class FindroidImagesTest {
                     endDate = null,
                     chapters = null,
                 )
-                .toLocalFindroidImages(episodeId.toItemId())
+                .toLocalItemImages(episodeId.toItemId())
 
         assertEquals("/images/$episodeId/primary", images.primary)
         assertEquals(oldLocalUri("images/$episodeId/primary"), images.primary)

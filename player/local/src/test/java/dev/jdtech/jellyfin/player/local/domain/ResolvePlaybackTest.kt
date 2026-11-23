@@ -1,7 +1,7 @@
 package dev.jdtech.jellyfin.player.local.domain
 
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.toItemId
@@ -100,8 +100,8 @@ class ResolvePlaybackTest {
 
     @Test
     fun `a finished download wins over the server's source`() {
-        val download = source("source", FindroidSourceType.LOCAL, "/films/film.mkv")
-        val remote = source("source", FindroidSourceType.REMOTE, "https://server/film")
+        val download = source("source", ItemSourceType.LOCAL, "/films/film.mkv")
+        val remote = source("source", ItemSourceType.REMOTE, "https://server/film")
 
         assertEquals(download, resolve().pick(listOf(remote, download), "source"))
         assertEquals(download, resolve().pick(listOf(remote, download), null))
@@ -109,8 +109,8 @@ class ResolvePlaybackTest {
 
     @Test
     fun `an unfinished download is skipped`() {
-        val partial = source("source", FindroidSourceType.LOCAL, "/films/film.mkv.download")
-        val remote = source("source", FindroidSourceType.REMOTE, "https://server/film")
+        val partial = source("source", ItemSourceType.LOCAL, "/films/film.mkv.download")
+        val remote = source("source", ItemSourceType.REMOTE, "https://server/film")
 
         assertEquals(remote, resolve().pick(listOf(partial, remote), "source"))
         assertNull(resolve().pick(listOf(partial), "source"))
@@ -118,8 +118,8 @@ class ResolvePlaybackTest {
 
     @Test
     fun `the source with the asked id plays, or the first one when none has it`() {
-        val first = source("first", FindroidSourceType.REMOTE, "https://server/first")
-        val second = source("second", FindroidSourceType.REMOTE, "https://server/second")
+        val first = source("first", ItemSourceType.REMOTE, "https://server/first")
+        val second = source("second", ItemSourceType.REMOTE, "https://server/second")
 
         assertEquals(second, resolve().pick(listOf(first, second), "second"))
         assertEquals(first, resolve().pick(listOf(first, second), "other"))
@@ -143,7 +143,7 @@ class ResolvePlaybackTest {
                         assertEquals(itemId, args[0].asItemIdOrNull())
                         // The last argument is the continuation.
                         requests += args.toList().subList(1, args.size - 1)
-                        emptyList<FindroidSource>()
+                        emptyList<ItemSource>()
                     }
                     else -> error("Unexpected call to ${method.kotlinName}")
                 }
@@ -152,8 +152,8 @@ class ResolvePlaybackTest {
         return ResolvePlayback(repository, testPreferences(values.toMap()))
     }
 
-    private fun source(id: String, type: FindroidSourceType, path: String) =
-        FindroidSource(
+    private fun source(id: String, type: ItemSourceType, path: String) =
+        ItemSource(
             id = id,
             name = id,
             type = type,

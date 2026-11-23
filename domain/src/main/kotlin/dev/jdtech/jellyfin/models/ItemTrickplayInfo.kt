@@ -1,6 +1,6 @@
 package dev.jdtech.jellyfin.models
 
-data class FindroidTrickplayInfo(
+data class ItemTrickplayInfo(
     val width: Int,
     val height: Int,
     val tileWidth: Int,

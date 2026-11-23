@@ -8,12 +8,12 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.film.domain.VideoMetadataParser
 import dev.jdtech.jellyfin.film.presentation.movie.MovieViewModel
 import dev.jdtech.jellyfin.film.presentation.show.ShowViewModel
-import dev.jdtech.jellyfin.models.FindroidBoxSet
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.BoxSet
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemImages
+import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.ServerCapabilities
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -50,18 +50,14 @@ class RelatedItemsLoadingTest {
     /** Boolean preferences the user turned off; every other preference has its default. */
     private val switchedOff = mutableSetOf<String>()
     /** What getMovie answers from now on, in place of the movie the view model was made with. */
-    @Volatile private var answer: FindroidMovie? = null
+    @Volatile private var answer: Movie? = null
     /** #769: what the server can do; Jellyfin can do everything. */
     @Volatile private var capabilities = ServerCapabilities.ALL
 
     private val extra = movie(UUID.randomUUID().toString().toItemId(), "Behind the scenes")
     private val similar = movie(UUID.randomUUID().toString().toItemId(), "Similar")
     private val collection =
-        FindroidBoxSet(
-            id = UUID.randomUUID().toString().toItemId(),
-            name = "Saga",
-            images = FindroidImages(),
-        )
+        BoxSet(id = UUID.randomUUID().toString().toItemId(), name = "Saga", images = ItemImages())
 
     @BeforeEach
     fun setUp() {
@@ -324,7 +320,7 @@ class RelatedItemsLoadingTest {
         assertEquals(listOf("getMovie"), synchronized(calls) { calls.toList() })
     }
 
-    private fun movieViewModel(movie: FindroidMovie) =
+    private fun movieViewModel(movie: Movie) =
         MovieViewModel(repository(movie), appPreferences(), VideoMetadataParser)
 
     private fun showViewModel(): ShowViewModel {
@@ -346,7 +342,7 @@ class RelatedItemsLoadingTest {
         )
     }
 
-    private fun repository(movie: FindroidMovie): MediaRepository =
+    private fun repository(movie: Movie): MediaRepository =
         fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
             _,
             method,
@@ -388,7 +384,7 @@ class RelatedItemsLoadingTest {
             as ServerDatabaseDao
 
     private fun movie(id: ItemId, name: String, localTrailers: Int = 0, specialFeatures: Int? = 0) =
-        FindroidMovie(
+        Movie(
             id = id,
             name = name,
             originalTitle = null,
@@ -411,13 +407,13 @@ class RelatedItemsLoadingTest {
             trailer = null,
             localTrailerCount = localTrailers,
             specialFeatureCount = specialFeatures,
-            images = FindroidImages(),
+            images = ItemImages(),
             chapters = emptyList(),
             trickplayInfo = null,
         )
 
     private fun show() =
-        FindroidShow(
+        Show(
             id = itemId,
             name = "Show",
             originalTitle = null,
@@ -439,7 +435,7 @@ class RelatedItemsLoadingTest {
             endDate = null,
             trailer = null,
             specialFeatureCount = 3,
-            images = FindroidImages(),
+            images = ItemImages(),
         )
 
     private fun appPreferences(): AppPreferences {

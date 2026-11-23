@@ -6,9 +6,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.film.domain.VideoMetadataParser
 import dev.jdtech.jellyfin.film.presentation.detailSections
 import dev.jdtech.jellyfin.film.presentation.shownIn
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItemPerson
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemPerson
 import dev.jdtech.jellyfin.models.PersonKind
 import dev.jdtech.jellyfin.models.mergeDuplicateRoles
 import dev.jdtech.jellyfin.repository.DataChangeEvents
@@ -98,7 +98,7 @@ constructor(
         }
     }
 
-    private suspend fun getActors(item: FindroidEpisode): List<FindroidItemPerson> {
+    private suspend fun getActors(item: Episode): List<ItemPerson> {
         return withContext(Dispatchers.Default) {
             item.people.mergeDuplicateRoles().filter { it.type == PersonKind.ACTOR }
         }

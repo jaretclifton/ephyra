@@ -12,11 +12,11 @@ import dev.jdtech.jellyfin.film.domain.homerows.HomeRowsProfile
 import dev.jdtech.jellyfin.film.domain.homerows.HomeRowsStore
 import dev.jdtech.jellyfin.film.domain.homerows.LegacyHomeSwitches
 import dev.jdtech.jellyfin.film.domain.homerows.homeLibraries
-import dev.jdtech.jellyfin.models.FindroidCollection
-import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.HomeItem
 import dev.jdtech.jellyfin.models.HomeSection
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.User
@@ -86,8 +86,7 @@ constructor(
      * The last library list, with the server and user it is for. CE (#810): one value, so a load a
      * switch overtook cannot pair one user's list with another user's key.
      */
-    @Volatile
-    private var cachedLibraries: Pair<Pair<String?, UserId?>, List<FindroidCollection>>? = null
+    @Volatile private var cachedLibraries: Pair<Pair<String?, UserId?>, List<Library>>? = null
     private var cacheChecked = false
 
     /**
@@ -522,7 +521,7 @@ constructor(
      * libraries, so the slowest library holds back none of the others (#251).
      */
     private suspend fun loadLatest(
-        libraries: List<FindroidCollection>,
+        libraries: List<Library>,
         stored: List<HomeRowConfig>?,
         legacy: LegacyHomeSwitches,
     ) {
@@ -538,7 +537,7 @@ constructor(
         }
 
         val current = _state.value.views
-        val results = arrayOfNulls<Result<List<FindroidItem>>>(views.size)
+        val results = arrayOfNulls<Result<List<Item>>>(views.size)
         // Rows that haven't arrived keep what they showed; the order is that of [views].
         fun items() =
             views.indices.mapNotNull { i ->

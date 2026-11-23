@@ -1,10 +1,10 @@
 package dev.jdtech.jellyfin.player.local.domain
 
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -75,7 +75,7 @@ class PlaylistManagerQueueTest {
             as MediaRepository
 
     private fun episode(number: Int) =
-        FindroidEpisode(
+        Episode(
             id = UUID.randomUUID().toString().toItemId(),
             name = "Episode $number",
             originalTitle = null,
@@ -98,16 +98,16 @@ class PlaylistManagerQueueTest {
             communityRating = null,
             people = emptyList(),
             missing = false,
-            images = FindroidImages(),
+            images = ItemImages(),
             chapters = emptyList(),
             trickplayInfo = null,
         )
 
     private fun source() =
-        FindroidSource(
+        ItemSource(
             id = "source",
             name = "Source",
-            type = FindroidSourceType.REMOTE,
+            type = ItemSourceType.REMOTE,
             path = "http://server/video",
             size = 0L,
             mediaStreams = emptyList(),

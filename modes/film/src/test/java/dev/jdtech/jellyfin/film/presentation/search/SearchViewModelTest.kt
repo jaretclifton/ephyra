@@ -1,6 +1,6 @@
 package dev.jdtech.jellyfin.film.presentation.search
 
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.repository.ItemsResult
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -106,12 +106,9 @@ class SearchViewModelTest {
         }
             as MediaRepository
 
-    private fun item(): FindroidItem =
-        fakeProxy(FindroidItem::class.java.classLoader, arrayOf(FindroidItem::class.java)) {
-            _,
-            method,
-            _ ->
-            throw NotImplementedError("FindroidItem.${method.kotlinName}")
+    private fun item(): Item =
+        fakeProxy(Item::class.java.classLoader, arrayOf(Item::class.java)) { _, method, _ ->
+            throw NotImplementedError("Item.${method.kotlinName}")
         }
-            as FindroidItem
+            as Item
 }

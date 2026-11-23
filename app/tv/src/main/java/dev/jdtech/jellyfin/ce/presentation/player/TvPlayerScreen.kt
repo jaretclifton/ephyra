@@ -93,8 +93,8 @@ import dev.jdtech.jellyfin.core.presentation.ephyra.SeekBarSegment
 import dev.jdtech.jellyfin.core.presentation.ephyra.seekBarSegments
 import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
 import dev.jdtech.jellyfin.di.SubtitleStyleEntryPoint
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.player.local.R as PlayerR
 import dev.jdtech.jellyfin.player.local.domain.SleepTimerOption
@@ -835,7 +835,7 @@ private fun PlayerControls(
     seriesName: String?,
     title: String,
     playbackSpeed: Float,
-    queue: List<FindroidItem>,
+    queue: List<Item>,
     queueOpen: Boolean,
     queueFocus: FocusRequester,
     positionMs: () -> Long,
@@ -1111,7 +1111,7 @@ private fun EndsAtText(remainingMs: () -> Long, playbackSpeed: Float) {
  */
 @Composable
 private fun QueueRow(
-    queue: List<FindroidItem>,
+    queue: List<Item>,
     open: Boolean,
     focusRequester: FocusRequester,
     onClosed: () -> Unit,
@@ -1173,7 +1173,7 @@ private fun QueueRow(
 
 @Composable
 private fun QueueCard(
-    item: FindroidItem,
+    item: Item,
     onClick: () -> Unit,
     onFocus: () -> Unit,
     modifier: Modifier = Modifier,
@@ -1340,9 +1340,9 @@ private fun episodeNumber(season: Int, episode: Int, episodeEnd: Int?): String =
  * The caption under a tile of the queue: [episodeLine], or only the episode's number while [hidden]
  * (Hide spoilers, #865), as the episode list shows a hidden episode.
  */
-internal fun queueCaption(item: FindroidItem, hidden: Boolean): String =
+internal fun queueCaption(item: Item, hidden: Boolean): String =
     when {
-        item !is FindroidEpisode -> item.name
+        item !is Episode -> item.name
         hidden -> episodeNumber(item.parentIndexNumber, item.indexNumber, item.indexNumberEnd)
         else ->
             episodeLine(item.parentIndexNumber, item.indexNumber, item.indexNumberEnd, item.name)

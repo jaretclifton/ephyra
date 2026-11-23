@@ -27,7 +27,7 @@ data class FindroidTrickplayInfoDto(
     val bandwidth: Int,
 )
 
-fun FindroidTrickplayInfo.toFindroidTrickplayInfoDto(sourceId: String): FindroidTrickplayInfoDto {
+fun ItemTrickplayInfo.toFindroidTrickplayInfoDto(sourceId: String): FindroidTrickplayInfoDto {
     return FindroidTrickplayInfoDto(
         sourceId = sourceId,
         width = width,
@@ -40,8 +40,8 @@ fun FindroidTrickplayInfo.toFindroidTrickplayInfoDto(sourceId: String): Findroid
     )
 }
 
-fun FindroidTrickplayInfoDto.toFindroidTrickplayInfo(): FindroidTrickplayInfo {
-    return FindroidTrickplayInfo(
+fun FindroidTrickplayInfoDto.toItemTrickplayInfo(): ItemTrickplayInfo {
+    return ItemTrickplayInfo(
         width = width,
         height = height,
         tileWidth = tileWidth,

@@ -1,8 +1,8 @@
 package dev.jdtech.jellyfin.player.cast
 
-import dev.jdtech.jellyfin.models.FindroidMediaStream
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.cast.models.CastMediaItem
@@ -391,7 +391,7 @@ class CastTracksTest {
         isDefault: Boolean = false,
         path: String? = null,
     ) =
-        FindroidMediaStream(
+        MediaStream(
             title = title,
             displayTitle = displayTitle,
             language = language,
@@ -411,11 +411,11 @@ class CastTracksTest {
             isHearingImpaired = isHearingImpaired,
         )
 
-    private fun source(vararg streams: FindroidMediaStream) =
-        FindroidSource(
+    private fun source(vararg streams: MediaStream) =
+        ItemSource(
             id = "source",
             name = "",
-            type = FindroidSourceType.REMOTE,
+            type = ItemSourceType.REMOTE,
             path = "",
             size = 0,
             mediaStreams = streams.toList(),

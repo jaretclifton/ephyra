@@ -31,7 +31,7 @@ import dev.jdtech.jellyfin.film.presentation.collection.CollectionAction
 import dev.jdtech.jellyfin.film.presentation.collection.CollectionState
 import dev.jdtech.jellyfin.film.presentation.collection.CollectionViewModel
 import dev.jdtech.jellyfin.models.CollectionSection
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.presentation.film.components.CollectionGrid
@@ -50,7 +50,7 @@ import dev.jdtech.jellyfin.presentation.utils.topAndSideInsets
 fun CollectionScreen(
     collectionId: ItemId,
     collectionName: String,
-    onItemClick: (item: FindroidItem) -> Unit,
+    onItemClick: (item: Item) -> Unit,
     navigateBack: () -> Unit,
     viewModel: CollectionViewModel = hiltViewModel(),
 ) {

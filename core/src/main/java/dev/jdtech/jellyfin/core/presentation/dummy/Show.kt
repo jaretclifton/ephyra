@@ -1,11 +1,11 @@
 package dev.jdtech.jellyfin.core.presentation.dummy
 
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.ItemImages
+import dev.jdtech.jellyfin.models.Show
 import java.time.LocalDateTime
 
 val dummyShow =
-    FindroidShow(
+    Show(
         id = randomItemId(),
         name = "Attack on Titan",
         originalTitle = null,
@@ -20,7 +20,7 @@ val dummyShow =
         communityRating = 8.8f,
         endDate = LocalDateTime.parse("2023-11-04T00:00:00"),
         genres = listOf("Action", "Sience Fiction", "Adventure"),
-        images = FindroidImages(),
+        images = ItemImages(),
         officialRating = "TV-MA",
         people = emptyList(),
         productionYear = 2013,

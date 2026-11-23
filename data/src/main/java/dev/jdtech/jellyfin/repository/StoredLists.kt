@@ -2,25 +2,25 @@ package dev.jdtech.jellyfin.repository
 
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.CollectionType
-import dev.jdtech.jellyfin.models.FindroidCollection
 import dev.jdtech.jellyfin.models.FindroidEpisodeDto
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidMovieDto
 import dev.jdtech.jellyfin.models.FindroidShowDto
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
 import dev.jdtech.jellyfin.models.localImagePath
-import dev.jdtech.jellyfin.models.toFindroidEpisode
-import dev.jdtech.jellyfin.models.toFindroidMovie
-import dev.jdtech.jellyfin.models.toFindroidShow
+import dev.jdtech.jellyfin.models.toEpisode
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMovie
+import dev.jdtech.jellyfin.models.toShow
 import java.time.LocalDateTime
 import java.util.Locale
 
@@ -96,20 +96,20 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
         serverId: String,
         names: StoredLibraryNames,
         storedImage: (itemId: ItemId, image: String) -> Boolean = { _, _ -> false },
-    ): List<FindroidCollection> {
+    ): List<Library> {
         val movies = database.getDownloadedMoviesOfServer(serverId).map { it.id }
         val shows = database.getDownloadedShowsOfServer(serverId).map { it.id }
         if (movies.isEmpty() && shows.isEmpty()) return emptyList()
         val downloaded =
             database.getDownloadDatesOfServer(serverId).associate { it.itemId to it.date }
-        fun artwork(ids: List<ItemId>): FindroidImages {
+        fun artwork(ids: List<ItemId>): ItemImages {
             val newestFirst = ids.sortedByDescending { downloaded[it] ?: Long.MIN_VALUE }
             val image = STORED_IMAGES.firstNotNullOfOrNull { image ->
                 newestFirst
                     .firstOrNull { storedImage(it, image) }
                     ?.let { localImagePath(it, image) }
             }
-            return FindroidImages(primary = image)
+            return ItemImages(primary = image)
         }
         return buildList {
             if (movies.isNotEmpty()) {
@@ -125,8 +125,8 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
         id: ItemId,
         type: CollectionType,
         names: StoredLibraryNames,
-        images: FindroidImages,
-    ) = FindroidCollection(id = id, name = names.nameOf(type), type = type, images = images)
+        images: ItemImages,
+    ) = Library(id = id, name = names.nameOf(type), type = type, images = images)
 
     /**
      * The rows of [libraryId], sorted as the server would. Filters Room cannot answer are left out
@@ -159,7 +159,7 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
         return entries.count { it.sortName < boundary }
     }
 
-    suspend fun toItems(dtos: List<Any>, serverId: String, userId: UserId): List<FindroidItem> {
+    suspend fun toItems(dtos: List<Any>, serverId: String, userId: UserId): List<Item> {
         val local =
             database.getLocalSourcesForItems(
                 dtos.mapNotNull {
@@ -173,9 +173,9 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
             )
         return dtos.map {
             when (it) {
-                is FindroidMovieDto -> it.toFindroidMovie(database, userId, local)
-                is FindroidShowDto -> it.toFindroidShow(database, userId)
-                is FindroidEpisodeDto -> it.toFindroidEpisode(database, userId, local)
+                is FindroidMovieDto -> it.toMovie(database, userId, local)
+                is FindroidShowDto -> it.toShow(database, userId)
+                is FindroidEpisodeDto -> it.toEpisode(database, userId, local)
                 else -> error("Not a stored item: $it")
             }
         }

@@ -49,8 +49,8 @@ import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
 import dev.jdtech.jellyfin.core.presentation.spoiler.spoilerFreeName
 import dev.jdtech.jellyfin.film.presentation.downloads.DownloadedShowViewModel
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.presentation.film.components.DownloadRow
 import dev.jdtech.jellyfin.presentation.film.components.SwipeActionBackground
@@ -68,7 +68,7 @@ fun DownloadedShowScreen(
     showId: ItemId,
     showName: String,
     navigateBack: () -> Unit,
-    onEpisodeClick: (FindroidItem) -> Unit,
+    onEpisodeClick: (Item) -> Unit,
     viewModel: DownloadedShowViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -102,7 +102,7 @@ fun DownloadedShowScreen(
             .filter { it.episodes.isNotEmpty() }
     val episodes = seasons.flatMap { it.episodes }
 
-    val removeEpisodes: (List<FindroidEpisode>) -> Unit = { removed ->
+    val removeEpisodes: (List<Episode>) -> Unit = { removed ->
         val message =
             removed.singleOrNull()?.let {
                 context.getString(CoreR.string.download_removed, it.name)
@@ -208,7 +208,7 @@ fun DownloadedShowScreen(
 
 @Composable
 private fun EpisodeRow(
-    episode: FindroidEpisode,
+    episode: Episode,
     sizeBytes: Long?,
     shape: Shape,
     onClick: () -> Unit,

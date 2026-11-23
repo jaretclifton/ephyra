@@ -1,13 +1,13 @@
 package dev.jdtech.jellyfin.core.presentation.downloader
 
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.EpisodeField
-import dev.jdtech.jellyfin.models.FindroidEpisode
 import dev.jdtech.jellyfin.models.FindroidSourceDto
-import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.asString
-import dev.jdtech.jellyfin.models.toFindroidSource
+import dev.jdtech.jellyfin.models.toItemSource
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -71,7 +71,7 @@ constructor(
 
     private suspend fun onPlaybackStopped(itemId: ItemId) {
         if (!isActive()) return
-        val episode = repositoryProvider.get().getItem(itemId) as? FindroidEpisode ?: return
+        val episode = repositoryProvider.get().getItem(itemId) as? Episode ?: return
         check(episode.seriesId, finishedRecently = episode.played)
     }
 
@@ -143,7 +143,7 @@ constructor(
         val sourcesByEpisode = episodes.associate { episode ->
             episode.id to
                 database.getSourcesOfServer(episode.id, serverId).filter {
-                    it.type == FindroidSourceType.LOCAL
+                    it.type == ItemSourceType.LOCAL
                 }
         }
         val completed =
@@ -188,7 +188,7 @@ constructor(
             if (playbackEvents.playingItemId.value == episode.id) continue
             val source = completed[episode.id]?.firstOrNull() ?: continue
             Timber.i("Smart Downloads: removing watched ${episode.describe()}")
-            downloader.deleteItem(episode, source.toFindroidSource(database))
+            downloader.deleteItem(episode, source.toItemSource(database))
         }
 
         if (plan.toQueue.isEmpty()) return
@@ -210,6 +210,5 @@ constructor(
         return latest?.downloadMaxBitrate
     }
 
-    private fun FindroidEpisode.describe() =
-        "$seriesName S%02dE%02d".format(parentIndexNumber, indexNumber)
+    private fun Episode.describe() = "$seriesName S%02dE%02d".format(parentIndexNumber, indexNumber)
 }

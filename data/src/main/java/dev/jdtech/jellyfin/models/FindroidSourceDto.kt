@@ -12,7 +12,7 @@ data class FindroidSourceDto(
     @PrimaryKey val id: String,
     val itemId: ItemId,
     val name: String,
-    val type: FindroidSourceType,
+    val type: ItemSourceType,
     val path: String,
     val downloadId: Long? = null,
     /**
@@ -31,29 +31,28 @@ data class FindroidSourceDto(
     @ColumnInfo(defaultValue = "0") val smartQueued: Boolean = false,
 )
 
-fun FindroidSource.toFindroidSourceDto(itemId: ItemId, path: String): FindroidSourceDto {
+fun ItemSource.toFindroidSourceDto(itemId: ItemId, path: String): FindroidSourceDto {
     return FindroidSourceDto(
         id = id,
         itemId = itemId,
         name = name,
-        type = FindroidSourceType.LOCAL,
+        type = ItemSourceType.LOCAL,
         path = path,
     )
 }
 
-suspend fun FindroidSourceDto.toFindroidSource(
-    serverDatabaseDao: ServerDatabaseDao
-): FindroidSource = toFindroidSource(serverDatabaseDao.getMediaStreamsBySourceId(id))
+suspend fun FindroidSourceDto.toItemSource(serverDatabaseDao: ServerDatabaseDao): ItemSource =
+    toItemSource(serverDatabaseDao.getMediaStreamsBySourceId(id))
 
 /** Maps with already-fetched [streams], so a list of sources costs no query per source. */
-fun FindroidSourceDto.toFindroidSource(streams: List<FindroidMediaStreamDto>): FindroidSource {
-    return FindroidSource(
+fun FindroidSourceDto.toItemSource(streams: List<FindroidMediaStreamDto>): ItemSource {
+    return ItemSource(
         id = id,
         name = name,
         type = type,
         path = path,
         size = File(path).length(),
-        mediaStreams = streams.map { it.toFindroidMediaStream() },
+        mediaStreams = streams.map { it.toMediaStream() },
         downloadId = downloadId,
     )
 }
@@ -64,8 +63,7 @@ fun FindroidSourceDto.toFindroidSource(streams: List<FindroidMediaStreamDto>): F
  */
 suspend fun ServerDatabaseDao.getLocalSourcesForItems(
     itemIds: Collection<ItemId>
-): Map<ItemId, List<FindroidSource>> =
-    localSourcesForItems(itemIds) { ids -> getSourcesForItems(ids) }
+): Map<ItemId, List<ItemSource>> = localSourcesForItems(itemIds) { ids -> getSourcesForItems(ids) }
 
 /**
  * CE (#718): [getLocalSourcesForItems], only the downloads stored for [serverId]: another server's
@@ -74,13 +72,13 @@ suspend fun ServerDatabaseDao.getLocalSourcesForItems(
 suspend fun ServerDatabaseDao.getLocalSourcesForItems(
     itemIds: Collection<ItemId>,
     serverId: String,
-): Map<ItemId, List<FindroidSource>> =
+): Map<ItemId, List<ItemSource>> =
     localSourcesForItems(itemIds) { ids -> getSourcesForItemsOfServer(ids, serverId) }
 
 private suspend fun ServerDatabaseDao.localSourcesForItems(
     itemIds: Collection<ItemId>,
     read: suspend (List<ItemId>) -> List<FindroidSourceDto>,
-): Map<ItemId, List<FindroidSource>> {
+): Map<ItemId, List<ItemSource>> {
     if (itemIds.isEmpty()) return emptyMap()
     val dtos = itemIds.distinct().chunked(SQL_CHUNK).flatMap { read(it) }
     if (dtos.isEmpty()) return emptyMap()
@@ -92,7 +90,7 @@ private suspend fun ServerDatabaseDao.localSourcesForItems(
             .groupBy { it.sourceId }
     return dtos
         .groupBy { it.itemId }
-        .mapValues { (_, sources) -> sources.map { it.toFindroidSource(streams[it.id].orEmpty()) } }
+        .mapValues { (_, sources) -> sources.map { it.toItemSource(streams[it.id].orEmpty()) } }
 }
 
 // Stays under SQLite's historical limit of 999 bound variables per statement.

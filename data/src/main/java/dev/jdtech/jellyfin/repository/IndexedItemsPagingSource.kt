@@ -5,7 +5,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
@@ -27,7 +27,7 @@ fun MediaRepository.getItemsPagingIndexed(
     sortOrder: SortOrder = SortOrder.ASCENDING,
     filters: Set<ItemFilter> = emptySet(),
     onFirstPage: (total: Int) -> Unit = {},
-): Flow<PagingData<FindroidItem>> {
+): Flow<PagingData<Item>> {
     // A jump invalidates the source; the total doesn't change by that, so it is taken once, from
     // the first page's response.
     var total: Int? = null
@@ -84,10 +84,10 @@ internal class IndexedItemsPagingSource(
     private val onTotal: (Int) -> Unit,
     /** Called with the total after each page that loaded. */
     private val onPage: (total: Int) -> Unit = {},
-) : PagingSource<Int, FindroidItem>() {
+) : PagingSource<Int, Item>() {
     override val jumpingSupported: Boolean = true
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, FindroidItem> {
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Item> {
         return try {
             val key = params.key ?: 0
             var total = knownTotal()
@@ -145,5 +145,5 @@ internal class IndexedItemsPagingSource(
         }
     }
 
-    override fun getRefreshKey(state: PagingState<Int, FindroidItem>): Int? = state.anchorPosition
+    override fun getRefreshKey(state: PagingState<Int, Item>): Int? = state.anchorPosition
 }

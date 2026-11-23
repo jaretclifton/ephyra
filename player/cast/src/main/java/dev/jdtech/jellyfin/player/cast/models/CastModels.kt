@@ -1,6 +1,6 @@
 package dev.jdtech.jellyfin.player.cast.models
 
-import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.player.core.domain.models.Track
 
@@ -77,7 +77,7 @@ data class CastPlayerState(
 data class CastMediaItem(
     val item: PlayerItem,
     /** The source the receiver plays, as the server adapter made it for a receiver (#767). */
-    val source: FindroidSource? = null,
+    val source: ItemSource? = null,
     val subtitleTracks: List<Track> = emptyList(),
     val audioTracks: List<Track> = emptyList(),
 )

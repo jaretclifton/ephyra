@@ -1,11 +1,11 @@
 package dev.jdtech.jellyfin.server.jellyfin.mappers
 
-import dev.jdtech.jellyfin.models.FindroidMediaStream
+import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.server.jellyfin.toModel
-import org.jellyfin.sdk.model.api.MediaStream
+import org.jellyfin.sdk.model.api.MediaStream as SdkMediaStream
 
-internal fun MediaStream.toFindroidMediaStream(baseUrl: String): FindroidMediaStream {
-    return FindroidMediaStream(
+internal fun SdkMediaStream.toMediaStream(baseUrl: String): MediaStream {
+    return MediaStream(
         title = title.orEmpty(),
         displayTitle = displayTitle,
         language = language.orEmpty(),

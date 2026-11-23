@@ -27,12 +27,12 @@ import dev.jdtech.jellyfin.ce.ui.focus.EphyraFocusScale
 import dev.jdtech.jellyfin.ce.ui.focus.ephyraFocusedBorder
 import dev.jdtech.jellyfin.ce.ui.focus.ephyraFocusedGlow
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
-import dev.jdtech.jellyfin.models.FindroidEpisode
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 
 @Composable
-fun EpisodeCard(episode: FindroidEpisode, onClick: (FindroidEpisode) -> Unit) {
+fun EpisodeCard(episode: Episode, onClick: (Episode) -> Unit) {
     Surface(
         onClick = { onClick(episode) },
         shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.small),

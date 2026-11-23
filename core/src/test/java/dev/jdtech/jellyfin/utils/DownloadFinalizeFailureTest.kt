@@ -11,7 +11,7 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidMediaStreamDto
 import dev.jdtech.jellyfin.models.FindroidMovieDto
 import dev.jdtech.jellyfin.models.FindroidSourceDto
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.toItemId
@@ -290,7 +290,7 @@ class DownloadFinalizeFailureTest {
                 id = "source",
                 itemId = itemId,
                 name = "Original",
-                type = FindroidSourceType.LOCAL,
+                type = ItemSourceType.LOCAL,
                 path = file.absolutePath,
                 downloadId = VIDEO_ID,
             )

@@ -1,6 +1,6 @@
 package dev.jdtech.jellyfin.core.presentation.downloader
 
-import dev.jdtech.jellyfin.models.FindroidEpisode
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
 import java.time.ZoneId
 
@@ -12,10 +12,7 @@ internal data class SmartDownload(
     val smartQueued: Boolean,
 )
 
-internal data class SmartDownloadPlan(
-    val toQueue: List<FindroidEpisode>,
-    val toDelete: List<FindroidEpisode>,
-)
+internal data class SmartDownloadPlan(val toQueue: List<Episode>, val toDelete: List<Episode>)
 
 /**
  * Decides what Smart Downloads should do for one series. Pure, so the removal rules can be tested.
@@ -29,7 +26,7 @@ internal data class SmartDownloadPlan(
  * @param playingItemId the episode the player has open, if any.
  */
 internal fun planSmartDownloads(
-    episodes: List<FindroidEpisode>,
+    episodes: List<Episode>,
     downloads: Map<ItemId, SmartDownload>,
     inFlightIds: Set<ItemId>,
     keepReady: Int,
@@ -45,11 +42,11 @@ internal fun planSmartDownloads(
             .sortedWith(compareBy({ it.parentIndexNumber }, { it.indexNumber }))
 
     // Servers mark an episode as played near its end, while the file is still open.
-    fun played(episode: FindroidEpisode) = episode.played && episode.id != playingItemId
+    fun played(episode: Episode) = episode.played && episode.id != playingItemId
 
     // Watched means the server saw it played after it was downloaded and after Smart Downloads was
     // turned on. Anything with an unknown date stays: an episode kept for a rewatch must survive.
-    fun watched(episode: FindroidEpisode): Boolean {
+    fun watched(episode: Episode): Boolean {
         val download = downloads[episode.id] ?: return false
         val downloadedAt = download.downloadedAt ?: return false
         val lastPlayedAt =
@@ -68,7 +65,7 @@ internal fun planSmartDownloads(
     }
 
     var held = 0
-    val queueable = mutableListOf<FindroidEpisode>()
+    val queueable = mutableListOf<Episode>()
     for (episode in ordered.drop(furthest + 1)) {
         if (played(episode)) continue
         if (episode.id in downloads || episode.id in inFlightIds) {

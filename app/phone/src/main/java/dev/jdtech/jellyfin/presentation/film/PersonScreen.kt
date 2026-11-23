@@ -38,9 +38,9 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyPersonDetail
 import dev.jdtech.jellyfin.film.presentation.person.PersonAction
 import dev.jdtech.jellyfin.film.presentation.person.PersonState
 import dev.jdtech.jellyfin.film.presentation.person.PersonViewModel
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidPerson
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.Person
 import dev.jdtech.jellyfin.presentation.film.components.Direction
 import dev.jdtech.jellyfin.presentation.film.components.ItemCard
 import dev.jdtech.jellyfin.presentation.film.components.ItemTopBar
@@ -60,7 +60,7 @@ fun PersonScreen(
     personId: ItemId,
     navigateBack: () -> Unit,
     navigateHome: () -> Unit,
-    navigateToItem: (item: FindroidItem) -> Unit,
+    navigateToItem: (item: Item) -> Unit,
     viewModel: PersonViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -228,11 +228,7 @@ internal fun PersonScreenLayout(state: PersonState, onAction: (PersonAction) -> 
 }
 
 @Composable
-private fun PersonImage(
-    person: FindroidPerson,
-    modifier: Modifier = Modifier,
-    height: Dp = 320.dp,
-) {
+private fun PersonImage(person: Person, modifier: Modifier = Modifier, height: Dp = 320.dp) {
     PersonPhoto(
         uri = person.images.primary,
         contentDescription = null,

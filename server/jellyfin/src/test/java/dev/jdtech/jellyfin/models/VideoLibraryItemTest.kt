@@ -2,7 +2,7 @@ package dev.jdtech.jellyfin.models
 
 import android.app.Application
 import dev.jdtech.jellyfin.server.jellyfin.mappers.MapperContext
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidItem
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toItem
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -24,9 +24,9 @@ class VideoLibraryItemTest {
     private val context =
         MapperContext("https://jf.example") { _, _ -> throw NotImplementedError("streamUrl") }
 
-    private fun map(type: BaseItemKind, canDownload: Boolean = true): FindroidItem? = runBlocking {
+    private fun map(type: BaseItemKind, canDownload: Boolean = true): Item? = runBlocking {
         BaseItemDto(id = UUID.randomUUID(), type = type, name = "Item", canDownload = canDownload)
-            .toFindroidItem(context, emptyMap())
+            .toItem(context, emptyMap())
     }
 
     @Test
@@ -48,13 +48,13 @@ class VideoLibraryItemTest {
 
     @Test
     fun `a home video and a music video map to a movie`() {
-        assertTrue(map(BaseItemKind.VIDEO) is FindroidMovie)
-        assertTrue(map(BaseItemKind.MUSIC_VIDEO) is FindroidMovie)
+        assertTrue(map(BaseItemKind.VIDEO) is Movie)
+        assertTrue(map(BaseItemKind.MUSIC_VIDEO) is Movie)
     }
 
     @Test
     fun `a folder with a photo in it maps to a folder`() {
-        assertTrue(map(BaseItemKind.PHOTO_ALBUM) is FindroidFolder)
+        assertTrue(map(BaseItemKind.PHOTO_ALBUM) is Folder)
     }
 
     @Test

@@ -60,13 +60,13 @@ import dev.jdtech.jellyfin.core.presentation.session.LocalServerSession
 import dev.jdtech.jellyfin.film.presentation.search.SearchAction
 import dev.jdtech.jellyfin.film.presentation.search.SearchState
 import dev.jdtech.jellyfin.film.presentation.search.SearchViewModel
-import dev.jdtech.jellyfin.models.FindroidBoxSet
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.BoxSet
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
@@ -97,10 +97,10 @@ fun SearchScreen(
             when (action) {
                 is SearchAction.OnItemClick -> {
                     when (val item = action.item) {
-                        is FindroidMovie -> navigateToMovie(item.id)
-                        is FindroidShow -> navigateToShow(item.id)
-                        is FindroidEpisode -> navigateToEpisode(item.id)
-                        is FindroidBoxSet -> navigateToCollection(item.id, item.name)
+                        is Movie -> navigateToMovie(item.id)
+                        is Show -> navigateToShow(item.id)
+                        is Episode -> navigateToEpisode(item.id)
+                        is BoxSet -> navigateToCollection(item.id, item.name)
                     }
                 }
                 else -> Unit
@@ -117,12 +117,12 @@ private enum class SearchGroup(val kind: ItemKind, @StringRes val title: Int) {
     EPISODES(ItemKind.EPISODE, CoreR.string.episodes_label),
     COLLECTIONS(ItemKind.BOX_SET, CoreR.string.collections_label);
 
-    fun matches(item: FindroidItem): Boolean =
+    fun matches(item: Item): Boolean =
         when (this) {
-            MOVIES -> item is FindroidMovie
-            SHOWS -> item is FindroidShow
-            EPISODES -> item is FindroidEpisode
-            COLLECTIONS -> item is FindroidBoxSet
+            MOVIES -> item is Movie
+            SHOWS -> item is Show
+            EPISODES -> item is Episode
+            COLLECTIONS -> item is BoxSet
         }
 }
 

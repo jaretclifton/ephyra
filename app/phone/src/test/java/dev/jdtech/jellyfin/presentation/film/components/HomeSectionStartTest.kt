@@ -17,9 +17,9 @@ import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.unit.dp
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.core.presentation.ephyra.EphyraMotion
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
 import dev.jdtech.jellyfin.models.HomeSection
+import dev.jdtech.jellyfin.models.Item
+import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
@@ -44,15 +44,15 @@ import org.robolectric.annotation.Config
 class HomeSectionStartTest {
     @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
 
-    private fun movie(name: String): FindroidMovie =
+    private fun movie(name: String): Movie =
         dummyMovie.copy(id = UUID.randomUUID().toString().toItemId(), name = name)
 
     private val sectionId = UUID.randomUUID().toString().toItemId()
-    private var items by mutableStateOf(listOf<FindroidItem>())
+    private var items by mutableStateOf(listOf<Item>())
 
     private fun section() = HomeSection(sectionId, UiText.DynamicString("Row"), items)
 
-    private fun setRow(initial: List<FindroidItem>) {
+    private fun setRow(initial: List<Item>) {
         items = initial
         rule.setContent {
             FindroidTheme {
@@ -67,7 +67,7 @@ class HomeSectionStartTest {
     }
 
     /** The row as Home shows it: an item of Home's own list, which animates its items too. */
-    private fun setRowInHome(initial: List<FindroidItem>) {
+    private fun setRowInHome(initial: List<Item>) {
         items = initial
         rule.setContent {
             FindroidTheme {

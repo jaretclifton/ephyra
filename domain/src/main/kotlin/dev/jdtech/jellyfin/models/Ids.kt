@@ -41,9 +41,7 @@ value class UserId(val value: String) : Serializable {
 /** The id a server gives itself (`ServerInfo.id`), as the server sends it. */
 typealias ServerId = String
 
-/**
- * The id of one version (media source) of an item (`FindroidSource.id`), as the server sends it.
- */
+/** The id of one version (media source) of an item (`ItemSource.id`), as the server sends it. */
 typealias MediaSourceId = String
 
 /**

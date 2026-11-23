@@ -1,6 +1,6 @@
 package dev.jdtech.jellyfin.film.presentation.movie
 
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 
 sealed interface MovieAction {
@@ -26,7 +26,7 @@ sealed interface MovieAction {
     data class NavigateToPerson(val personId: ItemId) : MovieAction
 
     /** CE (#332): a collection or a "More like this" item. */
-    data class NavigateToItem(val item: FindroidItem) : MovieAction
+    data class NavigateToItem(val item: Item) : MovieAction
 
     /** CE (#332): plays a local trailer or special feature in the app's player. */
     data class PlayExtra(val extraId: ItemId) : MovieAction

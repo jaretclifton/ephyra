@@ -1,8 +1,8 @@
 package dev.jdtech.jellyfin.player.local.domain
 
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.repository.MediaRepository
@@ -51,7 +51,7 @@ constructor(private val repository: MediaRepository, private val appPreferences:
         itemId: ItemId,
         mediaSourceId: String? = null,
         audioStreamIndex: Int? = null,
-    ): List<FindroidSource> {
+    ): List<ItemSource> {
         // The cap first, then the target: the order the repository read them in before #766.
         val maxBitrate = maxBitrate()
         return repository.getPlaybackSources(
@@ -67,13 +67,13 @@ constructor(private val repository: MediaRepository, private val appPreferences:
      * The source that plays: a finished download first, else the first remote one. Null when there
      * is none. Only the sources with the id [mediaSourceId] count, unless none has it.
      */
-    fun pick(sources: List<FindroidSource>, mediaSourceId: String?): FindroidSource? {
+    fun pick(sources: List<ItemSource>, mediaSourceId: String?): ItemSource? {
         // A downloaded copy shares its id with the server version, so it wins for that version too.
         val mediaSources = sources.filter { it.id == mediaSourceId }.ifEmpty { sources }
         // Never an unfinished download (#454): its partial file plays as far as it got, or not at
         // all.
         return mediaSources.firstOrNull {
-            it.type == FindroidSourceType.LOCAL && !it.path.endsWith(".download")
-        } ?: mediaSources.firstOrNull { it.type != FindroidSourceType.LOCAL }
+            it.type == ItemSourceType.LOCAL && !it.path.endsWith(".download")
+        } ?: mediaSources.firstOrNull { it.type != ItemSourceType.LOCAL }
     }
 }

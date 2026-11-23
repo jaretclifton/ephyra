@@ -16,14 +16,14 @@ import dev.jdtech.jellyfin.film.presentation.launchRelatedItems
 import dev.jdtech.jellyfin.film.presentation.selectEpisodesToDownload
 import dev.jdtech.jellyfin.film.presentation.shownIn
 import dev.jdtech.jellyfin.film.presentation.within
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.EpisodeField
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItemPerson
-import dev.jdtech.jellyfin.models.FindroidShow
-import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemPerson
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.PersonKind
 import dev.jdtech.jellyfin.models.SeasonEpisodeCounts
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.mergeDuplicateRoles
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.MediaRepository
@@ -323,7 +323,7 @@ constructor(
      * CE (#636): asks the questions of a download of [episodes], or, when every one of them is
      * downloaded or in flight already, says so at once without asking anything.
      */
-    private suspend fun startDownload(episodes: List<FindroidEpisode>) {
+    private suspend fun startDownload(episodes: List<Episode>) {
         val inFlightIds = downloadQueue.inFlightIds()
         if (selectEpisodesToDownload(episodes, inFlightIds).toQueue.isEmpty()) {
             enqueue(episodes, maxBitrate = null, unwatchedOnly = false)
@@ -345,11 +345,7 @@ constructor(
         }
     }
 
-    private suspend fun enqueue(
-        episodes: List<FindroidEpisode>,
-        maxBitrate: Int?,
-        unwatchedOnly: Boolean,
-    ) {
+    private suspend fun enqueue(episodes: List<Episode>, maxBitrate: Int?, unwatchedOnly: Boolean) {
         // Episodes already in flight count as skipped so the toast count
         // matches what actually got added to the queue.
         val (toQueue, skipped) =
@@ -366,7 +362,7 @@ constructor(
                     repository.getEpisodes(seriesId = showId, seasonId = season.id, offline = true)
                 for (episode in episodes) {
                     val localSource =
-                        episode.sources.firstOrNull { it.type == FindroidSourceType.LOCAL }
+                        episode.sources.firstOrNull { it.type == ItemSourceType.LOCAL }
                     if (localSource != null) {
                         downloader.deleteItem(item = episode, source = localSource)
                     }
@@ -376,18 +372,18 @@ constructor(
         }
     }
 
-    private suspend fun getNextUp(showId: ItemId): FindroidEpisode? {
+    private suspend fun getNextUp(showId: ItemId): Episode? {
         val nextUpItems = repository.getNextUp(showId)
         return nextUpItems.getOrNull(0)
     }
 
     private class CastAndCrew(
-        val actors: List<FindroidItemPerson> = emptyList(),
-        val director: FindroidItemPerson? = null,
-        val writers: List<FindroidItemPerson> = emptyList(),
+        val actors: List<ItemPerson> = emptyList(),
+        val director: ItemPerson? = null,
+        val writers: List<ItemPerson> = emptyList(),
     )
 
-    private fun castAndCrew(item: FindroidShow): CastAndCrew {
+    private fun castAndCrew(item: Show): CastAndCrew {
         val people = item.people.mergeDuplicateRoles()
         return CastAndCrew(
             actors = people.filter { it.type == PersonKind.ACTOR },

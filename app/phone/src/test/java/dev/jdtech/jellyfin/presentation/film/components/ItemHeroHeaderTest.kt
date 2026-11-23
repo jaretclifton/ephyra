@@ -17,7 +17,7 @@ import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloaderState
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
 import dev.jdtech.jellyfin.film.presentation.episode.EpisodeState
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.presentation.film.EpisodeWideContent
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import kotlin.test.assertFalse
@@ -47,9 +47,7 @@ class ItemHeroHeaderTest {
             playbackPositionTicks = 4_200_000_000L,
             sources =
                 dummyEpisode.sources +
-                    dummyEpisode.sources
-                        .first()
-                        .copy(type = FindroidSourceType.LOCAL, path = "e.mkv"),
+                    dummyEpisode.sources.first().copy(type = ItemSourceType.LOCAL, path = "e.mkv"),
         )
 
     @Test

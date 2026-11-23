@@ -1,8 +1,8 @@
 package dev.jdtech.jellyfin.core.presentation.downloader
 
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidImages
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.toItemId
 import java.time.Instant
 import java.time.LocalDateTime
@@ -294,7 +294,7 @@ class SmartDownloadPlannerTest {
     }
 
     private fun plan(
-        episodes: List<FindroidEpisode>,
+        episodes: List<Episode>,
         downloads: Map<ItemId, SmartDownload> = emptyMap(),
         inFlightIds: Set<ItemId> = emptySet(),
         keepReady: Int,
@@ -325,7 +325,7 @@ class SmartDownloadPlannerTest {
         canDownload: Boolean = true,
         lastPlayedAt: Long? = null,
     ) =
-        FindroidEpisode(
+        Episode(
             id = UUID.randomUUID().toString().toItemId(),
             name = "Episode $number",
             originalTitle = null,
@@ -352,7 +352,7 @@ class SmartDownloadPlannerTest {
                 lastPlayedAt?.let {
                     LocalDateTime.ofInstant(Instant.ofEpochMilli(it), ZoneId.systemDefault())
                 },
-            images = FindroidImages(),
+            images = ItemImages(),
             chapters = emptyList(),
             trickplayInfo = null,
         )

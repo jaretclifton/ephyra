@@ -20,7 +20,7 @@ data class FindroidUserDataDto(
     val lastPlayedDate: Long? = null,
 )
 
-fun FindroidItem.toFindroidUserDataDto(userId: UserId): FindroidUserDataDto {
+fun Item.toFindroidUserDataDto(userId: UserId): FindroidUserDataDto {
     return FindroidUserDataDto(
         userId = userId,
         itemId = id,
@@ -34,9 +34,9 @@ fun FindroidItem.toFindroidUserDataDto(userId: UserId): FindroidUserDataDto {
 }
 
 /** CE (#633): when the server last saw [item] played, for the item types that carry it. */
-private fun lastPlayedDateOf(item: FindroidItem): LocalDateTime? =
+private fun lastPlayedDateOf(item: Item): LocalDateTime? =
     when (item) {
-        is FindroidMovie -> item.lastPlayedDate
-        is FindroidEpisode -> item.lastPlayedDate
+        is Movie -> item.lastPlayedDate
+        is Episode -> item.lastPlayedDate
         else -> null
     }

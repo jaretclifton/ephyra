@@ -78,10 +78,10 @@ import dev.jdtech.jellyfin.film.presentation.downloads.DownloadsState
 import dev.jdtech.jellyfin.film.presentation.downloads.DownloadsViewModel
 import dev.jdtech.jellyfin.film.presentation.downloads.queueCounts
 import dev.jdtech.jellyfin.models.CollectionSection
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
@@ -114,8 +114,8 @@ private val UuidSetSaver =
 
 @Composable
 fun DownloadsScreen(
-    onItemClick: (item: FindroidItem) -> Unit,
-    onShowClick: (show: FindroidShow) -> Unit,
+    onItemClick: (item: Item) -> Unit,
+    onShowClick: (show: Show) -> Unit,
     onBrowseLibraryClick: () -> Unit,
     onStorageClick: () -> Unit,
     viewModel: DownloadsViewModel = hiltViewModel(),
@@ -154,9 +154,9 @@ fun DownloadsScreen(
 @Composable
 internal fun DownloadsScreenLayout(
     state: DownloadsState,
-    onItemClick: (FindroidItem) -> Unit,
-    onShowClick: (FindroidShow) -> Unit,
-    onItemsDelete: (List<FindroidItem>) -> Unit,
+    onItemClick: (Item) -> Unit,
+    onShowClick: (Show) -> Unit,
+    onItemsDelete: (List<Item>) -> Unit,
     onSortOrderChange: (DownloadSortOrder) -> Unit,
     onCancelDownload: (ActiveDownload) -> Unit,
     onDismissDownload: (ActiveDownload) -> Unit,
@@ -208,7 +208,7 @@ internal fun DownloadsScreenLayout(
             onCancelDownload(download)
         }
     }
-    val removeItems: (List<FindroidItem>) -> Unit = { items ->
+    val removeItems: (List<Item>) -> Unit = { items ->
         val message =
             items.singleOrNull()?.let { context.getString(CoreR.string.download_removed, it.name) }
                 ?: context.resources.getQuantityString(
@@ -383,7 +383,7 @@ internal fun DownloadsScreenLayout(
                             onClick = {
                                 when {
                                     selecting -> toggle()
-                                    item is FindroidShow -> onShowClick(item)
+                                    item is Show -> onShowClick(item)
                                     else -> onItemClick(item)
                                 }
                             },
@@ -538,7 +538,7 @@ private fun QueueRow(
 /** A downloaded movie or show. [selected] is non-null while multi-select is active. */
 @Composable
 private fun LibraryRow(
-    item: FindroidItem,
+    item: Item,
     sizeBytes: Long?,
     episodeCount: Int?,
     shape: Shape,
@@ -558,13 +558,13 @@ private fun LibraryRow(
     val meta =
         buildList {
                 when (item) {
-                    is FindroidShow ->
+                    is Show ->
                         episodeCount?.let {
                             add(
                                 pluralStringResource(CoreR.plurals.downloaded_episode_count, it, it)
                             )
                         }
-                    is FindroidMovie -> {
+                    is Movie -> {
                         item.productionYear?.let { add(it.toString()) }
                         if (item.runtimeTicks > 0) {
                             add(
@@ -597,7 +597,7 @@ private fun LibraryRow(
             supporting = supporting,
             meta = meta,
             shape = shape,
-            showPlaybackProgress = item !is FindroidShow,
+            showPlaybackProgress = item !is Show,
             onPlayClick = onPlayClick,
             onClick = onClick,
             onLongClick = if (selected == null) onLongClick else null,

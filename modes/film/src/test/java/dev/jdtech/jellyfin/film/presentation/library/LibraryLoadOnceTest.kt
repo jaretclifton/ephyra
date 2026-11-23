@@ -3,7 +3,7 @@ package dev.jdtech.jellyfin.film.presentation.library
 import android.content.SharedPreferences
 import androidx.paging.PagingData
 import dev.jdtech.jellyfin.models.CollectionType
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
@@ -97,7 +97,7 @@ class LibraryLoadOnceTest {
             when (method.kotlinName) {
                 "getItemsPaging" -> {
                     requests.add(args!![0].asItemIdOrNull())
-                    flowOf(PagingData.empty<FindroidItem>())
+                    flowOf(PagingData.empty<Item>())
                 }
                 else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
             }

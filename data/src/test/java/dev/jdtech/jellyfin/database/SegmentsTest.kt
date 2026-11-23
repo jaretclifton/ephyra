@@ -4,8 +4,8 @@ import android.app.Application
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.models.FindroidSegmentDto
-import dev.jdtech.jellyfin.models.FindroidSegmentType
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.SegmentType
 import dev.jdtech.jellyfin.models.toItemId
 import kotlin.test.assertEquals
 import kotlinx.coroutines.runBlocking
@@ -37,14 +37,14 @@ class SegmentsTest {
 
     @After fun close() = room.close()
 
-    private fun segment(id: ItemId, type: FindroidSegmentType, start: Long, end: Long) =
+    private fun segment(id: ItemId, type: SegmentType, start: Long, end: Long) =
         FindroidSegmentDto(itemId = id, type = type, startTicks = start, endTicks = end)
 
     @Test
     fun `two segments of one type are both kept, in playback order`() = runBlocking {
-        val second = segment(itemId, FindroidSegmentType.COMMERCIAL, 9_000, 10_000)
-        val intro = segment(itemId, FindroidSegmentType.INTRO, 0, 500)
-        val first = segment(itemId, FindroidSegmentType.COMMERCIAL, 3_000, 4_000)
+        val second = segment(itemId, SegmentType.COMMERCIAL, 9_000, 10_000)
+        val intro = segment(itemId, SegmentType.INTRO, 0, 500)
+        val first = segment(itemId, SegmentType.COMMERCIAL, 3_000, 4_000)
 
         database.replaceSegments(itemId, listOf(second, intro, first))
 
@@ -53,14 +53,14 @@ class SegmentsTest {
 
     @Test
     fun `a new download replaces the earlier segments of that item only`() = runBlocking {
-        val other = segment(otherId, FindroidSegmentType.INTRO, 0, 500)
+        val other = segment(otherId, SegmentType.INTRO, 0, 500)
         database.replaceSegments(otherId, listOf(other))
         database.replaceSegments(
             itemId,
-            listOf(segment(itemId, FindroidSegmentType.COMMERCIAL, 3_000, 4_000)),
+            listOf(segment(itemId, SegmentType.COMMERCIAL, 3_000, 4_000)),
         )
 
-        val moved = segment(itemId, FindroidSegmentType.COMMERCIAL, 5_000, 6_000)
+        val moved = segment(itemId, SegmentType.COMMERCIAL, 5_000, 6_000)
         database.replaceSegments(itemId, listOf(moved))
 
         assertEquals(listOf(moved), database.getSegments(itemId))
@@ -69,9 +69,9 @@ class SegmentsTest {
 
     @Test
     fun `deleting an item's segments leaves other items alone`() = runBlocking {
-        val other = segment(otherId, FindroidSegmentType.OUTRO, 7_000, 8_000)
+        val other = segment(otherId, SegmentType.OUTRO, 7_000, 8_000)
         database.replaceSegments(otherId, listOf(other))
-        database.replaceSegments(itemId, listOf(segment(itemId, FindroidSegmentType.INTRO, 0, 500)))
+        database.replaceSegments(itemId, listOf(segment(itemId, SegmentType.INTRO, 0, 500)))
 
         database.deleteSegments(itemId)
 

@@ -47,7 +47,7 @@ import dev.jdtech.jellyfin.core.presentation.ephyra.SPECK_LOOP_MILLIS
 import dev.jdtech.jellyfin.core.presentation.ephyra.drawSpecks
 import dev.jdtech.jellyfin.core.presentation.ephyra.reducedMotion
 import dev.jdtech.jellyfin.domain.ports.ServerSession
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.util.Date
@@ -89,7 +89,7 @@ fun ScreensaverScreen(
 
     val intervalSeconds = remember(intervalStr) { intervalStr.toIntOrNull() ?: 20 }
 
-    var items by remember { mutableStateOf<List<FindroidItem>>(emptyList()) }
+    var items by remember { mutableStateOf<List<Item>>(emptyList()) }
     var currentIndex by remember { mutableIntStateOf(0) }
 
     val userId = serverSession.userId
@@ -176,7 +176,7 @@ private fun ScreensaverSpecks(modifier: Modifier = Modifier) {
 
 @Composable
 private fun ScreensaverArtwork(
-    item: FindroidItem,
+    item: Item,
     screenWidthPx: Int,
     screenHeightPx: Int,
     modifier: Modifier = Modifier,

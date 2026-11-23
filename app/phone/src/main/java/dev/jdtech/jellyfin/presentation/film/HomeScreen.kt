@@ -50,9 +50,9 @@ import dev.jdtech.jellyfin.film.presentation.home.HomeAction
 import dev.jdtech.jellyfin.film.presentation.home.HomeState
 import dev.jdtech.jellyfin.film.presentation.home.HomeViewModel
 import dev.jdtech.jellyfin.film.presentation.home.orderedRows
-import dev.jdtech.jellyfin.models.FindroidCollection
-import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.HomeItem
+import dev.jdtech.jellyfin.models.Item
+import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.presentation.components.ErrorDialog
 import dev.jdtech.jellyfin.presentation.film.components.EmptyState
@@ -76,11 +76,11 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
-    onLibraryClick: (library: FindroidCollection) -> Unit,
+    onLibraryClick: (library: Library) -> Unit,
     onSearchClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onManageServers: () -> Unit,
-    onItemClick: (item: FindroidItem) -> Unit,
+    onItemClick: (item: Item) -> Unit,
     onAddUser: () -> Unit,
     onPublicUserClick: (username: String) -> Unit,
     onUserSwitched: () -> Unit,

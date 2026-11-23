@@ -1,8 +1,8 @@
 package dev.jdtech.jellyfin.player.local.domain
 
-import dev.jdtech.jellyfin.models.FindroidSegment
-import dev.jdtech.jellyfin.models.FindroidSegmentType
 import dev.jdtech.jellyfin.models.MediaSegmentAction
+import dev.jdtech.jellyfin.models.Segment
+import dev.jdtech.jellyfin.models.SegmentType
 
 /**
  * CE (#271): which media segment playback is in, and what the player should do about it.
@@ -23,34 +23,34 @@ import dev.jdtech.jellyfin.models.MediaSegmentAction
  *   [nextEpisodeThresholdMs] of the runtime when there is a next item ([skipTarget]).
  */
 class SegmentTracker(
-    private val actions: Map<FindroidSegmentType, MediaSegmentAction>,
+    private val actions: Map<SegmentType, MediaSegmentAction>,
     private val buttonDurationMs: Long,
     private val nextEpisodeThresholdMs: Long,
     private val autoSkipOnlyInPip: Boolean,
 ) {
-    private var segments: List<FindroidSegment> = emptyList()
-    private var entered: FindroidSegment? = null
+    private var segments: List<Segment> = emptyList()
+    private var entered: Segment? = null
     private var enteredAtMs: Long = 0L
     private var lastPositionMs: Long = 0L
-    private var autoSkipped: FindroidSegment? = null
+    private var autoSkipped: Segment? = null
 
     /** True when some segment type is set to skip or ask, so segments are worth loading. */
     val isActive: Boolean
         get() = actions.values.any { it != MediaSegmentAction.IGNORE }
 
     /** The current item's segments. Call on every item change; it forgets the previous item. */
-    fun setSegments(segments: List<FindroidSegment>) {
+    fun setSegments(segments: List<Segment>) {
         this.segments = segments
         entered = null
         autoSkipped = null
     }
 
     /** The configured action for [type]; types without a setting are ignored. */
-    fun actionFor(type: FindroidSegmentType): MediaSegmentAction =
+    fun actionFor(type: SegmentType): MediaSegmentAction =
         actions[type] ?: MediaSegmentAction.IGNORE
 
     /** The segment playing at [positionMs], or null. */
-    fun activeSegment(positionMs: Long): FindroidSegment? = segments.find {
+    fun activeSegment(positionMs: Long): Segment? = segments.find {
         positionMs >= it.startTicks && positionMs < it.endTicks - END_MARGIN_MS
     }
 
@@ -96,7 +96,7 @@ class SegmentTracker(
         }
     }
 
-    private fun ask(segment: FindroidSegment, target: SkipTarget, positionMs: Long) =
+    private fun ask(segment: Segment, target: SkipTarget, positionMs: Long) =
         SegmentDecision.Ask(
             segment = segment,
             target = target,
@@ -107,9 +107,9 @@ class SegmentTracker(
      * Where skipping [segment] lands: the next item for an outro that runs to within
      * [nextEpisodeThresholdMs] of the end when [hasNextItem], its end otherwise.
      */
-    fun skipTarget(segment: FindroidSegment, durationMs: Long, hasNextItem: Boolean): SkipTarget {
+    fun skipTarget(segment: Segment, durationMs: Long, hasNextItem: Boolean): SkipTarget {
         val closesItem =
-            segment.type == FindroidSegmentType.OUTRO &&
+            segment.type == SegmentType.OUTRO &&
                 hasNextItem &&
                 durationMs > 0 &&
                 segment.endTicks > durationMs - nextEpisodeThresholdMs
@@ -148,14 +148,11 @@ sealed interface SegmentDecision {
     data object None : SegmentDecision
 
     /** Offer a skip button. [inButtonWindow] is false once its time is up. */
-    data class Ask(
-        val segment: FindroidSegment,
-        val target: SkipTarget,
-        val inButtonWindow: Boolean,
-    ) : SegmentDecision
+    data class Ask(val segment: Segment, val target: SkipTarget, val inButtonWindow: Boolean) :
+        SegmentDecision
 
     /** Skip now, without asking. */
-    data class AutoSkip(val segment: FindroidSegment, val target: SkipTarget) : SegmentDecision
+    data class AutoSkip(val segment: Segment, val target: SkipTarget) : SegmentDecision
 }
 
 /** Where a skip lands. */

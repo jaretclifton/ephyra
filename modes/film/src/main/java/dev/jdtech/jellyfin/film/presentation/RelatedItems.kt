@@ -1,8 +1,8 @@
 package dev.jdtech.jellyfin.film.presentation
 
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.repository.MediaRepository
 import kotlin.coroutines.cancellation.CancellationException
@@ -17,11 +17,11 @@ import timber.log.Timber
  */
 data class RelatedItems(
     /** Local trailers and special features, playable in the app's own player. */
-    val extras: List<FindroidMovie> = emptyList(),
+    val extras: List<Movie> = emptyList(),
     /** The collections (box sets) the item is part of. */
-    val collections: List<FindroidItem> = emptyList(),
+    val collections: List<Item> = emptyList(),
     /** "More like this". */
-    val similar: List<FindroidItem> = emptyList(),
+    val similar: List<Item> = emptyList(),
 )
 
 /** Which of the [RelatedItems] to ask the server for. */

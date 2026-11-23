@@ -1,7 +1,7 @@
 package dev.jdtech.jellyfin.film.domain.homerows
 
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidCollection
+import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
@@ -51,4 +51,4 @@ constructor(private val appPreferences: AppPreferences, private val database: Se
 }
 
 /** The libraries that can have a Latest row on Home. */
-suspend fun MediaRepository.homeLibraries(): List<FindroidCollection> = getUserViews()
+suspend fun MediaRepository.homeLibraries(): List<Library> = getUserViews()

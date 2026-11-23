@@ -3,7 +3,7 @@ package dev.jdtech.jellyfin.film.presentation.favorites
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.film.presentation.collection.CollectionState
 import dev.jdtech.jellyfin.models.CollectionSection
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
@@ -132,8 +132,7 @@ class FavoritesViewModelUserSwitchTest {
         assertEquals(unknown, unknown.shownTo(bob))
     }
 
-    private fun items(state: CollectionState): List<FindroidItem> =
-        state.sections.flatMap { it.items }
+    private fun items(state: CollectionState): List<Item> = state.sections.flatMap { it.items }
 
     private fun repository(): MediaRepository =
         fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {

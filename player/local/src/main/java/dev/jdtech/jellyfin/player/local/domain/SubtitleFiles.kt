@@ -1,9 +1,9 @@
 package dev.jdtech.jellyfin.player.local.domain
 
 import androidx.media3.common.MimeTypes
-import dev.jdtech.jellyfin.models.FindroidMediaStream
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.SubtitleDeliveryMethod
 
@@ -43,8 +43,8 @@ data class SubtitleFile(
  * that plays directly the server can list the same URLs (it does for mpv's profile), and the track
  * would then be there twice.
  */
-fun subtitleFiles(source: FindroidSource): List<SubtitleFile> {
-    val local = source.type == FindroidSourceType.LOCAL
+fun subtitleFiles(source: ItemSource): List<SubtitleFile> {
+    val local = source.type == ItemSourceType.LOCAL
     val delivered =
         source.mediaStreams.filter {
             it.type == MediaStreamType.SUBTITLE && !it.path.isNullOrBlank()
@@ -73,7 +73,7 @@ private val FILE_SUBTITLE_TYPES =
         MimeTypes.APPLICATION_TTML,
     ) + IMAGE_SUBTITLE_TYPES
 
-private fun FindroidMediaStream.toSubtitleFile(embedded: Boolean, local: Boolean) =
+private fun MediaStream.toSubtitleFile(embedded: Boolean, local: Boolean) =
     SubtitleFile(
         title = title,
         language = language,

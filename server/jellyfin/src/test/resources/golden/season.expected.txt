@@ -1,4 +1,4 @@
-FindroidSeason(
+Season(
   id = 8a277688-abfa-96c7-e4ca-ce0d9435e3a5
   name = "Season 1"
   seriesId = 332758e9-c2da-4fb5-cf9f-7e1efffc9d37
@@ -15,7 +15,7 @@ FindroidSeason(
   runtimeTicks = 0
   playbackPositionTicks = 0
   unplayedItemCount = 6
-  images = FindroidImages(
+  images = ItemImages(
     primary = "https://server.test/items/8a277688-abfa-96c7-e4ca-ce0d9435e3a5/Images/Primary?tag=ccb9a18fc47ebe16cb4e0d209f72be4d"
     backdrop = null
     logo = null

@@ -1,7 +1,7 @@
 package dev.jdtech.jellyfin.models
 
 /**
- * What the player should do when playback enters a media segment of a given [FindroidSegmentType].
+ * What the player should do when playback enters a media segment of a given [SegmentType].
  *
  * - [SKIP] — auto-seek past the segment immediately.
  * - [ASK] — show a dismissable skip button for a few seconds so the user can opt in.

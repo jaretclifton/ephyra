@@ -31,13 +31,13 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.domain.ports.MediaHttpClient
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidSegment
-import dev.jdtech.jellyfin.models.FindroidSegmentType
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.MediaSegmentAction
 import dev.jdtech.jellyfin.models.PlayerEngineId
+import dev.jdtech.jellyfin.models.Segment
+import dev.jdtech.jellyfin.models.SegmentType
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
@@ -213,7 +213,7 @@ constructor(
         val currentItemId: ItemId?,
         val currentItemTitle: String,
         /** The segment the skip button is for, while playback is in one set to ask. */
-        val currentSegment: FindroidSegment?,
+        val currentSegment: Segment?,
         val currentSkipButtonStringRes: Int,
         /**
          * CE (#271): the skip button's first seconds in [currentSegment]. After that the UI shows
@@ -224,7 +224,7 @@ constructor(
          * CE (#681): every segment of the current item, whatever its action, for the seek bar.
          * Empty until they are loaded, and with the seek bar setting off.
          */
-        val currentSegments: List<FindroidSegment> = emptyList(),
+        val currentSegments: List<Segment> = emptyList(),
         val currentTrickplay: Trickplay?,
         val currentChapters: List<PlayerChapter>,
         val fileLoaded: Boolean,
@@ -247,13 +247,13 @@ constructor(
         val waitingForNetwork: Boolean = false,
     )
 
-    private val _queue = MutableStateFlow<List<FindroidItem>>(emptyList())
+    private val _queue = MutableStateFlow<List<Item>>(emptyList())
 
     /**
      * CE (#131): the queued items after the current one, for the TV player's queue row. Phone
      * doesn't read it. Jump to one with [playQueueItem].
      */
-    val queue: StateFlow<List<FindroidItem>> = _queue.asStateFlow()
+    val queue: StateFlow<List<Item>> = _queue.asStateFlow()
 
     /**
      * CE (#298): the sleep timer, for this player session only. [sleepTimerState] has its setting
@@ -644,7 +644,7 @@ constructor(
                     appPreferences.playerMediaSegmentsActions
                         .mapNotNull { (type, preference) ->
                             val segmentType =
-                                FindroidSegmentType.entries.firstOrNull { it.name == type }
+                                SegmentType.entries.firstOrNull { it.name == type }
                                     ?: return@mapNotNull null
                             segmentType to
                                 MediaSegmentAction.fromPreferenceValue(
@@ -2290,7 +2290,7 @@ constructor(
     }
 
     /** The skip button was pressed for [segment]. */
-    fun skipSegment(segment: FindroidSegment) {
+    fun skipSegment(segment: Segment) {
         markUserInteraction()
         skipTo(segmentTracker.skipTarget(segment, player.duration, player.hasNextMediaItem()))
     }
@@ -2314,17 +2314,17 @@ constructor(
         }
     }
 
-    private fun skipButtonText(segment: FindroidSegment, target: SkipTarget): Int =
+    private fun skipButtonText(segment: Segment, target: SkipTarget): Int =
         if (target == SkipTarget.NextItem) {
             R.string.player_controls_next_episode
         } else {
             when (segment.type) {
-                FindroidSegmentType.INTRO -> R.string.player_controls_skip_intro
-                FindroidSegmentType.OUTRO -> R.string.player_controls_skip_outro
-                FindroidSegmentType.RECAP -> R.string.player_controls_skip_recap
-                FindroidSegmentType.COMMERCIAL -> R.string.player_controls_skip_commercial
-                FindroidSegmentType.PREVIEW -> R.string.player_controls_skip_preview
-                FindroidSegmentType.UNKNOWN -> R.string.player_controls_skip_unknown
+                SegmentType.INTRO -> R.string.player_controls_skip_intro
+                SegmentType.OUTRO -> R.string.player_controls_skip_outro
+                SegmentType.RECAP -> R.string.player_controls_skip_recap
+                SegmentType.COMMERCIAL -> R.string.player_controls_skip_commercial
+                SegmentType.PREVIEW -> R.string.player_controls_skip_preview
+                SegmentType.UNKNOWN -> R.string.player_controls_skip_unknown
             }
         }
 

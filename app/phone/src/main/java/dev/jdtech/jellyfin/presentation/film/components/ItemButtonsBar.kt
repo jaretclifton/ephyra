@@ -36,11 +36,11 @@ import dev.jdtech.jellyfin.core.Constants
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloaderState
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidShow
-import dev.jdtech.jellyfin.models.FindroidSourceType
-import dev.jdtech.jellyfin.models.FindroidTrailer
+import dev.jdtech.jellyfin.models.Item
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Show
+import dev.jdtech.jellyfin.models.Trailer
 import dev.jdtech.jellyfin.models.getVersions
 import dev.jdtech.jellyfin.models.isDownloaded
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
@@ -50,7 +50,7 @@ import dev.jdtech.jellyfin.utils.download.DownloadStatus
 
 @Composable
 fun ItemButtonsBar(
-    item: FindroidItem,
+    item: Item,
     onPlayClick: (startFromBeginning: Boolean) -> Unit,
     onMarkAsPlayedClick: () -> Unit,
     onMarkAsFavoriteClick: () -> Unit,
@@ -83,17 +83,17 @@ fun ItemButtonsBar(
         remember(item) {
             val all =
                 when (item) {
-                    is FindroidMovie -> item.trailers
-                    is FindroidShow -> item.trailers
+                    is Movie -> item.trailers
+                    is Show -> item.trailers
                     else -> emptyList()
                 }
             val first =
                 when (item) {
-                    is FindroidMovie -> item.trailer
-                    is FindroidShow -> item.trailer
+                    is Movie -> item.trailer
+                    is Show -> item.trailer
                     else -> null
                 }
-            all.ifEmpty { listOfNotNull(first?.let { FindroidTrailer(name = null, url = it) }) }
+            all.ifEmpty { listOfNotNull(first?.let { Trailer(name = null, url = it) }) }
         }
     var trailerMenuOpen by remember { mutableStateOf(false) }
 
@@ -300,7 +300,7 @@ fun ItemButtonsBar(
             ) {
                 val localSource =
                     item.sources.firstOrNull {
-                        it.type == FindroidSourceType.LOCAL && !it.path.endsWith(".download")
+                        it.type == ItemSourceType.LOCAL && !it.path.endsWith(".download")
                     }
                 if (localSource != null) {
                     val label =

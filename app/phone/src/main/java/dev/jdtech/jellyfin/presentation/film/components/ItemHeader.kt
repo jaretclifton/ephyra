@@ -21,8 +21,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.presentation.utils.FadeIntoPageHeight
 import dev.jdtech.jellyfin.presentation.utils.Layout
@@ -33,7 +33,7 @@ import dev.jdtech.jellyfin.presentation.utils.rememberSafePadding
 
 @Composable
 fun ItemHeader(
-    item: FindroidItem,
+    item: Item,
     scrollState: ScrollState,
     showLogo: Boolean = false,
     artwork: ArtworkState = rememberArtworkState(item, ArtworkPlacement.Header),
@@ -57,7 +57,7 @@ fun ItemHeader(
 
 @Composable
 fun ItemHeader(
-    item: FindroidItem,
+    item: Item,
     lazyListState: LazyListState,
     showLogo: Boolean = false,
     artwork: ArtworkState = rememberArtworkState(item, ArtworkPlacement.Header),
@@ -81,7 +81,7 @@ fun ItemHeader(
 
 @Composable
 private fun ItemHeaderBase(
-    item: FindroidItem,
+    item: Item,
     artwork: ArtworkState,
     showLogo: Boolean = false,
     backdropImage: @Composable (() -> Unit),
@@ -91,7 +91,7 @@ private fun ItemHeaderBase(
 
     val logoUri =
         when (item) {
-            is FindroidEpisode -> item.images.showLogo
+            is Episode -> item.images.showLogo
             else -> item.images.logo
         }
 

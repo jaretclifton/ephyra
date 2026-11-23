@@ -1,6 +1,6 @@
 package dev.jdtech.jellyfin.models
 
-data class FindroidMediaStream(
+data class MediaStream(
     val title: String,
     val displayTitle: String?,
     val language: String,

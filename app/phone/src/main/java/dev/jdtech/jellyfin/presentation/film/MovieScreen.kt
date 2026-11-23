@@ -48,10 +48,10 @@ import dev.jdtech.jellyfin.film.domain.withMediaInfo
 import dev.jdtech.jellyfin.film.presentation.movie.MovieAction
 import dev.jdtech.jellyfin.film.presentation.movie.MovieState
 import dev.jdtech.jellyfin.film.presentation.movie.MovieViewModel
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.cast.LocalCastPlayback
 import dev.jdtech.jellyfin.presentation.film.components.ActorsRow
@@ -90,7 +90,7 @@ fun MovieScreen(
     navigateBack: () -> Unit,
     navigateHome: () -> Unit,
     navigateToPerson: (personId: ItemId) -> Unit,
-    navigateToItem: (item: FindroidItem) -> Unit = {},
+    navigateToItem: (item: Item) -> Unit = {},
     viewModel: MovieViewModel = hiltViewModel(),
     downloaderViewModel: DownloaderViewModel = hiltViewModel(),
 ) {
@@ -421,7 +421,7 @@ private fun MovieScreenLayout(
 
 /** CE (#332): the watch history and the outside links, right below the info text. */
 @Composable
-internal fun MovieWatchAndLinks(movie: FindroidMovie, onAction: (MovieAction) -> Unit) {
+internal fun MovieWatchAndLinks(movie: Movie, onAction: (MovieAction) -> Unit) {
     if (movie.playCount > 0) {
         Spacer(Modifier.height(MaterialTheme.spacings.small))
         WatchHistoryText(playCount = movie.playCount, lastPlayedDate = movie.lastPlayedDate)

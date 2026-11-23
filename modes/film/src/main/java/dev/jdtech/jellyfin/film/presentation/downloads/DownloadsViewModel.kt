@@ -15,16 +15,16 @@ import dev.jdtech.jellyfin.core.presentation.downloader.DownloadStatus
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.CollectionSection
 import dev.jdtech.jellyfin.models.FindroidEpisodeDto
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidShow
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
-import dev.jdtech.jellyfin.models.toFindroidEpisode
+import dev.jdtech.jellyfin.models.toEpisode
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
@@ -270,16 +270,16 @@ constructor(
         }
     }
 
-    fun deleteDownloadedItem(item: FindroidItem) = deleteDownloadedItems(listOf(item))
+    fun deleteDownloadedItem(item: Item) = deleteDownloadedItems(listOf(item))
 
-    fun deleteDownloadedItems(items: List<FindroidItem>) {
+    fun deleteDownloadedItems(items: List<Item>) {
         downloadDeletionScope.launch {
             for (item in items) {
-                if (item is FindroidShow) {
+                if (item is Show) {
                     val userId = repository.getUserId()
                     // CE (#718): this server's episodes; another server's of the same show stay.
                     for (epDto in storedEpisodes(item.id)) {
-                        deleteLocalCopy(epDto.toFindroidEpisode(database, userId))
+                        deleteLocalCopy(epDto.toEpisode(database, userId))
                     }
                 } else {
                     deleteLocalCopy(item)
@@ -296,9 +296,9 @@ constructor(
         return database.getEpisodesByShowIdOfServer(showId, serverId)
     }
 
-    private suspend fun deleteLocalCopy(item: FindroidItem) {
+    private suspend fun deleteLocalCopy(item: Item) {
         downloadQueue.remove(item.id)
-        val source = item.sources.firstOrNull { it.type == FindroidSourceType.LOCAL } ?: return
+        val source = item.sources.firstOrNull { it.type == ItemSourceType.LOCAL } ?: return
         downloader.deleteItem(item, source)
     }
 
@@ -343,10 +343,10 @@ constructor(
 
     /** Everything one load read, enough to build the sections for any sort order. */
     private class LoadedLibrary(
-        val movies: List<FindroidMovie>,
-        val shows: List<FindroidShow>,
+        val movies: List<Movie>,
+        val shows: List<Show>,
         val episodesByShow: Map<ItemId, List<FindroidEpisodeDto>>,
-        val sourcesByItem: Map<ItemId, List<FindroidSource>>,
+        val sourcesByItem: Map<ItemId, List<ItemSource>>,
         val itemSizes: Map<ItemId, Long>,
         val episodeCounts: Map<ItemId, Int>,
     ) {
@@ -369,13 +369,13 @@ constructor(
     private suspend fun readLibrary(): LoadedLibrary =
         withContext(Dispatchers.IO) {
             val items = repository.getDownloads()
-            val shows = items.filterIsInstance<FindroidShow>()
+            val shows = items.filterIsInstance<Show>()
             val episodesByShow = shows.associate { it.id to storedEpisodes(it.id) }
             // One batched read for every movie and episode instead of a query per item
             // (and per pass).
             val sourcesByItem =
                 database.getLocalSourcesForItems(
-                    items.filter { it !is FindroidShow }.map { it.id } +
+                    items.filter { it !is Show }.map { it.id } +
                         episodesByShow.values.flatten().map { it.id }
                 )
 
@@ -387,7 +387,7 @@ constructor(
             val itemSizes = mutableMapOf<ItemId, Long>()
             for (item in items) {
                 val bytes =
-                    if (item is FindroidShow) {
+                    if (item is Show) {
                         episodesByShow.getValue(item.id).sumOf { sizeOf(it.id) }
                     } else {
                         sizeOf(item.id)
@@ -405,8 +405,7 @@ constructor(
                 sourcesByItem[id].orEmpty().any { !it.path.endsWith(".download") }
             // A movie/show with ONLY a .download source is still being downloaded
             // and belongs in the Queue tab, not the Library tab.
-            val movies =
-                items.filterIsInstance<FindroidMovie>().filter { hasCompletedSource(it.id) }
+            val movies = items.filterIsInstance<Movie>().filter { hasCompletedSource(it.id) }
             val episodeCounts = shows.associate { show ->
                 show.id to episodesByShow.getValue(show.id).count { hasCompletedSource(it.id) }
             }

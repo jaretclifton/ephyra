@@ -14,12 +14,12 @@ class FindroidItemPersonTest {
         type: PersonKind = PersonKind.ACTOR,
         name: String = "Person $id",
     ) =
-        FindroidItemPerson(
+        ItemPerson(
             id = id,
             name = name,
             type = type,
             role = role,
-            image = FindroidItemPersonImage(uri = null, blurHash = null),
+            image = ItemPersonImage(uri = null, blurHash = null),
         )
 
     @Test

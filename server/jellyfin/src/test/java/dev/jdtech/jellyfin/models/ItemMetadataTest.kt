@@ -3,9 +3,9 @@ package dev.jdtech.jellyfin.models
 import android.app.Application
 import dev.jdtech.jellyfin.server.jellyfin.mappers.MapperContext
 import dev.jdtech.jellyfin.server.jellyfin.mappers.externalLinks
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidEpisode
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidMovie
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidShow
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toEpisode
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toMovie
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toShow
 import dev.jdtech.jellyfin.server.jellyfin.toUserId
 import java.time.DayOfWeek
 import java.time.Instant
@@ -67,19 +67,19 @@ class FindroidItemMetadataTest {
                 specialFeatureCount = 4,
             )
 
-        val movie = runBlocking { dto.toFindroidMovie(context, emptyMap()) }
+        val movie = runBlocking { dto.toMovie(context, emptyMap()) }
 
         assertEquals(91f, movie.criticRating)
         assertEquals("In space no one can hear you scream.", movie.tagline)
         assertEquals(listOf("Brandywine"), movie.studios)
         assertEquals(
-            listOf(FindroidExternalLink("IMDb", "https://www.imdb.com/title/tt0078748")),
+            listOf(ExternalLink("IMDb", "https://www.imdb.com/title/tt0078748")),
             movie.externalLinks,
         )
         assertEquals(
             listOf(
-                FindroidTrailer("Official trailer", "https://youtu.be/a"),
-                FindroidTrailer(null, "https://youtu.be/b"),
+                Trailer("Official trailer", "https://youtu.be/a"),
+                Trailer(null, "https://youtu.be/b"),
             ),
             movie.trailers,
         )
@@ -93,7 +93,7 @@ class FindroidItemMetadataTest {
     @Test
     fun `a bare movie leaves every new field empty`() {
         val movie = runBlocking {
-            BaseItemDto(id = id, type = BaseItemKind.MOVIE).toFindroidMovie(context, emptyMap())
+            BaseItemDto(id = id, type = BaseItemKind.MOVIE).toMovie(context, emptyMap())
         }
 
         assertNull(movie.criticRating)
@@ -119,7 +119,7 @@ class FindroidItemMetadataTest {
                     airTime = " 21:00 ",
                     criticRating = 88f,
                 )
-                .toFindroidShow(baseUrl)
+                .toShow(baseUrl)
 
         assertEquals(listOf("HBO"), show.studios)
         assertEquals(listOf(DayOfWeek.THURSDAY), show.airDays)
@@ -139,11 +139,11 @@ class FindroidItemMetadataTest {
                     providerIds = mapOf("Imdb" to "tt0959621"),
                     userData = userData(playCount = 1),
                 )
-                .toFindroidEpisode(context, emptyMap())!!
+                .toEpisode(context, emptyMap())!!
         }
 
         assertEquals(
-            listOf(FindroidExternalLink("IMDb", "https://www.imdb.com/title/tt0959621")),
+            listOf(ExternalLink("IMDb", "https://www.imdb.com/title/tt0959621")),
             episode.externalLinks,
         )
         assertEquals(1, episode.playCount)
@@ -160,9 +160,9 @@ class FindroidItemMetadataTest {
 
         assertEquals(
             listOf(
-                FindroidExternalLink("IMDb", "https://www.imdb.com/title/tt1"),
-                FindroidExternalLink("TheMovieDb", "https://www.themoviedb.org/tv/2"),
-                FindroidExternalLink("TheTVDB", "https://thetvdb.com/?tab=series&id=3"),
+                ExternalLink("IMDb", "https://www.imdb.com/title/tt1"),
+                ExternalLink("TheMovieDb", "https://www.themoviedb.org/tv/2"),
+                ExternalLink("TheTVDB", "https://thetvdb.com/?tab=series&id=3"),
             ),
             links,
         )
@@ -190,17 +190,14 @@ class FindroidItemMetadataTest {
                 type = BaseItemKind.MOVIE,
             )
 
-        assertEquals(
-            listOf(FindroidExternalLink("Trakt", "https://trakt.tv/movies/alien-1979")),
-            links,
-        )
+        assertEquals(listOf(ExternalLink("Trakt", "https://trakt.tv/movies/alien-1979")), links)
     }
 
     @Test
     fun `air schedule only for running shows`() {
         fun show(status: String, days: List<DayOfWeek>, time: String?) =
             BaseItemDto(id = id, type = BaseItemKind.SERIES)
-                .toFindroidShow(baseUrl)
+                .toShow(baseUrl)
                 .copy(status = status, airDays = days, airTime = time)
 
         assertNull(
@@ -240,10 +237,10 @@ class FindroidItemMetadataTest {
                         type = BaseItemKind.MOVIE,
                         userData = userData(playCount = 1).copy(lastPlayedDate = played),
                     )
-                    .toFindroidMovie(context, emptyMap())
+                    .toMovie(context, emptyMap())
             }
             val never = runBlocking {
-                BaseItemDto(id = id, type = BaseItemKind.MOVIE).toFindroidMovie(context, emptyMap())
+                BaseItemDto(id = id, type = BaseItemKind.MOVIE).toMovie(context, emptyMap())
             }
 
             assertEquals(

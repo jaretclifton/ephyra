@@ -55,7 +55,7 @@ private const val SOURCE_OF_SERVER =
         "OR sources.itemId IN (SELECT id FROM episodes WHERE serverId = :serverId))"
 
 /*
- * CE (#775): rows with a finished download, what FindroidItem.isDownloaded() means: a LOCAL source
+ * CE (#775): rows with a finished download, what Item.isDownloaded() means: a LOCAL source
  * whose file is complete (a `.download` file is still being written, #454). The downloader stores
  * the rows before the file, so an unfinished or abandoned download has rows too. A show counts with
  * an episode of :serverId that is downloaded.
@@ -420,8 +420,8 @@ interface ServerDatabaseDao {
 
     /**
      * CE (#252): per season of [seriesId], how many episodes are stored and how many of them are
-     * downloaded, in one query. Downloaded means what `FindroidItem.isDownloaded()` means: a LOCAL
-     * source that is not a partial `.download` file. CE (#718): only the episodes of [serverId].
+     * downloaded, in one query. Downloaded means what `Item.isDownloaded()` means: a LOCAL source
+     * that is not a partial `.download` file. CE (#718): only the episodes of [serverId].
      */
     @Query(
         "SELECT episodes.seasonId AS seasonId, COUNT(*) AS total, " +

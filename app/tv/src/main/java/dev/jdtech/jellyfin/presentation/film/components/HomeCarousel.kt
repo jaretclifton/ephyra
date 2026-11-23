@@ -14,16 +14,12 @@ import androidx.tv.material3.Carousel
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovies
 import dev.jdtech.jellyfin.film.presentation.home.HomeAction
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun HomeCarousel(
-    items: List<FindroidItem>,
-    onAction: (HomeAction) -> Unit,
-    modifier: Modifier = Modifier,
-) {
+fun HomeCarousel(items: List<Item>, onAction: (HomeAction) -> Unit, modifier: Modifier = Modifier) {
     Carousel(
         itemCount = items.size,
         modifier = modifier.height(300.dp).fillMaxWidth(),

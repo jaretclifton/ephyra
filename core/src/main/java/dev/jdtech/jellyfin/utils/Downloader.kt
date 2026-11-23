@@ -1,8 +1,8 @@
 package dev.jdtech.jellyfin.utils
 
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.UiText
 
 interface Downloader {
@@ -15,7 +15,7 @@ interface Downloader {
      * new source row.
      */
     suspend fun downloadItem(
-        item: FindroidItem,
+        item: Item,
         sourceId: String,
         storageIndex: Int = 0,
         maxBitrate: Int? = null,
@@ -27,13 +27,13 @@ interface Downloader {
      * (downloadId, null) on success or (-1L, errorText) on failure.
      */
     suspend fun downloadItem(
-        item: FindroidItem,
+        item: Item,
         storageIndex: Int = 0,
         maxBitrate: Int? = null,
         smartQueued: Boolean = false,
     ): Pair<Long, UiText?>
 
-    suspend fun cancelDownload(item: FindroidItem, downloadId: Long)
+    suspend fun cancelDownload(item: Item, downloadId: Long)
 
     /**
      * Restarts any still-incomplete external subtitle/media-stream downloads for [item]'s
@@ -42,9 +42,9 @@ interface Downloader {
      * otherwise permanently drops that subtitle track with no recovery. Cheap no-op when there is
      * nothing incomplete, so safe to call periodically.
      */
-    suspend fun retryFailedMediaStreams(item: FindroidItem)
+    suspend fun retryFailedMediaStreams(item: Item)
 
-    suspend fun deleteItem(item: FindroidItem, source: FindroidSource)
+    suspend fun deleteItem(item: Item, source: ItemSource)
 
     /** Snapshot from the OkHttp download engine for a single download id. */
     data class Progress(
@@ -73,7 +73,7 @@ interface Downloader {
 
     /** An in-flight download restored from the DB after process death. */
     data class ActiveDownload(
-        val item: FindroidItem,
+        val item: Item,
         val downloadId: Long,
         /** Quality cap the download was started with; null = original quality. */
         val maxBitrate: Int?,
@@ -83,7 +83,7 @@ interface Downloader {
 
     /** A persisted queued-but-not-started download. */
     data class PendingDownload(
-        val item: FindroidItem,
+        val item: Item,
         /** Timestamp the item was originally queued (ms since epoch). */
         val addedAt: Long,
         /** Quality cap chosen when the item was queued; null = original quality. */
@@ -103,7 +103,7 @@ interface Downloader {
 
     /** Persists a pending queue entry so it can be re-queued after process death. */
     suspend fun savePendingDownload(
-        item: FindroidItem,
+        item: Item,
         maxBitrate: Int? = null,
         smartQueued: Boolean = false,
     )

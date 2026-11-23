@@ -53,7 +53,7 @@ import dev.jdtech.jellyfin.film.domain.withMediaInfo
 import dev.jdtech.jellyfin.film.presentation.episode.EpisodeAction
 import dev.jdtech.jellyfin.film.presentation.episode.EpisodeState
 import dev.jdtech.jellyfin.film.presentation.episode.EpisodeViewModel
-import dev.jdtech.jellyfin.models.FindroidEpisode
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.asString
@@ -438,7 +438,7 @@ private fun EpisodeScreenLayout(
  * so, which a press and hold reveals.
  */
 @Composable
-internal fun EpisodeOverview(episode: FindroidEpisode, maxCollapsedLines: Int = Int.MAX_VALUE) {
+internal fun EpisodeOverview(episode: Episode, maxCollapsedLines: Int = Int.MAX_VALUE) {
     val spoilers = LocalSpoilers.current
     if (spoilers.hides(episode) && episode.overview.isNotBlank()) {
         Text(
@@ -455,7 +455,7 @@ internal fun EpisodeOverview(episode: FindroidEpisode, maxCollapsedLines: Int = 
 
 /** CE (#332): the watch history and the outside links, right below the overview. */
 @Composable
-internal fun EpisodeWatchAndLinks(episode: FindroidEpisode, onAction: (EpisodeAction) -> Unit) {
+internal fun EpisodeWatchAndLinks(episode: Episode, onAction: (EpisodeAction) -> Unit) {
     if (episode.playCount > 0) {
         Spacer(Modifier.height(MaterialTheme.spacings.medium))
         WatchHistoryText(playCount = episode.playCount, lastPlayedDate = episode.lastPlayedDate)

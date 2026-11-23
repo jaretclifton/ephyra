@@ -1,12 +1,12 @@
 package dev.jdtech.jellyfin.models
 
-data class FindroidSource(
+data class ItemSource(
     val id: MediaSourceId,
     val name: String,
-    val type: FindroidSourceType,
+    val type: ItemSourceType,
     val path: String,
     val size: Long,
-    val mediaStreams: List<FindroidMediaStream>,
+    val mediaStreams: List<MediaStream>,
     val downloadId: Long? = null,
     /**
      * True when [path] points at a server-side transcode rather than the original file: an HLS
@@ -28,7 +28,7 @@ data class FindroidSource(
     val defaultSubtitleStreamIndex: Int? = null,
 )
 
-enum class FindroidSourceType {
+enum class ItemSourceType {
     REMOTE,
     LOCAL,
 }

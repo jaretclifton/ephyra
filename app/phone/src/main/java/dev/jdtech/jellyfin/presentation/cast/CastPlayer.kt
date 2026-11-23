@@ -86,8 +86,8 @@ import dev.jdtech.jellyfin.core.presentation.ephyra.glowEnabled
 import dev.jdtech.jellyfin.core.presentation.ephyra.seekBarSegmentColor
 import dev.jdtech.jellyfin.core.presentation.ephyra.seekBarSegments
 import dev.jdtech.jellyfin.core.presentation.theme.EphyraColor
-import dev.jdtech.jellyfin.models.FindroidSegment
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.Segment
 import dev.jdtech.jellyfin.player.cast.models.CastPlaybackStatus
 import dev.jdtech.jellyfin.player.cast.presentation.CastNowPlaying
 import dev.jdtech.jellyfin.player.cast.presentation.CastUiState
@@ -530,7 +530,7 @@ private fun SeekBar(
     positionMs: Long,
     durationMs: Long,
     chapters: List<PlayerChapter>,
-    segments: List<FindroidSegment>,
+    segments: List<Segment>,
     enabled: Boolean,
     onSeek: (Long) -> Unit,
 ) {

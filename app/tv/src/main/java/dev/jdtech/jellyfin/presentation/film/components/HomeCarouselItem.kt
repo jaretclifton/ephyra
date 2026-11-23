@@ -28,14 +28,14 @@ import dev.jdtech.jellyfin.ce.ui.focus.ephyraFocusedBorder
 import dev.jdtech.jellyfin.ce.ui.focus.ephyraFocusedGlow
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.film.presentation.home.HomeAction
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.Item
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 
 @Composable
-fun HomeCarouselItem(item: FindroidItem, onAction: (HomeAction) -> Unit) {
+fun HomeCarouselItem(item: Item, onAction: (HomeAction) -> Unit) {
     val colorStops =
         arrayOf(
             0.0f to Color.Black.copy(alpha = 0.1f),
@@ -75,8 +75,8 @@ fun HomeCarouselItem(item: FindroidItem, onAction: (HomeAction) -> Unit) {
             ) {
                 val genres =
                     when (item) {
-                        is FindroidMovie -> item.genres
-                        is FindroidShow -> item.genres
+                        is Movie -> item.genres
+                        is Show -> item.genres
                         else -> emptyList()
                     }
                 Text(

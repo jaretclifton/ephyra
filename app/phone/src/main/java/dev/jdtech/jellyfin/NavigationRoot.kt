@@ -42,15 +42,15 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.window.core.layout.WindowSizeClass
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.ephyra.ephyraScreenTransition
+import dev.jdtech.jellyfin.models.BoxSet
 import dev.jdtech.jellyfin.models.CollectionType
-import dev.jdtech.jellyfin.models.FindroidBoxSet
-import dev.jdtech.jellyfin.models.FindroidCollection
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidFolder
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidSeason
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Folder
+import dev.jdtech.jellyfin.models.Item
+import dev.jdtech.jellyfin.models.Library
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Season
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.navigation.navigateOrReuse
@@ -847,22 +847,18 @@ private fun EntryProviderScope<NavKey>.mainEntries(
     entry<LicensesRoute> { LicensesScreen(navigateBack = dropUnlessResumed { navigator.goBack() }) }
 }
 
-private fun navigateToItem(
-    navigator: Navigator,
-    item: FindroidItem,
-    downloadsOnly: Boolean = false,
-) {
+private fun navigateToItem(navigator: Navigator, item: Item, downloadsOnly: Boolean = false) {
     when (item) {
-        is FindroidBoxSet ->
+        is BoxSet ->
             navigator.navigate(
                 CollectionRoute(collectionId = item.id.asString(), collectionName = item.name)
             )
-        is FindroidMovie -> navigator.navigate(MovieRoute(movieId = item.id.asString()))
-        is FindroidShow ->
+        is Movie -> navigator.navigate(MovieRoute(movieId = item.id.asString()))
+        is Show ->
             navigator.navigate(
                 ShowRoute(showId = item.id.asString(), downloadsOnly = downloadsOnly)
             )
-        is FindroidSeason ->
+        is Season ->
             navigator.navigate(
                 SeasonRoute(
                     seasonId = item.id.asString(),
@@ -870,8 +866,8 @@ private fun navigateToItem(
                     seriesId = item.seriesId.asString(),
                 )
             )
-        is FindroidEpisode -> navigator.navigate(EpisodeRoute(episodeId = item.id.asString()))
-        is FindroidCollection ->
+        is Episode -> navigator.navigate(EpisodeRoute(episodeId = item.id.asString()))
+        is Library ->
             navigator.navigate(
                 LibraryRoute(
                     libraryId = item.id.asString(),
@@ -879,7 +875,7 @@ private fun navigateToItem(
                     libraryType = item.type,
                 )
             )
-        is FindroidFolder ->
+        is Folder ->
             navigator.navigate(
                 LibraryRoute(
                     libraryId = item.id.asString(),

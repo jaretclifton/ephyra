@@ -1,12 +1,12 @@
 package dev.jdtech.jellyfin.player.local.domain
 
-import dev.jdtech.jellyfin.models.FindroidChapter
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidSeason
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.Chapter
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test
 class PlaylistManagerShuffleTest {
     private val seriesId = UUID.randomUUID().toString().toItemId()
     private val calls = mutableListOf<String>()
-    private val chapters = listOf(FindroidChapter(startPosition = 0L, name = "Opening"))
+    private val chapters = listOf(Chapter(startPosition = 0L, name = "Opening"))
 
     @Test
     fun `shuffling a series queues episodes across regular seasons and starts from 0`() {
@@ -188,7 +188,7 @@ class PlaylistManagerShuffleTest {
         assertEquals(inSeason.map { it.id }, queued)
     }
 
-    private fun fakeRepository(show: Map<FindroidSeason, List<FindroidEpisode>>) =
+    private fun fakeRepository(show: Map<Season, List<Episode>>) =
         fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
             _,
             method,
@@ -216,7 +216,7 @@ class PlaylistManagerShuffleTest {
             as MediaRepository
 
     private fun season(number: Int) =
-        FindroidSeason(
+        Season(
             id = UUID.randomUUID().toString().toItemId(),
             name = "Season $number",
             seriesId = seriesId,
@@ -231,11 +231,11 @@ class PlaylistManagerShuffleTest {
             canPlay = true,
             canDownload = false,
             unplayedItemCount = null,
-            images = FindroidImages(),
+            images = ItemImages(),
         )
 
-    private fun episode(season: FindroidSeason, number: Int) =
-        FindroidEpisode(
+    private fun episode(season: Season, number: Int) =
+        Episode(
             id = UUID.randomUUID().toString().toItemId(),
             name = "Episode $number",
             originalTitle = null,
@@ -258,16 +258,16 @@ class PlaylistManagerShuffleTest {
             communityRating = null,
             people = emptyList(),
             missing = false,
-            images = FindroidImages(),
+            images = ItemImages(),
             chapters = emptyList(),
             trickplayInfo = null,
         )
 
     private fun source() =
-        FindroidSource(
+        ItemSource(
             id = "source",
             name = "Source",
-            type = FindroidSourceType.REMOTE,
+            type = ItemSourceType.REMOTE,
             path = "http://server/video",
             size = 0L,
             mediaStreams = emptyList(),

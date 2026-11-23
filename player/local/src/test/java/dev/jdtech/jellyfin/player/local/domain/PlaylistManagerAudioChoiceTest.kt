@@ -1,12 +1,12 @@
 package dev.jdtech.jellyfin.player.local.domain
 
 import androidx.media3.common.C
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidMediaStream
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
 import dev.jdtech.jellyfin.models.toItemId
@@ -348,10 +348,10 @@ class PlaylistManagerAudioChoiceTest {
         )
 
     private fun source(transcodes: Boolean, audio: Int?) =
-        FindroidSource(
+        ItemSource(
             id = SOURCE,
             name = "Source",
-            type = FindroidSourceType.REMOTE,
+            type = ItemSourceType.REMOTE,
             path = path(audio),
             size = 0L,
             mediaStreams =
@@ -365,10 +365,10 @@ class PlaylistManagerAudioChoiceTest {
     private fun session(audio: Int?) = "session-$audio"
 
     private fun download() =
-        FindroidSource(
+        ItemSource(
             id = SOURCE,
             name = "Source",
-            type = FindroidSourceType.LOCAL,
+            type = ItemSourceType.LOCAL,
             path = DOWNLOAD,
             size = 0L,
             mediaStreams = emptyList(),
@@ -376,7 +376,7 @@ class PlaylistManagerAudioChoiceTest {
         )
 
     private fun audio(index: Int, language: String, title: String) =
-        FindroidMediaStream(
+        MediaStream(
             title = title,
             displayTitle = title,
             language = language,
@@ -394,7 +394,7 @@ class PlaylistManagerAudioChoiceTest {
         )
 
     private fun episode() =
-        FindroidEpisode(
+        Episode(
             id = UUID.randomUUID().toString().toItemId(),
             name = "Episode 1",
             originalTitle = null,
@@ -417,7 +417,7 @@ class PlaylistManagerAudioChoiceTest {
             communityRating = null,
             people = emptyList(),
             missing = false,
-            images = FindroidImages(),
+            images = ItemImages(),
             chapters = emptyList(),
             trickplayInfo = null,
         )

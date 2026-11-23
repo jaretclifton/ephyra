@@ -20,11 +20,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.jdtech.jellyfin.domain.ports.MediaServer
 import dev.jdtech.jellyfin.domain.ports.PlaybackRequest
 import dev.jdtech.jellyfin.domain.ports.capMbpsToBitsPerSecond
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.looksLikeJellyfinId
@@ -530,8 +530,8 @@ constructor(
             try {
                 val kind =
                     when (repository.getItem(itemId)) {
-                        is FindroidMovie -> ItemKind.MOVIE
-                        is FindroidEpisode -> ItemKind.EPISODE
+                        is Movie -> ItemKind.MOVIE
+                        is Episode -> ItemKind.EPISODE
                         else -> return@launch
                     }
                 val manager = playlistManagers.get()
@@ -576,7 +576,7 @@ constructor(
      * receiver cannot read. Its URLs are ready for the receiver (see `toReceiverSource` in the
      * Jellyfin adapter).
      */
-    private suspend fun receiverSource(item: PlayerItem, audioStreamIndex: Int?): FindroidSource? =
+    private suspend fun receiverSource(item: PlayerItem, audioStreamIndex: Int?): ItemSource? =
         withContext(ioDispatcher) {
             // A model known to play HEVC, or the user saying theirs does: the receiver itself
             // tells a sender nothing about its codecs.

@@ -7,8 +7,8 @@ import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.domain.ports.MediaServer
 import dev.jdtech.jellyfin.models.FindroidSourceDto
-import dev.jdtech.jellyfin.models.FindroidSourceType
-import dev.jdtech.jellyfin.models.FindroidTrickplayInfo
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.ItemTrickplayInfo
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.MediaRepositoryImpl
@@ -50,7 +50,7 @@ class TrickplayDownloadTest {
 
     /** 10 x 10 thumbnails to a sheet, 250 thumbnails: sheets 0 and 1 full, sheet 2 half. */
     private val info =
-        FindroidTrickplayInfo(
+        ItemTrickplayInfo(
             width = 320,
             height = 180,
             tileWidth = 10,
@@ -77,7 +77,7 @@ class TrickplayDownloadTest {
                         id = SOURCE_ID,
                         itemId = itemId,
                         name = "Original",
-                        type = FindroidSourceType.LOCAL,
+                        type = ItemSourceType.LOCAL,
                         path = "/downloads/Movie.mkv.download",
                     )
                 )
@@ -164,7 +164,7 @@ class TrickplayDownloadTest {
         assertEquals(sheet(1), readOffline(sheet))
     }
 
-    private fun download(failing: Set<Int>, info: FindroidTrickplayInfo = this.info) {
+    private fun download(failing: Set<Int>, info: ItemTrickplayInfo = this.info) {
         val tiles = info.tileWidth * info.tileHeight
         val sheetsOnServer = (info.thumbnailCount + tiles - 1) / tiles
         val server =

@@ -2,17 +2,17 @@ package dev.jdtech.jellyfin.models
 
 import android.app.Application
 import dev.jdtech.jellyfin.server.jellyfin.mappers.MapperContext
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidBoxSet
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidCollection
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidEpisode
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidFolder
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidItem
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidMovie
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidPerson
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSeason
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSegment
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidShow
-import dev.jdtech.jellyfin.server.jellyfin.mappers.toFindroidSource
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toBoxSet
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toEpisode
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toFolder
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toItem
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toItemSource
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toLibrary
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toMovie
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toPerson
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toSeason
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toSegment
+import dev.jdtech.jellyfin.server.jellyfin.mappers.toShow
 import java.io.File
 import java.lang.reflect.Modifier
 import java.util.TimeZone
@@ -75,7 +75,7 @@ class ItemMapperGoldenTest {
 
     @Test
     fun movie() {
-        val mapped = runBlocking { item("movie").toFindroidMovie(context, emptyMap()) }
+        val mapped = runBlocking { item("movie").toMovie(context, emptyMap()) }
         golden("movie", mapped)
     }
 
@@ -86,59 +86,59 @@ class ItemMapperGoldenTest {
     @Test
     fun movieEdgeCases() {
         val mapped = runBlocking {
-            item("movie-edge-cases.handwritten").toFindroidMovie(context, emptyMap())
+            item("movie-edge-cases.handwritten").toMovie(context, emptyMap())
         }
         golden("movie-edge-cases", mapped)
     }
 
     @Test
-    fun movieThroughToFindroidItem() {
-        val viaItem = runBlocking { item("movie").toFindroidItem(context, emptyMap()) }
-        val direct = runBlocking { item("movie").toFindroidMovie(context, emptyMap()) }
+    fun movieThroughToItem() {
+        val viaItem = runBlocking { item("movie").toItem(context, emptyMap()) }
+        val direct = runBlocking { item("movie").toMovie(context, emptyMap()) }
         assertEquals(direct, viaItem)
     }
 
     @Test
     fun episode() {
-        val mapped = runBlocking { item("episode").toFindroidEpisode(context, emptyMap()) }
+        val mapped = runBlocking { item("episode").toEpisode(context, emptyMap()) }
         golden("episode", assertNotNull(mapped))
     }
 
     @Test
     fun show() {
-        golden("show", item("show").toFindroidShow(BASE_URL))
+        golden("show", item("show").toShow(BASE_URL))
     }
 
     @Test
     fun season() {
-        golden("season", item("season").toFindroidSeason(BASE_URL))
+        golden("season", item("season").toSeason(BASE_URL))
     }
 
     @Test
     fun boxSet() {
-        golden("boxset", item("boxset.handwritten").toFindroidBoxSet(BASE_URL))
+        golden("boxset", item("boxset.handwritten").toBoxSet(BASE_URL))
     }
 
     @Test
     fun collection() {
-        golden("collection", assertNotNull(item("collection").toFindroidCollection(BASE_URL)))
+        golden("collection", assertNotNull(item("collection").toLibrary(BASE_URL)))
     }
 
     @Test
     fun folder() {
-        golden("folder", item("folder").toFindroidFolder(BASE_URL))
+        golden("folder", item("folder").toFolder(BASE_URL))
     }
 
     @Test
     fun person() {
-        golden("person", item("person").toFindroidPerson(BASE_URL))
+        golden("person", item("person").toPerson(BASE_URL))
     }
 
     /** A home video maps as a movie (#671). */
     @Test
     fun video() {
-        val mapped = runBlocking { item("video").toFindroidItem(context, emptyMap()) }
-        assertEquals(FindroidMovie::class, assertNotNull(mapped)::class)
+        val mapped = runBlocking { item("video").toItem(context, emptyMap()) }
+        assertEquals(Movie::class, assertNotNull(mapped)::class)
         golden("video", mapped)
     }
 
@@ -152,9 +152,9 @@ class ItemMapperGoldenTest {
                     json.decodeFromString(MediaSourceInfo.serializer(), resource("$file.json"))
                 listOf(
                     "$title, includePath = false" to
-                        runBlocking { info.toFindroidSource(context, itemId) },
+                        runBlocking { info.toItemSource(context, itemId) },
                     "$title, includePath = true" to
-                        runBlocking { info.toFindroidSource(context, itemId, includePath = true) },
+                        runBlocking { info.toItemSource(context, itemId, includePath = true) },
                 )
             }
         golden("source", *parts.toTypedArray())
@@ -164,7 +164,7 @@ class ItemMapperGoldenTest {
     fun kindsTheAppDoesNotShow() {
         // The kind picks the mapper; a kind without one is dropped.
         val audio = item("person").copy(type = BaseItemKind.AUDIO)
-        assertEquals(null, runBlocking { audio.toFindroidItem(context, emptyMap()) })
+        assertEquals(null, runBlocking { audio.toItem(context, emptyMap()) })
     }
 
     @Test
@@ -178,8 +178,8 @@ class ItemMapperGoldenTest {
                 endTicks = 905_000_000L,
             )
         assertEquals(
-            FindroidSegment(FindroidSegmentType.INTRO, startTicks = 30_500, endTicks = 90_500),
-            segment.toFindroidSegment(),
+            Segment(SegmentType.INTRO, startTicks = 30_500, endTicks = 90_500),
+            segment.toSegment(),
         )
     }
 

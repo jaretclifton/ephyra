@@ -40,10 +40,10 @@ data class FindroidEpisodeDto(
     val runtimeTicks: Long,
     val premiereDate: LocalDateTime?,
     val communityRating: Float?,
-    val chapters: List<FindroidChapter>?,
+    val chapters: List<Chapter>?,
 )
 
-fun FindroidEpisode.toFindroidEpisodeDto(serverId: String? = null): FindroidEpisodeDto {
+fun Episode.toFindroidEpisodeDto(serverId: String? = null): FindroidEpisodeDto {
     return FindroidEpisodeDto(
         id = id,
         serverId = serverId,
@@ -62,27 +62,24 @@ fun FindroidEpisode.toFindroidEpisodeDto(serverId: String? = null): FindroidEpis
     )
 }
 
-suspend fun FindroidEpisodeDto.toFindroidEpisode(
-    database: ServerDatabaseDao,
-    userId: UserId,
-): FindroidEpisode =
-    toFindroidEpisode(database, userId, database.getLocalSourcesForItems(listOf(id)))
+suspend fun FindroidEpisodeDto.toEpisode(database: ServerDatabaseDao, userId: UserId): Episode =
+    toEpisode(database, userId, database.getLocalSourcesForItems(listOf(id)))
 
 /** For lists: [localSources] comes from one [getLocalSourcesForItems] call for all items. */
-suspend fun FindroidEpisodeDto.toFindroidEpisode(
+suspend fun FindroidEpisodeDto.toEpisode(
     database: ServerDatabaseDao,
     userId: UserId,
-    localSources: Map<ItemId, List<FindroidSource>>,
-): FindroidEpisode {
+    localSources: Map<ItemId, List<ItemSource>>,
+): Episode {
     val userData = database.getUserDataOrCreateNew(id, userId)
     val sources = localSources[id].orEmpty()
-    val trickplayInfos = mutableMapOf<String, FindroidTrickplayInfo>()
+    val trickplayInfos = mutableMapOf<String, ItemTrickplayInfo>()
     for (source in sources) {
-        database.getTrickplayInfo(source.id)?.toFindroidTrickplayInfo()?.let {
+        database.getTrickplayInfo(source.id)?.toItemTrickplayInfo()?.let {
             trickplayInfos[source.id] = it
         }
     }
-    return FindroidEpisode(
+    return Episode(
         id = id,
         name = name,
         originalTitle = "",
@@ -104,14 +101,14 @@ suspend fun FindroidEpisodeDto.toFindroidEpisode(
         seasonName = null,
         communityRating = communityRating,
         people = emptyList(),
-        images = toLocalFindroidImages(itemId = id),
+        images = toLocalItemImages(itemId = id),
         chapters = chapters ?: emptyList(),
         trickplayInfo = trickplayInfos,
     )
 }
 
-fun FindroidEpisodeDto.toLocalFindroidImages(itemId: ItemId): FindroidImages {
-    return FindroidImages(
+fun FindroidEpisodeDto.toLocalItemImages(itemId: ItemId): ItemImages {
+    return ItemImages(
         primary = localImagePath(itemId, "primary"),
         backdrop = localImagePath(itemId, "backdrop"),
         showPrimary = localImagePath(seriesId, "primary"),

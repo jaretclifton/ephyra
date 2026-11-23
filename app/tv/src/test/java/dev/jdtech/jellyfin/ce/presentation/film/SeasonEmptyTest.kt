@@ -11,7 +11,7 @@ import androidx.compose.ui.test.onNodeWithText
 import dev.jdtech.jellyfin.core.presentation.dummy.dummySeason
 import dev.jdtech.jellyfin.film.presentation.episode.EpisodeState
 import dev.jdtech.jellyfin.film.presentation.season.SeasonState
-import dev.jdtech.jellyfin.models.FindroidSeason
+import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
@@ -28,7 +28,7 @@ import org.robolectric.annotation.Config
 class SeasonEmptyTest {
     @get:Rule val rule = createComposeRule()
 
-    private val seasons: List<FindroidSeason> =
+    private val seasons: List<Season> =
         (1..3).map {
             dummySeason.copy(id = UUID(4, it.toLong()).toString().toItemId(), name = "Season $it")
         }

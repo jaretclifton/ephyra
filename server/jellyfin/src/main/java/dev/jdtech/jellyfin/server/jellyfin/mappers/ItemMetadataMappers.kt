@@ -1,7 +1,7 @@
 package dev.jdtech.jellyfin.server.jellyfin.mappers
 
-import dev.jdtech.jellyfin.models.FindroidExternalLink
-import dev.jdtech.jellyfin.models.FindroidTrailer
+import dev.jdtech.jellyfin.models.ExternalLink
+import dev.jdtech.jellyfin.models.Trailer
 import java.time.DayOfWeek
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.BaseItemKind
@@ -12,14 +12,12 @@ import org.jellyfin.sdk.model.api.MediaUrl
 // CE (#332): the metadata the server already sends in the item response and the detail pages show.
 
 /** All remote trailers that have a URL, in the server's order, without duplicates. */
-internal fun List<MediaUrl>?.toFindroidTrailers(): List<FindroidTrailer> =
+internal fun List<MediaUrl>?.toTrailers(): List<Trailer> =
     orEmpty()
         .mapNotNull { trailer ->
             trailer.url
                 ?.takeIf { it.isNotBlank() }
-                ?.let {
-                    FindroidTrailer(name = trailer.name?.takeIf { n -> n.isNotBlank() }, url = it)
-                }
+                ?.let { Trailer(name = trailer.name?.takeIf { n -> n.isNotBlank() }, url = it) }
         }
         .distinctBy { it.url }
 
@@ -32,12 +30,12 @@ internal fun externalLinks(
     externalUrls: List<ExternalUrl>?,
     providerIds: Map<String, String?>?,
     type: BaseItemKind?,
-): List<FindroidExternalLink> {
+): List<ExternalLink> {
     val fromServer =
         externalUrls.orEmpty().mapNotNull { link ->
             val name = link.name?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
             val url = link.url?.takeIf { it.isWebUrl() } ?: return@mapNotNull null
-            FindroidExternalLink(name, url)
+            ExternalLink(name, url)
         }
     if (fromServer.isNotEmpty()) return fromServer.distinctBy { it.url }
 
@@ -45,25 +43,15 @@ internal fun externalLinks(
     return buildList {
             ids["imdb"]
                 ?.takeIf { it.isNotBlank() }
-                ?.let { add(FindroidExternalLink("IMDb", "https://www.imdb.com/title/$it")) }
+                ?.let { add(ExternalLink("IMDb", "https://www.imdb.com/title/$it")) }
             ids["tmdb"]
                 ?.takeIf { it.isNotBlank() }
                 ?.let { id ->
                     when (type) {
                         BaseItemKind.MOVIE ->
-                            add(
-                                FindroidExternalLink(
-                                    "TheMovieDb",
-                                    "https://www.themoviedb.org/movie/$id",
-                                )
-                            )
+                            add(ExternalLink("TheMovieDb", "https://www.themoviedb.org/movie/$id"))
                         BaseItemKind.SERIES ->
-                            add(
-                                FindroidExternalLink(
-                                    "TheMovieDb",
-                                    "https://www.themoviedb.org/tv/$id",
-                                )
-                            )
+                            add(ExternalLink("TheMovieDb", "https://www.themoviedb.org/tv/$id"))
                         else -> Unit
                     }
                 }
@@ -71,19 +59,14 @@ internal fun externalLinks(
                 ?.takeIf { it.isNotBlank() }
                 ?.let { id ->
                     if (type == BaseItemKind.SERIES) {
-                        add(
-                            FindroidExternalLink(
-                                "TheTVDB",
-                                "https://thetvdb.com/?tab=series&id=$id",
-                            )
-                        )
+                        add(ExternalLink("TheTVDB", "https://thetvdb.com/?tab=series&id=$id"))
                     }
                 }
         }
         .distinctBy { it.url }
 }
 
-internal fun BaseItemDto.toExternalLinks(): List<FindroidExternalLink> =
+internal fun BaseItemDto.toExternalLinks(): List<ExternalLink> =
     externalLinks(externalUrls, providerIds, type)
 
 /** The studio (movie) or network (show) names, in the server's order. */

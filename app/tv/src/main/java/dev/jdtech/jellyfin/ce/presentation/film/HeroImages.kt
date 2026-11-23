@@ -22,8 +22,8 @@ import coil3.size.Scale
 import coil3.transition.CrossfadeTransition
 import coil3.transition.Transition
 import coil3.transition.TransitionTarget
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.utils.withImageSize
 import java.util.concurrent.ConcurrentHashMap
@@ -53,15 +53,15 @@ internal class HeroImages(
     /** Backdrops the server doesn't have (404), so the hero goes on to the next candidate. */
     private val missing: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
-    fun backdrop(item: FindroidItem): ImageRequest? = backdrop(item, hideStill = false)
+    fun backdrop(item: Item): ImageRequest? = backdrop(item, hideStill = false)
 
     /** The first of [heroBackdropUrls] that isn't known to be missing. */
-    fun backdrop(item: FindroidItem, hideStill: Boolean): ImageRequest? =
+    fun backdrop(item: Item, hideStill: Boolean): ImageRequest? =
         heroBackdropUrls(item, backdropWidthPx, hideStill, seasonBackdropUrl)
             .firstOrNull { it !in missing }
             ?.let { request(it, backdropWidthPx, backdropWidthPx * 9 / 16, Scale.FILL) }
 
-    fun logo(item: FindroidItem): ImageRequest? =
+    fun logo(item: Item): ImageRequest? =
         heroLogoUrl(item, logoWidthPx)?.let { request(it, logoWidthPx, logoHeightPx, Scale.FIT) }
 
     /**
@@ -87,13 +87,13 @@ internal class HeroImages(
             )
             .build()
 
-    private fun requests(item: FindroidItem) = listOfNotNull(backdrop(item), logo(item))
+    private fun requests(item: Item) = listOfNotNull(backdrop(item), logo(item))
 
     /** True when the item's backdrop and logo can be drawn straight from the memory cache. */
-    fun isCached(item: FindroidItem): Boolean = requests(item).all { it.isCached() }
+    fun isCached(item: Item): Boolean = requests(item).all { it.isCached() }
 
     /** Waits for a prefetch of the item's images that is still loading. */
-    suspend fun awaitPrefetch(item: FindroidItem): Boolean {
+    suspend fun awaitPrefetch(item: Item): Boolean {
         val jobs = requests(item).mapNotNull { pending[it.key()]?.takeUnless { it.isDisposed } }
         jobs.forEach { it.job.join() }
         return jobs.isNotEmpty()
@@ -104,7 +104,7 @@ internal class HeroImages(
      * longer near [focused] are cancelled; one for [focused] itself keeps running, as the hero
      * waits for it.
      */
-    fun prefetch(focused: FindroidItem, neighbours: List<FindroidItem>) {
+    fun prefetch(focused: Item, neighbours: List<Item>) {
         val wanted = neighbours.flatMap { requests(it) }
         val keep = (wanted + requests(focused)).mapTo(HashSet()) { it.key() }
         cancel { it !in keep }
@@ -209,14 +209,14 @@ internal fun heroCrossfade(durationMillis: Int): Transition.Factory =
  * asked for without a tag and may not exist: [HeroImages] skips it after the first 404.
  */
 internal fun heroBackdropUrls(
-    item: FindroidItem,
+    item: Item,
     widthPx: Int,
     hideStill: Boolean = false,
     seasonBackdropUrl: (ItemId) -> String? = { null },
 ): List<String> {
     val uris =
         when (item) {
-            is FindroidEpisode ->
+            is Episode ->
                 listOf(
                     item.images.showBackdrop,
                     // CE (#618): "Hide spoilers" leaves the episode's own pictures out.
@@ -233,10 +233,7 @@ internal fun heroBackdropUrls(
  * The season's backdrop, from [seasonBackdropUrl], for an episode with a picture on the server. An
  * episode whose picture is a local file (a download) has none.
  */
-private fun seasonBackdrop(
-    episode: FindroidEpisode,
-    seasonBackdropUrl: (ItemId) -> String?,
-): String? {
+private fun seasonBackdrop(episode: Episode, seasonBackdropUrl: (ItemId) -> String?): String? {
     val scheme = episode.images.primary?.toUri()?.scheme ?: return null
     if (!scheme.equals("http", ignoreCase = true) && !scheme.equals("https", ignoreCase = true)) {
         return null
@@ -248,17 +245,17 @@ private fun seasonBackdrop(
  * The backdrop the server said the item has: an episode's is its show's. The screensaver uses it,
  * which only wants pictures that are there.
  */
-internal fun heroBackdropUrl(item: FindroidItem, widthPx: Int): String? {
+internal fun heroBackdropUrl(item: Item, widthPx: Int): String? {
     val uri =
         when (item) {
-            is FindroidEpisode -> item.images.showBackdrop ?: item.images.backdrop
+            is Episode -> item.images.showBackdrop ?: item.images.backdrop
             else -> item.images.backdrop
         }
     return uri?.withImageSize(widthPx, null)
 }
 
-internal fun heroLogoUrl(item: FindroidItem, widthPx: Int): String? {
-    val uri = if (item is FindroidEpisode) item.images.showLogo else item.images.logo
+internal fun heroLogoUrl(item: Item, widthPx: Int): String? {
+    val uri = if (item is Episode) item.images.showLogo else item.images.logo
     return uri?.withImageSize(widthPx, null)
 }
 

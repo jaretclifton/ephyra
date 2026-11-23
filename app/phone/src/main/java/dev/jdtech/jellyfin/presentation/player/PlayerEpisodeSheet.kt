@@ -50,7 +50,7 @@ import androidx.compose.ui.unit.dp
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.ephyra.EphyraMotion
 import dev.jdtech.jellyfin.film.presentation.season.SeasonState
-import dev.jdtech.jellyfin.models.FindroidEpisode
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.presentation.film.CompactEpisodeRow
 import dev.jdtech.jellyfin.presentation.film.components.groupedItemShape
@@ -73,7 +73,7 @@ fun PlayerEpisodeSheet(
     state: SeasonState,
     seasonNumber: Int?,
     currentEpisodeId: ItemId?,
-    onEpisodeClick: (FindroidEpisode) -> Unit,
+    onEpisodeClick: (Episode) -> Unit,
     onDismiss: () -> Unit,
     onClosed: () -> Unit,
     onBoundsChanged: (Rect) -> Unit = {},
@@ -155,7 +155,7 @@ private fun EpisodeSheetContent(
     seasonNumber: Int?,
     currentEpisodeId: ItemId?,
     scrollToCurrent: Boolean,
-    onEpisodeClick: (FindroidEpisode) -> Unit,
+    onEpisodeClick: (Episode) -> Unit,
     wantsFocus: Boolean,
     mayTakeFocus: () -> Boolean,
     onFocusSettled: (Boolean) -> Unit,

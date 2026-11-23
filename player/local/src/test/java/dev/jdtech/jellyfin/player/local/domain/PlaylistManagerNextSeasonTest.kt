@@ -1,12 +1,12 @@
 package dev.jdtech.jellyfin.player.local.domain
 
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidSeason
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
@@ -124,21 +124,18 @@ class PlaylistManagerNextSeasonTest {
     }
 
     /** A manager playing [start], from a server that lists [show] for each season. */
-    private fun playing(
-        start: FindroidEpisode,
-        show: Map<FindroidSeason, List<FindroidEpisode>>,
-    ): PlaylistManager {
+    private fun playing(start: Episode, show: Map<Season, List<Episode>>): PlaylistManager {
         val manager = playlistManager(fakeRepository(show))
         runBlocking { manager.getInitialItem(start.id, ItemKind.EPISODE) }
         return manager
     }
 
-    private fun PlaylistManager.nextAfter(episode: FindroidEpisode): ItemId? {
+    private fun PlaylistManager.nextAfter(episode: Episode): ItemId? {
         setCurrentMediaItemIndex(episode.id)
         return runBlocking { getNextPlayerItem() }?.itemId
     }
 
-    private fun fakeRepository(show: Map<FindroidSeason, List<FindroidEpisode>>) =
+    private fun fakeRepository(show: Map<Season, List<Episode>>) =
         fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
             _,
             method,
@@ -154,7 +151,7 @@ class PlaylistManagerNextSeasonTest {
             as MediaRepository
 
     private fun season(number: Int) =
-        FindroidSeason(
+        Season(
             id = UUID.randomUUID().toString().toItemId(),
             name = "Season $number",
             seriesId = seriesId,
@@ -169,11 +166,11 @@ class PlaylistManagerNextSeasonTest {
             canPlay = true,
             canDownload = false,
             unplayedItemCount = null,
-            images = FindroidImages(),
+            images = ItemImages(),
         )
 
-    private fun episode(season: FindroidSeason, number: Int, missing: Boolean = false) =
-        FindroidEpisode(
+    private fun episode(season: Season, number: Int, missing: Boolean = false) =
+        Episode(
             id = UUID.randomUUID().toString().toItemId(),
             name = "Episode $number",
             originalTitle = null,
@@ -196,16 +193,16 @@ class PlaylistManagerNextSeasonTest {
             communityRating = null,
             people = emptyList(),
             missing = missing,
-            images = FindroidImages(),
+            images = ItemImages(),
             chapters = emptyList(),
             trickplayInfo = null,
         )
 
     private fun source() =
-        FindroidSource(
+        ItemSource(
             id = "source",
             name = "Source",
-            type = FindroidSourceType.REMOTE,
+            type = ItemSourceType.REMOTE,
             path = "http://server/video",
             size = 0L,
             mediaStreams = emptyList(),

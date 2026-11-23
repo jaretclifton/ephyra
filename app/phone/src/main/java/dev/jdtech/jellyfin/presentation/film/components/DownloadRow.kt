@@ -42,8 +42,8 @@ import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
 import dev.jdtech.jellyfin.core.presentation.spoiler.spoilerImage
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 
 private val GroupOuterCorner = 20.dp
@@ -76,7 +76,7 @@ fun downloadRowSize(context: Context, bytes: Long): String =
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DownloadRow(
-    item: FindroidItem,
+    item: Item,
     title: String,
     meta: String,
     shape: Shape,
@@ -180,7 +180,7 @@ fun DownloadRow(
  */
 @Composable
 fun DownloadArtwork(
-    item: FindroidItem,
+    item: Item,
     modifier: Modifier = Modifier,
     showPlaybackProgress: Boolean = false,
     showPlayedBadge: Boolean = false,
@@ -188,7 +188,7 @@ fun DownloadArtwork(
 ) {
     val sources =
         when (item) {
-            is FindroidEpisode -> listOf(item.images.primary, item.images.showBackdrop)
+            is Episode -> listOf(item.images.primary, item.images.showBackdrop)
             else -> listOf(item.images.backdrop, item.images.primary)
         }
     val playLabel = stringResource(CoreR.string.play)

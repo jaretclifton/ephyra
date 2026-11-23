@@ -1,6 +1,6 @@
 package dev.jdtech.jellyfin.models
 
-data class FindroidCollection(
+data class Library(
     override val id: ItemId,
     override val name: String,
     override val originalTitle: String? = null,
@@ -9,11 +9,11 @@ data class FindroidCollection(
     override val favorite: Boolean = false,
     override val canPlay: Boolean = false,
     override val canDownload: Boolean = false,
-    override val sources: List<FindroidSource> = emptyList(),
+    override val sources: List<ItemSource> = emptyList(),
     override val runtimeTicks: Long = 0L,
     override val playbackPositionTicks: Long = 0L,
     override val unplayedItemCount: Int? = null,
     val type: CollectionType,
-    override val images: FindroidImages,
-    override val chapters: List<FindroidChapter> = emptyList(),
-) : FindroidItem
+    override val images: ItemImages,
+    override val chapters: List<Chapter> = emptyList(),
+) : Item

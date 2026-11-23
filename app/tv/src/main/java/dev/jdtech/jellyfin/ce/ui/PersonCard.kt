@@ -35,8 +35,8 @@ import dev.jdtech.jellyfin.ce.ui.focus.ephyraFocusedBorder
 import dev.jdtech.jellyfin.ce.ui.focus.ephyraFocusedGlow
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyPerson
-import dev.jdtech.jellyfin.models.FindroidItemPerson
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemPerson
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
@@ -44,7 +44,7 @@ import dev.jdtech.jellyfin.presentation.theme.spacings
 internal fun personCardTag(id: ItemId) = "ce_person_card_${id.asString()}"
 
 @Composable
-fun PersonCard(person: FindroidItemPerson, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun PersonCard(person: ItemPerson, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier.width(150.dp).testTag(personCardTag(person.id))) {
         Surface(
             onClick = onClick,

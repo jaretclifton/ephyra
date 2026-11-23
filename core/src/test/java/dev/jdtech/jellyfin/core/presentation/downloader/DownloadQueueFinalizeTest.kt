@@ -5,11 +5,11 @@ import android.content.Context
 import android.database.sqlite.SQLiteFullException
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidSource
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemImages
+import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -178,7 +178,7 @@ class DownloadQueueFinalizeTest {
         }
 
         override suspend fun downloadItem(
-            item: FindroidItem,
+            item: Item,
             sourceId: String,
             storageIndex: Int,
             maxBitrate: Int?,
@@ -186,7 +186,7 @@ class DownloadQueueFinalizeTest {
         ) = start()
 
         override suspend fun downloadItem(
-            item: FindroidItem,
+            item: Item,
             storageIndex: Int,
             maxBitrate: Int?,
             smartQueued: Boolean,
@@ -198,11 +198,11 @@ class DownloadQueueFinalizeTest {
             return started
         }
 
-        override suspend fun cancelDownload(item: FindroidItem, downloadId: Long) = Unit
+        override suspend fun cancelDownload(item: Item, downloadId: Long) = Unit
 
-        override suspend fun retryFailedMediaStreams(item: FindroidItem) = Unit
+        override suspend fun retryFailedMediaStreams(item: Item) = Unit
 
-        override suspend fun deleteItem(item: FindroidItem, source: FindroidSource) = Unit
+        override suspend fun deleteItem(item: Item, source: ItemSource) = Unit
 
         override suspend fun getProgress(downloadId: Long?) = progress
 
@@ -213,7 +213,7 @@ class DownloadQueueFinalizeTest {
         override suspend fun getActiveDownloads() = emptyList<Downloader.ActiveDownload>()
 
         override suspend fun savePendingDownload(
-            item: FindroidItem,
+            item: Item,
             maxBitrate: Int?,
             smartQueued: Boolean,
         ) = Unit
@@ -233,7 +233,7 @@ class DownloadQueueFinalizeTest {
     }
 
     private fun episode() =
-        FindroidEpisode(
+        Episode(
             id = UUID.randomUUID().toString().toItemId(),
             name = "Episode 1",
             originalTitle = null,
@@ -256,7 +256,7 @@ class DownloadQueueFinalizeTest {
             communityRating = null,
             people = emptyList(),
             missing = false,
-            images = FindroidImages(),
+            images = ItemImages(),
             chapters = emptyList(),
             trickplayInfo = null,
         )

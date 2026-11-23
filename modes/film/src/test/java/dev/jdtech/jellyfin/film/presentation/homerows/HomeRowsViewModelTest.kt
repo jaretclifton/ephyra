@@ -4,8 +4,8 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.film.domain.homerows.HomeRowsStore
 import dev.jdtech.jellyfin.film.domain.homerows.MemorySharedPreferences
 import dev.jdtech.jellyfin.models.CollectionType
-import dev.jdtech.jellyfin.models.FindroidCollection
-import dev.jdtech.jellyfin.models.FindroidImages
+import dev.jdtech.jellyfin.models.ItemImages
+import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
@@ -31,11 +31,11 @@ import org.junit.jupiter.api.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeRowsViewModelTest {
     private val movies =
-        FindroidCollection(
+        Library(
             id = UUID.randomUUID().toString().toItemId(),
             name = "Movies",
             type = CollectionType.Movies,
-            images = FindroidImages(),
+            images = ItemImages(),
         )
     private val events = DataChangeEvents()
 

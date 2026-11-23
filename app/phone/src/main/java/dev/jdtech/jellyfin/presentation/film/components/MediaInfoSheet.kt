@@ -49,9 +49,9 @@ import dev.jdtech.jellyfin.film.domain.MediaInfo
 import dev.jdtech.jellyfin.film.domain.MediaInfoNumbers
 import dev.jdtech.jellyfin.film.domain.MediaInfoTrack
 import dev.jdtech.jellyfin.film.domain.toMediaInfo
-import dev.jdtech.jellyfin.models.FindroidMediaStream
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
@@ -75,7 +75,7 @@ private val VersionPillMaxWidth = 240.dp
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MediaInfoSheet(sources: List<FindroidSource>, onDismissRequest: () -> Unit) {
+fun MediaInfoSheet(sources: List<ItemSource>, onDismissRequest: () -> Unit) {
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         // Opens at its full height: half a landscape window shows the title and little else.
@@ -86,7 +86,7 @@ fun MediaInfoSheet(sources: List<FindroidSource>, onDismissRequest: () -> Unit) 
 }
 
 @Composable
-internal fun MediaInfoContent(sources: List<FindroidSource>, modifier: Modifier = Modifier) {
+internal fun MediaInfoContent(sources: List<ItemSource>, modifier: Modifier = Modifier) {
     if (sources.isEmpty()) return
     var picked by rememberSaveable { mutableIntStateOf(0) }
     // The list can be another one after a reload: never point past its end.
@@ -176,7 +176,7 @@ internal fun MediaInfoContent(sources: List<FindroidSource>, modifier: Modifier 
 }
 
 /** What a version's pill says: its name, or its number when the server gave it none. */
-private fun versionLabel(version: FindroidSource, index: Int, numbers: MediaInfoNumbers): String =
+private fun versionLabel(version: ItemSource, index: Int, numbers: MediaInfoNumbers): String =
     version.name.ifBlank { numbers.count(index + 1) }
 
 /** "MKV · 54.01 GB · 62.1 Mbps", with whatever the server left out left out. */
@@ -275,9 +275,9 @@ private fun MediaInfoContentVersionsPreview() {
     }
 }
 
-private fun previewSource(name: String): FindroidSource {
+private fun previewSource(name: String): ItemSource {
     fun stream(type: MediaStreamType, title: String) =
-        FindroidMediaStream(
+        MediaStream(
             title = "",
             displayTitle = title,
             language = "eng",
@@ -296,10 +296,10 @@ private fun previewSource(name: String): FindroidSource {
             bitDepth = if (type == MediaStreamType.VIDEO) 10 else 24,
             sampleRate = 48_000,
         )
-    return FindroidSource(
+    return ItemSource(
         id = name,
         name = name,
-        type = FindroidSourceType.REMOTE,
+        type = ItemSourceType.REMOTE,
         path = "",
         size = 58_000_000_000,
         mediaStreams =

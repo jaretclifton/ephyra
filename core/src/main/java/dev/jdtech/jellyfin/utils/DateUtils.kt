@@ -1,8 +1,8 @@
 package dev.jdtech.jellyfin.utils
 
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.Show
 
-fun getShowDateString(item: FindroidShow): String {
+fun getShowDateString(item: Show): String {
     val dateRange: MutableList<String> = mutableListOf()
     item.productionYear?.let { dateRange.add(it.toString()) }
     when (item.status) {

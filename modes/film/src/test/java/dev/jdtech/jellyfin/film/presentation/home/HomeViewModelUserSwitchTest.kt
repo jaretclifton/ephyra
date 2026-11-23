@@ -2,7 +2,7 @@ package dev.jdtech.jellyfin.film.presentation.home
 
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.User
@@ -422,19 +422,16 @@ class HomeViewModelUserSwitchTest {
         }
             as SharedPreferences
 
-    private fun item(name: String): FindroidItem =
-        fakeProxy(FindroidItem::class.java.classLoader, arrayOf(FindroidItem::class.java)) {
-            proxy,
-            method,
-            args ->
+    private fun item(name: String): Item =
+        fakeProxy(Item::class.java.classLoader, arrayOf(Item::class.java)) { proxy, method, args ->
             when (method.kotlinName) {
                 "equals" -> proxy === args?.getOrNull(0)
                 "hashCode" -> System.identityHashCode(proxy)
                 "toString" -> name
-                else -> throw NotImplementedError("FindroidItem.${method.kotlinName}")
+                else -> throw NotImplementedError("Item.${method.kotlinName}")
             }
         }
-            as FindroidItem
+            as Item
 
     private companion object {
         const val SERVER_ID = "0123456789abcdef0123456789abcdef"

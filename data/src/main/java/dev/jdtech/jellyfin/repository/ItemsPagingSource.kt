@@ -2,7 +2,7 @@ package dev.jdtech.jellyfin.repository
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemFilter
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
@@ -18,8 +18,8 @@ class ItemsPagingSource(
     private val sortBy: SortBy,
     private val sortOrder: SortOrder,
     private val filters: Set<ItemFilter>,
-) : PagingSource<Int, FindroidItem>() {
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, FindroidItem> {
+) : PagingSource<Int, Item>() {
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Item> {
         val position = params.key ?: 0
 
         Timber.d("Retrieving position: $position")
@@ -46,7 +46,7 @@ class ItemsPagingSource(
         }
     }
 
-    override fun getRefreshKey(state: PagingState<Int, FindroidItem>): Int? {
+    override fun getRefreshKey(state: PagingState<Int, Item>): Int? {
         return state.anchorPosition?.let { anchorPosition ->
             state.closestPageToPosition(anchorPosition)?.prevKey?.let { it + state.config.pageSize }
                 ?: state.closestPageToPosition(anchorPosition)?.nextKey?.let {

@@ -1,10 +1,10 @@
 package dev.jdtech.jellyfin.testing
 
-import dev.jdtech.jellyfin.models.FindroidCollection
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidPerson
-import dev.jdtech.jellyfin.models.FindroidSegment
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.Library
+import dev.jdtech.jellyfin.models.Person
+import dev.jdtech.jellyfin.models.Segment
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.UserId
 
@@ -26,24 +26,24 @@ interface FakeLibrary {
     val userId: UserId
     val users: Map<String, String>
 
-    val libraries: List<FindroidCollection>
+    val libraries: List<Library>
 
     /**
      * Movies, shows, seasons, episodes and box sets, with the user data they start with. Shows and
      * seasons list no seasons and episodes of their own, as an adapter gives them: the fake finds
      * them by `seriesId` and `seasonId`.
      */
-    val items: List<FindroidItem>
+    val items: List<Item>
 
     /** The items of each library and each box set, by its id. */
     val children: Map<ItemId, List<ItemId>>
 
-    val people: List<FindroidPerson>
+    val people: List<Person>
 
     /** The items a person is in, by the person's id. */
     val personItems: Map<ItemId, List<ItemId>>
 
-    val segments: Map<ItemId, List<FindroidSegment>>
+    val segments: Map<ItemId, List<Segment>>
 
     /** Theme songs, by the id of their show or movie. */
     val themeSongs: Map<ItemId, String>

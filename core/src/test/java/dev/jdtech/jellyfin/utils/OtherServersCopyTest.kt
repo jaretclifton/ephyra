@@ -11,16 +11,16 @@ import dev.jdtech.jellyfin.models.FindroidEpisodeDto
 import dev.jdtech.jellyfin.models.FindroidMovieDto
 import dev.jdtech.jellyfin.models.FindroidSeasonDto
 import dev.jdtech.jellyfin.models.FindroidShowDto
-import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceDto
-import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.FindroidUserDataDto
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
-import dev.jdtech.jellyfin.models.toFindroidEpisode
-import dev.jdtech.jellyfin.models.toFindroidMovie
+import dev.jdtech.jellyfin.models.toEpisode
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMovie
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -111,7 +111,7 @@ class OtherServersCopyTest {
                 id = "source-${itemId.asString()}",
                 itemId = itemId,
                 name = "Original",
-                type = FindroidSourceType.LOCAL,
+                type = ItemSourceType.LOCAL,
                 path = file.absolutePath,
             )
         )
@@ -203,7 +203,7 @@ class OtherServersCopyTest {
         runBlocking {
             val file = storeMovie(SERVER_A)
             userData(userA, movieId, toBeSynced = true)
-            val movie = database.getMovie(movieId).toFindroidMovie(database, userB)
+            val movie = database.getMovie(movieId).toMovie(database, userB)
 
             current(SERVER_B)
             downloader.releaseOtherServersCopy(movie, SERVER_B)
@@ -218,7 +218,7 @@ class OtherServersCopyTest {
     @Test
     fun `the current server's own copy is left alone`(): Unit = runBlocking {
         val file = storeMovie(SERVER_A)
-        val movie = database.getMovie(movieId).toFindroidMovie(database, userA)
+        val movie = database.getMovie(movieId).toMovie(database, userA)
 
         current(SERVER_A)
         downloader.releaseOtherServersCopy(movie, SERVER_A)
@@ -233,7 +233,7 @@ class OtherServersCopyTest {
         runBlocking {
             val taken = storeEpisode(SERVER_A, episodeId, index = 1)
             val kept = storeEpisode(SERVER_A, otherEpisodeId, index = 2)
-            val episode = database.getEpisode(episodeId).toFindroidEpisode(database, userB)
+            val episode = database.getEpisode(episodeId).toEpisode(database, userB)
 
             current(SERVER_B)
             downloader.releaseOtherServersCopy(episode, SERVER_B)
@@ -248,10 +248,10 @@ class OtherServersCopyTest {
 
     /** The server's source of the movie, [size] bytes. */
     private fun serverSource(size: Long) =
-        FindroidSource(
+        ItemSource(
             id = "source-${movieId.asString()}",
             name = "Original",
-            type = FindroidSourceType.REMOTE,
+            type = ItemSourceType.REMOTE,
             path = "http://server.invalid/Videos/${movieId.asString()}/stream",
             size = size,
             mediaStreams = emptyList(),
@@ -271,7 +271,7 @@ class OtherServersCopyTest {
                 ShadowEnvironment.setExternalStorageState(external, Environment.MEDIA_MOUNTED)
             }
             val file = storeMovie(SERVER_A)
-            val movie = database.getMovie(movieId).toFindroidMovie(database, userB)
+            val movie = database.getMovie(movieId).toMovie(database, userB)
             server = { name ->
                 when (name) {
                     "MediaRepository.getMediaSources" -> listOf(serverSource(Long.MAX_VALUE / 4))
@@ -292,7 +292,7 @@ class OtherServersCopyTest {
     @Test
     fun `a download that fails at the server leaves the other server's copy`(): Unit = runBlocking {
         val file = storeMovie(SERVER_A)
-        val movie = database.getMovie(movieId).toFindroidMovie(database, userB)
+        val movie = database.getMovie(movieId).toMovie(database, userB)
         // The source comes, then the server stops answering.
         server = { name ->
             when (name) {

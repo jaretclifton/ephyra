@@ -91,10 +91,10 @@ import dev.jdtech.jellyfin.film.presentation.season.SeasonAction
 import dev.jdtech.jellyfin.film.presentation.season.SeasonState
 import dev.jdtech.jellyfin.film.presentation.season.SeasonViewModel
 import dev.jdtech.jellyfin.models.DisplayProfile
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidSeason
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.MediaStreamType
+import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.models.VideoMetadata
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.getVersions
@@ -230,7 +230,7 @@ internal class EpisodeSelection(initialId: String?) {
     /** The focused episode's ID, or null for [nextUp]. */
     var id by mutableStateOf(initialId)
 
-    fun selected(episodes: List<FindroidEpisode>): FindroidEpisode? =
+    fun selected(episodes: List<Episode>): Episode? =
         episodes.firstOrNull { it.id.asString() == id } ?: nextUp(episodes)
 
     companion object {
@@ -240,7 +240,7 @@ internal class EpisodeSelection(initialId: String?) {
 }
 
 /** The episode to focus first: the one in progress, else the first unwatched one. */
-private fun nextUp(episodes: List<FindroidEpisode>): FindroidEpisode? =
+private fun nextUp(episodes: List<Episode>): Episode? =
     episodes.firstOrNull { it.playbackPositionTicks > 0 && !it.played }
         ?: episodes.firstOrNull { !it.played }
         ?: episodes.firstOrNull()
@@ -251,11 +251,11 @@ internal fun SeasonScreenLayout(
     state: SeasonState,
     loadError: Throwable?,
     onRetry: () -> Unit,
-    episodes: List<FindroidEpisode>,
+    episodes: List<Episode>,
     selection: EpisodeSelection,
     episodeState: () -> EpisodeState,
-    onSelectSeason: (FindroidSeason) -> Unit,
-    onPlay: (episode: FindroidEpisode, mediaSourceId: String?, startFromBeginning: Boolean) -> Unit,
+    onSelectSeason: (Season) -> Unit,
+    onPlay: (episode: Episode, mediaSourceId: String?, startFromBeginning: Boolean) -> Unit,
     onAction: (EpisodeAction) -> Unit,
 ) {
     // Default focus: the selected episode. After Back from the player: the element that was used.
@@ -427,7 +427,7 @@ internal fun SeasonScreenLayout(
  * along the episodes leaves it alone (#257).
  */
 @Composable
-private fun SeasonBackdrop(season: FindroidSeason) {
+private fun SeasonBackdrop(season: Season) {
     AsyncImage(
         model = rememberDetailBackdrop(season.images.backdrop ?: season.images.showBackdrop),
         contentDescription = null,
@@ -465,11 +465,11 @@ private fun SeasonBackdrop(season: FindroidSeason) {
  */
 @Composable
 private fun EpisodeDetails(
-    selected: State<FindroidEpisode?>,
+    selected: State<Episode?>,
     episodeState: () -> EpisodeState,
     focusPosition: FocusPosition,
     playRequester: FocusRequester,
-    onPlay: (episode: FindroidEpisode, mediaSourceId: String?, startFromBeginning: Boolean) -> Unit,
+    onPlay: (episode: Episode, mediaSourceId: String?, startFromBeginning: Boolean) -> Unit,
     onAction: (EpisodeAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -648,7 +648,7 @@ private fun EpisodeDetails(
  * chips), and the language and format of the first audio track, with its spatial audio format (e.g.
  * "English Dolby TrueHD Atmos 7.1").
  */
-private fun technicalChips(episode: FindroidEpisode?, metadata: VideoMetadata?): List<String> {
+private fun technicalChips(episode: Episode?, metadata: VideoMetadata?): List<String> {
     val source = episode?.sources?.firstOrNull() ?: return emptyList()
     val video = source.mediaStreams.firstOrNull { it.type == MediaStreamType.VIDEO }
     val audio = source.mediaStreams.firstOrNull { it.type == MediaStreamType.AUDIO }
@@ -727,7 +727,7 @@ private fun TechnicalChips(chips: List<String>) {
 
 @Composable
 private fun EpisodeRowCard(
-    episode: FindroidEpisode,
+    episode: Episode,
     onClick: () -> Unit,
     onFocus: () -> Unit,
     modifier: Modifier = Modifier,

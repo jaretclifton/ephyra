@@ -39,7 +39,7 @@ fun ArtworkImage(
 }
 
 /**
- * The image to load for an image URL of `FindroidImages`. Downloaded images are stored as paths
+ * The image to load for an image URL of `ItemImages`. Downloaded images are stored as paths
  * relative to the files directory, without a scheme.
  */
 internal fun String.resolveIn(context: Context): Uri {

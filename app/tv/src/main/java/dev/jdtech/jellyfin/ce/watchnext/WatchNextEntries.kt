@@ -1,9 +1,9 @@
 package dev.jdtech.jellyfin.ce.watchnext
 
 import androidx.core.net.toUri
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
+import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.asString
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -17,23 +17,20 @@ import java.time.ZoneId
  * its overview, which the launcher shows outside the app. A reveal in the app doesn't reach it.
  */
 fun watchNextCandidates(
-    resume: List<FindroidItem>,
-    nextUp: List<FindroidEpisode>,
+    resume: List<Item>,
+    nextUp: List<Episode>,
     hideSpoilers: Boolean = false,
 ): List<WatchNextEntry> =
     resume.mapNotNull { it.toWatchNextEntry(WatchNextKind.CONTINUE, hideSpoilers) } +
         nextUp.mapNotNull { it.toWatchNextEntry(WatchNextKind.NEXT, hideSpoilers) }
 
-fun FindroidItem.toWatchNextEntry(
-    kind: WatchNextKind,
-    hideSpoilers: Boolean = false,
-): WatchNextEntry? {
+fun Item.toWatchNextEntry(kind: WatchNextKind, hideSpoilers: Boolean = false): WatchNextEntry? {
     if (runtimeTicks <= 0) return null
     if (kind == WatchNextKind.CONTINUE && (played || playbackPositionTicks <= 0)) return null
     val durationMs = runtimeTicks / TICKS_PER_MS
     val positionMs = if (kind == WatchNextKind.CONTINUE) playbackPositionTicks / TICKS_PER_MS else 0
     return when (this) {
-        is FindroidEpisode -> {
+        is Episode -> {
             // The episode's own thumbnail is landscape; the series poster is the fallback.
             val hidden = hideSpoilers && !played
             val landscape =
@@ -56,7 +53,7 @@ fun FindroidItem.toWatchNextEntry(
                 lastEngagementMs = lastPlayedDate?.toEpochMs(),
             )
         }
-        is FindroidMovie -> {
+        is Movie -> {
             val landscape = images.backdrop
             WatchNextEntry(
                 itemId = id.asString(),

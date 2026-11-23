@@ -1,10 +1,10 @@
 package dev.jdtech.jellyfin.film.presentation.media
 
-import dev.jdtech.jellyfin.models.FindroidCollection
+import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.models.UserId
 
 data class MediaState(
-    val libraries: List<FindroidCollection> = emptyList(),
+    val libraries: List<Library> = emptyList(),
     val isLoading: Boolean = false,
     val error: Exception? = null,
     /** CE (#810): the user [libraries] are for; null before the first load, or when unknown. */

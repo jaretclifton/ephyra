@@ -1,6 +1,6 @@
 package dev.jdtech.jellyfin.film.presentation.show
 
-import dev.jdtech.jellyfin.models.FindroidItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 
 sealed interface ShowAction {
@@ -24,7 +24,7 @@ sealed interface ShowAction {
 
     data object OnHomeClick : ShowAction
 
-    data class NavigateToItem(val item: FindroidItem) : ShowAction
+    data class NavigateToItem(val item: Item) : ShowAction
 
     data class NavigateToPerson(val personId: ItemId) : ShowAction
 

@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.Context
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidSourceDto
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.toItemId
@@ -37,7 +37,7 @@ class UnfinishedDownloadPlaybackTest {
             id = "source",
             itemId = episodeId,
             name = "Original",
-            type = FindroidSourceType.LOCAL,
+            type = ItemSourceType.LOCAL,
             path = "/storage/downloads/Show/S01/S01E01 - Episode.ts.download",
             downloadId = 1L,
         )

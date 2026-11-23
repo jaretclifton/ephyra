@@ -3,7 +3,7 @@ package dev.jdtech.jellyfin.models
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class FindroidChapter(
+data class Chapter(
     /** The start position. */
     val startPosition: Long,
     /** The name. */

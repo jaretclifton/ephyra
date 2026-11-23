@@ -71,9 +71,9 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyVideoMetadata
 import dev.jdtech.jellyfin.film.presentation.movie.MovieAction
 import dev.jdtech.jellyfin.film.presentation.movie.MovieState
 import dev.jdtech.jellyfin.film.presentation.movie.MovieViewModel
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.getVersions
 import dev.jdtech.jellyfin.presentation.film.components.VersionDialog
@@ -93,7 +93,7 @@ fun MovieScreen(
     movieId: ItemId,
     navigateToPlayer: (itemId: ItemId, mediaSourceId: String?, startFromBeginning: Boolean) -> Unit,
     navigateToPerson: (personId: ItemId) -> Unit,
-    navigateToItem: (item: FindroidItem) -> Unit = {},
+    navigateToItem: (item: Item) -> Unit = {},
     viewModel: MovieViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -611,7 +611,7 @@ private fun MovieScreenContent(
 }
 
 /** Whole minutes left of a partly watched movie, at least 1, as the season page counts them. */
-private fun minutesLeft(movie: FindroidMovie): Long =
+private fun minutesLeft(movie: Movie): Long =
     ((movie.runtimeTicks - movie.playbackPositionTicks) / TICKS_PER_MINUTE).coerceAtLeast(1)
 
 private const val TICKS_PER_MINUTE = 600_000_000L

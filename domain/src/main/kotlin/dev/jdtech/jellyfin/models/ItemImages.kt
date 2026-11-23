@@ -4,7 +4,7 @@ package dev.jdtech.jellyfin.models
  * The images of an item: a server URL, or for a download a path relative to the app's files
  * directory ([localImagePath]). A missing image is null, never an empty string.
  */
-data class FindroidImages(
+data class ItemImages(
     val primary: String? = null,
     val backdrop: String? = null,
     val logo: String? = null,

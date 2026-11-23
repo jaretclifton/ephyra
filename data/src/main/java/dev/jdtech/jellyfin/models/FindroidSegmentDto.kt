@@ -9,12 +9,12 @@ import androidx.room3.Entity
 @Entity(tableName = "segments", primaryKeys = ["itemId", "type", "startTicks"])
 data class FindroidSegmentDto(
     val itemId: ItemId,
-    val type: FindroidSegmentType,
+    val type: SegmentType,
     val startTicks: Long,
     val endTicks: Long,
 )
 
-fun FindroidSegment.toFindroidSegmentsDto(itemId: ItemId): FindroidSegmentDto {
+fun Segment.toFindroidSegmentsDto(itemId: ItemId): FindroidSegmentDto {
     return FindroidSegmentDto(
         itemId = itemId,
         type = type,
@@ -23,6 +23,6 @@ fun FindroidSegment.toFindroidSegmentsDto(itemId: ItemId): FindroidSegmentDto {
     )
 }
 
-fun FindroidSegmentDto.toFindroidSegment(): FindroidSegment {
-    return FindroidSegment(type = type, startTicks = startTicks, endTicks = endTicks)
+fun FindroidSegmentDto.toSegment(): Segment {
+    return Segment(type = type, startTicks = startTicks, endTicks = endTicks)
 }

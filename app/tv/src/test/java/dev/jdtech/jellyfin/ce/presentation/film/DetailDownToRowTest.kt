@@ -26,7 +26,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummySeason
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyShow
 import dev.jdtech.jellyfin.film.presentation.movie.MovieState
 import dev.jdtech.jellyfin.film.presentation.show.ShowState
-import dev.jdtech.jellyfin.models.FindroidMovie
+import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
@@ -98,7 +98,7 @@ class DetailDownToRowTest {
         rule.waitForIdle()
     }
 
-    private fun setMovie(movie: FindroidMovie) = setTvContent {
+    private fun setMovie(movie: Movie) = setTvContent {
         MovieScreenLayout(state = MovieState(movie = movie, actors = actors), onAction = {})
     }
 

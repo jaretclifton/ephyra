@@ -23,9 +23,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.film.presentation.home.HomeAction
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidShow
+import dev.jdtech.jellyfin.models.Item
+import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.presentation.utils.keyboardFocusRing
@@ -39,11 +39,7 @@ private val scrimColorStops =
     )
 
 @Composable
-fun HomeCarouselItem(
-    item: FindroidItem,
-    onAction: (HomeAction) -> Unit,
-    modifier: Modifier = Modifier,
-) {
+fun HomeCarouselItem(item: Item, onAction: (HomeAction) -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier =
             modifier
@@ -89,8 +85,8 @@ fun HomeCarouselItem(
         ) {
             val genres =
                 when (item) {
-                    is FindroidMovie -> item.genres
-                    is FindroidShow -> item.genres
+                    is Movie -> item.genres
+                    is Show -> item.genres
                     else -> emptyList()
                 }
             Text(

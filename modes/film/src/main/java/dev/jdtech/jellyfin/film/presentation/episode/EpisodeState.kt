@@ -1,13 +1,13 @@
 package dev.jdtech.jellyfin.film.presentation.episode
 
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItemPerson
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.ItemPerson
 import dev.jdtech.jellyfin.models.VideoMetadata
 
 data class EpisodeState(
-    val episode: FindroidEpisode? = null,
+    val episode: Episode? = null,
     val videoMetadata: VideoMetadata? = null,
-    val actors: List<FindroidItemPerson> = emptyList(),
+    val actors: List<ItemPerson> = emptyList(),
     val error: Exception? = null,
     /**
      * #769: whether a download can be transcoded down to a chosen quality. Without it the quality

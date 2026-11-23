@@ -16,8 +16,8 @@ import androidx.compose.ui.unit.dp
 import dev.jdtech.jellyfin.ce.ui.TvSafeArea
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.film.presentation.home.HomeState
-import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.HomeItem
+import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
@@ -37,7 +37,7 @@ import org.robolectric.annotation.Config
 class HomeRowUpdateTest {
     @get:Rule val rule = createComposeRule()
 
-    private val movies: List<FindroidItem> =
+    private val movies: List<Item> =
         (0 until 10).map {
             dummyMovie.copy(id = UUID(0, it.toLong()).toString().toItemId(), name = "Movie $it")
         }
@@ -65,10 +65,10 @@ class HomeRowUpdateTest {
         rule.waitForIdle()
     }
 
-    private fun card(item: FindroidItem): SemanticsMatcher =
+    private fun card(item: Item): SemanticsMatcher =
         hasAnyAncestor(hasTestTag(homeCardTag(item.id))) and isFocusable()
 
-    private fun assertOnScreen(item: FindroidItem) {
+    private fun assertOnScreen(item: Item) {
         val bounds = rule.onNode(card(item)).getBoundsInRoot()
         assertTrue(
             bounds.left >= TvSafeArea.horizontal,

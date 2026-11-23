@@ -1,9 +1,9 @@
 package dev.jdtech.jellyfin.film.domain
 
 import dev.jdtech.jellyfin.models.DisplayProfile
-import dev.jdtech.jellyfin.models.FindroidMediaStream
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.SpatialAudio
 import dev.jdtech.jellyfin.models.VideoRangeType
@@ -19,7 +19,7 @@ class VideoMetadataParserTest {
         displayTitle: String? = null,
         channelLayout: String? = "5.1",
     ) =
-        FindroidMediaStream(
+        MediaStream(
             title = "",
             displayTitle = displayTitle,
             language = "eng",
@@ -36,7 +36,7 @@ class VideoMetadataParserTest {
         )
 
     private fun video(range: VideoRangeType) =
-        FindroidMediaStream(
+        MediaStream(
             title = "",
             displayTitle = "4K HEVC",
             language = "",
@@ -52,11 +52,11 @@ class VideoMetadataParserTest {
             videoDoViTitle = null,
         )
 
-    private fun source(vararg streams: FindroidMediaStream) =
-        FindroidSource(
+    private fun source(vararg streams: MediaStream) =
+        ItemSource(
             id = "s",
             name = "s",
-            type = FindroidSourceType.REMOTE,
+            type = ItemSourceType.REMOTE,
             path = "",
             size = 1,
             mediaStreams = streams.toList(),

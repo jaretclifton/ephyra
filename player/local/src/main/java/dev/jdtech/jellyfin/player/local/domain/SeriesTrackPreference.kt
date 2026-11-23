@@ -1,6 +1,6 @@
 package dev.jdtech.jellyfin.player.local.domain
 
-import dev.jdtech.jellyfin.models.FindroidMediaStream
+import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.player.core.domain.models.ServerAudioTrack
 import java.util.Locale
@@ -108,7 +108,7 @@ fun seriesTrackChoice(candidates: List<TrackCandidate>, index: Int): StoredChoic
  * request; the player cannot select it afterwards. External audio is left out: the server's
  * transcode is of the file's own streams.
  */
-fun audioStreamIndex(choice: StoredChoice, streams: List<FindroidMediaStream>): Int? {
+fun audioStreamIndex(choice: StoredChoice, streams: List<MediaStream>): Int? {
     val audio = serverAudioTracks(streams)
     val match = matchSeriesTrack(choice, audio.map { TrackCandidate(it.language, it.title) })
     return match?.let { audio[it].index }
@@ -119,7 +119,7 @@ fun audioStreamIndex(choice: StoredChoice, streams: List<FindroidMediaStream>): 
  * audio dialog lists them while the server transcodes. External audio is left out, as in
  * [audioStreamIndex].
  */
-fun serverAudioTracks(streams: List<FindroidMediaStream>): List<ServerAudioTrack> =
+fun serverAudioTracks(streams: List<MediaStream>): List<ServerAudioTrack> =
     streams
         .filter { it.type == MediaStreamType.AUDIO && !it.isExternal }
         .mapNotNull { stream ->

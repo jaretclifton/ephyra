@@ -19,11 +19,11 @@ data class FindroidMovieDto(
     val status: String,
     val productionYear: Int?,
     val endDate: LocalDateTime?,
-    val chapters: List<FindroidChapter>?,
+    val chapters: List<Chapter>?,
     val genres: List<String>? = null,
 )
 
-fun FindroidMovie.toFindroidMovieDto(serverId: String? = null): FindroidMovieDto {
+fun Movie.toFindroidMovieDto(serverId: String? = null): FindroidMovieDto {
     return FindroidMovieDto(
         id = id,
         serverId = serverId,
@@ -42,26 +42,24 @@ fun FindroidMovie.toFindroidMovieDto(serverId: String? = null): FindroidMovieDto
     )
 }
 
-suspend fun FindroidMovieDto.toFindroidMovie(
-    database: ServerDatabaseDao,
-    userId: UserId,
-): FindroidMovie = toFindroidMovie(database, userId, database.getLocalSourcesForItems(listOf(id)))
+suspend fun FindroidMovieDto.toMovie(database: ServerDatabaseDao, userId: UserId): Movie =
+    toMovie(database, userId, database.getLocalSourcesForItems(listOf(id)))
 
 /** For lists: [localSources] comes from one [getLocalSourcesForItems] call for all items. */
-suspend fun FindroidMovieDto.toFindroidMovie(
+suspend fun FindroidMovieDto.toMovie(
     database: ServerDatabaseDao,
     userId: UserId,
-    localSources: Map<ItemId, List<FindroidSource>>,
-): FindroidMovie {
+    localSources: Map<ItemId, List<ItemSource>>,
+): Movie {
     val userData = database.getUserDataOrCreateNew(id, userId)
     val sources = localSources[id].orEmpty()
-    val trickplayInfos = mutableMapOf<String, FindroidTrickplayInfo>()
+    val trickplayInfos = mutableMapOf<String, ItemTrickplayInfo>()
     for (source in sources) {
-        database.getTrickplayInfo(source.id)?.toFindroidTrickplayInfo()?.let {
+        database.getTrickplayInfo(source.id)?.toItemTrickplayInfo()?.let {
             trickplayInfos[source.id] = it
         }
     }
-    return FindroidMovie(
+    return Movie(
         id = id,
         name = name,
         originalTitle = originalTitle,
@@ -82,14 +80,14 @@ suspend fun FindroidMovieDto.toFindroidMovie(
         canPlay = true,
         sources = sources,
         trailer = null,
-        images = toLocalFindroidImages(itemId = id),
+        images = toLocalItemImages(itemId = id),
         chapters = chapters ?: emptyList(),
         trickplayInfo = trickplayInfos,
     )
 }
 
-fun FindroidMovieDto.toLocalFindroidImages(itemId: ItemId): FindroidImages {
-    return FindroidImages(
+fun FindroidMovieDto.toLocalItemImages(itemId: ItemId): ItemImages {
+    return ItemImages(
         primary = localImagePath(itemId, "primary"),
         backdrop = localImagePath(itemId, "backdrop"),
     )

@@ -1,8 +1,8 @@
 package dev.jdtech.jellyfin.film.presentation.media
 
 import dev.jdtech.jellyfin.models.CollectionType
-import dev.jdtech.jellyfin.models.FindroidCollection
-import dev.jdtech.jellyfin.models.FindroidImages
+import dev.jdtech.jellyfin.models.ItemImages
+import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.toItemId
@@ -108,10 +108,10 @@ class MediaViewModelUserSwitchTest {
             as MediaRepository
 
     private fun library(name: String) =
-        FindroidCollection(
+        Library(
             id = UUID.randomUUID().toString().toItemId(),
             name = name,
             type = CollectionType.Movies,
-            images = FindroidImages(),
+            images = ItemImages(),
         )
 }

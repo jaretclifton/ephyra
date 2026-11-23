@@ -1,17 +1,17 @@
 package dev.jdtech.jellyfin.player.local.domain
 
-import dev.jdtech.jellyfin.models.FindroidSegment
-import dev.jdtech.jellyfin.models.FindroidSegmentType
-import dev.jdtech.jellyfin.models.FindroidSegmentType.COMMERCIAL
-import dev.jdtech.jellyfin.models.FindroidSegmentType.INTRO
-import dev.jdtech.jellyfin.models.FindroidSegmentType.OUTRO
-import dev.jdtech.jellyfin.models.FindroidSegmentType.PREVIEW
-import dev.jdtech.jellyfin.models.FindroidSegmentType.RECAP
-import dev.jdtech.jellyfin.models.FindroidSegmentType.UNKNOWN
 import dev.jdtech.jellyfin.models.MediaSegmentAction
 import dev.jdtech.jellyfin.models.MediaSegmentAction.ASK
 import dev.jdtech.jellyfin.models.MediaSegmentAction.IGNORE
 import dev.jdtech.jellyfin.models.MediaSegmentAction.SKIP
+import dev.jdtech.jellyfin.models.Segment
+import dev.jdtech.jellyfin.models.SegmentType
+import dev.jdtech.jellyfin.models.SegmentType.COMMERCIAL
+import dev.jdtech.jellyfin.models.SegmentType.INTRO
+import dev.jdtech.jellyfin.models.SegmentType.OUTRO
+import dev.jdtech.jellyfin.models.SegmentType.PREVIEW
+import dev.jdtech.jellyfin.models.SegmentType.RECAP
+import dev.jdtech.jellyfin.models.SegmentType.UNKNOWN
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -20,12 +20,12 @@ import org.junit.jupiter.api.Test
 
 class SegmentTrackerTest {
     private val duration = 1_400_000L // 23:20
-    private val recap = FindroidSegment(RECAP, startTicks = 0L, endTicks = 30_000L)
-    private val intro = FindroidSegment(INTRO, startTicks = 60_000L, endTicks = 150_000L)
-    private val outro = FindroidSegment(OUTRO, startTicks = 1_310_000L, endTicks = 1_398_000L)
+    private val recap = Segment(RECAP, startTicks = 0L, endTicks = 30_000L)
+    private val intro = Segment(INTRO, startTicks = 60_000L, endTicks = 150_000L)
+    private val outro = Segment(OUTRO, startTicks = 1_310_000L, endTicks = 1_398_000L)
 
     private fun tracker(
-        actions: Map<FindroidSegmentType, MediaSegmentAction> =
+        actions: Map<SegmentType, MediaSegmentAction> =
             mapOf(
                 INTRO to ASK,
                 OUTRO to ASK,
@@ -36,7 +36,7 @@ class SegmentTrackerTest {
         buttonDurationMs: Long = 5_000L,
         thresholdMs: Long = 5_000L,
         onlyInPip: Boolean = false,
-        segments: List<FindroidSegment> = listOf(recap, intro, outro),
+        segments: List<Segment> = listOf(recap, intro, outro),
     ) =
         SegmentTracker(actions, buttonDurationMs, thresholdMs, onlyInPip).apply {
             setSegments(segments)
@@ -69,8 +69,8 @@ class SegmentTrackerTest {
 
     @Test
     fun `back-to-back segments hand over at the boundary`() {
-        val first = FindroidSegment(RECAP, 0L, 20_000L)
-        val second = FindroidSegment(INTRO, 20_000L, 50_000L)
+        val first = Segment(RECAP, 0L, 20_000L)
+        val second = Segment(INTRO, 20_000L, 50_000L)
         val t =
             tracker(actions = mapOf(RECAP to ASK, INTRO to ASK), segments = listOf(first, second))
         assertEquals(first, (t.at(19_000L) as SegmentDecision.Ask).segment)
@@ -83,7 +83,7 @@ class SegmentTrackerTest {
 
     @Test
     fun `ignored types and types without a setting give nothing`() {
-        val t = tracker(segments = listOf(recap, FindroidSegment(UNKNOWN, 200_000L, 210_000L)))
+        val t = tracker(segments = listOf(recap, Segment(UNKNOWN, 200_000L, 210_000L)))
         assertEquals(SegmentDecision.None, t.at(10_000L))
         assertEquals(SegmentDecision.None, t.at(205_000L))
     }
@@ -91,9 +91,7 @@ class SegmentTrackerTest {
     @Test
     fun `isActive is false only when every type is ignored`() {
         assertTrue(tracker().isActive)
-        assertFalse(
-            tracker(actions = FindroidSegmentType.entries.associateWith { IGNORE }).isActive
-        )
+        assertFalse(tracker(actions = SegmentType.entries.associateWith { IGNORE }).isActive)
         assertFalse(tracker(actions = emptyMap()).isActive)
     }
 
@@ -198,12 +196,12 @@ class SegmentTrackerTest {
     @Test
     fun `an outro followed by more than the threshold lands at its end`() {
         val t = tracker()
-        val early = FindroidSegment(OUTRO, 1_300_000L, 1_390_000L) // 10 s before the end
+        val early = Segment(OUTRO, 1_300_000L, 1_390_000L) // 10 s before the end
         assertEquals(
             SkipTarget.SeekTo(1_390_000L),
             t.skipTarget(early, duration, hasNextItem = true),
         )
-        val closing = FindroidSegment(OUTRO, 1_300_000L, 1_395_001L)
+        val closing = Segment(OUTRO, 1_300_000L, 1_395_001L)
         assertEquals(SkipTarget.NextItem, t.skipTarget(closing, duration, hasNextItem = true))
     }
 
@@ -220,7 +218,7 @@ class SegmentTrackerTest {
     @Test
     fun `only outros go to the next item`() {
         val t = tracker()
-        val lateIntro = FindroidSegment(INTRO, 1_310_000L, 1_398_000L)
+        val lateIntro = Segment(INTRO, 1_310_000L, 1_398_000L)
         assertEquals(SkipTarget.SeekTo(1_398_000L), t.skipTarget(lateIntro, duration, true))
     }
 
@@ -251,7 +249,7 @@ class SegmentTrackerTest {
 
     @Test
     fun `an outro that ends early does not close the item`() {
-        val early = FindroidSegment(OUTRO, startTicks = 1_200_000L, endTicks = 1_300_000L)
+        val early = Segment(OUTRO, startTicks = 1_200_000L, endTicks = 1_300_000L)
         val t = tracker(segments = listOf(early))
         assertNull(t.closingOutroStartMs(duration, hasNextItem = true))
     }

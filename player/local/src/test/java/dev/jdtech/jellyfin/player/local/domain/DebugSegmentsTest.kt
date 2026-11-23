@@ -1,7 +1,7 @@
 package dev.jdtech.jellyfin.player.local.domain
 
-import dev.jdtech.jellyfin.models.FindroidSegment
-import dev.jdtech.jellyfin.models.FindroidSegmentType
+import dev.jdtech.jellyfin.models.Segment
+import dev.jdtech.jellyfin.models.SegmentType
 import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -10,8 +10,8 @@ class DebugSegmentsTest {
     fun `parses one segment per line in seconds`() {
         assertEquals(
             listOf(
-                FindroidSegment(FindroidSegmentType.INTRO, 10_000L, 40_000L),
-                FindroidSegment(FindroidSegmentType.OUTRO, 60_000L, 9_999_000L),
+                Segment(SegmentType.INTRO, 10_000L, 40_000L),
+                Segment(SegmentType.OUTRO, 60_000L, 9_999_000L),
             ),
             DebugSegments.parse("# test\nintro, 10, 40\n\nOUTRO,60,9999\n"),
         )

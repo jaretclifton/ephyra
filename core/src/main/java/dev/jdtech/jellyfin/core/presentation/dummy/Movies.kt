@@ -1,16 +1,16 @@
 package dev.jdtech.jellyfin.core.presentation.dummy
 
-import dev.jdtech.jellyfin.models.FindroidExternalLink
-import dev.jdtech.jellyfin.models.FindroidImages
-import dev.jdtech.jellyfin.models.FindroidMediaStream
-import dev.jdtech.jellyfin.models.FindroidMovie
-import dev.jdtech.jellyfin.models.FindroidSource
-import dev.jdtech.jellyfin.models.FindroidSourceType
+import dev.jdtech.jellyfin.models.ExternalLink
+import dev.jdtech.jellyfin.models.ItemImages
+import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
+import dev.jdtech.jellyfin.models.Movie
 import java.time.LocalDateTime
 
 val dummyMovie =
-    FindroidMovie(
+    Movie(
         id = randomItemId(),
         name = "Alita: Battle Angel",
         originalTitle = null,
@@ -18,15 +18,15 @@ val dummyMovie =
             "When Alita awakens with no memory of who she is in a future world she does not recognize, she is taken in by Ido, a compassionate doctor who realizes that somewhere in this abandoned cyborg shell is the heart and soul of a young woman with an extraordinary past.",
         sources =
             listOf(
-                FindroidSource(
+                ItemSource(
                     id = "",
                     name = "",
-                    type = FindroidSourceType.REMOTE,
+                    type = ItemSourceType.REMOTE,
                     path = "",
                     size = 0L,
                     mediaStreams =
                         listOf(
-                            FindroidMediaStream(
+                            MediaStream(
                                 title = "",
                                 displayTitle = "",
                                 language = "en",
@@ -64,11 +64,11 @@ val dummyMovie =
         studios = listOf("20th Century Fox", "Lightstorm Entertainment"),
         externalLinks =
             listOf(
-                FindroidExternalLink("IMDb", "https://www.imdb.com/title/tt0437086"),
-                FindroidExternalLink("TheMovieDb", "https://www.themoviedb.org/movie/399579"),
+                ExternalLink("IMDb", "https://www.imdb.com/title/tt0437086"),
+                ExternalLink("TheMovieDb", "https://www.themoviedb.org/movie/399579"),
             ),
         playCount = 2,
-        images = FindroidImages(),
+        images = ItemImages(),
         chapters = emptyList(),
         trickplayInfo = null,
     )

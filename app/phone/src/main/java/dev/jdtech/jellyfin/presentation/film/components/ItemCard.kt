@@ -24,9 +24,9 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
 import dev.jdtech.jellyfin.core.presentation.spoiler.revealOnLongClick
-import dev.jdtech.jellyfin.models.FindroidEpisode
-import dev.jdtech.jellyfin.models.FindroidItem
-import dev.jdtech.jellyfin.models.FindroidSeason
+import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.Item
+import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.models.isDownloaded
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
@@ -37,9 +37,9 @@ import dev.jdtech.jellyfin.utils.copyOnLongClick
 
 @Composable
 fun ItemCard(
-    item: FindroidItem,
+    item: Item,
     direction: Direction,
-    onClick: (FindroidItem) -> Unit,
+    onClick: (Item) -> Unit,
     modifier: Modifier = Modifier,
     showSeriesName: Boolean = false,
     // CE (#608): see ItemPoster.
@@ -94,13 +94,13 @@ fun ItemCard(
         Spacer(modifier = Modifier.height(MaterialTheme.spacings.extraSmall))
         val title =
             when (item) {
-                is FindroidEpisode -> item.seriesName
-                is FindroidSeason -> if (showSeriesName) item.seriesName else item.name
+                is Episode -> item.seriesName
+                is Season -> if (showSeriesName) item.seriesName else item.name
                 else -> item.name
             }
         val subtitle =
             when (item) {
-                is FindroidEpisode ->
+                is Episode ->
                     if (hidden) {
                         stringResource(
                             id = R.string.season_episode_number,
@@ -115,7 +115,7 @@ fun ItemCard(
                             item.name,
                         )
                     }
-                is FindroidSeason -> if (showSeriesName) item.name else null
+                is Season -> if (showSeriesName) item.name else null
                 else -> null
             }
         Text(

@@ -38,7 +38,7 @@ import dev.jdtech.jellyfin.core.presentation.spoiler.revealOnLongClick
 import dev.jdtech.jellyfin.core.presentation.spoiler.spoilerFreeEpisodeLine
 import dev.jdtech.jellyfin.film.presentation.show.ShowAction
 import dev.jdtech.jellyfin.film.presentation.show.ShowState
-import dev.jdtech.jellyfin.models.FindroidEpisode
+import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.presentation.film.components.ActorsRow
 import dev.jdtech.jellyfin.presentation.film.components.AirScheduleText
@@ -277,7 +277,7 @@ private fun RowTitle(text: String, contentPadding: PaddingValues) {
 
 /** Next Up as a row card of `cardHorizontal` width instead of the compact page's lone card. */
 @Composable
-private fun NextUpCard(episode: FindroidEpisode, widthClass: WidthClass, onClick: () -> Unit) {
+private fun NextUpCard(episode: Episode, widthClass: WidthClass, onClick: () -> Unit) {
     // CE (#618): a hidden Next Up is only its number, until held.
     val hidden = LocalSpoilers.current.hides(episode)
     Column(
