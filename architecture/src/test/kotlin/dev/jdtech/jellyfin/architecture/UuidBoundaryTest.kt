@@ -79,7 +79,7 @@ class UuidBoundaryTest {
         assertEquals(notNamed.map { false }, notNamed.map(::namesUuid))
     }
 
-    private companion object {
+    internal companion object {
         const val UUID = "java.util.UUID"
 
         /** About 900 today; far fewer means the tree was not found. */

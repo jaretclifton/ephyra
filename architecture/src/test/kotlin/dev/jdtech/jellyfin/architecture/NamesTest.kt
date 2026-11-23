@@ -58,6 +58,13 @@ class NamesTest {
             private typealias FindroidAlias = String
             fun toFindroidItem() = FindroidItem::class
             val x = "class FindroidString"
+            /*
+            class FindroidInBlock
+            */
+            class Holder {
+                companion object FindroidFactory
+            }
+            companion object FindroidFactory2 {}
             """
                 .trimIndent()
         assertEquals(
@@ -67,6 +74,9 @@ class NamesTest {
                 "FindroidTheme",
                 "JellyfinThing",
                 "FindroidAlias",
+                "Holder",
+                "FindroidFactory",
+                "FindroidFactory2",
             ),
             declaredNames(source),
         )
@@ -84,7 +94,7 @@ class NamesTest {
 
         val DECLARATION =
             Regex(
-                """^[ \t]*(?:(?:public|private|internal|protected|data|sealed|enum|abstract|open|inner|value|annotation|fun|expect|actual)\s+)*(?:class|interface|object|typealias)\s+(\w+)""",
+                """^[ \t]*(?:(?:public|private|internal|protected|data|sealed|enum|abstract|open|inner|value|annotation|fun|expect|actual|companion)\s+)*(?:class|interface|object|typealias)\s+(\w+)""",
                 RegexOption.MULTILINE,
             )
 
@@ -92,6 +102,8 @@ class NamesTest {
             name.startsWith("Findroid") && name !in ALLOWED_FINDROID
 
         fun declaredNames(source: String): List<String> =
-            DECLARATION.findAll(source).map { it.groupValues[1] }.toList()
+            DECLARATION.findAll(UuidBoundaryTest.withoutComments(source))
+                .map { it.groupValues[1] }
+                .toList()
     }
 }
