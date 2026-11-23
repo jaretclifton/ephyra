@@ -21,14 +21,13 @@ The server the app logs in to comes from the `test-server` skill.
    Never touch a physical device (a serial that is not `emulator-…`) unless the user named it for
    this task.
 2. **Tools and images.** `scripts/doctor.sh devices` checks the emulator, acceleration, `adb` and
-   the system images (the same list as `scripts/avds.sh images`). Installing a missing image means accepting Google's
-   licence, so that is the user's step: give them the command and wait.
-3. **Create and start.** `scripts/avds.sh create <name>`, then `scripts/avds.sh start <name>`
-   in the background (it returns when Android has booted). Pass
-   `EMULATOR_FLAGS="-crash-report-mode never -no-metrics"`, or a new emulator can hang on a dialog
-   nobody sees.
-4. **Build and install.** `./gradlew :app:phone:assembleLibreDebug` (or `:app:tv:`), then
-   `scripts/avds.sh install <name>`. Never uninstall to "start clean" on an AVD that is logged in.
+   the system images (the same list as `scripts/avds.sh images`). Installing a missing image
+   means accepting Google's licence, so that is the user's step: give them the command and wait.
+3. **Build.** `./gradlew :app:phone:assembleLibreDebug` (or `:app:tv:`).
+4. **Create, start and install.** `scripts/avds.sh up <name>`, in the background: it creates the
+   AVD if missing, starts it if not running (returns when Android has booted, with the media
+   volume at 0) and installs the debug build. `create`, `start` and `install` do the steps one by
+   one. Never uninstall to "start clean" on an AVD that is logged in.
 5. **Log in.** Server `http://10.0.2.2:8096`, a test user from the `test-server` skill. Typing a
    generated test password into the app on an emulator is fine; typing the user's own password
    for a real server is not: they log in there themselves.

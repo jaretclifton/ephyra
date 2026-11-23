@@ -12,7 +12,7 @@ the shared Kotlin code step 3, anything you have to see in the app all six.
 | 2 | Check the machine: `scripts/doctor.sh` | A few seconds |
 | 3 | The fast check and the first build | About a minute each with a warm Gradle cache; see below |
 | 4 | The test server: `tools/test-server/setup.sh` | About 2.5 minutes, plus a 2.5 GB image |
-| 5 | An emulator with the app: `scripts/avds.sh` | About 40 seconds once the system image is there |
+| 5 | An emulator with the app: `scripts/avds.sh up` | About 50 seconds once the system image is there |
 | 6 | Log in | A minute by hand |
 
 The test server and the emulators are described in full in
@@ -148,21 +148,23 @@ not paste it anywhere.
 ## 5. An emulator with the app
 
 ```bash
-scripts/avds.sh images            # the two system images; install a missing one with sdkmanager
-scripts/avds.sh create ce_phone   # Pixel 6, Android 14
-EMULATOR_FLAGS="-crash-report-mode never -no-metrics" scripts/avds.sh start ce_phone
-scripts/avds.sh install ce_phone  # the debug APK that fits it
+scripts/avds.sh images        # the two system images; install a missing one with sdkmanager
+scripts/avds.sh up ce_phone   # Pixel 6, Android 14: create, start, install the debug APK
 ```
 
-`start` returns with `ce_phone is up as emulator-5554`; `install` prints `Success`. For the TV
-app: `ce_tv_1080p`, after `./gradlew :app:tv:assembleLibreDebug`. Every AVD, its port and its
-purpose: [dev-environment.md](dev-environment.md#the-emulators).
+`up` creates the AVD if it is missing, starts it if it is not running (software rendering, no
+crash dialog, media volume at 0: the test media is a test tone) and installs the debug APK that
+fits it. It ends with:
 
-Turn the media volume down before you play anything: the test media is a test tone.
-
-```bash
-adb -s emulator-5554 shell cmd media_session volume --stream 3 --set 0
+```text
+ce_phone is up as emulator-5554
+Performing Streamed Install
+Success
 ```
+
+A first `up` took 51 seconds, a second one on a stopped AVD 32. For the TV app: `ce_tv_1080p`,
+after `./gradlew :app:tv:assembleLibreDebug`. Every AVD, its port and its purpose:
+[dev-environment.md](dev-environment.md#the-emulators).
 
 ## 6. Log in
 
