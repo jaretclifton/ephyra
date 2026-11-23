@@ -1,0 +1,74 @@
+// The views of the model (#928). A view `of` an element opens when you click that element in a
+// view above it, so the site drills down: context → modules → components.
+
+views {
+  view index {
+    title 'Context: Ephyra and what it talks to'
+    description 'Level 1. Click Ephyra to see its modules.'
+    include viewer, ephyra, jellyfin, castReceiver, android
+  }
+
+  view modules of ephyra {
+    title 'Containers: the Gradle modules'
+    description 'Level 2, generated from the build files. Production dependencies only; tests and tooling are left out, and so are the arrows of the apps: they depend on every module (view apps). Click a module with components to open it.'
+    include *
+    exclude ephyra.architecture, ephyra.testing, ephyra.baselineprofile, ephyra.baselineprofileTv
+    exclude * -[test]-> *
+    exclude ephyra.appPhone -> *, ephyra.appTv -> *
+  }
+
+  view apps of ephyra.appPhone {
+    title 'Containers: the apps, the composition root'
+    description 'Only the apps depend on the adapters data and server/jellyfin (rules R7, R9); Hilt wires the ports to them there.'
+    include ephyra.appPhone, ephyra.appTv
+    include ephyra.appPhone -> *, ephyra.appTv -> *
+    exclude * -[test]-> *
+    exclude ephyra.baselineprofile, ephyra.baselineprofileTv
+  }
+
+  view tooling of ephyra.testing {
+    title 'Tests and tooling modules'
+    include ephyra.testing, ephyra.architecture, ephyra.baselineprofile, ephyra.baselineprofileTv
+    include ephyra.domain, ephyra.appPhone, ephyra.appTv
+  }
+
+  view playerLocal of ephyra.playerLocal {
+    title 'Components: player/local'
+    description 'Level 3. The player behind PlayerEngine (ADR 0001, decision 4) and its use cases.'
+    include *
+    include ephyra.application.mediaRepository
+    include ephyra.application.mediaRepository -> ephyra.data.mediaRepositoryImpl
+  }
+
+  view downloads of ephyra.downloads {
+    title 'Components: downloads'
+    description 'Level 3. The download engine and queue (#901, rule R15).'
+    include *
+    include ephyra.application.downloadStore, ephyra.application.downloadSettings, ephyra.application.mediaRepository, ephyra.domain.downloadState
+  }
+
+  view domain of ephyra.domain {
+    title 'Components: domain'
+    description 'The server ports and the two domain models with rules (ADR 0002).'
+    include *
+    include ephyra.serverJellyfin.jellyfinMediaServer, ephyra.data.mediaRepositoryImpl
+  }
+
+  view application of ephyra.application {
+    title 'Components: application'
+    description 'The ports the features call, implemented in data.'
+    include *
+    include ephyra.data.mediaRepositoryImpl, ephyra.data.roomStores
+  }
+
+  view serverJellyfin of ephyra.serverJellyfin {
+    title 'Components: server/jellyfin'
+    include *
+    include ephyra.domain.mediaServer, ephyra.domain.playbackPort, ephyra.domain.serverConnector, jellyfin
+  }
+
+  view data of ephyra.data {
+    title 'Components: data'
+    include *
+  }
+}
