@@ -9,30 +9,35 @@ package dev.jdtech.jellyfin.player.local.engine.mpv
  * report sent then told the server that item was at 0. Until the index moves, the player reports
  * the last position mpv had for the item instead, as ExoPlayer, which changes the item at once,
  * never shows the item left at another position.
+ *
+ * Kept by the playlist entry itself ([T] is compared by identity), not by its index, so an entry
+ * inserted or removed before it meanwhile does not lose it.
  */
-internal class MpvItemLeftPosition {
-    private var index = -1
+internal class MpvItemLeftPosition<T : Any> {
+    private var item: T? = null
     private var positionMs: Long? = null
 
     /**
-     * mpv is asked to play entry [newIndex] while the player names [currentIndex], at [positionMs]
-     * (`null` when mpv never had a position for it). A reload of the current entry keeps nothing.
+     * mpv is asked to play [newItem] while the player names [currentItem], at [positionMs] (`null`
+     * when mpv never had a position for it). A reload of the current entry keeps nothing.
      */
-    fun onLoad(newIndex: Int, currentIndex: Int, positionMs: Long?) {
-        if (newIndex == currentIndex || positionMs == null) {
+    fun onLoad(newItem: T?, currentItem: T?, positionMs: Long?) {
+        if (currentItem == null || newItem === currentItem || positionMs == null) {
             clear()
             return
         }
-        index = currentIndex
+        item = currentItem
         this.positionMs = positionMs
     }
 
     /** The player names another item, failed or starts over: the position no longer applies. */
     fun clear() {
-        index = -1
+        item = null
         positionMs = null
     }
 
-    /** The position to report while the player names [currentIndex], or `null` to read mpv's. */
-    fun positionMs(currentIndex: Int): Long? = positionMs?.takeIf { currentIndex == index }
+    /** The position to report while the player names [currentItem], or `null` to read mpv's. */
+    fun positionMs(currentItem: T?): Long? = positionMs?.takeIf {
+        currentItem != null && currentItem === item
+    }
 }
