@@ -1,10 +1,12 @@
 package dev.jdtech.jellyfin.player.local.domain
 
+import dev.jdtech.jellyfin.models.DownloadState
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
+import dev.jdtech.jellyfin.models.downloadState
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
@@ -72,8 +74,7 @@ constructor(private val repository: MediaRepository, private val appPreferences:
         val mediaSources = sources.filter { it.id == mediaSourceId }.ifEmpty { sources }
         // Never an unfinished download (#454): its partial file plays as far as it got, or not at
         // all.
-        return mediaSources.firstOrNull {
-            it.type == ItemSourceType.LOCAL && !it.path.endsWith(".download")
-        } ?: mediaSources.firstOrNull { it.type != ItemSourceType.LOCAL }
+        return mediaSources.firstOrNull { it.downloadState == DownloadState.FINISHED }
+            ?: mediaSources.firstOrNull { it.type != ItemSourceType.LOCAL }
     }
 }
