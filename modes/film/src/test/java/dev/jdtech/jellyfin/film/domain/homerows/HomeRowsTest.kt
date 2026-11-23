@@ -1,7 +1,6 @@
 package dev.jdtech.jellyfin.film.domain.homerows
 
 import android.content.SharedPreferences
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.film.domain.homerows.HomeRowType.CONTINUE_WATCHING
 import dev.jdtech.jellyfin.film.domain.homerows.HomeRowType.LATEST
 import dev.jdtech.jellyfin.film.domain.homerows.HomeRowType.NEXT_UP
@@ -10,6 +9,7 @@ import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
+import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -200,17 +200,17 @@ class HomeRowsTest {
         assertEquals(LegacyHomeSwitches(false, true, true, false), old)
     }
 
-    private fun dao(servers: Map<String, Server>): ServerDatabaseDao =
-        fakeProxy(
-            ServerDatabaseDao::class.java.classLoader,
-            arrayOf(ServerDatabaseDao::class.java),
-        ) { _, method, args ->
+    private fun dao(servers: Map<String, Server>): ServerStore =
+        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
+            _,
+            method,
+            args ->
             when (method.kotlinName) {
-                "getServer" -> servers[args!![0]]
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
+                "server" -> servers[args!![0]]
+                else -> throw NotImplementedError("ServerStore.${method.kotlinName}")
             }
         }
-            as ServerDatabaseDao
+            as ServerStore
 }
 
 /** Just enough SharedPreferences for AppPreferences. */

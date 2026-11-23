@@ -3,7 +3,6 @@ package dev.jdtech.jellyfin.repository
 import dev.jdtech.jellyfin.models.isUnanswered
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withTimeoutOrNull
-import timber.log.Timber
 
 /**
  * CE (#281): how long a request waits for the server when Room already has a copy to show instead.
@@ -11,6 +10,18 @@ import timber.log.Timber
  * connect timeout before the downloaded copy shows.
  */
 const val STORED_FALLBACK_TIMEOUT_MS = 3_000L
+
+/**
+ * #899: where the fallbacks below say why they used the stored copy. This module has no logger (it
+ * is pure Kotlin); the callers pass one that writes to theirs.
+ */
+fun interface FallbackLog {
+    fun warn(error: Throwable?, message: String)
+
+    companion object {
+        val NONE = FallbackLog { _, _ -> }
+    }
+}
 
 /**
  * CE (#281): the server's answer, or the copy stored in Room when the server fails or takes longer
@@ -23,6 +34,7 @@ const val STORED_FALLBACK_TIMEOUT_MS = 3_000L
 suspend fun <T> serverOrStored(
     stored: (suspend () -> T)?,
     timeoutMs: Long = STORED_FALLBACK_TIMEOUT_MS,
+    log: FallbackLog = FallbackLog.NONE,
     server: suspend () -> T,
 ): T {
     if (stored == null) return server()
@@ -31,12 +43,12 @@ suspend fun <T> serverOrStored(
             // Boxed, so a server answer of null is told apart from the timeout.
             withTimeoutOrNull(timeoutMs) { Fresh(server()) }
                 ?: null.also {
-                    Timber.w("Server took over %d ms, using the stored copy", timeoutMs)
+                    log.warn(null, "Server took over $timeoutMs ms, using the stored copy")
                 }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.w(e, "Server unavailable, using the stored copy")
+            log.warn(e, "Server unavailable, using the stored copy")
             null
         }
     return if (fresh != null) fresh.value else stored()
@@ -49,9 +61,15 @@ suspend fun <T> serverOrStored(
 suspend fun <T> serverOrStoredList(
     stored: List<T>,
     timeoutMs: Long = STORED_FALLBACK_TIMEOUT_MS,
+    log: FallbackLog = FallbackLog.NONE,
     server: suspend () -> List<T>,
 ): List<T> =
-    serverOrStored(stored.takeIf { it.isNotEmpty() }?.let { suspend { it } }, timeoutMs, server)
+    serverOrStored(
+        stored.takeIf { it.isNotEmpty() }?.let { suspend { it } },
+        timeoutMs,
+        log,
+        server,
+    )
 
 /**
  * CE (#775): [server], or [stored] when the server could not be reached. For a list whose stored
@@ -64,6 +82,7 @@ suspend fun <T> serverOrStoredList(
  */
 suspend fun <T> serverOrStoredWhenUnanswered(
     stored: (suspend () -> T)?,
+    log: FallbackLog = FallbackLog.NONE,
     server: suspend () -> T,
 ): T {
     if (stored == null) return server()
@@ -73,7 +92,7 @@ suspend fun <T> serverOrStoredWhenUnanswered(
         throw e
     } catch (e: Exception) {
         if (!e.isUnanswered()) throw e
-        Timber.w(e, "Server unavailable, using the stored list")
+        log.warn(e, "Server unavailable, using the stored list")
         stored()
     }
 }

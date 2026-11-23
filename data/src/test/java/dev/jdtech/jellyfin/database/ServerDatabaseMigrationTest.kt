@@ -10,13 +10,14 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.PendingDownloadDto
-import dev.jdtech.jellyfin.models.Server
+import dev.jdtech.jellyfin.models.ServerEntity
 import dev.jdtech.jellyfin.models.ServerType
-import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.UserEntity
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.serverType
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
+import dev.jdtech.jellyfin.models.toServer
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import kotlin.math.abs
@@ -247,7 +248,11 @@ class ServerDatabaseMigrationTest {
                 assertEquals(EPISODE.toItemId(), dao.getPendingDownloads().single().itemId)
 
                 dao.insertUser(
-                    User(id = NEW_USER.toUserId(), name = "Bob", serverId = SERVER.toServerId())
+                    UserEntity(
+                        id = NEW_USER.toUserId(),
+                        name = "Bob",
+                        serverId = SERVER.toServerId(),
+                    )
                 )
                 dao.insertPendingDownload(
                     PendingDownloadDto(
@@ -336,7 +341,7 @@ class ServerDatabaseMigrationTest {
                 assertNull(dao.getTrickplayInfo(DASHED_SOURCE.replace("-", "").toMediaSourceId()))
 
                 dao.insertServer(
-                    Server(
+                    ServerEntity(
                         id = NEW_SERVER.toServerId(),
                         name = "New",
                         currentServerAddressId = null,
@@ -396,7 +401,10 @@ class ServerDatabaseMigrationTest {
                 .build()
         try {
             val dao = database.getServerDatabaseDao()
-            assertEquals(ServerType.JELLYFIN, dao.getServer(SERVER.toServerId())!!.serverType)
+            assertEquals(
+                ServerType.JELLYFIN,
+                dao.getServer(SERVER.toServerId())!!.toServer().serverType,
+            )
             assertEquals(TOKEN, dao.getServerCurrentUser(SERVER.toServerId())!!.accessToken)
             assertEquals(ADDRESS, dao.getServerCurrentAddress(SERVER.toServerId())!!.address)
             assertEquals("Movie", dao.getMovie(MOVIE.toItemId()).name)

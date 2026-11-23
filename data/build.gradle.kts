@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.androidx.room3)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
 }
 
 java { toolchain { languageVersion = Versions.JAVA } }
@@ -49,6 +50,8 @@ dependencies {
     implementation(projects.domain)
     implementation(projects.settings)
     implementation(libs.androidx.paging)
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
     implementation(libs.androidx.room3.runtime)
     ksp(libs.androidx.room3.compiler)
     implementation(libs.kotlinx.coroutines.android)

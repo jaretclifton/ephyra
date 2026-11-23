@@ -21,7 +21,7 @@ android {
 
 dependencies {
     implementation(projects.core)
-    implementation(projects.data)
+    implementation(projects.application)
     implementation(projects.domain)
     implementation(projects.settings)
     implementation(libs.timber)
@@ -38,6 +38,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(libs.junit)
+    // #899 (R9): the tests build the real stores over Room; the production code cannot see data.
+    testImplementation(projects.data)
     testImplementation(projects.testing)
     testImplementation(libs.kotlinx.coroutines.test)
     // CE (#425): the repository and ViewModel tests need a Context for the preferences.

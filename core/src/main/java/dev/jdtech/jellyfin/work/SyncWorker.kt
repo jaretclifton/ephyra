@@ -140,8 +140,8 @@ constructor(
      * [serverId], so a download resumes offline where it was left on any device (web, TV), not
      * where it was when it was downloaded. Uses [UserDataSyncPort.userDataOf] (#633).
      *
-     * Rows waiting to be sent are never touched, see [ServerDatabaseDao.refreshUserDataFromServer].
-     * A failure only leaves the rows as they were, so it does not make the sync retry. Returns how
+     * Rows waiting to be sent are never touched, see [PendingUserDataStore.refreshFromServer]. A
+     * failure only leaves the rows as they were, so it does not make the sync retry. Returns how
      * many rows changed.
      */
     private suspend fun refreshFromServer(port: UserDataSyncPort, account: AccountKey): Int {

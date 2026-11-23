@@ -1,8 +1,8 @@
 package dev.jdtech.jellyfin.film.presentation.home
 
 import android.content.SharedPreferences
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -64,7 +64,7 @@ class HomeViewModelOfflineCrashTest {
             HomeViewModel(
                 repository = offlineRepository(),
                 appPreferences = AppPreferences(defaultsOnlySharedPreferences()),
-                database = unusedDao(),
+                serverStore = unusedDao(),
             )
 
         viewModel.loadData()
@@ -125,16 +125,14 @@ class HomeViewModelOfflineCrashTest {
      * Not used by `loadData()` when there is no current server (see
      * [defaultsOnlySharedPreferences]); it only has to exist for the constructor.
      */
-    private fun unusedDao(): ServerDatabaseDao =
-        fakeProxy(
-            ServerDatabaseDao::class.java.classLoader,
-            arrayOf(ServerDatabaseDao::class.java),
-        ) { _, method, _ ->
-            throw NotImplementedError(
-                "ServerDatabaseDao.${method.kotlinName} not expected in this test"
-            )
+    private fun unusedDao(): ServerStore =
+        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
+            _,
+            method,
+            _ ->
+            throw NotImplementedError("ServerStore.${method.kotlinName} not expected in this test")
         }
-            as ServerDatabaseDao
+            as ServerStore
 
     /**
      * A [SharedPreferences] whose getters return the supplied default value. `AppPreferences` then

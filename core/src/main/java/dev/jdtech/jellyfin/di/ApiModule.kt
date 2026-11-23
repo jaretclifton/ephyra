@@ -5,8 +5,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.jdtech.jellyfin.core.server.CurrentServerType
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.SessionRestorer
+import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 
 /**
@@ -23,7 +23,7 @@ object ApiModule {
     @Provides
     fun provideSessionRestorer(
         appPreferences: AppPreferences,
-        database: ServerDatabaseDao,
+        serverStore: ServerStore,
         currentType: CurrentServerType,
-    ): SessionRestorer = SavedSessionRestorer(appPreferences, database, currentType)
+    ): SessionRestorer = SavedSessionRestorer(appPreferences, serverStore, currentType)
 }

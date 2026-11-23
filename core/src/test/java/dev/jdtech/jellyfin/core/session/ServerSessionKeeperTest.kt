@@ -8,13 +8,14 @@ import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
+import dev.jdtech.jellyfin.database.RoomServerStore
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
-import dev.jdtech.jellyfin.models.Server
-import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.ServerAddressEntity
 import dev.jdtech.jellyfin.models.ServerCapabilities
+import dev.jdtech.jellyfin.models.ServerEntity
 import dev.jdtech.jellyfin.models.ServerException
-import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.UserEntity
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
@@ -63,7 +64,9 @@ class ServerSessionKeeperTest {
     private val session = FakeServerSession(ADDRESS, TOKEN, USER_ID)
     private var capabilities = ServerCapabilities.ALL
     private val keeper =
-        ServerSessionKeeper(context, session, preferences, database) { capabilities }
+        ServerSessionKeeper(context, session, preferences, RoomServerStore(database)) {
+            capabilities
+        }
 
     /**
      * Runs [ServerSessionKeeper.onUnauthorized] off the main thread, as the keeper's scope does,
@@ -87,16 +90,21 @@ class ServerSessionKeeperTest {
         ShadowSystemClock.advanceBy(Duration.ofMinutes(5))
         preferences.setValue(preferences.currentServer, SERVER)
         database.insertServer(
-            Server(
+            ServerEntity(
                 id = SERVER.toServerId(),
                 name = "Home",
                 currentServerAddressId = ADDRESS_ID,
                 currentUserId = USER_ID,
             )
         )
-        database.insertServerAddress(ServerAddress(ADDRESS_ID, SERVER.toServerId(), ADDRESS))
+        database.insertServerAddress(ServerAddressEntity(ADDRESS_ID, SERVER.toServerId(), ADDRESS))
         database.insertUser(
-            User(id = USER_ID, name = "User", serverId = SERVER.toServerId(), accessToken = TOKEN)
+            UserEntity(
+                id = USER_ID,
+                name = "User",
+                serverId = SERVER.toServerId(),
+                accessToken = TOKEN,
+            )
         )
     }
 
@@ -185,7 +193,7 @@ class ServerSessionKeeperTest {
     fun `no sign-out when Room has another current user meanwhile`() = runBlocking {
         val other = "00000000-0000-0000-0000-000000000002".toUserId()
         database.insertUser(
-            User(
+            UserEntity(
                 id = other,
                 name = "Other",
                 serverId = SERVER.toServerId(),

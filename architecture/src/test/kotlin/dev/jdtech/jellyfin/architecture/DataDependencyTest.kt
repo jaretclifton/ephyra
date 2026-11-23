@@ -10,13 +10,13 @@ import kotlin.test.assertTrue
  * `application` instead. A test configuration (`testImplementation`) is allowed everywhere: a test
  * may build the real repository.
  *
- * The modules that still need Room (`core`, `modes/film`, `setup`) are in an exact baseline,
- * `data-dependents.txt`, which T7 (#899) empties.
+ * No exceptions since T7 (#899) put Room behind the store ports: `core`, `modes/film` and `setup`
+ * had a baseline until then.
  */
 class DataDependencyTest {
 
     @Test
-    fun `R9 only the apps depend on data, but for the modules in the baseline`() {
+    fun `R9 only the apps depend on data`() {
         val dependents =
             dependentsOf(ProjectTree.moduleBuildFiles.mapValues { it.value.readText() })
         assertTrue(
@@ -25,18 +25,13 @@ class DataDependencyTest {
                 dependents.sorted(),
         )
 
-        val baseline = Baseline("data-dependents.txt")
-        baseline.assertExactly(
-            dependents - APP_MODULES,
-            unlisted = {
+        val others = (dependents - APP_MODULES).sorted()
+        assertTrue(
+            others.isEmpty(),
+            others.joinToString("\n") {
                 "${buildFile(it)} depends on $DATA. Only ${APP_MODULES.sorted().joinToString(" and ")} " +
                     "may: use the ports of application instead (docs/architecture/" +
-                    "5-hexagonal-ddd.md), or a test configuration for a test that needs Room. " +
-                    "Do not add the module to ${baseline.path}."
-            },
-            stale = {
-                "$it is in ${baseline.path} but ${buildFile(it)} no longer depends on $DATA " +
-                    "outside its tests: delete its line."
+                    "5-hexagonal-ddd.md), or a test configuration for a test that needs Room."
             },
         )
     }

@@ -78,7 +78,7 @@ private const val PAGE_SIZE = 40
  * The total comes from the response of the first page that loads ([knownTotal] is null until then,
  * and [load] is asked to include it); later pages, and later sources after a jump, reuse it.
  */
-internal class IndexedItemsPagingSource(
+class IndexedItemsPagingSource(
     private val load: suspend (start: Int, limit: Int, includeTotal: Boolean) -> ItemsPage,
     private val knownTotal: () -> Int?,
     private val onTotal: (Int) -> Unit,

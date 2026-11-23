@@ -18,18 +18,18 @@ import dev.jdtech.jellyfin.models.PendingDownloadDto
 import dev.jdtech.jellyfin.models.SeasonEntity
 import dev.jdtech.jellyfin.models.SegmentEntity
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
-import dev.jdtech.jellyfin.models.Server
-import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.ServerAddressEntity
+import dev.jdtech.jellyfin.models.ServerEntity
 import dev.jdtech.jellyfin.models.ShowEntity
-import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserDataEntity
+import dev.jdtech.jellyfin.models.UserEntity
 
 @Database(
     entities =
         [
-            Server::class,
-            ServerAddress::class,
-            User::class,
+            ServerEntity::class,
+            ServerAddressEntity::class,
+            UserEntity::class,
             MovieEntity::class,
             ShowEntity::class,
             SeasonEntity::class,

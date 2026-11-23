@@ -3,7 +3,6 @@ package dev.jdtech.jellyfin.setup.data
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.server.CurrentServerType
 import dev.jdtech.jellyfin.core.server.ServerConnectors
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.AuthenticatedUser
 import dev.jdtech.jellyfin.domain.ports.ResolvedServer
 import dev.jdtech.jellyfin.domain.ports.ServerConnectException
@@ -23,6 +22,7 @@ import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.domain.AddressRejected
@@ -46,7 +46,7 @@ import timber.log.Timber
 class SetupRepositoryImpl(
     private val connectors: ServerConnectors,
     private val session: ServerSession,
-    private val database: ServerDatabaseDao,
+    private val serverStore: ServerStore,
     private val appPreferences: AppPreferences,
     private val currentType: CurrentServerType,
 ) : SetupRepository {
@@ -68,22 +68,22 @@ class SetupRepositoryImpl(
     private fun clientConnector(): ServerConnector = connectors.ofStoredType(currentType.stored)
 
     override suspend fun getServers(): List<ServerWithAddresses> {
-        return database.getServersWithAddresses()
+        return serverStore.serversWithAddresses()
     }
 
     override suspend fun getCurrentServer(): Server? {
-        return appPreferences.currentServerId()?.let { id -> database.getServer(id) }
+        return appPreferences.currentServerId()?.let { id -> serverStore.server(id) }
     }
 
     override suspend fun deleteServer(serverId: ServerId) {
         // CE (#334): the saved logins go with the server, so sign them out there too.
         coroutineScope {
-            database
-                .getUsers(serverId)
+            serverStore
+                .users(serverId)
                 .map { user -> async { endSessionOnServer(user) } }
                 .awaitAll()
         }
-        database.deleteServer(serverId)
+        serverStore.deleteServer(serverId)
     }
 
     /**
@@ -92,7 +92,7 @@ class SetupRepositoryImpl(
      */
     private suspend fun endSessionOnServer(user: User) {
         val token = user.accessToken ?: return
-        val saved = database.getServerWithAddressAndUser(user.serverId) ?: return
+        val saved = serverStore.serverWithAddressAndUser(user.serverId) ?: return
         val address = saved.address ?: return
         // CE (#770): a server of a type this build cannot talk to is still removed, without this.
         val connector = connectors.ofStoredTypeOrNull(saved.server.type) ?: return
@@ -116,7 +116,7 @@ class SetupRepositoryImpl(
         withContext(Dispatchers.IO) { clientConnector().quickConnectState(clientAddress(), secret) }
 
     override suspend fun setCurrentServer(serverId: ServerId) {
-        val serverWithAddressAndUser = database.getServerWithAddressAndUser(serverId) ?: return
+        val serverWithAddressAndUser = serverStore.serverWithAddressAndUser(serverId) ?: return
         val serverAddress = serverWithAddressAndUser.address ?: return
         val user = serverWithAddressAndUser.user
 
@@ -160,13 +160,13 @@ class SetupRepositoryImpl(
 
         Timber.d("Connecting to server: $serverName")
 
-        val serverInDatabase = database.getServer(serverId)
+        val serverInDatabase = serverStore.server(serverId)
 
         // Check if server is already in the database
         // If so only add a new address to that server if it's different
         val server =
             if (serverInDatabase != null) {
-                val addresses = database.getServerWithAddresses(serverInDatabase.id).addresses
+                val addresses = serverStore.serverWithAddresses(serverInDatabase.id).addresses
                 // If address is not in database, add it
                 if (addresses.none { it.address == resolved.address }) {
                     val serverAddress =
@@ -176,7 +176,7 @@ class SetupRepositoryImpl(
                             address = resolved.address,
                         )
 
-                    database.insertServerAddress(serverAddress)
+                    serverStore.insertAddress(serverAddress)
                 }
                 serverInDatabase
             } else {
@@ -196,14 +196,14 @@ class SetupRepositoryImpl(
                         type = type.value,
                     )
 
-                database.insertServer(server)
-                database.insertServerAddress(serverAddress)
+                serverStore.insertServer(server)
+                serverStore.insertAddress(serverAddress)
                 server
             }
 
         // CE (#425): a server that was saved before keeps its signed-in user, so the client keeps
         // that user's token. Clearing it signed the app out until a restart.
-        val currentUser = serverInDatabase?.let { database.getServerCurrentUser(it.id) }
+        val currentUser = serverInDatabase?.let { serverStore.currentUser(it.id) }
         // CE (#770): a server saved before keeps the type it was saved with.
         currentType.stored = server.type
         session.use(
@@ -276,8 +276,8 @@ class SetupRepositoryImpl(
                 primaryImageTag = authenticated.primaryImageTag,
             )
 
-        database.insertUser(user)
-        database.updateServerCurrentUser(authenticated.serverId, user.id)
+        serverStore.insertUser(user)
+        serverStore.setCurrentUser(authenticated.serverId, user.id)
 
         session.use(
             baseUrl = session.baseUrl,
@@ -287,7 +287,7 @@ class SetupRepositoryImpl(
     }
 
     override suspend fun getUsers(serverId: ServerId): List<User> {
-        return database.getUsers(serverId)
+        return serverStore.users(serverId)
     }
 
     override suspend fun getPublicUsers(serverId: ServerId): List<User> =
@@ -303,12 +303,12 @@ class SetupRepositoryImpl(
         }
 
     override suspend fun updateUserImageTag(userId: UserId, tag: String?) {
-        database.updateUserPrimaryImageTag(userId, tag)
+        serverStore.setUserImageTag(userId, tag)
     }
 
     override suspend fun getCurrentUser(): User? {
         val currentServer = getCurrentServer() ?: return null
-        return database.getServerCurrentUser(currentServer.id)
+        return serverStore.currentUser(currentServer.id)
     }
 
     override suspend fun deleteUser(userId: UserId) {
@@ -318,41 +318,39 @@ class SetupRepositoryImpl(
             Timber.e("You cannot delete the current user")
             return
         }*/
-        val user = database.getUser(userId) ?: return
+        val user = serverStore.user(userId) ?: return
         endSessionOnServer(user)
         // CE (#334): its token no longer works, so it cannot stay the current user.
-        val server = database.getServer(user.serverId)
+        val server = serverStore.server(user.serverId)
         if (server?.currentUserId == userId) {
-            database.clearServerCurrentUser(server.id)
+            serverStore.clearCurrentUser(server.id)
             if (session.userId == userId) {
                 session.use(baseUrl = session.baseUrl, accessToken = null, userId = null)
             }
         }
-        database.deleteUser(userId)
+        serverStore.deleteUser(userId)
     }
 
     override suspend fun setCurrentUser(userId: UserId) {
         val server = getCurrentServer() ?: return
-        val user = database.getUser(userId) ?: return
-        server.currentUserId = user.id
-        database.updateServer(server)
+        val user = serverStore.user(userId) ?: return
+        serverStore.updateServer(server.copy(currentUserId = user.id))
 
         session.use(baseUrl = session.baseUrl, accessToken = user.accessToken, userId = user.id)
     }
 
     override suspend fun clearCurrentUser() {
         val server = getCurrentServer() ?: return
-        database.clearServerCurrentUser(server.id)
+        serverStore.clearCurrentUser(server.id)
     }
 
     override suspend fun setCurrentAddress(addressId: UUID) {
         val server = getCurrentServer() ?: return
-        val address = database.getAddress(id = addressId)
+        val address = serverStore.address(addressId)
         if (address.serverId != server.id) {
             return
         }
-        server.currentServerAddressId = address.id
-        database.updateServer(server)
+        serverStore.updateServer(server.copy(currentServerAddressId = address.id))
         session.use(
             baseUrl = address.address,
             accessToken = session.accessToken,
@@ -367,30 +365,30 @@ class SetupRepositoryImpl(
         // must not reach the reachability banner or the return detector.
         // Only accept an address that actually points at the server being edited.
         // CE (#770): the connector of the server's type.
-        val connector = connectors.ofStoredType(database.getServer(serverId)?.type)
+        val connector = connectors.ofStoredType(serverStore.server(serverId)?.type)
         val match =
             connector.findAddress(address, serverId)
                 ?: throw AddressRejected(AddressRejected.Reason.NOT_FOUND)
 
-        val existing = database.getServerWithAddresses(serverId).addresses
+        val existing = serverStore.serverWithAddresses(serverId).addresses
         if (existing.any { it.address == match }) {
             throw AddressRejected(AddressRejected.Reason.ALREADY_SAVED)
         }
 
         val serverAddress = ServerAddress(UUID.randomUUID(), serverId, match)
-        database.insertServerAddress(serverAddress)
+        serverStore.insertAddress(serverAddress)
         return serverAddress
     }
 
     override suspend fun getAddresses(serverId: ServerId): List<ServerAddress> {
-        return database.getServerWithAddresses(serverId).addresses
+        return serverStore.serverWithAddresses(serverId).addresses
     }
 
     override suspend fun getCurrentAddress(serverId: ServerId): ServerAddress? {
-        return database.getServerCurrentAddress(serverId)
+        return serverStore.currentAddress(serverId)
     }
 
     override suspend fun deleteAddress(addressId: UUID) {
-        database.deleteServerAddress(addressId)
+        serverStore.deleteAddress(addressId)
     }
 }

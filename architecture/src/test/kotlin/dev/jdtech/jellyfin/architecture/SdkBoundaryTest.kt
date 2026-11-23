@@ -9,7 +9,7 @@ import kotlin.test.fail
  * Only the Jellyfin adapter may see the Jellyfin SDK
  * (docs/architecture/2-enforcement-and-tests.md, #733). The adapter is the module `server/jellyfin`
  * (#758), and only the apps depend on it (R7). R1 to R3 and R7 have no exceptions (#768). R4, about
- * Room rather than the SDK, allows the whole `data` module and keeps a frozen baseline.
+ * Room rather than the SDK, allows the whole `data` module and none outside it (#899).
  *
  * Test sources of every module are out of scope.
  */
@@ -129,21 +129,17 @@ class SdkBoundaryTest {
         )
     }
 
-    /** R4. Room's server DAO stays inside `data`; frozen, not part of the migration. */
+    /**
+     * R4. Room's server DAO stays inside `data`. No exceptions since #899 emptied its baseline: the
+     * features use the store ports of `application` (`ServerStore`, `DownloadStore`,
+     * `PendingUserDataStore`), and `data`'s own Hilt modules build Room.
+     */
     @Test
     fun `R4 no production file outside data imports ServerDatabaseDao`() {
-        val baseline = Baseline("dao-imports.txt")
-        baseline.assertExactly(
-            filesImporting(SERVER_DAO, allowed = ProjectTree::inDataModule),
-            unlisted = {
-                "$it imports $SERVER_DAO outside the data module. Go through a repository " +
-                    "instead; do not add the file to ${baseline.path}."
-            },
-            stale = {
-                "$it is in the baseline but no longer imports $SERVER_DAO: delete its line " +
-                    "from ${baseline.path}."
-            },
-        )
+        assertNone(filesImporting(SERVER_DAO, allowed = ProjectTree::inDataModule)) {
+            "$it imports $SERVER_DAO outside the data module. Use a store port of application " +
+                "(ServerStore, DownloadStore, PendingUserDataStore) instead."
+        }
     }
 
     /** Fails with one [message] line per violation, sorted, when there is any. */

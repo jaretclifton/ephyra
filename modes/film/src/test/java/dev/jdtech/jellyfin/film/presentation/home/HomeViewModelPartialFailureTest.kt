@@ -1,7 +1,6 @@
 package dev.jdtech.jellyfin.film.presentation.home
 
 import android.content.SharedPreferences
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.CollectionType
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
@@ -9,6 +8,7 @@ import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.asItemId
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -45,7 +45,7 @@ class HomeViewModelPartialFailureTest {
         HomeViewModel(
             repository = repository(),
             appPreferences = AppPreferences(sharedPreferences()),
-            database = unusedDao(),
+            serverStore = unusedDao(),
         )
     }
 
@@ -189,16 +189,14 @@ class HomeViewModelPartialFailureTest {
         }
             as Item
 
-    private fun unusedDao(): ServerDatabaseDao =
-        fakeProxy(
-            ServerDatabaseDao::class.java.classLoader,
-            arrayOf(ServerDatabaseDao::class.java),
-        ) { _, method, _ ->
-            throw NotImplementedError(
-                "ServerDatabaseDao.${method.kotlinName} not expected in this test"
-            )
+    private fun unusedDao(): ServerStore =
+        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
+            _,
+            method,
+            _ ->
+            throw NotImplementedError("ServerStore.${method.kotlinName} not expected in this test")
         }
-            as ServerDatabaseDao
+            as ServerStore
 
     private fun sharedPreferences(): SharedPreferences =
         fakeProxy(

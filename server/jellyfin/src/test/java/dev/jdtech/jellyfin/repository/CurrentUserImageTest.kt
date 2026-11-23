@@ -4,8 +4,8 @@ import android.app.Application
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
-import dev.jdtech.jellyfin.models.Server
-import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.ServerEntity
+import dev.jdtech.jellyfin.models.UserEntity
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
@@ -44,11 +44,11 @@ class CurrentUserImageTest {
 
     @Test
     fun `the tag goes to the user the server answered for`() = runBlocking {
-        database.insertServer(Server(SERVER.toServerId(), "Server", null, OTHER))
+        database.insertServer(ServerEntity(SERVER.toServerId(), "Server", null, OTHER))
         database.insertUser(
-            User(id = StandInServer.USER_ID, name = "Session", serverId = SERVER.toServerId())
+            UserEntity(id = StandInServer.USER_ID, name = "Session", serverId = SERVER.toServerId())
         )
-        database.insertUser(User(id = OTHER, name = "Token", serverId = SERVER.toServerId()))
+        database.insertUser(UserEntity(id = OTHER, name = "Token", serverId = SERVER.toServerId()))
 
         // The session's id is USER_ID; the server answers for OTHER, the token's user.
         server.repository(context, database).refreshCurrentUserImage()

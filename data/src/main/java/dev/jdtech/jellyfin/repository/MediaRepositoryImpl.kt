@@ -108,6 +108,7 @@ class MediaRepositoryImpl(
                         read()
                     }
                 },
+                TimberFallbackLog,
                 server,
             )
         return ItemsResult(items, fromStore)
@@ -171,7 +172,8 @@ class MediaRepositoryImpl(
         withContext(Dispatchers.IO) {
             val stored = currentServerId()?.let { database.getEpisodeOfServer(itemId, it) }
             serverOrStored(
-                stored?.let { dto -> suspend { dto.toEpisode(database, currentUserId) } }
+                stored?.let { dto -> suspend { dto.toEpisode(database, currentUserId) } },
+                log = TimberFallbackLog,
             ) {
                 catalog.episode(itemId).withLocalSources(localSourcesFor(listOf(itemId)))
             }
@@ -181,7 +183,8 @@ class MediaRepositoryImpl(
         withContext(Dispatchers.IO) {
             val stored = currentServerId()?.let { database.getMovieOfServer(itemId, it) }
             serverOrStored(
-                stored?.let { dto -> suspend { dto.toMovie(database, currentUserId) } }
+                stored?.let { dto -> suspend { dto.toMovie(database, currentUserId) } },
+                log = TimberFallbackLog,
             ) {
                 catalog.movie(itemId).withLocalSources(localSourcesFor(listOf(itemId)))
             }
@@ -190,7 +193,10 @@ class MediaRepositoryImpl(
     override suspend fun getShow(itemId: ItemId): Show =
         withContext(Dispatchers.IO) {
             val stored = currentServerId()?.let { database.getShowOfServer(itemId, it) }
-            serverOrStored(stored?.let { dto -> suspend { dto.toShow(database, currentUserId) } }) {
+            serverOrStored(
+                stored?.let { dto -> suspend { dto.toShow(database, currentUserId) } },
+                log = TimberFallbackLog,
+            ) {
                 catalog.show(itemId)
             }
         }
@@ -199,7 +205,8 @@ class MediaRepositoryImpl(
         withContext(Dispatchers.IO) {
             val stored = currentServerId()?.let { database.getSeasonOfServer(itemId, it) }
             serverOrStored(
-                stored?.let { dto -> suspend { dto.toSeason(database, currentUserId) } }
+                stored?.let { dto -> suspend { dto.toSeason(database, currentUserId) } },
+                log = TimberFallbackLog,
             ) {
                 catalog.season(itemId)
             }
@@ -217,7 +224,9 @@ class MediaRepositoryImpl(
         }
 
     override suspend fun getItem(itemId: ItemId): Item? =
-        withContext(Dispatchers.IO) { serverOrStored(storedItem(itemId)) { catalog.item(itemId) } }
+        withContext(Dispatchers.IO) {
+            serverOrStored(storedItem(itemId), log = TimberFallbackLog) { catalog.item(itemId) }
+        }
 
     /**
      * CE (#281): builds [itemId] from Room, or null when Room doesn't have it for the current
