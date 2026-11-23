@@ -242,6 +242,11 @@ Show(
   airTime = null
   localTrailerCount = 0
   specialFeatureCount = 0
+  externalIds = ExternalIds(
+    imdb = "tt0903747"
+    tmdb = "1396"
+    tvdb = "81189"
+  )
   images = ItemImages(
     primary = "https://server.test/items/332758e9-c2da-4fb5-cf9f-7e1efffc9d37/Images/Primary?tag=0eca0fbcf453d826f816496e2b6a98bf"
     backdrop = "https://server.test/items/332758e9-c2da-4fb5-cf9f-7e1efffc9d37/Images/Backdrop/0?tag=0eca0fbcf453d826f816496e2b6a98bf"

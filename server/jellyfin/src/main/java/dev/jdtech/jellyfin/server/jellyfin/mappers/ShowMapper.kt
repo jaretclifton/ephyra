@@ -37,6 +37,7 @@ internal fun BaseItemDto.toShow(baseUrl: String): Show {
         airTime = airTime?.takeIf { it.isNotBlank() }?.trim(),
         localTrailerCount = localTrailerCount ?: 0,
         specialFeatureCount = specialFeatureCount,
+        externalIds = providerIds.toExternalIds(),
         images = toItemImages(baseUrl),
     )
 }

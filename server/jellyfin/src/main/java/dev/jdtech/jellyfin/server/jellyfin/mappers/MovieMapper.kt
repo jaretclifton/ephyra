@@ -53,6 +53,7 @@ internal suspend fun BaseItemDto.toMovie(
         is3D = video3dFormat != null,
         localTrailerCount = localTrailerCount ?: 0,
         specialFeatureCount = specialFeatureCount,
+        externalIds = providerIds.toExternalIds(),
         images = toItemImages(context.baseUrl),
         chapters = toChapters(),
         trickplayInfo = toItemTrickplayInfo(),

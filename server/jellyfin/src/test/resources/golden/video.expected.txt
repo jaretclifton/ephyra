@@ -97,6 +97,11 @@ Movie(
   is3D = false
   localTrailerCount = 0
   specialFeatureCount = 0
+  externalIds = ExternalIds(
+    imdb = null
+    tmdb = null
+    tvdb = null
+  )
   images = ItemImages(
     primary = "https://server.test/items/e1efa999-9944-2ea3-7876-ddc6c8a83a2c/Images/Primary?tag=4d10c0a1b128a2fb05549708b08e2238"
     backdrop = null

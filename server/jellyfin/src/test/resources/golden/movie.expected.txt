@@ -386,6 +386,11 @@ Movie(
   is3D = false
   localTrailerCount = 0
   specialFeatureCount = 0
+  externalIds = ExternalIds(
+    imdb = "tt1375666"
+    tmdb = "27205"
+    tvdb = null
+  )
   images = ItemImages(
     primary = "https://server.test/items/d10943c9-a35f-58d6-1542-dc562fdabcf2/Images/Primary?tag=8475cfb09a2ebb59ef5fc5c7ded42769"
     backdrop = "https://server.test/items/d10943c9-a35f-58d6-1542-dc562fdabcf2/Images/Backdrop/0?tag=8475cfb09a2ebb59ef5fc5c7ded42769"
