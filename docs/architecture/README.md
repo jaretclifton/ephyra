@@ -39,7 +39,7 @@ app/phone, app/tv   (composition root, screens)
    ├─► modes/film, setup, settings, player/*, core, downloads ─► application ─► domain
    │                                                                  ▲
    ├─► data  (Room: the stores and MediaRepositoryImpl) ──────────────┘
-   └─► server/jellyfin  (the server ports, the only module with the SDK) ───► domain
+   └─► server/jellyfin  (the server ports, the only module with the SDK) ───► application, domain
 ```
 
 - `domain` (pure Kotlin): the models without the `Findroid` prefix (`Item`, `Movie`, `ItemSource`,
@@ -49,7 +49,8 @@ app/phone, app/tv   (composition root, screens)
   models with rules: `PlayState` (marks, stops, the sync's merge) and `DownloadState`. `Ticks` for
   the unit conversions.
 - `application` (pure Kotlin): `MediaRepository`, the event flows, and the store ports
-  `ServerStore`, `DownloadStore`, `PendingUserDataStore`, keyed by `AccountKey(serverId, userId)`.
+  `ServerStore`, `DownloadStore`, `PendingUserDataStore`, keyed by `AccountKey(serverId, userId)`,
+  and the settings the adapters read (#918), which `core` implements over `AppPreferences`.
 - `data`: Room, the three `Room*Store` and `MediaRepositoryImpl`, which composes the server in use
   with Room (stored fallback, local sources, write then report).
 - `server/jellyfin`: the SDK, `JellyfinApi`, the mappers, the port implementations, the device
@@ -102,10 +103,10 @@ line is added only with a reason of the same kind, given in the PR.
   - Downloads of a server whose type this build does not know could not be listed or played in
     the emulator check of #835; `UnsupportedMediaServer` says they open from Room. Not checked
     again since: decide when Emby starts whether they should stay playable.
-- **Preferences in the adapters.** File 5 (5.1, point 3) wanted `data` and the adapter to stop
-  reading `AppPreferences`. They still do: `MediaRepositoryImpl` reads the current server id and
-  the Next Up limit from it, `JellyfinServerModule` the timeouts, the download engine its
-  settings. No task was filed for it.
+- **Preferences in the adapters** (#918). File 5 (5.1, point 3) wanted `data` and the adapter to
+  stop reading `AppPreferences`. They read the settings through ports of `application` now
+  (`CurrentServerId`, `NextUpMaxDays`, `ResumeThresholdsStore`, `NetworkTimeouts`), bound in
+  `core` (`SettingsPortsModule`). The download engine still reads its settings itself.
 - **Issues filed on the way**, real bugs outside the refactoring: #907 (an unplayed mark during a
   profile switch may clear the other user's last-played date), #909 (playback reports do not name
   the chosen version), #912 (a download cut off by an unreachable server does not resume when it

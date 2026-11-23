@@ -18,20 +18,21 @@ import dev.jdtech.jellyfin.domain.ports.ServerConnector
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.domain.ports.UserDataSyncPorts
 import dev.jdtech.jellyfin.models.ServerType
+import dev.jdtech.jellyfin.repository.NetworkTimeouts
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceReportSource
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinServerConnector
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinServerSession
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinUserDataSyncPorts
-import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Singleton
 
 /**
  * #758: what the Jellyfin adapter provides, all over the app's one client. The apps, the only
  * modules that depend on the adapter, are the composition root; `core` provides what this takes
- * from outside: the [ActiveServerHolder] (with the saved session on it; `core` knows Room) and the
- * probed [DeviceCodecs].
+ * from outside: the [ActiveServerHolder] (with the saved session on it; `core` knows Room), the
+ * probed [DeviceCodecs] and the user's [NetworkTimeouts] (#918: read once, when the client is
+ * made).
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -46,14 +47,14 @@ object JellyfinServerModule {
     @Provides
     fun provideJellyfinApi(
         @ApplicationContext application: Context,
-        appPreferences: AppPreferences,
+        timeouts: NetworkTimeouts,
         active: ActiveServerHolder,
     ): JellyfinApi =
         JellyfinApi.getInstance(
             context = application,
-            requestTimeout = appPreferences.getValue(appPreferences.requestTimeout),
-            connectTimeout = appPreferences.getValue(appPreferences.connectTimeout),
-            socketTimeout = appPreferences.getValue(appPreferences.socketTimeout),
+            requestTimeout = timeouts.requestTimeout(),
+            connectTimeout = timeouts.connectTimeout(),
+            socketTimeout = timeouts.socketTimeout(),
             activeServer = active,
         )
 

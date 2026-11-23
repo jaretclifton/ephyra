@@ -48,7 +48,6 @@ tasks.withType<Test>().configureEach {
 dependencies {
     implementation(projects.application)
     implementation(projects.domain)
-    implementation(projects.settings)
     implementation(libs.androidx.paging)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

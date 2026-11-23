@@ -44,7 +44,6 @@ import dev.jdtech.jellyfin.models.toSegment
 import dev.jdtech.jellyfin.models.toSeriesTrackPreference
 import dev.jdtech.jellyfin.models.toSeriesTrackPreferenceDto
 import dev.jdtech.jellyfin.models.toShow
-import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.File
 import java.time.LocalDateTime
 import kotlinx.coroutines.CancellationException
@@ -66,13 +65,13 @@ class MediaRepositoryImpl(
     private val context: Context,
     private val server: MediaServer,
     private val database: ServerDatabaseDao,
-    private val appPreferences: AppPreferences,
+    private val currentServer: CurrentServerId,
+    private val nextUpMaxDays: NextUpMaxDays,
+    /** CE (#637): the resume settings read from each server, kept for the stops made offline. */
+    private val resumeThresholds: ResumeThresholdsStore,
     private val syncRequester: UserDataSyncRequester = UserDataSyncRequester.NONE,
     private val knownServerState: KnownServerState = KnownServerState.NONE,
     private val storedLibraryNames: StoredLibraryNames = StoredLibraryNames.ENGLISH,
-    /** CE (#637): the resume settings read from each server, kept for the stops made offline. */
-    private val resumeThresholds: ResumeThresholdsStore =
-        ResumeThresholdsStore(appPreferences.sharedPreferences),
 ) : MediaRepository {
     override val capabilities: ServerCapabilities
         get() = server.capabilities
@@ -133,7 +132,7 @@ class MediaRepositoryImpl(
         return suspend { storedLists.toItems(dtos, serverId, currentUserId) }
     }
 
-    private fun currentServerId(): ServerId? = appPreferences.currentServerId()
+    private fun currentServerId(): ServerId? = currentServer.get()
 
     /**
      * CE (#637): reads the server's resume settings once per app run, so stops here and offline
@@ -491,7 +490,7 @@ class MediaRepositoryImpl(
                 dateCutoff =
                     nextUpDateCutoff(
                         seriesId = seriesId,
-                        maxDays = appPreferences.getValue(appPreferences.homeNextUpMaxDays),
+                        maxDays = nextUpMaxDays.get(),
                         now = LocalDateTime.now(),
                     ),
             )
@@ -902,7 +901,7 @@ class MediaRepositoryImpl(
 
     override suspend fun getDownloads(): List<Item> =
         withContext(Dispatchers.IO) {
-            val serverId = appPreferences.currentServerId() ?: return@withContext emptyList()
+            val serverId = currentServer.get() ?: return@withContext emptyList()
             val items = mutableListOf<Item>()
             items.addAll(
                 database.getMoviesByServerId(serverId).map { it.toMovie(database, currentUserId) }

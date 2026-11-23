@@ -8,6 +8,8 @@ plugins { alias(libs.plugins.kotlin.jvm) }
 java { toolchain { languageVersion = Versions.JAVA } }
 
 dependencies {
+    // #918: FakeResumeThresholdsStore implements a port of application.
+    api(projects.application)
     api(projects.domain)
     api(libs.junit)
     api(libs.kotlin.test)

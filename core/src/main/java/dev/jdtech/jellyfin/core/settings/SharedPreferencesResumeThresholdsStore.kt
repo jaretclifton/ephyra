@@ -1,27 +1,29 @@
-package dev.jdtech.jellyfin.repository
+package dev.jdtech.jellyfin.core.settings
 
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.repository.ResumeThresholds
+import dev.jdtech.jellyfin.repository.ResumeThresholdsStore
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * CE (#637): the last [ResumeThresholds] read from each server, kept so stops made offline follow
- * them too. Stored per server id, because each server has its own.
+ * CE (#637): the [ResumeThresholdsStore] of the app, in its preferences, one key per server
+ * id. #918: moved from `data` (`ResumeThresholdsStore`), with the same keys in the same file.
  */
-class ResumeThresholdsStore(private val preferences: SharedPreferences) {
+class SharedPreferencesResumeThresholdsStore(private val preferences: SharedPreferences) :
+    ResumeThresholdsStore {
 
-    fun get(serverId: ServerId?): ResumeThresholds =
+    override fun get(serverId: ServerId?): ResumeThresholds =
         serverId?.let { preferences.getString(key(it), null) }?.let(::parse)
             ?: ResumeThresholds.DEFAULT
 
-    fun put(serverId: ServerId, thresholds: ResumeThresholds) {
+    override fun put(serverId: ServerId, thresholds: ResumeThresholds) {
         preferences.edit().putString(key(serverId), format(thresholds)).apply()
         readThisProcess.add(serverId)
     }
 
-    /** Whether [serverId]'s were read in this run: they rarely change, so once will do. */
-    fun isFresh(serverId: ServerId): Boolean = serverId in readThisProcess
+    override fun isFresh(serverId: ServerId): Boolean = serverId in readThisProcess
 
     private fun key(serverId: ServerId) = "ce_resume_thresholds_${serverId.asString()}"
 

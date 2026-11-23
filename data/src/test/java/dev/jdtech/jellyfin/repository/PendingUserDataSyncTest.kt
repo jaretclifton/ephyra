@@ -13,7 +13,7 @@ import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.FakeResumeThresholdsStore
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -54,8 +54,10 @@ class PendingUserDataSyncTest {
             context,
             UnansweredServer(userId),
             database,
-            AppPreferences(context.getSharedPreferences("test", Context.MODE_PRIVATE)),
-            UserDataSyncRequester { syncRequests++ },
+            currentServer = { null },
+            nextUpMaxDays = { 0 },
+            resumeThresholds = FakeResumeThresholdsStore(),
+            syncRequester = UserDataSyncRequester { syncRequests++ },
         )
     }
 

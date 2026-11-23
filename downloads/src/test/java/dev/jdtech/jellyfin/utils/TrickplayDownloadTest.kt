@@ -15,6 +15,7 @@ import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.MediaRepositoryImpl
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.FakeResumeThresholdsStore
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
@@ -223,9 +224,9 @@ class TrickplayDownloadTest {
                 context,
                 away,
                 room.getServerDatabaseDao(),
-                AppPreferences(
-                    context.getSharedPreferences("trickplay-download-test", Context.MODE_PRIVATE)
-                ),
+                currentServer = { null },
+                nextUpMaxDays = { 0 },
+                resumeThresholds = FakeResumeThresholdsStore(),
             )
         return runBlocking {
                 repository.getTrickplayData(itemId, info.width, index, version?.toMediaSourceId())
