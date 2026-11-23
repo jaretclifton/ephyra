@@ -9,7 +9,7 @@ import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.FakeResumeThresholdsStore
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
@@ -39,13 +39,18 @@ class CancellationNotSwallowedTest {
         Room.inMemoryDatabaseBuilder(context, ServerDatabase::class.java)
             .setDriver(AndroidSQLiteDriver())
             .build()
-    private val preferences =
-        AppPreferences(context.getSharedPreferences("cancellation", Context.MODE_PRIVATE))
 
     private val server = UnansweredServer(userId)
 
     private val repository: MediaRepository by lazy {
-        MediaRepositoryImpl(context, server, room.getServerDatabaseDao(), preferences)
+        MediaRepositoryImpl(
+            context,
+            server,
+            room.getServerDatabaseDao(),
+            currentServer = { null },
+            nextUpMaxDays = { 0 },
+            resumeThresholds = FakeResumeThresholdsStore(),
+        )
     }
 
     @After fun close() = room.close()

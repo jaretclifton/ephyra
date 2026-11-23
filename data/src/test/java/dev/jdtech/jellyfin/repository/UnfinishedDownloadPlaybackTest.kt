@@ -9,8 +9,9 @@ import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.FakeResumeThresholdsStore
 import dev.jdtech.jellyfin.testing.asItemId
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -64,16 +65,18 @@ class UnfinishedDownloadPlaybackTest {
 
     private val context: Context by lazy { RuntimeEnvironment.getApplication() }
 
-    private fun preferences() =
-        AppPreferences(context.getSharedPreferences("test", Context.MODE_PRIVATE)).apply {
-            setValue(currentServer, "server")
-        }
-
     @Test
     fun `online, an unfinished download is not played and the server is asked instead`() =
         runBlocking {
             val repository =
-                MediaRepositoryImpl(context, UnansweredServer(userId), database, preferences())
+                MediaRepositoryImpl(
+                    context,
+                    UnansweredServer(userId),
+                    database,
+                    currentServer = { "server".toServerId() },
+                    nextUpMaxDays = { 0 },
+                    resumeThresholds = FakeResumeThresholdsStore(),
+                )
 
             val result = runCatching {
                 repository.getPlaybackSources(episodeId, LOCAL_PLAYER, null)

@@ -17,6 +17,7 @@ import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.MovieEntity
 import dev.jdtech.jellyfin.models.SeasonEntity
 import dev.jdtech.jellyfin.models.ServerException
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ShowEntity
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
@@ -27,7 +28,7 @@ import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.FakeResumeThresholdsStore
 import java.io.File
 import java.time.LocalDateTime
 import java.util.UUID
@@ -61,10 +62,7 @@ class StoredListsFallbackTest {
             .setDriver(AndroidSQLiteDriver())
             .build()
     private val database: ServerDatabaseDao = room.getServerDatabaseDao()
-    private val preferences =
-        AppPreferences(context.getSharedPreferences("stored-lists", Context.MODE_PRIVATE)).apply {
-            setValue(currentServer, SERVER_A)
-        }
+    private var currentServerId: ServerId? = SERVER_A.toServerId()
 
     private val knownServerState =
         object : KnownServerState {
@@ -86,7 +84,9 @@ class StoredListsFallbackTest {
             context,
             server,
             database,
-            preferences,
+            currentServer = { currentServerId },
+            nextUpMaxDays = { 0 },
+            resumeThresholds = FakeResumeThresholdsStore(),
             knownServerState = knownServerState,
         )
     }
@@ -310,7 +310,7 @@ class StoredListsFallbackTest {
 
     @Test
     fun `without a current server there is no fallback for favourites`() = runBlocking {
-        preferences.setValue(preferences.currentServer, null)
+        currentServerId = null
         assertTrue(fails { repository.getFavoriteItems().items })
     }
 

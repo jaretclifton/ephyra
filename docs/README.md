@@ -21,7 +21,7 @@ Kept current. Follow these when you work on the matching part of the app.
 | [upstream-sync.md](upstream-sync.md) | Syncing with Findroid, releasing and publishing a beta |
 | [upstream-ledger.md](upstream-ledger.md) | Every Findroid commit since 2026-11-22 with what Ephyra did with it and why |
 | [open-decisions.md](open-decisions.md) | Product questions from the code audit that nobody has decided yet |
-| [architecture/README.md](architecture/README.md) | The module layout, the ports and stores, the architecture rules R1 to R16 and what is not done |
+| [architecture/README.md](architecture/README.md) | The module layout, the ports and stores, the architecture rules R1 to R17 and what is not done |
 
 ## Research
 

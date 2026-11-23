@@ -14,6 +14,7 @@ import dev.jdtech.jellyfin.models.MovieEntity
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.SeasonEntity
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ShowEntity
 import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.asString
@@ -22,7 +23,7 @@ import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.FakeResumeThresholdsStore
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
@@ -56,17 +57,24 @@ class StoredItemsByServerTest {
             .setDriver(AndroidSQLiteDriver())
             .build()
     private val database: ServerDatabaseDao = room.getServerDatabaseDao()
-    private val preferences =
-        AppPreferences(context.getSharedPreferences("stored-by-server", Context.MODE_PRIVATE))
+    private var currentServerId: ServerId? = null
 
     private val repository: MediaRepository by lazy {
-        MediaRepositoryImpl(context, UnansweredServer(userId), database, preferences)
+        MediaRepositoryImpl(
+            context,
+            UnansweredServer(userId),
+            database,
+            currentServer = { currentServerId },
+            nextUpMaxDays = { 0 },
+            resumeThresholds = FakeResumeThresholdsStore(),
+        )
     }
 
     @After fun close() = room.close()
 
-    private fun current(serverId: String) =
-        preferences.setValue(preferences.currentServer, serverId)
+    private fun current(serverId: String) {
+        currentServerId = serverId.toServerId()
+    }
 
     private suspend fun storeMovie(serverId: String) {
         database.insertMovie(

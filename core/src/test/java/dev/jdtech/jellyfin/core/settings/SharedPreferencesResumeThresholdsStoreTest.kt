@@ -1,8 +1,9 @@
-package dev.jdtech.jellyfin.repository
+package dev.jdtech.jellyfin.core.settings
 
 import android.app.Application
 import android.content.Context
 import dev.jdtech.jellyfin.models.toServerId
+import dev.jdtech.jellyfin.repository.ResumeThresholds
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -19,10 +20,10 @@ import org.robolectric.annotation.Config
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], application = Application::class)
-class ResumeThresholdsStoreTest {
+class SharedPreferencesResumeThresholdsStoreTest {
     private val preferences =
         RuntimeEnvironment.getApplication().getSharedPreferences("thresholds", Context.MODE_PRIVATE)
-    private val store = ResumeThresholdsStore(preferences)
+    private val store = SharedPreferencesResumeThresholdsStore(preferences)
 
     @Test
     fun `an unknown server has the defaults`() {
@@ -37,11 +38,11 @@ class ResumeThresholdsStoreTest {
 
         assertEquals(
             ResumeThresholds(2, 93, 2),
-            ResumeThresholdsStore(preferences).get("a".toServerId()),
+            SharedPreferencesResumeThresholdsStore(preferences).get("a".toServerId()),
         )
         assertEquals(
             ResumeThresholds(10, 80, 60),
-            ResumeThresholdsStore(preferences).get("b".toServerId()),
+            SharedPreferencesResumeThresholdsStore(preferences).get("b".toServerId()),
         )
     }
 
@@ -54,8 +55,11 @@ class ResumeThresholdsStoreTest {
 
     @Test
     fun `a stored value that is not three numbers is ignored`() {
-        assertNull(ResumeThresholdsStore.parse("2,93"))
-        assertNull(ResumeThresholdsStore.parse("2,x,3"))
-        assertEquals(ResumeThresholds(2, 93, 2), ResumeThresholdsStore.parse("2,93,2"))
+        assertNull(SharedPreferencesResumeThresholdsStore.parse("2,93"))
+        assertNull(SharedPreferencesResumeThresholdsStore.parse("2,x,3"))
+        assertEquals(
+            ResumeThresholds(2, 93, 2),
+            SharedPreferencesResumeThresholdsStore.parse("2,93,2"),
+        )
     }
 }
