@@ -30,6 +30,8 @@ import dev.jdtech.jellyfin.utils.CoreDownloadTexts
 import java.util.Collections
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -61,6 +63,8 @@ class ExternalRatingsLoadingTest {
         var answer = listOf(imdb, tomatoes)
         /** Runs while a lookup is under way, before it answers. */
         var during: () -> Unit = {}
+        /** Awaited by a lookup before it answers, when set. */
+        var gate: CompletableDeferred<Unit>? = null
         val asked: MutableList<RatingsLookup> = Collections.synchronizedList(mutableListOf())
 
         override fun isOn() = on
@@ -72,6 +76,7 @@ class ExternalRatingsLoadingTest {
         override suspend fun ratings(lookup: RatingsLookup): List<ExternalRating> {
             asked += lookup
             during()
+            gate?.await()
             return if (on && allowed) answer else emptyList()
         }
 
@@ -168,19 +173,29 @@ class ExternalRatingsLoadingTest {
     @Test
     fun `a lookup that comes back after a reload uses the reload's Rotten Tomatoes rule`() =
         runBlocking {
-            val viewModel = loaded()
-            ratings.during = {
-                // The page is loaded again while the lookup runs, with the score switched off.
-                switchedOff += "pref_detail_critic_rating"
-                viewModel.loadMovie(itemId)
-            }
-            viewModel.loadRelated(itemId)
-            val state =
-                withTimeout(5_000) {
-                    viewModel.state.first { it.externalRatings is ExternalRatingsState.Shown }
+            val gate = CompletableDeferred<Unit>()
+            ratings.gate = gate
+            val updates = mutableListOf<ExternalRatingsState>()
+            val loader =
+                ExternalRatingsLoader(ratings, CoroutineScope(UnconfinedTestDispatcher())) {
+                    updates += it
                 }
-            assertEquals(ExternalRatingsState.Shown(listOf(imdb)), state.externalRatings)
-            assertEquals(1, ratings.asked.size)
+            val lookup = movie().ratingsLookup()
+            val first =
+                loader.onItemLoaded(
+                    itemId,
+                    lookup,
+                    ExternalRatingsState.Hidden,
+                    rottenTomatoes = true,
+                )
+            loader.load(itemId, lookup, rottenTomatoes = true)
+            // The page is loaded again while the lookup waits, with the score switched off.
+            loader.onItemLoaded(itemId, lookup, first, rottenTomatoes = false)
+            gate.complete(Unit)
+            assertEquals(
+                listOf<ExternalRatingsState>(ExternalRatingsState.Shown(listOf(imdb))),
+                updates,
+            )
         }
 
     @Test
