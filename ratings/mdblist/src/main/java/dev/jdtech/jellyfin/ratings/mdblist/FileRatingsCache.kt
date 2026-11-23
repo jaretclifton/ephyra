@@ -83,15 +83,13 @@ class FileRatingsCache(private val directory: File) : RatingsCache {
                     },
                 )
             }
-            // A temp file of its own per write, so two writes of one title can't mix.
+            // A temp file of its own per write, so two writes of one title can't mix. The move is
+            // a rename in one directory: atomic, so a reader or a crash sees the old entry or the
+            // new one. Where it can't be atomic, the write fails and the old entry stays.
             val temp = File.createTempFile("${lookup.key}-", ".tmp", directory)
             try {
                 temp.writeText(stored.toString())
-                Files.move(
-                    temp.toPath(),
-                    file(lookup).toPath(),
-                    StandardCopyOption.REPLACE_EXISTING,
-                )
+                Files.move(temp.toPath(), file(lookup).toPath(), StandardCopyOption.ATOMIC_MOVE)
             } finally {
                 temp.delete()
             }

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.recalculateWindowInsets
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -32,6 +33,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -91,7 +93,7 @@ private fun ExternalRatingsScreenLayout(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             painter = painterResource(CoreR.drawable.ic_arrow_left),
-                            contentDescription = null,
+                            contentDescription = stringResource(CoreR.string.navigate_back),
                         )
                     }
                 },
@@ -106,21 +108,23 @@ private fun ExternalRatingsScreenLayout(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Column(modifier = Modifier.widthIn(max = Layout.settingsMaxWidth).fillMaxWidth()) {
+                // The whole row is the switch, so TalkBack reads its label with it.
                 ListItem(
+                    modifier =
+                        Modifier.toggleable(
+                            value = state.enabled,
+                            role = Role.Switch,
+                            onValueChange = {
+                                onAction(ExternalRatingsSettingsAction.SetEnabled(it))
+                            },
+                        ),
                     headlineContent = {
                         Text(stringResource(SettingsR.string.ce_external_ratings_switch))
                     },
                     supportingContent = {
                         Text(stringResource(SettingsR.string.ce_pref_external_ratings_summary))
                     },
-                    trailingContent = {
-                        Switch(
-                            checked = state.enabled,
-                            onCheckedChange = {
-                                onAction(ExternalRatingsSettingsAction.SetEnabled(it))
-                            },
-                        )
-                    },
+                    trailingContent = { Switch(checked = state.enabled, onCheckedChange = null) },
                 )
                 // In line with the switch's ListItem.
                 val padding = MaterialTheme.spacings.medium

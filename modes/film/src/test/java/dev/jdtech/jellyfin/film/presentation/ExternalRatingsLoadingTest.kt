@@ -166,6 +166,24 @@ class ExternalRatingsLoadingTest {
     }
 
     @Test
+    fun `a lookup that comes back after a reload uses the reload's Rotten Tomatoes rule`() =
+        runBlocking {
+            val viewModel = loaded()
+            ratings.during = {
+                // The page is loaded again while the lookup runs, with the score switched off.
+                switchedOff += "pref_detail_critic_rating"
+                viewModel.loadMovie(itemId)
+            }
+            viewModel.loadRelated(itemId)
+            val state =
+                withTimeout(5_000) {
+                    viewModel.state.first { it.externalRatings is ExternalRatingsState.Shown }
+                }
+            assertEquals(ExternalRatingsState.Shown(listOf(imdb)), state.externalRatings)
+            assertEquals(1, ratings.asked.size)
+        }
+
+    @Test
     fun `the first load keeps room and asks for nothing`() {
         val viewModel = loaded()
         assertEquals(ExternalRatingsState.Pending, viewModel.state.value.externalRatings)

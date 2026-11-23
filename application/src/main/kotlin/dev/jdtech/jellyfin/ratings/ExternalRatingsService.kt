@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.ratings
 import dev.jdtech.jellyfin.domain.ratings.ExternalRating
 import dev.jdtech.jellyfin.domain.ratings.RatingsLookup
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -27,7 +28,8 @@ class ExternalRatingsService(
     private val clock: () -> Long = System::currentTimeMillis,
 ) : ExternalRatings {
     @Volatile private var rejectedKey: String? = null
-    @Volatile private var blockedUntil = 0L
+    /** No request before this time (a 429). Only ever moved later, also by concurrent 429s. */
+    private val blockedUntil = AtomicLong(0L)
     private val failedAt = ConcurrentHashMap<String, Long>()
     /** Titles this process has seen ratings for, in the cache or from the service. Memory only. */
     private val rated = ConcurrentHashMap.newKeySet<String>()
@@ -44,7 +46,8 @@ class ExternalRatingsService(
     private fun sendableKey(lookup: RatingsLookup): String? {
         val key = key() ?: return null
         val now = clock()
-        if (key == rejectedKey || now < blockedUntil || recentlyFailed(lookup, now)) return null
+        if (key == rejectedKey || now < blockedUntil.get() || recentlyFailed(lookup, now))
+            return null
         return key
     }
 
@@ -134,7 +137,7 @@ class ExternalRatingsService(
     private fun backOff(retryAfterSeconds: Long?) {
         val wait =
             retryAfterSeconds?.coerceAtMost(MAX_BACKOFF_SECONDS)?.times(1000) ?: DEFAULT_BACKOFF_MS
-        blockedUntil = maxOf(blockedUntil, clock() + wait)
+        blockedUntil.accumulateAndGet(clock() + wait) { current, next -> maxOf(current, next) }
     }
 
     companion object {

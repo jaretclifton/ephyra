@@ -43,6 +43,11 @@ class ExternalRatingsLoader(
     private var loadedFor: ItemId? = null
     /** The ratings [loadedFor] got, before the Rotten Tomatoes rule; null while loading. */
     private var loaded: List<ExternalRating>? = null
+    /**
+     * The Rotten Tomatoes rule of the latest [onItemLoaded] or [load]: a lookup that comes back
+     * after a reload changed it uses the new one.
+     */
+    @Volatile private var rottenTomatoes = true
     private var job: Job? = null
 
     /**
@@ -56,6 +61,7 @@ class ExternalRatingsLoader(
         current: ExternalRatingsState,
         rottenTomatoes: Boolean,
     ): ExternalRatingsState {
+        this.rottenTomatoes = rottenTomatoes
         if (lookup == null || !source.isOn()) {
             reset()
             return ExternalRatingsState.Hidden
@@ -72,6 +78,7 @@ class ExternalRatingsLoader(
      * a later load of the page tries again, once the source allows it.
      */
     fun load(itemId: ItemId, lookup: RatingsLookup?, rottenTomatoes: Boolean) {
+        this.rottenTomatoes = rottenTomatoes
         if (lookup == null || loadedFor == itemId || !source.isOn()) return
         loadedFor = itemId
         loaded = null
@@ -96,7 +103,7 @@ class ExternalRatingsLoader(
                 ratings.isEmpty() && !source.canRequest(lookup) -> loadedFor = null
                 else -> loaded = ratings
             }
-            update(stateOf(ratings, rottenTomatoes))
+            update(stateOf(ratings, this@ExternalRatingsLoader.rottenTomatoes))
         }
     }
 
