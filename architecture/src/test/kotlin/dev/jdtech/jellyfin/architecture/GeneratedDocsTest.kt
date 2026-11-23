@@ -28,12 +28,29 @@ class GeneratedDocsTest {
     @Test fun `the rules page is up to date`() = check(RULES_PAGE, ArchitectureModel.rulesPage())
 
     @Test
-    fun `every module has a layer`() {
-        val missing = ArchitectureModel.modules().filter { it !in ArchitectureModel.LAYERS }
-        if (missing.isNotEmpty()) {
+    fun `every module has an entry`() {
+        val modules = ArchitectureModel.modules()
+        val problems = buildList {
+            for (module in modules.filter { it !in ArchitectureModel.MODULES }) {
+                add(
+                    "No entry for the module $module. Add a line to ArchitectureModel.MODULES in " +
+                        "architecture/src/test/kotlin/dev/jdtech/jellyfin/architecture/" +
+                        "GeneratedDocsTest.kt: \"$module\" to Module(Layer.FEATURE, \"What it is, " +
+                        "in one plain sentence.\"), with the layer one of " +
+                        "${ArchitectureModel.Layer.entries.joinToString()}."
+                )
+            }
+            for (module in ArchitectureModel.MODULES.keys.filter { it !in modules }) {
+                add(
+                    "ArchitectureModel.MODULES has an entry for $module, which is no module: remove it."
+                )
+            }
+        }
+        if (problems.isNotEmpty()) {
             fail(
-                "No layer for ${missing.joinToString()}: add it to ArchitectureModel.LAYERS, " +
-                    "then regenerate the docs (see GeneratedDocsTest)."
+                problems.joinToString("\n") +
+                    "\nThen regenerate the docs and commit them: " +
+                    "`$WRITE=1 ./gradlew :architecture:test --rerun --tests '*GeneratedDocsTest*'`"
             )
         }
     }
@@ -98,30 +115,84 @@ class GeneratedDocsTest {
 object ArchitectureModel {
 
     /**
-     * The layer of each module: how the model groups and colours it. A new module fails `every
-     * module has a layer` until it is added here.
+     * Each module: its layer (how the model groups and colours it) and what it is, in one plain
+     * sentence (its description in the model and the "What" column of modules.md). A new module
+     * fails `every module has an entry` until it is added here.
      */
-    val LAYERS: Map<String, Layer> =
+    val MODULES: Map<String, Module> =
         mapOf(
-            "app/phone" to Layer.APP,
-            "app/tv" to Layer.APP,
-            "modes/film" to Layer.FEATURE,
-            "setup" to Layer.FEATURE,
-            "settings" to Layer.FEATURE,
-            "player/local" to Layer.FEATURE,
-            "player/cast" to Layer.FEATURE,
-            "player/core" to Layer.FEATURE,
-            "core" to Layer.FEATURE,
-            "downloads" to Layer.FEATURE,
-            "application" to Layer.APPLICATION,
-            "domain" to Layer.DOMAIN,
-            "data" to Layer.ADAPTER,
-            "server/jellyfin" to Layer.ADAPTER,
-            "testing" to Layer.TOOLING,
-            "architecture" to Layer.TOOLING,
-            "baselineprofile" to Layer.TOOLING,
-            "baselineprofile-tv" to Layer.TOOLING,
+            "app/phone" to
+                Module(
+                    Layer.APP,
+                    "The phone app: screens, navigation and layouts; with app/tv the composition root.",
+                ),
+            "app/tv" to Module(Layer.APP, "The Android TV app, with its own screens."),
+            "modes/film" to
+                Module(
+                    Layer.FEATURE,
+                    "The view models of home, library, search, the item screens and downloads.",
+                ),
+            "setup" to Module(Layer.FEATURE, "Finding a server and signing in."),
+            "settings" to Module(Layer.FEATURE, "The app's preferences and the settings screen."),
+            "player/local" to
+                Module(
+                    Layer.FEATURE,
+                    "The player: PlayerViewModel and playback, on ExoPlayer or mpv behind PlayerEngine.",
+                ),
+            "player/cast" to
+                Module(
+                    Layer.FEATURE,
+                    "Google Cast: the session and playback on a receiver (stubs in the libre flavour).",
+                ),
+            "player/core" to
+                Module(Layer.FEATURE, "The player models shared by the player and its callers."),
+            "core" to
+                Module(
+                    Layer.FEATURE,
+                    "Hilt modules, the server in use, its session and reachability, the sync, shared Composables.",
+                ),
+            "downloads" to
+                Module(
+                    Layer.FEATURE,
+                    "The download engine, the download queue and smart downloads.",
+                ),
+            "application" to
+                Module(
+                    Layer.APPLICATION,
+                    "Pure Kotlin: MediaRepository, the store ports and the event flows.",
+                ),
+            "domain" to
+                Module(
+                    Layer.DOMAIN,
+                    "Pure Kotlin: the models, the ids, the rules of user data and downloads, the server ports.",
+                ),
+            "data" to
+                Module(
+                    Layer.ADAPTER,
+                    "Room: the database, the stores, and MediaRepositoryImpl over the server's ports.",
+                ),
+            "server/jellyfin" to
+                Module(
+                    Layer.ADAPTER,
+                    "The Jellyfin adapter, the only module with the Jellyfin SDK.",
+                ),
+            "testing" to
+                Module(
+                    Layer.TOOLING,
+                    "Test only: a fake server and the contract suites a server adapter passes.",
+                ),
+            "architecture" to
+                Module(
+                    Layer.TOOLING,
+                    "The Konsist rules over the source tree, and the generated architecture docs.",
+                ),
+            "baselineprofile" to
+                Module(Layer.TOOLING, "The baseline profile and startup benchmark of app/phone."),
+            "baselineprofile-tv" to
+                Module(Layer.TOOLING, "The baseline profile and startup benchmark of app/tv."),
         )
+
+    data class Module(val layer: Layer, val what: String)
 
     enum class Layer(val kind: String, val title: String) {
         APP("app", "Apps (composition root)"),
@@ -167,7 +238,20 @@ object ArchitectureModel {
             .mapIndexed { i, part -> if (i == 0) part else part.replaceFirstChar(Char::uppercase) }
             .joinToString("")
 
-    private fun layerOf(module: String): Layer = LAYERS[module] ?: Layer.TOOLING
+    private fun layerOf(module: String): Layer = MODULES[module]?.layer ?: Layer.TOOLING
+
+    private fun whatOf(module: String): String = MODULES[module]?.what.orEmpty()
+
+    /**
+     * The modules every module may use. Both overviews leave out the arrows into them, except
+     * application → domain, so the graph shows the dependencies that say something.
+     */
+    private val SHARED = setOf("domain", "application")
+
+    private fun inOverview(dep: Dependency): Boolean =
+        dep.to !in SHARED || (dep.from == "application" && dep.to == "domain")
+
+    private fun likeC4String(text: String): String = text.replace("\\", "\\\\").replace("'", "\\'")
 
     private fun header(comment: String) =
         "$comment Generated by architecture/…/GeneratedDocsTest.kt from the build files and the rule tests. Don't edit:\n" +
@@ -179,7 +263,7 @@ object ArchitectureModel {
         for (module in modules()) {
             val layer = layerOf(module)
             append("    ${idOf(module)} = ${layer.kind} '$module' {\n")
-            append("      description '${layer.title}'\n")
+            append("      description '${likeC4String(whatOf(module))}'\n")
             append("      link https://github.com/midasvo/ephyra/tree/main/$module 'Source'\n")
             append("    }\n")
         }
@@ -198,8 +282,10 @@ object ArchitectureModel {
         append("\n\n")
         append(
             "The Gradle modules and what each depends on, read from their `build.gradle.kts`. " +
-                "The graph leaves out test-only dependencies (`testImplementation`, …) and the " +
-                "arrows of the apps, which depend on every module (see the table). " +
+                "The graph leaves out test-only dependencies (`testImplementation`, …), the " +
+                "arrows of the apps, which depend on every module, and the arrows into `domain` " +
+                "and `application`, which every module may use (`application` → `domain` " +
+                "stays). The table has every dependency. " +
                 "The rules that guard these arrows are in [rules.md](rules.md); the interactive " +
                 "model is [model/](model/).\n\n"
         )
@@ -213,21 +299,33 @@ object ArchitectureModel {
         }
         val shown = modules().filter { layerOf(it) != Layer.TOOLING }.toSet()
         val arrows = deps.filter {
-            !it.test && it.from in shown && it.to in shown && layerOf(it.from) != Layer.APP
+            !it.test &&
+                it.from in shown &&
+                it.to in shown &&
+                layerOf(it.from) != Layer.APP &&
+                inOverview(it)
         }
         for (dep in arrows) {
             append("  ${idOf(dep.from)} --> ${idOf(dep.to)}\n")
         }
         append("```\n\n")
-        append("| Module | Layer | Depends on | Test-only |\n|---|---|---|---|\n")
+        append("| Module | Layer | What | Depends on | Test-only |\n|---|---|---|---|---|\n")
         for (module in modules()) {
             val prod = deps.filter { it.from == module && !it.test }.joinToString { "`${it.to}`" }
             val test = deps.filter { it.from == module && it.test }.joinToString { "`${it.to}`" }
-            append("| `$module` | ${layerOf(module).title} | $prod | $test |\n")
+            val what = whatOf(module).replace("|", "\\|")
+            append("| `$module` | ${layerOf(module).title} | $what | $prod | $test |\n")
         }
     }
 
-    data class Rule(val id: String, val tests: List<String>, val files: List<String>)
+    data class Rule(val id: String, val tests: List<String>, val files: List<String>) {
+        /** What the rule says: the names of its tests, but those that test the scanner itself. */
+        val statements: List<String>
+            get() = tests.filterNot { name -> SCANNER_TESTS.any { name.startsWith("$it ") } }
+    }
+
+    /** The first word of a rule test that checks the scanner, not the tree: `R13 finds …`. */
+    private val SCANNER_TESTS = listOf("finds", "counts", "skips")
 
     private val RULE_TEST = Regex("""fun `(R\d+) ([^`]*)`""")
 
@@ -260,13 +358,18 @@ object ArchitectureModel {
             "The Konsist rules in `architecture/`, read from the names of their tests. Run them " +
                 "with `./gradlew :architecture:test` (also part of `testDebugUnitTest`). When one " +
                 "fails, fix the code: the two files in `architecture/baseline/` are allowlists, " +
-                "not debt. Why each rule exists is in [README.md](README.md#the-rules) and the " +
-                "ADRs.\n\n"
+                "not debt. A rule says what each of its tests checks; the tests of the scanner " +
+                "itself (`finds …`, `counts …`, `skips …`) are left out. Why each rule exists is " +
+                "in [README.md](README.md#the-rules) and the ADRs.\n\n"
         )
         append("| Rule | Says | Tests |\n|---|---|---|\n")
         for (rule in rules()) {
             val links = rule.files.joinToString { "[${it.substringAfterLast('/')}](../../$it)" }
-            append("| ${rule.id} | ${rule.tests.first().replace("|", "\\|")} | $links |\n")
+            val says =
+                rule.statements
+                    .ifEmpty { rule.tests }
+                    .joinToString("<br>") { it.replace("|", "\\|") }
+            append("| ${rule.id} | $says | $links |\n")
         }
     }
 }
