@@ -48,7 +48,8 @@ app/phone        — Phone UI: screens, navigation, Compose layouts
 app/tv           — TV UI: separate screen implementations for Android TV
 core             — Shared DI modules, DownloaderViewModel, MainViewModel, common Composables
 domain           — pure Kotlin: the app's own models and the ports. No Android, no SDK
-data             — MediaRepository interface + Room database + the repository over a server's ports. No SDK
+application      — pure Kotlin: MediaRepository and its event flows (DataChangeEvents, ReloadPolicy, …), which features use instead of data
+data             — Room database + the repository over a server's ports (MediaRepositoryImpl). No SDK. Only the apps depend on it (rule R9, baseline core, modes/film, setup)
 server/jellyfin  — the Jellyfin adapter: the only module with the Jellyfin SDK (JellyfinApi, mappers, ports, device profiles) and its own Hilt module. Only app/phone and app/tv depend on it
 modes/film       — Feature ViewModels and State/Action classes for home, library, search, episode, movie, show, season
 player/core      — Player models shared by the player and its callers (PlayerItem, Track, Trickplay)
