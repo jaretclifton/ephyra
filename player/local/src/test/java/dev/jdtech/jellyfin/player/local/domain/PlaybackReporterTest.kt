@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.player.local.domain
 
 import androidx.media3.common.C
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
@@ -84,6 +85,7 @@ class PlaybackReporterTest {
                     itemId: ItemId,
                     playSessionId: String?,
                     transcodes: Boolean,
+                    mediaSourceId: MediaSourceId?,
                 ) {
                     record("session $itemId $playSessionId $transcodes")
                 }

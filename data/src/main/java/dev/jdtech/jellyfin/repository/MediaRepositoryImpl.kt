@@ -715,8 +715,12 @@ class MediaRepositoryImpl(
         server.playback.announceCapabilities()
     }
 
-    override fun setPlaySession(itemId: ItemId, playSessionId: String?, transcodes: Boolean) =
-        playSessions.onPlaybackInfo(itemId, playSessionId, transcodes)
+    override fun setPlaySession(
+        itemId: ItemId,
+        playSessionId: String?,
+        transcodes: Boolean,
+        mediaSourceId: MediaSourceId?,
+    ) = playSessions.onPlaybackInfo(itemId, playSessionId, transcodes, mediaSourceId)
 
     override suspend fun postPlaybackStart(
         itemId: ItemId,
@@ -741,6 +745,7 @@ class MediaRepositoryImpl(
                         isPaused = false,
                         transcoded = report.transcoded,
                         playSessionId = report.playSessionId,
+                        mediaSourceId = playSessions.sourceOf(itemId),
                     )
                 )
             }
@@ -772,6 +777,7 @@ class MediaRepositoryImpl(
                         transcoded = false,
                         // With it the server ends the item's transcode now, not a minute later.
                         playSessionId = playSessions.sessionOf(itemId),
+                        mediaSourceId = playSessions.sourceOf(itemId),
                     )
                 )
             }
@@ -809,6 +815,7 @@ class MediaRepositoryImpl(
                             isPaused = isPaused,
                             transcoded = report.transcoded,
                             playSessionId = report.playSessionId,
+                            mediaSourceId = playSessions.sourceOf(itemId),
                         )
                     )
                 },

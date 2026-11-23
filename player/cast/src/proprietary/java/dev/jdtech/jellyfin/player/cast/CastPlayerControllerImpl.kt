@@ -549,6 +549,7 @@ constructor(
                         itemId,
                         playback.playSessionId,
                         transcodes = playback.transcoded,
+                        mediaSourceId = playback.mediaSourceId,
                     )
                 }
                 val tracks = playback?.tracks(audioIndex, subtitleTrackId)
@@ -626,7 +627,7 @@ constructor(
 
         val source = receiverSource(item, audioStreamIndex) ?: return null
         val isTranscoded = source.transcoded
-        repository.setPlaySession(item.itemId, source.playSessionId, isTranscoded)
+        repository.setPlaySession(item.itemId, source.playSessionId, isTranscoded, source.id)
 
         val isEpisode = item.seriesName != null
         val mediaMetadata =

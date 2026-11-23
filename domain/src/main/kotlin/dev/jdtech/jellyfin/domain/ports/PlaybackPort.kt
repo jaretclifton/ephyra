@@ -34,6 +34,9 @@ data class PlaybackRequest(
  * [positionTicks] is where the player is when the report is sent; a start sends it as the web
  * client does (#868). Only a start may leave it `null`, which sends no position: the Cast start,
  * whose receiver's position is not read.
+ *
+ * [mediaSourceId] is the version that plays (#909), as the web client sends it: without it the
+ * server shows the item's first version. `null` names none.
  */
 data class PlaybackReport(
     val itemId: ItemId,
@@ -41,6 +44,7 @@ data class PlaybackReport(
     val isPaused: Boolean,
     val transcoded: Boolean,
     val playSessionId: String?,
+    val mediaSourceId: MediaSourceId? = null,
 )
 
 /**

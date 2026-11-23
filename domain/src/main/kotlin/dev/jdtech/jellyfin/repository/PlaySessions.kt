@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.repository
 
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.MediaSourceId
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -10,17 +11,33 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class PlaySessions {
     private val sessions = ConcurrentHashMap<ItemId, String>()
+    private val sources = ConcurrentHashMap<ItemId, MediaSourceId>()
 
     /**
      * Records the session of the stream that plays [itemId] now (see the repository's
      * `setPlaySession`). A source that plays directly has no transcode to end, so its session is
      * not kept. A new stream for the same item (a quality switch) replaces the session: the stream
      * it replaces is left to the server's timer, the server has no call to end it.
+     *
+     * CE (#909): [mediaSourceId] is the version that stream is of, which every report names, so the
+     * server shows the version that plays, not the item's first one. `null` names none.
      */
-    fun onPlaybackInfo(itemId: ItemId, playSessionId: String?, transcodes: Boolean) {
+    fun onPlaybackInfo(
+        itemId: ItemId,
+        playSessionId: String?,
+        transcodes: Boolean,
+        mediaSourceId: MediaSourceId? = null,
+    ) {
         val session = playSessionId?.takeIf { transcodes && it.isNotBlank() }
         if (session != null) sessions[itemId] = session else sessions.remove(itemId)
+        if (mediaSourceId != null) sources[itemId] = mediaSourceId else sources.remove(itemId)
     }
+
+    /**
+     * CE (#909): the version that plays [itemId], or `null` when none was recorded. Kept after a
+     * stop, like the session.
+     */
+    fun sourceOf(itemId: ItemId): MediaSourceId? = sources[itemId]
 
     /**
      * The transcode session of [itemId], or `null` when it plays directly. Kept after a stop: the
