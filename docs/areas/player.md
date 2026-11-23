@@ -65,7 +65,7 @@ On a device, on the test server ([docs/dev-environment.md](../dev-environment.md
 - **Plain Movie**, **Short Movie** (ends at once), **Long Movie**, **Resume Show** (4 episodes, resume positions).
 - **Versions Movie**: two versions (360p, 720p), for version and trickplay questions (#860).
 - **Hevc Movie**, **Hdr Ten Movie** for decoders.
-- Quality switch: a cap below the file's bitrate. Slow link: emulator at 3G, or a proxy that delays one request (#860, #890).
+- Quality switch: a cap below the file's bitrate. Slow link: emulator at 3G (#860). A held request (#890): see [playback-reporting.md](playback-reporting.md#how-to-test-it).
 - A real device for refresh rate, HDR and Dolby Vision. mpv needs software rendering on an emulator. Mute first.
 
 [docs/mpv-checklist.md](../mpv-checklist.md) is the list: resume, from 0, seek, media session, refresh rate vote (`dumpsys SurfaceFlinger`), back out; plus playlist, autoplay, quality switch and slow link when the PR touches them.

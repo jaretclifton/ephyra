@@ -20,7 +20,7 @@ While an item plays, the app tells the server three things, so its dashboard, "n
 - **Progress** (`.../Progress`): every 5 s while playing, and at once on pause and resume (#674). One at a time; a newer one replaces a waiting one.
 - **Stop** (`.../Stopped`): when the item is left (next, previous, end, close). It carries the play session, so the server ends a transcode at once.
 
-Order matters. A stop that arrives before its start can clear the session. So a stop waits up to 5 s for its start (`START_REPORT_WAIT_MS`), progress waits for the start, and the next item's start waits for the previous stop (`stopJob?.join()` in `PlayerViewModel.onMediaItemTransition`).
+Order matters, in two ways. Between items: the previous item's stop must reach the server before the next item's start, or it can clear the session's now-playing item; `stopJob?.join()` in `PlayerViewModel.onMediaItemTransition` holds the start until then. Within one item: a stop waits up to 5 s for its own start (`START_REPORT_WAIT_MS`), and progress waits for the start.
 
 Progress and stop also write user data through `reportUserData`: a downloaded item gets its position and a `toBeSynced` mark ([user-data](user-data.md)). The start writes nothing locally.
 
@@ -65,7 +65,7 @@ On a device: the test server (`test-server` skill, `docs/dev-environment.md`). W
 - Versions Movie: pick a version, play, read the session (#909).
 - Plain Movie: start, pause, resume, leave: one start, progress, one stop at the right position.
 - A quality switch on both ExoPlayer and mpv: one new start after each switch (#870).
-- Next while a slow server holds the stop, with `python3 tools/test-server/forward.py 8097 8096 600` (#890).
+- Next while the server holds the stop (#890): `tools/test-server/forward.py` cannot hold one request: its rate limit slows a long answer, but a small one passes in one chunk. Hold the call in a unit test instead, with a fake whose call suspends until the test releases it (`postPlaybackStop` in the `PlaybackReporter` tests), switch during the wait and count the starts and their play method.
 - Leave while the item loads: no start, progress or stop for it.
 
 ## Before a PR

@@ -54,7 +54,7 @@ Playback reports are the other flow: [playback-reporting](playback-reporting.md)
 On a device (`docs/dev-environment.md`, `test-server` skill): users `tester` and `second` on one server, a downloaded Short Movie for both (so both have a row), Resume Show for positions. Marking items on the server is free during tests.
 
 - Server away: `adb root`, `adb shell iptables -I OUTPUT -d 10.0.2.2 -p tcp --dport 8096 -j REJECT --reject-with tcp-reset` (`-D` undoes it). Mark the item played, unplayed, favourite; watch part of it. The row keeps `toBeSynced`; with the server back the sync sends it.
-- A slow server to hold a request open: `python3 tools/test-server/forward.py 8097 8096 600`, log in on port 8097 ([downloads](downloads.md)).
+- A request held open (#907): `tools/test-server/forward.py` cannot hold one request: its rate limit slows a long answer, but a small one passes in one chunk. Hold the call in a unit test instead, with a fake whose call suspends until the test releases it (the server port in the `data` tests), switch the user during the wait and read the rows.
 - Look at the rows with `run-as nl.midasvo.findroid.ce.debug` on the database: `userdata` has `played`, `favorite`, `playbackPositionTicks`, `lastPlayedDate`, `toBeSynced`.
 
 ## Before a PR
