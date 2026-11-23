@@ -37,6 +37,7 @@ import org.robolectric.annotation.Config
 class PlayStateWritesTest {
     private val userId = "00000000-0000-0000-0000-000000000001".toUserId()
     private val movieId = "00000000-0000-0000-0000-000000000040".toItemId()
+    private val otherUserId = "00000000-0000-0000-0000-000000000002".toUserId()
 
     private val context: Context = RuntimeEnvironment.getApplication()
     private val room =
@@ -47,28 +48,32 @@ class PlayStateWritesTest {
 
     private val sent = mutableListOf<String>()
 
+    /** Runs while the server takes a played or unplayed mark, before it answers. */
+    private var whileMarking: () -> Unit = {}
+
+    private val unanswered = UnansweredServer(userId)
+
     /** Answers the marks and the stop; anything else fails as [UnansweredServer] does. */
     private val server: MediaServer =
-        UnansweredServer(userId).let { unanswered ->
-            object : MediaServer by unanswered {
-                override val userData =
-                    object : UserDataPort {
-                        override suspend fun setFavorite(itemId: ItemId, favorite: Boolean) {
-                            sent += "favorite $favorite"
-                        }
-
-                        override suspend fun setPlayed(itemId: ItemId, played: Boolean) {
-                            sent += "played $played"
-                        }
+        object : MediaServer by unanswered {
+            override val userData =
+                object : UserDataPort {
+                    override suspend fun setFavorite(itemId: ItemId, favorite: Boolean) {
+                        sent += "favorite $favorite"
                     }
 
-                override val playback =
-                    object : PlaybackPort by unanswered.playback {
-                        override suspend fun reportStopped(report: PlaybackReport) {
-                            sent += "stopped ${report.positionTicks}"
-                        }
+                    override suspend fun setPlayed(itemId: ItemId, played: Boolean) {
+                        whileMarking()
+                        sent += "played $played"
                     }
-            }
+                }
+
+            override val playback =
+                object : PlaybackPort by unanswered.playback {
+                    override suspend fun reportStopped(report: PlaybackReport) {
+                        sent += "stopped ${report.positionTicks}"
+                    }
+                }
         }
 
     private val repository: MediaRepository by lazy {
@@ -127,6 +132,22 @@ class PlayStateWritesTest {
         assertEquals(listOf("played false"), sent)
         assertEquals(played.copy(played = false, lastPlayedDate = null), row())
     }
+
+    @Test
+    fun `an unplayed mark during a profile switch clears the date of the user who marked it`() =
+        runBlocking {
+            // #907: the other user's profile is opened while the unplayed request waits for the
+            // server. The date to clear is the marking user's, not the other user's.
+            storeMovie(played)
+            val other = played.copy(userId = otherUserId, lastPlayedDate = 2_000L)
+            database.insertUserData(other)
+            whileMarking = { unanswered.userId = otherUserId }
+
+            repository.markAsUnplayed(movieId)
+
+            assertEquals(played.copy(played = false, lastPlayedDate = null), row())
+            assertEquals(other, database.getUserData(movieId, otherUserId))
+        }
 
     @Test
     fun `a favourite the server got changes only the favourite`() = runBlocking {
