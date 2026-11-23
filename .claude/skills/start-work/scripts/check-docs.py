@@ -207,12 +207,17 @@ def check_gradle(text: str, problems: list[str]) -> None:
             )
     for quoted1, quoted2, bare in re.findall(r"""--tests\s+(?:'([^']+)'|"([^"]+)"|([\w.*]+))""", text):
         pattern = quoted1 or quoted2 or bare
-        # The class of `a.b.FooTest`, `*.FooTest` and `*.FooTest.aMethod`: the last part that
-        # starts with a capital or is a pattern of its own (`*Subtitle*`); a bare `*` says nothing.
-        parts = [x for x in pattern.split(".") if x != "*" and (x[0].isupper() or x[0] == "*")]
-        if not parts:
+        # The class of `a.b.FooTest`, `*.FooTest` and `FooTest.*aMethod*`: the first part that
+        # starts with a capital (packages do not). A filter of one part is the class itself
+        # (`*Subtitle*`). Anything else names no class this check can look up.
+        parts = [x for x in pattern.split(".") if x and x != "*"]
+        named = [x for x in parts if x[0].isupper()]
+        if named:
+            cls = named[0]
+        elif len(parts) == 1:
+            cls = parts[0]
+        else:
             continue
-        cls = parts[-1]
         rx = re.compile("^" + ".*".join(map(re.escape, cls.split("*"))) + "$")
         if not any(rx.match(name) for name in TEST_CLASSES):
             problems.append(f"--tests '{pattern}' matches no test class")
