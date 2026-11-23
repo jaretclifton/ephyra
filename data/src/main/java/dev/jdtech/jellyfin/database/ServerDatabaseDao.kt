@@ -6,6 +6,7 @@ import androidx.room3.OnConflictStrategy
 import androidx.room3.Query
 import androidx.room3.Transaction
 import androidx.room3.Update
+import dev.jdtech.jellyfin.domain.userdata.PlayState
 import dev.jdtech.jellyfin.models.EpisodeEntity
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSourceEntity
@@ -27,6 +28,7 @@ import dev.jdtech.jellyfin.models.StoredItemDate
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toPlayState
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
@@ -310,15 +312,39 @@ interface ServerDatabaseDao {
     )
     suspend fun setLastPlayedDate(userId: UserId, itemId: ItemId, lastPlayedDate: Long?)
 
-    /**
-     * CE (#633): sets when the item was last played only when that is unknown, as the server does
-     * when an item is marked played without a date.
-     */
+    /** #898: writes a play state that [updatePlayState] computed. */
     @Query(
-        "UPDATE userdata SET lastPlayedDate = COALESCE(lastPlayedDate, :now) " +
+        "UPDATE userdata SET played = :played, favorite = :favorite, " +
+            "playbackPositionTicks = :playbackPositionTicks, lastPlayedDate = :lastPlayedDate " +
             "WHERE userId = :userId AND itemId = :itemId"
     )
-    suspend fun setLastPlayedDateIfUnknown(userId: UserId, itemId: ItemId, now: Long)
+    suspend fun setPlayState(
+        userId: UserId,
+        itemId: ItemId,
+        played: Boolean,
+        favorite: Boolean,
+        playbackPositionTicks: Long,
+        lastPlayedDate: Long?,
+    )
+
+    /**
+     * #898: reads the play state of [itemId]'s row, asks [change] what to write and writes it, in
+     * one transaction. The rules are in [PlayState]; this only applies them. Without a row (the
+     * item is not stored) or when [change] answers null, nothing is written.
+     */
+    @Transaction
+    suspend fun updatePlayState(userId: UserId, itemId: ItemId, change: (PlayState) -> PlayState?) {
+        val row = getUserData(itemId, userId) ?: return
+        val next = change(row.toPlayState()) ?: return
+        setPlayState(
+            userId = userId,
+            itemId = itemId,
+            played = next.played,
+            favorite = next.favorite,
+            playbackPositionTicks = next.positionTicks,
+            lastPlayedDate = next.lastPlayedMillis,
+        )
+    }
 
     @Query("SELECT * FROM movies ORDER BY name ASC") suspend fun getMovies(): List<MovieEntity>
 

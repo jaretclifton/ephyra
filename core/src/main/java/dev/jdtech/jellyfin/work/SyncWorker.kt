@@ -12,6 +12,10 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.ServerUserData
 import dev.jdtech.jellyfin.domain.ports.UserDataSyncPort
 import dev.jdtech.jellyfin.domain.ports.UserDataSyncPorts
+import dev.jdtech.jellyfin.domain.userdata.PlayState
+import dev.jdtech.jellyfin.domain.userdata.SyncMerge
+import dev.jdtech.jellyfin.domain.userdata.mergeWithServer
+import dev.jdtech.jellyfin.domain.userdata.refreshedFromServer
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.ServerType
@@ -19,6 +23,7 @@ import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.serverExceptionOrNull
+import dev.jdtech.jellyfin.models.toPlayState
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import java.time.Instant
@@ -154,16 +159,17 @@ constructor(
         if (itemIds.isEmpty()) return 0
         var changed = 0
         try {
-            val onServer = port.userDataOf(itemIds)
-            for (userData in serverUserDataToStore(onServer, playbackEvents.playingItemId.value)) {
+            val onServer = port.userDataOf(itemIds).mapValues { it.value.toPlayState() }
+            val toStore = refreshedFromServer(onServer, playbackEvents.playingItemId.value)
+            for ((itemId, state) in toStore) {
                 changed +=
                     database.refreshUserDataFromServer(
                         userId = userId,
-                        itemId = userData.itemId,
-                        played = userData.played,
-                        favorite = userData.favorite,
-                        playbackPositionTicks = userData.playbackPositionTicks,
-                        lastPlayedDate = userData.lastPlayedMillis(),
+                        itemId = itemId,
+                        played = state.played,
+                        favorite = state.favorite,
+                        playbackPositionTicks = state.positionTicks,
+                        lastPlayedDate = state.lastPlayedMillis,
                     )
             }
             Timber.d("Refreshed the user data of ${itemIds.size} downloads, $changed changed")
@@ -180,36 +186,35 @@ constructor(
     }
 
     /**
-     * CE (#635): [row] was played here before another device played the item ([server] is newer),
-     * so the server's progress wins: it is copied into the row and nothing of the phone's progress
-     * is sent. A favourite changed here is still sent, on its own. A session the server still has
-     * playing for this device is ended at the server's own position, or its idle check would end it
-     * later with the position it last heard from here (#584). Returns whether the row took the
-     * server's progress.
+     * CE (#635): applies [merge] to [row]: another device played the item later, so the server's
+     * progress is copied into the row and nothing of the phone's progress is sent; a favourite
+     * changed here is still sent, on its own (the rules are in [mergeWithServer]). A session the
+     * server still has playing for this device is ended at the server's own position, or its idle
+     * check would end it later with the position it last heard from here (#584). Returns whether
+     * the row took the server's progress.
      */
-    private suspend fun keepServerProgress(
+    private suspend fun applyServerProgress(
         port: UserDataSyncPort,
         userId: UserId,
         row: UserDataEntity,
-        server: ServerUserData,
+        merge: SyncMerge.TakeServer,
         leftPlaying: ItemId?,
     ): Boolean {
         Timber.d(
             "Item ${row.itemId.asString()} was played later elsewhere, keeping the server's progress"
         )
+        val stored = merge.stored
         if (endsStaleSession(row.itemId, leftPlaying, playbackEvents.playingItemId.value)) {
-            port.reportStopped(row.itemId, server.playbackPositionTicks)
+            port.reportStopped(row.itemId, stored.positionTicks)
         }
-        if (row.favorite != server.favorite) {
-            port.setFavorite(row.itemId, row.favorite)
-        }
+        merge.favoriteToSend?.let { port.setFavorite(row.itemId, it) }
         val took =
             database.takeServerProgress(
                 userId = userId,
                 itemId = row.itemId,
-                played = server.played,
-                playbackPositionTicks = server.playbackPositionTicks,
-                lastPlayedDate = server.lastPlayedMillis(),
+                played = stored.played,
+                playbackPositionTicks = stored.positionTicks,
+                lastPlayedDate = stored.lastPlayedMillis,
                 sentPlayed = row.played,
                 sentFavorite = row.favorite,
                 sentPlaybackPositionTicks = row.playbackPositionTicks,
@@ -260,16 +265,19 @@ constructor(
         var tookServer = 0
         for (userData in items) {
             try {
-                val server = onServer[userData.itemId]
-                if (
-                    server != null &&
-                        serverIsNewer(userData.lastPlayedDate, server.lastPlayedMillis())
-                ) {
-                    if (keepServerProgress(port, userId, userData, server, leftPlaying)) {
-                        tookServer++
+                // #898: the rules of who wins and what is sent are in PlayState.mergeWithServer.
+                val merge =
+                    userData.toPlayState().mergeWithServer(onServer[userData.itemId]?.toPlayState())
+                val send =
+                    when (merge) {
+                        is SyncMerge.TakeServer -> {
+                            if (applyServerProgress(port, userId, userData, merge, leftPlaying)) {
+                                tookServer++
+                            }
+                            continue
+                        }
+                        is SyncMerge.SendLocal -> merge
                     }
-                    continue
-                }
 
                 if (
                     endsStaleSession(
@@ -283,21 +291,18 @@ constructor(
                     Timber.d(
                         "Ending the server's playback session of ${userData.itemId.asString()}"
                     )
-                    port.reportStopped(userData.itemId, userData.playbackPositionTicks)
+                    port.reportStopped(userData.itemId, send.state.positionTicks)
                 }
 
                 port.putUserData(
                     ServerUserData(
                         itemId = userData.itemId,
-                        played = userData.played,
-                        favorite = userData.favorite,
-                        playbackPositionTicks = userData.playbackPositionTicks,
+                        played = send.state.played,
+                        favorite = send.state.favorite,
+                        playbackPositionTicks = send.state.positionTicks,
                         // CE (#633): moves the item up in Continue Watching on every device. Null
                         // leaves the server's date as it is.
-                        lastPlayedDate =
-                            userData.lastPlayedDate
-                                ?.takeIf { isNewerThanServer(it, server?.lastPlayedMillis()) }
-                                ?.let(::localDateTimeOf),
+                        lastPlayedDate = send.lastPlayedMillisToSend?.let(::localDateTimeOf),
                     )
                 )
                 sent++
@@ -305,10 +310,10 @@ constructor(
                 database.clearUserDataToBeSynced(
                     userId = userId,
                     itemId = userData.itemId,
-                    played = userData.played,
-                    favorite = userData.favorite,
-                    playbackPositionTicks = userData.playbackPositionTicks,
-                    lastPlayedDate = userData.lastPlayedDate,
+                    played = send.state.played,
+                    favorite = send.state.favorite,
+                    playbackPositionTicks = send.state.positionTicks,
+                    lastPlayedDate = send.state.lastPlayedMillis,
                 )
                 // A row kept only for this sync, because its download was deleted first.
                 database.deleteUserDataIfOrphaned(userId, userData.itemId)
@@ -358,20 +363,16 @@ internal fun ServerUserData.lastPlayedMillis(zone: ZoneId = ZoneId.systemDefault
     }
 
 /**
- * CE (#633): whether a local last-played time [local] is newer than the server's [server], both in
- * epoch milliseconds. Unknown locally is never newer; unknown on the server is always older. An
- * equal time is not newer: there is nothing to move.
+ * #898: the server's user data as a [PlayState], for the rules in `domain`; the date in epoch
+ * milliseconds ([lastPlayedMillis]).
  */
-internal fun isNewerThanServer(local: Long?, server: Long?): Boolean =
-    local != null && (server == null || local > server)
-
-/**
- * CE (#635): whether the server's last-played time [server] is newer than the local one [local]:
- * another device played the item after this one did. The other side of [isNewerThanServer]; an
- * equal time is not newer.
- */
-internal fun serverIsNewer(local: Long?, server: Long?): Boolean =
-    isNewerThanServer(local = server, server = local)
+internal fun ServerUserData.toPlayState(zone: ZoneId = ZoneId.systemDefault()): PlayState =
+    PlayState(
+        played = played,
+        favorite = favorite,
+        positionTicks = playbackPositionTicks,
+        lastPlayedMillis = lastPlayedMillis(zone),
+    )
 
 /**
  * CE (#633): the port, as the SDK under it, reads and writes dates as local date-times of this
@@ -385,16 +386,6 @@ internal fun localDateTimeOf(
 /** CE (#633): the reverse of [localDateTimeOf]. */
 internal fun epochMillisOf(dateTime: LocalDateTime, zone: ZoneId = ZoneId.systemDefault()): Long =
     dateTime.atZone(zone).toInstant().toEpochMilli()
-
-/**
- * CE (#635): the server's user data to store in the rows of downloads. The item open in the player
- * here ([playingHere]) is left out: its own reports keep its row current, and the server's value
- * may be a few seconds behind them.
- */
-internal fun serverUserDataToStore(
-    onServer: Map<ItemId, ServerUserData>,
-    playingHere: ItemId?,
-): List<ServerUserData> = onServer.values.filter { it.itemId != playingHere }
 
 /**
  * CE (#635): whether a run refreshes the downloads' user data from the server: only with downloads,

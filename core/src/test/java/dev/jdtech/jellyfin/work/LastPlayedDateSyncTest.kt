@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.work
 
 import dev.jdtech.jellyfin.domain.ports.ServerUserData
+import dev.jdtech.jellyfin.domain.userdata.PlayState
 import dev.jdtech.jellyfin.models.toItemId
 import java.time.Instant
 import java.time.LocalDateTime
@@ -8,13 +9,12 @@ import java.time.ZoneId
 import java.util.TimeZone
 import java.util.UUID
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * CE (#633): the sync sends a row's LastPlayedDate only when it is newer than the server's, so a
- * device that watched the item later keeps it at the top of Continue Watching.
+ * CE (#633): the sync compares last-played dates in epoch milliseconds, as the database keeps them,
+ * while the port carries the server's local date-times. #898: the comparisons themselves are rules
+ * of `PlayState`, tested in `domain` (`SyncMergeTest`).
  *
  * #762: how the server's items become [ServerUserData] is tested with the adapter, in
  * `JellyfinUserDataSyncMappingTest` of `data`.
@@ -22,50 +22,20 @@ import org.junit.jupiter.api.Test
 class LastPlayedDateSyncTest {
 
     @Test
-    fun `a later local time is sent`() {
-        assertTrue(isNewerThanServer(local = 2_000L, server = 1_000L))
-    }
+    fun `the server's user data becomes a play state with its date in milliseconds`() {
+        val zone = ZoneId.of("America/Los_Angeles")
+        val played = LocalDateTime.of(2026, 11, 12, 19, 2, 51)
 
-    @Test
-    fun `an earlier local time is not sent`() {
-        // Another device watched the item after this one did.
-        assertFalse(isNewerThanServer(local = 1_000L, server = 2_000L))
-    }
-
-    @Test
-    fun `the same time is not sent`() {
-        assertFalse(isNewerThanServer(local = 1_000L, server = 1_000L))
-    }
-
-    @Test
-    fun `a local time is sent when the server has none`() {
-        assertTrue(isNewerThanServer(local = 1_000L, server = null))
-    }
-
-    @Test
-    fun `no local time is never sent`() {
-        assertFalse(isNewerThanServer(local = null, server = null))
-        assertFalse(isNewerThanServer(local = null, server = 1_000L))
-    }
-
-    @Test
-    fun `a later play on the server wins over the phone's`() {
-        // #635: another device played the item after this one did.
-        assertTrue(serverIsNewer(local = 1_000L, server = 2_000L))
-    }
-
-    @Test
-    fun `an earlier play on the server does not win`() {
-        assertFalse(serverIsNewer(local = 2_000L, server = 1_000L))
-        assertFalse(serverIsNewer(local = 1_000L, server = 1_000L))
-    }
-
-    @Test
-    fun `a server without a date never wins, a row without one always loses`() {
-        assertFalse(serverIsNewer(local = 1_000L, server = null))
-        assertFalse(serverIsNewer(local = null, server = null))
-        // A row that was never played here (a favourite changed offline) has no progress to send.
-        assertTrue(serverIsNewer(local = null, server = 1_000L))
+        assertEquals(
+            PlayState(
+                played = false,
+                favorite = true,
+                positionTicks = 1_270_000_000L,
+                lastPlayedMillis = Instant.parse("2026-11-13T03:02:51Z").toEpochMilli(),
+            ),
+            serverUserData(lastPlayed = played).toPlayState(zone),
+        )
+        assertEquals(null, serverUserData(lastPlayed = null).toPlayState(zone).lastPlayedMillis)
     }
 
     @Test

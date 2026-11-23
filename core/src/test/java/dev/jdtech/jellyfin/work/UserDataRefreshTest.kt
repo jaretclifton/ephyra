@@ -1,48 +1,17 @@
 package dev.jdtech.jellyfin.work
 
-import dev.jdtech.jellyfin.domain.ports.ServerUserData
 import dev.jdtech.jellyfin.models.toItemId
-import java.time.LocalDateTime
 import java.util.UUID
-import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
- * CE (#635): what the sync copies from the server into the rows of downloads, and how often the app
- * asks for that while it is in use.
+ * CE (#635): how often the app asks the server for the user data of downloads while it is in
+ * use. #898: what the sync copies into the rows is a rule of `PlayState`, tested in `domain`
+ * (`SyncMergeTest`).
  */
 class UserDataRefreshTest {
-
-    @Test
-    fun `the server's values are stored, with its last played date`() {
-        val item =
-            serverUserData(
-                positionTicks = 1_270_000_000L,
-                favorite = true,
-                lastPlayed = LocalDateTime.of(2026, 11, 12, 19, 2, 51),
-            )
-
-        assertEquals(
-            listOf(item),
-            serverUserDataToStore(mapOf(item.itemId to item), playingHere = null),
-        )
-    }
-
-    @Test
-    fun `the item open in the player here is left alone`() {
-        val playing = serverUserData(positionTicks = 10L)
-        val other = serverUserData(positionTicks = 20L)
-
-        val stored =
-            serverUserDataToStore(
-                mapOf(playing.itemId to playing, other.itemId to other),
-                playingHere = playing.itemId,
-            )
-
-        assertEquals(listOf(other.itemId), stored.map { it.itemId })
-    }
 
     @Test
     fun `the first refresh is always due`() {
@@ -68,19 +37,6 @@ class UserDataRefreshTest {
         )
         assertFalse(refreshesDownloads(hasDownloads = false, playingHere = null))
     }
-
-    private fun serverUserData(
-        positionTicks: Long,
-        favorite: Boolean = false,
-        lastPlayed: LocalDateTime? = null,
-    ) =
-        ServerUserData(
-            itemId = UUID.randomUUID().toString().toItemId(),
-            played = false,
-            favorite = favorite,
-            playbackPositionTicks = positionTicks,
-            lastPlayedDate = lastPlayed,
-        )
 
     private companion object {
         const val INTERVAL = 15 * 60 * 1000L

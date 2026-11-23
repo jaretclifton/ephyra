@@ -10,6 +10,8 @@ import dev.jdtech.jellyfin.domain.ports.ItemQuery
 import dev.jdtech.jellyfin.domain.ports.MediaServer
 import dev.jdtech.jellyfin.domain.ports.PlaybackReport
 import dev.jdtech.jellyfin.domain.ports.PlaybackRequest
+import dev.jdtech.jellyfin.domain.userdata.PlayState
+import dev.jdtech.jellyfin.domain.userdata.PlayStop
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.EpisodeField
 import dev.jdtech.jellyfin.models.Item
@@ -741,8 +743,8 @@ class MediaRepositoryImpl(
         withContext(Dispatchers.IO) {
             // CE (#637): the server applies its resume settings to this stop; the local copy
             // follows them.
-            val userData =
-                stopUserData(
+            val playStop =
+                PlayStop.of(
                     positionTicks,
                     playedPercentage,
                     runtimeTicks = database.getRuntimeTicks(itemId),
@@ -760,7 +762,7 @@ class MediaRepositoryImpl(
                     )
                 )
             }
-            if (userData == null) {
+            if (playStop == null) {
                 // Nothing local changes without user data, so there is nothing to sync later.
                 try {
                     stop()
@@ -769,11 +771,8 @@ class MediaRepositoryImpl(
                 } catch (_: Exception) {}
                 return@withContext
             }
-            reportUserData(itemId, report = stop) { userId ->
-                setPlaybackPositionTicks(itemId, userId, userData.positionTicks)
-                userData.played?.let { setPlayed(userId, itemId, it) }
-                // CE (#633): sent along if this stop has to be synced later.
-                setLastPlayedDate(userId, itemId, System.currentTimeMillis())
+            reportUserData(itemId, report = stop) {
+                it.stopped(playStop, at = System.currentTimeMillis())
             }
         }
     }
@@ -800,70 +799,67 @@ class MediaRepositoryImpl(
                         )
                     )
                 },
-            ) { userId ->
-                setPlaybackPositionTicks(itemId, userId, positionTicks)
-                // CE (#633): sent along if this progress has to be synced later.
-                setLastPlayedDate(userId, itemId, System.currentTimeMillis())
+            ) {
+                it.progressed(positionTicks, at = System.currentTimeMillis())
             }
         }
     }
 
     override suspend fun markAsFavorite(itemId: ItemId) {
         withContext(Dispatchers.IO) {
-            reportUserData(itemId, report = { server.userData.setFavorite(itemId, true) }) { userId
-                ->
-                setFavorite(userId, itemId, true)
+            reportUserData(itemId, report = { server.userData.setFavorite(itemId, true) }) {
+                it.withFavorite(true)
             }
         }
     }
 
     override suspend fun unmarkAsFavorite(itemId: ItemId) {
         withContext(Dispatchers.IO) {
-            reportUserData(itemId, report = { server.userData.setFavorite(itemId, false) }) { userId
-                ->
-                setFavorite(userId, itemId, false)
+            reportUserData(itemId, report = { server.userData.setFavorite(itemId, false) }) {
+                it.withFavorite(false)
             }
         }
     }
 
     override suspend fun markAsPlayed(itemId: ItemId) {
         withContext(Dispatchers.IO) {
-            reportUserData(itemId, report = { server.userData.setPlayed(itemId, true) }) { userId ->
-                setPlayed(userId, itemId, true)
-                // CE (#633): as the server does for a played mark without a date.
-                setLastPlayedDateIfUnknown(userId, itemId, System.currentTimeMillis())
+            reportUserData(itemId, report = { server.userData.setPlayed(itemId, true) }) {
+                it.markedPlayed(at = System.currentTimeMillis())
             }
         }
     }
 
     override suspend fun markAsUnplayed(itemId: ItemId) {
         withContext(Dispatchers.IO) {
-            // CE (#635): the time of the mark, taken before the request: a request that fails only
-            // after a timeout must not make the mark look later than a play elsewhere meanwhile.
+            // CE (#635): the time of the mark, taken before the request (see markedUnplayed).
             val markedAt = System.currentTimeMillis()
             val reached =
                 reportUserData(itemId, report = { server.userData.setPlayed(itemId, false) }) {
-                    userId ->
-                    setPlayed(userId, itemId, false)
-                    // CE (#635): kept until the sync sends the mark, which cannot clear the
-                    // server's; with it the sync sees the mark is not older than the play it
-                    // undoes. A row without one gets the time of the mark, or it would always count
-                    // as older.
-                    setLastPlayedDateIfUnknown(userId, itemId, markedAt)
+                    it.markedUnplayed(markedAt)
                 }
-            // CE (#633): the server clears it for an unplayed mark too.
-            if (reached) database.setLastPlayedDate(currentUserId, itemId, null)
+            database.updatePlayState(currentUserId, itemId) { it.afterUnplayedReport(reached) }
         }
     }
 
-    /** See the top-level [writeAndReport]: the change is written and marked before [report]. */
+    /**
+     * See the top-level [writeAndReport]: the play state [change] computes is written and marked
+     * before [report]. #898: the rules are in [PlayState]; this reads the row and writes the
+     * result.
+     */
     private suspend fun reportUserData(
         itemId: ItemId,
         report: suspend () -> Unit,
-        write: suspend ServerDatabaseDao.(userId: UserId) -> Unit,
+        change: (PlayState) -> PlayState,
     ): Boolean {
         val userId = currentUserId
-        return writeAndReport(database, syncRequester, userId, itemId, { write(userId) }, report)
+        return writeAndReport(
+            database,
+            syncRequester,
+            userId,
+            itemId,
+            { updatePlayState(userId, itemId, change) },
+            report,
+        )
     }
 
     override fun getBaseUrl() = server.session.baseUrl.orEmpty()

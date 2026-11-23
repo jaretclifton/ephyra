@@ -12,6 +12,7 @@ import dev.jdtech.jellyfin.domain.ports.RequestWatcher
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.domain.ports.UserDataPort
 import dev.jdtech.jellyfin.domain.ports.UserImage
+import dev.jdtech.jellyfin.domain.userdata.PlayStop
 import dev.jdtech.jellyfin.models.BoxSet
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.EpisodeField
@@ -38,7 +39,6 @@ import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.repository.ItemsPage
 import dev.jdtech.jellyfin.repository.ResumeThresholds
-import dev.jdtech.jellyfin.repository.stopUserData
 import java.time.LocalDateTime
 import java.util.Collections
 import java.util.UUID
@@ -562,7 +562,7 @@ class FakeMediaServer(
                 reportLog += ReportKind.STOPPED to report
                 val item = stored(report.itemId) ?: notFound()
                 val stop =
-                    stopUserData(
+                    PlayStop.of(
                         report.position(),
                         playedPercentage = 0,
                         runtimeTicks = item.runtimeTicks,
