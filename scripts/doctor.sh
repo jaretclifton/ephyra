@@ -61,14 +61,12 @@ sdk_tool() { # sdk_tool <path under the SDK, without .exe/.bat>
   return 1
 }
 
+# Printed as text to paste into the shell, so the variables stay unexpanded on purpose.
+# shellcheck disable=SC2016
 default_sdk() {
   case "$OS" in
-    # Printed as text to paste into the shell, so the variables stay unexpanded on purpose.
-    # shellcheck disable=SC2016
     windows) echo '"$LOCALAPPDATA/Android/Sdk"' ;;
-    # shellcheck disable=SC2016
     mac) echo '"$HOME/Library/Android/sdk"' ;;
-    # shellcheck disable=SC2016
     *) echo '"$HOME/Android/Sdk"' ;;
   esac
 }
