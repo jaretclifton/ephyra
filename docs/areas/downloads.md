@@ -1,6 +1,6 @@
 # Downloads
 
-Status: built and in use on phones; the TV app has no downloads. No known bug is open. As of 2026-11-23 (`main` at `26e62f27a`).
+Status: built and in use on phones; the TV app has no downloads. No known bug is open, with the fix of [#912](https://github.com/midasvo/ephyra/issues/912) in [#940](https://github.com/midasvo/ephyra/pull/940). As of 2026-11-23 (`main` at `26e62f27a` plus that pull request).
 
 ## Start here
 

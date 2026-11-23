@@ -159,8 +159,19 @@ constructor(
     private val mutex = Mutex()
 
     init {
-        scope.launch { serverAvailability.serverConfirmed.collect { retryAfterServerReturned() } }
+        scope.launch {
+            serverAvailability.serverConfirmed.collect {
+                lastServerConfirmedAt = System.nanoTime()
+                retryAfterServerReturned()
+            }
+        }
     }
+
+    /**
+     * CE (#912): when the server was last confirmed, so a confirmation that arrives while the pump
+     * is publishing an engine failure still counts for that failure ([pump] checks it).
+     */
+    @Volatile private var lastServerConfirmedAt = 0L
 
     // Refreshed at most every MEDIA_STREAM_RETRY_INTERVAL_MS, keyed by downloadId, by a
     // fire-and-forget check so the tight progress-polling loop below is never blocked on
@@ -559,6 +570,7 @@ constructor(
                 val permanentFailures = mutableSetOf<ItemId>()
                 val now = System.currentTimeMillis()
                 val dlIds = active.mapNotNull { it.downloadId }
+                val polledAt = System.nanoTime()
                 val snapshots = downloader.getProgress(dlIds)
                 for (entry in active) {
                     val dlId = entry.downloadId ?: continue
@@ -744,6 +756,15 @@ constructor(
                     }
                     mutex.withLock {
                         _entries.value = sort(_entries.value.map { updates[it.id] ?: it })
+                    }
+                    // CE (#912): the server was confirmed while these failures were being decided:
+                    // that confirmation found them still running, so it is applied now.
+                    if (
+                        exhausted.isNotEmpty() &&
+                            lastServerConfirmedAt != 0L &&
+                            lastServerConfirmedAt - polledAt >= 0
+                    ) {
+                        retryAfterServerReturned()
                     }
                     // A finished download changes what the screens show (#251).
                     if (completedNow.isNotEmpty()) dataChanges.onChanged()
