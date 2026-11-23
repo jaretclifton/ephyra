@@ -291,6 +291,80 @@ def area_list(entry: str, field: str) -> list[str]:
     return [i[1:-1] if len(i) > 1 and i[0] == i[-1] and i[0] in "'\"" else i for i in items]
 
 
+def check_model(models: dict[str, str]) -> list[str]:
+    """The hand-written parts of the LikeC4 model: components, ports and their arrows.
+
+    A `component` or `port` must link to its source (a file or a folder of this repository), and an
+    arrow from A to B is only true when a source file of A names B: the name of one of B's files,
+    B's title when that is a Kotlin name, or a type that B's one file declares. Arrows to and from elements without a source (the
+    modules, the server) are generated or checked by other means.
+    """
+    problems: list[str] = []
+    sources: dict[str, list[str]] = {}  # element → its files
+    titles: dict[str, str] = {}
+    needs_source: dict[str, str] = {}  # element → the file that declares it
+    arrows: list[tuple[str, str, str, str]] = []  # scope, from, to, file
+    for rel, text in models.items():
+        stack: list[str] = []  # the element each open brace belongs to ("" for other blocks)
+        for line in re.sub(r"(?<!:)//.*", "", text).splitlines():
+            scope = next((s for s in reversed(stack) if s), "")
+            declared = re.match(r"\s*(\w+)\s*=\s*(\w+)\s+'([^']*)'", line)
+            extended = re.match(r"\s*extend\s+([\w.]+)\s*\{", line)
+            opened = ""
+            if declared:
+                opened = f"{scope}.{declared.group(1)}" if scope else declared.group(1)
+                titles[opened] = declared.group(3)
+                if declared.group(2) in ("component", "port"):
+                    needs_source[opened] = rel
+            elif extended:
+                opened = extended.group(1)
+            link = re.search(r"link\s+https://github\.com/midasvo/ephyra/(?:tree|blob)/main/(\S+)", line)
+            if link and scope:
+                path = link.group(1).split("#")[0].strip("'\"").rstrip("/")
+                files = [path] if path in FILE_SET else [f for f in FILES if f.startswith(path + "/")]
+                # Code only: a link to a doc is not a source and is no evidence for an arrow.
+                sources.setdefault(scope, []).extend(f for f in files if f.endswith((".kt", ".kts", ".java")))
+            arrow = re.match(r"\s*([\w.]+)\s+-(?:\[\w+\]-)?>\s+([\w.]+)", line)
+            if arrow:
+                arrows.append((scope, arrow.group(1), arrow.group(2), rel))
+            for brace in re.findall(r"[{}]", line):
+                if brace == "{":
+                    stack.append(opened)
+                    opened = ""
+                elif stack:
+                    stack.pop()
+
+    def resolve(scope: str, name: str) -> str:
+        parts = scope.split(".") if scope else []
+        while parts:
+            candidate = ".".join(parts + [name])
+            if candidate in titles:
+                return candidate
+            parts.pop()
+        return name
+
+    for element, rel in needs_source.items():
+        if not sources.get(element):
+            problems.append(f"{rel}: `{element}` has no `link` to a source file (`.kt`, `.kts`, `.java`) or a folder of them in this repository")
+    for scope, a, b, rel in arrows:
+        a, b = resolve(scope, a), resolve(scope, b)
+        if not sources.get(a) or not sources.get(b):
+            continue
+        names = {Path(f).stem for f in sources[b]}
+        if re.fullmatch(r"[A-Z]\w+", titles.get(b, "")):
+            names.add(titles[b])
+        if len(sources[b]) == 1:  # the types a single file declares, such as DownloadFiles
+            declared = (ROOT / sources[b][0]).read_text("utf-8", "replace")
+            names.update(re.findall(r"^(?:[a-z]+ )*(?:class|object|interface) (\w+)", declared, re.M))
+        text = "\n".join((ROOT / f).read_text("utf-8", "replace") for f in sources[a])
+        if not any(re.search(rf"\b{re.escape(n)}\b", text) for n in names):
+            problems.append(
+                f"{rel}: arrow `{a} -> {b}`, but no source of {titles.get(a, a)} names "
+                f"{' or '.join(sorted(names)[:4])}"
+            )
+    return problems
+
+
 def check_areas(rel: str, text: str) -> list[str]:
     """docs/areas.yaml, read without a YAML package: the fields, then each list."""
     problems: list[str] = []
@@ -364,6 +438,14 @@ def main() -> int:
         for p in dict.fromkeys(problems):
             print(f"{rel}: {p}")
         failed += len(set(problems))
+    models = {
+        rel: (ROOT / rel).read_text("utf-8").replace("\r\n", "\n")
+        for rel in checked
+        if rel.endswith(".c4") and not rel.endswith(".generated.c4")
+    }
+    for p in dict.fromkeys(check_model(models)):
+        print(p)
+        failed += 1
     if failed:
         print(
             f"\n{failed} problem(s). The code is right: fix the doc. "

@@ -1,0 +1,12 @@
+/* The viewer's own colours in Ephyra's dark scheme (docs/identity/VISION.md §3.1), so the model
+   matches the site around it. likec4.config.json adds this file to the built viewer; the
+   element colours are in context.c4. The site builds the viewer with --theme dark only. */
+
+:root[data-mantine-color-scheme='dark'] {
+  --colors-surface-canvas: #070b16; /* surface */
+  --colors-diagram-background-pattern: #2a3650; /* outlineVariant */
+  --mantine-color-body: #0d1322; /* surfaceContainerLow: panels and menus */
+  --mantine-color-text: #e4fbff; /* onSurface */
+  --mantine-color-dimmed: #9fb3c8; /* onSurfaceVariant */
+  --mantine-color-anchor: #4fd8f0; /* primary */
+}

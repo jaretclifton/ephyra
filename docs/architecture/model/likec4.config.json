@@ -1,0 +1,7 @@
+{
+  "$schema": "https://likec4.dev/schemas/config.json",
+  "name": "ephyra",
+  "title": "Ephyra architecture",
+  "landingPage": { "redirect": true },
+  "styles": { "customCss": ["./ephyra.css"] }
+}

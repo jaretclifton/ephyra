@@ -8,7 +8,7 @@ GitHub, an agent in a checkout and the site show the same words.
 |---|---|
 | `scripts/sync-docs.mjs` | The list of Markdown files that become pages (`PAGES`). Copies them into `src/content/docs/` with a title from their first heading, rewrites their links, and writes the areas page (from `docs/areas.yaml`), the decisions page, the raw Markdown under `raw/` and `llms.txt`. What it writes is ignored by git |
 | `src/content/docs/index.mdx`, `architecture/model.mdx` | The only hand-written pages: the start page and the page around the model |
-| `../docs/architecture/model/` | The LikeC4 model. `modules.generated.c4` is written by `GeneratedDocsTest` in `architecture/` from the build files; the other `.c4` files by hand |
+| `../docs/architecture/model/` | The LikeC4 model. `modules.generated.c4` is written by `GeneratedDocsTest` in `architecture/` from the build files; the other `.c4` files by hand. `likec4.config.json` starts the viewer on the context view and adds `ephyra.css`, the viewer's colours; `npm run model` builds it dark, like the site |
 | `src/styles/ephyra.css` | Colours and type from `docs/identity/VISION.md` |
 | `scripts/compose.mjs` | Puts `site/` and this site together as Pages serves them; `pages.yml` uses it |
 

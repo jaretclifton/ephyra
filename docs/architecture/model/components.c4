@@ -1,65 +1,107 @@
-// Components inside some modules, written by hand (#928). Each element names its file, so a
-// rename shows up in review. Kept to the parts that explain the module; the guides in
-// docs/areas/ have the rest.
+// Components inside some modules, written by hand (#928). Each component and port links to its
+// source, and each arrow between two of them is a call that source makes: check-docs.py
+// (.claude/skills/start-work/scripts/) fails when a link points at nothing or when a source does
+// not name what its arrow points at. Kept to the parts that explain the module; the guides in
+// docs/areas/ have the rest, and the elements of an area with a guide link to it.
 
 model {
   extend ephyra.domain {
     mediaServer = port 'MediaServer' {
       description 'One server: session, catalog, userData, playback. domain/ports/MediaServer.kt'
+      link https://github.com/midasvo/ephyra/blob/main/domain/src/main/kotlin/dev/jdtech/jellyfin/domain/ports/MediaServer.kt 'Source'
     }
     playbackPort = port 'PlaybackPort' {
       description 'Playback info, stream URLs, reports to the server. domain/ports/PlaybackPort.kt'
+      link https://github.com/midasvo/ephyra/blob/main/domain/src/main/kotlin/dev/jdtech/jellyfin/domain/ports/PlaybackPort.kt 'Source'
     }
     serverConnector = port 'ServerConnector' {
-      description 'Finding a server and signing in, for setup. domain/ports/ServerConnector.kt'
+      description 'Finding a server and signing in, before there is a session. domain/ports/ServerConnector.kt'
+      link https://github.com/midasvo/ephyra/blob/main/domain/src/main/kotlin/dev/jdtech/jellyfin/domain/ports/ServerConnector.kt 'Source'
+      link https://midasvo.nl/ephyra/dev/areas/setup-and-servers/ 'Guide: setup and servers'
+    }
+    activeServer = component 'ActiveServerHolder' {
+      description 'The server in use as one ActiveServer (type, address, token, user), switched whole (rule R16). domain/ports/ActiveServer.kt'
+      link https://github.com/midasvo/ephyra/blob/main/domain/src/main/kotlin/dev/jdtech/jellyfin/domain/ports/ActiveServer.kt 'Source'
+      link https://midasvo.nl/ephyra/dev/areas/setup-and-servers/ 'Guide: setup and servers'
     }
     downloadState = component 'DownloadState' {
-      description 'Whether a source is a finished download (domain model, rule R13)'
+      description 'Whether a source is a finished download; the only place that names the .download suffix (rule R13). models/DownloadState.kt'
+      link https://github.com/midasvo/ephyra/blob/main/domain/src/main/kotlin/dev/jdtech/jellyfin/models/DownloadState.kt 'Source'
+      link https://midasvo.nl/ephyra/dev/areas/downloads/ 'Guide: downloads'
     }
     playState = component 'PlayState' {
-      description 'Played, favourite, resume position, the sync merge (domain model, rule R14)'
+      description 'Played, favourite, resume position, the sync merge (rule R14). domain/userdata/PlayState.kt'
+      link https://github.com/midasvo/ephyra/blob/main/domain/src/main/kotlin/dev/jdtech/jellyfin/domain/userdata/PlayState.kt 'Source'
     }
+
+    mediaServer -> playbackPort 'its playback port'
   }
 
   extend ephyra.application {
     mediaRepository = port 'MediaRepository' {
       description 'What the features call: the server in use composed with Room. repository/MediaRepository.kt'
+      link https://github.com/midasvo/ephyra/blob/main/application/src/main/kotlin/dev/jdtech/jellyfin/repository/MediaRepository.kt 'Source'
+    }
+    serverStore = port 'ServerStore' {
+      description 'Servers, addresses and users in Room. repository/ServerStore.kt'
+      link https://github.com/midasvo/ephyra/blob/main/application/src/main/kotlin/dev/jdtech/jellyfin/repository/ServerStore.kt 'Source'
+      link https://midasvo.nl/ephyra/dev/areas/setup-and-servers/ 'Guide: setup and servers'
     }
     downloadStore = port 'DownloadStore' {
       description 'Downloads in Room, per account. repository/DownloadStore.kt'
+      link https://github.com/midasvo/ephyra/blob/main/application/src/main/kotlin/dev/jdtech/jellyfin/repository/DownloadStore.kt 'Source'
+      link https://midasvo.nl/ephyra/dev/areas/downloads/ 'Guide: downloads'
+    }
+    pendingUserDataStore = port 'PendingUserDataStore' {
+      description 'User data written while the server was away, waiting for the sync. repository/PendingUserDataStore.kt'
+      link https://github.com/midasvo/ephyra/blob/main/application/src/main/kotlin/dev/jdtech/jellyfin/repository/PendingUserDataStore.kt 'Source'
     }
     downloadSettings = port 'DownloadSettings' {
-      description 'The download engine\'s settings (#918). repository/DownloadSettings.kt'
+      description 'The download settings, implemented over AppPreferences in core. repository/DownloadSettings.kt'
+      link https://github.com/midasvo/ephyra/blob/main/application/src/main/kotlin/dev/jdtech/jellyfin/repository/DownloadSettings.kt 'Source'
     }
   }
 
   extend ephyra.playerLocal {
     playerViewModel = component 'PlayerViewModel' {
       description 'The player screen\'s state and actions. presentation/PlayerViewModel.kt'
+      link https://github.com/midasvo/ephyra/blob/main/player/local/src/main/java/dev/jdtech/jellyfin/player/local/presentation/PlayerViewModel.kt 'Source'
     }
     resolvePlayback = component 'ResolvePlayback' {
       description 'What to play: a download first, else the server\'s sources. domain/ResolvePlayback.kt'
+      link https://github.com/midasvo/ephyra/blob/main/player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/ResolvePlayback.kt 'Source'
     }
     playlistManager = component 'PlaylistManager' {
       description 'The play queue: next and previous episodes. domain/PlaylistManager.kt'
+      link https://github.com/midasvo/ephyra/blob/main/player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/PlaylistManager.kt 'Source'
     }
     playbackReporter = component 'PlaybackReporter' {
       description 'Start, progress and stop reports to the server. domain/PlaybackReporter.kt'
+      link https://github.com/midasvo/ephyra/blob/main/player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/PlaybackReporter.kt 'Source'
     }
     trackPicks = component 'Track choice' {
-      description 'Audio and subtitle choice, remembered per series. domain/TrackPicks.kt, SeriesTrackPreference.kt'
+      description 'Audio and subtitle choice, remembered per series. domain/TrackPicks.kt, domain/SeriesTrackPreference.kt'
+      link https://github.com/midasvo/ephyra/blob/main/player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/TrackPicks.kt 'Source: TrackPicks.kt'
+      link https://github.com/midasvo/ephyra/blob/main/player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/SeriesTrackPreference.kt 'Source: SeriesTrackPreference.kt'
+      link https://midasvo.nl/ephyra/dev/areas/subtitles-and-tracks/ 'Guide: subtitles and tracks'
     }
     playerEngine = port 'PlayerEngine' {
       description 'The engine port: builds a media3 Player. engine/PlayerEngine.kt; rule R6 keeps the engines apart'
+      link https://github.com/midasvo/ephyra/blob/main/player/local/src/main/java/dev/jdtech/jellyfin/player/local/engine/PlayerEngine.kt 'Source'
     }
     exoEngine = component 'ExoPlayer engine' {
       description 'media3 ExoPlayer, subtitle delay and image subtitles. engine/exo/'
+      link https://github.com/midasvo/ephyra/tree/main/player/local/src/main/java/dev/jdtech/jellyfin/player/local/engine/exo 'Source'
+      link https://midasvo.nl/ephyra/dev/areas/subtitles-and-tracks/ 'Guide: subtitles and tracks'
     }
     mpvEngine = component 'mpv engine' {
-      description 'libmpv behind media3\'s Player. engine/mpv/MPVPlayer.kt'
+      description 'libmpv behind media3\'s Player. engine/mpv/'
+      link https://github.com/midasvo/ephyra/tree/main/player/local/src/main/java/dev/jdtech/jellyfin/player/local/engine/mpv 'Source'
+      link https://midasvo.nl/ephyra/dev/areas/subtitles-and-tracks/ 'Guide: subtitles and tracks'
     }
     playbackService = component 'PlaybackService' {
-      description 'The media session for notifications and the lock screen. PlaybackService.kt'
+      description 'Holds the media session for the notification and the lock screen while playing. PlaybackService.kt'
+      link https://github.com/midasvo/ephyra/blob/main/player/local/src/main/java/dev/jdtech/jellyfin/player/local/PlaybackService.kt 'Source'
     }
 
     playerViewModel -> resolvePlayback 'opens an item'
@@ -67,65 +109,192 @@ model {
     playerViewModel -> playbackReporter 'position, pause, stop'
     playerViewModel -> trackPicks 'picks tracks'
     playerViewModel -> playerEngine 'builds the player'
+    playerViewModel -> playbackService 'hands it the media session'
     exoEngine -> playerEngine 'implements'
     mpvEngine -> playerEngine 'implements'
-    playbackService -> playerEngine 'publishes the player'
   }
 
+  ephyra.playerLocal.playerViewModel -> ephyra.application.mediaRepository 'series track choices'
   ephyra.playerLocal.resolvePlayback -> ephyra.application.mediaRepository 'getPlaybackSources'
   ephyra.playerLocal.playlistManager -> ephyra.application.mediaRepository 'episodes'
   ephyra.playerLocal.playbackReporter -> ephyra.application.mediaRepository 'reports, user data'
+  ephyra.playerLocal.resolvePlayback -> ephyra.domain.downloadState 'a finished download first'
 
   extend ephyra.downloads {
+    link https://midasvo.nl/ephyra/dev/areas/downloads/ 'Guide: downloads'
+
     downloader = port 'Downloader' {
-      description 'What view models call to download or delete. utils/Downloader.kt'
+      description 'Download, cancel, delete an item; the queue and view models call it. utils/Downloader.kt'
+      link https://github.com/midasvo/ephyra/blob/main/downloads/src/main/java/dev/jdtech/jellyfin/utils/Downloader.kt 'Source'
+      link https://midasvo.nl/ephyra/dev/areas/downloads/ 'Guide: downloads'
     }
     downloaderImpl = component 'DownloaderImpl' {
-      description 'Stores the item in Room and queues its files. utils/DownloaderImpl.kt'
+      description 'Stores the item in Room, starts the engine, finalizes and deletes. utils/DownloaderImpl.kt'
+      link https://github.com/midasvo/ephyra/blob/main/downloads/src/main/java/dev/jdtech/jellyfin/utils/DownloaderImpl.kt 'Source'
+      link https://midasvo.nl/ephyra/dev/areas/downloads/ 'Guide: downloads'
     }
     downloadQueue = component 'DownloadQueue' {
-      description 'The queue entries, their state and progress. core/presentation/downloader/DownloadQueue.kt'
+      description 'The scheduler: entries, slots, retries, restore after process death. core/presentation/downloader/DownloadQueue.kt'
+      link https://github.com/midasvo/ephyra/blob/main/downloads/src/main/java/dev/jdtech/jellyfin/core/presentation/downloader/DownloadQueue.kt 'Source'
+      link https://midasvo.nl/ephyra/dev/areas/downloads/ 'Guide: downloads'
     }
     downloadPump = component 'DownloadPumpService' {
-      description 'Foreground service that runs the queue. core/presentation/downloader/DownloadPumpService.kt'
+      description 'Foreground service that keeps the process alive while the queue has work. core/presentation/downloader/DownloadPumpService.kt'
+      link https://github.com/midasvo/ephyra/blob/main/downloads/src/main/java/dev/jdtech/jellyfin/core/presentation/downloader/DownloadPumpService.kt 'Source'
     }
     mediaDownloadEngine = component 'MediaDownloadEngine' {
-      description 'Fetches a file with resume, checks what it resumes. utils/download/MediaDownloadEngine.kt'
+      description 'Fetches a file over OkHttp, resumes a cut-off one. utils/download/MediaDownloadEngine.kt'
+      link https://github.com/midasvo/ephyra/blob/main/downloads/src/main/java/dev/jdtech/jellyfin/utils/download/MediaDownloadEngine.kt 'Source'
+      link https://midasvo.nl/ephyra/dev/areas/downloads/ 'Guide: downloads'
     }
-    smartDownloads = component 'Smart downloads' {
-      description 'Keeps the next episodes of what you watch. core/presentation/downloader/SmartDownloads.kt'
+    smartDownloads = component 'SmartDownloads' {
+      description 'Keeps the next episodes of what you watch, removes watched ones. core/presentation/downloader/SmartDownloads.kt'
+      link https://github.com/midasvo/ephyra/blob/main/downloads/src/main/java/dev/jdtech/jellyfin/core/presentation/downloader/SmartDownloads.kt 'Source'
+      link https://midasvo.nl/ephyra/dev/areas/downloads/ 'Guide: downloads'
     }
 
     downloaderImpl -> downloader 'implements'
-    downloaderImpl -> downloadQueue 'enqueues'
-    downloadPump -> downloadQueue 'takes the next entry'
-    downloadPump -> mediaDownloadEngine 'downloads it'
-    smartDownloads -> downloader 'downloads the next episodes'
+    downloadQueue -> downloader 'starts, polls, cancels downloads'
+    downloadQueue -> downloadPump 'starts it while there is work'
+    downloaderImpl -> mediaDownloadEngine 'starts and cancels transfers'
+    smartDownloads -> downloadQueue 'queues the next episodes'
+    smartDownloads -> downloader 'deletes watched episodes'
   }
 
-  ephyra.downloads.downloaderImpl -> ephyra.application.downloadStore 'writes the item'
-  ephyra.downloads.downloaderImpl -> ephyra.application.mediaRepository 'item, sources'
-  ephyra.downloads.mediaDownloadEngine -> ephyra.application.downloadSettings 'reads'
-  ephyra.downloads.downloadQueue -> ephyra.domain.downloadState 'finished?'
+  ephyra.downloads.downloaderImpl -> ephyra.application.downloadStore 'writes the item rows'
+  ephyra.downloads.downloaderImpl -> ephyra.application.mediaRepository 'sources, segments, trickplay'
+  ephyra.downloads.downloaderImpl -> ephyra.application.downloadSettings 'mobile data, roaming'
+  ephyra.downloads.downloadQueue -> ephyra.application.downloadSettings 'how many at once, where'
+  ephyra.downloads.smartDownloads -> ephyra.application.mediaRepository 'next episodes'
 
   extend ephyra.serverJellyfin {
-    jellyfinMediaServer = component 'Jellyfin MediaServer' {
-      description 'The port implementations over the Jellyfin SDK, mappers, device profiles'
+    jellyfinMediaServer = component 'JellyfinMediaServer' {
+      description 'MediaServer over the Jellyfin SDK: catalog, user data, playback, session. server/jellyfin/JellyfinMediaServer.kt'
+      link https://github.com/midasvo/ephyra/blob/main/server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/JellyfinMediaServer.kt 'Source'
     }
-    jellyfinMediaServer -> ephyra.domain.mediaServer 'implements'
-    jellyfinMediaServer -> ephyra.domain.playbackPort 'implements'
-    jellyfinMediaServer -> ephyra.domain.serverConnector 'implements'
+    jellyfinPlayback = component 'JellyfinPlayback' {
+      description 'PlaybackPort: playback info, stream URLs, reports. server/jellyfin/JellyfinPlayback.kt'
+      link https://github.com/midasvo/ephyra/blob/main/server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/JellyfinPlayback.kt 'Source'
+    }
+    jellyfinDeviceProfiles = component 'JellyfinDeviceProfiles' {
+      description 'What this device plays, so the server knows what to transcode. server/jellyfin/JellyfinDeviceProfiles.kt'
+      link https://github.com/midasvo/ephyra/blob/main/server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/JellyfinDeviceProfiles.kt 'Source'
+      link https://midasvo.nl/ephyra/dev/areas/subtitles-and-tracks/ 'Guide: subtitles and tracks'
+    }
+    jellyfinServerConnector = component 'JellyfinServerConnector' {
+      description 'ServerConnector for Jellyfin: discovery, addresses, login, Quick Connect. server/jellyfin/JellyfinServerConnector.kt'
+      link https://github.com/midasvo/ephyra/blob/main/server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/JellyfinServerConnector.kt 'Source'
+      link https://midasvo.nl/ephyra/dev/areas/setup-and-servers/ 'Guide: setup and servers'
+    }
+    jellyfinApi = component 'JellyfinApi' {
+      description 'The one SDK client of the app. api/JellyfinApi.kt'
+      link https://github.com/midasvo/ephyra/blob/main/server/jellyfin/src/main/java/dev/jdtech/jellyfin/api/JellyfinApi.kt 'Source'
+    }
+
+    jellyfinMediaServer -> jellyfinPlayback 'its playback port'
+    jellyfinPlayback -> jellyfinDeviceProfiles 'the profile it sends'
+    jellyfinPlayback -> jellyfinApi 'calls'
+    jellyfinServerConnector -> jellyfinApi 'calls'
+    jellyfinApi -> jellyfin 'HTTP API'
   }
+
+  ephyra.serverJellyfin.jellyfinMediaServer -> ephyra.domain.mediaServer 'implements'
+  ephyra.serverJellyfin.jellyfinPlayback -> ephyra.domain.playbackPort 'implements'
+  ephyra.serverJellyfin.jellyfinServerConnector -> ephyra.domain.serverConnector 'implements'
 
   extend ephyra.data {
     mediaRepositoryImpl = component 'MediaRepositoryImpl' {
-      description 'The server in use with Room: stored fallback, local sources, write then report'
+      description 'The server in use with Room: stored fallback, local sources, write then report. repository/MediaRepositoryImpl.kt'
+      link https://github.com/midasvo/ephyra/blob/main/data/src/main/java/dev/jdtech/jellyfin/repository/MediaRepositoryImpl.kt 'Source'
     }
-    roomStores = component 'Room stores' {
-      description 'RoomServerStore, RoomDownloadStore, RoomPendingUserDataStore'
+    roomServerStore = component 'RoomServerStore' {
+      description 'ServerStore over Room. database/RoomServerStore.kt'
+      link https://github.com/midasvo/ephyra/blob/main/data/src/main/java/dev/jdtech/jellyfin/database/RoomServerStore.kt 'Source'
     }
-    mediaRepositoryImpl -> ephyra.application.mediaRepository 'implements'
-    mediaRepositoryImpl -> ephyra.domain.mediaServer 'calls the server in use'
-    roomStores -> ephyra.application.downloadStore 'implements'
+    roomDownloadStore = component 'RoomDownloadStore' {
+      description 'DownloadStore over Room. database/RoomDownloadStore.kt'
+      link https://github.com/midasvo/ephyra/blob/main/data/src/main/java/dev/jdtech/jellyfin/database/RoomDownloadStore.kt 'Source'
+    }
+    roomPendingUserDataStore = component 'RoomPendingUserDataStore' {
+      description 'PendingUserDataStore over Room. database/RoomPendingUserDataStore.kt'
+      link https://github.com/midasvo/ephyra/blob/main/data/src/main/java/dev/jdtech/jellyfin/database/RoomPendingUserDataStore.kt 'Source'
+    }
   }
+
+  ephyra.data.mediaRepositoryImpl -> ephyra.application.mediaRepository 'implements'
+  ephyra.data.mediaRepositoryImpl -> ephyra.domain.mediaServer 'calls the server in use'
+  ephyra.data.mediaRepositoryImpl -> ephyra.domain.playState 'user data rules'
+  ephyra.data.roomServerStore -> ephyra.application.serverStore 'implements'
+  ephyra.data.roomDownloadStore -> ephyra.application.downloadStore 'implements'
+  ephyra.data.roomPendingUserDataStore -> ephyra.application.pendingUserDataStore 'implements'
+
+  extend ephyra.core {
+    currentMediaServer = component 'CurrentMediaServer' {
+      description 'The MediaServer of the server in use: the adapter for its type. core/server/CurrentMediaServer.kt'
+      link https://github.com/midasvo/ephyra/blob/main/core/src/main/java/dev/jdtech/jellyfin/core/server/CurrentMediaServer.kt 'Source'
+      link https://midasvo.nl/ephyra/dev/areas/setup-and-servers/ 'Guide: setup and servers'
+    }
+    serverSessionKeeper = component 'ServerSessionKeeper' {
+      description 'Keeps the server\'s session open, signs out a revoked token. core/session/ServerSessionKeeper.kt'
+      link https://github.com/midasvo/ephyra/blob/main/core/src/main/java/dev/jdtech/jellyfin/core/session/ServerSessionKeeper.kt 'Source'
+      link https://midasvo.nl/ephyra/dev/areas/setup-and-servers/ 'Guide: setup and servers'
+    }
+    serverReachability = component 'ServerReachability' {
+      description 'Whether the server in use answers; phones show the unreachable banner. core/reachability/'
+      link https://github.com/midasvo/ephyra/tree/main/core/src/main/java/dev/jdtech/jellyfin/core/reachability 'Source'
+      link https://midasvo.nl/ephyra/dev/areas/setup-and-servers/ 'Guide: setup and servers'
+    }
+    userDataSync = component 'UserDataSync' {
+      description 'Starts the sync at app start, after a write, when the server is back. work/UserDataSync.kt'
+      link https://github.com/midasvo/ephyra/blob/main/core/src/main/java/dev/jdtech/jellyfin/work/UserDataSync.kt 'Source'
+    }
+    syncWorker = component 'SyncWorker' {
+      description 'Sends the waiting user data, merges the server\'s, refreshes downloads. work/SyncWorker.kt'
+      link https://github.com/midasvo/ephyra/blob/main/core/src/main/java/dev/jdtech/jellyfin/work/SyncWorker.kt 'Source'
+    }
+    downloaderViewModel = component 'DownloaderViewModel' {
+      description 'The queue\'s entries as DownloaderState for the item screens. core/presentation/downloader/DownloaderViewModel.kt'
+      link https://github.com/midasvo/ephyra/blob/main/core/src/main/java/dev/jdtech/jellyfin/core/presentation/downloader/DownloaderViewModel.kt 'Source'
+      link https://midasvo.nl/ephyra/dev/areas/downloads/ 'Guide: downloads'
+    }
+
+    userDataSync -> syncWorker 'enqueues'
+    userDataSync -> serverReachability 'restarts when the server is back'
+  }
+
+  ephyra.core.currentMediaServer -> ephyra.domain.mediaServer 'implements'
+  ephyra.core.currentMediaServer -> ephyra.domain.activeServer 'reads the server in use'
+  ephyra.core.serverSessionKeeper -> ephyra.application.serverStore 'signs out a revoked user'
+  ephyra.core.userDataSync -> ephyra.application.pendingUserDataStore 'anything waiting?'
+  ephyra.core.syncWorker -> ephyra.application.pendingUserDataStore 'sends and clears the rows'
+  ephyra.core.syncWorker -> ephyra.domain.playState 'merges with the server'
+  ephyra.core.syncWorker -> ephyra.downloads.smartDownloads 'checks after a sync'
+  ephyra.core.downloaderViewModel -> ephyra.downloads.downloadQueue 'entries, enqueue, remove'
+  ephyra.core.downloaderViewModel -> ephyra.downloads.downloader 'deletes'
+
+  extend ephyra.setup {
+    link https://midasvo.nl/ephyra/dev/areas/setup-and-servers/ 'Guide: setup and servers'
+
+    setupViewModels = component 'Setup view models' {
+      description 'Add server, addresses, login, servers, users, permission. setup/presentation/'
+      link https://github.com/midasvo/ephyra/tree/main/setup/src/main/java/dev/jdtech/jellyfin/setup/presentation 'Source'
+      link https://midasvo.nl/ephyra/dev/areas/setup-and-servers/ 'Guide: setup and servers'
+    }
+    setupRepository = port 'SetupRepository' {
+      description 'What the setup screens ask for. setup/domain/SetupRepository.kt'
+      link https://github.com/midasvo/ephyra/blob/main/setup/src/main/java/dev/jdtech/jellyfin/setup/domain/SetupRepository.kt 'Source'
+    }
+    setupRepositoryImpl = component 'SetupRepositoryImpl' {
+      description 'Servers, addresses and users; talks to a server through its connector. setup/data/SetupRepositoryImpl.kt'
+      link https://github.com/midasvo/ephyra/blob/main/setup/src/main/java/dev/jdtech/jellyfin/setup/data/SetupRepositoryImpl.kt 'Source'
+      link https://midasvo.nl/ephyra/dev/areas/setup-and-servers/ 'Guide: setup and servers'
+    }
+
+    setupViewModels -> setupRepository 'servers, users, login'
+    setupRepositoryImpl -> setupRepository 'implements'
+  }
+
+  ephyra.setup.setupRepositoryImpl -> ephyra.domain.serverConnector 'finds a server, signs in'
+  ephyra.setup.setupRepositoryImpl -> ephyra.application.serverStore 'saves servers and users'
+  ephyra.setup.setupRepositoryImpl -> ephyra.domain.activeServer 'switches the server in use'
 }
