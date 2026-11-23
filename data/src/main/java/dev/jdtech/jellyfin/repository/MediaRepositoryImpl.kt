@@ -578,9 +578,7 @@ class MediaRepositoryImpl(
             sources
         }
 
-    override suspend fun getSeriesTrackPreferences(
-        seriesId: ItemId
-    ): List<SeriesTrackPreference> =
+    override suspend fun getSeriesTrackPreferences(seriesId: ItemId): List<SeriesTrackPreference> =
         withContext(Dispatchers.IO) {
             database.getSeriesTrackPreferences(currentUserId, seriesId).map {
                 it.toSeriesTrackPreference()

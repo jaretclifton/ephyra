@@ -80,8 +80,7 @@ class SeriesTrackPreferenceTest {
     @Test
     fun `a new choice replaces the one before for the same track type`() = runBlocking {
         repository.saveSeriesTrackPreference(audio)
-        val subtitlesOff =
-            SeriesTrackPreference(userId, seriesId, TRACK_TYPE_TEXT, disabled = true)
+        val subtitlesOff = SeriesTrackPreference(userId, seriesId, TRACK_TYPE_TEXT, disabled = true)
         repository.saveSeriesTrackPreference(subtitlesOff)
         val english = audio.copy(language = "eng", title = "English")
         repository.saveSeriesTrackPreference(english)

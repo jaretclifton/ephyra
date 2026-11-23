@@ -27,9 +27,9 @@ fun trackPreferenceKey(itemId: String, selectableTracks: Int): String = "$itemId
 
 /**
  * CE (#596): the tracks picked by hand in items without a series, such as a movie, for as long as
- * the player is open. A series has its saved choice ([SeriesTrackPreference]); a movie had
- * nothing, so it went back to its default tracks whenever its stream was loaded again: on a quality
- * switch, and on an audio switch while the server transcodes.
+ * the player is open. A series has its saved choice ([SeriesTrackPreference]); a movie had nothing,
+ * so it went back to its default tracks whenever its stream was loaded again: on a quality switch,
+ * and on an audio switch while the server transcodes.
  */
 class SessionTrackPicks {
     private val picks = HashMap<ItemId, MutableMap<Int, TrackPick>>()

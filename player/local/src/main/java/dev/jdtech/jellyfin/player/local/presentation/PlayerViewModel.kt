@@ -1979,9 +1979,7 @@ constructor(
      * The saved choice for [seriesId], read on IO once per series and kept for its next items. Null
      * without a logged-in user. A read error gives no choice, as if none was saved.
      */
-    private fun seriesTrackPreferences(
-        seriesId: ItemId
-    ): Deferred<List<SeriesTrackPreference>>? {
+    private fun seriesTrackPreferences(seriesId: ItemId): Deferred<List<SeriesTrackPreference>>? {
         trackPreferences?.let { (id, preferences) -> if (id == seriesId) return preferences }
         if (signedInUserId() == null) return null
         val preferences =
@@ -2001,9 +1999,7 @@ constructor(
             null
         }
 
-    private suspend fun readSeriesTrackPreferences(
-        seriesId: ItemId
-    ): List<SeriesTrackPreference> =
+    private suspend fun readSeriesTrackPreferences(seriesId: ItemId): List<SeriesTrackPreference> =
         try {
             repository.getSeriesTrackPreferences(seriesId)
         } catch (e: CancellationException) {
