@@ -289,9 +289,10 @@ areas:
 
   - id: test-environment
     title: Test server and emulators
-    summary: "The throwaway Jellyfin test server and the emulators the app is tested on."
-    keywords: [test server, testserver, test user, testgebruiker, jellyfin server, docker, wsl, emulator, emulators, avd, device, test device, phone emulator, tv emulator, iptables, forward.py, set up, opzetten, ontwikkelomgeving, development environment, test-server, test-devices]
+    summary: "Setting up a machine (what to install, scripts/doctor.sh), the throwaway Jellyfin test server and the emulators the app is tested on."
+    keywords: [test server, testserver, test user, testgebruiker, jellyfin server, docker, wsl, emulator, emulators, avd, device, test device, phone emulator, tv emulator, iptables, forward.py, set up, opzetten, ontwikkelomgeving, development environment, test-server, test-devices, get started, getting started, doctor, install, installeren, new machine, nieuwe machine, jdk, android sdk, android_home, local.properties, cloud, devcontainer, testcontainers]
     paths:
+      - scripts/doctor.sh
       - tools/test-server/setup.sh
       - tools/test-server/user.py
       - tools/test-server/forward.py
@@ -299,7 +300,7 @@ areas:
       - .claude/skills/test-devices/SKILL.md
       - scripts/avds.sh
       - scripts/tv-dpad.sh
-    docs: [docs/dev-environment.md, docs/track-test-series.md]
+    docs: [docs/get-started.md, docs/dev-environment.md, docs/track-test-series.md]
 
   - id: identity
     title: Identity and design

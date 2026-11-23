@@ -43,6 +43,7 @@ CHECKED = [
     "docs/architecture/README.md",
     "docs/architecture/model/*.c4",
     "docs/dev-environment.md",
+    "docs/get-started.md",
     "docs/mpv-checklist.md",
     "docs/track-test-series.md",
     "devsite/README.md",
