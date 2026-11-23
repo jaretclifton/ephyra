@@ -6,11 +6,17 @@ tableOfContents: false
 ---
 
 The model in three levels: **context** (Ephyra and what it talks to), **containers** (the Gradle
-modules and their dependencies) and **components** (inside `player/local`, `downloads`,
-`domain`, `application`, `data` and `server/jellyfin`). Click an element to open the level
-below it; the search (top left, or <kbd>Ctrl</kbd>+<kbd>K</kbd>) finds any element or view.
+modules and their dependencies) and **components** (inside `player/local`, `downloads`, `core`,
+`setup`, `domain`, `application`, `data` and `server/jellyfin`). Click an element to open the
+level below it; the search (top left, or <kbd>Ctrl</kbd>+<kbd>K</kbd>) finds any element or view.
+An element's links lead to its source on GitHub and, for downloads, setup and servers, and
+subtitles and tracks, to the area guide.
 
-<a href="/ephyra/dev/model/" target="_blank">Open the model full screen</a> ·
+The module view leaves out the arrows into `domain` and `application`, which every module may
+use, and the arrows of the apps, which use every module. [Modules](/ephyra/dev/architecture/modules/)
+has every dependency.
+
+<a href="/ephyra/dev/model/#/view/index/" target="_blank">Open the model full screen</a> ·
 [source in `docs/architecture/model/`](https://github.com/midasvo/ephyra/tree/main/docs/architecture/model)
 
 <iframe class="c4-frame" src="/ephyra/dev/model/#/view/index/" title="Ephyra architecture model" loading="lazy"></iframe>
@@ -19,14 +25,21 @@ below it; the search (top left, or <kbd>Ctrl</kbd>+<kbd>K</kbd>) finds any eleme
 
 | File | What | Written by |
 |---|---|---|
-| [`modules.generated.c4`](https://github.com/midasvo/ephyra/blob/main/docs/architecture/model/modules.generated.c4) | The modules and the arrows between them | `GeneratedDocsTest` in `architecture/`, from the `build.gradle.kts` files |
+| [`modules.generated.c4`](https://github.com/midasvo/ephyra/blob/main/docs/architecture/model/modules.generated.c4) | The modules, one line each on what they are, and the arrows between them | `GeneratedDocsTest` in `architecture/`, from the `build.gradle.kts` files and its list of modules |
 | [`context.c4`](https://github.com/midasvo/ephyra/blob/main/docs/architecture/model/context.c4) | The element kinds and colours, the viewer, the server, Cast, Android | hand |
-| [`components.c4`](https://github.com/midasvo/ephyra/blob/main/docs/architecture/model/components.c4) | Components inside a few modules, each with its file | hand |
+| [`components.c4`](https://github.com/midasvo/ephyra/blob/main/docs/architecture/model/components.c4) | Components inside eight modules, each linked to its file or folder, and the calls between them | hand |
 | [`views.c4`](https://github.com/midasvo/ephyra/blob/main/docs/architecture/model/views.c4) | The views | hand |
+| [`likec4.config.json`](https://github.com/midasvo/ephyra/blob/main/docs/architecture/model/likec4.config.json), [`ephyra.css`](https://github.com/midasvo/ephyra/blob/main/docs/architecture/model/ephyra.css) | The project: the start on the context view, the viewer in Ephyra's dark colours | hand |
 
-`./gradlew :architecture:test` fails when the generated file no longer matches the build files;
-the failure prints the command that regenerates it. The same test writes
-[Modules](/ephyra/dev/architecture/modules/) (a Mermaid graph for GitHub) and
-[Rules](/ephyra/dev/architecture/rules/). In `devsite/`, `npm run check-model` validates the
-model, and `npx likec4 start ../docs/architecture/model` opens it with live reload while you
-edit it.
+What is checked:
+
+- `./gradlew :architecture:test` fails when the generated file no longer matches the build files,
+  or when a module has no line in `ArchitectureModel.MODULES`; the failure prints what to add and
+  the command that regenerates it. The same test writes
+  [Modules](/ephyra/dev/architecture/modules/) (a Mermaid graph for GitHub) and
+  [Rules](/ephyra/dev/architecture/rules/).
+- `.claude/skills/start-work/scripts/check-docs.py` fails when a component or port has no link to
+  its source, when a link points at a file that is gone, or when an arrow between two components
+  is not in the code: the source of the first must name the second.
+- In `devsite/`, `npm run check-model` validates the model, and
+  `npx likec4 start ../docs/architecture/model` opens it with live reload while you edit it.

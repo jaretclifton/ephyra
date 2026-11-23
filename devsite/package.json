@@ -6,7 +6,7 @@
     "sync": "node scripts/sync-docs.mjs",
     "dev": "node scripts/sync-docs.mjs && astro dev",
     "build": "node scripts/sync-docs.mjs && astro build && npm run model",
-    "model": "likec4 build ../docs/architecture/model --base /ephyra/dev/model/ -o dist/model --use-hash-history --title \"Ephyra architecture\"",
+    "model": "likec4 build ../docs/architecture/model --base /ephyra/dev/model/ -o dist/model --use-hash-history --theme dark --title \"Ephyra architecture\"",
     "check-model": "likec4 validate ../docs/architecture/model",
     "pages": "node scripts/compose.mjs"
   },
