@@ -19,8 +19,8 @@ import dev.jdtech.jellyfin.setup.data.SetupRepositoryImpl
 import dev.jdtech.jellyfin.setup.domain.FakeLocalNetworkAccess
 import dev.jdtech.jellyfin.setup.presentation.addresses.ServerAddressesAction
 import dev.jdtech.jellyfin.setup.presentation.addresses.ServerAddressesViewModel
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
-import java.lang.reflect.Proxy
 import java.util.Collections
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -63,7 +63,7 @@ class ServerAddressesFeedbackTest {
 
     // The repository calls only these; suspend functions that do not suspend can return directly.
     private val database =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
@@ -87,7 +87,8 @@ class ServerAddressesFeedbackTest {
                 "toString" -> "FakeServerDatabaseDao"
                 else -> throw UnsupportedOperationException(method.kotlinName)
             }
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 
     /** The address the saved server answers at; nothing answers anywhere else. */
     private val stubAddress = "http://127.0.0.1:8096"

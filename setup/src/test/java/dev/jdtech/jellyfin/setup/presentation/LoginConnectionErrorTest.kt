@@ -11,8 +11,8 @@ import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.domain.parseIpAddress
 import dev.jdtech.jellyfin.setup.presentation.login.LoginAction
 import dev.jdtech.jellyfin.setup.presentation.login.LoginViewModel
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
-import java.lang.reflect.Proxy
 import java.net.SocketTimeoutException
 import kotlin.test.assertEquals
 import kotlinx.coroutines.Dispatchers
@@ -35,12 +35,13 @@ class LoginConnectionErrorTest {
     private var failure: Exception = IllegalStateException("boom")
 
     private val unused =
-        Proxy.newProxyInstance(
-            SetupRepository::class.java.classLoader,
-            arrayOf(SetupRepository::class.java),
-        ) { _, method, _ ->
+        fakeProxy(SetupRepository::class.java.classLoader, arrayOf(SetupRepository::class.java)) {
+            _,
+            method,
+            _ ->
             throw UnsupportedOperationException(method.kotlinName)
-        } as SetupRepository
+        }
+            as SetupRepository
 
     private val repository =
         object : SetupRepository by unused {

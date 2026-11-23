@@ -13,8 +13,8 @@ import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.ReloadPolicy
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
-import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -86,7 +86,7 @@ class HomeRowsViewModelTest {
     }
 
     private fun repository(): JellyfinRepository =
-        Proxy.newProxyInstance(
+        fakeProxy(
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, _ ->
@@ -94,10 +94,11 @@ class HomeRowsViewModelTest {
                 "getUserViews" -> listOf(movies)
                 else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
             }
-        } as JellyfinRepository
+        }
+            as JellyfinRepository
 
     private fun dao(server: Server): ServerDatabaseDao =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
@@ -105,5 +106,6 @@ class HomeRowsViewModelTest {
                 "getServer" -> server.takeIf { it.id == args!![0] }
                 else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 }

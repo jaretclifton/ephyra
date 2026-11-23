@@ -11,8 +11,8 @@ import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.asItemId
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
-import java.lang.reflect.Proxy
 import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -43,7 +43,7 @@ class UnfinishedDownloadPlaybackTest {
         )
 
     private val database =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
@@ -58,7 +58,8 @@ class UnfinishedDownloadPlaybackTest {
                 "getMediaStreamsBySourceId" -> emptyList<Any>()
                 else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 
     private val context: Context by lazy { RuntimeEnvironment.getApplication() }
 

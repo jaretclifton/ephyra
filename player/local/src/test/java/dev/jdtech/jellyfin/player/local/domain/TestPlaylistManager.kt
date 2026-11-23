@@ -3,8 +3,8 @@ package dev.jdtech.jellyfin.player.local.domain
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
-import java.lang.reflect.Proxy
 
 /** A [PlaylistManager] over [repository] that resolves playback with [preferences] (#766). */
 internal fun playlistManager(
@@ -15,7 +15,7 @@ internal fun playlistManager(
 /** Preferences that read [values] by key and the default of every other preference. */
 internal fun testPreferences(values: Map<String, Any> = emptyMap()): AppPreferences =
     AppPreferences(
-        Proxy.newProxyInstance(
+        fakeProxy(
             SharedPreferences::class.java.classLoader,
             arrayOf(SharedPreferences::class.java),
         ) { _, method, args ->
@@ -29,5 +29,6 @@ internal fun testPreferences(values: Map<String, Any> = emptyMap()): AppPreferen
                 else ->
                     throw UnsupportedOperationException("SharedPreferences.${method.kotlinName}")
             }
-        } as SharedPreferences
+        }
+            as SharedPreferences
     )

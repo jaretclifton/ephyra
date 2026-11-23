@@ -9,8 +9,8 @@ import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
-import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -80,7 +80,7 @@ class ScreensaverItemsTest {
 
     /** A repository whose item calls are recorded and answered by [answer]. */
     private fun repository(answer: () -> List<FindroidItem>): JellyfinRepository =
-        Proxy.newProxyInstance(
+        fakeProxy(
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
@@ -92,7 +92,8 @@ class ScreensaverItemsTest {
                 }
                 else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
             }
-        } as JellyfinRepository
+        }
+            as JellyfinRepository
 
     private fun movie(name: String, backdrop: String?) =
         FindroidMovie(

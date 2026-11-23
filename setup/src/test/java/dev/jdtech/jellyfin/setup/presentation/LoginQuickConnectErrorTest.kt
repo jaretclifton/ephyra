@@ -11,8 +11,8 @@ import dev.jdtech.jellyfin.setup.domain.ServerLocalNetworkBlock
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.presentation.login.LoginAction
 import dev.jdtech.jellyfin.setup.presentation.login.LoginViewModel
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
-import java.lang.reflect.Proxy
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -57,13 +57,12 @@ class LoginQuickConnectErrorTest {
         QuickConnectState(code = "123456", secret = "secret", authenticated = approved)
 
     private val repository =
-        Proxy.newProxyInstance(
-            SetupRepository::class.java.classLoader,
-            arrayOf(SetupRepository::class.java),
-        ) { _, method, _ ->
+        fakeProxy(SetupRepository::class.java.classLoader, arrayOf(SetupRepository::class.java)) {
+            _,
+            method,
+            _ ->
             // #769: Jellyfin can do everything.
-            if (method.kotlinName == "getCapabilities")
-                return@newProxyInstance ServerCapabilities.ALL
+            if (method.kotlinName == "getCapabilities") return@fakeProxy ServerCapabilities.ALL
             failures[method.kotlinName]?.let { throw it }
             when (method.kotlinName) {
                 "initiateQuickConnect",
@@ -75,7 +74,8 @@ class LoginQuickConnectErrorTest {
                 "equals" -> false
                 else -> throw UnsupportedOperationException(method.kotlinName)
             }
-        } as SetupRepository
+        }
+            as SetupRepository
 
     private fun viewModel() =
         LoginViewModel(repository, ServerLocalNetworkBlock(FakeLocalNetworkAccess(), { null }))

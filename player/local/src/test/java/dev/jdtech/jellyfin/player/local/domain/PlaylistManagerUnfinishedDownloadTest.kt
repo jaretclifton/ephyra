@@ -7,8 +7,8 @@ import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
-import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -44,7 +44,7 @@ class PlaylistManagerUnfinishedDownloadTest {
     }
 
     private fun fakeRepository(sources: List<FindroidSource>) =
-        Proxy.newProxyInstance(
+        fakeProxy(
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, _ ->
@@ -53,7 +53,8 @@ class PlaylistManagerUnfinishedDownloadTest {
                 "getPlaybackSources" -> sources
                 else -> error("Unexpected call to ${method.kotlinName}")
             }
-        } as JellyfinRepository
+        }
+            as JellyfinRepository
 
     private fun partial() =
         FindroidSource(

@@ -10,10 +10,10 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
 import java.io.File
-import java.lang.reflect.Proxy
 import java.util.UUID
 import javax.inject.Provider
 import kotlin.test.assertEquals
@@ -133,7 +133,7 @@ class OrphanSweepTest {
     }
 
     private fun database(sources: List<FindroidSourceDto> = emptyList(), failOn: String? = null) =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, _ ->
@@ -146,11 +146,12 @@ class OrphanSweepTest {
                 "getAllItemIds" -> listOf(trackedId)
                 else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 
     private fun downloader(database: ServerDatabaseDao): DownloaderImpl {
         val repository =
-            Proxy.newProxyInstance(
+            fakeProxy(
                 JellyfinRepository::class.java.classLoader,
                 arrayOf(JellyfinRepository::class.java),
             ) { _, method, _ ->
@@ -158,7 +159,8 @@ class OrphanSweepTest {
                     "getUserId" -> UUID.randomUUID().toString().toItemId()
                     else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
                 }
-            } as JellyfinRepository
+            }
+                as JellyfinRepository
         val preferences = context.getSharedPreferences("orphan-sweep-test", Context.MODE_PRIVATE)
         return DownloaderImpl(
             context,

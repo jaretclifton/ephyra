@@ -13,8 +13,8 @@ import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.ItemsResult
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.StoredLibraries
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
-import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
@@ -633,15 +633,14 @@ class ServerAwayReloadTest {
         FavoritesViewModel(repository(), dataChanges, dispatcher)
 
     private fun repository(): JellyfinRepository =
-        Proxy.newProxyInstance(
+        fakeProxy(
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
             // #769: Jellyfin can do everything.
-            if (method.kotlinName == "getCapabilities")
-                return@newProxyInstance ServerCapabilities.ALL
+            if (method.kotlinName == "getCapabilities") return@fakeProxy ServerCapabilities.ALL
             // #810: Media asks whom the client acts for; always the same user here.
-            if (method.kotlinName == "getUserId") return@newProxyInstance USER_ID
+            if (method.kotlinName == "getUserId") return@fakeProxy USER_ID
             if (fail) throw java.net.ConnectException("Failed to connect")
             if (holdNext) {
                 // A slow answer: the test resumes it later.
@@ -649,7 +648,7 @@ class ServerAwayReloadTest {
                 calls += method.kotlinName
                 @Suppress("UNCHECKED_CAST")
                 held += args!!.last() as Continuation<Any?>
-                return@newProxyInstance COROUTINE_SUSPENDED
+                return@fakeProxy COROUTINE_SUSPENDED
             }
             when (method.kotlinName) {
                 "getLibraries" -> {
@@ -666,7 +665,8 @@ class ServerAwayReloadTest {
                 }
                 else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
             }
-        } as JellyfinRepository
+        }
+            as JellyfinRepository
 
     private companion object {
         val USER_ID: UserId = java.util.UUID.randomUUID().toString().toUserId()

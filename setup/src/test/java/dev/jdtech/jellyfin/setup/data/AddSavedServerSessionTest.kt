@@ -15,8 +15,8 @@ import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
-import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -40,7 +40,7 @@ class AddSavedServerSessionTest {
     private val users = mutableMapOf<UserId, User>()
 
     private val database =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
@@ -68,7 +68,8 @@ class AddSavedServerSessionTest {
                 "toString" -> "FakeServerDatabaseDao"
                 else -> throw UnsupportedOperationException(method.kotlinName)
             }
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 
     private val context: Context by lazy { RuntimeEnvironment.getApplication() }
 

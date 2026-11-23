@@ -1,7 +1,6 @@
 package dev.jdtech.jellyfin.player.local.domain
 
 import android.os.Parcel
-import androidx.core.os.ParcelCompat
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import kotlin.test.assertEquals
@@ -23,11 +22,8 @@ class PlayerItemParcelTest {
         try {
             parcel.writeParcelable(item, 0)
             parcel.setDataPosition(0)
-            return ParcelCompat.readParcelable(
-                parcel,
-                PlayerItem::class.java.classLoader,
-                PlayerItem::class.java,
-            )!!
+            @Suppress("DEPRECATION")
+            return parcel.readParcelable(PlayerItem::class.java.classLoader)!!
         } finally {
             parcel.recycle()
         }

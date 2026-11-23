@@ -11,8 +11,8 @@ import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.testing.asItemId
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
-import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
@@ -161,7 +161,7 @@ class QueueRebuildTest {
 
     @Suppress("UNCHECKED_CAST")
     private fun fakeRepository() =
-        Proxy.newProxyInstance(
+        fakeProxy(
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
@@ -184,7 +184,8 @@ class QueueRebuildTest {
             } else {
                 answer
             }
-        } as JellyfinRepository
+        }
+            as JellyfinRepository
 
     private fun episode(number: Int) =
         FindroidEpisode(

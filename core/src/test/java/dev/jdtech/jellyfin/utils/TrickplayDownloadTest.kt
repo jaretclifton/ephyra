@@ -13,10 +13,10 @@ import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.JellyfinRepositoryImpl
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
 import java.io.File
-import java.lang.reflect.Proxy
 import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.inject.Provider
@@ -168,7 +168,7 @@ class TrickplayDownloadTest {
         val tiles = info.tileWidth * info.tileHeight
         val sheetsOnServer = (info.thumbnailCount + tiles - 1) / tiles
         val server =
-            Proxy.newProxyInstance(
+            fakeProxy(
                 JellyfinRepository::class.java.classLoader,
                 arrayOf(JellyfinRepository::class.java),
             ) { _, method, args ->
@@ -183,7 +183,8 @@ class TrickplayDownloadTest {
                     }
                     else -> throw IllegalStateException("JellyfinRepository.${method.kotlinName}")
                 }
-            } as JellyfinRepository
+            }
+                as JellyfinRepository
         val downloader =
             DownloaderImpl(
                 context,
@@ -206,12 +207,13 @@ class TrickplayDownloadTest {
     /** What the player gets for [index] of [version] of the downloaded item, server away. */
     private fun readOffline(index: Int, version: String? = null): String? {
         val away =
-            Proxy.newProxyInstance(
-                MediaServer::class.java.classLoader,
-                arrayOf(MediaServer::class.java),
-            ) { _, method, _ ->
+            fakeProxy(MediaServer::class.java.classLoader, arrayOf(MediaServer::class.java)) {
+                _,
+                method,
+                _ ->
                 throw IllegalStateException("MediaServer.${method.kotlinName}")
-            } as MediaServer
+            }
+                as MediaServer
         val repository =
             JellyfinRepositoryImpl(
                 context,

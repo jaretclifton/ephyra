@@ -11,8 +11,8 @@ import dev.jdtech.jellyfin.setup.domain.ServerLocalNetworkBlock
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.presentation.login.LoginViewModel
 import dev.jdtech.jellyfin.setup.presentation.users.UsersViewModel
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
-import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -110,10 +110,10 @@ class LoginCapabilitiesTest {
         )
 
     private fun fakeRepository(capabilities: ServerCapabilities): SetupRepository =
-        Proxy.newProxyInstance(
-            SetupRepository::class.java.classLoader,
-            arrayOf(SetupRepository::class.java),
-        ) { _, method, _ ->
+        fakeProxy(SetupRepository::class.java.classLoader, arrayOf(SetupRepository::class.java)) {
+            _,
+            method,
+            _ ->
             when (method.kotlinName) {
                 "getCapabilities" -> capabilities
                 "getCurrentServer" -> server
@@ -126,13 +126,15 @@ class LoginCapabilitiesTest {
                 "equals" -> false
                 else -> throw UnsupportedOperationException(method.kotlinName)
             }
-        } as SetupRepository
+        }
+            as SetupRepository
 
     private fun unusedDao(): ServerDatabaseDao =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, _ ->
             throw UnsupportedOperationException(method.kotlinName)
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 }

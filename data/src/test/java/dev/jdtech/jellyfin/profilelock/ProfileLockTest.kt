@@ -6,8 +6,8 @@ import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.testing.asUserId
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
-import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -162,7 +162,7 @@ class ProfileLockTest {
     companion object {
         /** Just the user calls [ProfileLock] makes, on an in-memory table. */
         fun fakeDao(users: MutableMap<UserId, User>): ServerDatabaseDao =
-            Proxy.newProxyInstance(
+            fakeProxy(
                 ServerDatabaseDao::class.java.classLoader,
                 arrayOf(ServerDatabaseDao::class.java),
             ) { _, method, args ->
@@ -200,6 +200,7 @@ class ProfileLockTest {
                     "toString" -> "FakeServerDatabaseDao"
                     else -> throw UnsupportedOperationException(method.kotlinName)
                 }
-            } as ServerDatabaseDao
+            }
+                as ServerDatabaseDao
     }
 }

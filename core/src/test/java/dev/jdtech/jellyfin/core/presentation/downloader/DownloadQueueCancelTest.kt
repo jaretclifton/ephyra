@@ -14,10 +14,10 @@ import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
-import java.lang.reflect.Proxy
 import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.inject.Provider
@@ -128,7 +128,7 @@ class DownloadQueueCancelTest {
     }
 
     private fun database() =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
@@ -137,7 +137,8 @@ class DownloadQueueCancelTest {
                     listOf(partialRow).filter { it.itemId == args?.firstOrNull().asItemIdOrNull() }
                 else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 
     private class FakeDownloader : Downloader {
         var active = emptyList<Downloader.ActiveDownload>()

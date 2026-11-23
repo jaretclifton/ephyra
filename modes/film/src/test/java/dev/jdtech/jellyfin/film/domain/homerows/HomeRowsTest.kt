@@ -10,8 +10,8 @@ import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
-import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -196,7 +196,7 @@ class HomeRowsTest {
     }
 
     private fun dao(servers: Map<String, Server>): ServerDatabaseDao =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
@@ -204,7 +204,8 @@ class HomeRowsTest {
                 "getServer" -> servers[args!![0]]
                 else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 }
 
 /** Just enough SharedPreferences for AppPreferences. */

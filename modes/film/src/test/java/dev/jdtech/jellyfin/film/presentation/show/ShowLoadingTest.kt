@@ -17,8 +17,8 @@ import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
-import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -213,13 +213,12 @@ class ShowLoadingTest {
     }
 
     private fun repository(): JellyfinRepository =
-        Proxy.newProxyInstance(
+        fakeProxy(
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
             // #769: Jellyfin can do everything.
-            if (method.kotlinName == "getCapabilities")
-                return@newProxyInstance ServerCapabilities.ALL
+            if (method.kotlinName == "getCapabilities") return@fakeProxy ServerCapabilities.ALL
             synchronized(calls) { calls.add(method.kotlinName) }
             when (method.kotlinName) {
                 "getShow" -> show()
@@ -238,10 +237,11 @@ class ShowLoadingTest {
                 "markAsFavorite" -> Unit
                 else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
             }
-        } as JellyfinRepository
+        }
+            as JellyfinRepository
 
     private fun database(counts: List<SeasonEpisodeCounts>): ServerDatabaseDao =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, _ ->
@@ -249,7 +249,8 @@ class ShowLoadingTest {
                 "getSeasonEpisodeCounts" -> counts
                 else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 
     private fun show() =
         FindroidShow(
@@ -326,7 +327,7 @@ class ShowLoadingTest {
 
     private fun appPreferences(): AppPreferences {
         val preferences =
-            Proxy.newProxyInstance(
+            fakeProxy(
                 SharedPreferences::class.java.classLoader,
                 arrayOf(SharedPreferences::class.java),
             ) { _, method, args ->
@@ -336,7 +337,8 @@ class ShowLoadingTest {
                         "server"
                     else -> defaultValue(method.kotlinName, args)
                 }
-            } as SharedPreferences
+            }
+                as SharedPreferences
         return AppPreferences(preferences)
     }
 
@@ -352,7 +354,8 @@ class ShowLoadingTest {
         }
 
     private inline fun <reified T : Any> unused(): T =
-        Proxy.newProxyInstance(T::class.java.classLoader, arrayOf(T::class.java)) { _, method, _ ->
+        fakeProxy(T::class.java.classLoader, arrayOf(T::class.java)) { _, method, _ ->
             throw NotImplementedError("${T::class.java.simpleName}.${method.kotlinName}")
-        } as T
+        }
+            as T
 }

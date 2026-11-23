@@ -11,10 +11,10 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
-import java.lang.reflect.Proxy
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -321,12 +321,13 @@ class DownloadQueueRetryTransitionTest {
     }
 
     private fun database() =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, _ ->
             throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 
     /** Every item gets its own download id; [progress] is what the engine reports for all. */
     private class FakeDownloader : Downloader {

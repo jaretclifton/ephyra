@@ -11,11 +11,11 @@ import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
 import java.io.File
-import java.lang.reflect.Proxy
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
@@ -346,7 +346,7 @@ class SubtitleFinalizeTest {
     }
 
     private fun database() =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
@@ -383,11 +383,12 @@ class SubtitleFinalizeTest {
                 "getAllItemIds" -> listOf(itemId)
                 else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 
     private fun downloader(timeoutMs: Long = 5_000): DownloaderImpl {
         val repository =
-            Proxy.newProxyInstance(
+            fakeProxy(
                 JellyfinRepository::class.java.classLoader,
                 arrayOf(JellyfinRepository::class.java),
             ) { _, method, _ ->
@@ -396,7 +397,8 @@ class SubtitleFinalizeTest {
                     // The server is not there: a failed subtitle cannot be started again.
                     else -> throw IllegalStateException("JellyfinRepository.${method.kotlinName}")
                 }
-            } as JellyfinRepository
+            }
+                as JellyfinRepository
         val preferences =
             context.getSharedPreferences("subtitle-finalize-test", Context.MODE_PRIVATE)
         return DownloaderImpl(

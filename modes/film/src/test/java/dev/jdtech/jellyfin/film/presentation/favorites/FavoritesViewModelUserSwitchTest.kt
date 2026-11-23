@@ -12,8 +12,8 @@ import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.ItemsResult
 import dev.jdtech.jellyfin.repository.JellyfinRepository
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
-import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -136,7 +136,7 @@ class FavoritesViewModelUserSwitchTest {
         state.sections.flatMap { it.items }
 
     private fun repository(): JellyfinRepository =
-        Proxy.newProxyInstance(
+        fakeProxy(
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, _ ->
@@ -149,7 +149,8 @@ class FavoritesViewModelUserSwitchTest {
                     else ItemsResult(if (sessionUser == bob) bobFavorites else aliceFavorites)
                 else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
             }
-        } as JellyfinRepository
+        }
+            as JellyfinRepository
 
     private fun movie(name: String) =
         dummyMovie.copy(id = UUID.randomUUID().toString().toItemId(), name = name)

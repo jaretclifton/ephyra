@@ -6,9 +6,9 @@ import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.IOException
-import java.lang.reflect.Proxy
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -90,7 +90,7 @@ class HomeViewModelServerNameTest {
     private fun info(id: String, name: String) = ServerInfo(id, name, null, null)
 
     private fun repository(): JellyfinRepository =
-        Proxy.newProxyInstance(
+        fakeProxy(
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, _ ->
@@ -103,10 +103,11 @@ class HomeViewModelServerNameTest {
                 "getUserViews" -> emptyList<Any>()
                 else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
             }
-        } as JellyfinRepository
+        }
+            as JellyfinRepository
 
     private fun database(): ServerDatabaseDao =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
@@ -116,10 +117,11 @@ class HomeViewModelServerNameTest {
                 "updateServer" -> updated.add(args!![0] as Server).let { Unit }
                 else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 
     private fun sharedPreferences(): SharedPreferences =
-        Proxy.newProxyInstance(
+        fakeProxy(
             SharedPreferences::class.java.classLoader,
             arrayOf(SharedPreferences::class.java),
         ) { _, method, args ->
@@ -131,7 +133,8 @@ class HomeViewModelServerNameTest {
                 else ->
                     throw UnsupportedOperationException("SharedPreferences.${method.kotlinName}")
             }
-        } as SharedPreferences
+        }
+            as SharedPreferences
 
     private companion object {
         const val SERVER_ID = "0123456789abcdef0123456789abcdef"

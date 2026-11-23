@@ -12,8 +12,8 @@ import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.ContractLibrary
 import dev.jdtech.jellyfin.testing.FakeLibrary
 import dev.jdtech.jellyfin.testing.FakeMediaServer
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
-import java.lang.reflect.Proxy
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -86,7 +86,7 @@ class PlaylistManagerNextUpTest {
 
     /** No downloads: with no current server set, the repository only asks whether there are any. */
     private fun noDownloads(): ServerDatabaseDao =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, _ ->
@@ -94,12 +94,13 @@ class PlaylistManagerNextUpTest {
                 "observeHasSources" -> flowOf(false)
                 else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 
     /** Every preference at its default. */
     private fun defaultPreferences(): AppPreferences =
         AppPreferences(
-            Proxy.newProxyInstance(
+            fakeProxy(
                 SharedPreferences::class.java.classLoader,
                 arrayOf(SharedPreferences::class.java),
             ) { _, method, args ->
@@ -115,6 +116,7 @@ class PlaylistManagerNextUpTest {
                             "SharedPreferences.${method.kotlinName}"
                         )
                 }
-            } as SharedPreferences
+            }
+                as SharedPreferences
         )
 }

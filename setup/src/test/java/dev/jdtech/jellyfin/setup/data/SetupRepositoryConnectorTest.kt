@@ -26,8 +26,8 @@ import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.domain.AddressRejected
 import dev.jdtech.jellyfin.testing.asUserId
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
-import java.lang.reflect.Proxy
 import java.util.Collections
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -67,7 +67,7 @@ class SetupRepositoryConnectorTest {
     private val writes: MutableList<String> = Collections.synchronizedList(mutableListOf())
 
     private val database =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
@@ -116,7 +116,8 @@ class SetupRepositoryConnectorTest {
                 "toString" -> "FakeServerDatabaseDao"
                 else -> throw UnsupportedOperationException(method.kotlinName)
             }
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 
     private val connector = FakeServerConnector()
 

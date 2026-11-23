@@ -18,8 +18,8 @@ import dev.jdtech.jellyfin.setup.presentation.users.UsersAction
 import dev.jdtech.jellyfin.setup.presentation.users.UsersEvent
 import dev.jdtech.jellyfin.setup.presentation.users.UsersViewModel
 import dev.jdtech.jellyfin.testing.asUserId
+import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
-import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -324,7 +324,7 @@ class ProfilePinSwitchTest {
     }
 
     private fun fakeDao(): ServerDatabaseDao =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
@@ -362,13 +362,14 @@ class ProfilePinSwitchTest {
                 "toString" -> "FakeServerDatabaseDao"
                 else -> throw UnsupportedOperationException(method.kotlinName)
             }
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 
     private fun fakeRepository(): SetupRepository =
-        Proxy.newProxyInstance(
-            SetupRepository::class.java.classLoader,
-            arrayOf(SetupRepository::class.java),
-        ) { _, method, args ->
+        fakeProxy(SetupRepository::class.java.classLoader, arrayOf(SetupRepository::class.java)) {
+            _,
+            method,
+            args ->
             when (method.kotlinName) {
                 "getCapabilities" -> ServerCapabilities.ALL
                 "getCurrentServer" -> server
@@ -386,5 +387,6 @@ class ProfilePinSwitchTest {
                 "toString" -> "FakeSetupRepository"
                 else -> throw UnsupportedOperationException(method.kotlinName)
             }
-        } as SetupRepository
+        }
+            as SetupRepository
 }
