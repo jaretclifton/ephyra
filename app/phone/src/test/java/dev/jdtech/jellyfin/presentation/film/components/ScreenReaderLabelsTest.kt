@@ -16,6 +16,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyUser
 import dev.jdtech.jellyfin.models.CollectionType
 import dev.jdtech.jellyfin.models.HomeItem
 import dev.jdtech.jellyfin.models.View
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
 import org.junit.Rule
@@ -57,7 +58,13 @@ class ScreenReaderLabelsTest {
 
     @Test
     fun `the arrow of a Latest row says it opens the library`() {
-        val view = View(UUID.randomUUID(), "Movies", listOf(dummyMovie), CollectionType.Movies)
+        val view =
+            View(
+                UUID.randomUUID().toString().toItemId(),
+                "Movies",
+                listOf(dummyMovie),
+                CollectionType.Movies,
+            )
         rule.setContent {
             FindroidTheme {
                 HomeView(

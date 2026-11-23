@@ -68,6 +68,7 @@ dependencies {
 
     testImplementation(libs.androidx.work.testing)
     testImplementation(libs.junit)
+    testImplementation(projects.testing)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)
 }

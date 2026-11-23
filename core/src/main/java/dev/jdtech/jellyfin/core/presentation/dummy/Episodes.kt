@@ -7,11 +7,10 @@ import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.MediaStreamType
 import java.time.LocalDateTime
-import java.util.UUID
 
 val dummyEpisode =
     FindroidEpisode(
-        id = UUID.randomUUID(),
+        id = randomItemId(),
         name = "Mother and Children",
         originalTitle = null,
         overview =
@@ -54,9 +53,9 @@ val dummyEpisode =
         runtimeTicks = 2000000000L,
         playbackPositionTicks = 1200000000L,
         premiereDate = LocalDateTime.parse("2019-02-14T00:00:00"),
-        seriesId = UUID.randomUUID(),
+        seriesId = randomItemId(),
         seriesName = "Oshi no Ko",
-        seasonId = UUID.randomUUID(),
+        seasonId = randomItemId(),
         seasonName = "Season 1",
         communityRating = 9.2f,
         people = emptyList(),

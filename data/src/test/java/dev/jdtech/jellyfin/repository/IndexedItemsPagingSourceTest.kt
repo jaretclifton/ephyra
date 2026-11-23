@@ -3,7 +3,8 @@ package dev.jdtech.jellyfin.repository
 import androidx.paging.PagingSource.LoadParams
 import androidx.paging.PagingSource.LoadResult
 import dev.jdtech.jellyfin.models.FindroidItem
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -17,12 +18,13 @@ class IndexedItemsPagingSourceTest {
     private var total: Int? = null
 
     private fun item(): FindroidItem =
-        Proxy.newProxyInstance(
-            FindroidItem::class.java.classLoader,
-            arrayOf(FindroidItem::class.java),
-        ) { _, method, _ ->
-            throw NotImplementedError(method.name)
-        } as FindroidItem
+        fakeProxy(FindroidItem::class.java.classLoader, arrayOf(FindroidItem::class.java)) {
+            _,
+            method,
+            _ ->
+            throw NotImplementedError(method.kotlinName)
+        }
+            as FindroidItem
 
     /** A library of [size] items; the server counts only when asked. */
     private fun source(size: Int) =

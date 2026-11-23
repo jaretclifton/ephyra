@@ -13,8 +13,10 @@ import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -38,11 +40,11 @@ class AddSavedServerSessionTest {
     private val users = mutableMapOf<UserId, User>()
 
     private val database =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getServer" -> servers[args[0] as String]
                 "getServerWithAddresses" -> {
                     val server = servers.getValue(args[0] as String)
@@ -64,9 +66,10 @@ class AddSavedServerSessionTest {
                     Unit
                 }
                 "toString" -> "FakeServerDatabaseDao"
-                else -> throw UnsupportedOperationException(method.name)
+                else -> throw UnsupportedOperationException(method.kotlinName)
             }
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 
     private val context: Context by lazy { RuntimeEnvironment.getApplication() }
 
@@ -115,8 +118,20 @@ class AddSavedServerSessionTest {
         return repository.addServer(address)
     }
 
-    private val alice = User(UUID.randomUUID(), "alice", serverId = "a", accessToken = "token-a")
-    private val bob = User(UUID.randomUUID(), "bob", serverId = "b", accessToken = "token-b")
+    private val alice =
+        User(
+            UUID.randomUUID().toString().toUserId(),
+            "alice",
+            serverId = "a",
+            accessToken = "token-a",
+        )
+    private val bob =
+        User(
+            UUID.randomUUID().toString().toUserId(),
+            "bob",
+            serverId = "b",
+            accessToken = "token-b",
+        )
 
     @Test
     fun `adding the current server again keeps its user signed in`() = runBlocking {

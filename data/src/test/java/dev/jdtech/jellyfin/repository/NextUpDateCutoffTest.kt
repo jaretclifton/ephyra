@@ -1,5 +1,6 @@
 package dev.jdtech.jellyfin.repository
 
+import dev.jdtech.jellyfin.models.toItemId
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -24,6 +25,12 @@ class NextUpDateCutoffTest {
 
     @Test
     fun `a single series has no cutoff`() {
-        assertNull(nextUpDateCutoff(seriesId = UUID.randomUUID(), maxDays = 365, now = now))
+        assertNull(
+            nextUpDateCutoff(
+                seriesId = UUID.randomUUID().toString().toItemId(),
+                maxDays = 365,
+                now = now,
+            )
+        )
     }
 }

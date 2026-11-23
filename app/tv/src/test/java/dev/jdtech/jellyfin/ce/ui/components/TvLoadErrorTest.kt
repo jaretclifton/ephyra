@@ -25,6 +25,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.film.presentation.collection.CollectionState
 import dev.jdtech.jellyfin.models.CollectionSection
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.net.SocketTimeoutException
 import java.util.UUID
@@ -93,7 +94,8 @@ class TvLoadErrorTest {
 
     @Test
     fun favoritesFocusesTheFirstCardAfterASuccessfulRetry() {
-        val movies = (0 until 3).map { dummyMovie.copy(id = UUID(0, it.toLong())) }
+        val movies =
+            (0 until 3).map { dummyMovie.copy(id = UUID(0, it.toLong()).toString().toItemId()) }
         var state by mutableStateOf(CollectionState(isLoading = false, error = unreachable))
         rule.setContent {
             FindroidTheme { FavoritesScreenLayout(state = state, onItemClick = {}, onRetry = {}) }

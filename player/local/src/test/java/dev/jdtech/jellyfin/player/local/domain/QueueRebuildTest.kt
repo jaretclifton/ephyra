@@ -6,9 +6,13 @@ import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.repository.JellyfinRepository
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.asItemId
+import dev.jdtech.jellyfin.testing.asItemIdOrNull
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
@@ -28,8 +32,8 @@ import org.junit.jupiter.api.Test
  * a request the test holds ([slow]) until it [release]s it, as in [NeighbourLoaderTest].
  */
 class QueueRebuildTest {
-    private val seriesId = UUID.randomUUID()
-    private val seasonId = UUID.randomUUID()
+    private val seriesId = UUID.randomUUID().toString().toItemId()
+    private val seasonId = UUID.randomUUID().toString().toItemId()
     private val episodes = List(5) { episode(it + 1) }
     private val e1 = episodes[0].id
     private val e2 = episodes[1].id
@@ -157,34 +161,35 @@ class QueueRebuildTest {
 
     @Suppress("UNCHECKED_CAST")
     private fun fakeRepository() =
-        Proxy.newProxyInstance(
+        fakeProxy(
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
             val answer: Any =
-                when (method.name) {
-                    "getEpisode" -> episodes.first { it.id == args[0] }
+                when (method.kotlinName) {
+                    "getEpisode" -> episodes.first { it.id == args[0].asItemIdOrNull() }
                     "getEpisodes" -> episodes
                     "getPlaybackSources" -> {
-                        streamRequests += args[0] as ItemId
+                        streamRequests += args[0].asItemId()
                         listOf(source())
                     }
-                    else -> error("Unexpected call to ${method.name}")
+                    else -> error("Unexpected call to ${method.kotlinName}")
                 }
-            val request = method.name to args?.getOrNull(0)
+            val request = method.kotlinName to args?.getOrNull(0).asItemIdOrNull()
             if (request in slow) {
                 slow.remove(request)
                 val continuation = args.last() as Continuation<Any?>
-                held += (args[0] as ItemId) to { continuation.intercepted().resume(answer) }
+                held += (args[0].asItemId()) to { continuation.intercepted().resume(answer) }
                 COROUTINE_SUSPENDED
             } else {
                 answer
             }
-        } as JellyfinRepository
+        }
+            as JellyfinRepository
 
     private fun episode(number: Int) =
         FindroidEpisode(
-            id = UUID.randomUUID(),
+            id = UUID.randomUUID().toString().toItemId(),
             name = "Episode $number",
             originalTitle = null,
             overview = "",

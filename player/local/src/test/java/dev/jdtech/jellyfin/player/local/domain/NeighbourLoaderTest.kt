@@ -7,9 +7,13 @@ import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.repository.JellyfinRepository
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.asItemId
+import dev.jdtech.jellyfin.testing.asItemIdOrNull
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
@@ -28,8 +32,8 @@ import org.junit.jupiter.api.Test
  * holds ([slow]) until it [release]s it.
  */
 class NeighbourLoaderTest {
-    private val seriesId = UUID.randomUUID()
-    private val seasonId = UUID.randomUUID()
+    private val seriesId = UUID.randomUUID().toString().toItemId()
+    private val seasonId = UUID.randomUUID().toString().toItemId()
     private val episodes = List(6) { episode(it + 1) }
     private val e1 = episodes[0].id
     private val e2 = episodes[1].id
@@ -39,7 +43,7 @@ class NeighbourLoaderTest {
     private val e6 = episodes[5].id
 
     /** The next season, there only for the tests that set [seasons]. */
-    private val season2Id = UUID.randomUUID()
+    private val season2Id = UUID.randomUUID().toString().toItemId()
     private val season2 = List(3) { episode(it + 1, season2Id, seasonNumber = 2) }
     private var seasons: List<FindroidSeason> = emptyList()
 
@@ -150,7 +154,7 @@ class NeighbourLoaderTest {
             manager.random = Random(657)
             val first = manager.getInitialItem(seriesId, ItemKind.SERIES, shuffle = true)!!
             val order = listOf(first.itemId) + manager.upcomingItems().map { it.id }
-            val playlist = FakePlaylist(first.itemId)
+            val playlist = FakePlaylist(listOf(first.itemId))
             manager.setCurrentMediaItemIndex(first.itemId)
             loader.load(first.itemId, playlist)
             assertEquals(order.take(2), playlist.ids)
@@ -192,7 +196,7 @@ class NeighbourLoaderTest {
     /** e3 playing, with e2 and e4 queued around it. */
     private suspend fun startAtThirdEpisode(): FakePlaylist {
         manager.getInitialItem(e3, ItemKind.EPISODE)
-        val playlist = FakePlaylist(e3)
+        val playlist = FakePlaylist(listOf(e3))
         manager.setCurrentMediaItemIndex(e3)
         loader.load(e3, playlist)
         assertEquals(listOf(e2, e3, e4), playlist.ids)
@@ -220,7 +224,7 @@ class NeighbourLoaderTest {
     }
 
     /** The player's playlist, by item id, and the index it plays. */
-    private class FakePlaylist(vararg start: ItemId) : NeighbourLoader.Playlist {
+    private class FakePlaylist(start: List<ItemId>) : NeighbourLoader.Playlist {
         val ids = start.toMutableList()
         var current = 0
 
@@ -240,33 +244,35 @@ class NeighbourLoaderTest {
 
     @Suppress("UNCHECKED_CAST")
     private fun fakeRepository() =
-        Proxy.newProxyInstance(
+        fakeProxy(
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
             val answer: Any =
-                when (method.name) {
-                    "getEpisode" -> episodes.first { it.id == args[0] }
+                when (method.kotlinName) {
+                    "getEpisode" -> episodes.first { it.id == args[0].asItemIdOrNull() }
                     // A whole series (shuffle) or the season.
-                    "getEpisodes" -> if (args[1] == season2Id) season2 else episodes
+                    "getEpisodes" ->
+                        if (args[1].asItemIdOrNull() == season2Id) season2 else episodes
                     "getSeasons" -> seasons
                     "getPlaybackSources" -> listOf(source())
-                    else -> error("Unexpected call to ${method.name}")
+                    else -> error("Unexpected call to ${method.kotlinName}")
                 }
-            val request = method.name to args?.getOrNull(0)
+            val request = method.kotlinName to args?.getOrNull(0).asItemIdOrNull()
             if (request in slow) {
                 slow.remove(request)
                 val continuation = args.last() as Continuation<Any?>
-                held += (args[0] as ItemId) to { continuation.intercepted().resume(answer) }
+                held += (args[0].asItemId()) to { continuation.intercepted().resume(answer) }
                 COROUTINE_SUSPENDED
             } else {
                 answer
             }
-        } as JellyfinRepository
+        }
+            as JellyfinRepository
 
     private fun episode(number: Int, season: ItemId = seasonId, seasonNumber: Int = 1) =
         FindroidEpisode(
-            id = UUID.randomUUID(),
+            id = UUID.randomUUID().toString().toItemId(),
             name = "Episode $number",
             originalTitle = null,
             overview = "",

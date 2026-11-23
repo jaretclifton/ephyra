@@ -11,7 +11,8 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.toItemId
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
@@ -115,16 +116,14 @@ class CurrentMediaServerTest {
         val ITEM: ItemId = "00000000-0000-0000-0000-000000000001".toItemId()
 
         inline fun <reified T> uncalled(): T =
-            Proxy.newProxyInstance(T::class.java.classLoader, arrayOf(T::class.java)) {
-                proxy,
-                method,
-                args ->
-                when (method.name) {
+            fakeProxy(T::class.java.classLoader, arrayOf(T::class.java)) { proxy, method, args ->
+                when (method.kotlinName) {
                     "equals" -> proxy === args?.get(0)
                     "hashCode" -> System.identityHashCode(proxy)
                     "toString" -> "uncalled ${T::class.simpleName}"
-                    else -> throw NotImplementedError("${T::class.simpleName}.${method.name}")
+                    else -> throw NotImplementedError("${T::class.simpleName}.${method.kotlinName}")
                 }
-            } as T
+            }
+                as T
     }
 }

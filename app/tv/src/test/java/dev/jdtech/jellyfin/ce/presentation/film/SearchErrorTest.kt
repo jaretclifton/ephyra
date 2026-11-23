@@ -21,6 +21,7 @@ import dev.jdtech.jellyfin.ce.ui.components.TV_LOAD_ERROR_RETRY_TAG
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.film.presentation.search.SearchAction
 import dev.jdtech.jellyfin.film.presentation.search.SearchState
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.net.SocketTimeoutException
 import java.util.UUID
@@ -46,7 +47,8 @@ class SearchErrorTest {
     private val unreachable =
         SocketTimeoutException("failed to connect to /10.0.2.2 (port 9) after 6000ms")
 
-    private val movies = (0 until 3).map { dummyMovie.copy(id = UUID(0, it.toLong())) }
+    private val movies =
+        (0 until 3).map { dummyMovie.copy(id = UUID(0, it.toLong()).toString().toItemId()) }
 
     private var state by mutableStateOf(SearchState())
     private val searches = mutableListOf<String>()

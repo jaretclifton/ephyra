@@ -7,10 +7,13 @@ import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.ItemsResult
 import dev.jdtech.jellyfin.repository.JellyfinRepository
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -34,8 +37,8 @@ import org.junit.jupiter.api.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class FavoritesViewModelUserSwitchTest {
     private val dispatcher = StandardTestDispatcher()
-    private val alice = UUID.randomUUID()
-    private val bob = UUID.randomUUID()
+    private val alice = UUID.randomUUID().toString().toUserId()
+    private val bob = UUID.randomUUID().toString().toUserId()
     private val aliceFavorites = listOf(movie("Alice's movie"), movie("Alice's other movie"))
     private val bobFavorites = listOf(movie("Bob's movie"))
 
@@ -133,20 +136,22 @@ class FavoritesViewModelUserSwitchTest {
         state.sections.flatMap { it.items }
 
     private fun repository(): JellyfinRepository =
-        Proxy.newProxyInstance(
+        fakeProxy(
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, _ ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getCapabilities" -> ServerCapabilities.ALL
                 "getUserId" -> sessionUser ?: throw IllegalStateException("No user")
                 "getFavoriteItems" ->
                     if (sessionUser == null || favoritesFail)
                         throw IllegalStateException("No answer")
                     else ItemsResult(if (sessionUser == bob) bobFavorites else aliceFavorites)
-                else -> throw NotImplementedError("JellyfinRepository.${method.name}")
+                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
             }
-        } as JellyfinRepository
+        }
+            as JellyfinRepository
 
-    private fun movie(name: String) = dummyMovie.copy(id = UUID.randomUUID(), name = name)
+    private fun movie(name: String) =
+        dummyMovie.copy(id = UUID.randomUUID().toString().toItemId(), name = name)
 }

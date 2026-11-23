@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.core.presentation.spoiler
 
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
+import dev.jdtech.jellyfin.models.toItemId
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -11,7 +12,11 @@ class UpNextSpoilerTest {
     private val on = Spoilers(enabled = true)
 
     private fun episode(played: Boolean, number: Int = 4) =
-        dummyEpisode.copy(id = UUID.randomUUID(), played = played, indexNumber = number)
+        dummyEpisode.copy(
+            id = UUID.randomUUID().toString().toItemId(),
+            played = played,
+            indexNumber = number,
+        )
 
     @Test
     fun `an unwatched next episode is hidden and numbered`() {
@@ -38,7 +43,7 @@ class UpNextSpoilerTest {
     fun `an episode that is not in the queue yet stays hidden, without a number`() {
         assertEquals(
             UpNextSpoiler(hidden = true, episodeNumber = null),
-            on.upNext(UUID.randomUUID(), emptyList()),
+            on.upNext(UUID.randomUUID().toString().toItemId(), emptyList()),
         )
     }
 

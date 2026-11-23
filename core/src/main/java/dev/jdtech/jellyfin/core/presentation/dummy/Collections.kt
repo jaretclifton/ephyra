@@ -3,11 +3,10 @@ package dev.jdtech.jellyfin.core.presentation.dummy
 import dev.jdtech.jellyfin.models.CollectionType
 import dev.jdtech.jellyfin.models.FindroidCollection
 import dev.jdtech.jellyfin.models.FindroidImages
-import java.util.UUID
 
 private val dummyMoviesCollection =
     FindroidCollection(
-        id = UUID.randomUUID(),
+        id = randomItemId(),
         name = "Movies",
         type = CollectionType.Movies,
         images = FindroidImages(),
@@ -15,7 +14,7 @@ private val dummyMoviesCollection =
 
 private val dummyShowsCollection =
     FindroidCollection(
-        id = UUID.randomUUID(),
+        id = randomItemId(),
         name = "Shows",
         type = CollectionType.TvShows,
         images = FindroidImages(),

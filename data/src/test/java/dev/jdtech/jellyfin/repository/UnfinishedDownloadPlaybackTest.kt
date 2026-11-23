@@ -5,13 +5,14 @@ import android.content.Context
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
-import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.asItemId
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import kotlin.test.assertTrue
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -42,21 +43,23 @@ class UnfinishedDownloadPlaybackTest {
         )
 
     private val database =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
-            val id = args?.firstOrNull() as? ItemId
-            when (method.name) {
+            // A value class parameter reaches the proxy as its String (see testing/ProxyCalls.kt).
+            val id = (args?.firstOrNull() as? String)?.asItemId()
+            when (method.kotlinName) {
                 "observeHasSources" -> flowOf(true)
                 // The queries' SQL, on the one row this item has.
                 "getSourcesOfServer" -> listOf(partial).filter { it.itemId == id }
                 "getCompletedSources" ->
                     listOf(partial).filter { it.itemId == id && !it.path.endsWith(".download") }
                 "getMediaStreamsBySourceId" -> emptyList<Any>()
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.name}")
+                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 
     private val context: Context by lazy { RuntimeEnvironment.getApplication() }
 

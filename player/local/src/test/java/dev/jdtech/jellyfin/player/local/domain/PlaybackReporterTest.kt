@@ -9,8 +9,9 @@ import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.repository.ReloadPolicy
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.IOException
-import java.lang.reflect.Proxy
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -68,12 +69,13 @@ class PlaybackReporterTest {
         }
 
         private val unused =
-            Proxy.newProxyInstance(
+            fakeProxy(
                 JellyfinRepository::class.java.classLoader,
                 arrayOf(JellyfinRepository::class.java),
             ) { _, method, _ ->
-                error("Unexpected call to ${method.name}")
-            } as JellyfinRepository
+                error("Unexpected call to ${method.kotlinName}")
+            }
+                as JellyfinRepository
 
         val repository: JellyfinRepository =
             object : JellyfinRepository by unused {

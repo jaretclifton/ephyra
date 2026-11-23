@@ -35,7 +35,10 @@ constructor(
     private val _state = MutableStateFlow(LibraryState())
     val state = _state.asStateFlow()
 
-    private lateinit var parentId: ItemId
+    private var parentIdOrNull: ItemId? = null
+    private val parentId: ItemId
+        get() = checkNotNull(parentIdOrNull) { "parentId is read before it is loaded" }
+
     private lateinit var libraryType: CollectionType
 
     private lateinit var sortBy: SortBy
@@ -55,7 +58,7 @@ constructor(
      *   jump, and build a [LetterIndex] when sorting by name. TV and phone (#672) both use it.
      */
     fun setup(parentId: ItemId, libraryType: CollectionType, indexed: Boolean = false) {
-        this.parentId = parentId
+        parentIdOrNull = parentId
         this.libraryType = libraryType
         this.indexed = indexed
     }

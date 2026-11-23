@@ -11,7 +11,8 @@ import dev.jdtech.jellyfin.setup.domain.ServerLocalNetworkBlock
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.presentation.login.LoginAction
 import dev.jdtech.jellyfin.setup.presentation.login.LoginViewModel
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -56,14 +57,14 @@ class LoginQuickConnectErrorTest {
         QuickConnectState(code = "123456", secret = "secret", authenticated = approved)
 
     private val repository =
-        Proxy.newProxyInstance(
-            SetupRepository::class.java.classLoader,
-            arrayOf(SetupRepository::class.java),
-        ) { _, method, _ ->
+        fakeProxy(SetupRepository::class.java.classLoader, arrayOf(SetupRepository::class.java)) {
+            _,
+            method,
+            _ ->
             // #769: Jellyfin can do everything.
-            if (method.name == "getCapabilities") return@newProxyInstance ServerCapabilities.ALL
-            failures[method.name]?.let { throw it }
-            when (method.name) {
+            if (method.kotlinName == "getCapabilities") return@fakeProxy ServerCapabilities.ALL
+            failures[method.kotlinName]?.let { throw it }
+            when (method.kotlinName) {
                 "initiateQuickConnect",
                 "getQuickConnectState" -> result()
                 "loginWithSecret" -> Unit
@@ -71,9 +72,10 @@ class LoginQuickConnectErrorTest {
                 "toString" -> "FakeSetupRepository"
                 "hashCode" -> 0
                 "equals" -> false
-                else -> throw UnsupportedOperationException(method.name)
+                else -> throw UnsupportedOperationException(method.kotlinName)
             }
-        } as SetupRepository
+        }
+            as SetupRepository
 
     private fun viewModel() =
         LoginViewModel(repository, ServerLocalNetworkBlock(FakeLocalNetworkAccess(), { null }))

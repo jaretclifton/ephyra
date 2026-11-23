@@ -1,5 +1,6 @@
 package dev.jdtech.jellyfin.repository
 
+import dev.jdtech.jellyfin.models.toItemId
 import java.util.UUID
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -70,13 +71,13 @@ class ReloadPolicyTest {
     fun `playback stop reloads once, through the stop event`() {
         val playback = PlaybackEvents(events)
         loaded()
-        playback.onPlaying(UUID.randomUUID())
+        playback.onPlaying(UUID.randomUUID().toString().toItemId())
         now += 90_000
         // The player has closed but its stop is not reported yet: the stop event reloads.
         assertFalse(policy.shouldReload(stopEventFollows = true))
         // A screen without the stop event reloads on resume.
         assertTrue(policy.shouldReload(stopEventFollows = false))
-        playback.onStopped(UUID.randomUUID())
+        playback.onStopped(UUID.randomUUID().toString().toItemId())
         // A screen that missed the event still finds out afterwards.
         assertTrue(policy.shouldReload(stopEventFollows = true))
     }

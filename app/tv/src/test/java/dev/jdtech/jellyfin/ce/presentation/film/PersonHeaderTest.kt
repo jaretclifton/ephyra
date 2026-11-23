@@ -26,6 +26,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyPersonDetail
 import dev.jdtech.jellyfin.film.presentation.person.PersonState
 import dev.jdtech.jellyfin.models.FindroidMovie
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -49,7 +50,9 @@ class PersonHeaderTest {
     @get:Rule val rule = createComposeRule()
 
     private val movies: List<FindroidMovie> =
-        (0 until 6).map { dummyMovie.copy(id = UUID(0, it.toLong()), name = "Movie $it") }
+        (0 until 6).map {
+            dummyMovie.copy(id = UUID(0, it.toLong()).toString().toItemId(), name = "Movie $it")
+        }
 
     private val longBiography = "A biography that goes on for many lines. ".repeat(60)
 

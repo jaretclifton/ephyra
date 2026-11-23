@@ -31,9 +31,10 @@ import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.NetworkConnectivity
-import java.lang.reflect.Proxy
 import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.Provider
@@ -184,9 +185,10 @@ class SyncWorkerRunTest {
     }
 
     private inline fun <reified T> unused(): T =
-        Proxy.newProxyInstance(T::class.java.classLoader, arrayOf(T::class.java)) { _, method, _ ->
-            throw NotImplementedError("${T::class.simpleName}.${method.name}")
-        } as T
+        fakeProxy(T::class.java.classLoader, arrayOf(T::class.java)) { _, method, _ ->
+            throw NotImplementedError("${T::class.simpleName}.${method.kotlinName}")
+        }
+            as T
 
     @Test
     fun `a later play on the server replaces the row and nothing of it is sent`() = runBlocking {

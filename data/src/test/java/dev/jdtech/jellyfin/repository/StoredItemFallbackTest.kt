@@ -17,7 +17,9 @@ import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.asItemId
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
@@ -111,12 +113,13 @@ class StoredItemFallbackTest {
         )
 
     private val database =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
-            val id = args?.firstOrNull() as? ItemId
-            when (method.name) {
+            // A value class parameter reaches the proxy as its String (see testing/ProxyCalls.kt).
+            val id = (args?.firstOrNull() as? String)?.asItemId()
+            when (method.kotlinName) {
                 "observeHasSources" -> flowOf(true)
                 "getEpisodeOfServer" -> episode.takeIf { it.id == id }
                 "getMovieOfServer" -> movie.takeIf { it.id == id }
@@ -138,9 +141,10 @@ class StoredItemFallbackTest {
                         .map { localSource(it) }
                 "getMediaStreamsForSources" -> emptyList<Any>()
                 "getTrickplayInfo" -> null
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.name}")
+                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 
     private val repository: JellyfinRepository by lazy {
         val context = RuntimeEnvironment.getApplication()

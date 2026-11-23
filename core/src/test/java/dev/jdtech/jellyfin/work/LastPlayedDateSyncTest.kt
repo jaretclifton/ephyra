@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.work
 
 import dev.jdtech.jellyfin.domain.ports.ServerUserData
+import dev.jdtech.jellyfin.models.toItemId
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -105,7 +106,7 @@ class LastPlayedDateSyncTest {
 
     private fun serverUserData(lastPlayed: LocalDateTime?) =
         ServerUserData(
-            itemId = UUID.randomUUID(),
+            itemId = UUID.randomUUID().toString().toItemId(),
             played = false,
             favorite = true,
             playbackPositionTicks = 1_270_000_000L,

@@ -27,6 +27,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyShow
 import dev.jdtech.jellyfin.film.presentation.movie.MovieState
 import dev.jdtech.jellyfin.film.presentation.show.ShowState
 import dev.jdtech.jellyfin.models.FindroidMovie
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
 import kotlin.test.assertTrue
@@ -46,7 +47,9 @@ class DetailDownToRowTest {
     @get:Rule val rule = createComposeRule()
 
     private val actors =
-        (0 until 6).map { dummyPerson.copy(id = UUID(2, it.toLong()), name = "Actor $it") }
+        (0 until 6).map {
+            dummyPerson.copy(id = UUID(2, it.toLong()).toString().toItemId(), name = "Actor $it")
+        }
 
     private val longOverview = "A long overview that wraps over several lines. ".repeat(20)
     private val studios = (0 until 30).map { "Studio with a long name $it" }
@@ -164,7 +167,10 @@ class DetailDownToRowTest {
     fun `Down from Play on the show page focuses the first season while it is below the screen`() {
         val seasons =
             (0 until 3).map {
-                dummySeason.copy(id = UUID(3, it.toLong()), name = "Season card $it")
+                dummySeason.copy(
+                    id = UUID(3, it.toLong()).toString().toItemId(),
+                    name = "Season card $it",
+                )
             }
         setTvContent {
             ShowScreenLayout(

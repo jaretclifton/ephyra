@@ -218,6 +218,9 @@ class ItemMapperGoldenTest {
     private fun print(value: Any?, indent: String = ""): String =
         when {
             value == null -> "null"
+            // #773: an id prints as it did when it was a UUID, unquoted.
+            value is ItemId -> value.asString()
+            value is UserId -> value.asString()
             value is String -> "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
             value is Enum<*> -> value.name
             value is Collection<*> ->
@@ -243,11 +246,25 @@ class ItemMapperGoldenTest {
                     postfix = "\n$indent)",
                 ) {
                     it.isAccessible = true
-                    "$indent  ${it.name} = ${print(it.get(value), "$indent  ")}"
+                    val field = it.get(value)
+                    val printed =
+                        if (field is String && holdsValueClass(value.javaClass, it.name)) field
+                        else print(field, "$indent  ")
+                    "$indent  ${it.name} = $printed"
                 }
             }
             else -> value.toString()
         }
+
+    /**
+     * #773: a property of a value class type (`ItemId`, `UserId`) is a plain `String` field on the
+     * JVM. Its getter gives it away: Kotlin mangles its name (`getId-<hash>`). Such a field prints
+     * as the id it holds, unquoted, as the `UUID` it was before.
+     */
+    private fun holdsValueClass(owner: Class<*>, field: String): Boolean {
+        val getter = "get" + field.replaceFirstChar { it.uppercase() } + "-"
+        return owner.methods.any { it.name.startsWith(getter) }
+    }
 
     private companion object {
         const val BASE_URL = "https://server.test"

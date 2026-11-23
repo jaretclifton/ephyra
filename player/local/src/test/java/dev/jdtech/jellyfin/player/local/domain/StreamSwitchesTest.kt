@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.player.local.domain
 
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -17,9 +18,9 @@ import org.junit.jupiter.api.Test
  * answer runs the switch on to its next request or its end before it returns.
  */
 class StreamSwitchesTest {
-    private val e1 = UUID.randomUUID()
-    private val e2 = UUID.randomUUID()
-    private val e3 = UUID.randomUUID()
+    private val e1 = UUID.randomUUID().toString().toItemId()
+    private val e2 = UUID.randomUUID().toString().toItemId()
+    private val e3 = UUID.randomUUID().toString().toItemId()
     private val playingAudio = StoredChoice(language = "eng", title = null, positionInLanguage = 0)
 
     /** The queue: e2 plays, at 0 (original quality), with its default audio track. */

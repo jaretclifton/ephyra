@@ -8,11 +8,13 @@ import dev.jdtech.jellyfin.film.presentation.search.SearchAction
 import dev.jdtech.jellyfin.film.presentation.search.SearchViewModel
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.ItemsResult
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.StoredLibraries
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
@@ -631,24 +633,24 @@ class ServerAwayReloadTest {
         FavoritesViewModel(repository(), dataChanges, dispatcher)
 
     private fun repository(): JellyfinRepository =
-        Proxy.newProxyInstance(
+        fakeProxy(
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
             // #769: Jellyfin can do everything.
-            if (method.name == "getCapabilities") return@newProxyInstance ServerCapabilities.ALL
+            if (method.kotlinName == "getCapabilities") return@fakeProxy ServerCapabilities.ALL
             // #810: Media asks whom the client acts for; always the same user here.
-            if (method.name == "getUserId") return@newProxyInstance USER_ID
+            if (method.kotlinName == "getUserId") return@fakeProxy USER_ID
             if (fail) throw java.net.ConnectException("Failed to connect")
             if (holdNext) {
                 // A slow answer: the test resumes it later.
                 holdNext = false
-                calls += method.name
+                calls += method.kotlinName
                 @Suppress("UNCHECKED_CAST")
                 held += args!!.last() as Continuation<Any?>
-                return@newProxyInstance COROUTINE_SUSPENDED
+                return@fakeProxy COROUTINE_SUSPENDED
             }
-            when (method.name) {
+            when (method.kotlinName) {
                 "getLibraries" -> {
                     calls += "libraries"
                     ItemsResult(if (heldOnce()) listOf(storedMovies) else emptyList(), fromStore)
@@ -661,11 +663,12 @@ class ServerAwayReloadTest {
                     calls += args!![0] as String
                     ItemsResult(emptyList<Any>(), fromStore)
                 }
-                else -> throw NotImplementedError("JellyfinRepository.${method.name}")
+                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
             }
-        } as JellyfinRepository
+        }
+            as JellyfinRepository
 
     private companion object {
-        val USER_ID: UserId = java.util.UUID.randomUUID()
+        val USER_ID: UserId = java.util.UUID.randomUUID().toString().toUserId()
     }
 }

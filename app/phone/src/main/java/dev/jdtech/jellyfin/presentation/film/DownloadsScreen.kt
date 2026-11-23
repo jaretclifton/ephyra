@@ -70,6 +70,7 @@ import dev.jdtech.jellyfin.core.presentation.downloader.DownloadStatus
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovies
+import dev.jdtech.jellyfin.core.presentation.dummy.randomItemId
 import dev.jdtech.jellyfin.core.presentation.session.LocalServerSession
 import dev.jdtech.jellyfin.film.presentation.downloads.ActiveDownload
 import dev.jdtech.jellyfin.film.presentation.downloads.DownloadSortOrder
@@ -101,7 +102,6 @@ import dev.jdtech.jellyfin.presentation.utils.Layout
 import dev.jdtech.jellyfin.presentation.utils.WidthClass
 import dev.jdtech.jellyfin.presentation.utils.currentWidthClass
 import dev.jdtech.jellyfin.presentation.utils.topAndSideInsets
-import java.util.UUID
 
 /** Queues longer than this collapse behind a "Show all" toggle. */
 private const val COLLAPSED_QUEUE_SIZE = 3
@@ -763,7 +763,7 @@ private fun DownloadsScreenLayoutEmptyPreview() {
 @Composable
 private fun DownloadsScreenLayoutTabletPreview() {
     val movies =
-        List(6) { index -> dummyMovie.copy(id = UUID.randomUUID(), name = "Movie ${index + 1}") }
+        List(6) { index -> dummyMovie.copy(id = randomItemId(), name = "Movie ${index + 1}") }
     FindroidTheme {
         DownloadsScreenLayout(
             state =

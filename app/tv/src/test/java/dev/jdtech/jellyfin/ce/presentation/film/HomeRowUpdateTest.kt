@@ -18,6 +18,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.film.presentation.home.HomeState
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.HomeItem
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
 import kotlin.test.assertTrue
@@ -37,7 +38,9 @@ class HomeRowUpdateTest {
     @get:Rule val rule = createComposeRule()
 
     private val movies: List<FindroidItem> =
-        (0 until 10).map { dummyMovie.copy(id = UUID(0, it.toLong()), name = "Movie $it") }
+        (0 until 10).map {
+            dummyMovie.copy(id = UUID(0, it.toLong()).toString().toItemId(), name = "Movie $it")
+        }
 
     private var items by mutableStateOf(movies)
 
@@ -48,7 +51,10 @@ class HomeRowUpdateTest {
                     state =
                         HomeState(
                             suggestionsSection =
-                                HomeItem.Suggestions(id = UUID(1, 0), items = items),
+                                HomeItem.Suggestions(
+                                    id = UUID(1, 0).toString().toItemId(),
+                                    items = items,
+                                ),
                             isLoading = false,
                         ),
                     refreshed = true,
@@ -117,7 +123,7 @@ class HomeRowUpdateTest {
     fun aCardLandingInFrontOfTheFocusedFirstCardShows() {
         setUpHome()
         rule.onNode(card(movies[0])).assertIsFocused()
-        val added = dummyMovie.copy(id = UUID(0, 99), name = "Movie 99")
+        val added = dummyMovie.copy(id = UUID(0, 99).toString().toItemId(), name = "Movie 99")
 
         items = listOf(added) + movies
         rule.waitForIdle()

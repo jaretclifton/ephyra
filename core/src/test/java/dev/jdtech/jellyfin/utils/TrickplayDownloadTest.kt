@@ -9,12 +9,14 @@ import dev.jdtech.jellyfin.domain.ports.MediaServer
 import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.FindroidTrickplayInfo
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.repository.JellyfinRepositoryImpl
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
 import java.io.File
-import java.lang.reflect.Proxy
 import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.inject.Provider
@@ -44,7 +46,7 @@ class TrickplayDownloadTest {
         Room.inMemoryDatabaseBuilder(context, ServerDatabase::class.java)
             .setDriver(AndroidSQLiteDriver())
             .build()
-    private val itemId = UUID.randomUUID()
+    private val itemId = UUID.randomUUID().toString().toItemId()
 
     /** 10 x 10 thumbnails to a sheet, 250 thumbnails: sheets 0 and 1 full, sheet 2 half. */
     private val info =
@@ -166,11 +168,11 @@ class TrickplayDownloadTest {
         val tiles = info.tileWidth * info.tileHeight
         val sheetsOnServer = (info.thumbnailCount + tiles - 1) / tiles
         val server =
-            Proxy.newProxyInstance(
+            fakeProxy(
                 JellyfinRepository::class.java.classLoader,
                 arrayOf(JellyfinRepository::class.java),
             ) { _, method, args ->
-                when (method.name) {
+                when (method.kotlinName) {
                     "getTrickplayData" -> {
                         val index = args[2] as Int
                         requested.add(index)
@@ -179,9 +181,10 @@ class TrickplayDownloadTest {
                         if (index in failing || index >= sheetsOnServer) null
                         else sheet(index).toByteArray()
                     }
-                    else -> throw IllegalStateException("JellyfinRepository.${method.name}")
+                    else -> throw IllegalStateException("JellyfinRepository.${method.kotlinName}")
                 }
-            } as JellyfinRepository
+            }
+                as JellyfinRepository
         val downloader =
             DownloaderImpl(
                 context,
@@ -204,12 +207,13 @@ class TrickplayDownloadTest {
     /** What the player gets for [index] of [version] of the downloaded item, server away. */
     private fun readOffline(index: Int, version: String? = null): String? {
         val away =
-            Proxy.newProxyInstance(
-                MediaServer::class.java.classLoader,
-                arrayOf(MediaServer::class.java),
-            ) { _, method, _ ->
-                throw IllegalStateException("MediaServer.${method.name}")
-            } as MediaServer
+            fakeProxy(MediaServer::class.java.classLoader, arrayOf(MediaServer::class.java)) {
+                _,
+                method,
+                _ ->
+                throw IllegalStateException("MediaServer.${method.kotlinName}")
+            }
+                as MediaServer
         val repository =
             JellyfinRepositoryImpl(
                 context,

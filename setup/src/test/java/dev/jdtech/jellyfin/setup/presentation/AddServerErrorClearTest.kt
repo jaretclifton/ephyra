@@ -10,7 +10,8 @@ import dev.jdtech.jellyfin.setup.domain.FakeLocalNetworkAccess
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.presentation.addserver.AddServerAction
 import dev.jdtech.jellyfin.setup.presentation.addserver.AddServerViewModel
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertSame
@@ -39,12 +40,13 @@ class AddServerErrorClearTest {
     private val notFound = UiText.StringResource(SetupR.string.add_server_error_not_found)
 
     private val unused =
-        Proxy.newProxyInstance(
-            SetupRepository::class.java.classLoader,
-            arrayOf(SetupRepository::class.java),
-        ) { _, method, _ ->
-            throw UnsupportedOperationException(method.name)
-        } as SetupRepository
+        fakeProxy(SetupRepository::class.java.classLoader, arrayOf(SetupRepository::class.java)) {
+            _,
+            method,
+            _ ->
+            throw UnsupportedOperationException(method.kotlinName)
+        }
+            as SetupRepository
 
     private val repository =
         object : SetupRepository by unused {

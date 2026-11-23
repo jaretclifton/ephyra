@@ -14,14 +14,16 @@ import dev.jdtech.jellyfin.models.FindroidSourceDto
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
 import java.io.File
 import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Proxy
 import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.inject.Provider
@@ -56,7 +58,7 @@ class DownloadFinalizeFailureTest {
         Room.inMemoryDatabaseBuilder(context, ServerDatabase::class.java)
             .setDriver(AndroidSQLiteDriver())
             .build()
-    private val itemId = UUID.randomUUID()
+    private val itemId = UUID.randomUUID().toString().toItemId()
     private lateinit var root: File
 
     /** Every request the server got, with its Range header. */
@@ -316,14 +318,14 @@ class DownloadFinalizeFailureTest {
     /** Room, with a write that fails the way a full disk makes it fail when [failRoomWrite]. */
     private fun database(): ServerDatabaseDao {
         val real = room.getServerDatabaseDao()
-        return Proxy.newProxyInstance(
+        return fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
-            if (failRoomWrite && method.name == "setSourceDownloaded") {
+            if (failRoomWrite && method.kotlinName == "setSourceDownloaded") {
                 throw SQLiteFullException("database or disk is full")
             }
-            if (failSubtitleWrite && method.name == "setMediaStreamPath") {
+            if (failSubtitleWrite && method.kotlinName == "setMediaStreamPath") {
                 throw SQLiteFullException("database or disk is full")
             }
             try {
@@ -331,20 +333,22 @@ class DownloadFinalizeFailureTest {
             } catch (e: InvocationTargetException) {
                 throw e.targetException
             }
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
     }
 
     private fun downloader(): DownloaderImpl {
         val repository =
-            Proxy.newProxyInstance(
+            fakeProxy(
                 JellyfinRepository::class.java.classLoader,
                 arrayOf(JellyfinRepository::class.java),
             ) { _, method, _ ->
-                when (method.name) {
+                when (method.kotlinName) {
                     "getUserId" -> USER_ID
-                    else -> throw IllegalStateException("JellyfinRepository.${method.name}")
+                    else -> throw IllegalStateException("JellyfinRepository.${method.kotlinName}")
                 }
-            } as JellyfinRepository
+            }
+                as JellyfinRepository
         val preferences =
             context.getSharedPreferences("download-finalize-failure-test", Context.MODE_PRIVATE)
         return DownloaderImpl(

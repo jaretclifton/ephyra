@@ -9,6 +9,7 @@ import dev.jdtech.jellyfin.repository.StandInServer
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinServerConnector
+import dev.jdtech.jellyfin.server.jellyfin.toUuid
 import dev.jdtech.jellyfin.testing.CatalogContract
 import dev.jdtech.jellyfin.testing.ContractLibrary
 import dev.jdtech.jellyfin.testing.ContractLibrary.Part
@@ -32,7 +33,7 @@ private fun jellyfinAt(baseUrl: String): MediaServer {
     val api =
         JellyfinApi(context).apply {
             api.update(baseUrl = baseUrl, accessToken = LiveServer.FAKE_TOKEN)
-            userId = ContractLibrary.userId
+            userId = ContractLibrary.userId.toUuid()
         }
     return JellyfinMediaServer(api, JellyfinDeviceProfiles(DeviceCodecProbe(context)))
 }

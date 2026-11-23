@@ -37,6 +37,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.jdtech.jellyfin.core.presentation.dummy.randomUserId
 import dev.jdtech.jellyfin.core.presentation.ephyra.EphyraMotion
 import dev.jdtech.jellyfin.core.presentation.ephyra.errorShake
 import dev.jdtech.jellyfin.models.ProfileLockType
@@ -46,7 +47,6 @@ import dev.jdtech.jellyfin.profilelock.ProfilePattern
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.presentation.pin.PinError
 import dev.jdtech.jellyfin.setup.presentation.pin.PinPrompt
-import java.util.UUID
 
 /** CE (#330): the message for a rejected pattern. */
 @Composable
@@ -278,7 +278,7 @@ private fun PatternDialogPreview() {
         PatternDialog(
             prompt =
                 PinPrompt(
-                    UUID.randomUUID(),
+                    randomUserId(),
                     "Midas",
                     PinError.WRONG,
                     1,

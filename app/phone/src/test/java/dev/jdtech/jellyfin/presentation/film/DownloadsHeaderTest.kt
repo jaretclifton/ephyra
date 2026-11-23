@@ -11,6 +11,7 @@ import dev.jdtech.jellyfin.core.presentation.downloader.DownloadStatus
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
 import dev.jdtech.jellyfin.film.presentation.downloads.ActiveDownload
 import dev.jdtech.jellyfin.film.presentation.downloads.DownloadsState
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
 import org.junit.Rule
@@ -77,7 +78,10 @@ class DownloadsHeaderTest {
                             queueItems =
                                 statuses.map { status ->
                                     ActiveDownload(
-                                        item = dummyEpisode.copy(id = UUID.randomUUID()),
+                                        item =
+                                            dummyEpisode.copy(
+                                                id = UUID.randomUUID().toString().toItemId()
+                                            ),
                                         progress = DownloadProgress(status = status),
                                         downloadId = 1L,
                                     )

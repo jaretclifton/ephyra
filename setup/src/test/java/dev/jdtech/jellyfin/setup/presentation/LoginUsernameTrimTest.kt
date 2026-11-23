@@ -5,7 +5,8 @@ import dev.jdtech.jellyfin.setup.domain.ServerLocalNetworkBlock
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.presentation.login.LoginAction
 import dev.jdtech.jellyfin.setup.presentation.login.LoginViewModel
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import kotlin.test.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -27,19 +28,20 @@ class LoginUsernameTrimTest {
     private val logins = mutableListOf<Pair<String, String>>()
 
     private val repository =
-        Proxy.newProxyInstance(
-            SetupRepository::class.java.classLoader,
-            arrayOf(SetupRepository::class.java),
-        ) { _, method, args ->
-            when (method.name) {
+        fakeProxy(SetupRepository::class.java.classLoader, arrayOf(SetupRepository::class.java)) {
+            _,
+            method,
+            args ->
+            when (method.kotlinName) {
                 "login" -> {
                     logins.add(args[0] as String to args[1] as String)
                     Unit
                 }
                 "toString" -> "FakeSetupRepository"
-                else -> throw UnsupportedOperationException(method.name)
+                else -> throw UnsupportedOperationException(method.kotlinName)
             }
-        } as SetupRepository
+        }
+            as SetupRepository
 
     @BeforeEach
     fun setUp() {

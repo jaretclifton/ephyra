@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.work
 
 import dev.jdtech.jellyfin.domain.ports.ServerUserData
+import dev.jdtech.jellyfin.models.toItemId
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -59,7 +60,12 @@ class UserDataRefreshTest {
     @Test
     fun `a run refreshes the downloads only while nothing is playing here`() {
         assertTrue(refreshesDownloads(hasDownloads = true, playingHere = null))
-        assertFalse(refreshesDownloads(hasDownloads = true, playingHere = UUID.randomUUID()))
+        assertFalse(
+            refreshesDownloads(
+                hasDownloads = true,
+                playingHere = UUID.randomUUID().toString().toItemId(),
+            )
+        )
         assertFalse(refreshesDownloads(hasDownloads = false, playingHere = null))
     }
 
@@ -69,7 +75,7 @@ class UserDataRefreshTest {
         lastPlayed: LocalDateTime? = null,
     ) =
         ServerUserData(
-            itemId = UUID.randomUUID(),
+            itemId = UUID.randomUUID().toString().toItemId(),
             played = false,
             favorite = favorite,
             playbackPositionTicks = positionTicks,

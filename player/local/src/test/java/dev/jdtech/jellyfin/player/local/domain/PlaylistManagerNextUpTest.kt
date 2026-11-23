@@ -12,7 +12,8 @@ import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.ContractLibrary
 import dev.jdtech.jellyfin.testing.FakeLibrary
 import dev.jdtech.jellyfin.testing.FakeMediaServer
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -85,32 +86,37 @@ class PlaylistManagerNextUpTest {
 
     /** No downloads: with no current server set, the repository only asks whether there are any. */
     private fun noDownloads(): ServerDatabaseDao =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, _ ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "observeHasSources" -> flowOf(false)
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.name}")
+                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 
     /** Every preference at its default. */
     private fun defaultPreferences(): AppPreferences =
         AppPreferences(
-            Proxy.newProxyInstance(
+            fakeProxy(
                 SharedPreferences::class.java.classLoader,
                 arrayOf(SharedPreferences::class.java),
             ) { _, method, args ->
-                when (method.name) {
+                when (method.kotlinName) {
                     "getBoolean",
                     "getString",
                     "getInt",
                     "getLong",
                     "getFloat",
                     "getStringSet" -> args!![1]
-                    else -> throw UnsupportedOperationException("SharedPreferences.${method.name}")
+                    else ->
+                        throw UnsupportedOperationException(
+                            "SharedPreferences.${method.kotlinName}"
+                        )
                 }
-            } as SharedPreferences
+            }
+                as SharedPreferences
         )
 }

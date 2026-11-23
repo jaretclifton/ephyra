@@ -6,7 +6,8 @@ import dev.jdtech.jellyfin.setup.domain.ServerLocalNetworkBlock
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.presentation.login.LoginAction
 import dev.jdtech.jellyfin.setup.presentation.login.LoginViewModel
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlinx.coroutines.Dispatchers
@@ -99,11 +100,11 @@ class LoginQuickConnectTest {
         QuickConnectState(code = code, secret = "secret-$code", authenticated = false)
 
     private fun fakeRepository(): SetupRepository =
-        Proxy.newProxyInstance(
-            SetupRepository::class.java.classLoader,
-            arrayOf(SetupRepository::class.java),
-        ) { _, method, _ ->
-            when (method.name) {
+        fakeProxy(SetupRepository::class.java.classLoader, arrayOf(SetupRepository::class.java)) {
+            _,
+            method,
+            _ ->
+            when (method.kotlinName) {
                 "initiateQuickConnect" -> {
                     initiated++
                     result(initiated.toString().padStart(6, '0'))
@@ -115,7 +116,8 @@ class LoginQuickConnectTest {
                 "toString" -> "FakeSetupRepository"
                 "hashCode" -> 0
                 "equals" -> false
-                else -> throw UnsupportedOperationException(method.name)
+                else -> throw UnsupportedOperationException(method.kotlinName)
             }
-        } as SetupRepository
+        }
+            as SetupRepository
 }

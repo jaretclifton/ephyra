@@ -8,7 +8,8 @@ import dev.jdtech.jellyfin.setup.domain.FakeLocalNetworkAccess
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.presentation.addserver.AddServerAction
 import dev.jdtech.jellyfin.setup.presentation.addserver.AddServerViewModel
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import kotlin.test.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,11 +36,11 @@ class AddServerAddressTrimTest {
     private val addedAddresses = mutableListOf<String>()
 
     private val repository =
-        Proxy.newProxyInstance(
-            SetupRepository::class.java.classLoader,
-            arrayOf(SetupRepository::class.java),
-        ) { _, method, args ->
-            when (method.name) {
+        fakeProxy(SetupRepository::class.java.classLoader, arrayOf(SetupRepository::class.java)) {
+            _,
+            method,
+            args ->
+            when (method.kotlinName) {
                 "addServer" -> {
                     addedAddresses.add(args[0] as String)
                     Server(
@@ -50,9 +51,10 @@ class AddServerAddressTrimTest {
                     )
                 }
                 "toString" -> "FakeSetupRepository"
-                else -> throw UnsupportedOperationException(method.name)
+                else -> throw UnsupportedOperationException(method.kotlinName)
             }
-        } as SetupRepository
+        }
+            as SetupRepository
 
     private val appPreferences =
         AppPreferences(

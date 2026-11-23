@@ -2,13 +2,12 @@ package dev.jdtech.jellyfin.core.presentation.dummy
 
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidSeason
-import java.util.UUID
 
 val dummySeason =
     FindroidSeason(
-        id = UUID.randomUUID(),
+        id = randomItemId(),
         name = "Season 1",
-        seriesId = UUID.randomUUID(),
+        seriesId = randomItemId(),
         seriesName = "Attack on Titan",
         originalTitle = null,
         overview = "",

@@ -33,6 +33,8 @@ import coil3.request.crossfade
 import dev.jdtech.jellyfin.core.R
 import dev.jdtech.jellyfin.core.presentation.theme.OutfitFamily
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.looksLikeJellyfinId
 import java.text.BreakIterator
 import java.util.Locale
 import kotlin.math.abs
@@ -54,7 +56,25 @@ data class AvatarColors(
 )
 
 /** Which of [count] colours a user gets. Deterministic, so a user keeps their colour. */
-fun avatarColorIndex(seed: UserId, count: Int): Int = abs(seed.hashCode().toLong()).toInt() % count
+fun avatarColorIndex(seed: UserId, count: Int): Int =
+    // The remainder before toInt(): abs(Int.MIN_VALUE) does not fit in an Int. The same index as
+    // before for every other hash.
+    (abs(idHash(seed.asString()).toLong()) % count).toInt()
+
+/**
+ * The hash a user's colour comes from. CE (#773): user ids were `java.util.UUID`s, and the colour
+ * came from `UUID.hashCode()`. For an id in a UUID's dashed lowercase form (every Jellyfin id) this
+ * is that same hash, so a user keeps their colour; any other id hashes as its text.
+ */
+private fun idHash(id: String): Int {
+    if (!id.looksLikeJellyfinId()) return id.hashCode()
+    val hex = id.replace("-", "")
+    val mostSignificant = hex.substring(0, 16).toULong(16).toLong()
+    val leastSignificant = hex.substring(16).toULong(16).toLong()
+    // UUID.hashCode(): the xor of the four 32-bit halves.
+    val hilo = mostSignificant xor leastSignificant
+    return (hilo shr 32).toInt() xor hilo.toInt()
+}
 
 /**
  * The initials shown when a user has no picture: the first letter of the first and the last word of

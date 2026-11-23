@@ -11,10 +11,12 @@ import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
-import java.lang.reflect.Proxy
 import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
@@ -155,12 +157,13 @@ class DownloadQueueFinalizeTest {
     }
 
     private fun database() =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, _ ->
-            throw NotImplementedError("ServerDatabaseDao.${method.name}")
-        } as ServerDatabaseDao
+            throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
+        }
+            as ServerDatabaseDao
 
     private class FakeDownloader : Downloader {
         @Volatile var progress = Downloader.Progress(DownloadStatus.RUNNING, 0, 0L, -1L)
@@ -231,7 +234,7 @@ class DownloadQueueFinalizeTest {
 
     private fun episode() =
         FindroidEpisode(
-            id = UUID.randomUUID(),
+            id = UUID.randomUUID().toString().toItemId(),
             name = "Episode 1",
             originalTitle = null,
             overview = "",
@@ -246,9 +249,9 @@ class DownloadQueueFinalizeTest {
             runtimeTicks = 0L,
             playbackPositionTicks = 0L,
             premiereDate = null,
-            seriesId = UUID.randomUUID(),
+            seriesId = UUID.randomUUID().toString().toItemId(),
             seriesName = "Show",
-            seasonId = UUID.randomUUID(),
+            seasonId = UUID.randomUUID().toString().toItemId(),
             seasonName = "Season 1",
             communityRating = null,
             people = emptyList(),

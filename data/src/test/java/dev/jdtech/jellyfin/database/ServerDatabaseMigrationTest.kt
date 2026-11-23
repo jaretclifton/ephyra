@@ -7,9 +7,12 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.sqlite.execSQL
 import androidx.test.platform.app.InstrumentationRegistry
+import dev.jdtech.jellyfin.models.PendingDownloadDto
 import dev.jdtech.jellyfin.models.ServerType
+import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.serverType
-import java.util.UUID
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toUserId
 import kotlin.math.abs
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -203,6 +206,65 @@ class ServerDatabaseMigrationTest {
         }
     }
 
+    /**
+     * CE (#773): item and user ids became value classes over their text, and Room binds them by
+     * that text, with no converter and no schema change. A schema 21 database as the `UUID`
+     * converter wrote it (dashed lowercase text) reads back as the same ids, and an id the DAO
+     * writes is stored as that same text.
+     */
+    @Test
+    fun `ids of a schema 21 database read and write as the text the UUID converter stored`() =
+        runBlocking {
+            helper.createDatabase(21).apply {
+                insertRows(21)
+                close()
+            }
+            val database =
+                Room.databaseBuilder(context, ServerDatabase::class.java, dbFile.path)
+                    .setDriver(AndroidSQLiteDriver())
+                    .addMigrations(*MIGRATIONS.toTypedArray())
+                    .build()
+            try {
+                val dao = database.getServerDatabaseDao()
+                assertEquals(USER.toUserId(), dao.getServerCurrentUser(SERVER)!!.id)
+                assertEquals(USER.toUserId(), dao.getServer(SERVER)!!.currentUserId)
+                assertEquals(MOVIE.toItemId(), dao.getMovie(MOVIE.toItemId()).id)
+                assertEquals(MOVIE.toItemId(), dao.getSources(MOVIE.toItemId()).single().itemId)
+                val episode = dao.getEpisode(EPISODE.toItemId())
+                assertEquals(SEASON.toItemId(), episode.seasonId)
+                assertEquals(SHOW.toItemId(), episode.seriesId)
+                val userData = dao.getUserData(MOVIE.toItemId(), USER.toUserId())!!
+                assertEquals(
+                    USER.toUserId() to MOVIE.toItemId(),
+                    userData.userId to userData.itemId,
+                )
+                assertEquals(EPISODE.toItemId(), dao.getPendingDownloads().single().itemId)
+
+                dao.insertUser(User(id = NEW_USER.toUserId(), name = "Bob", serverId = SERVER))
+                dao.insertPendingDownload(
+                    PendingDownloadDto(
+                        itemId = NEW_ITEM.toItemId(),
+                        itemKind = "Movie",
+                        addedAt = 1L,
+                    )
+                )
+            } finally {
+                database.close()
+            }
+
+            AndroidSQLiteDriver().open(dbFile.path).run {
+                assertEquals(
+                    listOf(USER to "text", NEW_USER to "text"),
+                    rows("SELECT id, typeof(id) FROM users ORDER BY id"),
+                )
+                assertEquals(
+                    listOf(EPISODE to "text", NEW_ITEM to "text"),
+                    rows("SELECT itemId, typeof(itemId) FROM pending_downloads ORDER BY itemId"),
+                )
+                close()
+            }
+        }
+
     private fun migratesWithData(from: Int) = runBlocking {
         helper.createDatabase(from).apply {
             insertRows(from)
@@ -227,15 +289,20 @@ class ServerDatabaseMigrationTest {
             assertEquals(ServerType.JELLYFIN, dao.getServer(SERVER)!!.serverType)
             assertEquals(TOKEN, dao.getServerCurrentUser(SERVER)!!.accessToken)
             assertEquals(ADDRESS, dao.getServerCurrentAddress(SERVER)!!.address)
-            assertEquals("Movie", dao.getMovie(uuid(MOVIE)).name)
-            assertEquals(PATH, dao.getSources(uuid(MOVIE)).single().path)
-            assertEquals(POSITION, dao.getUserData(uuid(MOVIE), uuid(USER))!!.playbackPositionTicks)
-            assertEquals(uuid(EPISODE), dao.getPendingDownloads().single().itemId)
-            assertEquals(300_000_000L, dao.getSegments(uuid(MOVIE)).single().endTicks)
+            assertEquals("Movie", dao.getMovie(MOVIE.toItemId()).name)
+            assertEquals(PATH, dao.getSources(MOVIE.toItemId()).single().path)
+            assertEquals(
+                POSITION,
+                dao.getUserData(MOVIE.toItemId(), USER.toUserId())!!.playbackPositionTicks,
+            )
+            assertEquals(EPISODE.toItemId(), dao.getPendingDownloads().single().itemId)
+            assertEquals(300_000_000L, dao.getSegments(MOVIE.toItemId()).single().endTicks)
             if (from >= 14) {
                 assertEquals(
                     "eng",
-                    dao.getSeriesTrackPreferences(uuid(USER), uuid(SHOW)).single().language,
+                    dao.getSeriesTrackPreferences(USER.toUserId(), SHOW.toItemId())
+                        .single()
+                        .language,
                 )
             }
         } finally {
@@ -429,8 +496,6 @@ class ServerDatabaseMigrationTest {
             it.getLong(0)
         }
 
-    private fun uuid(id: String): UUID = UUID.fromString(id)
-
     private fun helper(file: java.io.File) =
         MigrationTestHelper(
             instrumentation = instrumentation,
@@ -463,6 +528,10 @@ class ServerDatabaseMigrationTest {
         const val SECOND_ADDRESS_ID = "00000000-0000-0000-0000-00000000000b"
         const val SECOND_USER = "00000000-0000-0000-0000-000000000011"
         const val SECOND_MOVIE = "00000000-0000-0000-0000-000000000012"
+
+        /** Ids the DAO writes in the #773 test, as `UUID.toString()` gave them. */
+        const val NEW_USER = "0f8fad5b-d9cb-469f-a165-70867728950e"
+        const val NEW_ITEM = "7c9e6679-7425-40de-944b-e07fc1f90ae7"
 
         /** The one line [describeSchema] gains from #770. */
         const val SERVER_TYPE_COLUMN = "servers column type TEXT 1 'jellyfin' 0"

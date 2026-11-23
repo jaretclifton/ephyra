@@ -24,9 +24,10 @@ import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
 import java.io.File
-import java.lang.reflect.Proxy
 import javax.inject.Provider
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -74,12 +75,13 @@ class OtherServersCopyTest {
 
     private val downloader: DownloaderImpl by lazy {
         val repository =
-            Proxy.newProxyInstance(
+            fakeProxy(
                 JellyfinRepository::class.java.classLoader,
                 arrayOf(JellyfinRepository::class.java),
             ) { _, method, _ ->
-                server("JellyfinRepository.${method.name}")
-            } as JellyfinRepository
+                server("JellyfinRepository.${method.kotlinName}")
+            }
+                as JellyfinRepository
         DownloaderImpl(
             context,
             database,

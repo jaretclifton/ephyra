@@ -5,7 +5,7 @@ import dev.jdtech.jellyfin.models.ProfileLockType
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.User
-import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.profilelock.ProfileLock
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.presentation.pin.PinError
@@ -17,7 +17,9 @@ import dev.jdtech.jellyfin.setup.presentation.pin.ProfilePinSettingsViewModel
 import dev.jdtech.jellyfin.setup.presentation.users.UsersAction
 import dev.jdtech.jellyfin.setup.presentation.users.UsersEvent
 import dev.jdtech.jellyfin.setup.presentation.users.UsersViewModel
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.asUserId
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -43,8 +45,10 @@ import org.junit.jupiter.api.Test
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProfilePinSwitchTest {
-    private val adult = User(id = UUID.randomUUID(), name = "Adult", serverId = "s")
-    private val kid = User(id = UUID.randomUUID(), name = "Kid", serverId = "s")
+    private val adult =
+        User(id = UUID.randomUUID().toString().toUserId(), name = "Adult", serverId = "s")
+    private val kid =
+        User(id = UUID.randomUUID().toString().toUserId(), name = "Kid", serverId = "s")
     private val users = mutableMapOf(adult.id to adult, kid.id to kid)
     private val server =
         Server(id = "s", name = "Home", currentServerAddressId = null, currentUserId = kid.id)
@@ -320,14 +324,14 @@ class ProfilePinSwitchTest {
     }
 
     private fun fakeDao(): ServerDatabaseDao =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
-            when (method.name) {
-                "getUser" -> users[args[0] as UserId]
+            when (method.kotlinName) {
+                "getUser" -> users[args[0].asUserId()]
                 "updateUserPin" -> {
-                    val id = args[0] as UserId
+                    val id = args[0].asUserId()
                     users[id]?.let {
                         users[id] =
                             it.copy(
@@ -339,7 +343,7 @@ class ProfilePinSwitchTest {
                     Unit
                 }
                 "updateUserPattern" -> {
-                    val id = args[0] as UserId
+                    val id = args[0].asUserId()
                     users[id]?.let {
                         users[id] =
                             it.copy(
@@ -351,28 +355,29 @@ class ProfilePinSwitchTest {
                     Unit
                 }
                 "updateUserPinOnStart" -> {
-                    val id = args[0] as UserId
+                    val id = args[0].asUserId()
                     users[id]?.let { users[id] = it.copy(pinOnStart = args[1] as Boolean) }
                     Unit
                 }
                 "toString" -> "FakeServerDatabaseDao"
-                else -> throw UnsupportedOperationException(method.name)
+                else -> throw UnsupportedOperationException(method.kotlinName)
             }
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 
     private fun fakeRepository(): SetupRepository =
-        Proxy.newProxyInstance(
-            SetupRepository::class.java.classLoader,
-            arrayOf(SetupRepository::class.java),
-        ) { _, method, args ->
-            when (method.name) {
+        fakeProxy(SetupRepository::class.java.classLoader, arrayOf(SetupRepository::class.java)) {
+            _,
+            method,
+            args ->
+            when (method.kotlinName) {
                 "getCapabilities" -> ServerCapabilities.ALL
                 "getCurrentServer" -> server
                 "getUsers" -> users.values.toList()
                 "getPublicUsers" -> emptyList<User>()
                 "getCurrentUser" -> server.currentUserId?.let { users[it] }
                 "setCurrentUser" -> {
-                    server.currentUserId = args[0] as UserId
+                    server.currentUserId = args[0].asUserId()
                     Unit
                 }
                 "clearCurrentUser" -> {
@@ -380,7 +385,8 @@ class ProfilePinSwitchTest {
                     Unit
                 }
                 "toString" -> "FakeSetupRepository"
-                else -> throw UnsupportedOperationException(method.name)
+                else -> throw UnsupportedOperationException(method.kotlinName)
             }
-        } as SetupRepository
+        }
+            as SetupRepository
 }

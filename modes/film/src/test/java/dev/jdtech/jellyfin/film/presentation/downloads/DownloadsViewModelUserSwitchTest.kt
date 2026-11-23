@@ -14,9 +14,12 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -41,9 +44,9 @@ import org.junit.jupiter.api.Test
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class DownloadsViewModelUserSwitchTest {
-    private val alice = UUID.randomUUID()
-    private val bob = UUID.randomUUID()
-    private val movieId = UUID.randomUUID()
+    private val alice = UUID.randomUUID().toString().toUserId()
+    private val bob = UUID.randomUUID().toString().toUserId()
+    private val movieId = UUID.randomUUID().toString().toItemId()
 
     /** One download, as each user sees it: Alice is halfway, Bob has not started. */
     private val aliceMovie =
@@ -181,11 +184,11 @@ class DownloadsViewModelUserSwitchTest {
     }
 
     private fun repository(): JellyfinRepository =
-        Proxy.newProxyInstance(
+        fakeProxy(
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, _ ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getCapabilities" -> ServerCapabilities.ALL
                 "getUserId" -> sessionUser ?: throw IllegalStateException("No user")
                 // Room's copy of the downloads, with the user data of the user the client acts for.
@@ -198,16 +201,17 @@ class DownloadsViewModelUserSwitchTest {
                     } else {
                         listOf(aliceMovie)
                     }
-                else -> throw NotImplementedError("JellyfinRepository.${method.name}")
+                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
             }
-        } as JellyfinRepository
+        }
+            as JellyfinRepository
 
     private fun database(): ServerDatabaseDao =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getActiveDownloadSources",
                 "getMediaStreamsForSources" -> emptyList<Any>()
                 // A finished download of every item asked for.
@@ -221,31 +225,37 @@ class DownloadsViewModelUserSwitchTest {
                             path = "/nowhere/$id.mkv",
                         )
                     }
-                else -> throw NotImplementedError("ServerDatabaseDao.${method.name}")
+                else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
             }
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 
     private fun appPreferences(): AppPreferences {
         val preferences =
-            Proxy.newProxyInstance(
+            fakeProxy(
                 SharedPreferences::class.java.classLoader,
                 arrayOf(SharedPreferences::class.java),
             ) { _, method, args ->
-                when (method.name) {
+                when (method.kotlinName) {
                     "getBoolean",
                     "getString",
                     "getInt",
                     "getLong",
                     "getFloat",
                     "getStringSet" -> args!![1]
-                    else -> throw UnsupportedOperationException("SharedPreferences.${method.name}")
+                    else ->
+                        throw UnsupportedOperationException(
+                            "SharedPreferences.${method.kotlinName}"
+                        )
                 }
-            } as SharedPreferences
+            }
+                as SharedPreferences
         return AppPreferences(preferences)
     }
 
     private inline fun <reified T : Any> unused(): T =
-        Proxy.newProxyInstance(T::class.java.classLoader, arrayOf(T::class.java)) { _, method, _ ->
-            throw NotImplementedError("${T::class.java.simpleName}.${method.name}")
-        } as T
+        fakeProxy(T::class.java.classLoader, arrayOf(T::class.java)) { _, method, _ ->
+            throw NotImplementedError("${T::class.java.simpleName}.${method.kotlinName}")
+        }
+            as T
 }

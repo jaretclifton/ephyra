@@ -21,11 +21,13 @@ import dev.jdtech.jellyfin.models.ServerWithAddressAndUser
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.User
-import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.domain.AddressRejected
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.asUserId
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.Collections
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -48,7 +50,13 @@ import org.robolectric.annotation.Config
 class SetupRepositoryConnectorTest {
     private val context: Context by lazy { RuntimeEnvironment.getApplication() }
 
-    private val alice = User(UUID.randomUUID(), "alice", serverId = "a", accessToken = "token-a")
+    private val alice =
+        User(
+            UUID.randomUUID().toString().toUserId(),
+            "alice",
+            serverId = "a",
+            accessToken = "token-a",
+        )
     private val inRoom = ServerAddress(UUID.randomUUID(), "a", "https://a.example")
     private val other = ServerAddress(UUID.randomUUID(), "a", "http://a.local:8096")
     private var server = Server("a", "Server a", inRoom.id, alice.id)
@@ -59,13 +67,13 @@ class SetupRepositoryConnectorTest {
     private val writes: MutableList<String> = Collections.synchronizedList(mutableListOf())
 
     private val database =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getServer" -> server.takeIf { it.id == args[0] }
-                "getUser" -> users[args[0] as UserId]
+                "getUser" -> users[args[0].asUserId()]
                 "getAddress" -> addresses.single { it.id == args[0] }
                 "getServerWithAddresses" -> ServerWithAddresses(server, addresses.toList(), null)
                 "getServerWithAddressAndUser" ->
@@ -81,7 +89,7 @@ class SetupRepositoryConnectorTest {
                     Unit
                 }
                 "updateServerCurrentUser" -> {
-                    server = server.copy(currentUserId = args[1] as UserId)
+                    server = server.copy(currentUserId = args[1].asUserId())
                     writes += "updateServerCurrentUser ${args[0]}"
                     Unit
                 }
@@ -96,7 +104,7 @@ class SetupRepositoryConnectorTest {
                     Unit
                 }
                 "deleteUser" -> {
-                    users.remove(args[0] as UserId)
+                    users.remove(args[0].asUserId())
                     writes += "deleteUser"
                     Unit
                 }
@@ -106,9 +114,10 @@ class SetupRepositoryConnectorTest {
                     Unit
                 }
                 "toString" -> "FakeServerDatabaseDao"
-                else -> throw UnsupportedOperationException(method.name)
+                else -> throw UnsupportedOperationException(method.kotlinName)
             }
-        } as ServerDatabaseDao
+        }
+            as ServerDatabaseDao
 
     private val connector = FakeServerConnector()
 
@@ -195,7 +204,7 @@ class SetupRepositoryConnectorTest {
     @Test
     fun `a login goes to the client's address, then saves the user, then signs the client in`() =
         runBlocking {
-            val bob = UUID.randomUUID()
+            val bob = UUID.randomUUID().toString().toUserId()
             connector.onLogin = { username, _ ->
                 writes += "login $username"
                 AuthenticatedUser(bob, "bob", "a", "token-b", "tag")
@@ -218,7 +227,7 @@ class SetupRepositoryConnectorTest {
     @Test
     fun `the public users come from the client's address and belong to the server asked about`() =
         runBlocking {
-            val id = UUID.randomUUID()
+            val id = UUID.randomUUID().toString().toUserId()
             connector.onPublicUsers = { listOf(PublicUser(id, "carol", null)) }
 
             val publicUsers = repository.getPublicUsers("b")
@@ -249,7 +258,13 @@ class SetupRepositoryConnectorTest {
 
     @Test
     fun `switching user keeps the address and takes the user's token`() = runBlocking {
-        val bob = User(UUID.randomUUID(), "bob", serverId = "a", accessToken = "token-b")
+        val bob =
+            User(
+                UUID.randomUUID().toString().toUserId(),
+                "bob",
+                serverId = "a",
+                accessToken = "token-b",
+            )
         users[bob.id] = bob
 
         repository.setCurrentUser(bob.id)

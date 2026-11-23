@@ -93,7 +93,7 @@ internal class SavedSessionRestorer(
 /** The copy of the session kept in preferences, read without touching Room. */
 internal fun AppPreferences.savedApiSession(): ApiSession? {
     val serverId = getValue(sessionServerId) ?: return null
-    val userId = getValue(sessionUserId)?.let { id -> runCatching { id.toUserId() }.getOrNull() }
+    val userId = getValue(sessionUserId)?.toUserId()
     return ApiSession(
         serverId,
         getValue(sessionBaseUrl),

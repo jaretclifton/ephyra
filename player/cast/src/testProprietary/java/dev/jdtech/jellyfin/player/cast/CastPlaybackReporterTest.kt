@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.player.cast
 
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.cast.models.CastPlaybackStatus
 import dev.jdtech.jellyfin.player.cast.models.CastPlaybackStatus.BUFFERING
 import dev.jdtech.jellyfin.player.cast.models.CastPlaybackStatus.ENDED
@@ -21,8 +22,8 @@ import org.junit.jupiter.api.Test
  */
 class CastPlaybackReporterTest {
 
-    private val a = UUID.randomUUID()
-    private val b = UUID.randomUUID()
+    private val a = UUID.randomUUID().toString().toItemId()
+    private val b = UUID.randomUUID().toString().toItemId()
     private val none = emptyList<CastReport>()
 
     /** The clock, and where an item that plays at normal speed from 0 is at that time. */

@@ -7,8 +7,11 @@ import dev.jdtech.jellyfin.models.FindroidSeason
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.asItemIdOrNull
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import kotlin.random.Random
 import kotlin.test.assertEquals
@@ -20,7 +23,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
 class PlaylistManagerShuffleTest {
-    private val seriesId = UUID.randomUUID()
+    private val seriesId = UUID.randomUUID().toString().toItemId()
     private val calls = mutableListOf<String>()
     private val chapters = listOf(FindroidChapter(startPosition = 0L, name = "Opening"))
 
@@ -186,31 +189,35 @@ class PlaylistManagerShuffleTest {
     }
 
     private fun fakeRepository(show: Map<FindroidSeason, List<FindroidEpisode>>) =
-        Proxy.newProxyInstance(
+        fakeProxy(
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getSeasons" -> show.keys.toList()
-                "getSeason" -> show.keys.first { it.id == args[0] }
+                "getSeason" -> show.keys.first { it.id == args[0].asItemIdOrNull() }
                 "getEpisodes" -> {
                     calls += "getEpisodes"
                     if (args[1] == null)
                         show.values.flatten().map { it.copy(chapters = emptyList()) }
-                    else show.entries.first { it.key.id == args[1] }.value
+                    else show.entries.first { it.key.id == args[1].asItemIdOrNull() }.value
                 }
                 "getEpisode" -> {
                     calls += "getEpisode"
-                    show.values.flatten().first { it.id == args[0] }.copy(chapters = chapters)
+                    show.values
+                        .flatten()
+                        .first { it.id == args[0].asItemIdOrNull() }
+                        .copy(chapters = chapters)
                 }
                 "getPlaybackSources" -> listOf(source())
-                else -> error("Unexpected call to ${method.name}")
+                else -> error("Unexpected call to ${method.kotlinName}")
             }
-        } as JellyfinRepository
+        }
+            as JellyfinRepository
 
     private fun season(number: Int) =
         FindroidSeason(
-            id = UUID.randomUUID(),
+            id = UUID.randomUUID().toString().toItemId(),
             name = "Season $number",
             seriesId = seriesId,
             seriesName = "Show",
@@ -229,7 +236,7 @@ class PlaylistManagerShuffleTest {
 
     private fun episode(season: FindroidSeason, number: Int) =
         FindroidEpisode(
-            id = UUID.randomUUID(),
+            id = UUID.randomUUID().toString().toItemId(),
             name = "Episode $number",
             originalTitle = null,
             overview = "",

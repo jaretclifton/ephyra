@@ -233,7 +233,7 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
         userId: UserId,
         sortBy: SortBy,
     ): List<Entry> {
-        val byName = compareBy<Entry>({ it.sortName }, { it.id })
+        val byName = compareBy<Entry>({ it.sortName }, { it.id.value })
         val comparator =
             when (sortBy) {
                 SortBy.IMDB_RATING -> compareBy<Entry> { it.rating }

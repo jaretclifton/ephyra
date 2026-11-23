@@ -15,9 +15,10 @@ import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinMediaServer
 import dev.jdtech.jellyfin.server.jellyfin.toUuid
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.Closeable
 import java.io.InputStream
-import java.lang.reflect.Proxy
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
@@ -187,15 +188,16 @@ internal class StandInServer(
          * any: with no current server set, the requests under test read nothing else.
          */
         fun noDownloads(): ServerDatabaseDao =
-            Proxy.newProxyInstance(
+            fakeProxy(
                 ServerDatabaseDao::class.java.classLoader,
                 arrayOf(ServerDatabaseDao::class.java),
             ) { _, method, _ ->
-                when (method.name) {
+                when (method.kotlinName) {
                     "observeHasSources" -> flowOf(false)
-                    else -> throw NotImplementedError("ServerDatabaseDao.${method.name}")
+                    else -> throw NotImplementedError("ServerDatabaseDao.${method.kotlinName}")
                 }
-            } as ServerDatabaseDao
+            }
+                as ServerDatabaseDao
 
         /** A recorded server answer under `src/test/resources/`. */
         fun resource(path: String): String =

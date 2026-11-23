@@ -5,14 +5,13 @@ import dev.jdtech.jellyfin.models.HomeItem
 import dev.jdtech.jellyfin.models.HomeSection
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.View
-import java.util.UUID
 
-val dummyHomeSuggestions = HomeItem.Suggestions(id = UUID.randomUUID(), items = dummyMovies)
+val dummyHomeSuggestions = HomeItem.Suggestions(id = randomItemId(), items = dummyMovies)
 
 val dummyHomeSection =
     HomeItem.Section(
         HomeSection(
-            id = UUID.randomUUID(),
+            id = randomItemId(),
             name = UiText.DynamicString("Continue watching"),
             items = dummyMovies + dummyEpisodes,
         )
@@ -21,7 +20,7 @@ val dummyHomeSection =
 val dummyHomeView =
     HomeItem.ViewItem(
         View(
-            id = UUID.randomUUID(),
+            id = randomItemId(),
             name = "Movies",
             items = dummyMovies,
             type = CollectionType.Movies,

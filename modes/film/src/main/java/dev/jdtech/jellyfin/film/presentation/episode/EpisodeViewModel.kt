@@ -40,18 +40,21 @@ constructor(
     private val _state = MutableStateFlow(EpisodeState())
     val state = _state.asStateFlow()
 
-    private lateinit var episodeId: ItemId
+    private var episodeIdOrNull: ItemId? = null
+    private val episodeId: ItemId
+        get() = checkNotNull(episodeIdOrNull) { "episodeId is read before it is loaded" }
+
     private val reloadPolicy = ReloadPolicy(dataChanges)
     private var loadJob: Job? = null
 
     /** Whether coming back to the screen needs a load (#251), see [ReloadPolicy]. */
     fun shouldReload(episodeId: ItemId, stopEventFollows: Boolean = false): Boolean =
-        !::episodeId.isInitialized ||
+        episodeIdOrNull == null ||
             this.episodeId != episodeId ||
             reloadPolicy.shouldReload(stopEventFollows)
 
     fun loadEpisode(episodeId: ItemId) {
-        this.episodeId = episodeId
+        episodeIdOrNull = episodeId
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             val token = reloadPolicy.begin()

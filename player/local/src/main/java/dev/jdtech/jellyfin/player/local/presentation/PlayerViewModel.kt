@@ -1121,7 +1121,7 @@ constructor(
 
         // Every item change goes through here, whatever caused it, so this is where the item being
         // left is reported as stopped (PlaybackReporter.onItemTransition).
-        val newId = mediaItem?.mediaId?.let { runCatching { it.toItemId() }.getOrNull() }
+        val newId = mediaItem?.mediaId?.takeIf { it.isNotEmpty() }?.toItemId()
         val stopJob = playbackReporter.onItemTransition(newId)
         // Smart Downloads must not delete the file that is open, even once the server has marked
         // it played. Only releasePlayer clears this: a finished item stays open until the player

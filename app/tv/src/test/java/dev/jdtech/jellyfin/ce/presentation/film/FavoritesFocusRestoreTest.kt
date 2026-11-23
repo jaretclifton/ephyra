@@ -24,6 +24,7 @@ import dev.jdtech.jellyfin.film.presentation.collection.CollectionState
 import dev.jdtech.jellyfin.models.CollectionSection
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import java.util.UUID
 import org.junit.Rule
@@ -39,9 +40,13 @@ class FavoritesFocusRestoreTest {
     @get:Rule val rule = createComposeRule()
 
     private val movies: List<FindroidItem> =
-        (0 until 5).map { dummyMovie.copy(id = UUID(0, it.toLong()), name = "Movie $it") }
+        (0 until 5).map {
+            dummyMovie.copy(id = UUID(0, it.toLong()).toString().toItemId(), name = "Movie $it")
+        }
     private val episodes: List<FindroidItem> =
-        (0 until 3).map { dummyEpisode.copy(id = UUID(1, it.toLong()), name = "Episode $it") }
+        (0 until 3).map {
+            dummyEpisode.copy(id = UUID(1, it.toLong()).toString().toItemId(), name = "Episode $it")
+        }
 
     private var detailOpen by mutableStateOf(false)
     private var opened: FindroidItem? = null

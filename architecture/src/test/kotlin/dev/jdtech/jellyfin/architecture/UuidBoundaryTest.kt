@@ -13,8 +13,11 @@ import kotlin.test.assertTrue
  * A text check, as R1: a file can name the class by its full name without an import, or import
  * `java.util.*` and say `UUID`. Comments do not count.
  *
- * The baseline (`architecture/baseline/uuid-imports.txt`) lists the files that still do, and may
- * only shrink: the #773 slices empty it down to the files that make random ids.
+ * Since the flip to value classes (#773), `architecture/baseline/uuid-imports.txt` is an allowlist,
+ * not debt: the files that name `UUID` for an id the app makes itself (server addresses, stored
+ * media streams, random names, preview dummies), grouped under the reason. An item or user id is
+ * never a reason. The check stays exact both ways, so a file that stops naming `UUID` loses its
+ * line.
  */
 class UuidBoundaryTest {
 
@@ -36,8 +39,8 @@ class UuidBoundaryTest {
             unlisted = {
                 "$it imports or names $UUID outside the Jellyfin adapter " +
                     "(${ProjectTree.JELLYFIN_ADAPTER_MODULE}). Use the domain's ids and their " +
-                    "helpers (toItemId(), asString(), see Ids.kt); do not add the file to " +
-                    "${baseline.path}."
+                    "helpers (toItemId(), asString(), see Ids.kt). Only a random id of the app's " +
+                    "own, of a kind ${baseline.path} gives a reason for, belongs in that list."
             },
             stale = {
                 "$it is in the baseline but no longer names $UUID: delete its line from " +

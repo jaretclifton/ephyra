@@ -2,6 +2,8 @@ package dev.jdtech.jellyfin.player.local.domain
 
 import androidx.media3.common.C
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toUserId
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -12,7 +14,7 @@ import org.junit.jupiter.api.Test
  * was loaded again (a quality switch). The picks of the open player are kept per item.
  */
 class SessionTrackPicksTest {
-    private val movie = UUID.randomUUID()
+    private val movie = UUID.randomUUID().toString().toItemId()
     private val dutch = TrackPick(C.TRACK_TYPE_AUDIO, StoredChoice("nld", "Dutch 5.1", 0))
     private val german = TrackPick(C.TRACK_TYPE_TEXT, StoredChoice("deu", "External", 0))
 
@@ -45,7 +47,7 @@ class SessionTrackPicksTest {
         val picks = SessionTrackPicks()
         picks.remember(movie, dutch)
 
-        assertEquals(emptyList<TrackPick>(), picks.of(UUID.randomUUID()))
+        assertEquals(emptyList<TrackPick>(), picks.of(UUID.randomUUID().toString().toItemId()))
     }
 
     @Test
@@ -54,7 +56,7 @@ class SessionTrackPicksTest {
         picks.remember(movie, dutch)
         picks.remember(movie, german)
         picks.forget(movie, C.TRACK_TYPE_AUDIO)
-        picks.forget(UUID.randomUUID(), C.TRACK_TYPE_TEXT)
+        picks.forget(UUID.randomUUID().toString().toItemId(), C.TRACK_TYPE_TEXT)
 
         assertEquals(listOf(german), picks.of(movie))
     }
@@ -70,8 +72,8 @@ class SessionTrackPicksTest {
 
     @Test
     fun `a saved series choice becomes the same kind of pick`() {
-        val userId = UUID.randomUUID()
-        val seriesId = UUID.randomUUID()
+        val userId = UUID.randomUUID().toString().toUserId()
+        val seriesId = UUID.randomUUID().toString().toItemId()
         val audio =
             SeriesTrackPreferenceDto(
                 userId,

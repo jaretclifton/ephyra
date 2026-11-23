@@ -4,8 +4,9 @@ import android.content.SharedPreferences
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.IOException
-import java.lang.reflect.Proxy
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -103,33 +104,37 @@ class HomeViewModelOfflineCrashTest {
      * getResumeItems / getNextUp / getUserViews); the rest are never reached.
      */
     private fun offlineRepository(): JellyfinRepository =
-        Proxy.newProxyInstance(
+        fakeProxy(
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { proxy, method, args ->
             when {
                 method.declaringClass == Any::class.java ->
-                    when (method.name) {
+                    when (method.kotlinName) {
                         "hashCode" -> System.identityHashCode(proxy)
                         "toString" -> "offlineRepository"
                         "equals" -> proxy === args?.getOrNull(0)
                         else -> null
                     }
-                else -> throw IOException("Simulated offline: ${method.name}")
+                else -> throw IOException("Simulated offline: ${method.kotlinName}")
             }
-        } as JellyfinRepository
+        }
+            as JellyfinRepository
 
     /**
      * Not used by `loadData()` when there is no current server (see
      * [defaultsOnlySharedPreferences]); it only has to exist for the constructor.
      */
     private fun unusedDao(): ServerDatabaseDao =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, _ ->
-            throw NotImplementedError("ServerDatabaseDao.${method.name} not expected in this test")
-        } as ServerDatabaseDao
+            throw NotImplementedError(
+                "ServerDatabaseDao.${method.kotlinName} not expected in this test"
+            )
+        }
+            as ServerDatabaseDao
 
     /**
      * A [SharedPreferences] whose getters return the supplied default value. `AppPreferences` then
@@ -137,11 +142,11 @@ class HomeViewModelOfflineCrashTest {
      * entirely) and the `home*` toggles = true (so every section actually calls the repository).
      */
     private fun defaultsOnlySharedPreferences(): SharedPreferences =
-        Proxy.newProxyInstance(
+        fakeProxy(
             SharedPreferences::class.java.classLoader,
             arrayOf(SharedPreferences::class.java),
         ) { proxy, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 // AppPreferences.getValue always passes the default as the 2nd arg.
                 "getString",
                 "getBoolean",
@@ -153,7 +158,9 @@ class HomeViewModelOfflineCrashTest {
                 "hashCode" -> System.identityHashCode(proxy)
                 "toString" -> "defaultsOnlySharedPreferences"
                 "equals" -> proxy === args?.getOrNull(0)
-                else -> throw UnsupportedOperationException("SharedPreferences.${method.name}")
+                else ->
+                    throw UnsupportedOperationException("SharedPreferences.${method.kotlinName}")
             }
-        } as SharedPreferences
+        }
+            as SharedPreferences
 }

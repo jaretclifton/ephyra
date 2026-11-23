@@ -20,6 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.jdtech.jellyfin.core.R as CoreR
+import dev.jdtech.jellyfin.core.presentation.dummy.randomItemId
 import dev.jdtech.jellyfin.models.FindroidItemPerson
 import dev.jdtech.jellyfin.models.PersonKind
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
@@ -133,7 +134,7 @@ private val MaxLabelColumnWidth = 140.dp
 private fun InfoTextPreview() {
     fun person(name: String) =
         FindroidItemPerson(
-            id = java.util.UUID.randomUUID(),
+            id = randomItemId(),
             name = name,
             type = PersonKind.DIRECTOR,
             role = "",

@@ -5,8 +5,10 @@ import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidSource
 import dev.jdtech.jellyfin.models.FindroidSourceType
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -42,16 +44,17 @@ class PlaylistManagerUnfinishedDownloadTest {
     }
 
     private fun fakeRepository(sources: List<FindroidSource>) =
-        Proxy.newProxyInstance(
+        fakeProxy(
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, _ ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getEpisode" -> episode
                 "getPlaybackSources" -> sources
-                else -> error("Unexpected call to ${method.name}")
+                else -> error("Unexpected call to ${method.kotlinName}")
             }
-        } as JellyfinRepository
+        }
+            as JellyfinRepository
 
     private fun partial() =
         FindroidSource(
@@ -76,7 +79,7 @@ class PlaylistManagerUnfinishedDownloadTest {
 
     private fun episode() =
         FindroidEpisode(
-            id = UUID.randomUUID(),
+            id = UUID.randomUUID().toString().toItemId(),
             name = "Episode 1",
             originalTitle = null,
             overview = "",
@@ -91,9 +94,9 @@ class PlaylistManagerUnfinishedDownloadTest {
             runtimeTicks = 0L,
             playbackPositionTicks = 0L,
             premiereDate = null,
-            seriesId = UUID.randomUUID(),
+            seriesId = UUID.randomUUID().toString().toItemId(),
             seriesName = "Show",
-            seasonId = UUID.randomUUID(),
+            seasonId = UUID.randomUUID().toString().toItemId(),
             seasonName = "Season 1",
             communityRating = null,
             people = emptyList(),

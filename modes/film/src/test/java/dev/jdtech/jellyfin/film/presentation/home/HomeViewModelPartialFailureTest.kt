@@ -7,10 +7,13 @@ import dev.jdtech.jellyfin.models.FindroidCollection
 import dev.jdtech.jellyfin.models.FindroidImages
 import dev.jdtech.jellyfin.models.FindroidItem
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.asItemId
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.IOException
-import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -149,61 +152,68 @@ class HomeViewModelPartialFailureTest {
 
     private fun library() =
         FindroidCollection(
-            id = UUID.randomUUID(),
+            id = UUID.randomUUID().toString().toItemId(),
             name = "Movies",
             type = CollectionType.Movies,
             images = FindroidImages(),
         )
 
     private fun repository(): JellyfinRepository =
-        Proxy.newProxyInstance(
+        fakeProxy(
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
-            if (method.name in failing) throw IllegalStateException(method.name)
-            when (method.name) {
+            if (method.kotlinName in failing) throw IllegalStateException(method.kotlinName)
+            when (method.kotlinName) {
                 "getSuggestions",
                 "getResumeItems",
                 "getNextUp" -> listOf(item())
                 "getUserViews" -> libraries
                 "getLatestMedia" -> {
-                    if (args!![0] in failingLibraries) throw IOException("library")
+                    if (args!![0].asItemId() in failingLibraries) throw IOException("library")
                     listOf(item())
                 }
-                else -> throw NotImplementedError("JellyfinRepository.${method.name}")
+                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
             }
-        } as JellyfinRepository
+        }
+            as JellyfinRepository
 
     private fun item(): FindroidItem =
-        Proxy.newProxyInstance(
-            FindroidItem::class.java.classLoader,
-            arrayOf(FindroidItem::class.java),
-        ) { proxy, method, args ->
+        fakeProxy(FindroidItem::class.java.classLoader, arrayOf(FindroidItem::class.java)) {
+            proxy,
+            method,
+            args ->
             // StateFlow compares each new state with the last one.
-            when (method.name) {
+            when (method.kotlinName) {
                 "equals" -> proxy === args?.getOrNull(0)
                 "hashCode" -> System.identityHashCode(proxy)
-                else -> throw NotImplementedError("FindroidItem.${method.name}")
+                else -> throw NotImplementedError("FindroidItem.${method.kotlinName}")
             }
-        } as FindroidItem
+        }
+            as FindroidItem
 
     private fun unusedDao(): ServerDatabaseDao =
-        Proxy.newProxyInstance(
+        fakeProxy(
             ServerDatabaseDao::class.java.classLoader,
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, _ ->
-            throw NotImplementedError("ServerDatabaseDao.${method.name} not expected in this test")
-        } as ServerDatabaseDao
+            throw NotImplementedError(
+                "ServerDatabaseDao.${method.kotlinName} not expected in this test"
+            )
+        }
+            as ServerDatabaseDao
 
     private fun sharedPreferences(): SharedPreferences =
-        Proxy.newProxyInstance(
+        fakeProxy(
             SharedPreferences::class.java.classLoader,
             arrayOf(SharedPreferences::class.java),
         ) { _, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getBoolean" -> if (args!![0] in turnedOff) false else args[1]
                 "getString" -> args!![1]
-                else -> throw UnsupportedOperationException("SharedPreferences.${method.name}")
+                else ->
+                    throw UnsupportedOperationException("SharedPreferences.${method.kotlinName}")
             }
-        } as SharedPreferences
+        }
+            as SharedPreferences
 }

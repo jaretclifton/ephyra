@@ -37,6 +37,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyUser
+import dev.jdtech.jellyfin.core.presentation.dummy.randomUserId
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.presentation.setup.components.RootLayout
 import dev.jdtech.jellyfin.presentation.setup.components.UserItem
@@ -49,7 +50,6 @@ import dev.jdtech.jellyfin.setup.presentation.users.UsersEvent
 import dev.jdtech.jellyfin.setup.presentation.users.UsersState
 import dev.jdtech.jellyfin.setup.presentation.users.UsersViewModel
 import dev.jdtech.jellyfin.utils.ObserveAsEvents
-import java.util.UUID
 
 @Composable
 fun UsersScreen(
@@ -246,12 +246,8 @@ private fun UsersScreenLayoutPreview() {
             state =
                 UsersState(
                     users =
-                        listOf(
-                            dummyUser,
-                            User(id = UUID.randomUUID(), name = "Bob", serverId = ""),
-                        ),
-                    publicUsers =
-                        listOf(User(id = UUID.randomUUID(), name = "Alice", serverId = "")),
+                        listOf(dummyUser, User(id = randomUserId(), name = "Bob", serverId = "")),
+                    publicUsers = listOf(User(id = randomUserId(), name = "Alice", serverId = "")),
                     serverName = "Jellyfin",
                     currentUserId = dummyUser.id,
                 ),

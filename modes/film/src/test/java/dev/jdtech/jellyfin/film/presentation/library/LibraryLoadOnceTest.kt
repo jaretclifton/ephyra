@@ -10,7 +10,9 @@ import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.JellyfinRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.asItemIdOrNull
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import kotlin.test.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -88,38 +90,40 @@ class LibraryLoadOnceTest {
     private fun viewModel() = LibraryViewModel(repository(), appPreferences())
 
     private fun repository(): JellyfinRepository =
-        Proxy.newProxyInstance(
+        fakeProxy(
             JellyfinRepository::class.java.classLoader,
             arrayOf(JellyfinRepository::class.java),
         ) { _, method, args ->
-            when (method.name) {
+            when (method.kotlinName) {
                 "getItemsPaging" -> {
-                    requests.add(args!![0] as ItemId?)
+                    requests.add(args!![0].asItemIdOrNull())
                     flowOf(PagingData.empty<FindroidItem>())
                 }
-                else -> throw NotImplementedError("JellyfinRepository.${method.name}")
+                else -> throw NotImplementedError("JellyfinRepository.${method.kotlinName}")
             }
-        } as JellyfinRepository
+        }
+            as JellyfinRepository
 
     private fun appPreferences(): AppPreferences {
         lateinit var editor: SharedPreferences.Editor
         editor =
-            Proxy.newProxyInstance(
+            fakeProxy(
                 SharedPreferences.Editor::class.java.classLoader,
                 arrayOf(SharedPreferences.Editor::class.java),
             ) { _, method, _ ->
-                when (method.name) {
+                when (method.kotlinName) {
                     "apply" -> Unit
                     "commit" -> true
                     else -> editor
                 }
-            } as SharedPreferences.Editor
+            }
+                as SharedPreferences.Editor
         val preferences =
-            Proxy.newProxyInstance(
+            fakeProxy(
                 SharedPreferences::class.java.classLoader,
                 arrayOf(SharedPreferences::class.java),
             ) { _, method, args ->
-                when (method.name) {
+                when (method.kotlinName) {
                     "getBoolean",
                     "getString",
                     "getInt",
@@ -127,9 +131,13 @@ class LibraryLoadOnceTest {
                     "getFloat",
                     "getStringSet" -> args!![1]
                     "edit" -> editor
-                    else -> throw UnsupportedOperationException("SharedPreferences.${method.name}")
+                    else ->
+                        throw UnsupportedOperationException(
+                            "SharedPreferences.${method.kotlinName}"
+                        )
                 }
-            } as SharedPreferences
+            }
+                as SharedPreferences
         return AppPreferences(preferences)
     }
 }

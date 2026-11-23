@@ -23,6 +23,7 @@ import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.looksLikeJellyfinId
 import dev.jdtech.jellyfin.models.toFindroidEpisode
 import dev.jdtech.jellyfin.models.toFindroidEpisodeDto
 import dev.jdtech.jellyfin.models.toFindroidMediaStreamDto
@@ -117,8 +118,9 @@ internal fun shouldDeleteOrphanArtwork(
     knownItemIds: Set<ItemId>,
     minAgeMs: Long = ORPHAN_MIN_AGE_MS,
 ): Boolean {
-    val id = runCatching { dirName.toItemId() }.getOrNull() ?: return false
-    if (id.asString() != dirName.lowercase()) return false
+    val name = dirName.lowercase()
+    if (!name.looksLikeJellyfinId()) return false
+    val id = name.toItemId()
     if (id in knownItemIds) return false
     return isOldEnough(newestModified, now, minAgeMs)
 }

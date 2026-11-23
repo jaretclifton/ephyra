@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.timber)
     testImplementation(libs.androidx.room3.testing)
     testImplementation(libs.junit)
+    testImplementation(projects.testing)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)
 }

@@ -10,7 +10,8 @@ import androidx.compose.ui.test.pressKey
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
-import java.lang.reflect.Proxy
+import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.kotlinName
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import org.junit.Rule
@@ -66,19 +67,17 @@ class TvPlaybackProblemTest {
 
     /** A [Player] that only knows its state and error, and records what it is asked to do. */
     private fun player(state: Int, error: PlaybackException?, calls: MutableList<String>): Player =
-        Proxy.newProxyInstance(Player::class.java.classLoader, arrayOf(Player::class.java)) {
-            _,
-            method,
-            _ ->
-            when (method.name) {
+        fakeProxy(Player::class.java.classLoader, arrayOf(Player::class.java)) { _, method, _ ->
+            when (method.kotlinName) {
                 "getPlaybackState" -> state
                 "getPlayerError" -> error
                 else -> {
-                    calls += method.name
+                    calls += method.kotlinName
                     null
                 }
             }
-        } as Player
+        }
+            as Player
 
     private val error = PlaybackException("test", null, PlaybackException.ERROR_CODE_IO_UNSPECIFIED)
 
