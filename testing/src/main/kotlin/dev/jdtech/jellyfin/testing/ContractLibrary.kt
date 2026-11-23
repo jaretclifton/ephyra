@@ -24,6 +24,8 @@ import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 
 /**
@@ -74,7 +76,7 @@ object ContractLibrary : FakeLibrary {
 
     override val server =
         ServerInfo(
-            id = "00000000000000000000000000000002",
+            id = "00000000000000000000000000000002".toServerId(),
             name = "Ephyra Test",
             version = "12.4.0",
             product = "Jellyfin Server",
@@ -324,7 +326,7 @@ object ContractLibrary : FakeLibrary {
 
     private fun source(id: String, name: String, bitrate: Int?) =
         ItemSource(
-            id = id,
+            id = id.toMediaSourceId(),
             name = name,
             type = ItemSourceType.REMOTE,
             path = "",
@@ -359,5 +361,5 @@ object ContractLibrary : FakeLibrary {
 
     /** The test server makes trickplay images 320 wide, ten seconds apart. */
     private fun trickplay(id: ItemId) =
-        mapOf(id.toN() to ItemTrickplayInfo(320, 180, 10, 10, 9, 10_000, 892))
+        mapOf(id.toN().toMediaSourceId() to ItemTrickplayInfo(320, 180, 10, 10, 9, 10_000, 892))
 }

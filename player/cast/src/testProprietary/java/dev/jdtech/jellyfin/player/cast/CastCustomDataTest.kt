@@ -4,6 +4,8 @@ import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -18,7 +20,7 @@ class CastCustomDataTest {
 
     private val source =
         ItemSource(
-            id = "abc",
+            id = "abc".toMediaSourceId(),
             name = "Movie",
             type = ItemSourceType.REMOTE,
             path = "https://jellyfin.example/videos/1/master.m3u8?AudioStreamIndex=2&ApiKey=token",
@@ -64,7 +66,7 @@ class CastCustomDataTest {
 
         assertEquals("session", data.playSessionId)
         assertEquals(true, data.transcoded)
-        assertEquals("abc", data.source().id)
+        assertEquals("abc", data.source().id.asString())
         assertEquals(true, data.source().transcoded)
         assertEquals(1, data.source().defaultAudioStreamIndex)
     }

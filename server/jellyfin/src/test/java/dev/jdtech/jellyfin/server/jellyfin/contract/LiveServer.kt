@@ -61,7 +61,7 @@ private constructor(
         token = login.text("AccessToken")
         userId = login.getValue("User").jsonObject.text("Id")
         link(ContractLibrary.userId.asString().n(), userId)
-        link(ContractLibrary.server.id, json(get("/System/Info/Public")).text("Id"))
+        link(ContractLibrary.server.id.asString(), json(get("/System/Info/Public")).text("Id"))
 
         val library = ContractLibrary
         library.movies.forEach { movie ->

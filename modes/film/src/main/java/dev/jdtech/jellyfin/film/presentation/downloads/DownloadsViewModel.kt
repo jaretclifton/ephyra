@@ -293,7 +293,7 @@ constructor(
 
     /** CE (#718): the stored episodes of [showId] that the current server downloaded. */
     private suspend fun storedEpisodes(showId: ItemId): List<EpisodeEntity> {
-        val serverId = appPreferences.getValue(appPreferences.currentServer) ?: return emptyList()
+        val serverId = appPreferences.currentServerId() ?: return emptyList()
         return database.getEpisodesByShowIdOfServer(showId, serverId)
     }
 

@@ -10,6 +10,7 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Playable
 import dev.jdtech.jellyfin.models.Ticks
@@ -104,7 +105,7 @@ internal constructor(
     suspend fun getInitialItem(
         itemId: ItemId,
         itemKind: ItemKind,
-        mediaSourceId: String? = null,
+        mediaSourceId: MediaSourceId? = null,
         startFromBeginning: Boolean = false,
         shuffle: Boolean = false,
     ): PlayerItem? {
@@ -469,7 +470,7 @@ internal constructor(
     }
 
     private suspend fun Item.toPlayerItem(
-        mediaSourceId: String?,
+        mediaSourceId: MediaSourceId?,
         playbackPosition: Long,
         prefetchedSources: List<ItemSource>? = null,
         selectedAudio: StoredChoice? = null,

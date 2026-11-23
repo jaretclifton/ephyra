@@ -6,6 +6,7 @@ import android.provider.Settings
 import com.sun.net.httpserver.HttpServer
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.domain.ports.RequestWatcher
+import dev.jdtech.jellyfin.models.toServerId
 import java.net.InetSocketAddress
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
@@ -75,11 +76,11 @@ class AddAddressUnwatchedTest {
         try {
             val stubAddress = "http://127.0.0.1:${server.address.port}"
             // The SDK normalises the input: the trailing slash goes.
-            assertEquals(stubAddress, connector.findAddress("$stubAddress/", serverId))
+            assertEquals(stubAddress, connector.findAddress("$stubAddress/", serverId.toServerId()))
             // Another server's id is not a match.
-            assertNull(connector.findAddress(stubAddress, "another server"))
+            assertNull(connector.findAddress(stubAddress, "another server".toServerId()))
             // A second address that nobody answers: failures must stay unseen as well.
-            assertNull(connector.findAddress("http://127.0.0.1:9", serverId))
+            assertNull(connector.findAddress("http://127.0.0.1:9", serverId.toServerId()))
 
             assertEquals(0, watcher.calls.get())
             assertEquals(inUse, jellyfinApi.api.baseUrl)

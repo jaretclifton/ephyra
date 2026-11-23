@@ -5,6 +5,7 @@ import dev.jdtech.jellyfin.models.QuickConnectState
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.ServerCapabilities
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
@@ -21,7 +22,7 @@ interface SetupRepository {
 
     suspend fun getCurrentServer(): Server?
 
-    suspend fun deleteServer(serverId: String)
+    suspend fun deleteServer(serverId: ServerId)
 
     suspend fun getIsQuickConnectEnabled(): Boolean
 
@@ -29,7 +30,7 @@ interface SetupRepository {
 
     suspend fun getQuickConnectState(secret: String): QuickConnectState
 
-    suspend fun setCurrentServer(serverId: String)
+    suspend fun setCurrentServer(serverId: ServerId)
 
     suspend fun addServer(address: String): Server
 
@@ -39,9 +40,9 @@ interface SetupRepository {
 
     suspend fun loginWithSecret(secret: String)
 
-    suspend fun getUsers(serverId: String): List<User>
+    suspend fun getUsers(serverId: ServerId): List<User>
 
-    suspend fun getPublicUsers(serverId: String): List<User>
+    suspend fun getPublicUsers(serverId: ServerId): List<User>
 
     suspend fun updateUserImageTag(userId: UserId, tag: String?)
 
@@ -62,12 +63,12 @@ interface SetupRepository {
      *
      * @throws AddressRejected when another server or none answers, or the address is already saved.
      */
-    suspend fun addAddress(serverId: String, address: String): ServerAddress
+    suspend fun addAddress(serverId: ServerId, address: String): ServerAddress
 
-    suspend fun getAddresses(serverId: String): List<ServerAddress>
+    suspend fun getAddresses(serverId: ServerId): List<ServerAddress>
 
     /** The address the app uses for [serverId]. */
-    suspend fun getCurrentAddress(serverId: String): ServerAddress?
+    suspend fun getCurrentAddress(serverId: ServerId): ServerAddress?
 
     suspend fun deleteAddress(addressId: UUID)
 }

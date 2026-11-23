@@ -44,7 +44,7 @@ constructor(
                     // Episodes with only a `.download` source are still in progress.
                     // CE (#718): the ones the current server downloaded.
                     val allEpisodes =
-                        appPreferences.getValue(appPreferences.currentServer)?.let {
+                        appPreferences.currentServerId()?.let {
                             database.getEpisodesByShowIdOfServer(showId, it)
                         } ?: emptyList()
                     // One query for every episode's sources, reused for the filter, the

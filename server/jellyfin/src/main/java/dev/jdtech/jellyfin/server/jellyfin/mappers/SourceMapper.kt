@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.server.jellyfin.mappers
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import org.jellyfin.sdk.model.api.MediaProtocol
 import org.jellyfin.sdk.model.api.MediaSourceInfo
 
@@ -21,7 +22,8 @@ internal suspend fun MediaSourceInfo.toItemSource(
             transcodeUrl != null && transcoded -> serverUrl(context.baseUrl, transcodeUrl)
             protocol == MediaProtocol.FILE -> {
                 try {
-                    if (includePath) context.streamUrl(itemId, id.orEmpty()) else ""
+                    if (includePath) context.streamUrl(itemId, id.orEmpty().toMediaSourceId())
+                    else ""
                 } catch (_: Exception) {
                     ""
                 }
@@ -30,7 +32,7 @@ internal suspend fun MediaSourceInfo.toItemSource(
             else -> ""
         }
     return ItemSource(
-        id = id.orEmpty(),
+        id = id.orEmpty().toMediaSourceId(),
         name = name.orEmpty(),
         type = ItemSourceType.REMOTE,
         path = path,

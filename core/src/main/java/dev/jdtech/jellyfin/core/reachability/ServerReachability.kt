@@ -83,11 +83,9 @@ constructor(
 
         // Another server: what was known is about the old one.
         scope.launch {
-            appPreferences
-                .observe(appPreferences.currentServer)
-                .distinctUntilChanged()
-                .drop(1)
-                .collect { monitor.reset() }
+            appPreferences.observeCurrentServerId().distinctUntilChanged().drop(1).collect {
+                monitor.reset()
+            }
         }
 
         scope.launch(Dispatchers.Main) {

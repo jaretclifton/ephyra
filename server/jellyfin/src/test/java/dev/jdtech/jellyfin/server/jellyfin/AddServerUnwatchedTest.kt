@@ -7,6 +7,7 @@ import com.sun.net.httpserver.HttpServer
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.domain.ports.RequestWatcher
 import dev.jdtech.jellyfin.domain.ports.ServerConnectException
+import dev.jdtech.jellyfin.models.asString
 import java.net.InetSocketAddress
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
@@ -76,7 +77,7 @@ class AddServerUnwatchedTest {
             try {
                 val stubAddress = "http://127.0.0.1:${server.address.port}"
                 val resolved = connector.resolve("$stubAddress/")
-                assertEquals("new", resolved.info.id)
+                assertEquals("new", resolved.info.id.asString())
                 assertEquals(stubAddress, resolved.address)
                 // An address that nobody answers: failures must stay unseen as well.
                 assertFailsWith<ServerConnectException> { connector.resolve("http://127.0.0.1:9") }

@@ -20,6 +20,7 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.Library
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Person
 import dev.jdtech.jellyfin.models.PlaybackTarget
@@ -27,6 +28,7 @@ import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.models.Segment
 import dev.jdtech.jellyfin.models.SeriesTrackPreference
 import dev.jdtech.jellyfin.models.ServerCapabilities
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.SortBy
@@ -121,7 +123,7 @@ class MediaRepositoryImpl(
      * favourites can say "none downloaded", which an empty library or search could not.
      */
     private fun storedItems(
-        serverId: String?,
+        serverId: ServerId?,
         dtos: List<Any>,
         emptyIsAnAnswer: Boolean = false,
     ): (suspend () -> List<Item>)? {
@@ -130,7 +132,7 @@ class MediaRepositoryImpl(
         return suspend { storedLists.toItems(dtos, serverId, currentUserId) }
     }
 
-    private fun currentServerId(): String? = appPreferences.getValue(appPreferences.currentServer)
+    private fun currentServerId(): ServerId? = appPreferences.currentServerId()
 
     /**
      * CE (#637): reads the server's resume settings once per app run, so stops here and offline
@@ -541,7 +543,7 @@ class MediaRepositoryImpl(
     override suspend fun getPlaybackSources(
         itemId: ItemId,
         target: PlaybackTarget,
-        mediaSourceId: String?,
+        mediaSourceId: MediaSourceId?,
         audioStreamIndex: Int?,
         maxBitrate: Int?,
     ): List<ItemSource> =
@@ -594,7 +596,7 @@ class MediaRepositoryImpl(
             )
         }
 
-    override suspend fun getStreamUrl(itemId: ItemId, mediaSourceId: String): String =
+    override suspend fun getStreamUrl(itemId: ItemId, mediaSourceId: MediaSourceId): String =
         withContext(Dispatchers.IO) {
             try {
                 server.playback.streamUrl(itemId, mediaSourceId)
@@ -635,7 +637,7 @@ class MediaRepositoryImpl(
         itemId: ItemId,
         width: Int,
         index: Int,
-        mediaSourceId: String?,
+        mediaSourceId: MediaSourceId?,
     ): ByteArray? =
         withContext(Dispatchers.IO) {
             try {
@@ -644,7 +646,10 @@ class MediaRepositoryImpl(
                     // version the folder lists first; a version not downloaded goes to the server.
                     val source =
                         if (mediaSourceId != null) {
-                            File(context.filesDir, "trickplay/${itemId.asString()}/$mediaSourceId")
+                            File(
+                                    context.filesDir,
+                                    "trickplay/${itemId.asString()}/${mediaSourceId.asString()}",
+                                )
                                 .takeIf { it.isDirectory }
                         } else {
                             File(context.filesDir, "trickplay/${itemId.asString()}")
@@ -888,9 +893,7 @@ class MediaRepositoryImpl(
 
     override suspend fun getDownloads(): List<Item> =
         withContext(Dispatchers.IO) {
-            val serverId =
-                appPreferences.getValue(appPreferences.currentServer)
-                    ?: return@withContext emptyList()
+            val serverId = appPreferences.currentServerId() ?: return@withContext emptyList()
             val items = mutableListOf<Item>()
             items.addAll(
                 database.getMoviesByServerId(serverId).map { it.toMovie(database, currentUserId) }

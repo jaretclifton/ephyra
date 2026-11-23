@@ -4,6 +4,7 @@ import dev.jdtech.jellyfin.models.DownloadState
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.downloadState
@@ -51,7 +52,7 @@ constructor(private val repository: MediaRepository, private val appPreferences:
      */
     suspend fun sources(
         itemId: ItemId,
-        mediaSourceId: String? = null,
+        mediaSourceId: MediaSourceId? = null,
         audioStreamIndex: Int? = null,
     ): List<ItemSource> {
         // The cap first, then the target: the order the repository read them in before #766.
@@ -69,7 +70,7 @@ constructor(private val repository: MediaRepository, private val appPreferences:
      * The source that plays: a finished download first, else the first remote one. Null when there
      * is none. Only the sources with the id [mediaSourceId] count, unless none has it.
      */
-    fun pick(sources: List<ItemSource>, mediaSourceId: String?): ItemSource? {
+    fun pick(sources: List<ItemSource>, mediaSourceId: MediaSourceId?): ItemSource? {
         // A downloaded copy shares its id with the server version, so it wins for that version too.
         val mediaSources = sources.filter { it.id == mediaSourceId }.ifEmpty { sources }
         // Never an unfinished download (#454): its partial file plays as far as it got, or not at

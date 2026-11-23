@@ -8,7 +8,7 @@ import java.time.LocalDateTime
 @Entity(tableName = "shows")
 data class ShowEntity(
     @PrimaryKey val id: ItemId,
-    val serverId: String?,
+    val serverId: ServerId?,
     val name: String,
     val originalTitle: String?,
     val overview: String,
@@ -21,7 +21,7 @@ data class ShowEntity(
     val genres: List<String>? = null,
 )
 
-fun Show.toShowEntity(serverId: String? = null): ShowEntity {
+fun Show.toShowEntity(serverId: ServerId? = null): ShowEntity {
     return ShowEntity(
         id = id,
         serverId = serverId,

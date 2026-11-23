@@ -20,7 +20,7 @@ import androidx.room3.PrimaryKey
 data class User(
     @PrimaryKey val id: UserId,
     val name: String,
-    @ColumnInfo(index = true) val serverId: String,
+    @ColumnInfo(index = true) val serverId: ServerId,
     val accessToken: String? = null,
     /** Tag of the user's Jellyfin profile picture; null when they have none. */
     val primaryImageTag: String? = null,

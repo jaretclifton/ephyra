@@ -38,6 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyServer
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyServerAddress
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.presentation.setup.components.RootLayout
 import dev.jdtech.jellyfin.presentation.setup.components.ServerBottomSheet
@@ -54,7 +55,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ServersScreen(
     navigateToUsers: () -> Unit,
-    navigateToAddresses: (serverId: String) -> Unit,
+    navigateToAddresses: (serverId: ServerId) -> Unit,
     onAddClick: () -> Unit,
     onBackClick: () -> Unit,
     showBack: Boolean = true,

@@ -1,6 +1,8 @@
 package dev.jdtech.jellyfin.repository
 
 import android.content.SharedPreferences
+import dev.jdtech.jellyfin.models.ServerId
+import dev.jdtech.jellyfin.models.asString
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -9,22 +11,22 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class ResumeThresholdsStore(private val preferences: SharedPreferences) {
 
-    fun get(serverId: String?): ResumeThresholds =
+    fun get(serverId: ServerId?): ResumeThresholds =
         serverId?.let { preferences.getString(key(it), null) }?.let(::parse)
             ?: ResumeThresholds.DEFAULT
 
-    fun put(serverId: String, thresholds: ResumeThresholds) {
+    fun put(serverId: ServerId, thresholds: ResumeThresholds) {
         preferences.edit().putString(key(serverId), format(thresholds)).apply()
         readThisProcess.add(serverId)
     }
 
     /** Whether [serverId]'s were read in this run: they rarely change, so once will do. */
-    fun isFresh(serverId: String): Boolean = serverId in readThisProcess
+    fun isFresh(serverId: ServerId): Boolean = serverId in readThisProcess
 
-    private fun key(serverId: String) = "ce_resume_thresholds_$serverId"
+    private fun key(serverId: ServerId) = "ce_resume_thresholds_${serverId.asString()}"
 
     internal companion object {
-        private val readThisProcess: MutableSet<String> = ConcurrentHashMap.newKeySet()
+        private val readThisProcess: MutableSet<ServerId> = ConcurrentHashMap.newKeySet()
 
         fun format(thresholds: ResumeThresholds): String =
             with(thresholds) { "$minResumePct,$maxResumePct,$minResumeDurationSeconds" }

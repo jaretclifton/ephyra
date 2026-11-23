@@ -25,7 +25,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyServer
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyServerAddress
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerWithAddresses
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.setup.presentation.servers.ServersAction
@@ -37,7 +39,7 @@ import dev.jdtech.jellyfin.utils.ObserveAsEvents
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ServerSelectionBottomSheet(
-    currentServerId: String,
+    currentServerId: ServerId,
     onUpdate: () -> Unit,
     onManage: () -> Unit,
     onDismissRequest: () -> Unit,
@@ -68,7 +70,7 @@ fun ServerSelectionBottomSheet(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ServerSelectionBottomSheetLayout(
-    currentServerId: String,
+    currentServerId: ServerId,
     state: ServersState,
     onManage: () -> Unit,
     onAction: (action: ServersAction) -> Unit,
@@ -111,7 +113,7 @@ private fun ServerSelectionBottomSheetLayout(
 private fun ServerSelectionBottomSheetPreview() {
     FindroidTheme {
         ServerSelectionBottomSheetLayout(
-            currentServerId = "",
+            currentServerId = "".toServerId(),
             state =
                 ServersState(
                     servers =

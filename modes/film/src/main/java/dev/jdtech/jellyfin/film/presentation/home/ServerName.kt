@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.film.presentation.home
 
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerInfo
+import dev.jdtech.jellyfin.models.asString
 
 /**
  * CE (#543): this server with the name it now reports, or null when there is nothing to change.
@@ -10,6 +11,7 @@ import dev.jdtech.jellyfin.models.ServerInfo
  */
 fun Server.renamedTo(info: ServerInfo): Server? {
     val name = info.name
-    if (info.id.isBlank() || info.id != id || name.isBlank() || name == this.name) return null
+    if (info.id.asString().isBlank() || info.id != id || name.isBlank() || name == this.name)
+        return null
     return copy(name = name)
 }

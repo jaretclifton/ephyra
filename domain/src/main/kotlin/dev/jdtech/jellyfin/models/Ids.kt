@@ -2,9 +2,9 @@ package dev.jdtech.jellyfin.models
 
 import java.io.Serializable
 
-// The ids of the domain (#773). An item or user id is an opaque string wrapped in its own type, so
-// a user id cannot go where an item id belongs, and a server whose ids are not UUIDs (Emby) can use
-// its own. `ServerId` and `MediaSourceId` are still aliases of the strings they are.
+// The ids of the domain (#773, #902). An item, user, server or media source id is an opaque string
+// wrapped in its own type, so one kind of id cannot go where another belongs, and a server whose
+// ids are not UUIDs (Emby) can use its own.
 //
 // The string form. For Jellyfin an item or user id is the dashed lowercase form `UUID.toString()`
 // gives (`0f8fad5b-d9cb-469f-a165-70867728950e`): the Jellyfin adapter makes every id it hands out
@@ -38,11 +38,28 @@ value class UserId(val value: String) : Serializable {
     override fun toString(): String = value
 }
 
-/** The id a server gives itself (`ServerInfo.id`), as the server sends it. */
-typealias ServerId = String
+/**
+ * The id a server gives itself (`ServerInfo.id`), exactly as the server sends it (#902). It names
+ * the server in Room (the servers, users and downloads), in the current server preference and in
+ * the saved session, so its text never changes form. Make one with [toServerId], read it with
+ * [asString]. [toString] and [Serializable] as for [ItemId].
+ */
+@JvmInline
+value class ServerId(val value: String) : Serializable {
+    override fun toString(): String = value
+}
 
-/** The id of one version (media source) of an item (`ItemSource.id`), as the server sends it. */
-typealias MediaSourceId = String
+/**
+ * The id of one version (media source) of an item (`ItemSource.id`), exactly as the server sends it
+ * (#902). For Jellyfin it is a UUID, dashed or not depending on the answer it came in: the text is
+ * kept as it came, never normalised, because Room (sources, media streams, trickplay), the player
+ * and the receiver match it as text. Make one with [toMediaSourceId], read it with [asString].
+ * [toString] and [Serializable] as for [ItemId].
+ */
+@JvmInline
+value class MediaSourceId(val value: String) : Serializable {
+    override fun toString(): String = value
+}
 
 /**
  * The item id whose string form is this text (see the top of this file). It only wraps the text and
@@ -53,6 +70,12 @@ fun String.toItemId(): ItemId = ItemId(this)
 
 /** The user id whose string form is this text; the same rules as [toItemId]. */
 fun String.toUserId(): UserId = UserId(this)
+
+/** The server id whose string form is this text. It only wraps the text, as [toItemId]. */
+fun String.toServerId(): ServerId = ServerId(this)
+
+/** The media source id whose string form is this text. It only wraps the text, as [toItemId]. */
+fun String.toMediaSourceId(): MediaSourceId = MediaSourceId(this)
 
 private val JELLYFIN_ID_FORM = Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 
@@ -73,3 +96,9 @@ fun ItemId.asString(): String = value
 
 /** The string form of the id; see [ItemId.asString]. */
 fun UserId.asString(): String = value
+
+/** The string form of the id, as the server sent it; see [ItemId.asString]. */
+fun ServerId.asString(): String = value
+
+/** The string form of the id, as the server sent it; see [ItemId.asString]. */
+fun MediaSourceId.asString(): String = value

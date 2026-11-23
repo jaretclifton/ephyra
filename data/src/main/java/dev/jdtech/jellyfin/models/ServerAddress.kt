@@ -20,6 +20,6 @@ import java.util.UUID
 )
 data class ServerAddress(
     @PrimaryKey val id: UUID,
-    @ColumnInfo(index = true) val serverId: String,
+    @ColumnInfo(index = true) val serverId: ServerId,
     val address: String,
 )

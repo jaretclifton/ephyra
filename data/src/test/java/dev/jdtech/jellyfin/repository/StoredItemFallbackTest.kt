@@ -15,6 +15,8 @@ import dev.jdtech.jellyfin.models.ShowEntity
 import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.asItemId
@@ -49,7 +51,7 @@ class StoredItemFallbackTest {
     private val show =
         ShowEntity(
             id = showId,
-            serverId = "server",
+            serverId = "server".toServerId(),
             name = "Bluey",
             originalTitle = null,
             overview = "",
@@ -72,7 +74,7 @@ class StoredItemFallbackTest {
     private val episode =
         EpisodeEntity(
             id = episodeId,
-            serverId = "server",
+            serverId = "server".toServerId(),
             seasonId = seasonId,
             seriesId = showId,
             name = "Obstacle Course",
@@ -89,7 +91,7 @@ class StoredItemFallbackTest {
     private val movie =
         MovieEntity(
             id = movieId,
-            serverId = "server",
+            serverId = "server".toServerId(),
             name = "Movie",
             originalTitle = null,
             overview = "",
@@ -105,7 +107,7 @@ class StoredItemFallbackTest {
 
     private fun localSource(itemId: ItemId) =
         ItemSourceEntity(
-            id = "source-${itemId.asString()}",
+            id = "source-${itemId.asString()}".toMediaSourceId(),
             itemId = itemId,
             name = "Original",
             type = ItemSourceType.LOCAL,

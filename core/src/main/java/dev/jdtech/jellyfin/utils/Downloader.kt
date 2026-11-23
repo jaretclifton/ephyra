@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.utils
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.UiText
 
 interface Downloader {
@@ -16,7 +17,7 @@ interface Downloader {
      */
     suspend fun downloadItem(
         item: Item,
-        sourceId: String,
+        sourceId: MediaSourceId,
         storageIndex: Int = 0,
         maxBitrate: Int? = null,
         smartQueued: Boolean = false,

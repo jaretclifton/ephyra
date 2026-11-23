@@ -28,7 +28,7 @@ import java.time.LocalDateTime
 )
 data class EpisodeEntity(
     @PrimaryKey val id: ItemId,
-    val serverId: String?,
+    val serverId: ServerId?,
     val seasonId: ItemId,
     val seriesId: ItemId,
     val name: String,
@@ -43,7 +43,7 @@ data class EpisodeEntity(
     val chapters: List<Chapter>?,
 )
 
-fun Episode.toEpisodeEntity(serverId: String? = null): EpisodeEntity {
+fun Episode.toEpisodeEntity(serverId: ServerId? = null): EpisodeEntity {
     return EpisodeEntity(
         id = id,
         serverId = serverId,
@@ -73,7 +73,7 @@ suspend fun EpisodeEntity.toEpisode(
 ): Episode {
     val userData = database.getUserDataOrCreateNew(id, userId)
     val sources = localSources[id].orEmpty()
-    val trickplayInfos = mutableMapOf<String, ItemTrickplayInfo>()
+    val trickplayInfos = mutableMapOf<MediaSourceId, ItemTrickplayInfo>()
     for (source in sources) {
         database.getTrickplayInfo(source.id)?.toItemTrickplayInfo()?.let {
             trickplayInfos[source.id] = it

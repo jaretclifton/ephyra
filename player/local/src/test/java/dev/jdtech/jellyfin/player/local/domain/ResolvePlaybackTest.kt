@@ -5,6 +5,7 @@ import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -64,7 +65,7 @@ class ResolvePlaybackTest {
     fun `sources asks with the target and the cap the settings have`() {
         val resolve = resolve(BACKEND to "mpv", MAX_BITRATE to 4_000_000, DOLBY_VISION to false)
 
-        runBlocking { resolve.sources(itemId, "source", audioStreamIndex = 2) }
+        runBlocking { resolve.sources(itemId, "source".toMediaSourceId(), audioStreamIndex = 2) }
 
         assertEquals(
             listOf(
@@ -103,7 +104,7 @@ class ResolvePlaybackTest {
         val download = source("source", ItemSourceType.LOCAL, "/films/film.mkv")
         val remote = source("source", ItemSourceType.REMOTE, "https://server/film")
 
-        assertEquals(download, resolve().pick(listOf(remote, download), "source"))
+        assertEquals(download, resolve().pick(listOf(remote, download), "source".toMediaSourceId()))
         assertEquals(download, resolve().pick(listOf(remote, download), null))
     }
 
@@ -112,8 +113,8 @@ class ResolvePlaybackTest {
         val partial = source("source", ItemSourceType.LOCAL, "/films/film.mkv.download")
         val remote = source("source", ItemSourceType.REMOTE, "https://server/film")
 
-        assertEquals(remote, resolve().pick(listOf(partial, remote), "source"))
-        assertNull(resolve().pick(listOf(partial), "source"))
+        assertEquals(remote, resolve().pick(listOf(partial, remote), "source".toMediaSourceId()))
+        assertNull(resolve().pick(listOf(partial), "source".toMediaSourceId()))
     }
 
     @Test
@@ -121,15 +122,15 @@ class ResolvePlaybackTest {
         val first = source("first", ItemSourceType.REMOTE, "https://server/first")
         val second = source("second", ItemSourceType.REMOTE, "https://server/second")
 
-        assertEquals(second, resolve().pick(listOf(first, second), "second"))
-        assertEquals(first, resolve().pick(listOf(first, second), "other"))
+        assertEquals(second, resolve().pick(listOf(first, second), "second".toMediaSourceId()))
+        assertEquals(first, resolve().pick(listOf(first, second), "other".toMediaSourceId()))
         assertEquals(first, resolve().pick(listOf(first, second), null))
     }
 
     @Test
     fun `no sources gives null`() {
         assertNull(resolve().pick(emptyList(), null))
-        assertNull(resolve().pick(emptyList(), "source"))
+        assertNull(resolve().pick(emptyList(), "source".toMediaSourceId()))
     }
 
     private fun resolve(vararg values: Pair<String, Any>): ResolvePlayback {
@@ -154,7 +155,7 @@ class ResolvePlaybackTest {
 
     private fun source(id: String, type: ItemSourceType, path: String) =
         ItemSource(
-            id = id,
+            id = id.toMediaSourceId(),
             name = id,
             type = type,
             path = path,

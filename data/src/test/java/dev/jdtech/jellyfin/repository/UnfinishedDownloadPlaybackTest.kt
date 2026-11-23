@@ -8,6 +8,7 @@ import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.asItemId
@@ -34,7 +35,7 @@ class UnfinishedDownloadPlaybackTest {
 
     private val partial =
         ItemSourceEntity(
-            id = "source",
+            id = "source".toMediaSourceId(),
             itemId = episodeId,
             name = "Original",
             type = ItemSourceType.LOCAL,

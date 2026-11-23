@@ -24,6 +24,8 @@ import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.io.File
@@ -108,7 +110,7 @@ class StoredListsFallbackTest {
         database.insertMovie(
             MovieEntity(
                 id = id,
-                serverId = serverId,
+                serverId = serverId.toServerId(),
                 name = name,
                 originalTitle = null,
                 overview = "",
@@ -152,7 +154,7 @@ class StoredListsFallbackTest {
         database.insertShow(
             ShowEntity(
                 id = showId,
-                serverId = serverId,
+                serverId = serverId.toServerId(),
                 name = "Bluey",
                 originalTitle = null,
                 overview = "",
@@ -177,7 +179,7 @@ class StoredListsFallbackTest {
         database.insertEpisode(
             EpisodeEntity(
                 id = episodeId,
-                serverId = serverId,
+                serverId = serverId.toServerId(),
                 seasonId = seasonId,
                 seriesId = showId,
                 name = name,
@@ -215,7 +217,7 @@ class StoredListsFallbackTest {
 
     private fun source(itemId: ItemId, downloadedAt: Long?) =
         ItemSourceEntity(
-            id = "source-${itemId.asString()}",
+            id = "source-${itemId.asString()}".toMediaSourceId(),
             itemId = itemId,
             name = "Original",
             type = ItemSourceType.LOCAL,

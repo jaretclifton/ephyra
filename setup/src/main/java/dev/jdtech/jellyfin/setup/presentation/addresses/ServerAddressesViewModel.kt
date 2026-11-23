@@ -3,7 +3,9 @@ package dev.jdtech.jellyfin.setup.presentation.addresses
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.domain.AddressRejected
 import dev.jdtech.jellyfin.setup.domain.LocalNetworkAccess
@@ -28,9 +30,9 @@ constructor(
     private val _state = MutableStateFlow(ServerAddressesState())
     val state = _state.asStateFlow()
 
-    private var currentServerId: String = ""
+    private var currentServerId: ServerId = "".toServerId()
 
-    fun loadAddresses(serverId: String) {
+    fun loadAddresses(serverId: ServerId) {
         currentServerId = serverId
         viewModelScope.launch {
             try {

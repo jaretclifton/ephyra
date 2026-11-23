@@ -6,6 +6,7 @@ import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import java.time.LocalDateTime
 
 val dummyEpisode =
@@ -21,7 +22,7 @@ val dummyEpisode =
         sources =
             listOf(
                 ItemSource(
-                    id = "",
+                    id = "".toMediaSourceId(),
                     name = "",
                     type = ItemSourceType.REMOTE,
                     path = "",

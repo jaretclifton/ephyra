@@ -10,6 +10,7 @@ import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.models.MovieEntity
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ShowEntity
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
@@ -54,14 +55,14 @@ fun interface StoredLibraryNames {
  * downloaded, so they are sorted and filtered in memory, on the rows before they are mapped.
  */
 internal class StoredLists(private val database: ServerDatabaseDao) {
-    suspend fun favorites(serverId: String, userId: UserId): List<Any> =
+    suspend fun favorites(serverId: ServerId, userId: UserId): List<Any> =
         database.getFavoriteMoviesOfServer(serverId, userId) +
             database.getFavoriteShowsOfServer(serverId, userId) +
             database.getFavoriteEpisodesOfServer(serverId, userId)
 
     /** By name, as the server's search: movies and shows unless [kinds] says otherwise. */
     suspend fun search(
-        serverId: String,
+        serverId: ServerId,
         query: String,
         kinds: List<ItemKind>?,
         limitPerKind: Int,
@@ -82,7 +83,7 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
     }
 
     /** Whether anything of the server is downloaded (finished), favourite or not. */
-    suspend fun hasDownloads(serverId: String): Boolean =
+    suspend fun hasDownloads(serverId: ServerId): Boolean =
         database.countDownloadedMoviesOfServer(serverId) > 0 ||
             database.countDownloadedShowsOfServer(serverId) > 0
 
@@ -93,7 +94,7 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
      * real library shows. Without any, the blank card as before.
      */
     suspend fun libraries(
-        serverId: String,
+        serverId: ServerId,
         names: StoredLibraryNames,
         storedImage: (itemId: ItemId, image: String) -> Boolean = { _, _ -> false },
     ): List<Library> {
@@ -134,7 +135,7 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
      * back to the name.
      */
     suspend fun libraryContents(
-        serverId: String,
+        serverId: ServerId,
         userId: UserId,
         libraryId: ItemId,
         sortBy: SortBy,
@@ -147,7 +148,7 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
 
     /** How many rows of [libraryId] sort before [nameLessThan], for the A–Z bar. */
     suspend fun libraryCount(
-        serverId: String,
+        serverId: ServerId,
         userId: UserId,
         libraryId: ItemId,
         filters: Set<ItemFilter>,
@@ -159,7 +160,7 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
         return entries.count { it.sortName < boundary }
     }
 
-    suspend fun toItems(dtos: List<Any>, serverId: String, userId: UserId): List<Item> {
+    suspend fun toItems(dtos: List<Any>, serverId: ServerId, userId: UserId): List<Item> {
         val local =
             database.getLocalSourcesForItems(
                 dtos.mapNotNull {
@@ -194,7 +195,7 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
     }
 
     private suspend fun entries(
-        serverId: String,
+        serverId: ServerId,
         userId: UserId,
         libraryId: ItemId,
         filters: Set<ItemFilter>,
@@ -229,7 +230,7 @@ internal class StoredLists(private val database: ServerDatabaseDao) {
     /** Ascending; a missing value comes first, as on the server. Ties go by name. */
     private suspend fun sorted(
         entries: List<Entry>,
-        serverId: String,
+        serverId: ServerId,
         userId: UserId,
         sortBy: SortBy,
     ): List<Entry> {

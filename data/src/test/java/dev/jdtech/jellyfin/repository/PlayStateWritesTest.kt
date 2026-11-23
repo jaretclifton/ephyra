@@ -14,6 +14,7 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.MovieEntity
 import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import kotlin.test.assertEquals
@@ -86,7 +87,7 @@ class PlayStateWritesTest {
         database.insertMovie(
             MovieEntity(
                 id = movieId,
-                serverId = "server",
+                serverId = "server".toServerId(),
                 name = "Movie",
                 originalTitle = null,
                 overview = "",

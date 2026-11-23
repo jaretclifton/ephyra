@@ -823,7 +823,7 @@ private fun SeasonEpisodeDetailPane(
                         intent.putExtra("itemId", episodeId.asString())
                         intent.putExtra("itemKind", ItemKind.EPISODE.serialName)
                         intent.putExtra("startFromBeginning", action.startFromBeginning)
-                        intent.putExtra("mediaSourceId", action.mediaSourceId)
+                        intent.putExtra("mediaSourceId", action.mediaSourceId?.asString())
                         context.startActivity(intent)
                     }
                 }

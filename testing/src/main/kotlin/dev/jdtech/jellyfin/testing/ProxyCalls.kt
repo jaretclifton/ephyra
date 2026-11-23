@@ -1,22 +1,26 @@
 package dev.jdtech.jellyfin.testing
 
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.MediaSourceId
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.UserId
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 
 // Helpers for the test fakes built with `java.lang.reflect.Proxy` (#773). `ItemId` and `UserId` are
-// value classes, and Kotlin compiles a function that takes one to a JVM method with a mangled name
-// (`getMovie(ItemId)` is `getMovie-<hash>`) whose parameter is the plain `String`. A fake that
-// switches on `method.name`, casts `args[0] as ItemId` or answers with an `ItemId` where the JVM
-// method returns a `String` then silently stops matching or throws.
+// value classes, and `ServerId` and `MediaSourceId` too since #902. Kotlin compiles a function that
+// takes one to a JVM method with a mangled name (`getMovie(ItemId)` is `getMovie-<hash>`) whose
+// parameter is the plain `String`. A fake that switches on `method.name`, casts `args[0] as ItemId`
+// or answers with an `ItemId` where the JVM method returns a `String` then silently stops matching
+// or throws.
 
 /**
  * A fake of [interfaces] built with `java.lang.reflect.Proxy`, as `Proxy.newProxyInstance` builds
- * it, except that an [ItemId] or [UserId] the [handler] answers with goes back as the JVM method
- * wants it: a function declared to return a value class returns its `String` on the JVM. (A suspend
- * function returns it boxed, as the handler gives it.)
+ * it, except that an id the [handler] answers with ([ItemId], [UserId], [ServerId],
+ * [MediaSourceId]) goes back as the JVM method wants it: a function declared to return a value
+ * class returns its `String` on the JVM. (A suspend function returns it boxed, as the handler gives
+ * it.)
  */
 fun fakeProxy(
     loader: ClassLoader?,
@@ -30,6 +34,8 @@ fun fakeProxy(
             when (answer) {
                 is ItemId -> answer.value
                 is UserId -> answer.value
+                is ServerId -> answer.value
+                is MediaSourceId -> answer.value
                 else -> answer
             }
     }
@@ -64,3 +70,25 @@ fun Any?.asUserId(): UserId =
 
 /** [asUserId] for an argument that may be null. */
 fun Any?.asUserIdOrNull(): UserId? = this?.asUserId()
+
+/** This argument of a Proxy call as a [ServerId]; see [asItemId]. */
+fun Any?.asServerId(): ServerId =
+    when (this) {
+        is ServerId -> this
+        is String -> ServerId(this)
+        else -> throw IllegalArgumentException("Not a server id: $this")
+    }
+
+/** [asServerId] for an argument that may be null. */
+fun Any?.asServerIdOrNull(): ServerId? = this?.asServerId()
+
+/** This argument of a Proxy call as a [MediaSourceId]; see [asItemId]. */
+fun Any?.asMediaSourceId(): MediaSourceId =
+    when (this) {
+        is MediaSourceId -> this
+        is String -> MediaSourceId(this)
+        else -> throw IllegalArgumentException("Not a media source id: $this")
+    }
+
+/** [asMediaSourceId] for an argument that may be null. */
+fun Any?.asMediaSourceIdOrNull(): MediaSourceId? = this?.asMediaSourceId()

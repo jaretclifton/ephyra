@@ -7,7 +7,7 @@ import java.util.UUID
 
 @Entity(tableName = "servers")
 data class Server(
-    @PrimaryKey val id: String,
+    @PrimaryKey val id: ServerId,
     val name: String,
     var currentServerAddressId: UUID?,
     var currentUserId: UserId?,

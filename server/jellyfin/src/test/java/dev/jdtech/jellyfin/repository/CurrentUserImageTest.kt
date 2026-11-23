@@ -7,6 +7,7 @@ import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -43,9 +44,11 @@ class CurrentUserImageTest {
 
     @Test
     fun `the tag goes to the user the server answered for`() = runBlocking {
-        database.insertServer(Server(SERVER, "Server", null, OTHER))
-        database.insertUser(User(id = StandInServer.USER_ID, name = "Session", serverId = SERVER))
-        database.insertUser(User(id = OTHER, name = "Token", serverId = SERVER))
+        database.insertServer(Server(SERVER.toServerId(), "Server", null, OTHER))
+        database.insertUser(
+            User(id = StandInServer.USER_ID, name = "Session", serverId = SERVER.toServerId())
+        )
+        database.insertUser(User(id = OTHER, name = "Token", serverId = SERVER.toServerId()))
 
         // The session's id is USER_ID; the server answers for OTHER, the token's user.
         server.repository(context, database).refreshCurrentUserImage()

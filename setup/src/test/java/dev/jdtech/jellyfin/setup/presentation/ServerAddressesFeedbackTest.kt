@@ -11,6 +11,8 @@ import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.UiText
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.data.FakeServerConnector
@@ -53,8 +55,10 @@ import org.robolectric.annotation.Config
 @Config(sdk = [34], application = Application::class)
 class ServerAddressesFeedbackTest {
     private val serverId = "server"
-    private val inUse = ServerAddress(UUID.randomUUID(), serverId, "http://10.0.2.2:8096")
-    private val other = ServerAddress(UUID.randomUUID(), serverId, "http://192.168.1.2:8096")
+    private val inUse =
+        ServerAddress(UUID.randomUUID(), serverId.toServerId(), "http://10.0.2.2:8096")
+    private val other =
+        ServerAddress(UUID.randomUUID(), serverId.toServerId(), "http://192.168.1.2:8096")
     private val addresses = Collections.synchronizedList(mutableListOf(inUse, other))
     private val deleted = Collections.synchronizedList(mutableListOf<UUID>())
 
@@ -70,7 +74,7 @@ class ServerAddressesFeedbackTest {
             when (method.kotlinName) {
                 "getServerCurrentAddress" -> inUse
                 // CE (#770): for its type, which picks the connector.
-                "getServer" -> Server(serverId, "Ephyra Test", inUse.id, null)
+                "getServer" -> Server(serverId.toServerId(), "Ephyra Test", inUse.id, null)
                 "deleteServerAddress" -> {
                     deleted.add(args[0] as UUID)
                     addresses.removeAll { it.id == args[0] }
@@ -79,7 +83,7 @@ class ServerAddressesFeedbackTest {
                 "getServerWithAddresses" -> {
                     failure?.let { throw it }
                     ServerWithAddresses(
-                        server = Server(serverId, "Ephyra Test", inUse.id, null),
+                        server = Server(serverId.toServerId(), "Ephyra Test", inUse.id, null),
                         addresses = addresses.toList(),
                         user = null,
                     )
@@ -97,7 +101,7 @@ class ServerAddressesFeedbackTest {
     private val connector =
         FakeServerConnector(
             onFindAddress = { address, id ->
-                address.trimEnd('/').takeIf { it == stubAddress && id == serverId }
+                address.trimEnd('/').takeIf { it == stubAddress && id.asString() == serverId }
             }
         )
 
@@ -117,7 +121,7 @@ class ServerAddressesFeedbackTest {
                 CurrentServerType(),
             )
         viewModel = ServerAddressesViewModel(repository, localNetworkAccess)
-        viewModel.loadAddresses(serverId)
+        viewModel.loadAddresses(serverId.toServerId())
     }
 
     @After
@@ -147,7 +151,7 @@ class ServerAddressesFeedbackTest {
 
     @Test
     fun `adding an address that is already there says so`() = runBlocking {
-        addresses.add(ServerAddress(UUID.randomUUID(), serverId, stubAddress))
+        addresses.add(ServerAddress(UUID.randomUUID(), serverId.toServerId(), stubAddress))
 
         viewModel.onAction(ServerAddressesAction.AddAddress("$stubAddress/"))
 

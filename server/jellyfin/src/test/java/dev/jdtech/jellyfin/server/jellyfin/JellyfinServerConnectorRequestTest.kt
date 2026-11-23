@@ -7,6 +7,7 @@ import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.domain.ports.ServerConnectException
 import dev.jdtech.jellyfin.domain.ports.ServerIssue
 import dev.jdtech.jellyfin.models.ServerException
+import dev.jdtech.jellyfin.models.asString
 import java.net.InetSocketAddress
 import java.util.Collections
 import java.util.concurrent.Executors
@@ -85,7 +86,7 @@ class JellyfinServerConnectorRequestTest {
         val resolved = connector.resolve(address)
 
         assertEquals(address, resolved.address)
-        assertEquals("abc123", resolved.info.id)
+        assertEquals("abc123", resolved.info.id.asString())
         assertEquals("Ephyra Test", resolved.info.name)
         assertEquals("12.4.0", resolved.info.version)
         assertEquals("Jellyfin Server", resolved.info.product)

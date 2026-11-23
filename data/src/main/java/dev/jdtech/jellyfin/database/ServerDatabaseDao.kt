@@ -12,6 +12,7 @@ import dev.jdtech.jellyfin.models.EpisodeEntity
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemTrickplayInfoEntity
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.MediaStreamEntity
 import dev.jdtech.jellyfin.models.MovieEntity
 import dev.jdtech.jellyfin.models.PendingDownloadDto
@@ -21,6 +22,7 @@ import dev.jdtech.jellyfin.models.SegmentEntity
 import dev.jdtech.jellyfin.models.SeriesTrackPreferenceDto
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerWithAddressAndUser
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.ServerWithAddressesAndUsers
@@ -90,31 +92,31 @@ interface ServerDatabaseDao {
 
     @Update suspend fun updateServer(server: Server)
 
-    @Query("SELECT * FROM servers WHERE id = :id") suspend fun getServer(id: String): Server?
+    @Query("SELECT * FROM servers WHERE id = :id") suspend fun getServer(id: ServerId): Server?
 
     @Query("SELECT * FROM users WHERE id = :id") suspend fun getUser(id: UserId): User?
 
     @Transaction
     @Query("SELECT * FROM servers WHERE id = :id")
-    suspend fun getServerWithAddresses(id: String): ServerWithAddresses
+    suspend fun getServerWithAddresses(id: ServerId): ServerWithAddresses
 
     @Query("SELECT * FROM serverAddresses WHERE id = :id")
     suspend fun getAddress(id: UUID): ServerAddress
 
     @Query("SELECT * FROM users WHERE serverId = :serverId")
-    suspend fun getUsers(serverId: String): List<User>
+    suspend fun getUsers(serverId: ServerId): List<User>
 
     @Transaction
     @Query("SELECT * FROM servers WHERE id = :id")
-    suspend fun getServerWithAddressesAndUsers(id: String): ServerWithAddressesAndUsers?
+    suspend fun getServerWithAddressesAndUsers(id: ServerId): ServerWithAddressesAndUsers?
 
     @Transaction
     @Query("SELECT * FROM servers WHERE id = :id")
-    suspend fun getServerWithAddressAndUser(id: String): ServerWithAddressAndUser?
+    suspend fun getServerWithAddressAndUser(id: ServerId): ServerWithAddressAndUser?
 
     @Transaction
     @Query("SELECT * FROM servers WHERE id = :id")
-    fun observeServerWithAddressAndUser(id: String): Flow<ServerWithAddressAndUser?>
+    fun observeServerWithAddressAndUser(id: ServerId): Flow<ServerWithAddressAndUser?>
 
     @Transaction
     @Query("SELECT * FROM servers")
@@ -127,14 +129,14 @@ interface ServerDatabaseDao {
     @Query("SELECT COUNT(*) FROM servers") fun observeServersCount(): Flow<Int>
 
     @Query("SELECT COUNT(*) FROM users WHERE serverId = :serverId")
-    fun observeUsersCount(serverId: String): Flow<Int>
+    fun observeUsersCount(serverId: ServerId): Flow<Int>
 
-    @Query("SELECT * FROM servers WHERE id = :id") fun observeServer(id: String): Flow<Server?>
+    @Query("SELECT * FROM servers WHERE id = :id") fun observeServer(id: ServerId): Flow<Server?>
 
     @Query("SELECT currentUserId FROM servers WHERE id = :id")
-    fun observeServerCurrentUserId(id: String): Flow<UserId?>
+    fun observeServerCurrentUserId(id: ServerId): Flow<UserId?>
 
-    @Query("DELETE FROM servers WHERE id = :id") suspend fun deleteServer(id: String)
+    @Query("DELETE FROM servers WHERE id = :id") suspend fun deleteServer(id: ServerId)
 
     @Query("DELETE FROM users WHERE id = :id") suspend fun deleteUser(id: UserId)
 
@@ -144,11 +146,11 @@ interface ServerDatabaseDao {
     @Query("DELETE FROM serverAddresses WHERE id = :id") suspend fun deleteServerAddress(id: UUID)
 
     @Query("UPDATE servers SET currentUserId = :userId WHERE id = :serverId")
-    suspend fun updateServerCurrentUser(serverId: String, userId: UserId)
+    suspend fun updateServerCurrentUser(serverId: ServerId, userId: UserId)
 
     // CE (#299): profile PIN.
     @Query("UPDATE servers SET currentUserId = NULL WHERE id = :serverId")
-    suspend fun clearServerCurrentUser(serverId: String)
+    suspend fun clearServerCurrentUser(serverId: ServerId)
 
     // CE (#330): a PIN, or no lock (null hash), resets the lock type to `pin`.
     @Query("UPDATE users SET pinHash = :hash, pinSalt = :salt, lockType = 'pin' WHERE id = :id")
@@ -163,17 +165,17 @@ interface ServerDatabaseDao {
     @Query(
         "SELECT * FROM users WHERE id = (SELECT currentUserId FROM servers WHERE id = :serverId)"
     )
-    fun observeServerCurrentUser(serverId: String): Flow<User?>
+    fun observeServerCurrentUser(serverId: ServerId): Flow<User?>
 
     @Query(
         "SELECT * FROM users WHERE id = (SELECT currentUserId FROM servers WHERE id = :serverId)"
     )
-    suspend fun getServerCurrentUser(serverId: String): User?
+    suspend fun getServerCurrentUser(serverId: ServerId): User?
 
     @Query(
         "SELECT * FROM serverAddresses WHERE id = (SELECT currentServerAddressId FROM servers WHERE id = :serverId)"
     )
-    suspend fun getServerCurrentAddress(serverId: String): ServerAddress?
+    suspend fun getServerCurrentAddress(serverId: ServerId): ServerAddress?
 
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun insertMovie(movie: MovieEntity)
 
@@ -193,12 +195,12 @@ interface ServerDatabaseDao {
     @Query("SELECT * FROM sources WHERE itemId IN (:itemIds) AND $SOURCE_OF_SERVER")
     suspend fun getSourcesForItemsOfServer(
         itemIds: List<ItemId>,
-        serverId: String,
+        serverId: ServerId,
     ): List<ItemSourceEntity>
 
     /** CE (#718): [getSources], only when the item is stored for [serverId]. */
     @Query("SELECT * FROM sources WHERE itemId = :itemId AND $SOURCE_OF_SERVER")
-    suspend fun getSourcesOfServer(itemId: ItemId, serverId: String): List<ItemSourceEntity>
+    suspend fun getSourcesOfServer(itemId: ItemId, serverId: ServerId): List<ItemSourceEntity>
 
     @Query("SELECT EXISTS(SELECT 1 FROM sources)") suspend fun hasSources(): Boolean
 
@@ -229,7 +231,7 @@ interface ServerDatabaseDao {
             "' " +
             "AND $SOURCE_OF_SERVER"
     )
-    suspend fun getCompletedSources(itemId: ItemId, serverId: String): List<ItemSourceEntity>
+    suspend fun getCompletedSources(itemId: ItemId, serverId: ServerId): List<ItemSourceEntity>
 
     @Query(
         "SELECT DISTINCT episodes.seriesId FROM episodes " +
@@ -239,21 +241,21 @@ interface ServerDatabaseDao {
             "' " +
             "AND episodes.serverId = :serverId"
     )
-    suspend fun getSeriesIdsWithCompletedDownloads(serverId: String): List<ItemId>
+    suspend fun getSeriesIdsWithCompletedDownloads(serverId: ServerId): List<ItemId>
 
     @Query("UPDATE sources SET downloadId = :downloadId WHERE id = :id")
-    suspend fun setSourceDownloadId(id: String, downloadId: Long)
+    suspend fun setSourceDownloadId(id: MediaSourceId, downloadId: Long)
 
     @Query("UPDATE sources SET path = :path WHERE id = :id")
-    suspend fun setSourcePath(id: String, path: String)
+    suspend fun setSourcePath(id: MediaSourceId, path: String)
 
     @Query("UPDATE sources SET path = :path, downloadedAt = :downloadedAt WHERE id = :id")
-    suspend fun setSourceDownloaded(id: String, path: String, downloadedAt: Long)
+    suspend fun setSourceDownloaded(id: MediaSourceId, path: String, downloadedAt: Long)
 
     @Query("UPDATE sources SET smartQueued = 0 WHERE itemId = :itemId")
     suspend fun clearSourceSmartQueued(itemId: ItemId)
 
-    @Query("DELETE FROM sources WHERE id = :id") suspend fun deleteSource(id: String)
+    @Query("DELETE FROM sources WHERE id = :id") suspend fun deleteSource(id: MediaSourceId)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPendingDownload(pendingDownload: PendingDownloadDto)
@@ -282,10 +284,10 @@ interface ServerDatabaseDao {
     suspend fun insertMediaStream(mediaStream: MediaStreamEntity)
 
     @Query("SELECT * FROM mediastreams WHERE sourceId = :sourceId")
-    suspend fun getMediaStreamsBySourceId(sourceId: String): List<MediaStreamEntity>
+    suspend fun getMediaStreamsBySourceId(sourceId: MediaSourceId): List<MediaStreamEntity>
 
     @Query("SELECT * FROM mediastreams WHERE sourceId IN (:sourceIds)")
-    suspend fun getMediaStreamsForSources(sourceIds: List<String>): List<MediaStreamEntity>
+    suspend fun getMediaStreamsForSources(sourceIds: List<MediaSourceId>): List<MediaStreamEntity>
 
     @Query("SELECT * FROM mediastreams WHERE downloadId = :downloadId")
     suspend fun getMediaStreamByDownloadId(downloadId: Long): MediaStreamEntity?
@@ -299,7 +301,7 @@ interface ServerDatabaseDao {
     @Query("DELETE FROM mediastreams WHERE id = :id") suspend fun deleteMediaStream(id: UUID)
 
     @Query("DELETE FROM mediastreams WHERE sourceId = :sourceId")
-    suspend fun deleteMediaStreamsBySourceId(sourceId: String)
+    suspend fun deleteMediaStreamsBySourceId(sourceId: MediaSourceId)
 
     /** CE (#637): the server's runtime of a downloaded movie or episode; null when not stored. */
     @Query(
@@ -345,32 +347,32 @@ interface ServerDatabaseDao {
     @Query("SELECT * FROM movies ORDER BY name ASC") suspend fun getMovies(): List<MovieEntity>
 
     @Query("SELECT * FROM movies WHERE serverId = :serverId ORDER BY name ASC")
-    suspend fun getMoviesByServerId(serverId: String): List<MovieEntity>
+    suspend fun getMoviesByServerId(serverId: ServerId): List<MovieEntity>
 
     @Query("SELECT COUNT(*) FROM movies WHERE serverId = :serverId")
-    suspend fun countMoviesByServerId(serverId: String): Int
+    suspend fun countMoviesByServerId(serverId: ServerId): Int
 
     /** Whichever server stored it; what serves the current server is [getMovieOfServer]. */
     @Query("SELECT * FROM movies WHERE id = :id")
     suspend fun getMovieOrNull(id: ItemId): MovieEntity?
 
     @Query("SELECT * FROM movies WHERE id = :id AND serverId = :serverId")
-    suspend fun getMovieOfServer(id: ItemId, serverId: String): MovieEntity?
+    suspend fun getMovieOfServer(id: ItemId, serverId: ServerId): MovieEntity?
 
     @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun insertShow(show: ShowEntity)
 
     @Query("SELECT * FROM shows WHERE id = :id") suspend fun getShow(id: ItemId): ShowEntity
 
     @Query("SELECT * FROM shows WHERE id = :id AND $SHOW_OF_SERVER")
-    suspend fun getShowOfServer(id: ItemId, serverId: String): ShowEntity?
+    suspend fun getShowOfServer(id: ItemId, serverId: ServerId): ShowEntity?
 
     @Query("SELECT * FROM shows ORDER BY name ASC") suspend fun getShows(): List<ShowEntity>
 
     @Query("SELECT * FROM shows WHERE $SHOW_OF_SERVER ORDER BY name ASC")
-    suspend fun getShowsByServerId(serverId: String): List<ShowEntity>
+    suspend fun getShowsByServerId(serverId: ServerId): List<ShowEntity>
 
     @Query("SELECT COUNT(*) FROM shows WHERE $SHOW_OF_SERVER")
-    suspend fun countShowsByServerId(serverId: String): Int
+    suspend fun countShowsByServerId(serverId: ServerId): Int
 
     @Query("DELETE FROM shows WHERE id = :id") suspend fun deleteShow(id: ItemId)
 
@@ -379,7 +381,7 @@ interface ServerDatabaseDao {
     @Query("SELECT * FROM seasons WHERE id = :id") suspend fun getSeason(id: ItemId): SeasonEntity
 
     @Query("SELECT * FROM seasons WHERE id = :id AND $SEASON_OF_SERVER")
-    suspend fun getSeasonOfServer(id: ItemId, serverId: String): SeasonEntity?
+    suspend fun getSeasonOfServer(id: ItemId, serverId: ServerId): SeasonEntity?
 
     /** Every server's: what serves the current server is [getSeasonsByShowIdOfServer]. */
     @Query("SELECT * FROM seasons WHERE seriesId = :seriesId ORDER BY indexNumber ASC")
@@ -389,7 +391,7 @@ interface ServerDatabaseDao {
         "SELECT * FROM seasons WHERE seriesId = :seriesId AND $SEASON_OF_SERVER " +
             "ORDER BY indexNumber ASC"
     )
-    suspend fun getSeasonsByShowIdOfServer(seriesId: ItemId, serverId: String): List<SeasonEntity>
+    suspend fun getSeasonsByShowIdOfServer(seriesId: ItemId, serverId: ServerId): List<SeasonEntity>
 
     @Query("DELETE FROM seasons WHERE id = :id") suspend fun deleteSeason(id: ItemId)
 
@@ -404,13 +406,16 @@ interface ServerDatabaseDao {
     suspend fun getEpisodeOrNull(id: ItemId): EpisodeEntity?
 
     @Query("SELECT * FROM episodes WHERE id = :id AND serverId = :serverId")
-    suspend fun getEpisodeOfServer(id: ItemId, serverId: String): EpisodeEntity?
+    suspend fun getEpisodeOfServer(id: ItemId, serverId: ServerId): EpisodeEntity?
 
     @Query(
         "SELECT * FROM episodes WHERE seriesId = :seriesId AND serverId = :serverId " +
             "ORDER BY parentIndexNumber ASC, indexNumber ASC"
     )
-    suspend fun getEpisodesByShowIdOfServer(seriesId: ItemId, serverId: String): List<EpisodeEntity>
+    suspend fun getEpisodesByShowIdOfServer(
+        seriesId: ItemId,
+        serverId: ServerId,
+    ): List<EpisodeEntity>
 
     /** Every server's: what serves the current server is [getEpisodesBySeasonIdOfServer]. */
     @Query("SELECT * FROM episodes WHERE seasonId = :seasonId ORDER BY indexNumber ASC")
@@ -422,7 +427,7 @@ interface ServerDatabaseDao {
     )
     suspend fun getEpisodesBySeasonIdOfServer(
         seasonId: ItemId,
-        serverId: String,
+        serverId: ServerId,
     ): List<EpisodeEntity>
 
     /** CE (#379): every stored item of every server and user, which may own downloaded artwork. */
@@ -449,7 +454,7 @@ interface ServerDatabaseDao {
     )
     suspend fun getSeasonEpisodeCounts(
         seriesId: ItemId,
-        serverId: String,
+        serverId: ServerId,
     ): List<SeasonEpisodeCounts>
 
     @Query("DELETE FROM episodes WHERE id = :id") suspend fun deleteEpisode(id: ItemId)
@@ -535,7 +540,7 @@ interface ServerDatabaseDao {
             "AND itemId NOT IN (SELECT id FROM episodes WHERE serverId = :serverId) " +
             "AND itemId NOT IN (SELECT id FROM seasons) AND itemId NOT IN (SELECT id FROM shows)))"
     )
-    suspend fun getAllUserDataToBeSynced(serverId: String, userId: UserId): List<UserDataEntity>
+    suspend fun getAllUserDataToBeSynced(serverId: ServerId, userId: UserId): List<UserDataEntity>
 
     @Query(
         "UPDATE userdata SET toBeSynced = :toBeSynced WHERE itemId = :itemId AND userId = :userId"
@@ -585,7 +590,7 @@ interface ServerDatabaseDao {
             "itemId IN (SELECT id FROM movies WHERE serverId = :serverId) OR " +
             "itemId IN (SELECT id FROM episodes WHERE serverId = :serverId))"
     )
-    suspend fun getSyncedUserDataItemIds(serverId: String, userId: UserId): List<ItemId>
+    suspend fun getSyncedUserDataItemIds(serverId: ServerId, userId: UserId): List<ItemId>
 
     /** CE (#635): whether any downloaded movie or episode has user data the server may refresh. */
     @Query(
@@ -668,55 +673,55 @@ interface ServerDatabaseDao {
     @Query(
         "SELECT * FROM movies WHERE serverId = :serverId AND $MOVIE_DOWNLOADED ORDER BY name ASC"
     )
-    suspend fun getDownloadedMoviesOfServer(serverId: String): List<MovieEntity>
+    suspend fun getDownloadedMoviesOfServer(serverId: ServerId): List<MovieEntity>
 
     @Query("SELECT * FROM shows WHERE $SHOW_DOWNLOADED ORDER BY name ASC")
-    suspend fun getDownloadedShowsOfServer(serverId: String): List<ShowEntity>
+    suspend fun getDownloadedShowsOfServer(serverId: ServerId): List<ShowEntity>
 
     @Query("SELECT COUNT(*) FROM movies WHERE serverId = :serverId AND $MOVIE_DOWNLOADED")
-    suspend fun countDownloadedMoviesOfServer(serverId: String): Int
+    suspend fun countDownloadedMoviesOfServer(serverId: ServerId): Int
 
     @Query("SELECT COUNT(*) FROM shows WHERE $SHOW_DOWNLOADED")
-    suspend fun countDownloadedShowsOfServer(serverId: String): Int
+    suspend fun countDownloadedShowsOfServer(serverId: ServerId): Int
 
     @Query(
         "SELECT * FROM movies WHERE serverId = :serverId AND $MOVIE_DOWNLOADED AND id IN " +
             "(SELECT itemId FROM userdata WHERE userId = :userId AND favorite = 1) ORDER BY name ASC"
     )
-    suspend fun getFavoriteMoviesOfServer(serverId: String, userId: UserId): List<MovieEntity>
+    suspend fun getFavoriteMoviesOfServer(serverId: ServerId, userId: UserId): List<MovieEntity>
 
     @Query(
         "SELECT * FROM shows WHERE $SHOW_DOWNLOADED AND id IN " +
             "(SELECT itemId FROM userdata WHERE userId = :userId AND favorite = 1) ORDER BY name ASC"
     )
-    suspend fun getFavoriteShowsOfServer(serverId: String, userId: UserId): List<ShowEntity>
+    suspend fun getFavoriteShowsOfServer(serverId: ServerId, userId: UserId): List<ShowEntity>
 
     @Query(
         "SELECT * FROM episodes WHERE serverId = :serverId AND $EPISODE_DOWNLOADED AND id IN " +
             "(SELECT itemId FROM userdata WHERE userId = :userId AND favorite = 1) " +
             "ORDER BY seriesName ASC, parentIndexNumber ASC, indexNumber ASC"
     )
-    suspend fun getFavoriteEpisodesOfServer(serverId: String, userId: UserId): List<EpisodeEntity>
+    suspend fun getFavoriteEpisodesOfServer(serverId: ServerId, userId: UserId): List<EpisodeEntity>
 
     /** [pattern] is a LIKE pattern with `\` as its escape character. */
     @Query(
         "SELECT * FROM movies WHERE serverId = :serverId AND $MOVIE_DOWNLOADED " +
             "AND name LIKE :pattern ESCAPE '\\' ORDER BY name ASC"
     )
-    suspend fun searchMoviesOfServer(serverId: String, pattern: String): List<MovieEntity>
+    suspend fun searchMoviesOfServer(serverId: ServerId, pattern: String): List<MovieEntity>
 
     @Query(
         "SELECT * FROM shows WHERE $SHOW_DOWNLOADED AND name LIKE :pattern ESCAPE '\\' " +
             "ORDER BY name ASC"
     )
-    suspend fun searchShowsOfServer(serverId: String, pattern: String): List<ShowEntity>
+    suspend fun searchShowsOfServer(serverId: ServerId, pattern: String): List<ShowEntity>
 
     @Query(
         "SELECT * FROM episodes WHERE serverId = :serverId AND $EPISODE_DOWNLOADED " +
             "AND name LIKE :pattern ESCAPE '\\' " +
             "ORDER BY seriesName ASC, parentIndexNumber ASC, indexNumber ASC"
     )
-    suspend fun searchEpisodesOfServer(serverId: String, pattern: String): List<EpisodeEntity>
+    suspend fun searchEpisodesOfServer(serverId: ServerId, pattern: String): List<EpisodeEntity>
 
     @Query("SELECT * FROM userdata WHERE userId = :userId")
     suspend fun getUserDataOfUser(userId: UserId): List<UserDataEntity>
@@ -730,7 +735,7 @@ interface ServerDatabaseDao {
             "JOIN sources ON sources.itemId = episodes.id WHERE episodes.serverId = :serverId " +
             "GROUP BY episodes.seriesId"
     )
-    suspend fun getDownloadDatesOfServer(serverId: String): List<StoredItemDate>
+    suspend fun getDownloadDatesOfServer(serverId: ServerId): List<StoredItemDate>
 
     /** When [userId] last played an episode of each show of [serverId]. */
     @Query(
@@ -738,11 +743,11 @@ interface ServerDatabaseDao {
             "JOIN userdata ON userdata.itemId = episodes.id AND userdata.userId = :userId " +
             "WHERE episodes.serverId = :serverId GROUP BY episodes.seriesId"
     )
-    suspend fun getShowPlayedDatesOfServer(serverId: String, userId: UserId): List<StoredItemDate>
+    suspend fun getShowPlayedDatesOfServer(serverId: ServerId, userId: UserId): List<StoredItemDate>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTrickplayInfo(trickplayInfoDto: ItemTrickplayInfoEntity)
 
     @Query("SELECT * FROM trickplayInfos WHERE sourceId = :sourceId")
-    suspend fun getTrickplayInfo(sourceId: String): ItemTrickplayInfoEntity?
+    suspend fun getTrickplayInfo(sourceId: MediaSourceId): ItemTrickplayInfoEntity?
 }

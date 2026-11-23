@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.player.local.domain
 
 import android.os.Parcel
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import kotlin.test.assertEquals
 import org.junit.Test
@@ -10,8 +11,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * #773: [PlayerItem] carries item ids, which are value classes now. Parcelize does not write those
- * by itself; its type parcelers write each id as its string, a missing one as a null string.
+ * #773: [PlayerItem] carries item ids, which are value classes now, and a media source id (#902).
+ * Parcelize does not write those by itself; its type parcelers write each id as its string, a
+ * missing one as a null string.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -33,7 +35,7 @@ class PlayerItemParcelTest {
         PlayerItem(
             name = "Obstacle Course",
             itemId = "0f8fad5b-d9cb-469f-a165-70867728950e".toItemId(),
-            mediaSourceId = "0f8fad5bd9cb469fa16570867728950e",
+            mediaSourceId = "0f8fad5bd9cb469fa16570867728950e".toMediaSourceId(),
             playbackPosition = 42L,
             seriesId = "7c9e6679-7425-40de-944b-e07fc1f90ae7".toItemId(),
             seasonId = "16fd2706-8baf-433b-82eb-8c7fada847da".toItemId(),
@@ -58,6 +60,8 @@ class PlayerItemParcelTest {
             parcel.setDataPosition(0)
             assertEquals("Obstacle Course", parcel.readString())
             assertEquals("0f8fad5b-d9cb-469f-a165-70867728950e", parcel.readString())
+            // #902: the source id as it came, here the dashless form, as the String it was.
+            assertEquals("0f8fad5bd9cb469fa16570867728950e", parcel.readString())
         } finally {
             parcel.recycle()
         }

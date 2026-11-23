@@ -50,9 +50,11 @@ import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Season
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.navigation.navigateOrReuse
 import dev.jdtech.jellyfin.navigation.resumedAction
 import dev.jdtech.jellyfin.presentation.cast.CastHost
@@ -593,7 +595,9 @@ private fun EntryProviderScope<NavKey>.setupEntries(
         ServersScreen(
             navigateToUsers = dropUnlessResumed { navigate(UsersRoute) },
             navigateToAddresses =
-                resumedAction { serverId -> navigate(ServerAddressesRoute(serverId)) },
+                resumedAction { serverId: ServerId ->
+                    navigate(ServerAddressesRoute(serverId.asString()))
+                },
             onAddClick = dropUnlessResumed { navigate(AddServerRoute) },
             onBackClick = dropUnlessResumed { goBack() },
             showBack = showBack,
@@ -607,7 +611,7 @@ private fun EntryProviderScope<NavKey>.setupEntries(
     }
     entry<ServerAddressesRoute> { key ->
         ServerAddressesScreen(
-            serverId = key.serverId,
+            serverId = key.serverId.toServerId(),
             navigateBack = dropUnlessResumed { goBack() },
         )
     }

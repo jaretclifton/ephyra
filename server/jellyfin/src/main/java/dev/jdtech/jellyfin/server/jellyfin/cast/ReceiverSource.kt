@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.server.jellyfin.cast
 
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.server.jellyfin.mappers.MapperContext
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toItemSource
 import org.jellyfin.sdk.model.api.MediaSourceInfo
@@ -22,7 +23,7 @@ internal suspend fun MediaSourceInfo.toReceiverSource(
     val source = toItemSource(context, itemId)
     val baseUrl = context.baseUrl.removeSuffix("/")
     return source.copy(
-        path = castStreamUrl(baseUrl, itemId, id, transcodingUrl, accessToken),
+        path = castStreamUrl(baseUrl, itemId, id?.toMediaSourceId(), transcodingUrl, accessToken),
         // The mapper keeps the server's order, one stream for one.
         mediaStreams =
             source.mediaStreams.zip(mediaStreams.orEmpty()) { stream, server ->

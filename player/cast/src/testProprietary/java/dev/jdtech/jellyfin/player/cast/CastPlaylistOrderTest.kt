@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.player.cast
 
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -233,7 +234,7 @@ class CastPlaylistOrderTest {
         PlayerItem(
             name = name,
             itemId = UUID.randomUUID().toString().toItemId(),
-            mediaSourceId = "source",
+            mediaSourceId = "source".toMediaSourceId(),
             playbackPosition = 0L,
         )
 }

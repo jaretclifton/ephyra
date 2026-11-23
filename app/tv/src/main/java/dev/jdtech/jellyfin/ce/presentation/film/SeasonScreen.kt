@@ -93,6 +93,7 @@ import dev.jdtech.jellyfin.film.presentation.season.SeasonViewModel
 import dev.jdtech.jellyfin.models.DisplayProfile
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.models.VideoMetadata
@@ -123,7 +124,8 @@ import kotlinx.coroutines.flow.collectLatest
 fun SeasonScreen(
     seasonId: ItemId?,
     episodeId: ItemId?,
-    navigateToPlayer: (itemId: ItemId, mediaSourceId: String?, startFromBeginning: Boolean) -> Unit,
+    navigateToPlayer:
+        (itemId: ItemId, mediaSourceId: MediaSourceId?, startFromBeginning: Boolean) -> Unit,
     seriesId: ItemId? = null,
     seasonViewModel: SeasonViewModel = hiltViewModel(),
     episodeViewModel: EpisodeViewModel = hiltViewModel(),
@@ -255,7 +257,7 @@ internal fun SeasonScreenLayout(
     selection: EpisodeSelection,
     episodeState: () -> EpisodeState,
     onSelectSeason: (Season) -> Unit,
-    onPlay: (episode: Episode, mediaSourceId: String?, startFromBeginning: Boolean) -> Unit,
+    onPlay: (episode: Episode, mediaSourceId: MediaSourceId?, startFromBeginning: Boolean) -> Unit,
     onAction: (EpisodeAction) -> Unit,
 ) {
     // Default focus: the selected episode. After Back from the player: the element that was used.
@@ -469,7 +471,7 @@ private fun EpisodeDetails(
     episodeState: () -> EpisodeState,
     focusPosition: FocusPosition,
     playRequester: FocusRequester,
-    onPlay: (episode: Episode, mediaSourceId: String?, startFromBeginning: Boolean) -> Unit,
+    onPlay: (episode: Episode, mediaSourceId: MediaSourceId?, startFromBeginning: Boolean) -> Unit,
     onAction: (EpisodeAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {

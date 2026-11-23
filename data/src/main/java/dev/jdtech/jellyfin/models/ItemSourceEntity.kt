@@ -9,7 +9,7 @@ import java.io.File
 
 @Entity(tableName = "sources", indices = [Index("itemId")])
 data class ItemSourceEntity(
-    @PrimaryKey val id: String,
+    @PrimaryKey val id: MediaSourceId,
     val itemId: ItemId,
     val name: String,
     val type: ItemSourceType,
@@ -71,7 +71,7 @@ suspend fun ServerDatabaseDao.getLocalSourcesForItems(
  */
 suspend fun ServerDatabaseDao.getLocalSourcesForItems(
     itemIds: Collection<ItemId>,
-    serverId: String,
+    serverId: ServerId,
 ): Map<ItemId, List<ItemSource>> =
     localSourcesForItems(itemIds) { ids -> getSourcesForItemsOfServer(ids, serverId) }
 

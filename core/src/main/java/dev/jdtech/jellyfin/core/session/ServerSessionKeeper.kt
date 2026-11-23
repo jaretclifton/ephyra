@@ -110,7 +110,7 @@ constructor(
         }
 
     private suspend fun signOut(token: String) {
-        val serverId = appPreferences.getValue(appPreferences.currentServer) ?: return
+        val serverId = appPreferences.currentServerId() ?: return
         val user = database.getServerCurrentUser(serverId) ?: return
         // Switched to another user meanwhile.
         if (user.accessToken != token || serverSession.accessToken != token) return

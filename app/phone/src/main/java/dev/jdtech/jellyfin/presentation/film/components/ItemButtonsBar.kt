@@ -37,6 +37,7 @@ import dev.jdtech.jellyfin.core.presentation.downloader.DownloaderState
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
 import dev.jdtech.jellyfin.models.DownloadState
 import dev.jdtech.jellyfin.models.Item
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.Ticks
@@ -65,7 +66,8 @@ fun ItemButtonsBar(
     canPlay: Boolean = true,
     canDownload: Boolean = item.canDownload,
     isDownloaded: Boolean = item.isDownloaded(),
-    onPlayVersionClick: ((startFromBeginning: Boolean, mediaSourceId: String) -> Unit)? = null,
+    onPlayVersionClick: ((startFromBeginning: Boolean, mediaSourceId: MediaSourceId) -> Unit)? =
+        null,
     hasMoreToDownload: Boolean = false,
     /** CE (#638): when set, a Shuffle button next to Play (shows and seasons). */
     onShuffleClick: (() -> Unit)? = null,

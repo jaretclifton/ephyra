@@ -7,11 +7,17 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.sqlite.execSQL
 import androidx.test.platform.app.InstrumentationRegistry
+import dev.jdtech.jellyfin.models.ItemSourceEntity
+import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.PendingDownloadDto
+import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.serverType
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import kotlin.math.abs
 import kotlin.test.assertEquals
@@ -226,8 +232,8 @@ class ServerDatabaseMigrationTest {
                     .build()
             try {
                 val dao = database.getServerDatabaseDao()
-                assertEquals(USER.toUserId(), dao.getServerCurrentUser(SERVER)!!.id)
-                assertEquals(USER.toUserId(), dao.getServer(SERVER)!!.currentUserId)
+                assertEquals(USER.toUserId(), dao.getServerCurrentUser(SERVER.toServerId())!!.id)
+                assertEquals(USER.toUserId(), dao.getServer(SERVER.toServerId())!!.currentUserId)
                 assertEquals(MOVIE.toItemId(), dao.getMovie(MOVIE.toItemId()).id)
                 assertEquals(MOVIE.toItemId(), dao.getSources(MOVIE.toItemId()).single().itemId)
                 val episode = dao.getEpisode(EPISODE.toItemId())
@@ -240,7 +246,9 @@ class ServerDatabaseMigrationTest {
                 )
                 assertEquals(EPISODE.toItemId(), dao.getPendingDownloads().single().itemId)
 
-                dao.insertUser(User(id = NEW_USER.toUserId(), name = "Bob", serverId = SERVER))
+                dao.insertUser(
+                    User(id = NEW_USER.toUserId(), name = "Bob", serverId = SERVER.toServerId())
+                )
                 dao.insertPendingDownload(
                     PendingDownloadDto(
                         itemId = NEW_ITEM.toItemId(),
@@ -260,6 +268,108 @@ class ServerDatabaseMigrationTest {
                 assertEquals(
                     listOf(EPISODE to "text", NEW_ITEM to "text"),
                     rows("SELECT itemId, typeof(itemId) FROM pending_downloads ORDER BY itemId"),
+                )
+                close()
+            }
+        }
+
+    /**
+     * CE (#902): server and media source ids became value classes over the text the server sent,
+     * bound by Room as that text like the item ids (#773). A schema 21 database with a Jellyfin
+     * server id (dashless) and source ids in both forms the server sends reads back as the same
+     * ids, and ids the DAO writes are stored as the same text, never normalised.
+     */
+    @Test
+    fun `server and source ids of a schema 21 database read and write as the text stored`() =
+        runBlocking {
+            helper.createDatabase(21).apply {
+                insertRows(21)
+                execSQL(
+                    "INSERT INTO servers (id, name, currentServerAddressId, currentUserId) VALUES ('$JELLYFIN_SERVER', 'Jellyfin', NULL, NULL)"
+                )
+                execSQL(
+                    "INSERT INTO movies (id, serverId, name, overview, runtimeTicks, status) VALUES ('$SECOND_MOVIE', '$JELLYFIN_SERVER', 'Other movie', '', 72000000000, 'Released')"
+                )
+                execSQL(
+                    "INSERT INTO sources (id, itemId, name, type, path) VALUES ('$DASHLESS_SOURCE', '$SECOND_MOVIE', 'Own', 'LOCAL', '$PATH.own')"
+                )
+                execSQL(
+                    "INSERT INTO sources (id, itemId, name, type, path) VALUES ('$DASHED_SOURCE', '$SECOND_MOVIE', 'Other', 'LOCAL', '$PATH.other')"
+                )
+                execSQL(
+                    "INSERT INTO mediastreams (id, sourceId, title, language, type, codec, isExternal, path) VALUES ('$STREAM_ID', '$DASHLESS_SOURCE', 'English', 'eng', 'SUBTITLE', 'srt', 1, '$PATH.srt')"
+                )
+                execSQL(
+                    "INSERT INTO trickplayInfos (sourceId, width, height, tileWidth, tileHeight, thumbnailCount, interval, bandwidth) VALUES ('$DASHED_SOURCE', 320, 180, 10, 10, 9, 10000, 892)"
+                )
+                close()
+            }
+            val database =
+                Room.databaseBuilder(context, ServerDatabase::class.java, dbFile.path)
+                    .setDriver(AndroidSQLiteDriver())
+                    .addMigrations(*MIGRATIONS.toTypedArray())
+                    .build()
+            try {
+                val dao = database.getServerDatabaseDao()
+                val server = JELLYFIN_SERVER.toServerId()
+                assertEquals(server, dao.getServer(server)!!.id)
+                assertEquals(
+                    SERVER.toServerId(),
+                    dao.getUsers(SERVER.toServerId()).single().serverId,
+                )
+                assertEquals(server, dao.getMoviesByServerId(server).single().serverId)
+                assertEquals(
+                    listOf(DASHLESS_SOURCE.toMediaSourceId(), DASHED_SOURCE.toMediaSourceId()),
+                    dao.getSources(SECOND_MOVIE.toItemId()).map { it.id }.sortedBy { it.asString() },
+                )
+                assertEquals(
+                    DASHLESS_SOURCE.toMediaSourceId(),
+                    dao.getMediaStreamsBySourceId(DASHLESS_SOURCE.toMediaSourceId())
+                        .single()
+                        .sourceId,
+                )
+                assertEquals(
+                    DASHED_SOURCE.toMediaSourceId(),
+                    dao.getTrickplayInfo(DASHED_SOURCE.toMediaSourceId())!!.sourceId,
+                )
+                // The other form of the same UUID is another id: nothing is normalised.
+                assertNull(dao.getTrickplayInfo(DASHED_SOURCE.replace("-", "").toMediaSourceId()))
+
+                dao.insertServer(
+                    Server(
+                        id = NEW_SERVER.toServerId(),
+                        name = "New",
+                        currentServerAddressId = null,
+                        currentUserId = null,
+                    )
+                )
+                dao.insertSource(
+                    ItemSourceEntity(
+                        id = NEW_SOURCE.toMediaSourceId(),
+                        itemId = SECOND_MOVIE.toItemId(),
+                        name = "New",
+                        type = ItemSourceType.LOCAL,
+                        path = "$PATH.new",
+                    )
+                )
+            } finally {
+                database.close()
+            }
+
+            AndroidSQLiteDriver().open(dbFile.path).run {
+                assertEquals(
+                    listOf(JELLYFIN_SERVER to "text", NEW_SERVER to "text", SERVER to "text"),
+                    rows("SELECT id, typeof(id) FROM servers ORDER BY id"),
+                )
+                assertEquals(
+                    listOf(
+                        DASHLESS_SOURCE to "text",
+                        DASHED_SOURCE to "text",
+                        NEW_SOURCE to "text",
+                    ),
+                    rows(
+                        "SELECT id, typeof(id) FROM sources WHERE itemId = '$SECOND_MOVIE' ORDER BY id"
+                    ),
                 )
                 close()
             }
@@ -286,9 +396,9 @@ class ServerDatabaseMigrationTest {
                 .build()
         try {
             val dao = database.getServerDatabaseDao()
-            assertEquals(ServerType.JELLYFIN, dao.getServer(SERVER)!!.serverType)
-            assertEquals(TOKEN, dao.getServerCurrentUser(SERVER)!!.accessToken)
-            assertEquals(ADDRESS, dao.getServerCurrentAddress(SERVER)!!.address)
+            assertEquals(ServerType.JELLYFIN, dao.getServer(SERVER.toServerId())!!.serverType)
+            assertEquals(TOKEN, dao.getServerCurrentUser(SERVER.toServerId())!!.accessToken)
+            assertEquals(ADDRESS, dao.getServerCurrentAddress(SERVER.toServerId())!!.address)
             assertEquals("Movie", dao.getMovie(MOVIE.toItemId()).name)
             assertEquals(PATH, dao.getSources(MOVIE.toItemId()).single().path)
             assertEquals(
@@ -532,6 +642,16 @@ class ServerDatabaseMigrationTest {
         /** Ids the DAO writes in the #773 test, as `UUID.toString()` gave them. */
         const val NEW_USER = "0f8fad5b-d9cb-469f-a165-70867728950e"
         const val NEW_ITEM = "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+
+        /**
+         * Ids of the #902 test, as Jellyfin sends them: a dashless server id, both source forms.
+         */
+        const val JELLYFIN_SERVER = "4b2d1e0ca8f04f5c9b7e3a1d2c6f8e90"
+        const val NEW_SERVER = "a1b2c3d4e5f60718293a4b5c6d7e8f90"
+        const val DASHLESS_SOURCE = "00000000000000000000000000000012"
+        const val DASHED_SOURCE = "3f2a1b0c-9d8e-4f7a-8b6c-5d4e3f2a1b0c"
+        const val NEW_SOURCE = "9e8d7c6b5a4f43e2a1b0c9d8e7f6a5b4"
+        const val STREAM_ID = "00000000-0000-0000-0000-0000000000c1"
 
         /** The one line [describeSchema] gains from #770. */
         const val SERVER_TYPE_COLUMN = "servers column type TEXT 1 'jellyfin' 0"

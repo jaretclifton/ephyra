@@ -15,6 +15,7 @@ import dev.jdtech.jellyfin.film.presentation.movie.MovieAction
 import dev.jdtech.jellyfin.film.presentation.movie.MovieState
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Ticks
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import kotlin.test.assertEquals
 import org.junit.Rule
@@ -118,7 +119,10 @@ class MovieResumeTest {
         setMovie(
             partlyWatched.copy(
                 sources =
-                    listOf(first.copy(id = "a", name = "720p"), first.copy(id = "b", name = "4K"))
+                    listOf(
+                        first.copy(id = "a".toMediaSourceId(), name = "720p"),
+                        first.copy(id = "b".toMediaSourceId(), name = "4K"),
+                    )
             )
         )
 
@@ -129,8 +133,8 @@ class MovieResumeTest {
 
         assertEquals<List<MovieAction>>(
             listOf(
-                MovieAction.Play(startFromBeginning = true, mediaSourceId = "b"),
-                MovieAction.Play(startFromBeginning = false, mediaSourceId = "a"),
+                MovieAction.Play(startFromBeginning = true, mediaSourceId = "b".toMediaSourceId()),
+                MovieAction.Play(startFromBeginning = false, mediaSourceId = "a".toMediaSourceId()),
             ),
             actions,
         )

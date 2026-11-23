@@ -17,10 +17,12 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemTrickplayInfo
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.MediaStreamEntity
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Playable
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
@@ -208,7 +210,7 @@ class DownloaderImpl(
     private val mediaStreamFinalizeScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     /** One job per source id: its subtitles that were not finished with the video (#573). */
-    private val mediaStreamFinalizeJobs = ConcurrentHashMap<String, Job>()
+    private val mediaStreamFinalizeJobs = ConcurrentHashMap<MediaSourceId, Job>()
 
     // Resolved per use, never captured: which repository is active (online vs offline) can
     // change at runtime without this @Singleton being recreated. Capturing a fixed instance
@@ -229,7 +231,7 @@ class DownloaderImpl(
     //  the current screen
     override suspend fun downloadItem(
         item: Item,
-        sourceId: String,
+        sourceId: MediaSourceId,
         storageIndex: Int,
         maxBitrate: Int?,
         smartQueued: Boolean,
@@ -240,7 +242,7 @@ class DownloaderImpl(
         val allowRoaming = appPreferences.getValue(appPreferences.downloadWhenRoaming)
         // CE (#718): read once, so a server switch while this runs cannot store the download, or
         // decide which copy gives way, under another server than the one it started for.
-        val serverId = appPreferences.getValue(appPreferences.currentServer)
+        val serverId = appPreferences.currentServerId()
 
         // ---- RESUME BRANCH -------------------------------------------------------
         // Match the first in-progress .download source row for this item, regardless of
@@ -514,7 +516,7 @@ class DownloaderImpl(
      * The item's download in progress, when it is [serverId]'s (#718): another server's partial
      * file is not resumed or completed with this server's URLs.
      */
-    private suspend fun partialSourceOfServer(item: Item, serverId: String?) =
+    private suspend fun partialSourceOfServer(item: Item, serverId: ServerId?) =
         serverId
             ?.let { database.getSourcesOfServer(item.id, it) }
             .orEmpty()
@@ -535,7 +537,7 @@ class DownloaderImpl(
      * downloaded it last, and the other server shows it as not downloaded. Its progress still to be
      * sent stays, and the sync sends it to that server.
      */
-    internal suspend fun releaseOtherServersCopy(item: Item, serverId: String?) {
+    internal suspend fun releaseOtherServersCopy(item: Item, serverId: ServerId?) {
         if (!isStoredForAnotherServer(item, serverId)) return
         Timber.i("Replacing the copy of ${item.id.asString()} stored for another server")
         val sources = database.getSources(item.id)
@@ -548,16 +550,18 @@ class DownloaderImpl(
     }
 
     /** CE (#718): whether Room holds [item] for a server other than [serverId]. */
-    private suspend fun isStoredForAnotherServer(item: Item, serverId: String?): Boolean {
+    private suspend fun isStoredForAnotherServer(item: Item, serverId: ServerId?): Boolean {
         if (serverId == null) return false
         // A row from before rows carried a server ("") belongs to no server: another one.
         val storedFor =
             when (item) {
-                is Movie -> database.getMovieOrNull(item.id)?.let { it.serverId.orEmpty() }
-                is Episode -> database.getEpisodeOrNull(item.id)?.let { it.serverId.orEmpty() }
+                is Movie ->
+                    database.getMovieOrNull(item.id)?.let { it.serverId?.asString().orEmpty() }
+                is Episode ->
+                    database.getEpisodeOrNull(item.id)?.let { it.serverId?.asString().orEmpty() }
                 else -> null
             }
-        return storedFor != null && storedFor != serverId
+        return storedFor != null && storedFor != serverId.asString()
     }
 
     private suspend fun deleteItemRows(item: Item, source: ItemSource?) {
@@ -726,7 +730,7 @@ class DownloaderImpl(
                     File(
                             downloadsDir,
                             DownloadFiles.partialPath(
-                                "${sanitize(item.name)}.${source.id}.$id.$streamExt"
+                                "${sanitize(item.name)}.${source.id.asString()}.$id.$streamExt"
                             ),
                         )
                         .absolutePath
@@ -807,7 +811,7 @@ class DownloaderImpl(
     override suspend fun retryFailedMediaStreams(item: Item) {
         val dbSourceDto =
             try {
-                partialSourceOfServer(item, appPreferences.getValue(appPreferences.currentServer))
+                partialSourceOfServer(item, appPreferences.currentServerId())
             } catch (e: Exception) {
                 Timber.w(e, "Failed to load source for media-stream retry check on ${item.name}")
                 return
@@ -914,7 +918,7 @@ class DownloaderImpl(
      */
     internal suspend fun downloadTrickplayData(
         itemId: ItemId,
-        sourceId: String,
+        sourceId: MediaSourceId,
         trickplayInfo: ItemTrickplayInfo,
     ) {
         val sheets = mutableMapOf<Int, ByteArray>()
@@ -928,11 +932,11 @@ class DownloaderImpl(
 
     private suspend fun saveTrickplayData(
         itemId: ItemId,
-        sourceId: String,
+        sourceId: MediaSourceId,
         trickplayInfo: ItemTrickplayInfo,
         sheets: Map<Int, ByteArray>,
     ) {
-        val basePath = "trickplay/${itemId.asString()}/$sourceId"
+        val basePath = "trickplay/${itemId.asString()}/${sourceId.asString()}"
         database.insertTrickplayInfo(trickplayInfo.toItemTrickplayInfoEntity(sourceId))
         File(context.filesDir, basePath).mkdirs()
         for ((index, bytes) in sheets) {
@@ -1313,7 +1317,7 @@ class DownloaderImpl(
         if (left) finalizeMediaStreamsLater(source)
     }
 
-    private suspend fun unfinishedMediaStreams(sourceId: String): List<MediaStreamEntity> =
+    private suspend fun unfinishedMediaStreams(sourceId: MediaSourceId): List<MediaStreamEntity> =
         database.getMediaStreamsBySourceId(sourceId).filter { DownloadFiles.isPartial(it.path) }
 
     /**
@@ -1355,7 +1359,7 @@ class DownloaderImpl(
      * Finalizes the subtitles of [sourceId] the engine reports done. True when none is left
      * running: all finalized, the rows gone, or only failed or unknown ones left.
      */
-    private suspend fun finalizeFinishedOrIdle(sourceId: String): Boolean {
+    private suspend fun finalizeFinishedOrIdle(sourceId: MediaSourceId): Boolean {
         val rows = unfinishedMediaStreams(sourceId)
         if (rows.isEmpty()) return true
         val snapshots = engine.snapshots(rows.mapNotNull { it.downloadId })
@@ -1517,7 +1521,7 @@ class DownloaderImpl(
      * Movies: `Movie Name (2024)/Movie Name (2024).mkv` Episodes: `Series Name/S01/S01E05 - Episode
      * Name.mkv`
      */
-    private fun buildDownloadPath(item: Item, sourceId: String, extension: String): String {
+    private fun buildDownloadPath(item: Item, sourceId: MediaSourceId, extension: String): String {
         return when (item) {
             is Episode -> {
                 val series = sanitize(item.seriesName.ifBlank { "Unknown Series" })
@@ -1532,7 +1536,7 @@ class DownloaderImpl(
                 val folder = if (year != null) "$title ($year)" else title
                 "$folder/$folder.$extension"
             }
-            else -> "${item.id.asString()}.$sourceId.$extension"
+            else -> "${item.id.asString()}.${sourceId.asString()}.$extension"
         }
     }
 

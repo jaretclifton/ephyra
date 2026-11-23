@@ -10,6 +10,7 @@ import dev.jdtech.jellyfin.models.HomeSection
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.Movie
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
@@ -35,8 +36,8 @@ import timber.log.Timber
 class HomeCache @Inject constructor(@ApplicationContext context: Context) {
     private val dir = File(context.filesDir, "home-cache")
 
-    private fun file(serverId: String, userId: UserId) =
-        File(dir, "${serverId}_${userId.asString()}.json")
+    private fun file(serverId: ServerId, userId: UserId) =
+        File(dir, "${serverId.asString()}_${userId.asString()}.json")
 
     /** What Home needs to show the rows: the sections, the library rows and their order. */
     class Rows(
@@ -47,7 +48,7 @@ class HomeCache @Inject constructor(@ApplicationContext context: Context) {
         val rowOrder: List<String>,
     )
 
-    suspend fun read(serverId: String, userId: UserId): Rows? =
+    suspend fun read(serverId: ServerId, userId: UserId): Rows? =
         withContext(Dispatchers.IO) {
             try {
                 val file = file(serverId, userId)
@@ -85,7 +86,7 @@ class HomeCache @Inject constructor(@ApplicationContext context: Context) {
             }
         }
 
-    suspend fun write(serverId: String, userId: UserId, state: HomeState) =
+    suspend fun write(serverId: ServerId, userId: UserId, state: HomeState) =
         withContext(Dispatchers.IO) {
             try {
                 val json =

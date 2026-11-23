@@ -18,6 +18,7 @@ import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.models.Server
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
@@ -86,7 +87,7 @@ constructor(
      * The last library list, with the server and user it is for. CE (#810): one value, so a load a
      * switch overtook cannot pair one user's list with another user's key.
      */
-    @Volatile private var cachedLibraries: Pair<Pair<String?, UserId?>, List<Library>>? = null
+    @Volatile private var cachedLibraries: Pair<Pair<ServerId?, UserId?>, List<Library>>? = null
     private var cacheChecked = false
 
     /**
@@ -106,7 +107,7 @@ constructor(
     private var switchLoad: Job? = null
 
     /** CE (#810): the server and user [followCurrentUser] saw last. Main thread only. */
-    private var followedUser: Pair<String?, UserId?>? = null
+    private var followedUser: Pair<ServerId?, UserId?>? = null
 
     init {
         syncPreferences()
@@ -133,7 +134,7 @@ constructor(
     private fun followCurrentUser() {
         viewModelScope.launch {
             appPreferences
-                .observe(appPreferences.currentServer)
+                .observeCurrentServerId()
                 .flatMapLatest { serverId ->
                     if (serverId == null) {
                         flowOf(null to null)
@@ -152,7 +153,7 @@ constructor(
      * user. Until it arrives Home shows the new user's avatar and no rows (nothing at all when
      * nobody is signed in).
      */
-    private fun onCurrentUser(serverId: String?, user: User?) {
+    private fun onCurrentUser(serverId: ServerId?, user: User?) {
         val identity = serverId to user?.id
         val previous = followedUser
         followedUser = identity
@@ -248,10 +249,7 @@ constructor(
         var server: Server? = null
         var loaded = false
         try {
-            server =
-                appPreferences.getValue(appPreferences.currentServer)?.let { serverId ->
-                    loadServerName(serverId)
-                }
+            server = appPreferences.currentServerId()?.let { serverId -> loadServerName(serverId) }
             if (server != null) {
                 val user = logFailure("user") { database.getServerCurrentUser(server.id) }
                 updateState { it.copy(user = user.getOrNull()) }
@@ -328,7 +326,7 @@ constructor(
     }
 
     /** The avatar's image tag changes on the server; Room holds it, so read the user again. */
-    private suspend fun refreshUserImage(serverId: String) {
+    private suspend fun refreshUserImage(serverId: ServerId) {
         logFailure("user image") {
             repository.refreshCurrentUserImage()
             database.getServerCurrentUser(serverId)?.let { user ->
@@ -357,7 +355,7 @@ constructor(
      * Cold start (#251): the rows of the last full load, on screen before the network answers. Only
      * when nothing is on screen yet; the load that follows replaces them.
      */
-    private suspend fun showCachedRows(serverId: String, userId: UserId?) {
+    private suspend fun showCachedRows(serverId: ServerId, userId: UserId?) {
         val cache = homeCache ?: return
         if (userId == null || cacheChecked || !_state.value.isEmpty) return
         cacheChecked = true
@@ -416,7 +414,7 @@ constructor(
         }
     }
 
-    private suspend fun loadServerName(serverId: String): Server? {
+    private suspend fun loadServerName(serverId: ServerId): Server? {
         val server = database.getServer(serverId)
         if (server != null) {
             updateState { it.copy(server = server) }

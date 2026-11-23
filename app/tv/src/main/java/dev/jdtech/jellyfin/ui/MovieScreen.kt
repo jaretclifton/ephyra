@@ -53,6 +53,7 @@ import dev.jdtech.jellyfin.film.presentation.movie.MovieAction
 import dev.jdtech.jellyfin.film.presentation.movie.MovieState
 import dev.jdtech.jellyfin.film.presentation.movie.MovieViewModel
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.models.getVersions
 import dev.jdtech.jellyfin.presentation.film.components.VersionDialog
@@ -63,7 +64,7 @@ import dev.jdtech.jellyfin.utils.format
 @Composable
 fun MovieScreen(
     movieId: ItemId,
-    navigateToPlayer: (itemId: ItemId, mediaSourceId: String?) -> Unit,
+    navigateToPlayer: (itemId: ItemId, mediaSourceId: MediaSourceId?) -> Unit,
     viewModel: MovieViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current

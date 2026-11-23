@@ -54,6 +54,7 @@ import dev.jdtech.jellyfin.models.HomeItem
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.presentation.components.ErrorDialog
 import dev.jdtech.jellyfin.presentation.film.components.EmptyState
 import dev.jdtech.jellyfin.presentation.film.components.ErrorCardInitialHeight
@@ -373,7 +374,7 @@ internal fun HomeScreenLayout(
 
     if (showServerSelectionBottomSheet) {
         ServerSelectionBottomSheet(
-            currentServerId = state.server?.id ?: "",
+            currentServerId = state.server?.id ?: "".toServerId(),
             onUpdate = {
                 onAction(HomeAction.OnRetryClick)
                 scope

@@ -7,6 +7,7 @@ import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.SpatialAudio
 import dev.jdtech.jellyfin.models.VideoRangeType
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
@@ -54,7 +55,7 @@ class VideoMetadataParserTest {
 
     private fun source(vararg streams: MediaStream) =
         ItemSource(
-            id = "s",
+            id = "s".toMediaSourceId(),
             name = "s",
             type = ItemSourceType.REMOTE,
             path = "",

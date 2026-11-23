@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.server.jellyfin.cast
 
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import org.junit.jupiter.api.Test
@@ -129,16 +130,33 @@ class ReceiverUrlsTest {
     fun `a file that plays as it is gets a static stream URL with the access token`() {
         assertEquals(
             "$base/Videos/${itemId.asString()}/stream?static=true&mediaSourceId=abc123&api_key=token",
-            castStreamUrl(base, itemId, "abc123", transcodingUrl = null, accessToken = "token"),
+            castStreamUrl(
+                base,
+                itemId,
+                "abc123".toMediaSourceId(),
+                transcodingUrl = null,
+                accessToken = "token",
+            ),
         )
         // A blank transcoding URL is none.
         assertEquals(
             "$base/Videos/${itemId.asString()}/stream?static=true&mediaSourceId=abc123&api_key=token",
-            castStreamUrl(base, itemId, "abc123", transcodingUrl = " ", accessToken = "token"),
+            castStreamUrl(
+                base,
+                itemId,
+                "abc123".toMediaSourceId(),
+                transcodingUrl = " ",
+                accessToken = "token",
+            ),
         )
         assertEquals(
             "https://example.org/jellyfin/Videos/${itemId.asString()}/stream?static=true&mediaSourceId=abc123",
-            directPlayUrl("https://example.org/jellyfin/", itemId, "abc123", accessToken = null),
+            directPlayUrl(
+                "https://example.org/jellyfin/",
+                itemId,
+                "abc123".toMediaSourceId(),
+                accessToken = null,
+            ),
         )
     }
 
@@ -146,7 +164,7 @@ class ReceiverUrlsTest {
     fun `what goes into the static stream URL is encoded`() {
         assertEquals(
             "$base/Videos/${itemId.asString()}/stream?static=true&mediaSourceId=a%26b%3Dc%20d&api_key=t%2Fk",
-            directPlayUrl(base, itemId, "a&b=c d", accessToken = "t/k"),
+            directPlayUrl(base, itemId, "a&b=c d".toMediaSourceId(), accessToken = "t/k"),
         )
     }
 
@@ -166,14 +184,20 @@ class ReceiverUrlsTest {
 
         assertEquals(
             base + transcodingUrl,
-            castStreamUrl(base, itemId, "abc", transcodingUrl, accessToken = "other"),
+            castStreamUrl(
+                base,
+                itemId,
+                "abc".toMediaSourceId(),
+                transcodingUrl,
+                accessToken = "other",
+            ),
         )
         assertEquals(
             "https://example.org/jellyfin/videos/1/master.m3u8",
             castStreamUrl(
                 "https://example.org/jellyfin",
                 itemId,
-                "abc",
+                "abc".toMediaSourceId(),
                 "videos/1/master.m3u8",
                 null,
             ),

@@ -7,6 +7,7 @@ import dev.jdtech.jellyfin.film.presentation.home.HomeState
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.HomeItem
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import java.io.File
 import kotlin.test.assertEquals
@@ -34,7 +35,7 @@ class HomeCacheIdsTest {
         file.parentFile!!.mkdirs()
         file.writeText(STORED_BEFORE)
 
-        val rows = cache.read("server", USER.toUserId())!!
+        val rows = cache.read("server".toServerId(), USER.toUserId())!!
         val suggestions = rows.suggestions!!
         assertEquals(SECTION.toItemId(), suggestions.id)
         val episode = suggestions.items.single() as Episode
@@ -52,7 +53,7 @@ class HomeCacheIdsTest {
                 seasonId = SEASON.toItemId(),
             )
         cache.write(
-            "server",
+            "server".toServerId(),
             USER.toUserId(),
             HomeState(
                 suggestionsSection = HomeItem.Suggestions(SECTION.toItemId(), listOf(episode))

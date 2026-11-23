@@ -19,6 +19,8 @@ import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.getLocalSourcesForItems
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import kotlin.test.assertEquals
@@ -70,7 +72,7 @@ class StoredItemsByServerTest {
         database.insertMovie(
             MovieEntity(
                 id = movieId,
-                serverId = serverId,
+                serverId = serverId.toServerId(),
                 name = "Movie",
                 originalTitle = null,
                 overview = "",
@@ -97,7 +99,7 @@ class StoredItemsByServerTest {
         database.insertShow(
             ShowEntity(
                 id = showId,
-                serverId = serverId,
+                serverId = serverId.toServerId(),
                 name = "Bluey",
                 originalTitle = null,
                 overview = "",
@@ -122,7 +124,7 @@ class StoredItemsByServerTest {
         database.insertEpisode(
             EpisodeEntity(
                 id = episode,
-                serverId = serverId,
+                serverId = serverId.toServerId(),
                 seasonId = season,
                 seriesId = showId,
                 name = "Episode $index",
@@ -142,7 +144,7 @@ class StoredItemsByServerTest {
 
     private fun source(itemId: ItemId) =
         ItemSourceEntity(
-            id = "source-${itemId.asString()}",
+            id = "source-${itemId.asString()}".toMediaSourceId(),
             itemId = itemId,
             name = "Original",
             type = ItemSourceType.LOCAL,
@@ -260,13 +262,17 @@ class StoredItemsByServerTest {
     fun `a download still in progress is not played`() = runBlocking {
         storeMovie(SERVER_A)
         database.insertSource(
-            source(movieId).copy(id = "partial", path = "/storage/downloads/other.mkv.download")
+            source(movieId)
+                .copy(
+                    id = "partial".toMediaSourceId(),
+                    path = "/storage/downloads/other.mkv.download",
+                )
         )
 
         current(SERVER_A)
         assertEquals(
             listOf("source-${movieId.asString()}"),
-            database.getCompletedSources(movieId, SERVER_A).map { it.id },
+            database.getCompletedSources(movieId, SERVER_A.toServerId()).map { it.id.asString() },
         )
         assertEquals(
             listOf("/storage/downloads/${movieId.asString()}.mkv"),
@@ -281,14 +287,32 @@ class StoredItemsByServerTest {
             storeEpisode(SERVER_A, seasonId, episodeId, index = 1)
             val ids = listOf(movieId, episodeId)
 
-            assertEquals(emptyMap(), database.getLocalSourcesForItems(ids, SERVER_B))
-            assertEquals(ids.toSet(), database.getLocalSourcesForItems(ids, SERVER_A).keys)
-            assertEquals(emptyList(), database.getSeasonEpisodeCounts(showId, SERVER_B))
-            assertEquals(1, database.getSeasonEpisodeCounts(showId, SERVER_A).single().downloaded)
-            assertEquals(emptyList(), database.getSeriesIdsWithCompletedDownloads(SERVER_B))
-            assertEquals(listOf(showId), database.getSeriesIdsWithCompletedDownloads(SERVER_A))
-            assertEquals(emptyList(), database.getSourcesOfServer(movieId, SERVER_B))
-            assertEquals(emptyList(), database.getCompletedSources(episodeId, SERVER_B))
+            assertEquals(emptyMap(), database.getLocalSourcesForItems(ids, SERVER_B.toServerId()))
+            assertEquals(
+                ids.toSet(),
+                database.getLocalSourcesForItems(ids, SERVER_A.toServerId()).keys,
+            )
+            assertEquals(
+                emptyList(),
+                database.getSeasonEpisodeCounts(showId, SERVER_B.toServerId()),
+            )
+            assertEquals(
+                1,
+                database.getSeasonEpisodeCounts(showId, SERVER_A.toServerId()).single().downloaded,
+            )
+            assertEquals(
+                emptyList(),
+                database.getSeriesIdsWithCompletedDownloads(SERVER_B.toServerId()),
+            )
+            assertEquals(
+                listOf(showId),
+                database.getSeriesIdsWithCompletedDownloads(SERVER_A.toServerId()),
+            )
+            assertEquals(emptyList(), database.getSourcesOfServer(movieId, SERVER_B.toServerId()))
+            assertEquals(
+                emptyList(),
+                database.getCompletedSources(episodeId, SERVER_B.toServerId()),
+            )
         }
 
     @Test
@@ -309,7 +333,7 @@ class StoredItemsByServerTest {
 
             assertEquals(
                 listOf(movieId),
-                database.getAllUserDataToBeSynced(SERVER_A, userId).map { it.itemId },
+                database.getAllUserDataToBeSynced(SERVER_A.toServerId(), userId).map { it.itemId },
             )
         }
 

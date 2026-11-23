@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.player.local.domain
 
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -89,7 +90,7 @@ class StreamSwitchesTest {
         PlayerItem(
             name = "$id",
             itemId = id,
-            mediaSourceId = "$id",
+            mediaSourceId = "$id".toMediaSourceId(),
             playbackPosition = 0,
             mediaSourceUri = "http://server/$id?bitrate=$bitrate&audio=$audio",
             audioStreamIndex = audio,

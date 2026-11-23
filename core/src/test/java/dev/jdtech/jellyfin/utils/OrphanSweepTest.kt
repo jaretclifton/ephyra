@@ -8,6 +8,7 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -70,7 +71,7 @@ class OrphanSweepTest {
 
     private fun source(file: File) =
         ItemSourceEntity(
-            id = "source",
+            id = "source".toMediaSourceId(),
             itemId = trackedId,
             name = "Original",
             type = ItemSourceType.LOCAL,

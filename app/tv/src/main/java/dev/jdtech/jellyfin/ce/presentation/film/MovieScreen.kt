@@ -73,6 +73,7 @@ import dev.jdtech.jellyfin.film.presentation.movie.MovieState
 import dev.jdtech.jellyfin.film.presentation.movie.MovieViewModel
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.models.asString
@@ -92,7 +93,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun MovieScreen(
     movieId: ItemId,
-    navigateToPlayer: (itemId: ItemId, mediaSourceId: String?, startFromBeginning: Boolean) -> Unit,
+    navigateToPlayer:
+        (itemId: ItemId, mediaSourceId: MediaSourceId?, startFromBeginning: Boolean) -> Unit,
     navigateToPerson: (personId: ItemId) -> Unit,
     navigateToItem: (item: Item) -> Unit = {},
     viewModel: MovieViewModel = hiltViewModel(),

@@ -49,6 +49,7 @@ import dagger.hilt.android.EntryPointAccessors
 import dev.jdtech.jellyfin.core.R
 import dev.jdtech.jellyfin.di.SubtitleStyleEntryPoint
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerChapter
 import dev.jdtech.jellyfin.player.local.presentation.PlayerAction
 import dev.jdtech.jellyfin.player.local.presentation.PlayerEvents
@@ -73,7 +74,7 @@ fun PlayerScreen(
     itemId: ItemId,
     itemKind: String,
     startFromBeginning: Boolean,
-    mediaSourceId: String? = null,
+    mediaSourceId: MediaSourceId? = null,
     navigateBack: () -> Unit,
 ) {
     val viewModel = hiltViewModel<PlayerViewModel>()

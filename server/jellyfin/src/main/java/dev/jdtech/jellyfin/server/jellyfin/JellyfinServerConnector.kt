@@ -12,6 +12,8 @@ import dev.jdtech.jellyfin.models.QuickConnectState
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerInfo
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toServerId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -81,7 +83,9 @@ class JellyfinServerConnector(private val api: JellyfinApi) : ServerConnector {
         val discovery = api.unwatchedDiscovery
         val candidates = discovery.getAddressCandidates(address)
         val recommended = discovery.getRecommendedServers(candidates, RecommendedServerInfoScore.OK)
-        return recommended.firstOrNull { it.systemInfo.getOrNull()?.id == serverId }?.address
+        return recommended
+            .firstOrNull { it.systemInfo.getOrNull()?.id == serverId.asString() }
+            ?.address
     }
 
     override suspend fun loginDisclaimer(address: String): String? =
@@ -164,7 +168,7 @@ class JellyfinServerConnector(private val api: JellyfinApi) : ServerConnector {
 }
 
 internal fun ServerDiscoveryInfo.toDiscoveredServer() =
-    DiscoveredServer(id = id, name = name, address = address)
+    DiscoveredServer(id = id.toServerId(), name = name, address = address)
 
 internal fun QuickConnectResult.toQuickConnectState() =
     QuickConnectState(code = code, secret = secret, authenticated = authenticated)
@@ -178,7 +182,13 @@ internal fun RecommendedServerInfo.toResolvedServer(): ResolvedServer {
         throw ServerConnectException(listOf(ServerIssue(ServerIssue.Kind.NO_ID)))
     }
     return ResolvedServer(
-        info = ServerInfo(id = id, name = name, version = info.version, product = info.productName),
+        info =
+            ServerInfo(
+                id = id.toServerId(),
+                name = name,
+                version = info.version,
+                product = info.productName,
+            ),
         address = address,
     )
 }
@@ -201,7 +211,7 @@ internal fun AuthenticationResult.toAuthenticatedUser() =
     AuthenticatedUser(
         id = user!!.id.toUserId(),
         name = user!!.name!!,
-        serverId = serverId!!,
+        serverId = serverId!!.toServerId(),
         accessToken = accessToken!!,
         primaryImageTag = user?.primaryImageTag,
     )

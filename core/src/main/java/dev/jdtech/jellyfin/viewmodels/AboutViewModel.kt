@@ -81,7 +81,7 @@ constructor(
             val info = withContext(Dispatchers.Default) { AboutInfoReader.read(context, codecs) }
             _state.update { it.copy(info = info, codecs = codecs.probedCodecsSnapshot()) }
 
-            val serverId = appPreferences.getValue(appPreferences.currentServer) ?: return@launch
+            val serverId = appPreferences.currentServerId() ?: return@launch
             val data = database.getServerWithAddressAndUser(serverId) ?: return@launch
             _state.update {
                 it.copy(

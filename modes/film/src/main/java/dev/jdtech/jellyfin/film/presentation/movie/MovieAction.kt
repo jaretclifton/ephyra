@@ -2,10 +2,13 @@ package dev.jdtech.jellyfin.film.presentation.movie
 
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.MediaSourceId
 
 sealed interface MovieAction {
-    data class Play(val startFromBeginning: Boolean = false, val mediaSourceId: String? = null) :
-        MovieAction
+    data class Play(
+        val startFromBeginning: Boolean = false,
+        val mediaSourceId: MediaSourceId? = null,
+    ) : MovieAction
 
     data class PlayTrailer(val trailer: String) : MovieAction
 

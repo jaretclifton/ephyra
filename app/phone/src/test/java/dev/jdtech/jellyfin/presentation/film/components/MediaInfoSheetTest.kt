@@ -25,6 +25,7 @@ import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import kotlin.test.assertEquals
 import org.junit.Rule
@@ -64,7 +65,7 @@ class MediaInfoSheetTest {
         vararg streams: MediaStream,
     ) =
         ItemSource(
-            id = name,
+            id = name.toMediaSourceId(),
             name = name,
             type = ItemSourceType.REMOTE,
             path = "",

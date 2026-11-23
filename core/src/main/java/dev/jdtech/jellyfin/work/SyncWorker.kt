@@ -18,6 +18,7 @@ import dev.jdtech.jellyfin.domain.userdata.mergeWithServer
 import dev.jdtech.jellyfin.domain.userdata.refreshedFromServer
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ServerException
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.UserId
@@ -152,7 +153,7 @@ constructor(
      */
     private suspend fun refreshFromServer(
         port: UserDataSyncPort,
-        serverId: String,
+        serverId: ServerId,
         userId: UserId,
     ): Int {
         val itemIds = database.getSyncedUserDataItemIds(serverId, userId)

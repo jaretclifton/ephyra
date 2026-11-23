@@ -10,6 +10,7 @@ import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.ItemTrickplayInfo
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.MediaRepositoryImpl
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -74,7 +75,7 @@ class TrickplayDownloadTest {
                 .getServerDatabaseDao()
                 .insertSource(
                     ItemSourceEntity(
-                        id = SOURCE_ID,
+                        id = SOURCE_ID.toMediaSourceId(),
                         itemId = itemId,
                         name = "Original",
                         type = ItemSourceType.LOCAL,
@@ -196,7 +197,7 @@ class TrickplayDownloadTest {
                 Provider { error("No WorkManager in this test") },
                 MediaDownloadEngine(OkHttpClient(), Online),
             )
-        runBlocking { downloader.downloadTrickplayData(itemId, SOURCE_ID, info) }
+        runBlocking { downloader.downloadTrickplayData(itemId, SOURCE_ID.toMediaSourceId(), info) }
     }
 
     private fun storedSheets(): List<String> =
@@ -223,7 +224,9 @@ class TrickplayDownloadTest {
                     context.getSharedPreferences("trickplay-download-test", Context.MODE_PRIVATE)
                 ),
             )
-        return runBlocking { repository.getTrickplayData(itemId, info.width, index, version) }
+        return runBlocking {
+                repository.getTrickplayData(itemId, info.width, index, version?.toMediaSourceId())
+            }
             ?.decodeToString()
     }
 

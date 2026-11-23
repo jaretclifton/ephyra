@@ -1,10 +1,13 @@
 package dev.jdtech.jellyfin.film.presentation.episode
 
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.MediaSourceId
 
 sealed interface EpisodeAction {
-    data class Play(val startFromBeginning: Boolean = false, val mediaSourceId: String? = null) :
-        EpisodeAction
+    data class Play(
+        val startFromBeginning: Boolean = false,
+        val mediaSourceId: MediaSourceId? = null,
+    ) : EpisodeAction
 
     data object MarkAsPlayed : EpisodeAction
 

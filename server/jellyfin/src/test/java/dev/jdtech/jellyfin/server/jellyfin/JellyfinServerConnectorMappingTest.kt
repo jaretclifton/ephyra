@@ -7,6 +7,7 @@ import dev.jdtech.jellyfin.domain.ports.ServerIssue
 import dev.jdtech.jellyfin.models.DiscoveredServer
 import dev.jdtech.jellyfin.models.QuickConnectState
 import dev.jdtech.jellyfin.models.ServerInfo
+import dev.jdtech.jellyfin.models.toServerId
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -39,7 +40,7 @@ class JellyfinServerConnectorMappingTest {
 
         assertEquals(
             DiscoveredServer(
-                id = "abc123",
+                id = "abc123".toServerId(),
                 name = "Living room",
                 address = "http://192.168.1.10:8096",
             ),
@@ -94,7 +95,7 @@ class JellyfinServerConnectorMappingTest {
             ResolvedServer(
                 info =
                     ServerInfo(
-                        id = "abc123",
+                        id = "abc123".toServerId(),
                         name = "Living room",
                         version = "10.11.0",
                         product = "Jellyfin Server",
@@ -173,7 +174,7 @@ class JellyfinServerConnectorMappingTest {
             AuthenticatedUser(
                 id = id.toUserId(),
                 name = "alice",
-                serverId = "abc123",
+                serverId = "abc123".toServerId(),
                 accessToken = "token",
                 primaryImageTag = "tag",
             ),

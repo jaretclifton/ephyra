@@ -21,10 +21,13 @@ import dev.jdtech.jellyfin.models.ServerWithAddressAndUser
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.User
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.domain.AddressRejected
+import dev.jdtech.jellyfin.testing.asServerId
 import dev.jdtech.jellyfin.testing.asUserId
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -54,12 +57,12 @@ class SetupRepositoryConnectorTest {
         User(
             UUID.randomUUID().toString().toUserId(),
             "alice",
-            serverId = "a",
+            serverId = "a".toServerId(),
             accessToken = "token-a",
         )
-    private val inRoom = ServerAddress(UUID.randomUUID(), "a", "https://a.example")
-    private val other = ServerAddress(UUID.randomUUID(), "a", "http://a.local:8096")
-    private var server = Server("a", "Server a", inRoom.id, alice.id)
+    private val inRoom = ServerAddress(UUID.randomUUID(), "a".toServerId(), "https://a.example")
+    private val other = ServerAddress(UUID.randomUUID(), "a".toServerId(), "http://a.local:8096")
+    private var server = Server("a".toServerId(), "Server a", inRoom.id, alice.id)
     private val users = mutableMapOf(alice.id to alice)
     private val addresses = mutableListOf(inRoom, other)
 
@@ -72,7 +75,7 @@ class SetupRepositoryConnectorTest {
             arrayOf(ServerDatabaseDao::class.java),
         ) { _, method, args ->
             when (method.kotlinName) {
-                "getServer" -> server.takeIf { it.id == args[0] }
+                "getServer" -> server.takeIf { it.id == args[0].asServerId() }
                 "getUser" -> users[args[0].asUserId()]
                 "getAddress" -> addresses.single { it.id == args[0] }
                 "getServerWithAddresses" -> ServerWithAddresses(server, addresses.toList(), null)
@@ -207,7 +210,7 @@ class SetupRepositoryConnectorTest {
             val bob = UUID.randomUUID().toString().toUserId()
             connector.onLogin = { username, _ ->
                 writes += "login $username"
-                AuthenticatedUser(bob, "bob", "a", "token-b", "tag")
+                AuthenticatedUser(bob, "bob", "a".toServerId(), "token-b", "tag")
             }
 
             repository.login("bob", "secret")
@@ -217,7 +220,7 @@ class SetupRepositoryConnectorTest {
                 listOf("login bob", "insertUser bob", "updateServerCurrentUser a"),
                 writes.toList(),
             )
-            assertEquals(User(bob, "bob", "a", "token-b", "tag"), users[bob])
+            assertEquals(User(bob, "bob", "a".toServerId(), "token-b", "tag"), users[bob])
             assertEquals(
                 listOf(RecordingServerSession.Use(other.address, "token-b", bob)),
                 session.uses.toList(),
@@ -230,10 +233,10 @@ class SetupRepositoryConnectorTest {
             val id = UUID.randomUUID().toString().toUserId()
             connector.onPublicUsers = { listOf(PublicUser(id, "carol", null)) }
 
-            val publicUsers = repository.getPublicUsers("b")
+            val publicUsers = repository.getPublicUsers("b".toServerId())
 
             assertEquals(listOf("publicUsers" to other.address), connector.calls.toList())
-            assertEquals(listOf(User(id, "carol", serverId = "b")), publicUsers)
+            assertEquals(listOf(User(id, "carol", serverId = "b".toServerId())), publicUsers)
         }
 
     @Test
@@ -262,7 +265,7 @@ class SetupRepositoryConnectorTest {
             User(
                 UUID.randomUUID().toString().toUserId(),
                 "bob",
-                serverId = "a",
+                serverId = "a".toServerId(),
                 accessToken = "token-b",
             )
         users[bob.id] = bob
@@ -292,7 +295,7 @@ class SetupRepositoryConnectorTest {
 
     @Test
     fun `switching server signs in as its current user at its current address`() = runBlocking {
-        repository.setCurrentServer("a")
+        repository.setCurrentServer("a".toServerId())
 
         assertEquals(
             listOf(RecordingServerSession.Use(inRoom.address, "token-a", alice.id)),
@@ -306,7 +309,7 @@ class SetupRepositoryConnectorTest {
         server = server.copy(type = "emby")
         currentType.stored = "jellyfin"
 
-        repository.setCurrentServer("a")
+        repository.setCurrentServer("a".toServerId())
 
         assertEquals("emby", currentType.stored)
     }
@@ -330,20 +333,22 @@ class SetupRepositoryConnectorTest {
     @Test
     fun `adding an address checks it unwatched and leaves the client alone`() = runBlocking {
         connector.onFindAddress = { address, serverId ->
-            "http://a.lan:8096".takeIf { address == "a.lan" && serverId == "a" }
+            "http://a.lan:8096".takeIf { address == "a.lan" && serverId.asString() == "a" }
         }
 
-        val added = repository.addAddress("a", "a.lan")
+        val added = repository.addAddress("a".toServerId(), "a.lan")
 
         assertEquals("http://a.lan:8096", added.address)
         assertEquals(listOf("insertServerAddress http://a.lan:8096"), writes.toList())
         assertEquals(
             AddressRejected.Reason.ALREADY_SAVED,
-            assertFailsWith<AddressRejected> { repository.addAddress("a", "a.lan") }.reason,
+            assertFailsWith<AddressRejected> { repository.addAddress("a".toServerId(), "a.lan") }
+                .reason,
         )
         assertEquals(
             AddressRejected.Reason.NOT_FOUND,
-            assertFailsWith<AddressRejected> { repository.addAddress("a", "b.lan") }.reason,
+            assertFailsWith<AddressRejected> { repository.addAddress("a".toServerId(), "b.lan") }
+                .reason,
         )
         assertEquals(listOf("a.lan", "a.lan", "b.lan"), connector.findAddressCalls.toList())
         assertTrue(session.uses.isEmpty())

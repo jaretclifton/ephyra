@@ -5,6 +5,7 @@ import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import kotlin.test.assertEquals
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonNull
@@ -111,7 +112,7 @@ class PlaybackInfoRequestTest {
         repository.getPlaybackSources(
             itemId,
             PlaybackTarget.LocalPlayer(engine, directPlayDolbyVision = true),
-            mediaSourceId = mediaSourceId,
+            mediaSourceId = mediaSourceId?.toMediaSourceId(),
             audioStreamIndex = audioStreamIndex,
             maxBitrate = maxBitrate,
         )

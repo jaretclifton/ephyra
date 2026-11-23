@@ -10,6 +10,7 @@ import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.SeriesTrackPreference
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
@@ -349,7 +350,7 @@ class PlaylistManagerAudioChoiceTest {
 
     private fun source(transcodes: Boolean, audio: Int?) =
         ItemSource(
-            id = SOURCE,
+            id = SOURCE.toMediaSourceId(),
             name = "Source",
             type = ItemSourceType.REMOTE,
             path = path(audio),
@@ -366,7 +367,7 @@ class PlaylistManagerAudioChoiceTest {
 
     private fun download() =
         ItemSource(
-            id = SOURCE,
+            id = SOURCE.toMediaSourceId(),
             name = "Source",
             type = ItemSourceType.LOCAL,
             path = DOWNLOAD,

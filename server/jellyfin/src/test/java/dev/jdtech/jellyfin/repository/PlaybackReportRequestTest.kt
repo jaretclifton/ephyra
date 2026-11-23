@@ -7,6 +7,7 @@ import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.models.MovieEntity
 import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toServerId
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -153,7 +154,7 @@ class PlaybackReportRequestTest {
         database.insertMovie(
             MovieEntity(
                 id = itemId,
-                serverId = SERVER,
+                serverId = SERVER.toServerId(),
                 name = "Libass Sidecar Movie",
                 originalTitle = null,
                 overview = "",

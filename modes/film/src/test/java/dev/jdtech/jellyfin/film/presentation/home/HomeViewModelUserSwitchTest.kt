@@ -7,6 +7,7 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.MediaRepository
@@ -51,18 +52,22 @@ import org.junit.jupiter.api.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelUserSwitchTest {
     private val alice =
-        User(id = UUID.randomUUID().toString().toUserId(), name = "Alice", serverId = SERVER_ID)
+        User(
+            id = UUID.randomUUID().toString().toUserId(),
+            name = "Alice",
+            serverId = SERVER_ID.toServerId(),
+        )
     private val bob =
         User(
             id = UUID.randomUUID().toString().toUserId(),
             name = "Bob",
-            serverId = SERVER_ID,
+            serverId = SERVER_ID.toServerId(),
             primaryImageTag = "b",
         )
     private val aliceItem = item("Alice's movie")
     private val bobItem = item("Bob's movie")
 
-    private val server = Server(SERVER_ID, "Server", null, alice.id)
+    private val server = Server(SERVER_ID.toServerId(), "Server", null, alice.id)
     private val users = mutableMapOf(alice.id to alice)
     private val currentUser = MutableStateFlow<User?>(alice)
 

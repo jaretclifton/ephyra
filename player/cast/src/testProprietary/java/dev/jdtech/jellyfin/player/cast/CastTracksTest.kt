@@ -5,6 +5,7 @@ import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.player.cast.models.CastMediaItem
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.player.core.domain.models.Track
@@ -369,7 +370,7 @@ class CastTracksTest {
                 PlayerItem(
                     name = "Movie",
                     itemId = UUID.randomUUID().toString().toItemId(),
-                    mediaSourceId = "source",
+                    mediaSourceId = "source".toMediaSourceId(),
                     playbackPosition = 0L,
                 ),
             subtitleTracks = tracks.subtitles,
@@ -413,7 +414,7 @@ class CastTracksTest {
 
     private fun source(vararg streams: MediaStream) =
         ItemSource(
-            id = "source",
+            id = "source".toMediaSourceId(),
             name = "",
             type = ItemSourceType.REMOTE,
             path = "",
