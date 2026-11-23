@@ -57,7 +57,7 @@ CI on a pull request runs `ktfmtCheck` (when Kotlin files or `gradle/libs.versio
 
 ## Architecture
 
-**Where code goes.** The apps (`app/phone`, `app/tv`) are the composition root and depend on every library module. ViewModels live in `modes/film`, `setup`, `settings`, `core`, `player/local` and `player/cast`, NOT in `app/phone` or `app/tv`; the screens in the app modules consume their state. New TV screens and components go in `app/tv/src/main/java/dev/jdtech/jellyfin/ce/`, next to upstream's screens instead of rewriting them, and `NavigationRoot.kt` points each route at the CE one (TV ADR 0001; the TV decisions are in `docs/tv-research/adr/`).
+**Where code goes.** The apps (`app/phone`, `app/tv`) are the composition root and depend on the library modules (`app/tv` not on `player/cast`; the full list is in `modules.md`). ViewModels live in `modes/film`, `setup`, `settings`, `core`, `player/local` and `player/cast`, NOT in `app/phone` or `app/tv`; the screens in the app modules consume their state. New TV screens and components go in `app/tv/src/main/java/dev/jdtech/jellyfin/ce/`, next to upstream's screens instead of rewriting them, and `NavigationRoot.kt` points each route at the CE one (TV ADR 0001; the TV decisions are in `docs/tv-research/adr/`).
 
 **MVI-style MVVM with Unidirectional Data Flow.** Each screen has:
 - `FooState`: immutable data class holding all UI state
@@ -104,7 +104,7 @@ Events that fire once (navigation, toasts) use a `Channel<FooEvent>` exposed as 
 
 **Cast (#626):** `app/phone` and `player/cast` have a second flavor, `proprietary`, with Google Cast (Play Services). Everything that touches the Cast SDK is in `player/cast/src/proprietary`; `player/cast/src/libre` has stubs that say Cast is not supported, and `player/cast/src/main` (interfaces, models, ViewModels) and the Cast UI in `app/phone/.../presentation/cast` compile in both. A change there must compile in both flavors (`compileLibreDebugKotlin` and `compileProprietaryDebugKotlin`). The Google Play phone bundle is `proprietary` (#641). The Cast surfaces (top bar button, device sheet, mini player, player) are stateless layouts fed by one `CastViewModel`; `CastHost` wraps the navigation display and is the only Cast code `NavigationRoot` knows. Emulators find no receivers: a debug build of the `proprietary` flavor has a stand-in (`adb shell setprop debug.ephyra.cast fake`, see `player/cast/src/debug/.../FakeCast.kt`) to look at every state. Anything about a real receiver still needs a real one (memory note `cast-device-test`).
 
-**Player PRs:** anything under `player/local` or the player screens runs `docs/mpv-checklist.md` on both backends before merge. It includes the display refresh-rate vote check: ExoPlayer must keep its default frame-rate strategy and mpv must hint the surface on every device, or phones play at their maximum refresh rate (#338). `player/local`'s `PlayerInvariantsTest` fails the build if either is undone.
+**Player PRs:** anything under `player/local`, the player screens or the device profile (`JellyfinDeviceProfiles.kt`) runs `docs/mpv-checklist.md` on both backends before merge. It includes the display refresh-rate vote check: ExoPlayer must keep its default frame-rate strategy and mpv must hint the surface on every device, or phones play at their maximum refresh rate (#338). `player/local`'s `PlayerInvariantsTest` fails the build if either is undone.
 
 ## Commits and Pull Requests
 

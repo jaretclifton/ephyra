@@ -68,6 +68,6 @@ flowchart TD
 | `player/core` | Features | The player models shared by the player and its callers: PlayerItem, Track, Trickplay. | `domain` |  |
 | `player/local` | Features | The player: PlayerViewModel and playback, on ExoPlayer or mpv behind PlayerEngine (in its engine package). | `application`, `core`, `domain`, `player/core`, `settings` | `data`, `testing` |
 | `server/jellyfin` | Adapters | The Jellyfin adapter, the only module with the Jellyfin SDK: JellyfinApi, the mappers, the port implementations, the device profiles and its own Hilt module. | `application`, `domain`, `settings` | `data`, `testing` |
-| `settings` | Features | AppPreferences (DataStore) and the settings screens. | `domain` |  |
+| `settings` | Features | AppPreferences (over SharedPreferences), SettingsViewModel and the preference models; the screens are in the apps. | `domain` |  |
 | `setup` | Features | Server discovery, signing in and the onboarding flow. | `application`, `core`, `domain`, `settings` | `data`, `testing` |
 | `testing` | Tests and tooling | Test only (R8): FakeMediaServer, FakeServerConnector and the contract suites a server adapter passes. | `application`, `domain` |  |

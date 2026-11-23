@@ -64,7 +64,7 @@ model {
       link https://github.com/midasvo/ephyra/tree/main/server/jellyfin 'Source'
     }
     settings = feature 'settings' {
-      description 'AppPreferences (DataStore) and the settings screens.'
+      description 'AppPreferences (over SharedPreferences), SettingsViewModel and the preference models; the screens are in the apps.'
       link https://github.com/midasvo/ephyra/tree/main/settings 'Source'
     }
     setup = feature 'setup' {

@@ -139,7 +139,10 @@ object ArchitectureModel {
             "setup" to
                 Module(Layer.FEATURE, "Server discovery, signing in and the onboarding flow."),
             "settings" to
-                Module(Layer.FEATURE, "AppPreferences (DataStore) and the settings screens."),
+                Module(
+                    Layer.FEATURE,
+                    "AppPreferences (over SharedPreferences), SettingsViewModel and the preference models; the screens are in the apps.",
+                ),
             "player/local" to
                 Module(
                     Layer.FEATURE,
