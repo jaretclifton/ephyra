@@ -2,19 +2,20 @@ package dev.jdtech.jellyfin.server.jellyfin
 
 import androidx.annotation.VisibleForTesting
 import dev.jdtech.jellyfin.api.JellyfinApi
-import dev.jdtech.jellyfin.domain.ports.ActiveServer
 import dev.jdtech.jellyfin.domain.ports.RequestWatcher
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.domain.ports.UserImage
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import org.jellyfin.sdk.api.sockets.subscribe
 import org.jellyfin.sdk.model.api.DeviceOptionsDto
 import org.jellyfin.sdk.model.api.PlaystateMessage
@@ -79,20 +80,26 @@ class JellyfinServerSession(private val api: JellyfinApi) : ServerSession {
      * Any subscription keeps the socket open; the SDK closes it a few seconds after the last one
      * ends. Play state messages need no start message, so nothing is streamed to us.
      *
-     * #899: the socket is the one of the SDK client for the value on the holder; on a switch of
-     * address or token the subscription moves to the new value's socket, as the SDK reconnected its
-     * one client before.
+     * #899: there is one socket, which reads the holder when it connects. When the address or the
+     * token on the holder changes it closes and connects again with the new ones, as the SDK did on
+     * `update` before: the server never has two sockets from the device.
      */
-    @OptIn(ExperimentalCoroutinesApi::class)
     override fun keepAlive(): Flow<Nothing> = flow {
-        api.activeServer.flow
-            // Only the address and the token make a socket; a change of user alone keeps it.
-            .map { ActiveServer(baseUrl = it.baseUrl, accessToken = it.accessToken) }
-            .distinctUntilChanged()
-            .flatMapLatest { server ->
-                api.clientAt(server).webSocket.subscribe<PlaystateMessage>()
+        coroutineScope {
+            // UNDISPATCHED: the value of now is taken before the socket connects, so every later
+            // change reconnects it. Only the address and the token make a socket; a change of user
+            // alone keeps it.
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                api.activeServer.flow
+                    .map { it.baseUrl to it.accessToken }
+                    .distinctUntilChanged()
+                    .drop(1)
+                    .collect { api.socketMoved() }
             }
-            .collect { message -> Timber.d("Ignoring play state command %s", message) }
+            api.api.webSocket.subscribe<PlaystateMessage>().collect { message ->
+                Timber.d("Ignoring play state command %s", message)
+            }
+        }
     }
 
     /** The server hands the picture out without authentication. */

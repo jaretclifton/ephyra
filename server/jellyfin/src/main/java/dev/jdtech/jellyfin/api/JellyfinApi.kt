@@ -52,6 +52,7 @@ import org.jellyfin.sdk.api.client.extensions.userViewApi
 import org.jellyfin.sdk.api.client.extensions.videoApi
 import org.jellyfin.sdk.api.okhttp.OkHttpFactory
 import org.jellyfin.sdk.api.operations.TrickPlayApi
+import org.jellyfin.sdk.api.sockets.SocketConnectionFactory
 import org.jellyfin.sdk.createJellyfin
 import org.jellyfin.sdk.model.ClientInfo
 import org.jellyfin.sdk.model.DeviceInfo
@@ -76,6 +77,8 @@ class JellyfinApi(
      * none is given: the adapter's tests set it up through [api] and [userId].
      */
     internal val activeServer: ActiveServerHolder = ActiveServerHolder(),
+    /** #899: the server sockets are made with; another only in tests. */
+    private val socketConnections: SocketConnectionFactory? = null,
 ) {
     /** #899: the value a request was started with, while it runs; see [pinnedTo]. */
     private val pinned = ThreadLocal<ActiveServer?>()
@@ -214,7 +217,7 @@ class JellyfinApi(
         context = androidContext
         deviceInfo = buildDeviceInfo(androidContext)
         apiClientFactory = factory
-        socketConnectionFactory = factory
+        socketConnectionFactory = socketConnections ?: factory
     }
 
     val jellyfin = buildJellyfin(okHttpFactory)
@@ -233,6 +236,7 @@ class JellyfinApi(
     val api: ApiClient =
         ActiveServerClient(
             jellyfin = jellyfin,
+            socketConnections = socketConnections ?: okHttpFactory,
             httpClientOptions =
                 HttpClientOptions(
                     requestTimeout = requestTimeout.toDuration(DurationUnit.MILLISECONDS),
@@ -245,6 +249,9 @@ class JellyfinApi(
 
     /** #899: the SDK client for [server]'s address and token; it never points anywhere else. */
     internal fun clientAt(server: ActiveServer): ApiClient = (api as ActiveServerClient).at(server)
+
+    /** #899: see [ActiveServerClient.serverMoved]. */
+    internal fun socketMoved() = (api as ActiveServerClient).serverMoved()
 
     /**
      * The user the client is signed in as, from the [snapshot]. #899: setting it is for the

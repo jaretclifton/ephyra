@@ -6,22 +6,29 @@ import org.jellyfin.sdk.api.client.ApiClient
 import org.jellyfin.sdk.api.client.HttpClientOptions
 import org.jellyfin.sdk.api.client.HttpMethod
 import org.jellyfin.sdk.api.client.RawResponse
+import org.jellyfin.sdk.api.sockets.DefaultSocketApi
 import org.jellyfin.sdk.api.sockets.SocketApi
+import org.jellyfin.sdk.api.sockets.SocketConnectionFactory
 import org.jellyfin.sdk.model.ClientInfo
 import org.jellyfin.sdk.model.DeviceInfo
 
 /**
- * #899: the app's SDK client, without an address or token of its own. Every request, URL and socket
- * reads the [ActiveServer] once, through [snapshot], and goes through an SDK client made for that
- * value's address and token, which never changes ([at]). So a request sends the address and the
- * token of one value, also when a switch comes while it is being built.
+ * #899: the app's SDK client, without an address or token of its own. Every request and URL reads
+ * the [ActiveServer] once, through [snapshot], and goes through an SDK client made for that value's
+ * address and token, which never changes ([at]). So a request sends the address and the token of
+ * one value, also when a switch comes while it is being built.
  *
  * The SDK client of the last value is kept and reused until the address or the token changes; all
  * of them come from [jellyfin], so they share the connection pool and the response watcher of
  * `JellyfinApi`.
+ *
+ * The socket is the exception: there is one, over this client itself, so it reads the holder when
+ * it connects. [serverMoved] reconnects it when the address or the token changed, as the SDK did
+ * for its one client on `update`: the server never sees a second socket from the device.
  */
 internal class ActiveServerClient(
     private val jellyfin: Jellyfin,
+    socketConnections: SocketConnectionFactory,
     override val httpClientOptions: HttpClientOptions,
     private val snapshot: () -> ActiveServer,
     private val onSameServer: ((ActiveServer) -> ActiveServer) -> Unit,
@@ -62,9 +69,19 @@ internal class ActiveServerClient(
     override val deviceInfo: DeviceInfo
         get() = checkNotNull(jellyfin.deviceInfo)
 
-    /** The socket of the server in use now; `keepAlive` follows the holder for later ones. */
+    private val socket by lazy {
+        DefaultSocketApi(this, httpClientOptions.socketReconnectPolicy, socketConnections)
+    }
+
+    /** The one socket, to the server in use when it connects. */
     override val webSocket: SocketApi
-        get() = at(snapshot()).webSocket
+        get() = socket
+
+    /**
+     * The address or the token on the holder changed: the socket closes and connects again with the
+     * new ones, if it is open. Nothing happens while no one subscribes.
+     */
+    fun serverMoved() = socket.notifyApiClientUpdate()
 
     /**
      * Only the adapter's own tests set the client up this way. The app switches through the holder
