@@ -4,75 +4,75 @@
 model {
   extend ephyra {
     appPhone = app 'app/phone' {
-      description 'Apps (composition root)'
+      description 'The phone app: screens, navigation and layouts; with app/tv the composition root.'
       link https://github.com/midasvo/ephyra/tree/main/app/phone 'Source'
     }
     appTv = app 'app/tv' {
-      description 'Apps (composition root)'
+      description 'The Android TV app, with its own screens.'
       link https://github.com/midasvo/ephyra/tree/main/app/tv 'Source'
     }
     application = application 'application' {
-      description 'Application'
+      description 'Pure Kotlin: MediaRepository, the store ports and the event flows.'
       link https://github.com/midasvo/ephyra/tree/main/application 'Source'
     }
     architecture = tooling 'architecture' {
-      description 'Tests and tooling'
+      description 'The Konsist rules over the source tree, and the generated architecture docs.'
       link https://github.com/midasvo/ephyra/tree/main/architecture 'Source'
     }
     baselineprofile = tooling 'baselineprofile' {
-      description 'Tests and tooling'
+      description 'The baseline profile and startup benchmark of app/phone.'
       link https://github.com/midasvo/ephyra/tree/main/baselineprofile 'Source'
     }
     baselineprofileTv = tooling 'baselineprofile-tv' {
-      description 'Tests and tooling'
+      description 'The baseline profile and startup benchmark of app/tv.'
       link https://github.com/midasvo/ephyra/tree/main/baselineprofile-tv 'Source'
     }
     core = feature 'core' {
-      description 'Features'
+      description 'Hilt modules, the server in use, its session and reachability, the sync, shared Composables.'
       link https://github.com/midasvo/ephyra/tree/main/core 'Source'
     }
     data = adapter 'data' {
-      description 'Adapters'
+      description 'Room: the database, the stores, and MediaRepositoryImpl over the server\'s ports.'
       link https://github.com/midasvo/ephyra/tree/main/data 'Source'
     }
     domain = domain 'domain' {
-      description 'Domain'
+      description 'Pure Kotlin: the models, the ids, the rules of user data and downloads, the server ports.'
       link https://github.com/midasvo/ephyra/tree/main/domain 'Source'
     }
     downloads = feature 'downloads' {
-      description 'Features'
+      description 'The download engine, the download queue and smart downloads.'
       link https://github.com/midasvo/ephyra/tree/main/downloads 'Source'
     }
     modesFilm = feature 'modes/film' {
-      description 'Features'
+      description 'The view models of home, library, search, the item screens and downloads.'
       link https://github.com/midasvo/ephyra/tree/main/modes/film 'Source'
     }
     playerCast = feature 'player/cast' {
-      description 'Features'
+      description 'Google Cast: the session and playback on a receiver (stubs in the libre flavour).'
       link https://github.com/midasvo/ephyra/tree/main/player/cast 'Source'
     }
     playerCore = feature 'player/core' {
-      description 'Features'
+      description 'The player models shared by the player and its callers.'
       link https://github.com/midasvo/ephyra/tree/main/player/core 'Source'
     }
     playerLocal = feature 'player/local' {
-      description 'Features'
+      description 'The player: PlayerViewModel and playback, on ExoPlayer or mpv behind PlayerEngine.'
       link https://github.com/midasvo/ephyra/tree/main/player/local 'Source'
     }
     serverJellyfin = adapter 'server/jellyfin' {
-      description 'Adapters'
+      description 'The Jellyfin adapter, the only module with the Jellyfin SDK.'
       link https://github.com/midasvo/ephyra/tree/main/server/jellyfin 'Source'
     }
     settings = feature 'settings' {
-      description 'Features'
+      description 'The app\'s preferences and the settings screen.'
       link https://github.com/midasvo/ephyra/tree/main/settings 'Source'
     }
     setup = feature 'setup' {
-      description 'Features'
+      description 'Finding a server and signing in.'
       link https://github.com/midasvo/ephyra/tree/main/setup 'Source'
     }
     testing = tooling 'testing' {
-      description 'Tests and tooling'
+      description 'Test only: a fake server and the contract suites a server adapter passes.'
       link https://github.com/midasvo/ephyra/tree/main/testing 'Source'
     }
 
