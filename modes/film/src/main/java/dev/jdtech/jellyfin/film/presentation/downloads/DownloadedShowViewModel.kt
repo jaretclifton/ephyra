@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.models.DownloadFiles
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSourceType
@@ -54,7 +55,7 @@ constructor(
                         allEpisodes
                             .filter { ep ->
                                 sourcesByEpisode[ep.id].orEmpty().any {
-                                    !it.path.endsWith(".download")
+                                    !DownloadFiles.isPartial(it.path)
                                 }
                             }
                             .map { it.toEpisode(database, userId, sourcesByEpisode) }

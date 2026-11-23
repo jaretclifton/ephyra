@@ -18,11 +18,11 @@ interface Item {
 }
 
 fun Item.isDownloading(): Boolean {
-    return sources.filter { it.type == ItemSourceType.LOCAL }.any { it.path.endsWith(".download") }
+    return sources.any { it.downloadState == DownloadState.DOWNLOADING }
 }
 
 fun Item.isDownloaded(): Boolean {
-    return sources.filter { it.type == ItemSourceType.LOCAL }.any { !it.path.endsWith(".download") }
+    return sources.any { it.downloadState == DownloadState.FINISHED }
 }
 
 /** The versions a user can pick from. A downloaded copy keeps the id of its server version. */

@@ -9,6 +9,7 @@ import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.models.DownloadFiles
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
@@ -409,7 +410,7 @@ constructor(
             try {
                 database
                     .getSources(entry.id)
-                    .filter { it.path.endsWith(".download") }
+                    .filter { DownloadFiles.isPartial(it.path) }
                     .mapNotNull { it.downloadId }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to read the source rows of ${entry.item.name}")
