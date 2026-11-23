@@ -32,6 +32,15 @@ interface EnginePlayer {
     /** Shifts subtitles by [delayMs] (positive = later, negative = earlier). */
     fun setSubtitleDelayMs(delayMs: Int)
 
+    /**
+     * CE (#870): whether replacing the playlist reports a media item transition also when the
+     * playing item stays the same (a quality or transcode audio switch), as ExoPlayer does with
+     * `MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED`. Without one, the caller reports the new
+     * stream itself.
+     */
+    val transitionsOnReplacedPlaylist: Boolean
+        get() = true
+
     /** Called when an item becomes ready, for settings the engine drops on load. */
     fun onItemReady() {}
 

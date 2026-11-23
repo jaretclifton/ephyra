@@ -57,6 +57,10 @@ private class MpvEnginePlayer(private val mpvPlayer: MPVPlayer) : EnginePlayer {
     override val player: Player
         get() = mpvPlayer
 
+    // CE (#870): mpv reports a transition only when the item changes (#453, MpvItemTransitions).
+    override val transitionsOnReplacedPlaylist: Boolean
+        get() = false
+
     /** The delay last set, which mpv drops when it loads a file. */
     private var subtitleDelayMs = 0
 

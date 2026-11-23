@@ -165,6 +165,16 @@ class PlaybackReporterTest {
             return stop
         }
 
+        /**
+         * CE (#870): the playlist was replaced with [item], a new stream of the playing item, and
+         * the player reported no transition for it (mpv), as `PlayerViewModel.swapInQueue` does.
+         */
+        fun streamReplaced(item: PlayerItem) {
+            reporter.onStreamQueued(item)
+            reporter.onStreamReplaced(item)
+            scope.testScheduler.runCurrent()
+        }
+
         /** The player is ready; the start it owes is on its way (it may still be waiting). */
         fun loaded() {
             reporter.onItemReady()?.let { owner.launch { reporter.sendPlaybackStart(it, player) } }
@@ -283,6 +293,76 @@ class PlaybackReporterTest {
             // The snapshot keeps the position: the stop is for the item, not the stream.
             assertEquals(60_000L, s.reporter.playing?.positionMs)
         }
+
+    @Test
+    fun `mpv's quality switch, without a transition, sends the start of the new stream (#870)`() =
+        test { s ->
+            // mpv reports no transition when the playlist is replaced with the same item: the
+            // ViewModel hands the new stream to the reporter itself, after setMediaItems().
+            s.transition(item())
+            s.loaded()
+            advanceUntilIdle()
+            s.reporter.updatePosition(positionMs = 60_000L, durationMs = 600_000L)
+
+            // The new stream is loaded at the position playback was at.
+            s.player.positionMs = 60_000L
+            s.streamReplaced(item(session = "session-2", transcoded = true))
+            advanceUntilIdle()
+            // Not before the new stream has loaded, as after ExoPlayer's transition.
+            assertEquals(listOf("0: start $itemId false"), s.reports)
+            s.loaded()
+            advanceUntilIdle()
+            s.loaded()
+            advanceUntilIdle()
+
+            // The same reports as ExoPlayer's switch above: one start for the new stream, no stop.
+            assertEquals(
+                listOf(
+                    "0: session $itemId session-1 false",
+                    "0: start $itemId false",
+                    "0: session $itemId session-2 true",
+                    "0: start $itemId true",
+                ),
+                s.fake.calls,
+            )
+            // CE (#868): the new stream's start carries where playback is, as ExoPlayer's does.
+            assertEquals(listOf<Long?>(0L, 600_000_000L), s.fake.startPositions)
+            assertEquals(60_000L, s.reporter.playing?.positionMs)
+        }
+
+    @Test
+    fun `a replaced stream that never loads sends no start (#870)`() = test { s ->
+        s.transition(item())
+        s.loaded()
+        advanceUntilIdle()
+
+        s.streamReplaced(item(session = "session-2", transcoded = true))
+        advanceUntilIdle()
+        s.reporter.onPlayerReleased()
+        s.loaded()
+        advanceUntilIdle()
+
+        assertEquals(listOf("0: start $itemId false"), s.reports)
+    }
+
+    @Test
+    fun `a stream replaced for an item the player has left owes nothing (#870)`() = test { s ->
+        s.transition(item())
+        s.loaded()
+        advanceUntilIdle()
+        s.transition(item(id = nextId))
+        advanceUntilIdle()
+
+        s.streamReplaced(item(session = "session-2", transcoded = true))
+        s.loaded()
+        advanceUntilIdle()
+
+        // The start held for the item the player is on stays.
+        assertEquals(
+            listOf("0: start $itemId false", "0: stop $itemId 0 null", "0: start $nextId false"),
+            s.reports,
+        )
+    }
 
     @Test
     fun `no progress before the start is sent`() = test { s ->

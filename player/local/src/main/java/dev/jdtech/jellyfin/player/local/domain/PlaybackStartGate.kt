@@ -7,9 +7,10 @@ package dev.jdtech.jellyfin.player.local.domain
  *
  * Every item transition owes one start, sent at the first ready state after it: a new item, and
  * also a transition to the same item (ExoPlayer reports one when a quality switch replaces the
- * playlist), as before. A ready state without a transition (rebuffering, the reload after a lost
- * connection) owes nothing, as before. Only the moment changes: the transition, then the ready
- * state, and never for an item that does not get there.
+ * playlist), as before. mpv reports none for that: `PlaybackReporter.onStreamReplaced` hands the
+ * gate the same transition for it (#870). A ready state without a transition (rebuffering, the
+ * reload after a lost connection) owes nothing, as before. Only the moment changes: the transition,
+ * then the ready state, and never for an item that does not get there.
  *
  * Not thread-safe: called from the player's listener and the main thread only.
  */
@@ -22,9 +23,9 @@ class PlaybackStartGate<T : Any> {
      * [onReady], replacing an item that was left before it loaded.
      *
      * [current] is false when the player has already moved on from [item] by the time the
-     * transition is handled (it waits for the previous item's stop): mpv's quality switch passes
-     * through the item before the current one. Nothing is owed for it, and the start held for the
-     * item the player moved on to stays.
+     * transition is handled (it waits for the previous item's stop, and Next was pressed again
+     * meanwhile). Before #723, mpv's quality switch also passed through the item before the current
+     * one. Nothing is owed for it, and the start held for the item the player moved on to stays.
      */
     fun onTransition(item: T, ready: Boolean, current: Boolean = true): T? {
         if (!current) return null
