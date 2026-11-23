@@ -9,11 +9,9 @@
     <string name="download_cancelled">Prenos za %1$s je preklican</string>
     <string name="download_completed">Dokončano</string>
     <string name="download_error_network">Omrežna napaka — preverite povezavo</string>
-    <string name="download_error_no_sources">Za ta element ni na voljo nobenih virov za predvajanje</string>
     <string name="download_error_server_unreachable">Povezava s strežnikom Jellyfin ni mogoča</string>
     <string name="download_error_timeout">Časovna omejitev povezave je potekla</string>
     <string name="download_failed_indicator">Prenos ni uspel</string>
-    <string name="download_failures_channel_name">Neuspeli prenosi</string>
     <string name="download_preparing_on_server">Priprava na strežniku</string>
     <string name="download_quality">Kakovost prenosa</string>
     <string name="download_quality_original">Izvirna kakovost</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">Čakanje na omrežje</string>
     <string name="downloaded_to">Shranjeno v: %s</string>
     <string name="downloading_indicator">Prenašanje</string>
-    <string name="downloads_channel_description">Tekoče dejavnosti prenosov</string>
-    <string name="downloads_channel_name">Prenosi</string>
     <string name="downloads_downloading">Prenašanje</string>
     <string name="downloads_empty_body">Prenesite filme in epizode za ogled brez povezave: na letalu, vlaku ali kjerkoli drugje.</string>
     <string name="downloads_empty_title">Ni še prenosov</string>
@@ -69,12 +65,6 @@
         <item quantity="few">%d epizode</item>
         <item quantity="other">%d epizod</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="one">Prenašanje %d elementa</item>
-        <item quantity="two">Prenašanje %d elementov</item>
-        <item quantity="few">Prenašanje %d elementov</item>
-        <item quantity="other">Prenašanje %d elementov</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="one">Odstranjen %d prenos</item>
         <item quantity="two">Odstranjena %d prenosa</item>
@@ -103,7 +93,6 @@
     <string name="item_included_in">Vključeno v</string>
     <string name="item_more_like_this">Več podobnih</string>
     <string name="ce_session_revoked">%1$s vas je odjavil. Za nadaljevanje se znova prijavite.</string>
-    <string name="ce_download_error_server">Strežnik je zavrnil prenos (HTTP %1$d)</string>
     <string name="ce_error_server_status">Strežnik je odgovoril z napako (HTTP %1$d). Poskusite znova pozneje.</string>
     <string name="ce_media_info">Podatki o predstavnosti</string>
     <string name="ce_home_profile">Profil</string>

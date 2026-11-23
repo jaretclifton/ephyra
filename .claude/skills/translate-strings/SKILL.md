@@ -12,7 +12,8 @@ Upstream's translations come from Weblate into `values-<lang>/strings.xml`.
 To avoid merge conflicts during upstream syncs, all CE-only translations live in:
 `<module>/src/main/res/values-<lang>/strings_ce.xml`.
 
-Six modules have them: `core`, `data`, `modes/film`, `player/local`, `settings` and `setup`.
+Seven modules have them: `core`, `data`, `downloads`, `modes/film`, `player/local`, `settings`
+and `setup`.
 
 ## Steps
 

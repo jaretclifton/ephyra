@@ -9,11 +9,9 @@
     <string name="download_cancelled">%1$s のダウンロードをキャンセルしました</string>
     <string name="download_completed">完了</string>
     <string name="download_error_network">ネットワークエラー — 接続を確認してください</string>
-    <string name="download_error_no_sources">このアイテムには再生可能なソースがありません</string>
     <string name="download_error_server_unreachable">Jellyfin サーバーに接続できません</string>
     <string name="download_error_timeout">接続がタイムアウトしました</string>
     <string name="download_failed_indicator">ダウンロード失敗</string>
-    <string name="download_failures_channel_name">ダウンロード失敗</string>
     <string name="download_preparing_on_server">サーバーで準備中</string>
     <string name="download_quality">ダウンロード画質</string>
     <string name="download_quality_original">オリジナル画質</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">ネットワーク待機中</string>
     <string name="downloaded_to">保存先: %s</string>
     <string name="downloading_indicator">ダウンロード中</string>
-    <string name="downloads_channel_description">進行中のダウンロード状況</string>
-    <string name="downloads_channel_name">ダウンロード</string>
     <string name="downloads_downloading">ダウンロード中</string>
     <string name="downloads_empty_body">映画やエピソードをダウンロードしておけば、飛行機や電車の中など、インターネット接続のない場所でも視聴できます。</string>
     <string name="downloads_empty_title">ダウンロードはまだありません</string>
@@ -66,9 +62,6 @@
     <plurals name="downloaded_episode_count">
         <item quantity="other">%dエピソード</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="other">%d件のアイテムをダウンロード中</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="other">%d件のダウンロードを削除しました</item>
     </plurals>
@@ -94,7 +87,6 @@
     <string name="item_included_in">収録コレクション</string>
     <string name="item_more_like_this">似た作品</string>
     <string name="ce_session_revoked">%1$s からサインアウトされました。続けるにはもう一度サインインしてください。</string>
-    <string name="ce_download_error_server">サーバーがダウンロードを拒否しました (HTTP %1$d)</string>
     <string name="ce_error_server_status">サーバーがエラーを返しました (HTTP %1$d)。しばらくしてからもう一度お試しください。</string>
     <string name="ce_media_info">メディア情報</string>
     <string name="ce_home_profile">プロフィール</string>

@@ -9,11 +9,9 @@
     <string name="download_cancelled">Download von %1$s abgebrochen</string>
     <string name="download_completed">Abgeschlossen</string>
     <string name="download_error_network">Netzwerkfehler — prüfe deine Verbindung</string>
-    <string name="download_error_no_sources">Keine abspielbaren Quellen für diesen Titel verfügbar</string>
     <string name="download_error_server_unreachable">Jellyfin-Server kann nicht erreicht werden</string>
     <string name="download_error_timeout">Zeitüberschreitung der Verbindung</string>
     <string name="download_failed_indicator">Download fehlgeschlagen</string>
-    <string name="download_failures_channel_name">Download-Fehler</string>
     <string name="download_preparing_on_server">Wird auf Server vorbereitet</string>
     <string name="download_quality">Download-Qualität</string>
     <string name="download_quality_original">Originalqualität</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">Warten auf Netzwerk</string>
     <string name="downloaded_to">Gespeichert in: %s</string>
     <string name="downloading_indicator">Wird heruntergeladen</string>
-    <string name="downloads_channel_description">Laufende Download-Aktivität</string>
-    <string name="downloads_channel_name">Downloads</string>
     <string name="downloads_downloading">Wird heruntergeladen</string>
     <string name="downloads_empty_body">Lade Filme und Folgen herunter, um sie ohne Internetverbindung im Flugzeug, im Zug oder überall sonst anzusehen.</string>
     <string name="downloads_empty_title">Noch keine Downloads</string>
@@ -67,10 +63,6 @@
         <item quantity="one">%d Folge</item>
         <item quantity="other">%d Folgen</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="one">%d Element wird heruntergeladen</item>
-        <item quantity="other">%d Elemente werden heruntergeladen</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="one">%d Download entfernt</item>
         <item quantity="other">%d Downloads entfernt</item>
@@ -97,7 +89,6 @@
     <string name="item_included_in">Enthalten in</string>
     <string name="item_more_like_this">Mehr wie dieses</string>
     <string name="ce_session_revoked">%1$s hat dich abgemeldet. Melde dich erneut an, um fortzufahren.</string>
-    <string name="ce_download_error_server">Der Server hat den Download abgelehnt (HTTP %1$d)</string>
     <string name="ce_error_server_status">Der Server hat mit einem Fehler geantwortet (HTTP %1$d). Versuche es später erneut.</string>
     <string name="ce_media_info">Medieninfo</string>
     <string name="ce_home_profile">Profil</string>

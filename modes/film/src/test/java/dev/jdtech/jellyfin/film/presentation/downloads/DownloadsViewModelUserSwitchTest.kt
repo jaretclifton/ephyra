@@ -21,6 +21,7 @@ import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
+import dev.jdtech.jellyfin.utils.CoreDownloadTexts
 import java.util.UUID
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -177,6 +178,7 @@ class DownloadsViewModelUserSwitchTest {
                     repositoryProvider = { repository },
                     downloadStore = downloadStore,
                     context = context,
+                    texts = CoreDownloadTexts,
                 ),
             downloader = unused(),
             downloadStore = downloadStore,

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">Няма налични източници за възпроизвеждане на този елемент</string>
+    <string name="ce_download_error_server">Сървърът отказа изтеглянето (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">Неуспешни изтегляния</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="one">Изтегляне на %d елемент</item>
+        <item quantity="other">Изтегляне на %d елемента</item>
+    </plurals>
+    <string name="downloads_channel_name">Изтегляния</string>
+    <string name="downloads_channel_description">Текуща активност по изтеглянията</string>
+</resources>

@@ -14,6 +14,7 @@ import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
+import dev.jdtech.jellyfin.utils.CoreDownloadTexts
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -136,6 +137,7 @@ class SeasonLoadingTest {
                     repositoryProvider = { repository },
                     downloadStore = unused<DownloadStore>(),
                     context = ContextWrapper(null) as Context,
+                    texts = CoreDownloadTexts,
                 ),
         )
     }

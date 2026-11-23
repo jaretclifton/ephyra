@@ -9,11 +9,9 @@
     <string name="download_cancelled">Üksuse %1$s allalaadimine tühistatud</string>
     <string name="download_completed">Lõpetatud</string>
     <string name="download_error_network">Võrguviga — kontrolli ühendust</string>
-    <string name="download_error_no_sources">Selle üksuse jaoks pole esitatavaid allikaid saadaval</string>
     <string name="download_error_server_unreachable">Jellyfini serveriga ei saa ühendust</string>
     <string name="download_error_timeout">Ühenduse ajalõpp</string>
     <string name="download_failed_indicator">Allalaadimine nurjus</string>
-    <string name="download_failures_channel_name">Nurjunud allalaadimised</string>
     <string name="download_preparing_on_server">Serveris ettevalmistamisel</string>
     <string name="download_quality">Allalaadimise kvaliteet</string>
     <string name="download_quality_original">Algne kvaliteet</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">Võrgu ootel</string>
     <string name="downloaded_to">Salvestatud asukohta: %s</string>
     <string name="downloading_indicator">Allalaadimine</string>
-    <string name="downloads_channel_description">Käimasolev allalaadimistegevus</string>
-    <string name="downloads_channel_name">Allalaadimised</string>
     <string name="downloads_downloading">Allalaadimine</string>
     <string name="downloads_empty_body">Laadi filme ja episoode alla, et vaadata neid ilma ühenduseta lennukis, rongis või kus iganes mujal.</string>
     <string name="downloads_empty_title">Allalaadimisi pole veel</string>
@@ -67,10 +63,6 @@
         <item quantity="one">%d episood</item>
         <item quantity="other">%d episoodi</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="one">Allalaadimisel on %d üksus</item>
-        <item quantity="other">Allalaadimisel on %d üksust</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="one">Eemaldatud %d allalaadimine</item>
         <item quantity="other">Eemaldatud %d allalaadimist</item>
@@ -97,7 +89,6 @@
     <string name="item_included_in">Kuulub kogusse</string>
     <string name="item_more_like_this">Sarnased</string>
     <string name="ce_session_revoked">%1$s logis sind välja. Jätkamiseks logi uuesti sisse.</string>
-    <string name="ce_download_error_server">Server keeldus allalaadimisest (HTTP %1$d)</string>
     <string name="ce_error_server_status">Server vastas veaga (HTTP %1$d). Proovi hiljem uuesti.</string>
     <string name="ce_media_info">Meediainfo</string>
     <string name="ce_home_profile">Profiil</string>

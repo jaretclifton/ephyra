@@ -9,11 +9,9 @@
     <string name="download_cancelled">Descărcarea pentru %1$s a fost anulată</string>
     <string name="download_completed">Finalizat</string>
     <string name="download_error_network">Eroare de rețea — verifică conexiunea</string>
-    <string name="download_error_no_sources">Nu există surse redabile pentru acest element</string>
     <string name="download_error_server_unreachable">Nu se poate contacta serverul Jellyfin</string>
     <string name="download_error_timeout">Conexiunea a expirat</string>
     <string name="download_failed_indicator">Descărcare eșuată</string>
-    <string name="download_failures_channel_name">Descărcări eșuate</string>
     <string name="download_preparing_on_server">Se pregătește pe server</string>
     <string name="download_quality">Calitate descărcare</string>
     <string name="download_quality_original">Calitate originală</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">Se așteaptă rețeaua</string>
     <string name="downloaded_to">Salvat în: %s</string>
     <string name="downloading_indicator">Se descarcă</string>
-    <string name="downloads_channel_description">Activitate de descărcare în curs</string>
-    <string name="downloads_channel_name">Descărcări</string>
     <string name="downloads_downloading">Se descarcă</string>
     <string name="downloads_empty_body">Descarcă filme și episoade pentru a le viziona fără conexiune, în avion, tren sau oriunde altundeva.</string>
     <string name="downloads_empty_title">Nicio descărcare încă</string>
@@ -68,11 +64,6 @@
         <item quantity="few">%d episoade</item>
         <item quantity="other">%d de episoade</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="one">Se descarcă %d element</item>
-        <item quantity="few">Se descarcă %d elemente</item>
-        <item quantity="other">Se descarcă %d de elemente</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="one">S-a eliminat %d descărcare</item>
         <item quantity="few">S-au eliminat %d descărcări</item>
@@ -100,7 +91,6 @@
     <string name="item_included_in">Inclus în</string>
     <string name="item_more_like_this">Mai multe asemănătoare</string>
     <string name="ce_session_revoked">%1$s te-a deconectat. Conectează-te din nou pentru a continua.</string>
-    <string name="ce_download_error_server">Serverul a refuzat descărcarea (HTTP %1$d)</string>
     <string name="ce_error_server_status">Serverul a răspuns cu o eroare (HTTP %1$d). Încearcă din nou mai târziu.</string>
     <string name="ce_media_info">Informații media</string>
     <string name="ce_home_profile">Profil</string>

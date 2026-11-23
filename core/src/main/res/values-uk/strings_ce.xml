@@ -9,11 +9,9 @@
     <string name="download_cancelled">Завантаження %1$s скасовано</string>
     <string name="download_completed">Завершено</string>
     <string name="download_error_network">Помилка мережі — перевірте підключення</string>
-    <string name="download_error_no_sources">Немає доступних джерел для відтворення цього елемента</string>
     <string name="download_error_server_unreachable">Не вдалося з\'єднатися із сервером Jellyfin</string>
     <string name="download_error_timeout">Час очікування з\'єднання вичерпано</string>
     <string name="download_failed_indicator">Помилка завантаження</string>
-    <string name="download_failures_channel_name">Помилки завантаження</string>
     <string name="download_preparing_on_server">Підготовка на сервері</string>
     <string name="download_quality">Якість завантаження</string>
     <string name="download_quality_original">Оригінальна якість</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">Очікування мережі</string>
     <string name="downloaded_to">Збережено в: %s</string>
     <string name="downloading_indicator">Завантаження</string>
-    <string name="downloads_channel_description">Поточні процеси завантаження</string>
-    <string name="downloads_channel_name">Завантаження</string>
     <string name="downloads_downloading">Завантаження</string>
     <string name="downloads_empty_body">Завантажуйте фільми та серіали для перегляду без інтернету: у літаку, потязі чи будь-де інде.</string>
     <string name="downloads_empty_title">Завантажень поки немає</string>
@@ -69,12 +65,6 @@
         <item quantity="many">%d серій</item>
         <item quantity="other">%d серій</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="one">Завантаження %d елемента</item>
-        <item quantity="few">Завантаження %d елементів</item>
-        <item quantity="many">Завантаження %d елементів</item>
-        <item quantity="other">Завантаження %d елементів</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="one">Видалено %d завантаження</item>
         <item quantity="few">Видалено %d завантаження</item>
@@ -103,7 +93,6 @@
     <string name="item_included_in">Входить до</string>
     <string name="item_more_like_this">Схоже</string>
     <string name="ce_session_revoked">%1$s завершив ваш сеанс. Увійдіть знову, щоб продовжити.</string>
-    <string name="ce_download_error_server">Сервер відхилив завантаження (HTTP %1$d)</string>
     <string name="ce_error_server_status">Сервер відповів помилкою (HTTP %1$d). Спробуйте пізніше.</string>
     <string name="ce_media_info">Відомості про медіа</string>
     <string name="ce_home_profile">Профіль</string>

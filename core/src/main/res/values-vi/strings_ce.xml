@@ -9,11 +9,9 @@
     <string name="download_cancelled">Đã huỷ tải về %1$s</string>
     <string name="download_completed">Đã hoàn tất</string>
     <string name="download_error_network">Lỗi mạng — kiểm tra kết nối của bạn</string>
-    <string name="download_error_no_sources">Không có nguồn phát nào cho mục này</string>
     <string name="download_error_server_unreachable">Không thể kết nối đến máy chủ Jellyfin</string>
     <string name="download_error_timeout">Hết thời gian kết nối</string>
     <string name="download_failed_indicator">Tải về thất bại</string>
-    <string name="download_failures_channel_name">Tải về thất bại</string>
     <string name="download_preparing_on_server">Đang chuẩn bị trên máy chủ</string>
     <string name="download_quality">Chất lượng tải về</string>
     <string name="download_quality_original">Chất lượng gốc</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">Đang chờ mạng</string>
     <string name="downloaded_to">Đã lưu vào: %s</string>
     <string name="downloading_indicator">Đang tải về</string>
-    <string name="downloads_channel_description">Hoạt động tải về đang diễn ra</string>
-    <string name="downloads_channel_name">Tải về</string>
     <string name="downloads_downloading">Đang tải về</string>
     <string name="downloads_empty_body">Tải phim và các tập để xem không cần mạng, trên máy bay, tàu hỏa hoặc bất cứ nơi nào.</string>
     <string name="downloads_empty_title">Chưa có bản tải về nào</string>
@@ -66,9 +62,6 @@
     <plurals name="downloaded_episode_count">
         <item quantity="other">%d tập</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="other">Đang tải về %d mục</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="other">Đã xóa %d bản tải về</item>
     </plurals>
@@ -94,7 +87,6 @@
     <string name="item_included_in">Thuộc bộ sưu tập</string>
     <string name="item_more_like_this">Nội dung tương tự</string>
     <string name="ce_session_revoked">%1$s đã đăng xuất bạn. Hãy đăng nhập lại để tiếp tục.</string>
-    <string name="ce_download_error_server">Máy chủ đã từ chối tải xuống (HTTP %1$d)</string>
     <string name="ce_error_server_status">Máy chủ trả về lỗi (HTTP %1$d). Hãy thử lại sau.</string>
     <string name="ce_media_info">Thông tin phương tiện</string>
     <string name="ce_home_profile">Hồ sơ</string>

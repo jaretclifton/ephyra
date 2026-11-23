@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">אין מקורות זמינים לניגון עבור פריט זה</string>
+    <string name="ce_download_error_server">השרת דחה את ההורדה (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">שגיאות הורדה</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="one">מוריד פריט %d</item>
+        <item quantity="other">מוריד %d פריטים</item>
+    </plurals>
+    <string name="downloads_channel_name">הורדות</string>
+    <string name="downloads_channel_description">פעילות הורדה פעילה</string>
+</resources>

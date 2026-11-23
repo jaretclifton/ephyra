@@ -9,11 +9,9 @@
     <string name="download_cancelled">Baixada de %1$s cancel·lada</string>
     <string name="download_completed">Completat</string>
     <string name="download_error_network">Error de xarxa — comprova la teva connexió</string>
-    <string name="download_error_no_sources">No hi ha fonts reproduïbles disponibles per a aquest element</string>
     <string name="download_error_server_unreachable">No es pot connectar amb el servidor de Jellyfin</string>
     <string name="download_error_timeout">S\'ha esgotat el temps d\'espera de la connexió</string>
     <string name="download_failed_indicator">La baixada ha fallat</string>
-    <string name="download_failures_channel_name">Errors de baixada</string>
     <string name="download_preparing_on_server">Preparant al servidor</string>
     <string name="download_quality">Qualitat de la baixada</string>
     <string name="download_quality_original">Qualitat original</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">Esperant la xarxa</string>
     <string name="downloaded_to">Desat a: %s</string>
     <string name="downloading_indicator">Baixant</string>
-    <string name="downloads_channel_description">Activitat de baixada en curs</string>
-    <string name="downloads_channel_name">Baixades</string>
     <string name="downloads_downloading">Baixant</string>
     <string name="downloads_empty_body">Baixa pel·lícules i episodis per veure\'ls sense connexió, a l\'avió, al tren o a qualsevol altre lloc.</string>
     <string name="downloads_empty_title">Encara no hi ha baixades</string>
@@ -67,10 +63,6 @@
         <item quantity="one">%d episodi</item>
         <item quantity="other">%d episodis</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="one">Baixant %d element</item>
-        <item quantity="other">Baixant %d elements</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="one">S\'ha suprimit %d baixada</item>
         <item quantity="other">S\'han suprimit %d baixades</item>
@@ -97,7 +89,6 @@
     <string name="item_included_in">Inclòs a</string>
     <string name="item_more_like_this">Més com aquest</string>
     <string name="ce_session_revoked">%1$s ha tancat la teva sessió. Torna a iniciar la sessió per continuar.</string>
-    <string name="ce_download_error_server">El servidor ha rebutjat la baixada (HTTP %1$d)</string>
     <string name="ce_error_server_status">El servidor ha respost amb un error (HTTP %1$d). Torna-ho a provar més tard.</string>
     <string name="ce_media_info">Informació multimèdia</string>
     <string name="ce_home_profile">Perfil</string>

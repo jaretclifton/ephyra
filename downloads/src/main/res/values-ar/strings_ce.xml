@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">لا توجد مصادر قابلة للتشغيل لهذا العنصر</string>
+    <string name="ce_download_error_server">رفض الخادم التنزيل (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">إخفاقات التنزيل</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="zero">لا يتم تنزيل أي عنصر</item>
+        <item quantity="one">جارٍ تنزيل عنصر واحد</item>
+        <item quantity="two">جارٍ تنزيل عنصرين</item>
+        <item quantity="few">جارٍ تنزيل %d عناصر</item>
+        <item quantity="many">جارٍ تنزيل %d عنصراً</item>
+        <item quantity="other">جارٍ تنزيل %d عنصر</item>
+    </plurals>
+    <string name="downloads_channel_name">التنزيلات</string>
+    <string name="downloads_channel_description">نشاط التنزيل الجاري</string>
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">Tidak ada sumber yang dapat diputar untuk item ini</string>
+    <string name="ce_download_error_server">Server menolak unduhan (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">Unduhan gagal</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="other">Mengunduh %d item</item>
+    </plurals>
+    <string name="downloads_channel_name">Unduhan</string>
+    <string name="downloads_channel_description">Aktivitas unduhan yang sedang berlangsung</string>
+</resources>

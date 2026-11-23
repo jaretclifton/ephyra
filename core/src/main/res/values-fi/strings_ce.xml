@@ -9,11 +9,9 @@
     <string name="download_cancelled">Kohteen %1$s lataus peruutettu</string>
     <string name="download_completed">Valmis</string>
     <string name="download_error_network">Verkkovirhe — tarkista yhteys</string>
-    <string name="download_error_no_sources">Tälle kohteelle ei ole toistettavia lähteitä saatavilla</string>
     <string name="download_error_server_unreachable">Jellyfin-palvelimeen ei saada yhteyttä</string>
     <string name="download_error_timeout">Yhteyden aikakatkaisu</string>
     <string name="download_failed_indicator">Lataus epäonnistui</string>
-    <string name="download_failures_channel_name">Latausvirheet</string>
     <string name="download_preparing_on_server">Valmistellaan palvelimella</string>
     <string name="download_quality">Latauslaatu</string>
     <string name="download_quality_original">Alkuperäinen laatu</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">Odotetaan verkkoa</string>
     <string name="downloaded_to">Tallennettu kohteeseen: %s</string>
     <string name="downloading_indicator">Ladataan</string>
-    <string name="downloads_channel_description">Käynnissä oleva lataustoiminta</string>
-    <string name="downloads_channel_name">Lataukset</string>
     <string name="downloads_downloading">Ladataan</string>
     <string name="downloads_empty_body">Lataa elokuvia ja jaksoja katsottavaksi ilman verkkoyhteyttä lentokoneessa, junassa tai missä tahansa muualla.</string>
     <string name="downloads_empty_title">Ei vielä latauksia</string>
@@ -67,10 +63,6 @@
         <item quantity="one">%d jakso</item>
         <item quantity="other">%d jaksoa</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="one">Ladataan %d kohde</item>
-        <item quantity="other">Ladataan %d kohdetta</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="one">Poistettu %d lataus</item>
         <item quantity="other">Poistettu %d latausta</item>
@@ -97,7 +89,6 @@
     <string name="item_included_in">Sisältyy kokoelmaan</string>
     <string name="item_more_like_this">Samankaltaisia</string>
     <string name="ce_session_revoked">%1$s kirjasi sinut ulos. Jatka kirjautumalla uudelleen sisään.</string>
-    <string name="ce_download_error_server">Palvelin hylkäsi latauksen (HTTP %1$d)</string>
     <string name="ce_error_server_status">Palvelin vastasi virheellä (HTTP %1$d). Yritä myöhemmin uudelleen.</string>
     <string name="ce_media_info">Mediatiedot</string>
     <string name="ce_home_profile">Profiili</string>

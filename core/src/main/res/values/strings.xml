@@ -98,9 +98,6 @@
     <string name="download_error_network">Network error — check your connection</string>
     <string name="download_error_server_unreachable">Can\'t reach the Jellyfin server</string>
     <string name="download_error_timeout">Connection timed out</string>
-    <string name="download_error_no_sources">No playable sources available for this item</string>
-    <!-- CE (#383): the server answered a download with an HTTP error. %1$d is the status, such as 404. -->
-    <string name="ce_download_error_server">The server refused the download (HTTP %1$d)</string>
     <!-- CE (#377): a screen failed to load because the server answered with an HTTP error. %1$d is the status, such as 503. -->
     <string name="ce_error_server_status">The server answered with an error (HTTP %1$d). Try again later.</string>
     <string name="not_enough_storage">This item requires %1$s of free storage but only %2$s is available</string>
@@ -189,15 +186,8 @@
     <string name="download_failed_indicator">Download failed</string>
     <string name="downloading_indicator">Downloading</string>
     <string name="person_image_description">Photo of %1$s</string>
-    <string name="downloads_channel_name">Downloads</string>
-    <string name="downloads_channel_description">Ongoing download activity</string>
-    <string name="download_failures_channel_name">Download failures</string>
     <!-- CE (#334): the server revoked the login. %1$s is the server name. -->
     <string name="ce_session_revoked">%1$s signed you out. Sign in again to continue.</string>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="one">Downloading %d item</item>
-        <item quantity="other">Downloading %d items</item>
-    </plurals>
     <!-- CE (#332): metadata the server already sends, on the detail pages -->
     <string name="item_critic_rating">Rotten Tomatoes score</string>
     <string name="item_studios">Studios</string>

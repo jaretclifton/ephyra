@@ -9,11 +9,9 @@
     <string name="download_cancelled">%1$s letöltése megszakítva</string>
     <string name="download_completed">Befejezve</string>
     <string name="download_error_network">Hálózati hiba — ellenőrizd a kapcsolatot</string>
-    <string name="download_error_no_sources">Ehhez az elemhez nincs lejátszható forrás</string>
     <string name="download_error_server_unreachable">Nem érhető el a Jellyfin szerver</string>
     <string name="download_error_timeout">A kapcsolat túllépte az időkorlátot</string>
     <string name="download_failed_indicator">Sikertelen letöltés</string>
-    <string name="download_failures_channel_name">Sikertelen letöltések</string>
     <string name="download_preparing_on_server">Előkészítés a szerveren</string>
     <string name="download_quality">Letöltési minőség</string>
     <string name="download_quality_original">Eredeti minőség</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">Várakozás a hálózatra</string>
     <string name="downloaded_to">Mentve ide: %s</string>
     <string name="downloading_indicator">Letöltés</string>
-    <string name="downloads_channel_description">Folyamatban lévő letöltések</string>
-    <string name="downloads_channel_name">Letöltések</string>
     <string name="downloads_downloading">Letöltés</string>
     <string name="downloads_empty_body">Tölts le filmeket és epizódokat az internetkapcsolat nélküli nézéshez, repülőn, vonaton vagy bárhol máshol.</string>
     <string name="downloads_empty_title">Még nincsenek letöltések</string>
@@ -67,10 +63,6 @@
         <item quantity="one">%d epizód</item>
         <item quantity="other">%d epizód</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="one">%d elem letöltése</item>
-        <item quantity="other">%d elem letöltése</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="one">%d letöltés eltávolítva</item>
         <item quantity="other">%d letöltés eltávolítva</item>
@@ -97,7 +89,6 @@
     <string name="item_included_in">Része ennek</string>
     <string name="item_more_like_this">Hasonlók</string>
     <string name="ce_session_revoked">%1$s kijelentkeztetett. A folytatáshoz jelentkezz be újra.</string>
-    <string name="ce_download_error_server">A szerver elutasította a letöltést (HTTP %1$d)</string>
     <string name="ce_error_server_status">A szerver hibával válaszolt (HTTP %1$d). Próbáld újra később.</string>
     <string name="ce_media_info">Médiainformáció</string>
     <string name="ce_home_profile">Profil</string>

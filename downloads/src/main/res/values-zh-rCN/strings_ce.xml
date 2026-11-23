@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_error_no_sources">该项目没有可用的播放源</string>
+    <string name="ce_download_error_server">服务器拒绝了下载 (HTTP %1$d)</string>
+    <string name="download_failures_channel_name">下载失败</string>
+    <plurals name="downloads_in_progress_title">
+        <item quantity="other">正在下载 %d 个项目</item>
+    </plurals>
+    <string name="downloads_channel_name">下载</string>
+    <string name="downloads_channel_description">进行中的下载活动</string>
+</resources>

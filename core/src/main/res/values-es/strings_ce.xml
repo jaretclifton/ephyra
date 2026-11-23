@@ -9,11 +9,9 @@
     <string name="download_cancelled">Descarga de %1$s cancelada</string>
     <string name="download_completed">Completado</string>
     <string name="download_error_network">Error de red — comprueba tu conexión</string>
-    <string name="download_error_no_sources">No hay fuentes reproducibles disponibles para este elemento</string>
     <string name="download_error_server_unreachable">No se puede conectar con el servidor de Jellyfin</string>
     <string name="download_error_timeout">Tiempo de espera de conexión agotado</string>
     <string name="download_failed_indicator">Error al descargar</string>
-    <string name="download_failures_channel_name">Errores de descarga</string>
     <string name="download_preparing_on_server">Preparando en el servidor</string>
     <string name="download_quality">Calidad de descarga</string>
     <string name="download_quality_original">Calidad original</string>
@@ -30,8 +28,6 @@
     <string name="download_waiting_for_network">Esperando a la red</string>
     <string name="downloaded_to">Guardado en: %s</string>
     <string name="downloading_indicator">Descargando</string>
-    <string name="downloads_channel_description">Actividad de descarga en curso</string>
-    <string name="downloads_channel_name">Descargas</string>
     <string name="downloads_downloading">Descargando</string>
     <string name="downloads_empty_body">Descarga películas y episodios para verlos sin conexión, en un avión, tren o cualquier otro lugar.</string>
     <string name="downloads_empty_title">Aún no hay descargas</string>
@@ -67,10 +63,6 @@
         <item quantity="one">%d episodio</item>
         <item quantity="other">%d episodios</item>
     </plurals>
-    <plurals name="downloads_in_progress_title">
-        <item quantity="one">Descargando %d elemento</item>
-        <item quantity="other">Descargando %d elementos</item>
-    </plurals>
     <plurals name="downloads_removed">
         <item quantity="one">Se ha eliminado %d descarga</item>
         <item quantity="other">Se han eliminado %d descargas</item>
@@ -97,7 +89,6 @@
     <string name="item_included_in">Incluido en</string>
     <string name="item_more_like_this">Más como esto</string>
     <string name="ce_session_revoked">%1$s ha cerrado tu sesión. Vuelve a iniciar sesión para continuar.</string>
-    <string name="ce_download_error_server">El servidor ha rechazado la descarga (HTTP %1$d)</string>
     <string name="ce_error_server_status">El servidor ha respondido con un error (HTTP %1$d). Vuelve a intentarlo más tarde.</string>
     <string name="ce_media_info">Información multimedia</string>
     <string name="ce_home_profile">Perfil</string>
