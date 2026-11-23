@@ -1,5 +1,23 @@
 # 3. Target
 
+**Status: historical.** This was the target of ADR 0001 (2026-11-20), and it was built. ADR 0002
+then moved the code further, so this file is kept as written and not corrected. Where the code
+differs (2026-11-23):
+
+- A pure Kotlin `application` module holds `MediaRepository` and the store ports `ServerStore`,
+  `DownloadStore`, `PendingUserDataStore`; `data` implements them. Features depend on
+  `application`, not on `data`: only the apps depend on `data` (rule R9), as on `server/jellyfin`.
+  The dependency picture of 3.1 is replaced by the one in the [README](README.md).
+- The download engine is the `downloads` module, out of `core`.
+- Only `data` sees `ServerDatabaseDao` (R4, baseline empty): `MediaRepositoryImpl` and the
+  `Room*Store` use it, everything outside `data` goes through a store.
+- Ids are value classes over `String` (`ItemId`, `UserId`, `ServerId`, `MediaSourceId`), not
+  `UUID` aliases (D1 replaced); the repository is `MediaRepository` and the models are `Item`,
+  `Movie`, `ItemSource`, `Library`, … (D2 replaced, #774). The signatures below use the old names.
+- The server in use is one `ActiveServer` value; `MediaServer.at(active)` hands it to the adapter.
+- New in `domain`: `PlayState` (the user-data rules, which replaced `stopUserData`),
+  `DownloadState`, `Ticks`, `AccountKey`.
+
 The module layout at the end of the migration and the ports as Kotlin signatures. The signatures
 are the design; a task issue may adjust a name, not the direction of a dependency.
 

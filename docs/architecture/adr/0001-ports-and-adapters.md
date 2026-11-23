@@ -1,6 +1,6 @@
 # ADR 0001: Ports and adapters, enforced by the build
 
-**Status:** Accepted (2026-11-21, in #733; proposed 2026-11-20)
+**Status:** Accepted, implemented (accepted 2026-11-21, in #733; proposed 2026-11-20; built by 2026-11-22, #735 to #771). D1 and D2 were replaced by [ADR 0002](0002-hexagonal-ddd.md).
 
 ## Context
 

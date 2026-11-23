@@ -41,18 +41,42 @@ follow anyway. The rest is **skipped**, with the reason in the ledger.
 
 ## Module layout
 
-Ephyra's code is not where upstream's is. Upstream's `data/models` are in `domain` (pure Kotlin).
-Everything that uses the Jellyfin SDK is in `server/jellyfin`. `MediaRepositoryImpl` talks to
-ports, and the player's engines are in `player/local/.../engine/`. Use this to say in the ledger
-where an upstream change would land (`docs/architecture/`).
+Ephyra's code is not where upstream's is (ports and adapters, #733; `CLAUDE.md` lists the
+modules, `docs/architecture/` has the reasons). Packages stayed `dev.jdtech.jellyfin…`, but the
+files of upstream's model, repository, API and download directories now live elsewhere or were
+split. Use this table to say in the ledger where an upstream change would land:
 
-**Renamed since #774.** `JellyfinRepository`/`JellyfinRepositoryImpl` are `MediaRepository`/
-`MediaRepositoryImpl` (same package, `data/.../repository/`), and the models were renamed from
-`Findroid*` (`FindroidItem` is `Item`, `FindroidMovie` is `Movie`, `FindroidSource` is `ItemSource`,
-`FindroidCollection` is `Library`, `FindroidSources` is `Playable`, the Room `Findroid*Dto` are
-`*Entity`; the full map is in #774). A Findroid change that names an old type is re-applied with the
-new name, and an upstream change to `JellyfinRepository.kt` lands in `MediaRepository.kt` or
-`MediaRepositoryImpl.kt` by hand. `FindroidTheme` kept its name.
+| Upstream (Findroid) | Ephyra |
+|---|---|
+| `data/.../models/Findroid*.kt` | `domain/.../models/`, renamed (below); the mapping from SDK types is in `server/jellyfin/.../mappers/` |
+| `data/.../models/Findroid*Dto.kt` | `data/.../models/*Entity.kt` (Room) |
+| `data/.../repository/JellyfinRepository.kt` | `application/.../repository/MediaRepository.kt` |
+| `data/.../repository/JellyfinRepositoryImpl.kt` | split: `data/.../repository/MediaRepositoryImpl.kt` (Room, stored fallback) over the ports, the SDK calls in `server/jellyfin` (`JellyfinCatalog`, `JellyfinPlayback`, `JellyfinUserData`, …) |
+| `data/.../repository/JellyfinRepositoryOfflineImpl.kt` | gone (#281, no offline mode) |
+| `data/.../api/JellyfinApi.kt` | `server/jellyfin/.../api/JellyfinApi.kt` |
+| `data/.../database/` | `data/.../database/`, used only through the store ports in `application` (`ServerStore`, `DownloadStore`, `PendingUserDataStore`) |
+| `core/.../di/` | split: `core/.../di/`, `data/.../data/di/` (Room, the stores, the repository), `downloads/.../di/`, `server/jellyfin/.../di/` |
+| `core/.../utils/Downloader.kt`, `DownloaderImpl.kt`, `work/ImagesDownloaderWorker.kt` | `downloads` (with `DownloadQueue`); `DownloaderViewModel` stayed in `core` |
+| `setup/.../data/SetupRepositoryImpl.kt` | same path, but its SDK calls are behind `ServerConnector` (`server/jellyfin/.../JellyfinServerConnector.kt`) |
+
+Git follows a moved file only where the merge sees it; Kotlin is never merged as text here
+anyway (above). A file Findroid **adds** in one of those directories would land in the old place:
+re-implemented, it goes into the module the table names. A model field Findroid adds needs the
+field on the renamed model in `domain`, its mapper line in `server/jellyfin`, and, if it is
+stored, the `*Entity` column and a Room migration.
+
+**Renamed.** `JellyfinRepository`/`JellyfinRepositoryImpl` are `MediaRepository`/
+`MediaRepositoryImpl` (#774), and the models dropped `Findroid` (`FindroidItem` is `Item`,
+`FindroidMovie` is `Movie`, `FindroidSource` is `ItemSource`, `FindroidCollection` is `Library`,
+`FindroidSources` is `Playable`, `FindroidMediaStream` is `MediaStream`, the Room `Findroid*Dto` are
+`*Entity`; the full map is in #774). Ids are value classes, not `UUID`: `ItemId`, `UserId`,
+`ServerId`, `MediaSourceId` (`domain/.../models/Ids.kt`, #773, #902). A Findroid change that names
+an old type or a `UUID` id is re-applied with the new name and type. `FindroidTheme` kept its name.
+
+**Re-applied by hand most often.** `PlayerViewModel.kt` (split into `player/local/.../domain/` and
+the engines), `JellyfinRepositoryImpl.kt` (now `MediaRepositoryImpl.kt` and the adapter),
+`SetupRepositoryImpl.kt` and `DownloaderImpl.kt` differ so much from upstream that a change there
+is always read and rebuilt, never compared line by line.
 
 ## Background
 
@@ -100,6 +124,10 @@ Kind: dependency, fix, feature, refactoring, CI/metadata. Verdict:
 - **covered**: Ephyra has the same thing in its own form; name the file, issue or PR.
 - **skipped**: with the reason.
 
+For a commit that touches the **moved files** (the table under Module layout), the "where"
+column names the Ephyra module and file, not upstream's path, and a re-implement issue says which
+port, store or mapper the change needs.
+
 The PR that closes a **re-implement** issue changes the row to **re-implemented** and adds
 itself, and has `Upstream: <sha>` in its commit message. That edit belongs to that PR, not to a
 later sync.
@@ -130,6 +158,9 @@ that is a complete sync.
 - **Upstream removes or renames a string Ephyra still uses:** the build fails on the missing
   resource. Add it as a `ce_` key in `strings_ce.xml`, with the translations from the files as
   they were before the merge, and use that key.
+- **No upstream `strings.xml` moved** with the modules. The only new one is
+  `downloads/src/main/res/values/strings.xml`, which holds six CE download strings (translations in
+  its `strings_ce.xml`); upstream has no `downloads` module, so nothing merges into it.
 
 ### 4. Check
 
@@ -137,6 +168,12 @@ that is a complete sync.
 ./gradlew ktfmtCheck testDebugUnitTest :app:phone:assembleLibreDebug :app:tv:assembleLibreDebug
 python3 .claude/skills/translate-strings/scripts/check-translations.py
 ```
+
+`testDebugUnitTest` includes the architecture rules (`:architecture:test`, R1–R16). A sync only
+brings `strings.xml` files, so they should not fail; if one does, upstream code came in by
+mistake. When a re-implement PR later brings upstream code that imports the SDK outside the
+adapter, fix it by mapping the type in `server/jellyfin` and using Ephyra's own type, never with a
+baseline line.
 
 If something fails, fix forward in the same branch (KSP/Kotlin alignment, API changes). If it
 can't be fixed easily, stop and report; the branch is the rollback, `main` is untouched.

@@ -37,6 +37,9 @@ The app is **Ephyra**, a fork of [Findroid](https://github.com/jarnedemeulemeest
 
 # Unit tests of every module and flavour (CI runs them too: run them yourself before opening a PR to save a round trip)
 ./gradlew testDebugUnitTest
+
+# Fast check: the pure Kotlin modules and the architecture rules (seconds, no Android)
+./gradlew :domain:test :application:test :architecture:test
 ```
 
 CI on a pull request runs `ktfmtCheck` (when Kotlin files or `gradle/libs.versions.toml` change) and, unless the change touches only docs-like paths (see `build.yaml`), the CE translation check, a debug build of every app variant and the unit tests (`testDebugUnitTest`, which uploads the test reports when it fails). Pushes to `main` run the same jobs; the Beta workflow does not wait for them. The build needs JDK 21.
@@ -44,24 +47,26 @@ CI on a pull request runs `ktfmtCheck` (when Kotlin files or `gradle/libs.versio
 ## Module Structure
 
 ```
-app/phone        — Phone UI: screens, navigation, Compose layouts
+app/phone        — Phone UI: screens, navigation, Compose layouts. With app/tv the composition root
 app/tv           — TV UI: separate screen implementations for Android TV
-core             — Shared DI modules, DownloaderViewModel, MainViewModel, common Composables
-domain           — pure Kotlin: the app's own models and the ports. No Android, no SDK
-application      — pure Kotlin: MediaRepository and its event flows (DataChangeEvents, ReloadPolicy, …), which features use instead of data
-data             — Room database + the repository over a server's ports (MediaRepositoryImpl). No SDK. Only the apps depend on it (rule R9, baseline core, modes/film, setup)
-server/jellyfin  — the Jellyfin adapter: the only module with the Jellyfin SDK (JellyfinApi, mappers, ports, device profiles) and its own Hilt module. Only app/phone and app/tv depend on it
-modes/film       — Feature ViewModels and State/Action classes for home, library, search, episode, movie, show, season
+domain           — pure Kotlin: the models (Item, Movie, ItemSource, …), the ids, PlayState, DownloadState, Ticks, ActiveServer and the server ports (domain/ports). No Android, no SDK
+application      — pure Kotlin: MediaRepository, the store ports (ServerStore, DownloadStore, PendingUserDataStore) and the event flows (DataChangeEvents, ReloadPolicy, …)
+data             — Room: the database, the stores (Room*Store) and MediaRepositoryImpl, the repository over a server's ports. No SDK
+server/jellyfin  — the Jellyfin adapter: the only module with the Jellyfin SDK (JellyfinApi, mappers, the port implementations, device profiles) and its own Hilt module
+downloads        — the download engine (Downloader, DownloaderImpl, MediaDownloadEngine), DownloadQueue, smart downloads and their workers
+core             — Hilt modules, the server selector (CurrentMediaServer), session keeper, reachability, the sync worker, DownloaderViewModel, MainViewModel, common Composables
+modes/film       — Feature ViewModels and State/Action classes for home, library, search, episode, movie, show, season, downloads
 player/core      — Player models shared by the player and its callers (PlayerItem, Track, Trickplay)
-player/local     — ExoPlayer + mpv PlayerViewModel and playback logic
+player/local     — PlayerViewModel and playback logic; ExoPlayer and mpv behind PlayerEngine in player/local/.../engine/
 player/cast      — Google Cast: session and playback on a receiver (real in the proprietary flavor, stubs in libre)
 setup            — Server discovery and login onboarding flow
 settings         — AppPreferences (DataStore) and settings screen
-baselineprofile  — Macrobenchmark module for app/phone: baseline profile and startup benchmark
-architecture     — Konsist rules: only server/jellyfin touches the Jellyfin SDK (no exceptions)
+testing          — test-only (R8): FakeMediaServer, FakeServerConnector and the contract suites a server adapter passes
+architecture     — Konsist rules R1–R16 over the source tree; the allowlists in architecture/baseline/
+baselineprofile  — Macrobenchmark modules (baselineprofile for app/phone, baselineprofile-tv for app/tv): baseline profile and startup benchmark
 ```
 
-The `app/phone` module depends on all other modules. ViewModels live in `modes/film`, `setup`, `settings`, and `player/local` — NOT in `app/phone` or `app/tv`. Screens in the app modules consume state from those ViewModels.
+The apps depend on every library module. ViewModels live in `modes/film`, `setup`, `settings`, `core`, `player/local` and `player/cast` — NOT in `app/phone` or `app/tv`. Screens in the app modules consume state from those ViewModels.
 
 **TV:** new TV screens and components go in `app/tv/src/main/java/dev/jdtech/jellyfin/ce/`, next to upstream's screens instead of rewriting them, and `NavigationRoot.kt` points each route at the CE one (ADR 0001). The TV decisions are in `docs/tv-research/adr/`.
 
@@ -78,11 +83,28 @@ Each screen follows this pattern:
 
 Events that fire once (navigation, toasts) use a `Channel<FooEvent>` exposed as `Flow`, observed via `ObserveAsEvents()`.
 
-**Dependency Injection:** Hilt throughout. DI modules are in `core/src/main/java/dev/jdtech/jellyfin/di/`, except the Jellyfin adapter's `JellyfinServerModule` in `server/jellyfin` and `data`'s own `DatabaseModule` (Room, the store ports, `ProfileLock`) and `MediaRepositoryModule` in `data/src/main/java/dev/jdtech/jellyfin/data/di/` (#899).
+**Dependency Injection:** Hilt throughout. DI modules are in `core/src/main/java/dev/jdtech/jellyfin/di/`, except the Jellyfin adapter's `JellyfinServerModule` in `server/jellyfin`, the download engine's modules in `downloads/.../di/`, and `data`'s own `DatabaseModule` (Room, the store ports, `ProfileLock`) and `MediaRepositoryModule` in `data/src/main/java/dev/jdtech/jellyfin/data/di/` (#899).
+
+**Ports and adapters** (ADR 0001 and ADR 0002 in `docs/architecture/adr/`):
+- Only `app/phone` and `app/tv` depend on `data` and `server/jellyfin` (R9, R7). The other modules reach the server and Room through `application` and `domain`, which are pure Kotlin (R5); `downloads` depends on no adapter and not on `core` (R15).
+- The Jellyfin SDK is only in `server/jellyfin` (R1–R3). A ViewModel calls `MediaRepository` or a port, never an adapter class, `JellyfinApi` or `ServerDatabaseDao` (R2, R4).
+- New server-specific code goes behind a port in `domain/.../domain/ports/` (`MediaServer`: `session`, `catalog`, `userData`, `playback`; `ServerConnector` for setup), with our own types: the adapter maps SDK types, I/O failures are `ServerException`. New Room access goes behind a store port in `application` (state of one user keyed by `AccountKey(serverId, userId)`), implemented in `data`.
+- Ids are value classes (`ItemId`, `UserId`, `ServerId`, `MediaSourceId` in `Ids.kt`; `toItemId()`, `asString()`), never `UUID` (except the ids the app makes itself, allowlisted) or a bare `String` outside the adapter (R10). Routes carry the `String` form.
+- One rule, one place: user-data rules (played, favourite, resume position, last played, the sync's merge) are `PlayState` in `domain/.../userdata` (R14); a finished download is `DownloadState` (`ItemSource.downloadState`; only `DownloadFiles` names the `.download` suffix, R13); tick conversions are `Ticks` (R12).
+- The server in use is one `ActiveServer` (type, address, token, user) on `ActiveServerHolder`, switched as a whole (R16); `CurrentMediaServer` picks the adapter by its type. What a server can do is `ServerCapabilities`, never a version check.
+- A new adapter passes the contract suites in `testing`. Shared player code imports no engine package (R6). No type is named `Findroid*`, or `Jellyfin*` outside the adapter (R11).
+- `./gradlew :architecture:test` (also run by `testDebugUnitTest`) enforces R1–R16. When one fails, fix the code; never add a baseline line to get past it (the two files in `architecture/baseline/` are allowlists with a reason per entry).
+
+**Glossary** ("session" alone is ambiguous: never use it for a new name):
+- **server** `Server`/`ServerId` (its `ServerType`); **address** `ServerAddress`, where it answers; **user** `User`/`UserId`.
+- **server session**: the app signed in to a server as a user (`ServerSession`, `ActiveServer`); **play session**: the server's job for one stream (`playSessionId`); **Cast session**: a Cast connection.
+- **item** `Item`/`ItemId` (`Movie`, `Show`, `Season`, `Episode`, …); **library** `Library`.
+- **version** in the UI, **source** in code: one file or transcode of an item (`ItemSource`, `MediaSourceId`); **stream**: an audio, video or subtitle part of a source (`MediaStream`; a track in the player).
+- **download**: an item kept on the device, a `LOCAL` source with a `DownloadState` (there is no "offline mode"); **resume position** `PlayState.positionTicks`; **played** `played` ("watched" only in UI text).
 
 **Navigation:** Navigation 3 with `@Serializable` route objects. `NavigationRoot.kt` in `app/phone` is the single source of truth for the nav graph.
 
-**Downloads without the server:** there is no offline mode (#281). `RepositoryModule` always provides `MediaRepositoryImpl`. Its item getters (`getMovie`, `getEpisode`, `getShow`, `getSeason`, `getItem`) return the Room copy of a downloaded item when the server fails or takes over 3 s (`StoredFallback.kt`), `getPlaybackSources` picks a finished download before asking the server, and user data written while the server is away is marked `toBeSynced` and sent by `UserDataSync`/`SyncWorker`. The Downloads screens read Room only. Screens that need the server show the unreachable banner (see below).
+**Downloads without the server:** there is no offline mode (#281). `MediaRepositoryModule` (in `data`) always provides `MediaRepositoryImpl`. Its item getters (`getMovie`, `getEpisode`, `getShow`, `getSeason`, `getItem`) return the Room copy of a downloaded item when the server fails or takes over 3 s (`StoredFallback.kt`), `getPlaybackSources` picks a finished download before asking the server, and user data written while the server is away is marked `toBeSynced` (`PendingUserDataStore`) and sent by `UserDataSync`/`SyncWorker`. The Downloads screens read the `DownloadStore` only. Screens that need the server show the unreachable banner (see below).
 
 **Server reachability:** `ServerReachability` (in `core`) follows the app's own requests and probes the server on a network change, on return to the app and after a failed request. Phone screens read it through `LocalServerStatus` and show the unreachable banner (`ServerOrErrorCard`) with a way to Downloads. It is not started on TV.
 
@@ -90,9 +112,9 @@ Events that fire once (navigation, toasts) use a `Channel<FooEvent>` exposed as 
 
 **Identity:** the visual identity (palette, type, shape, motion, glow rules) is specified in `docs/identity/VISION.md`. Quote its principles in reviews; don't invent colours outside its token tables.
 
-**Downloading:** `Downloader` interface (in `core`) is injected into ViewModels that need it. `DownloaderViewModel` (also in `core`) collects the entries of `DownloadQueue` and exposes `DownloaderState`. Storage index is read from `AppPreferences.downloadStorageIndex`, so downloads don't ask for a storage location. Each download does ask for a quality, through `DownloadQualityDialog`.
+**Downloading:** `Downloader` interface (in `downloads`) is injected into ViewModels that need it. `DownloaderViewModel` (in `core`) collects the entries of `DownloadQueue` (in `downloads`) and exposes `DownloaderState`. Storage index is read from `AppPreferences.downloadStorageIndex`, so downloads don't ask for a storage location. Each download does ask for a quality, through `DownloadQualityDialog`.
 
-**ItemButtonsBar:** The shared download/play/favorite buttons component. Accepts `canDownload` and `isDownloaded` overrides so aggregate items (seasons, shows) can pass computed values instead of deriving from the item directly.
+**ItemButtonsBar:** The shared download/play/favorite buttons component. Accepts `canDownload` and `isDownloaded` overrides so aggregate items (seasons, shows) can pass computed values instead of deriving from the item directly (`item.isDownloaded()`, which reads `DownloadState`).
 
 **Build variants:** Build types are `debug`, `release`, `staging`. The default flavor is `libre`: use its variants (e.g. `assembleLibreDebug`, `compileLibreDebugKotlin`) unless the change is about Cast. `libre` must stay free of Google code. Both phone flavors share one application ID and signing key (one installs over the other); the TV app has only `libre`. Channels: Google Play phone `proprietary`, Google Play TV `libre`, Amazon Appstore `libre` (Fire OS has no Play Services), F-Droid `libre`, GitHub releases and betas both (`ephyra-v<version>-libre-<abi>.apk`, `-proprietary-<abi>.apk`, `-libre-tv-<abi>.apk`).
 
@@ -133,7 +155,7 @@ Read the one that fits the change before starting:
 | Track selection or subtitle styling | `docs/track-test-series.md` |
 | Google Play | `docs/play-store.md` |
 | A server or an emulator to test on | `docs/dev-environment.md`, through the `test-server` and `test-devices` skills |
-| Ports and adapters, the Jellyfin SDK boundary, `architecture/baseline/` | `docs/architecture/` |
+| Ports and adapters, a new module, port or store, the Jellyfin SDK boundary, `architecture/baseline/` | `docs/architecture/README.md`, then `5-hexagonal-ddd.md` and the ADRs |
 
 The numbered files in `docs/mpv-research/`, `docs/tablet/` and `docs/tv-research/` are research from before the work was done. Where they differ from the code, the code is right.
 

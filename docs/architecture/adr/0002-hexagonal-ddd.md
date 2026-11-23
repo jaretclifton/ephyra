@@ -1,6 +1,6 @@
 # ADR 0002: Further towards hexagonal, with DDD only where there are rules
 
-**Status:** Accepted (2026-11-22, the owner's answers below; proposed the same day). Amends ADR 0001, decisions 1, D1 and D2.
+**Status:** Accepted, implemented (accepted 2026-11-22, the owner's answers below; proposed the same day; built by 2026-11-23 in #879, #882, #883, #885, #886, #888, #895, #903, #904, #905, #906, #908, #910, #911, #913, #914, #915, documented in #772). Amends ADR 0001, decisions 1, D1 and D2.
 
 ## Context
 
