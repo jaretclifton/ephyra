@@ -278,15 +278,6 @@ interface ServerDatabaseDao {
 
     @Query("DELETE FROM movies WHERE id = :id") suspend fun deleteMovie(id: ItemId)
 
-    @Query(
-        "UPDATE userdata SET playbackPositionTicks = :playbackPositionTicks WHERE itemId = :itemId AND userid = :userId"
-    )
-    suspend fun setPlaybackPositionTicks(
-        itemId: ItemId,
-        userId: UserId,
-        playbackPositionTicks: Long,
-    )
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMediaStream(mediaStream: MediaStreamEntity)
 
@@ -316,18 +307,6 @@ interface ServerDatabaseDao {
             "UNION ALL SELECT runtimeTicks FROM episodes WHERE id = :itemId LIMIT 1"
     )
     suspend fun getRuntimeTicks(itemId: ItemId): Long?
-
-    @Query("UPDATE userdata SET played = :played WHERE userId = :userId AND itemId = :itemId")
-    suspend fun setPlayed(userId: UserId, itemId: ItemId, played: Boolean)
-
-    @Query("UPDATE userdata SET favorite = :favorite WHERE userId = :userId AND itemId = :itemId")
-    suspend fun setFavorite(userId: UserId, itemId: ItemId, favorite: Boolean)
-
-    /** CE (#633): when the item was last played, in epoch milliseconds; null when unknown. */
-    @Query(
-        "UPDATE userdata SET lastPlayedDate = :lastPlayedDate WHERE userId = :userId AND itemId = :itemId"
-    )
-    suspend fun setLastPlayedDate(userId: UserId, itemId: ItemId, lastPlayedDate: Long?)
 
     /** #898: writes a play state that [updatePlayState] computed. */
     @Query(
