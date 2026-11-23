@@ -3,10 +3,12 @@
 
 For each file in CHECKED it reports:
   - a path (a Markdown link, or a path in backticks) that does not exist;
-  - a Kotlin name in backticks (`DownloadQueue`, `PlayState.positionTicks`) that no source file has;
+  - a Kotlin name in backticks (`DownloadQueue`, `PlayState.positionTicks`) that no source file has
+    (each part is looked up as a word: it does not check that `positionTicks` is a member of
+    `PlayState`);
   - a rule number (R18) that docs/architecture/rules.md does not list;
   - a Gradle task on a module that does not exist, or a `testDebugUnitTest`-style task on a module
-    with flavours (it needs `testLibreDebugUnitTest`);
+    with flavours (it needs `testLibreDebugUnitTest`); other task names are not checked;
   - a test class pattern (`DownloadQueue*Test`) that matches no test file;
 and for docs/areas.yaml: unknown or missing fields, 3 to 8 `paths` that exist and are not a whole
 module (unless the module is the area, such as `downloads/`), `docs` that exist, `rules` that are
@@ -27,6 +29,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from urllib.parse import unquote
 
 ROOT = Path(__file__).resolve().parents[4]
 
@@ -77,10 +80,18 @@ AREA_REQUIRED = ("title", "summary", "keywords", "paths")
 
 
 def git_files() -> list[str]:
+    """The files of the working tree: tracked or new, not ignored, and still on disk.
+
+    So a file moved in an editor counts at its new place before it is staged, as in a clean
+    checkout.
+    """
     out = subprocess.run(
-        ["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, check=True
+        ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+        cwd=ROOT,
+        capture_output=True,
+        check=True,
     ).stdout.decode("utf-8")
-    return [f for f in out.split("\0") if f]
+    return sorted({f for f in out.split("\0") if f and (ROOT / f).is_file()})
 
 
 FILES = git_files()
@@ -150,9 +161,11 @@ def path_exists(pattern: str, tail: bool = False) -> bool:
             rx += "[^/\n]*"
         else:
             rx += re.escape(piece)
-    return re.search(rf"^{rx}$", PATHS_TEXT, re.M) is not None
+    start = "^(?:.*/)?" if tail else "^"
+    return re.search(rf"{start}{rx}$", PATHS_TEXT, re.M) is not None
 
 
+SOURCE_ENDINGS = (".kt", ".kts")  # Kotlin paths are ours; other endings also name files elsewhere
 PATH_LIKE = re.compile(r"^[\w.\-/…*<>]+$")
 NAME = re.compile(r"^[A-Z][a-z0-9]+(?:[A-Z][a-z0-9]*)+$")
 NAME_EXPR = re.compile(r"^([A-Za-z_]\w*)(?:\.([A-Za-z_]\w*))*(?:\(\))?$")
@@ -163,7 +176,10 @@ def check_span(span: str, problems: list[str]) -> None:
     s = span.strip()
     if "/" in s and PATH_LIKE.match(s) and not s.startswith(("/", "http", "./gradlew")):
         built = "/build/" in s + "/"  # a build output, not in the tree
-        if s.split("/")[0] in TOP and not built and not path_exists(s, tail=True):
+        # A path of this repository starts with one of its top-level names, or, when that
+        # folder is gone, still ends like a Kotlin file.
+        ours = s.split("/")[0] in TOP or s.endswith(SOURCE_ENDINGS)
+        if ours and not built and not path_exists(s, tail=True):
             problems.append(f"path `{s}` does not exist")
         return
     m = NAME_EXPR.match(s)
@@ -189,8 +205,9 @@ def check_gradle(text: str, problems: list[str]) -> None:
                 f"`{module}:{task}`: {path} has flavours, the task is "
                 f"`{unflavoured.group(1)}Libre{task[len(unflavoured.group(1)):]}`"
             )
-    for pattern in re.findall(r"--tests\s+'([^']+)'", text) + re.findall(r'--tests\s+"([^"]+)"', text):
-        cls = pattern.split(".")[-1] if not pattern.startswith("*") else pattern
+    for quoted1, quoted2, bare in re.findall(r"""--tests\s+(?:'([^']+)'|"([^"]+)"|([\w.*]+))""", text):
+        pattern = quoted1 or quoted2 or bare
+        cls = pattern.split(".")[-1]  # the class of `a.b.FooTest` and of `*.FooTest`
         rx = re.compile("^" + ".*".join(map(re.escape, cls.split("*"))) + "$")
         if not any(rx.match(name) for name in TEST_CLASSES):
             problems.append(f"--tests '{pattern}' matches no test class")
@@ -218,7 +235,7 @@ def check_markdown(rel: str, text: str) -> list[str]:
     for target in re.findall(r"\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)", re.sub(r"`[^`\n]*`", "", prose)):
         if re.match(r"^([a-z]+:|#|//)", target, re.I) or target.startswith("/ephyra/"):
             continue
-        file = target.split("#")[0]
+        file = unquote(target.split("#")[0])
         if not file:
             continue
         resolved = (Path(rel).parent / file).as_posix()
