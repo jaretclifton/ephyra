@@ -254,7 +254,7 @@ def check_model(models: dict[str, str]) -> list[str]:
 
     A `component` or `port` must link to its source (a file or a folder of this repository), and an
     arrow from A to B is only true when a source file of A names B: the name of one of B's files,
-    or B's title when that is a Kotlin name. Arrows to and from elements without a source (the
+    B's title when that is a Kotlin name, or a type that B's one file declares. Arrows to and from elements without a source (the
     modules, the server) are generated or checked by other means.
     """
     problems: list[str] = []
@@ -264,7 +264,7 @@ def check_model(models: dict[str, str]) -> list[str]:
     arrows: list[tuple[str, str, str, str]] = []  # scope, from, to, file
     for rel, text in models.items():
         stack: list[str] = []  # the element each open brace belongs to ("" for other blocks)
-        for line in re.sub(r"//.*", "", text).splitlines():
+        for line in re.sub(r"(?<!:)//.*", "", text).splitlines():
             scope = next((s for s in reversed(stack) if s), "")
             declared = re.match(r"\s*(\w+)\s*=\s*(\w+)\s+'([^']*)'", line)
             extended = re.match(r"\s*extend\s+([\w.]+)\s*\{", line)
@@ -310,6 +310,9 @@ def check_model(models: dict[str, str]) -> list[str]:
         names = {Path(f).stem for f in sources[b]}
         if re.fullmatch(r"[A-Z]\w+", titles.get(b, "")):
             names.add(titles[b])
+        if len(sources[b]) == 1:  # the types a single file declares, such as DownloadFiles
+            declared = (ROOT / sources[b][0]).read_text("utf-8", "replace")
+            names.update(re.findall(r"^(?:[a-z]+ )*(?:class|object|interface) (\w+)", declared, re.M))
         text = "\n".join((ROOT / f).read_text("utf-8", "replace") for f in sources[a])
         if not any(re.search(rf"\b{re.escape(n)}\b", text) for n in names):
             problems.append(
