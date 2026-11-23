@@ -73,13 +73,16 @@ class StreamSwitchesTest {
                     return request.response.await()
                 }
 
-                override fun setBitrate(bitrate: Int, store: Boolean) {
+                override fun showBitrate(bitrate: Int) {
                     shown = bitrate
-                    if (store) {
-                        setting = bitrate
-                        settingChanges += bitrate
-                    }
                 }
+
+                override fun storeBitrate(bitrate: Int) {
+                    setting = bitrate
+                    settingChanges += bitrate
+                }
+
+                override fun storedBitrate() = setting
 
                 override fun swapIn(rebuilt: List<PlayerItem>) {
                     swaps += rebuilt
@@ -275,5 +278,48 @@ class StreamSwitchesTest {
         answerAll(720)
 
         assertEquals(3, requests.size, "stream requests")
+    }
+
+    @Test
+    fun `a failed pick puts back the setting of its own network`() {
+        // CE (#837): the queue plays at 0 (asked for on Wi-Fi); the network is mobile data now,
+        // whose setting is 720.
+        setting = 720
+        switches.selectBitrate(1500)
+        fail(1500)
+
+        assertEquals(720, setting, "the mobile-data setting")
+        assertEquals(0, shown, "the quality shown")
+    }
+
+    @Test
+    fun `picking the quality that plays stores it`() {
+        // CE (#837): on mobile data (setting 720) the queue plays at 0; picking 0 keeps it there.
+        setting = 720
+        switches.selectBitrate(0)
+
+        assertEquals(emptyList(), requests, "stream requests")
+        assertEquals(listOf(0), settingChanges, "the quality setting's changes")
+    }
+
+    @Test
+    fun `an item asked for under another cap shows that cap and a failed pick goes back to it`() {
+        switches.playingAt(720)
+        assertEquals(720, shown, "the quality shown")
+
+        switches.selectBitrate(360)
+        fail(360)
+
+        assertEquals(720, shown, "the quality shown after the failed pick")
+    }
+
+    @Test
+    fun `playingAt changes nothing while a switch is on its way`() {
+        switches.selectBitrate(360)
+        switches.playingAt(720)
+        answerAll(360)
+
+        assertEquals(360, shown, "the quality shown")
+        assertEquals(List(3) { "bitrate=360&audio=null" }, lastSwap(), "the streams that play")
     }
 }

@@ -2164,16 +2164,30 @@ constructor(
     /** CE (#837): the network the last quality pick is stored for, and a failed one undone for. */
     private var pickedBitrateNetwork: QualityNetwork? = null
 
+    private fun pickedNetwork(): QualityNetwork =
+        pickedBitrateNetwork ?: resolvePlayback.qualityNetwork()
+
+    /** CE (#837): the item [followNetworkQuality] looked at last. */
+    private var networkQualityItemId: ItemId? = null
+
     /**
      * CE (#837): the item the player moved on to plays at the quality of the network in use now.
      * Its stream was asked for earlier (the next item is queued when the one before it starts), so
      * when the network changed since, it is asked for again, like a quality switch. A network
-     * change during an item leaves that item as it plays. A download has no cap to follow.
+     * change during an item leaves that item as it plays, also when its stream is reloaded
+     * (ExoPlayer reports a reload as a transition to the same item, mpv reports none). A download
+     * has no cap to follow.
      */
     private fun followNetworkQuality(item: PlayerItem) {
+        if (item.itemId == networkQualityItemId) return
+        networkQualityItemId = item.itemId
         val cap = item.streamCap ?: return
         val now = resolvePlayback.maxBitrateSetting()
-        if (cap == now) return
+        if (cap == now) {
+            // Asked for under this network already: the quality shown is the one it plays at.
+            streamSwitches.playingAt(cap)
+            return
+        }
         Timber.i("Network quality changed from %d to %d: asking for the queue again", cap, now)
         streamSwitches.followBitrate(now)
     }
@@ -2213,15 +2227,15 @@ constructor(
                             maxBitrate = bitrate,
                         )
 
-                    override fun setBitrate(bitrate: Int, store: Boolean) {
+                    override fun showBitrate(bitrate: Int) {
                         maxBitrate = bitrate
-                        if (store) {
-                            resolvePlayback.storeMaxBitrate(
-                                pickedBitrateNetwork ?: resolvePlayback.qualityNetwork(),
-                                bitrate,
-                            )
-                        }
                     }
+
+                    override fun storeBitrate(bitrate: Int) =
+                        resolvePlayback.storeMaxBitrate(pickedNetwork(), bitrate)
+
+                    override fun storedBitrate(): Int =
+                        resolvePlayback.storedMaxBitrate(pickedNetwork())
 
                     override fun swapIn(rebuilt: List<PlayerItem>) = swapInQueue(rebuilt)
 

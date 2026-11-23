@@ -19,13 +19,16 @@ import kotlinx.coroutines.launch
  * choices, so the latest choice wins for quality and for audio, whatever order the server answers
  * in. A pick of audio that has not reached the player yet ([pendingAudio]) is passed on to the
  * switch that cancels it; each request is made with the latest cap ([wantedBitrate]). A switch that
- * fails rolls the setting back to the cap of the streams that play ([playingBitrate]), not to the
- * value from before it started, which a cancelled switch may never have reached. A cancelled switch
- * (a newer one, or the player closing) changes nothing.
+ * fails shows the cap of the streams that play again ([playingBitrate]) and puts the setting back
+ * to what it was before the picks of that switch ([storedBefore]), not to the cap that plays: the
+ * setting is the one of the network in use (CE #837), and the streams that play may have been asked
+ * for on the other network. A cancelled switch (a newer one, or the player closing) changes
+ * nothing.
  *
- * CE (#837): the setting is the one of the network in use. When the player moves on to an item
- * whose stream was asked for on the other network, [followBitrate] asks for the queue again under
- * the cap of the network in use now, without storing it: it is the setting already.
+ * CE (#837): when the player moves on to an item whose stream was asked for on the other network,
+ * [followBitrate] asks for the queue again under the cap of the network in use now, without storing
+ * it: it is the setting already. [playingAt] tells the switches the cap an item plays at when it
+ * needs no new streams.
  *
  * Main thread only, like the player: [scope] must run its coroutines there.
  */
@@ -57,8 +60,14 @@ class StreamSwitches(
             pickedAudio: Int?,
         ): PlayerItem
 
-        /** Shows [bitrate] as the quality that plays, and stores it as the setting if [store]. */
-        fun setBitrate(bitrate: Int, store: Boolean)
+        /** Shows [bitrate] as the quality that plays. */
+        fun showBitrate(bitrate: Int)
+
+        /** Stores [bitrate] as the quality setting (CE #837: the one of the network in use). */
+        fun storeBitrate(bitrate: Int)
+
+        /** The quality setting as it is stored now, to put back when a pick fails. */
+        fun storedBitrate(): Int
 
         /** Swaps [rebuilt] in, the queue with new streams. Called without suspending after it. */
         fun swapIn(rebuilt: List<PlayerItem>)
@@ -80,17 +89,26 @@ class StreamSwitches(
 
     private var playingBitrate = playingBitrate
     private var wantedBitrate = playingBitrate
-    /** Whether [wantedBitrate] is the user's pick, stored: a failed switch then undoes it. */
-    private var wantedStored = false
+    /**
+     * CE (#837): the setting from before the picks of the switch on its way, put back when it
+     * fails. Null while no pick is on its way.
+     */
+    private var storedBefore: Int? = null
     private var pendingAudio: AudioPick? = null
     private var job: Job? = null
 
     /** Switches to [bitrate], 0 for the original quality. */
     fun selectBitrate(bitrate: Int) {
-        if (bitrate == wantedBitrate) return
+        if (bitrate == wantedBitrate) {
+            // CE (#837): no new streams, but the pick is stored: the network in use may have
+            // another setting than the one the streams were asked for on.
+            host.storeBitrate(bitrate)
+            return
+        }
+        if (storedBefore == null) storedBefore = host.storedBitrate()
         wantedBitrate = bitrate
-        wantedStored = true
-        host.setBitrate(bitrate, store = true)
+        host.showBitrate(bitrate)
+        host.storeBitrate(bitrate)
         restart()
     }
 
@@ -103,9 +121,21 @@ class StreamSwitches(
         // That switch is on its way already.
         if (bitrate == wantedBitrate && job?.isActive == true) return
         wantedBitrate = bitrate
-        wantedStored = false
-        host.setBitrate(bitrate, store = false)
+        host.showBitrate(bitrate)
         restart()
+    }
+
+    /**
+     * CE (#837): the item that plays was asked for under [bitrate] and needs no new streams (it was
+     * queued after a network change): the quality shown and the one a failed switch goes back to
+     * follow it. Nothing changes while a switch is on its way: that switch decides.
+     */
+    fun playingAt(bitrate: Int) {
+        if (job?.isActive == true) return
+        playingBitrate = bitrate
+        if (wantedBitrate == bitrate) return
+        wantedBitrate = bitrate
+        host.showBitrate(bitrate)
     }
 
     /**
@@ -151,8 +181,10 @@ class StreamSwitches(
                     pendingAudio = null
                     if (wantedBitrate != playingBitrate) {
                         wantedBitrate = playingBitrate
-                        host.setBitrate(playingBitrate, store = wantedStored)
+                        host.showBitrate(playingBitrate)
                     }
+                    storedBefore?.let(host::storeBitrate)
+                    storedBefore = null
                     host.failed(e)
                     return@launch
                 }
@@ -161,6 +193,7 @@ class StreamSwitches(
             host.swapIn(rebuilt)
             playingBitrate = bitrate
             pendingAudio = null
+            storedBefore = null
         }
     }
 }

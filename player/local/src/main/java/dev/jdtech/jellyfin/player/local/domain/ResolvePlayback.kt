@@ -53,8 +53,11 @@ constructor(
      * The user-selected cap (player quality selector, or the settings) for the network in use now,
      * in bits per second. 0 = original.
      */
-    fun maxBitrateSetting(): Int =
-        appPreferences.getValue(appPreferences.maxBitrate(qualityNetwork()))
+    fun maxBitrateSetting(): Int = storedMaxBitrate(qualityNetwork())
+
+    /** CE (#837): the cap stored for [network]. */
+    fun storedMaxBitrate(network: QualityNetwork): Int =
+        appPreferences.getValue(appPreferences.maxBitrate(network))
 
     /**
      * CE (#837): stores [bitrate] as the cap for [network], as the player's quality picker does.
