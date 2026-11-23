@@ -97,7 +97,8 @@ class ServerCapabilitiesGateTest {
 
     @Test
     fun `Jellyfin is asked for its resume thresholds with the start report`() = runBlocking {
-        repository(ServerCapabilities.ALL).postPlaybackStart(itemId, transcoded = false)
+        repository(ServerCapabilities.ALL)
+            .postPlaybackStart(itemId, positionTicks = 0L, transcoded = false)
 
         assertTrue(paths().contains("/System/Configuration"), paths().toString())
     }
@@ -105,7 +106,7 @@ class ServerCapabilitiesGateTest {
     @Test
     fun `without resume thresholds only the start is reported`() = runBlocking {
         repository(ServerCapabilities.ALL.copy(serverResumeThresholds = false))
-            .postPlaybackStart(itemId, transcoded = false)
+            .postPlaybackStart(itemId, positionTicks = 0L, transcoded = false)
 
         assertEquals(listOf("/Sessions/Playing"), paths())
     }

@@ -82,7 +82,7 @@ class PlaySessionOfPlayingStreamTest {
         request(session = "playing", load = true)
         request(session = null, load = false)
 
-        repository.postPlaybackStart(itemId, transcoded = true)
+        repository.postPlaybackStart(itemId, positionTicks = 0L, transcoded = true)
 
         assertEquals(
             "Transcode" to "playing",
@@ -96,7 +96,7 @@ class PlaySessionOfPlayingStreamTest {
         request(session = "playing", load = true)
         request(session = "never-played", load = false)
 
-        repository.postPlaybackStart(itemId, transcoded = true)
+        repository.postPlaybackStart(itemId, positionTicks = 0L, transcoded = true)
 
         assertEquals("Transcode" to "playing", startReport(), message = "no job runs for the other")
     }
@@ -106,7 +106,7 @@ class PlaySessionOfPlayingStreamTest {
         request(session = "first", load = true)
         request(session = "second", load = true)
 
-        repository.postPlaybackStart(itemId, transcoded = true)
+        repository.postPlaybackStart(itemId, positionTicks = 0L, transcoded = true)
 
         assertEquals("Transcode" to "second", startReport(), message = "the new stream plays")
     }
@@ -116,7 +116,7 @@ class PlaySessionOfPlayingStreamTest {
         request(session = "first", load = true)
         request(session = null, load = true)
 
-        repository.postPlaybackStart(itemId, transcoded = false)
+        repository.postPlaybackStart(itemId, positionTicks = 0L, transcoded = false)
 
         val (method, session) = startReport()
         assertEquals("DirectPlay", method, message = "the file plays")

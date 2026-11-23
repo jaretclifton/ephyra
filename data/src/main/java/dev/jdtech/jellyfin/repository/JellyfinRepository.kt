@@ -279,11 +279,12 @@ interface JellyfinRepository {
     fun setPlaySession(itemId: ItemId, playSessionId: String?, transcodes: Boolean) {}
 
     /**
-     * Report that [itemId] started playing. [transcoded] says whether the stream playing is the
+     * Report that [itemId] started playing at [positionTicks], the player's position when the start
+     * is sent (#868); `null` sends no position. [transcoded] says whether the stream playing is the
      * server's transcode of it (`PlayerItem.isTranscoded`), which the server shows as the play
      * method.
      */
-    suspend fun postPlaybackStart(itemId: ItemId, transcoded: Boolean)
+    suspend fun postPlaybackStart(itemId: ItemId, positionTicks: Long?, transcoded: Boolean)
 
     /**
      * Report that [itemId] stopped playing at [positionTicks]. What the local database stores

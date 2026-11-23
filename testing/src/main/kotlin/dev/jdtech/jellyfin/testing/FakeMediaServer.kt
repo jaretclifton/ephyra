@@ -552,10 +552,14 @@ class FakeMediaServer(
             call("reportStart") { reportLog += ReportKind.START to report }
         }
 
+        /** Only a start may leave its position out (see [PlaybackReport]). */
+        private fun PlaybackReport.position(): Long =
+            checkNotNull(positionTicks) { "a progress or stop report without a position" }
+
         override suspend fun reportProgress(report: PlaybackReport) {
             call("reportProgress") {
                 reportLog += ReportKind.PROGRESS to report
-                mark(report.itemId) { it.copy(positionTicks = report.positionTicks) }
+                mark(report.itemId) { it.copy(positionTicks = report.position()) }
             }
         }
 
@@ -566,7 +570,7 @@ class FakeMediaServer(
                 val item = stored(report.itemId) ?: notFound()
                 val stop =
                     stopUserData(
-                        report.positionTicks,
+                        report.position(),
                         playedPercentage = 0,
                         runtimeTicks = item.runtimeTicks,
                     )

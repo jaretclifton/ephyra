@@ -179,6 +179,9 @@ class JellyfinPlayback(
                     playSessionId = report.playSessionId,
                     repeatMode = RepeatMode.REPEAT_NONE,
                     playbackOrder = PlaybackOrder.DEFAULT,
+                    // CE (#868): where the player is, as the web client sends it. Without it the
+                    // server shows the item at 0 until the first progress report.
+                    positionTicks = report.positionTicks,
                 )
             )
         }

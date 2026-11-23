@@ -999,7 +999,8 @@ constructor(
     }
 
     /**
-     * CE (#765): what [PlaybackReporter.reportProgress] reads of the player when it sends a report.
+     * CE (#765): what [PlaybackReporter.reportProgress] reads of the player when it sends a report,
+     * and [PlaybackReporter.sendPlaybackStart] for the start's position (#868).
      */
     private val reportedPlayer =
         object : PlaybackReporter.ReportedPlayer {
@@ -1171,6 +1172,7 @@ constructor(
                         playbackReporter.onTransitionHandled(
                             item,
                             ready = player.playbackState == ExoPlayer.STATE_READY,
+                            reportedPlayer,
                         )
 
                         // CE (#681): the seek bar shows them even with every type ignored.
@@ -1707,7 +1709,9 @@ constructor(
                 _uiState.update { it.copy(fileLoaded = true) }
                 // CE (#601): the item loaded, so its start report is due.
                 playbackReporter.onItemReady()?.let { item ->
-                    viewModelScope.launch { playbackReporter.sendPlaybackStart(item) }
+                    viewModelScope.launch {
+                        playbackReporter.sendPlaybackStart(item, reportedPlayer)
+                    }
                 }
                 runDeferredWork()
             }

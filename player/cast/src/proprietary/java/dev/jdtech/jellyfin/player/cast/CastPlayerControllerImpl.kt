@@ -447,7 +447,12 @@ constructor(
         val transcoded = isTranscoded(itemId)
         scope.launch {
             try {
-                repository.postPlaybackStart(itemId = itemId, transcoded = transcoded)
+                // The receiver's position is not read here, so the start sends none, as before.
+                repository.postPlaybackStart(
+                    itemId = itemId,
+                    positionTicks = null,
+                    transcoded = transcoded,
+                )
             } catch (e: Exception) {
                 Timber.e(e, "Failed to report start for ${itemId.asString()}")
             }
