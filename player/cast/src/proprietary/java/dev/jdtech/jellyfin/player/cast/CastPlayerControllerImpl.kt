@@ -809,12 +809,17 @@ constructor(
     ) =
         queueInsertPosition(
             queue =
-                status.queueItems.map {
-                    ReceiverQueueItem(
-                        queueItemId = it.itemId,
-                        itemId = it.media?.customData?.optString("itemId")?.castItemIdOrNull(),
-                    )
-                },
+                receiverQueue(
+                    items =
+                        status.queueItems.map {
+                            ReceiverQueueItem(
+                                queueItemId = it.itemId,
+                                itemId = it.media?.castItemId(),
+                            )
+                        },
+                    currentQueueItemId = status.currentItemId,
+                    loadedItemId = status.mediaInfo?.castItemId(),
+                ),
             currentQueueItemId = status.currentItemId,
             current = current,
             itemId = item.itemId,
@@ -1022,4 +1027,7 @@ constructor(
  * app sent (another sender's media on the receiver). Before #773 the `UUID` parse rejected those;
  * an id is opaque text now, so its form is checked instead.
  */
+/** The Jellyfin item [this] media was built for, from the custom data the sender gave it. */
+private fun MediaInfo.castItemId(): ItemId? = customData?.optString("itemId")?.castItemIdOrNull()
+
 internal fun String.castItemIdOrNull(): ItemId? = takeIf { it.looksLikeJellyfinId() }?.toItemId()
