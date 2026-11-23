@@ -138,18 +138,37 @@ for (const page of PAGES) {
   pages.push({ ...page, title: pageTitle, text, url: SITE_URL + route(page.dest).slice(BASE.length), raw: SITE_URL + raw });
 }
 
-// The areas page, from docs/areas.yaml.
+// The areas page, from docs/areas.yaml, and a page for each area that has no guide yet: what the
+// map knows about it (where the code is, the docs, the rules, the tests).
 const areas = YAML.parse(fs.readFileSync(path.join(ROOT, 'docs/areas.yaml'), 'utf8')).areas;
+const hasGuide = (a) => fs.existsSync(path.join(ROOT, `docs/areas/${a.id}.md`));
+const rulesRoute = route('architecture/rules.md');
+const repoLink = (p) => {
+  const abs = path.join(ROOT, p);
+  const kind = fs.existsSync(abs) && fs.statSync(abs).isDirectory() ? 'tree' : 'blob';
+  return `[\`${p}\`](${GITHUB}/${kind}/main/${p})`;
+};
+const docLink = (p) => {
+  const page = bySrc.get(p.replace(/\/$/, '')) ?? bySrc.get(`${p.replace(/\/$/, '')}/README.md`);
+  return page ? `[\`${p}\`](${route(page.dest)})` : repoLink(p);
+};
 {
-  const rows = areas.map((a) => {
-    const guide = a.status === 'guide' ? `[${a.title}](${route(`areas/${a.id}.md`)})` : a.title;
-    const where = (a.paths ?? []).slice(0, 2).map((p) => `\`${p}\``).join(', ');
-    return `| ${guide} | ${a.summary} | ${where} | ${a.status === 'guide' ? 'guide' : 'no guide yet'} |`;
-  });
+  const mapUrl = `${GITHUB}/blob/main/docs/areas.yaml`;
+  for (const a of areas.filter((a) => !hasGuide(a))) {
+    let body = `${a.summary}\n\n:::note\nThis area has no guide yet. This page is its entry in the area map ([\`docs/areas.yaml\`](${mapUrl})): where to start reading. \`CLAUDE.md\` has the project rules that apply everywhere.\n:::\n`;
+    body += `\n## Where the code is\n\n${(a.paths ?? []).map((p) => `- ${repoLink(p)}`).join('\n')}\n`;
+    if (a.docs?.length) body += `\n## Docs to read\n\n${a.docs.map((p) => `- ${docLink(p)}`).join('\n')}\n`;
+    if (a.rules?.length) body += `\n## Rules\n\n${a.rules.map((r) => `[${r}](${rulesRoute})`).join(', ')}: the architecture rules that guard this code. Run them with \`./gradlew :architecture:test\`.\n`;
+    if (a.tests?.length) body += `\n## Tests\n\n\`\`\`bash\n${a.tests.join('\n')}\n\`\`\`\n`;
+    body += `\n## Also called\n\n${(a.keywords ?? []).join(', ')}\n`;
+    write(path.join(CONTENT, `areas/${a.id}.md`), frontmatter({ title: a.title, editUrl: `${GITHUB}/edit/main/docs/areas.yaml` }) + body);
+  }
+  const rows = areas.map((a) => `| [${a.title}](${route(`areas/${a.id}.md`)}) | ${a.summary} | ${hasGuide(a) ? 'guide' : 'map entry'} |`);
   const body =
-    'Start here when you know what you want to change. Each area lists its code, the ports it uses, the rules that guard it, how to test it and what went wrong before. ' +
-    `The map is [\`docs/areas.yaml\`](${GITHUB}/blob/main/docs/areas.yaml); the \`start-work\` skill reads the same file.\n\n` +
-    '| Area | What it is | Where | Status |\n|---|---|---|---|\n' +
+    'Start here when you know what you want to change. An area with a guide says where the code is, the ports it uses, the rules that guard it, how to test it and what went wrong before. ' +
+    'An area without one shows its entry in the map: the files to open first, the docs, the rules and the tests. ' +
+    `The map is [\`docs/areas.yaml\`](${mapUrl}); the \`start-work\` skill reads the same file.\n\n` +
+    '| Area | What it is | |\n|---|---|---|\n' +
     rows.join('\n') +
     '\n';
   write(path.join(CONTENT, 'areas/index.md'), frontmatter({ title: 'Areas', editUrl: `${GITHUB}/edit/main/docs/areas.yaml`, sidebar: { hidden: 'true' } }).replace('hidden: "true"', 'hidden: true') + body);
@@ -178,13 +197,13 @@ fs.copyFileSync(path.join(ROOT, 'site/images/branding/ephyra-mark.svg'), path.jo
 // llms.txt: what an agent without the repository reads first.
 {
   const section = (title, items) => `\n## ${title}\n\n${items.map((p) => `- [${p.title}](${p.raw})`).join('\n')}\n`;
-  const guides = areas.filter((a) => a.status === 'guide');
+  const guides = areas.filter(hasGuide);
   let txt =
     '# Ephyra development\n\n' +
     '> How Ephyra (an Android Jellyfin client for phones, tablets and Android TV, a fork of Findroid) is built: the architecture (ports and adapters, Konsist rules R1 to R16), the areas of the app with where the code is and how to test it, and the decisions. Every link is the raw Markdown from the repository github.com/midasvo/ephyra.\n\n' +
     `Start with the area map (${SITE_URL}raw/docs/areas.yaml): find the area by its keywords, then read its guide. The agent instructions of the repository are CLAUDE.md.\n`;
   txt += section('Area guides', pages.filter((p) => p.dest.startsWith('areas/')));
-  txt += `\nAreas without a guide yet: ${areas.filter((a) => a.status !== 'guide').map((a) => a.id).join(', ')}.\n`;
+  txt += `\nAreas without a guide yet (their paths, docs, rules and tests are in the area map): ${areas.filter((a) => !hasGuide(a)).map((a) => a.id).join(', ')}.\n`;
   txt += section('Architecture', pages.filter((p) => p.dest.startsWith('architecture/') && !p.history));
   txt += section('Decisions', pages.filter((p) => p.adr));
   txt += section('Working here', pages.filter((p) => p.dest.startsWith('working/')));
