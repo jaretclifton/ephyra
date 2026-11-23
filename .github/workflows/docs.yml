@@ -32,3 +32,47 @@ jobs:
 
       - name: Check paths, names, rules and commands in the docs
         run: python3 .claude/skills/start-work/scripts/check-docs.py
+
+  # The generated architecture docs (modules.md, rules.md, the model's modules.generated.c4) are
+  # checked by GeneratedDocsTest, which the Build workflow runs with the unit tests. A pull request
+  # that changes only docs does not run that workflow, so a hand edit of a generated file would pass.
+  # This job runs the one test class, and only when the pull request changes one of those files.
+  generated:
+    name: Generated docs are current
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Does the pull request change a generated file?
+        id: changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          files=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate --jq '.[] | .filename, (.previous_filename // empty)')
+          if grep -qxE 'docs/architecture/(modules|rules)\.md|docs/architecture/model/modules\.generated\.c4' <<<"$files"; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No generated file changed: nothing to check."
+          fi
+
+      - name: Checkout repository
+        if: steps.changed.outputs.run == 'true'
+        uses: actions/checkout@v7
+
+      - name: Set up JDK
+        if: steps.changed.outputs.run == 'true'
+        uses: actions/setup-java@v6
+        with:
+          java-version: 21
+          distribution: temurin
+
+      - name: Setup Gradle
+        if: steps.changed.outputs.run == 'true'
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Compare the generated docs with the tree
+        if: steps.changed.outputs.run == 'true'
+        run: ./gradlew :architecture:test --tests '*GeneratedDocsTest*'

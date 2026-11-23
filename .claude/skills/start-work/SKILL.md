@@ -27,7 +27,7 @@ data, decisions, the checks before a PR). The same files are the development sit
    (subtitles-and-tracks and downloads): take the area of the behaviour that is wrong first, and
    name the second. Match on the thing more than the verb: "een download hervat niet" is
    downloads, though "hervatten" also means resuming playback. If nothing matches, say so and use
-   the module list in `CLAUDE.md` and `docs/architecture/modules.md` instead.
+   the module list in `docs/architecture/modules.md` instead.
 2. **Read the guide**, if `docs/areas/<id>.md` exists. The guides are long: read the "Start here"
    block first, then only the sections the task needs (where the code is, rules, how to test it,
    pitfalls). Without a guide, the entry's `paths`, `docs`, `rules` and `tests` are what there
