@@ -150,6 +150,17 @@ class PlaybackReporter(
         }
     }
 
+    /**
+     * CE (#870): the player's playlist was replaced with new streams of the same items, [item]
+     * being the playing item's new stream (a quality or transcode audio switch), and the player
+     * reported no transition for it: mpv reports only a change of item. The new stream owes its
+     * start as after a transition to the same item, which is what ExoPlayer reports: held until the
+     * stream has loaded ([onItemReady]), and nothing when the player is no longer on the item.
+     */
+    fun onStreamReplaced(item: PlayerItem) {
+        startGate.onTransition(item, ready = false, current = playing?.itemId == item.itemId)
+    }
+
     /** CE (#601): the player is ready. Returns the item whose start is due now, or `null`. */
     fun onItemReady(): PlayerItem? = startGate.onReady()
 

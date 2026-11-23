@@ -2117,6 +2117,11 @@ constructor(
         items = rebuilt.toMutableList()
         appliedTrackPreferenceItemId = null
         player.setMediaItems(rebuilt.map { it.toMediaItem() }, currentIndex, position)
+        // CE (#870): the playing item's new stream owes a start. ExoPlayer reports the new playlist
+        // as a transition to the same item, and onMediaItemTransition sees to it; mpv reports none.
+        if (!enginePlayer.transitionsOnReplacedPlaylist) {
+            currentPlayerItem()?.let(playbackReporter::onStreamReplaced)
+        }
         player.prepare()
         // Keep playing (or paused) as before, whatever the player does with the flag on a new
         // playlist: mpv used to clear it, so the button showed Play while it played (#305).
