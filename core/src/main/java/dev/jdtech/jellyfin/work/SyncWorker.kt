@@ -8,7 +8,6 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dev.jdtech.jellyfin.core.presentation.downloader.SmartDownloads
 import dev.jdtech.jellyfin.core.server.forStoredType
-import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.ServerUserData
 import dev.jdtech.jellyfin.domain.ports.UserDataSyncPort
 import dev.jdtech.jellyfin.domain.ports.UserDataSyncPorts
@@ -16,16 +15,15 @@ import dev.jdtech.jellyfin.domain.userdata.PlayState
 import dev.jdtech.jellyfin.domain.userdata.SyncMerge
 import dev.jdtech.jellyfin.domain.userdata.mergeWithServer
 import dev.jdtech.jellyfin.domain.userdata.refreshedFromServer
+import dev.jdtech.jellyfin.models.AccountKey
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ServerException
-import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerType
-import dev.jdtech.jellyfin.models.UserDataEntity
-import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.serverExceptionOrNull
-import dev.jdtech.jellyfin.models.toPlayState
 import dev.jdtech.jellyfin.repository.DataChangeEvents
+import dev.jdtech.jellyfin.repository.PendingUserData
+import dev.jdtech.jellyfin.repository.PendingUserDataStore
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import java.time.Instant
 import java.time.LocalDateTime
@@ -41,7 +39,7 @@ class SyncWorker
 constructor(
     @Assisted context: Context,
     @Assisted workerParams: WorkerParameters,
-    val database: ServerDatabaseDao,
+    private val store: PendingUserDataStore,
     /** CE (#770): by server type; each server's users go through the ports of its type. */
     private val userDataSyncPorts: Map<ServerType, @JvmSuppressWildcards UserDataSyncPorts>,
     private val smartDownloads: SmartDownloads,
@@ -51,17 +49,12 @@ constructor(
 
     override suspend fun doWork(): Result {
         return withContext(Dispatchers.IO) {
-            val servers = database.getServers()
+            val servers = store.servers()
             var hadFailures = false
             var changed = false
 
             for (server in servers) {
-                val serverWithAddressesAndUsers =
-                    database.getServerWithAddressesAndUsers(server.id) ?: continue
-                val serverAddress =
-                    serverWithAddressesAndUsers.addresses.firstOrNull {
-                        it.id == server.currentServerAddressId
-                    } ?: continue
+                val target = store.targetOf(server) ?: continue
                 // CE (#770): a server of a type this build cannot talk to keeps its rows marked,
                 // for a build that can. Not a failure: retrying would not change it.
                 val ports = userDataSyncPorts.forStoredType(server.type)
@@ -69,34 +62,34 @@ constructor(
                     Timber.w("No adapter for server type %s, not syncing it", server.type)
                     continue
                 }
-                for (user in serverWithAddressesAndUsers.users) {
+                for (user in target.users) {
+                    val account = AccountKey(server.id, user.id)
                     // Only the rows still marked to be synced, and the downloads whose progress
                     // the server may have moved on: without either, no item is loaded, no client
                     // is built and no request is made (#250).
-                    val pending = database.getAllUserDataToBeSynced(server.id, user.id)
+                    val pending = store.pending(account)
                     val refresh =
                         refreshesDownloads(
-                            hasDownloads =
-                                database.getSyncedUserDataItemIds(server.id, user.id).isNotEmpty(),
+                            hasDownloads = store.syncedItemIds(account).isNotEmpty(),
                             playingHere = playbackEvents.playingItemId.value,
                         )
                     if (pending.isEmpty() && !refresh) continue
 
-                    val port = ports.forUser(serverAddress.address, user.accessToken, user.id)
+                    val port = ports.forUser(target.address, user.accessToken, user.id)
                     var ok = true
                     if (pending.isNotEmpty()) {
-                        val outcome = syncUserData(port, user.id, pending)
+                        val outcome = syncUserData(port, account, pending)
                         if (!outcome.allOk) ok = false
                         if (outcome.sent > 0 || outcome.tookServer > 0) changed = true
                     }
                     // CE (#635): after sending, so the server's values include what was just sent.
-                    if (ok && refresh && refreshFromServer(port, server.id, user.id) > 0) {
+                    if (ok && refresh && refreshFromServer(port, account) > 0) {
                         changed = true
                     }
                     // A write that failed while this run was sending keeps its row marked, and
                     // asking for a sync during a run does nothing: run again for those. CE (#635):
                     // also for a row marked during a run that only refreshed.
-                    val stillMarked = database.getAllUserDataToBeSynced(server.id, user.id)
+                    val stillMarked = store.pending(account)
                     if (needsAnotherRun(sent = pending, stillMarked = stillMarked)) ok = false
                     if (!ok) hadFailures = true
                 }
@@ -151,27 +144,15 @@ constructor(
      * A failure only leaves the rows as they were, so it does not make the sync retry. Returns how
      * many rows changed.
      */
-    private suspend fun refreshFromServer(
-        port: UserDataSyncPort,
-        serverId: ServerId,
-        userId: UserId,
-    ): Int {
-        val itemIds = database.getSyncedUserDataItemIds(serverId, userId)
+    private suspend fun refreshFromServer(port: UserDataSyncPort, account: AccountKey): Int {
+        val itemIds = store.syncedItemIds(account)
         if (itemIds.isEmpty()) return 0
         var changed = 0
         try {
             val onServer = port.userDataOf(itemIds).mapValues { it.value.toPlayState() }
             val toStore = refreshedFromServer(onServer, playbackEvents.playingItemId.value)
             for ((itemId, state) in toStore) {
-                changed +=
-                    database.refreshUserDataFromServer(
-                        userId = userId,
-                        itemId = itemId,
-                        played = state.played,
-                        favorite = state.favorite,
-                        playbackPositionTicks = state.positionTicks,
-                        lastPlayedDate = state.lastPlayedMillis,
-                    )
+                changed += store.refreshFromServer(account, itemId, state)
             }
             Timber.d("Refreshed the user data of ${itemIds.size} downloads, $changed changed")
         } catch (e: CancellationException) {
@@ -196,8 +177,8 @@ constructor(
      */
     private suspend fun applyServerProgress(
         port: UserDataSyncPort,
-        userId: UserId,
-        row: UserDataEntity,
+        account: AccountKey,
+        row: PendingUserData,
         merge: SyncMerge.TakeServer,
         leftPlaying: ItemId?,
     ): Boolean {
@@ -209,26 +190,15 @@ constructor(
             port.reportStopped(row.itemId, stored.positionTicks)
         }
         merge.favoriteToSend?.let { port.setFavorite(row.itemId, it) }
-        val took =
-            database.takeServerProgress(
-                userId = userId,
-                itemId = row.itemId,
-                played = stored.played,
-                playbackPositionTicks = stored.positionTicks,
-                lastPlayedDate = stored.lastPlayedMillis,
-                sentPlayed = row.played,
-                sentFavorite = row.favorite,
-                sentPlaybackPositionTicks = row.playbackPositionTicks,
-                sentLastPlayedDate = row.lastPlayedDate,
-            ) > 0
-        database.deleteUserDataIfOrphaned(userId, row.itemId)
+        val took = store.takeServerProgress(account, sent = row, server = stored) > 0
+        store.deleteIfOrphaned(account, row.itemId)
         return took
     }
 
     private suspend fun syncUserData(
         port: UserDataSyncPort,
-        userId: UserId,
-        items: List<UserDataEntity>,
+        account: AccountKey,
+        items: List<PendingUserData>,
     ): SyncOutcome {
         // The item the server still has "playing" for this device: its stop report did not get
         // through. Asked first, so an unreachable server ends the run after one request.
@@ -267,12 +237,11 @@ constructor(
         for (userData in items) {
             try {
                 // #898: the rules of who wins and what is sent are in PlayState.mergeWithServer.
-                val merge =
-                    userData.toPlayState().mergeWithServer(onServer[userData.itemId]?.toPlayState())
+                val merge = userData.state.mergeWithServer(onServer[userData.itemId]?.toPlayState())
                 val send =
                     when (merge) {
                         is SyncMerge.TakeServer -> {
-                            if (applyServerProgress(port, userId, userData, merge, leftPlaying)) {
+                            if (applyServerProgress(port, account, userData, merge, leftPlaying)) {
                                 tookServer++
                             }
                             continue
@@ -308,16 +277,9 @@ constructor(
                 )
                 sent++
 
-                database.clearUserDataToBeSynced(
-                    userId = userId,
-                    itemId = userData.itemId,
-                    played = send.state.played,
-                    favorite = send.state.favorite,
-                    playbackPositionTicks = send.state.positionTicks,
-                    lastPlayedDate = send.state.lastPlayedMillis,
-                )
+                store.clearToBeSynced(account, userData.itemId, send.state)
                 // A row kept only for this sync, because its download was deleted first.
-                database.deleteUserDataIfOrphaned(userId, userData.itemId)
+                store.deleteIfOrphaned(account, userData.itemId)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -335,8 +297,8 @@ constructor(
                         Timber.w(
                             "Item ${userData.itemId.asString()} is gone from the server, dropping it"
                         )
-                        database.setUserDataToBeSynced(userId, userData.itemId, false)
-                        database.deleteUserDataIfOrphaned(userId, userData.itemId)
+                        store.dropToBeSynced(account, userData.itemId)
+                        store.deleteIfOrphaned(account, userData.itemId)
                     }
                     AfterStatus.LEAVE ->
                         // Refused, and a retry in 30 seconds would be refused again. The row
@@ -435,8 +397,8 @@ internal fun afterStatus(status: Int): AfterStatus =
  * that failure decides for itself.
  */
 internal fun needsAnotherRun(
-    sent: List<UserDataEntity>,
-    stillMarked: List<UserDataEntity>,
+    sent: List<PendingUserData>,
+    stillMarked: List<PendingUserData>,
 ): Boolean = stillMarked.any { it !in sent }
 
 private const val HTTP_UNAUTHORIZED = 401

@@ -1,9 +1,9 @@
 package dev.jdtech.jellyfin.work
 
+import dev.jdtech.jellyfin.domain.userdata.PlayState
 import dev.jdtech.jellyfin.models.ServerException
-import dev.jdtech.jellyfin.models.UserDataEntity
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.models.toUserId
+import dev.jdtech.jellyfin.repository.PendingUserData
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -12,16 +12,16 @@ import org.junit.jupiter.api.Test
 
 /** CE (#552): when the user data sync retries, and when it lets a row be. */
 class SyncWorkerDecisionsTest {
-    private val userId = "00000000-0000-0000-0000-000000000001".toUserId()
-
     private fun row(item: Int, positionTicks: Long = 100L) =
-        UserDataEntity(
-            userId = userId,
+        PendingUserData(
             itemId = UUID(0L, item.toLong()).toString().toItemId(),
-            played = false,
-            favorite = false,
-            playbackPositionTicks = positionTicks,
-            toBeSynced = true,
+            state =
+                PlayState(
+                    played = false,
+                    favorite = false,
+                    positionTicks = positionTicks,
+                    lastPlayedMillis = null,
+                ),
         )
 
     @Test

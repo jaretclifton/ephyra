@@ -9,8 +9,6 @@ core/src/main/java/dev/jdtech/jellyfin/di/RepositoryModule.kt
 core/src/main/java/dev/jdtech/jellyfin/utils/DownloaderImpl.kt
 core/src/main/java/dev/jdtech/jellyfin/viewmodels/AboutViewModel.kt
 core/src/main/java/dev/jdtech/jellyfin/viewmodels/MainViewModel.kt
-core/src/main/java/dev/jdtech/jellyfin/work/SyncWorker.kt
-core/src/main/java/dev/jdtech/jellyfin/work/UserDataSync.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/domain/homerows/HomeRowsStore.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/downloads/DownloadedShowViewModel.kt
 modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/downloads/DownloadsViewModel.kt
