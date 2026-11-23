@@ -28,12 +28,16 @@ data class PlaybackRequest(
 
 /**
  * A start, progress or stop report of [itemId] (#757). [transcoded] is whether the server's
- * transcode with [playSessionId] plays; the repository's `PlaySessions` decides both. A start sends
- * no position, and a stop neither [isPaused] nor [transcoded].
+ * transcode with [playSessionId] plays; the repository's `PlaySessions` decides both. A stop sends
+ * neither [isPaused] nor [transcoded].
+ *
+ * [positionTicks] is where the player is when the report is sent; a start sends it as the web
+ * client does (#868). Only a start may leave it `null`, which sends no position: the Cast start,
+ * whose receiver's position is not read.
  */
 data class PlaybackReport(
     val itemId: ItemId,
-    val positionTicks: Long,
+    val positionTicks: Long?,
     val isPaused: Boolean,
     val transcoded: Boolean,
     val playSessionId: String?,

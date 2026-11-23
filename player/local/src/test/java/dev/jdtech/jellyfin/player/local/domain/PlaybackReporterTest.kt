@@ -56,6 +56,9 @@ class PlaybackReporterTest {
     /** Records the reports with the virtual time they reached it, and can delay or fail them. */
     private class FakeRepository(private val scope: TestScope) {
         val calls = mutableListOf<String>()
+
+        /** The positions the start reports carried, in ticks (#868). */
+        val startPositions = mutableListOf<Long?>()
         var startDelayMs = 0L
         var progressDelayMs = 0L
         var failStart = false
@@ -82,10 +85,15 @@ class PlaybackReporterTest {
                     record("session $itemId $playSessionId $transcodes")
                 }
 
-                override suspend fun postPlaybackStart(itemId: ItemId, transcoded: Boolean) {
+                override suspend fun postPlaybackStart(
+                    itemId: ItemId,
+                    positionTicks: Long?,
+                    transcoded: Boolean,
+                ) {
                     delay(startDelayMs)
                     if (failStart) throw IOException("no server")
                     record("start $itemId $transcoded")
+                    startPositions += positionTicks
                 }
 
                 override suspend fun postPlaybackProgress(
@@ -140,13 +148,16 @@ class PlaybackReporterTest {
         val reports
             get() = fake.calls.filterNot { it.contains(": session ") }
 
+        /** The player the start reports read (#868). */
+        val player = Player(null)
+
         /** The player moved to [item] and handled the transition; [ready] if already loaded. */
         fun transition(item: PlayerItem, ready: Boolean = false): Job? {
             reporter.onStreamQueued(item)
             val stop = reporter.onItemTransition(item.itemId)
             owner.launch {
                 stop?.join()
-                reporter.onTransitionHandled(item, ready)
+                reporter.onTransitionHandled(item, ready, player)
             }
             scope.testScheduler.runCurrent()
             return stop
@@ -154,7 +165,7 @@ class PlaybackReporterTest {
 
         /** The player is ready; the start it owes is on its way (it may still be waiting). */
         fun loaded() {
-            reporter.onItemReady()?.let { owner.launch { reporter.sendPlaybackStart(it) } }
+            reporter.onItemReady()?.let { owner.launch { reporter.sendPlaybackStart(it, player) } }
             scope.testScheduler.runCurrent()
         }
 
@@ -182,6 +193,54 @@ class PlaybackReporterTest {
         s.loaded()
         advanceUntilIdle()
         assertEquals(listOf("0: start $itemId false"), s.reports)
+    }
+
+    @Test
+    fun `the start carries the player's position when it is sent`() = test { s ->
+        // #868: a resume at 275 s. The player is there once it has loaded the item.
+        s.transition(item(position = 275_000L))
+        s.player.positionMs = 275_000L
+        s.loaded()
+        advanceUntilIdle()
+        assertEquals(listOf("0: start $itemId false"), s.reports)
+        assertEquals(listOf<Long?>(2_750_000_000L), s.fake.startPositions)
+    }
+
+    @Test
+    fun `a fresh start carries position 0`() = test { s ->
+        s.transition(item())
+        s.loaded()
+        advanceUntilIdle()
+        assertEquals(listOf<Long?>(0L), s.fake.startPositions)
+    }
+
+    @Test
+    fun `the start of a quality switch carries where playback is, not where it began`() =
+        test { s ->
+            s.transition(item(position = 275_000L))
+            s.player.positionMs = 275_000L
+            s.loaded()
+            advanceUntilIdle()
+            s.reporter.updatePosition(positionMs = 300_000L, durationMs = 600_000L)
+
+            // The new stream is loaded at the position playback was at.
+            s.player.positionMs = 300_000L
+            s.transition(item(session = "session-2", transcoded = true, position = 275_000L))
+            advanceUntilIdle()
+            s.loaded()
+            advanceUntilIdle()
+
+            assertEquals(listOf<Long?>(2_750_000_000L, 3_000_000_000L), s.fake.startPositions)
+        }
+
+    @Test
+    fun `an item already loaded at its transition sends its start with the position`() = test { s ->
+        // An auto-advance: the next item is ready when the transition is handled.
+        s.player.positionMs = 12_000L
+        s.transition(item(position = 12_000L), ready = true)
+        advanceUntilIdle()
+        assertEquals(listOf("0: start $itemId false"), s.reports)
+        assertEquals(listOf<Long?>(120_000_000L), s.fake.startPositions)
     }
 
     @Test
