@@ -95,10 +95,10 @@ class PlaybackStartGateTest {
     }
 
     @Test
-    fun `mpv's quality switch sends one start, for the item it plays on`() {
-        // mpv replaces the playlist with the previous episode first: transitions E3, E2, E3. The
-        // E2 transition is handled after E3's (it waited for E3's stop), and is no longer
-        // current. Main sent one start, for E3; so does the gate.
+    fun `a transition handled after the player moved on sends one start, for the item it plays on`() {
+        // Before #723, mpv replaced the playlist with the previous episode first: transitions E3,
+        // E2, E3. The E2 transition is handled after E3's (it waited for E3's stop), and is no
+        // longer current. Main sent one start, for E3; so does the gate.
         val player = Player()
         player.transition("E3")
         player.ready()
