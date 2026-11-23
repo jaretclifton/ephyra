@@ -9,6 +9,7 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.Library
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Person
 import dev.jdtech.jellyfin.models.PlaybackTarget
@@ -189,7 +190,7 @@ interface MediaRepository {
     suspend fun getPlaybackSources(
         itemId: ItemId,
         target: PlaybackTarget,
-        mediaSourceId: String? = null,
+        mediaSourceId: MediaSourceId? = null,
         audioStreamIndex: Int? = null,
         maxBitrate: Int? = null,
     ): List<ItemSource>
@@ -203,7 +204,7 @@ interface MediaRepository {
      */
     suspend fun saveSeriesTrackPreference(preference: SeriesTrackPreference)
 
-    suspend fun getStreamUrl(itemId: ItemId, mediaSourceId: String): String
+    suspend fun getStreamUrl(itemId: ItemId, mediaSourceId: MediaSourceId): String
 
     suspend fun getSegments(itemId: ItemId): List<Segment>
 
@@ -222,7 +223,7 @@ interface MediaRepository {
         itemId: ItemId,
         width: Int,
         index: Int,
-        mediaSourceId: String? = null,
+        mediaSourceId: MediaSourceId? = null,
     ): ByteArray?
 
     /**

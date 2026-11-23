@@ -2,9 +2,11 @@ package dev.jdtech.jellyfin.server.jellyfin.mappers
 
 import dev.jdtech.jellyfin.models.Chapter
 import dev.jdtech.jellyfin.models.ItemTrickplayInfo
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.Segment
 import dev.jdtech.jellyfin.models.SegmentType
 import dev.jdtech.jellyfin.models.Ticks
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.MediaSegmentDto
 import org.jellyfin.sdk.model.api.MediaSegmentType
@@ -45,10 +47,12 @@ internal fun MediaSegmentDto.toSegment(): Segment {
  * one width each (#860): see [preferredTrickplayInfo]. A version without a usable width is left
  * out, as one without trickplay.
  */
-internal fun BaseItemDto.toItemTrickplayInfo(): Map<String, ItemTrickplayInfo>? =
+internal fun BaseItemDto.toItemTrickplayInfo(): Map<MediaSourceId, ItemTrickplayInfo>? =
     trickplay
         ?.mapNotNull { (sourceId, widths) ->
-            widths?.preferredTrickplayInfo()?.let { sourceId to it.toItemTrickplayInfo() }
+            widths?.preferredTrickplayInfo()?.let {
+                sourceId.toMediaSourceId() to it.toItemTrickplayInfo()
+            }
         }
         ?.toMap()
 

@@ -8,7 +8,7 @@ import java.util.UUID
 @Entity(tableName = "mediastreams", indices = [Index("sourceId")])
 data class MediaStreamEntity(
     @PrimaryKey val id: UUID,
-    val sourceId: String,
+    val sourceId: MediaSourceId,
     val title: String,
     val displayTitle: String?,
     val language: String,
@@ -25,7 +25,11 @@ data class MediaStreamEntity(
     val downloadId: Long? = null,
 )
 
-fun MediaStream.toMediaStreamEntity(id: UUID, sourceId: String, path: String): MediaStreamEntity {
+fun MediaStream.toMediaStreamEntity(
+    id: UUID,
+    sourceId: MediaSourceId,
+    path: String,
+): MediaStreamEntity {
     return MediaStreamEntity(
         id = id,
         sourceId = sourceId,

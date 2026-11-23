@@ -3,16 +3,18 @@ package dev.jdtech.jellyfin.player.core.domain.models
 import android.net.Uri
 import android.os.Parcelable
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.MediaSourceId
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.TypeParceler
 
 @Parcelize
 @TypeParceler<ItemId, ItemIdParceler>
 @TypeParceler<ItemId?, NullableItemIdParceler>
+@TypeParceler<MediaSourceId, MediaSourceIdParceler>
 data class PlayerItem(
     val name: String,
     val itemId: ItemId,
-    val mediaSourceId: String,
+    val mediaSourceId: MediaSourceId,
     val playbackPosition: Long,
     val mediaSourceUri: String = "",
     /** True when [mediaSourceUri] is a server-side transcode (an HLS manifest). */

@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.MediaSourceId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.presentation.components.BaseDialog
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
@@ -25,7 +27,7 @@ import dev.jdtech.jellyfin.presentation.theme.spacings
 @Composable
 fun VersionDialog(
     versions: List<ItemSource>,
-    onSelect: (mediaSourceId: String) -> Unit,
+    onSelect: (mediaSourceId: MediaSourceId) -> Unit,
     onDismiss: () -> Unit,
 ) {
     BaseDialog(
@@ -65,7 +67,7 @@ private fun VersionDialogPreview() {
             versions =
                 listOf(
                     ItemSource(
-                        id = "1",
+                        id = "1".toMediaSourceId(),
                         name = "2160p - HEVC",
                         type = ItemSourceType.REMOTE,
                         path = "",
@@ -73,7 +75,7 @@ private fun VersionDialogPreview() {
                         mediaStreams = emptyList(),
                     ),
                     ItemSource(
-                        id = "2",
+                        id = "2".toMediaSourceId(),
                         name = "1080p - H264",
                         type = ItemSourceType.REMOTE,
                         path = "",

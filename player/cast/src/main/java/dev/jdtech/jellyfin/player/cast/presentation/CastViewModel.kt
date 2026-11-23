@@ -9,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.Segment
 import dev.jdtech.jellyfin.models.SegmentType
 import dev.jdtech.jellyfin.models.asString
@@ -124,7 +125,7 @@ constructor(
     private class PlayRequest(
         val itemId: ItemId,
         val kind: ItemKind,
-        val mediaSourceId: String?,
+        val mediaSourceId: MediaSourceId?,
         val shuffle: Boolean = false,
     )
 
@@ -417,7 +418,7 @@ constructor(
         itemId: ItemId,
         kind: ItemKind,
         startFromBeginning: Boolean,
-        mediaSourceId: String?,
+        mediaSourceId: MediaSourceId?,
         shuffle: Boolean = false,
     ): Boolean =
         play(itemId, kind, startFromBeginning, mediaSourceId, known = null, shuffle = shuffle)
@@ -426,7 +427,7 @@ constructor(
         itemId: ItemId,
         kind: ItemKind,
         startFromBeginning: Boolean,
-        mediaSourceId: String?,
+        mediaSourceId: MediaSourceId?,
         known: CastNowPlaying?,
         shuffle: Boolean = false,
     ): Boolean {

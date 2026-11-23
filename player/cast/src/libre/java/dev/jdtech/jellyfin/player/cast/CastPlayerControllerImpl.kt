@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.player.cast
 
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.player.cast.models.CastError
 import dev.jdtech.jellyfin.player.cast.models.CastMediaItem
 import dev.jdtech.jellyfin.player.cast.models.CastPlayerState
@@ -27,7 +28,7 @@ class CastPlayerControllerImpl @Inject constructor() : CastPlayerController {
         itemId: ItemId,
         itemKind: String,
         startFromBeginning: Boolean,
-        mediaSourceId: String?,
+        mediaSourceId: MediaSourceId?,
         shuffle: Boolean,
     ) {}
 

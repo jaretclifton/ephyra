@@ -8,7 +8,7 @@ import java.time.LocalDateTime
 @Entity(tableName = "movies")
 data class MovieEntity(
     @PrimaryKey val id: ItemId,
-    val serverId: String?,
+    val serverId: ServerId?,
     val name: String,
     val originalTitle: String?,
     val overview: String,
@@ -23,7 +23,7 @@ data class MovieEntity(
     val genres: List<String>? = null,
 )
 
-fun Movie.toMovieEntity(serverId: String? = null): MovieEntity {
+fun Movie.toMovieEntity(serverId: ServerId? = null): MovieEntity {
     return MovieEntity(
         id = id,
         serverId = serverId,
@@ -53,7 +53,7 @@ suspend fun MovieEntity.toMovie(
 ): Movie {
     val userData = database.getUserDataOrCreateNew(id, userId)
     val sources = localSources[id].orEmpty()
-    val trickplayInfos = mutableMapOf<String, ItemTrickplayInfo>()
+    val trickplayInfos = mutableMapOf<MediaSourceId, ItemTrickplayInfo>()
     for (source in sources) {
         database.getTrickplayInfo(source.id)?.toItemTrickplayInfo()?.let {
             trickplayInfos[source.id] = it

@@ -7,6 +7,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.player.cast.CastPlayerController
 import dev.jdtech.jellyfin.player.cast.CastSessionManager
@@ -237,7 +238,7 @@ internal class FakeCastPlayerController(
         itemId: ItemId,
         itemKind: String,
         startFromBeginning: Boolean,
-        mediaSourceId: String?,
+        mediaSourceId: MediaSourceId?,
         shuffle: Boolean,
     ) {
         manager = playlistManagers.get()

@@ -88,7 +88,7 @@ constructor(
 
             try {
                 val server = repository.addServer(address)
-                appPreferences.setValue(appPreferences.currentServer, server.id)
+                appPreferences.setCurrentServerId(server.id)
                 _state.emit(_state.value.copy(isLoading = false, error = null))
                 eventsChannel.send(AddServerEvent.Success)
             } catch (e: CancellationException) {

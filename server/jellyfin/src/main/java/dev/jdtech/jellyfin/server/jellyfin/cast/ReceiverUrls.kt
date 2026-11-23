@@ -77,7 +77,7 @@ internal fun directPlayUrl(
     val query =
         listOfNotNull(
                 "static" to "true",
-                mediaSourceId?.let { "mediaSourceId" to it },
+                mediaSourceId?.let { "mediaSourceId" to it.asString() },
                 accessToken?.let { "api_key" to it },
             )
             .joinToString("&") { (name, value) -> "$name=${encode(value)}" }

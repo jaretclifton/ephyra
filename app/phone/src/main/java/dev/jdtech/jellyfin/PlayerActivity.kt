@@ -64,6 +64,7 @@ import dev.jdtech.jellyfin.databinding.ActivityPlayerBinding
 import dev.jdtech.jellyfin.film.presentation.season.SeasonState
 import dev.jdtech.jellyfin.film.presentation.season.SeasonViewModel
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.player.local.PlaybackSessionStore
 import dev.jdtech.jellyfin.player.local.R as PlayerR
 import dev.jdtech.jellyfin.player.local.domain.SleepTimerOption
@@ -658,7 +659,7 @@ class PlayerActivity : BasePlayerActivity() {
         val itemId = itemIdExtra?.toItemId()
         val itemKind = intent.extras?.getString("itemKind")
         val startFromBeginning = intent.extras?.getBoolean("startFromBeginning") ?: false
-        val mediaSourceId = intent.extras?.getString("mediaSourceId")
+        val mediaSourceId = intent.extras?.getString("mediaSourceId")?.toMediaSourceId()
         // CE (#638): a show or season played in random order, from the Shuffle button.
         val shuffle = intent.extras?.getBoolean("shuffle") ?: false
 
@@ -1445,7 +1446,7 @@ class PlayerActivity : BasePlayerActivity() {
         val itemId = itemIdExtra.toItemId()
         val itemKind = intent.extras!!.getString("itemKind")
         val startFromBeginning = intent.extras!!.getBoolean("startFromBeginning")
-        val mediaSourceId = intent.extras!!.getString("mediaSourceId")
+        val mediaSourceId = intent.extras!!.getString("mediaSourceId")?.toMediaSourceId()
         val shuffle = intent.extras!!.getBoolean("shuffle")
 
         viewModel.initializePlayer(

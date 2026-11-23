@@ -23,12 +23,13 @@ import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.presentation.theme.spacings
 
 @Composable
 fun VersionDialog(
     versions: List<ItemSource>,
-    onSelect: (mediaSourceId: String) -> Unit,
+    onSelect: (mediaSourceId: MediaSourceId) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val firstItemFocusRequester = remember { FocusRequester() }

@@ -67,11 +67,18 @@ class IdsTest {
 
     @Test
     fun `the server and source ids are the text the server sends`() {
-        val serverId: ServerId = "server"
-        val mediaSourceId: MediaSourceId = "source"
+        // A Jellyfin source id comes dashed or not depending on the answer: both are kept as sent.
+        val dashless = STORED.replace("-", "")
+        val serverId = "Server-1".toServerId()
+        val mediaSourceId = dashless.toMediaSourceId()
 
-        assertEquals<String>("server", serverId)
-        assertEquals<String>("source", mediaSourceId)
+        assertEquals("Server-1", serverId.asString())
+        assertEquals("Server-1", serverId.toString())
+        assertEquals(dashless, mediaSourceId.asString())
+        assertEquals(dashless, mediaSourceId.toString())
+        assertEquals(STORED, STORED.toMediaSourceId().asString())
+        assertEquals(ServerId("Server-1"), serverId)
+        assertNotEquals(dashless.toMediaSourceId(), STORED.toMediaSourceId())
     }
 
     private companion object {

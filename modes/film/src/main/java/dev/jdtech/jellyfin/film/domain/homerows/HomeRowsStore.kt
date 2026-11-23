@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.film.domain.homerows
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.models.Server
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.repository.MediaRepository
@@ -11,7 +12,7 @@ import dev.jdtech.jellyfin.settings.domain.models.Preference
 import javax.inject.Inject
 
 /** CE (#142): whose Home layout it is. Each user on each server has their own. */
-data class HomeRowsProfile(val serverId: String, val userId: UserId) {
+data class HomeRowsProfile(val serverId: ServerId, val userId: UserId) {
     val preference: Preference<String?>
         get() = Preference("pref_ce_home_rows_${serverId}_${userId.asString()}", null)
 
@@ -28,9 +29,7 @@ class HomeRowsStore
 @Inject
 constructor(private val appPreferences: AppPreferences, private val database: ServerDatabaseDao) {
     suspend fun currentProfile(): HomeRowsProfile? =
-        appPreferences.getValue(appPreferences.currentServer)?.let {
-            HomeRowsProfile.of(database.getServer(it))
-        }
+        appPreferences.currentServerId()?.let { HomeRowsProfile.of(database.getServer(it)) }
 
     /** Null when nothing is stored, or there's no profile to store it for. */
     fun read(profile: HomeRowsProfile?): List<HomeRowConfig>? = profile?.let {

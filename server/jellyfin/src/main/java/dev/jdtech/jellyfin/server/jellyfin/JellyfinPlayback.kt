@@ -10,6 +10,7 @@ import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.Segment
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.repository.ResumeThresholds
 import dev.jdtech.jellyfin.server.jellyfin.cast.toReceiverSource
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toItemSource
@@ -90,7 +91,9 @@ class JellyfinPlayback(
                     autoOpenLiveStream = enableTranscoding,
                     // CE (#580): the server ignores the index without the source's id.
                     mediaSourceId =
-                        request.mediaSourceId.takeIf { request.audioStreamIndex != null },
+                        request.mediaSourceId?.asString().takeIf {
+                            request.audioStreamIndex != null
+                        },
                     audioStreamIndex =
                         request.audioStreamIndex.takeIf { request.mediaSourceId != null },
                 )
@@ -116,7 +119,7 @@ class JellyfinPlayback(
                 // no maximum bitrate when uncapped (#767).
                 PlaybackInfoDto(
                     userId = api.currentUserId,
-                    mediaSourceId = request.mediaSourceId,
+                    mediaSourceId = request.mediaSourceId?.asString(),
                     deviceProfile = deviceProfiles.profileFor(target, bitrateCapped = capped),
                     maxStreamingBitrate = maxBitrate,
                     audioStreamIndex = request.audioStreamIndex,
@@ -135,7 +138,7 @@ class JellyfinPlayback(
         api.videoApi.getVideoStreamUrl(
             itemId.toUuid(),
             static = true,
-            mediaSourceId = mediaSourceId,
+            mediaSourceId = mediaSourceId.asString(),
         )
     }
 
@@ -261,7 +264,7 @@ class JellyfinPlayback(
  * one it always was. A source id that is not an id sends none either.
  */
 internal fun trickplayVersion(itemId: ItemId, mediaSourceId: MediaSourceId?): UUID? =
-    mediaSourceId?.toUUIDOrNull()?.takeIf { it.toItemId() != itemId }
+    mediaSourceId?.asString()?.toUUIDOrNull()?.takeIf { it.toItemId() != itemId }
 
 /** CE (#599): Transcode with the transcode's play session, else DirectPlay (see PlaySessions). */
 private fun PlaybackReport.playMethod(): PlayMethod =

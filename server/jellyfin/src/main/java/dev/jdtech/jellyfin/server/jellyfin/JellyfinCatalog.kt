@@ -16,6 +16,7 @@ import dev.jdtech.jellyfin.models.Person
 import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.Show
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.repository.ItemsPage
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toEpisode
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toItem
@@ -54,7 +55,7 @@ class JellyfinCatalog(private val api: JellyfinApi) : CatalogPort {
     override suspend fun serverInfo(): ServerInfo = call {
         val info = api.systemApi.getPublicSystemInfo().content
         ServerInfo(
-            id = info.id.orEmpty(),
+            id = info.id.orEmpty().toServerId(),
             name = info.serverName.orEmpty(),
             version = info.version,
             product = info.productName,

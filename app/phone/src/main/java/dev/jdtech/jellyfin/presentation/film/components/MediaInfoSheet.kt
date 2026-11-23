@@ -53,6 +53,7 @@ import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamType
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import java.util.Locale
@@ -297,7 +298,7 @@ private fun previewSource(name: String): ItemSource {
             sampleRate = 48_000,
         )
     return ItemSource(
-        id = name,
+        id = name.toMediaSourceId(),
         name = name,
         type = ItemSourceType.REMOTE,
         path = "",

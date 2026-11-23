@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.server.jellyfin
 
 import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.models.ServerException
+import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.server.jellyfin.mappers.MapperContext
 import java.util.UUID
 import kotlinx.coroutines.CancellationException
@@ -48,7 +49,11 @@ internal fun JellyfinApi.mapperContext() =
         baseUrl = baseUrl(),
         streamUrl = { id, source ->
             try {
-                videoApi.getVideoStreamUrl(id.toUuid(), static = true, mediaSourceId = source)
+                videoApi.getVideoStreamUrl(
+                    id.toUuid(),
+                    static = true,
+                    mediaSourceId = source.asString(),
+                )
             } catch (e: Exception) {
                 Timber.e(e)
                 ""

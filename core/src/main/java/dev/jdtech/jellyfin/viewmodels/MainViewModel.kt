@@ -72,7 +72,7 @@ constructor(
 
     private suspend fun hasDownloads(): Boolean =
         try {
-            val serverId = appPreferences.getValue(appPreferences.currentServer)
+            val serverId = appPreferences.currentServerId()
             serverId != null &&
                 (database.countMoviesByServerId(serverId) > 0 ||
                     database.countShowsByServerId(serverId) > 0)
@@ -113,7 +113,7 @@ constructor(
 
     fun loadServerAndUser() {
         viewModelScope.launch {
-            val serverId = appPreferences.getValue(appPreferences.currentServer)
+            val serverId = appPreferences.currentServerId()
             serverId?.let { id ->
                 database.getServerWithAddressAndUser(id)?.let { data ->
                     _uiState.emit(UiState.Normal(data.server, data.user))
@@ -132,7 +132,7 @@ constructor(
             _state.emit(MainState(isLoading = true))
 
             val setupFlags =
-                appPreferences.observe(appPreferences.currentServer).flatMapLatest { serverId ->
+                appPreferences.observeCurrentServerId().flatMapLatest { serverId ->
                     if (serverId == null) {
                         database.observeServersCount().map { serverCount ->
                             SetupFlags(
@@ -161,7 +161,7 @@ constructor(
             val askUserOnStart =
                 combine(
                     appPreferences.observe(appPreferences.askUserOnStart),
-                    appPreferences.observe(appPreferences.currentServer).flatMapLatest { serverId ->
+                    appPreferences.observeCurrentServerId().flatMapLatest { serverId ->
                         if (serverId == null) flowOf(0) else database.observeUsersCount(serverId)
                     },
                 ) { enabled, usersCount ->
@@ -170,7 +170,7 @@ constructor(
 
             // CE (#299): the current profile has a PIN that this process has not been given yet.
             val profileLocked =
-                appPreferences.observe(appPreferences.currentServer).flatMapLatest { serverId ->
+                appPreferences.observeCurrentServerId().flatMapLatest { serverId ->
                     if (serverId == null) {
                         flowOf(false)
                     } else {

@@ -40,6 +40,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyUser
 import dev.jdtech.jellyfin.core.presentation.dummy.randomUserId
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.presentation.components.UserAvatar
 import dev.jdtech.jellyfin.presentation.setup.pin.SwitchPinDialog
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
@@ -214,13 +215,14 @@ private fun ProfileSheetUser(user: User, onClick: () -> Unit, subtitle: String? 
 @Composable
 @Preview
 private fun ProfileBottomSheetPreview() {
-    val other = User(id = randomUserId(), name = "Alice", serverId = "")
+    val other = User(id = randomUserId(), name = "Alice", serverId = "".toServerId())
     FindroidTheme {
         ProfileBottomSheetLayout(
             state =
                 UsersState(
                     users = listOf(dummyUser, other),
-                    publicUsers = listOf(User(id = randomUserId(), name = "Bob", serverId = "")),
+                    publicUsers =
+                        listOf(User(id = randomUserId(), name = "Bob", serverId = "".toServerId())),
                     serverName = "Jellyfin",
                     currentUserId = dummyUser.id,
                 ),

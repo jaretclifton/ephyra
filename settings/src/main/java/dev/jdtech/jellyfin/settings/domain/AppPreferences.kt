@@ -1,11 +1,15 @@
 package dev.jdtech.jellyfin.settings.domain
 
 import android.content.SharedPreferences
+import dev.jdtech.jellyfin.models.ServerId
+import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.settings.domain.models.Preference
 import javax.inject.Inject
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.map
 import timber.log.Timber
 
 class AppPreferences @Inject constructor(val sharedPreferences: SharedPreferences) {
@@ -361,6 +365,18 @@ class AppPreferences @Inject constructor(val sharedPreferences: SharedPreference
         }
         setValue(mpvAoAaudioMigrated, true)
     }
+
+    /**
+     * CE (#902): the server [currentServer] names. The preference keeps the id's text exactly as
+     * before; these read and write it as a [ServerId].
+     */
+    fun currentServerId(): ServerId? = getValue(currentServer)?.toServerId()
+
+    /** [currentServerId] and every change of it. */
+    fun observeCurrentServerId(): Flow<ServerId?> = observe(currentServer).map { it?.toServerId() }
+
+    /** Makes [id] the current server, or none. */
+    fun setCurrentServerId(id: ServerId?) = setValue(currentServer, id?.asString())
 
     inline fun <reified T> getValue(preference: Preference<T>): T {
         return try {

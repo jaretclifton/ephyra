@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.setup.presentation.servers
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import java.util.UUID
@@ -31,11 +32,11 @@ constructor(private val repository: SetupRepository, private val appPreferences:
         }
     }
 
-    private fun setCurrentServer(serverId: String) {
+    private fun setCurrentServer(serverId: ServerId) {
         viewModelScope.launch {
             repository.setCurrentServer(serverId)
 
-            appPreferences.setValue(appPreferences.currentServer, serverId)
+            appPreferences.setCurrentServerId(serverId)
 
             eventsChannel.send(ServersEvent.ServerChanged)
         }
@@ -49,7 +50,7 @@ constructor(private val repository: SetupRepository, private val appPreferences:
         }
     }
 
-    private fun deleteServer(serverId: String) {
+    private fun deleteServer(serverId: ServerId) {
         viewModelScope.launch {
             repository.deleteServer(serverId)
             loadServers()

@@ -24,6 +24,7 @@ import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.ItemSource
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.Ticks
@@ -695,7 +696,7 @@ constructor(
         itemId: ItemId,
         itemKind: String,
         startFromBeginning: Boolean,
-        mediaSourceId: String?,
+        mediaSourceId: MediaSourceId?,
         shuffle: Boolean,
     ) {
         cancelJobs()

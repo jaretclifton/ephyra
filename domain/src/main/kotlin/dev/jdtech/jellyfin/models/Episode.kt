@@ -34,5 +34,5 @@ data class Episode(
     val playCount: Int = 0,
     override val images: ItemImages,
     override val chapters: List<Chapter>,
-    override val trickplayInfo: Map<String, ItemTrickplayInfo>?,
+    override val trickplayInfo: Map<MediaSourceId, ItemTrickplayInfo>?,
 ) : Item, Playable

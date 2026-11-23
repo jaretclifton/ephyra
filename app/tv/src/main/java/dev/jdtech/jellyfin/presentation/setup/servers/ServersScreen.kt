@@ -34,6 +34,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyServer
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.ServerWithAddresses
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.presentation.setup.components.ServerItem
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
@@ -189,7 +190,7 @@ private fun ServersScreenLayoutPreview() {
                                         ServerAddress(
                                             id = UUID.randomUUID(),
                                             address = dummyDiscoveredServer.address,
-                                            serverId = "",
+                                            serverId = "".toServerId(),
                                         )
                                     ),
                                 user = null,

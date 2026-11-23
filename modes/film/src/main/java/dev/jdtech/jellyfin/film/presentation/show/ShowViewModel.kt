@@ -220,9 +220,7 @@ constructor(
     /** Stored and downloaded episodes per season, from Room only, of the current server (#718). */
     private suspend fun getLocalEpisodeCounts(showId: ItemId): Map<ItemId, SeasonEpisodeCounts> =
         withContext(Dispatchers.IO) {
-            val serverId =
-                appPreferences.getValue(appPreferences.currentServer)
-                    ?: return@withContext emptyMap()
+            val serverId = appPreferences.currentServerId() ?: return@withContext emptyMap()
             database.getSeasonEpisodeCounts(showId, serverId).associateBy { it.seasonId }
         }
 

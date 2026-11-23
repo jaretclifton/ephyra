@@ -38,11 +38,13 @@ import dev.jdtech.jellyfin.models.BoxSet
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.navigation.navigateOrReuse
 import dev.jdtech.jellyfin.navigation.resumedAction
 import dev.jdtech.jellyfin.presentation.settings.SettingsScreen
@@ -175,13 +177,13 @@ fun NavigationRoot(
 @Composable
 private fun episodePlayerAction(
     navigate: (NavKey) -> Unit
-): (itemId: ItemId, mediaSourceId: String?, startFromBeginning: Boolean) -> Unit =
+): (itemId: ItemId, mediaSourceId: MediaSourceId?, startFromBeginning: Boolean) -> Unit =
     resumedAction { itemId, mediaSourceId, startFromBeginning ->
         navigate(
             PlayerRoute(
                 itemId = itemId.asString(),
                 itemKind = ItemKind.EPISODE.serialName,
-                mediaSourceId = mediaSourceId,
+                mediaSourceId = mediaSourceId?.asString(),
                 startFromBeginning = startFromBeginning,
             )
         )
@@ -367,7 +369,7 @@ private fun EntryProviderScope<NavKey>.tvEntries(
                         PlayerRoute(
                             itemId = itemId.asString(),
                             itemKind = ItemKind.MOVIE.serialName,
-                            mediaSourceId = mediaSourceId,
+                            mediaSourceId = mediaSourceId?.asString(),
                             // CE (#412): Restart on the movie page.
                             startFromBeginning = startFromBeginning,
                         )
@@ -452,7 +454,7 @@ private fun EntryProviderScope<NavKey>.tvEntries(
             itemId = key.itemId.toItemId(),
             itemKind = key.itemKind,
             startFromBeginning = key.startFromBeginning,
-            mediaSourceId = key.mediaSourceId,
+            mediaSourceId = key.mediaSourceId?.toMediaSourceId(),
             shuffle = key.shuffle,
             navigateBack = { navigateBackFrom(key) },
         )

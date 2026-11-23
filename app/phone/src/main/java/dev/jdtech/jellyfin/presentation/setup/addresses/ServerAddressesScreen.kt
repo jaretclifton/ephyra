@@ -43,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyServerAddress
 import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.presentation.utils.Layout
@@ -55,7 +56,7 @@ import dev.jdtech.jellyfin.setup.presentation.addresses.ServerAddressesViewModel
 
 @Composable
 fun ServerAddressesScreen(
-    serverId: String,
+    serverId: ServerId,
     navigateBack: () -> Unit,
     viewModel: ServerAddressesViewModel = hiltViewModel(),
 ) {

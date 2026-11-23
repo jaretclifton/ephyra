@@ -4,10 +4,12 @@ import dev.jdtech.jellyfin.core.server.CurrentServerType
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.domain.ports.SessionRestorer
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.ServerWithAddressAndUser
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import kotlinx.coroutines.CoroutineScope
@@ -31,7 +33,7 @@ import timber.log.Timber
  * the database has no such server.
  */
 internal data class ApiSession(
-    val serverId: String,
+    val serverId: ServerId,
     val baseUrl: String?,
     val accessToken: String?,
     val userId: UserId?,
@@ -39,7 +41,7 @@ internal data class ApiSession(
 )
 
 /** The session the database describes for [serverId], the way the client was always set up. */
-internal fun ServerWithAddressAndUser?.toApiSession(serverId: String): ApiSession {
+internal fun ServerWithAddressAndUser?.toApiSession(serverId: ServerId): ApiSession {
     val type = this?.server?.type
     val address = this?.address ?: return ApiSession(serverId, null, null, null, type)
     return ApiSession(serverId, address.address, user?.accessToken, user?.id, type)
@@ -70,7 +72,7 @@ internal class SavedSessionRestorer(
     private val currentType: CurrentServerType,
 ) : SessionRestorer {
     override fun restore(session: ServerSession) {
-        val serverId = appPreferences.getValue(appPreferences.currentServer)
+        val serverId = appPreferences.currentServerId()
         val saved = appPreferences.savedApiSession()
         val initial =
             when {
@@ -92,7 +94,7 @@ internal class SavedSessionRestorer(
 
 /** The copy of the session kept in preferences, read without touching Room. */
 internal fun AppPreferences.savedApiSession(): ApiSession? {
-    val serverId = getValue(sessionServerId) ?: return null
+    val serverId = getValue(sessionServerId)?.toServerId() ?: return null
     val userId = getValue(sessionUserId)?.toUserId()
     return ApiSession(
         serverId,
@@ -108,7 +110,7 @@ internal fun AppPreferences.saveApiSession(session: ApiSession?) {
     if (savedApiSession() == session) return
     sharedPreferences
         .edit()
-        .putString(sessionServerId.backendName, session?.serverId)
+        .putString(sessionServerId.backendName, session?.serverId?.asString())
         .putString(sessionBaseUrl.backendName, session?.baseUrl)
         .putString(sessionAccessToken.backendName, session?.accessToken)
         .putString(sessionUserId.backendName, session?.userId?.asString())
@@ -140,7 +142,7 @@ internal fun mirrorApiSession(
     CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
         var first = true
         appPreferences
-            .observe(appPreferences.currentServer)
+            .observeCurrentServerId()
             .flatMapLatest { serverId ->
                 if (serverId == null) {
                     flowOf(null)

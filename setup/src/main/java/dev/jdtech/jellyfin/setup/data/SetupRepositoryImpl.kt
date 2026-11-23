@@ -17,6 +17,7 @@ import dev.jdtech.jellyfin.models.QuickConnectState
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.ServerCapabilities
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.UiText
@@ -71,12 +72,10 @@ class SetupRepositoryImpl(
     }
 
     override suspend fun getCurrentServer(): Server? {
-        return appPreferences.getValue(appPreferences.currentServer)?.let { id ->
-            database.getServer(id)
-        }
+        return appPreferences.currentServerId()?.let { id -> database.getServer(id) }
     }
 
-    override suspend fun deleteServer(serverId: String) {
+    override suspend fun deleteServer(serverId: ServerId) {
         // CE (#334): the saved logins go with the server, so sign them out there too.
         coroutineScope {
             database
@@ -116,7 +115,7 @@ class SetupRepositoryImpl(
     override suspend fun getQuickConnectState(secret: String): QuickConnectState =
         withContext(Dispatchers.IO) { clientConnector().quickConnectState(clientAddress(), secret) }
 
-    override suspend fun setCurrentServer(serverId: String) {
+    override suspend fun setCurrentServer(serverId: ServerId) {
         val serverWithAddressAndUser = database.getServerWithAddressAndUser(serverId) ?: return
         val serverAddress = serverWithAddressAndUser.address ?: return
         val user = serverWithAddressAndUser.user
@@ -287,11 +286,11 @@ class SetupRepositoryImpl(
         )
     }
 
-    override suspend fun getUsers(serverId: String): List<User> {
+    override suspend fun getUsers(serverId: ServerId): List<User> {
         return database.getUsers(serverId)
     }
 
-    override suspend fun getPublicUsers(serverId: String): List<User> =
+    override suspend fun getPublicUsers(serverId: ServerId): List<User> =
         withContext(Dispatchers.IO) {
             clientConnector().publicUsers(clientAddress()).map {
                 User(
@@ -361,7 +360,7 @@ class SetupRepositoryImpl(
         )
     }
 
-    override suspend fun addAddress(serverId: String, address: String): ServerAddress {
+    override suspend fun addAddress(serverId: ServerId, address: String): ServerAddress {
         // The connector normalises the input the same way addServer does, so a bare host or a
         // missing scheme resolves to a usable address. It does not touch the client's base URL,
         // and it runs unwatched: this server is not the one in use, so its answers (or silence)
@@ -383,11 +382,11 @@ class SetupRepositoryImpl(
         return serverAddress
     }
 
-    override suspend fun getAddresses(serverId: String): List<ServerAddress> {
+    override suspend fun getAddresses(serverId: ServerId): List<ServerAddress> {
         return database.getServerWithAddresses(serverId).addresses
     }
 
-    override suspend fun getCurrentAddress(serverId: String): ServerAddress? {
+    override suspend fun getCurrentAddress(serverId: ServerId): ServerAddress? {
         return database.getServerCurrentAddress(serverId)
     }
 

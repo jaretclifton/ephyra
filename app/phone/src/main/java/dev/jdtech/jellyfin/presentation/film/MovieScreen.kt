@@ -154,7 +154,7 @@ fun MovieScreen(
                         intent.putExtra("itemId", movieId.asString())
                         intent.putExtra("itemKind", ItemKind.MOVIE.serialName)
                         intent.putExtra("startFromBeginning", action.startFromBeginning)
-                        intent.putExtra("mediaSourceId", action.mediaSourceId)
+                        intent.putExtra("mediaSourceId", action.mediaSourceId?.asString())
                         context.startActivity(intent)
                     }
                 }

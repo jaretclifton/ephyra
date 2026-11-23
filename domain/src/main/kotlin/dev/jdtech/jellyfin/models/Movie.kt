@@ -42,5 +42,5 @@ data class Movie(
     val specialFeatureCount: Int? = null,
     override val images: ItemImages,
     override val chapters: List<Chapter>,
-    override val trickplayInfo: Map<String, ItemTrickplayInfo>?,
+    override val trickplayInfo: Map<MediaSourceId, ItemTrickplayInfo>?,
 ) : Item, Playable

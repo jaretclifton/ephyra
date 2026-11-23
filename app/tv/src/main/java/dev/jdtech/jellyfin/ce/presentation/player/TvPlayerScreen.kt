@@ -96,6 +96,7 @@ import dev.jdtech.jellyfin.di.SubtitleStyleEntryPoint
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.player.local.R as PlayerR
 import dev.jdtech.jellyfin.player.local.domain.SleepTimerOption
 import dev.jdtech.jellyfin.player.local.domain.StillWatchingTracker
@@ -135,7 +136,7 @@ fun TvPlayerScreen(
     itemId: ItemId,
     itemKind: String,
     startFromBeginning: Boolean,
-    mediaSourceId: String? = null,
+    mediaSourceId: MediaSourceId? = null,
     shuffle: Boolean = false,
     navigateBack: () -> Unit,
 ) {

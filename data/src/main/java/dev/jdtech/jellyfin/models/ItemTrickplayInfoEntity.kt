@@ -17,7 +17,7 @@ import androidx.room3.PrimaryKey
         ],
 )
 data class ItemTrickplayInfoEntity(
-    @PrimaryKey val sourceId: String,
+    @PrimaryKey val sourceId: MediaSourceId,
     val width: Int,
     val height: Int,
     val tileWidth: Int,
@@ -27,7 +27,7 @@ data class ItemTrickplayInfoEntity(
     val bandwidth: Int,
 )
 
-fun ItemTrickplayInfo.toItemTrickplayInfoEntity(sourceId: String): ItemTrickplayInfoEntity {
+fun ItemTrickplayInfo.toItemTrickplayInfoEntity(sourceId: MediaSourceId): ItemTrickplayInfoEntity {
     return ItemTrickplayInfoEntity(
         sourceId = sourceId,
         width = width,
