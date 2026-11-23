@@ -3,10 +3,10 @@ package dev.jdtech.jellyfin.repository
 import dev.jdtech.jellyfin.models.ServerId
 
 /**
- * #918: the id of the server the app has chosen, for `data` and `downloads`, which do not read the
- * app's preferences. `core` implements it over the saved preference, read again on every [get].
+ * The server the app is signed in to, or none. Read live on every call, as the callers do not keep
+ * it. The app provides the implementation (#918): a port keeps the download engine and the stores
+ * off the UI's preferences.
  */
 fun interface CurrentServerId {
-    /** The current server's id, or null when none is chosen. */
     fun get(): ServerId?
 }
