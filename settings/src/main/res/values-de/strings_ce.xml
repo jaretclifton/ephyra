@@ -193,7 +193,7 @@
     <string name="ce_number_no_limit">Unbegrenzt</string>
     <string name="ce_number_off">Aus</string>
     <string name="ce_pref_player_keep_landscape">Player im Querformat halten</string>
-    <string name="ce_pref_player_keep_landscape_summary">Videos im Querformat abspielen, auch wenn du das Tablet hochkant drehst</string>
+    <string name="ce_pref_player_keep_landscape_summary">Videos im Querformat abspielen, auch wenn du das Tablet hochkant drehst. Manche Tablets lassen das nicht zu; dann dreht sich der Player mit dem Tablet.</string>
     <string name="ce_pref_home_episode_images">Episodenbilder verwenden</string>
     <string name="ce_pref_home_episode_images_summary">In „Weiterschauen“ und „Als Nächstes“ das Bild der Episode statt des Serienbilds anzeigen</string>
     <string name="ce_pref_cast_group">Chromecast</string>

@@ -197,7 +197,7 @@
     <string name="ce_number_no_limit">Bez limitu</string>
     <string name="ce_number_off">Wyłączone</string>
     <string name="ce_pref_player_keep_landscape">Utrzymuj odtwarzacz w poziomie</string>
-    <string name="ce_pref_player_keep_landscape_summary">Odtwarzaj filmy w poziomie, nawet gdy obrócisz tablet pionowo</string>
+    <string name="ce_pref_player_keep_landscape_summary">Odtwarzaj filmy w poziomie, nawet gdy obrócisz tablet pionowo. Niektóre tablety na to nie pozwalają; wtedy odtwarzacz obraca się razem z tabletem.</string>
     <string name="ce_pref_home_episode_images">Używaj obrazów odcinków</string>
     <string name="ce_pref_home_episode_images_summary">Pokazuj obraz odcinka zamiast obrazu serialu w sekcjach Kontynuuj oglądanie i Następne</string>
     <string name="ce_pref_cast_group">Chromecast</string>

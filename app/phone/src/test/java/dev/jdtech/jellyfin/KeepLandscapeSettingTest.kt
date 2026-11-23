@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import androidx.test.core.app.ApplicationProvider
 import dev.jdtech.jellyfin.settings.R as SettingsR
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import dev.jdtech.jellyfin.settings.domain.KeepPlayerLandscape
 import dev.jdtech.jellyfin.settings.presentation.enums.AppVariant
 import dev.jdtech.jellyfin.settings.presentation.settings.SettingsViewModel
 import kotlin.test.assertFalse
@@ -84,10 +83,22 @@ class KeepLandscapeSettingTest {
         assertFalse(appPreferences.getValue(appPreferences.playerKeepLandscape))
     }
 
+    // #917: whether the system honours the request is a per-display setting, not the version.
     @Test
-    fun `Android 16 and later ignore the request on large screens`() {
-        assertTrue(KeepPlayerLandscape.isSupported(35))
-        assertFalse(KeepPlayerLandscape.isSupported(36))
-        assertFalse(KeepPlayerLandscape.isSupported(37))
+    @Config(sdk = [36], qualifiers = "w1024dp-h640dp")
+    fun `shown on an Android 16 tablet`() {
+        assertTrue(shown())
+    }
+
+    @Test
+    @Config(sdk = [37], qualifiers = "w640dp-h1024dp")
+    fun `shown on an Android 17 tablet held upright`() {
+        assertTrue(shown())
+    }
+
+    @Test
+    @Config(sdk = [36], qualifiers = "w412dp-h915dp")
+    fun `hidden on an Android 16 phone`() {
+        assertFalse(shown())
     }
 }
