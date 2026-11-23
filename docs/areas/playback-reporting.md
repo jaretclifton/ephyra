@@ -1,6 +1,6 @@
 # Playback reporting
 
-Status: works on phone, TV and Cast; two bugs are open ([#909](https://github.com/midasvo/ephyra/issues/909), [#890](https://github.com/midasvo/ephyra/issues/890)). As of 2026-11-23 (`main` at `26e62f27a`).
+Status: works on phone, TV and Cast; no open bugs known. As of 2026-11-23 (`main` at `26e62f27a`).
 
 ## Start here
 
@@ -10,7 +10,6 @@ Status: works on phone, TV and Cast; two bugs are open ([#909](https://github.co
 - Other senders: TV's `TvProgressReports` (loop only), Cast's `CastPlaybackReporter` (proprietary flavour).
 - Rules: R1, R2 (no SDK outside the adapter), R12 (`Ticks`), R14 (`PlayStop` and `PlayState`), R6 (no engine package).
 - Test fast: `./gradlew :player:local:testDebugUnitTest --tests '*PlaybackReporter*' --tests '*PlaybackStartGate*' --tests '*PlaybackStopReport*'`; request bodies: `./gradlew :server:jellyfin:testDebugUnitTest --tests '*PlaybackReportRequestTest'`.
-- Open: the reports do not name the chosen version (#909); a switch during the previous item's stop can send a second start with the old play method (#890). Both are under Pitfalls.
 
 ## What it does
 
@@ -65,7 +64,8 @@ On a device: the test server (`test-server` skill, `docs/dev-environment.md`). W
 - Versions Movie: pick a version, play, read the session (#909).
 - Plain Movie: start, pause, resume, leave: one start, progress, one stop at the right position.
 - A quality switch on both ExoPlayer and mpv: one new start after each switch (#870).
-- Next while the server holds the stop (#890): `tools/test-server/forward.py` cannot hold one request: its rate limit slows a long answer, but a small one passes in one chunk. Hold the call in a unit test instead, with a fake whose call suspends until the test releases it (`postPlaybackStop` in the `PlaybackReporter` tests), switch during the wait and count the starts and their play method.
+- Next while the server holds the stop (#890): `tools/test-server/forward.py` cannot hold one request: its rate limit slows a long answer, but a small one passes in one chunk. In a unit test, delay `postPlaybackStop` in the `PlaybackReporter` tests (`stopDelayMs`), switch during the wait and count the starts. On the emulator a small proxy that reads each request line and sleeps before forwarding `POST /Sessions/Playing/Stopped` does it (the app's address set to the proxy's port in `serverAddresses`); it must half-close (`shutdown(SHUT_WR)`) rather than close at the end of a request, or mpv's HLS requests fail with "Connection reset by peer". Cap the quality first (`pref_player_max_bitrate`) so the switch to Original changes the play method; the cap stays in the prefs after a switch.
+- What the server was told: `GET /Sessions` (with your own `DeviceId`), `PlayState.MediaSourceId`, `PlayMethod` and `PositionTicks` of the device's session. The activity log shows only "is playing".
 - Leave while the item loads: no start, progress or stop for it.
 
 ## Before a PR
@@ -89,8 +89,8 @@ Anything under `player/local` runs `docs/mpv-checklist.md` on both backends ([pl
 
 ## Pitfalls
 
-- **#909 (open): the reports do not name the version.** `PlaybackReport` (`PlaybackPort.kt`) has no media source id, and `JellyfinPlayback.reportStart`, `reportProgress` and `reportStopped` set none on the SDK infos. The id is in the player (`PlayerItem.mediaSourceId`) and is lost at `MediaRepository.postPlayback*`, which take only the item id. A fix touches `PlaybackReporter`, `MediaRepository` and `MediaRepositoryImpl`, `PlaybackReport`, `JellyfinPlayback`, the Cast sender in `CastPlayerControllerImpl` and `PlaybackReportRequestTest`. `PlaySessions` is keyed by item id, so two versions of one item share an entry.
-- **#890 (open): a second start with the old play method.** `PlayerViewModel.onMediaItemTransition` looks the item up in `items` before `stopJob?.join()`. A quality or audio switch that lands in the join replaces the queue (`swapInQueue`; on mpv it calls `PlaybackReporter.onStreamReplaced`). Then `onTransitionHandled` runs with the old `PlayerItem`: `PlaybackStartGate.onTransition` sends it, or replaces the held new one, and `sendPlaybackStart` reports the old `item.isTranscoded`. Fix: look the item up again after the join, or let the gate drop a stream older than the one it holds (it knows only the item id). Found by reading code: reproduce first, with a proxy that delays `POST /Sessions/Playing/Stopped`, and count the starts and their `PlayMethod`.
+- **The reports name the version (#909).** `setPlaySession` records the version of the stream that is loaded with its play session, as one `PlayingStream` per item in `PlaySessions` (`domain/.../repository/PlaySessions.kt`), and every report sends it as `MediaSourceId`. A report reads the session and the version from that one value. Without it the server shows the item's first version. `PlaySessions` is keyed by item id: the last stream loaded for an item is the one named.
+- **A start goes out after the previous item's stop, once (#890).** `onMediaItemTransition` takes the item before it waits for the previous item's stop. A quality or audio switch in that wait (ExoPlayer: a second transition; mpv: `onStreamReplaced`) used to send the new stream's start ahead of the stop, and the waiting transition a second start after it. Now `PlaybackReporter` numbers the transitions (`ItemTransition`): one handled after a newer one sends nothing. And `sendPlaybackStart` waits for the stops still being sent (`stopsInFlight`), whichever way the start comes. A new way into `sendPlaybackStart` keeps both.
 - **A start before the stream is fetched says DirectPlay**; `PlaySessions.playReport` sends Transcode only with a known session, and the first progress corrects it.
 - **A quality switch leaves the old transcode to the server's timer**: there is no call to end it.
 - **No start, no progress.** `reportProgress` returns while `playing?.startJob` is null: the server marks an item without a runtime played at its first position report.
