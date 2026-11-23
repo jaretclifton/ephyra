@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin
 
 import android.app.Application
 import android.os.Bundle
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.serialization.NavBackStackSerializer
@@ -133,6 +134,18 @@ internal object RouteSavedState {
         // The whole back stack, through the serializer rememberNavBackStack uses. It holds the
         // route's class name, which is unchanged, and the route's serializer output: put the old
         // route's output in its place, as an older version saved it, and the route comes back.
+        // A back stack is snapshot state: it is made in a snapshot of its own that is thrown away,
+        // or the write stays in the global snapshot and breaks later Compose tests in this JVM
+        // (ServerUnreachableTest did).
+        val snapshot = Snapshot.takeMutableSnapshot()
+        try {
+            snapshot.enter { checkBackStack(new, newState, oldState) }
+        } finally {
+            snapshot.dispose()
+        }
+    }
+
+    private fun <New : NavKey> checkBackStack(new: New, newState: Bundle, oldState: Bundle) {
         val backStack = NavBackStackSerializer(NavKeySerializer<NavKey>())
         val stack = encodeToSavedState(backStack, NavBackStack<NavKey>(new))
         var places = 0
