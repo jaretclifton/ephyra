@@ -30,7 +30,9 @@ class DomainPurityTest {
     /**
      * R5 for `application` (#896): the same, and nothing that `data` declares either (its entities
      * share the package `dev.jdtech.jellyfin.models` with domain's models, so a package prefix
-     * would not catch them). The ports the features use stay free of the Room adapter.
+     * would not catch them). A wildcard import of a package `data` declares something in is a
+     * violation too, `dev.jdtech.jellyfin.models.*` included: import domain's models by name. The
+     * ports the features use stay free of the Room adapter.
      */
     @Test
     fun `R5 the application module imports nothing from Android, the SDK, Room or data`() {
@@ -39,9 +41,12 @@ class DomainPurityTest {
             "dev.jdtech.jellyfin.database.ServerDatabaseDao" in dataNames,
             "The declarations of $DATA were not read: $dataNames",
         )
+        val dataPackages = dataNames.map { it.substringBeforeLast('.') }.toSet()
         val violations =
             importsOf(APPLICATION).filter { (_, import) ->
-                isForbidden(import) || import.removeSuffix(".*") in dataNames
+                val name = import.removeSuffix(".*")
+                isForbidden(import) ||
+                    if (import.endsWith(".*")) name in dataPackages else name in dataNames
             }
         assertTrue(
             violations.isEmpty(),
@@ -52,11 +57,16 @@ class DomainPurityTest {
         )
     }
 
-    /** The imports of the production Kotlin files under [prefix], as (file, import name). */
+    /**
+     * The imports of the production Kotlin files under [prefix], as (file, import name). A wildcard
+     * import ends in `.*` (Konsist names it by its package alone).
+     */
     private fun importsOf(prefix: String): List<Pair<String, String>> =
         scopeOf(prefix).files.flatMap { file ->
             val path = ProjectTree.relativePath(java.io.File(file.path))
-            file.imports.map { path to it.name }
+            file.imports.map {
+                path to if (it.isWildcard) it.name.removeSuffix(".*") + ".*" else it.name
+            }
         }
 
     /**
