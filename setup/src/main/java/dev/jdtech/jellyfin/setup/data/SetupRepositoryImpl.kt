@@ -15,6 +15,7 @@ import dev.jdtech.jellyfin.models.ExceptionUiTexts
 import dev.jdtech.jellyfin.models.QuickConnectState
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.ServerAddressId
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerType
@@ -27,7 +28,6 @@ import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.domain.AddressRejected
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
-import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -175,7 +175,7 @@ class SetupRepositoryImpl(
                 if (addresses.none { it.address == resolved.address }) {
                     val serverAddress =
                         ServerAddress(
-                            id = UUID.randomUUID(),
+                            id = ServerAddressId.random(),
                             serverId = serverInDatabase.id,
                             address = resolved.address,
                         )
@@ -186,7 +186,7 @@ class SetupRepositoryImpl(
             } else {
                 val serverAddress =
                     ServerAddress(
-                        id = UUID.randomUUID(),
+                        id = ServerAddressId.random(),
                         serverId = serverId,
                         address = resolved.address,
                     )
@@ -349,7 +349,7 @@ class SetupRepositoryImpl(
         serverStore.clearCurrentUser(server.id)
     }
 
-    override suspend fun setCurrentAddress(addressId: UUID) {
+    override suspend fun setCurrentAddress(addressId: ServerAddressId) {
         val server = getCurrentServer() ?: return
         val address = serverStore.address(addressId)
         if (address.serverId != server.id) {
@@ -376,7 +376,7 @@ class SetupRepositoryImpl(
             throw AddressRejected(AddressRejected.Reason.ALREADY_SAVED)
         }
 
-        val serverAddress = ServerAddress(UUID.randomUUID(), serverId, match)
+        val serverAddress = ServerAddress(ServerAddressId.random(), serverId, match)
         serverStore.insertAddress(serverAddress)
         return serverAddress
     }
@@ -389,7 +389,7 @@ class SetupRepositoryImpl(
         return serverStore.currentAddress(serverId)
     }
 
-    override suspend fun deleteAddress(addressId: UUID) {
+    override suspend fun deleteAddress(addressId: ServerAddressId) {
         serverStore.deleteAddress(addressId)
     }
 }

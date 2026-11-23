@@ -16,6 +16,7 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemTrickplayInfo
 import dev.jdtech.jellyfin.models.MediaSourceId
+import dev.jdtech.jellyfin.models.MediaStreamId
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Playable
@@ -39,7 +40,6 @@ import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
 import dev.jdtech.jellyfin.utils.download.estimateCappedDownloadSize
 import dev.jdtech.jellyfin.work.ImagesDownloaderWorker
 import java.io.File
-import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Provider
@@ -683,7 +683,7 @@ class DownloaderImpl(
             source.mediaStreams.filter {
                 it.isExternal || (source.transcoded && it.type == MediaStreamType.SUBTITLE)
             }) {
-            val id = UUID.randomUUID()
+            val id = MediaStreamId.random()
             try {
                 val mediaStreamPath = mediaStream.path ?: continue
                 val streamExt =
@@ -693,7 +693,7 @@ class DownloaderImpl(
                     File(
                             downloadsDir,
                             DownloadFiles.partialPath(
-                                "${sanitize(item.name)}.${source.id.asString()}.$id.$streamExt"
+                                "${sanitize(item.name)}.${source.id.asString()}.${id.asString()}.$streamExt"
                             ),
                         )
                         .absolutePath

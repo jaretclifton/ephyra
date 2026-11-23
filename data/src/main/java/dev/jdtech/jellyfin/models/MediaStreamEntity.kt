@@ -3,11 +3,10 @@ package dev.jdtech.jellyfin.models
 import androidx.room3.Entity
 import androidx.room3.Index
 import androidx.room3.PrimaryKey
-import java.util.UUID
 
 @Entity(tableName = "mediastreams", indices = [Index("sourceId")])
 data class MediaStreamEntity(
-    @PrimaryKey val id: UUID,
+    @PrimaryKey val id: MediaStreamId,
     val sourceId: MediaSourceId,
     val title: String,
     val displayTitle: String?,
@@ -26,7 +25,7 @@ data class MediaStreamEntity(
 )
 
 fun MediaStream.toMediaStreamEntity(
-    id: UUID,
+    id: MediaStreamId,
     sourceId: MediaSourceId,
     path: String,
 ): MediaStreamEntity {

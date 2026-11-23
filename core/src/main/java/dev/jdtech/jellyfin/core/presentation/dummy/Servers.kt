@@ -3,8 +3,8 @@ package dev.jdtech.jellyfin.core.presentation.dummy
 import dev.jdtech.jellyfin.models.DiscoveredServer
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.toServerAddressId
 import dev.jdtech.jellyfin.models.toServerId
-import java.util.UUID
 
 val dummyDiscoveredServer =
     DiscoveredServer(
@@ -17,13 +17,13 @@ val dummyServer =
     Server(
         id = "".toServerId(),
         name = "Demo server",
-        currentServerAddressId = UUID.fromString("6f048d8b-aab4-4c97-9b05-8e7de4e6d604"),
+        currentServerAddressId = "6f048d8b-aab4-4c97-9b05-8e7de4e6d604".toServerAddressId(),
         currentUserId = randomUserId(),
     )
 
 val dummyServerAddress =
     ServerAddress(
-        id = UUID.fromString("6f048d8b-aab4-4c97-9b05-8e7de4e6d604"),
+        id = "6f048d8b-aab4-4c97-9b05-8e7de4e6d604".toServerAddressId(),
         address = "http://192.168.0.10:8096",
         serverId = "".toServerId(),
     )

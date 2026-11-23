@@ -8,11 +8,13 @@ import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.MediaStreamEntity
+import dev.jdtech.jellyfin.models.MediaStreamId
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.testing.asMediaSourceId
+import dev.jdtech.jellyfin.testing.asMediaStreamId
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
@@ -58,7 +60,7 @@ class SubtitleFinalizeTest {
     private val slowSubtitle = CountDownLatch(1)
 
     private val sources = ConcurrentHashMap<String, ItemSourceEntity>()
-    private val streams = ConcurrentHashMap<UUID, MediaStreamEntity>()
+    private val streams = ConcurrentHashMap<MediaStreamId, MediaStreamEntity>()
     private val streamReads = AtomicInteger()
     private val pathUpdates = AtomicInteger()
 
@@ -301,7 +303,7 @@ class SubtitleFinalizeTest {
     }
 
     private fun subtitleRow(source: ItemSourceEntity, downloadId: Long): MediaStreamEntity {
-        val id = UUID.randomUUID()
+        val id = MediaStreamId.random()
         val row =
             MediaStreamEntity(
                 id = id,
@@ -372,13 +374,13 @@ class SubtitleFinalizeTest {
                 }
                 "setMediaStreamPath" -> {
                     pathUpdates.incrementAndGet()
-                    streams.computeIfPresent(args[0] as UUID) { _, s ->
+                    streams.computeIfPresent(args[0].asMediaStreamId()) { _, s ->
                         s.copy(path = args[1] as String)
                     }
                     Unit
                 }
                 "deleteMediaStream" -> {
-                    streams.remove(args[0] as UUID)
+                    streams.remove(args[0].asMediaStreamId())
                     Unit
                 }
                 "getCompletedDownloadSources" ->

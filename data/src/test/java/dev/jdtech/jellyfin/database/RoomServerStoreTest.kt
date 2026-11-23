@@ -6,13 +6,13 @@ import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.models.ProfileLockType
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.ServerAddressId
 import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.ServerWithAddressAndUser
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlinx.coroutines.CompletableDeferred
@@ -53,8 +53,9 @@ class RoomServerStoreTest {
     @After fun close() = room.close()
 
     private val serverId = "server-1".toServerId()
-    private val address = ServerAddress(UUID.randomUUID(), serverId, "http://10.0.0.2:8096")
-    private val other = ServerAddress(UUID.randomUUID(), serverId, "https://media.example.org")
+    private val address = ServerAddress(ServerAddressId.random(), serverId, "http://10.0.0.2:8096")
+    private val other =
+        ServerAddress(ServerAddressId.random(), serverId, "https://media.example.org")
 
     /** Every field away from its default, so a mapper that drops one is seen. */
     private val user =

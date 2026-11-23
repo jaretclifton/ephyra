@@ -30,6 +30,7 @@ import dev.jdtech.jellyfin.models.UserEntity
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toServerAddressId
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
@@ -42,7 +43,6 @@ import dev.jdtech.jellyfin.utils.CoreDownloadTexts
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.NetworkConnectivity
 import java.time.LocalDateTime
-import java.util.UUID
 import javax.inject.Provider
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -350,7 +350,7 @@ class SyncWorkerRunTest {
         const val SERVER = "server"
         const val ADDRESS = "http://jellyfin.test:8096"
         const val TOKEN = "token"
-        val ADDRESS_ID: UUID = UUID.fromString("00000000-0000-0000-0000-0000000000ad")
+        val ADDRESS_ID = "00000000-0000-0000-0000-0000000000ad".toServerAddressId()
         val USER_ID: UserId = "00000000-0000-0000-0000-000000000001".toUserId()
         val ITEM_ID: ItemId = "00000000-0000-0000-0000-000000000040".toItemId()
         const val LOCAL_POSITION = 1_800_000_000L

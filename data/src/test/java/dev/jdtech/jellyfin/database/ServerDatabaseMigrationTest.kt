@@ -9,7 +9,12 @@ import androidx.sqlite.execSQL
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.models.MediaStreamEntity
+import dev.jdtech.jellyfin.models.MediaStreamId
+import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.PendingDownloadDto
+import dev.jdtech.jellyfin.models.ServerAddressEntity
+import dev.jdtech.jellyfin.models.ServerAddressId
 import dev.jdtech.jellyfin.models.ServerEntity
 import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.UserEntity
@@ -17,7 +22,9 @@ import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.serverType
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
+import dev.jdtech.jellyfin.models.toMediaStreamId
 import dev.jdtech.jellyfin.models.toServer
+import dev.jdtech.jellyfin.models.toServerAddressId
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import kotlin.math.abs
@@ -380,6 +387,99 @@ class ServerDatabaseMigrationTest {
             }
         }
 
+    /**
+     * CE (#918): server address and media stream ids became value classes over their text, without
+     * the `UUID` converter that stored them before. A schema 21 database with the converter's text
+     * (dashed lowercase) reads back as the same ids, queries by id find the row, and ids the DAO
+     * writes, random ones too, are stored as the same text.
+     */
+    @Test
+    fun `address and media stream ids of a schema 21 database read and write as the text stored`() =
+        runBlocking {
+            helper.createDatabase(21).apply {
+                insertRows(21)
+                execSQL(
+                    "INSERT INTO mediastreams (id, sourceId, title, language, type, codec, isExternal, path) VALUES ('$STREAM_ID', 'source', 'English', 'eng', 'SUBTITLE', 'srt', 1, '$PATH.srt.download')"
+                )
+                close()
+            }
+            val randomAddress = ServerAddressId.random()
+            val randomStream = MediaStreamId.random()
+            val database =
+                Room.databaseBuilder(context, ServerDatabase::class.java, dbFile.path)
+                    .setDriver(AndroidSQLiteDriver())
+                    .addMigrations(*MIGRATIONS.toTypedArray())
+                    .build()
+            try {
+                val dao = database.getServerDatabaseDao()
+                val server = dao.getServer(SERVER.toServerId())!!
+                assertEquals(ADDRESS_ID.toServerAddressId(), server.currentServerAddressId)
+                assertEquals(ADDRESS, dao.getAddress(ADDRESS_ID.toServerAddressId()).address)
+                assertEquals(
+                    ADDRESS_ID.toServerAddressId(),
+                    dao.getServerCurrentAddress(SERVER.toServerId())!!.id,
+                )
+                assertTrue(
+                    STREAM_ID.toMediaStreamId() in
+                        dao.getMediaStreamsBySourceId("source".toMediaSourceId()).map { it.id }
+                )
+                dao.setMediaStreamPath(STREAM_ID.toMediaStreamId(), "$PATH.srt")
+
+                dao.insertServerAddress(
+                    ServerAddressEntity(NEW_ADDRESS_ID.toServerAddressId(), server.id, "http://a")
+                )
+                dao.insertServerAddress(ServerAddressEntity(randomAddress, server.id, "http://b"))
+                dao.updateServer(server.copy(currentServerAddressId = randomAddress))
+                dao.insertMediaStream(stream(NEW_STREAM_ID.toMediaStreamId()))
+                dao.insertMediaStream(stream(randomStream))
+                assertEquals(randomAddress, dao.getServerCurrentAddress(SERVER.toServerId())!!.id)
+            } finally {
+                database.close()
+            }
+
+            AndroidSQLiteDriver().open(dbFile.path).run {
+                assertEquals(
+                    listOf(ADDRESS_ID, NEW_ADDRESS_ID, randomAddress.asString()).sorted().map {
+                        it to "text"
+                    },
+                    rows("SELECT id, typeof(id) FROM serverAddresses ORDER BY id"),
+                )
+                assertEquals(
+                    randomAddress.asString(),
+                    text("SELECT currentServerAddressId FROM servers WHERE id = '$SERVER'"),
+                )
+                assertEquals(
+                    listOf(NEW_STREAM_ID, STREAM_ID, randomStream.asString(), "stream")
+                        .sorted()
+                        .map { it to "text" },
+                    rows("SELECT id, typeof(id) FROM mediastreams ORDER BY id"),
+                )
+                assertEquals(
+                    "$PATH.srt",
+                    text("SELECT path FROM mediastreams WHERE id = '$STREAM_ID'"),
+                )
+                close()
+            }
+        }
+
+    private fun stream(id: MediaStreamId) =
+        MediaStreamEntity(
+            id = id,
+            sourceId = "source".toMediaSourceId(),
+            title = "Deutsch",
+            displayTitle = null,
+            language = "deu",
+            type = MediaStreamType.SUBTITLE,
+            codec = "subrip",
+            isExternal = true,
+            path = "$PATH.$id.srt",
+            channelLayout = null,
+            videoRangeType = null,
+            height = null,
+            width = null,
+            videoDoViTitle = null,
+        )
+
     private fun migratesWithData(from: Int) = runBlocking {
         helper.createDatabase(from).apply {
             insertRows(from)
@@ -660,6 +760,10 @@ class ServerDatabaseMigrationTest {
         const val DASHED_SOURCE = "3f2a1b0c-9d8e-4f7a-8b6c-5d4e3f2a1b0c"
         const val NEW_SOURCE = "9e8d7c6b5a4f43e2a1b0c9d8e7f6a5b4"
         const val STREAM_ID = "00000000-0000-0000-0000-0000000000c1"
+
+        /** Ids the DAO writes in the #918 test, as `UUID.toString()` gave them. */
+        const val NEW_ADDRESS_ID = "6f048d8b-aab4-4c97-9b05-8e7de4e6d604"
+        const val NEW_STREAM_ID = "b3a1c2d4-5e6f-4a7b-8c9d-0e1f2a3b4c5d"
 
         /** The one line [describeSchema] gains from #770. */
         const val SERVER_TYPE_COLUMN = "servers column type TEXT 1 'jellyfin' 0"

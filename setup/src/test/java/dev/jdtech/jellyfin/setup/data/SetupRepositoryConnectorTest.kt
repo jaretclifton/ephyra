@@ -13,6 +13,7 @@ import dev.jdtech.jellyfin.models.ExceptionUiText
 import dev.jdtech.jellyfin.models.ExceptionUiTexts
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.ServerAddressId
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.ServerWithAddressAndUser
@@ -26,6 +27,7 @@ import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.domain.AddressRejected
+import dev.jdtech.jellyfin.testing.asServerAddressId
 import dev.jdtech.jellyfin.testing.asServerId
 import dev.jdtech.jellyfin.testing.asUserId
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -59,8 +61,10 @@ class SetupRepositoryConnectorTest {
             serverId = "a".toServerId(),
             accessToken = "token-a",
         )
-    private val inRoom = ServerAddress(UUID.randomUUID(), "a".toServerId(), "https://a.example")
-    private val other = ServerAddress(UUID.randomUUID(), "a".toServerId(), "http://a.local:8096")
+    private val inRoom =
+        ServerAddress(ServerAddressId.random(), "a".toServerId(), "https://a.example")
+    private val other =
+        ServerAddress(ServerAddressId.random(), "a".toServerId(), "http://a.local:8096")
     private var server = Server("a".toServerId(), "Server a", inRoom.id, alice.id)
     private val users = mutableMapOf(alice.id to alice)
     private val addresses = mutableListOf(inRoom, other)
@@ -76,7 +80,7 @@ class SetupRepositoryConnectorTest {
             when (method.kotlinName) {
                 "server" -> server.takeIf { it.id == args[0].asServerId() }
                 "user" -> users[args[0].asUserId()]
-                "address" -> addresses.single { it.id == args[0] }
+                "address" -> addresses.single { it.id == args[0].asServerAddressId() }
                 "serverWithAddresses" -> ServerWithAddresses(server, addresses.toList(), null)
                 "serverWithAddressAndUser" ->
                     ServerWithAddressAndUser(

@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlinx.coroutines.runBlocking
@@ -56,13 +55,14 @@ class StoredVideoRangeTypeTest {
         VideoRangeType.entries.forEach { range ->
             val dto =
                 video(range)
-                    .toMediaStreamEntity(UUID.randomUUID(), "source".toMediaSourceId(), "path")
+                    .toMediaStreamEntity(MediaStreamId.random(), "source".toMediaSourceId(), "path")
 
             assertEquals(range.name, dto.videoRangeType)
             assertEquals(range, dto.toMediaStream().videoRangeType)
         }
         val none =
-            video(null).toMediaStreamEntity(UUID.randomUUID(), "source".toMediaSourceId(), "path")
+            video(null)
+                .toMediaStreamEntity(MediaStreamId.random(), "source".toMediaSourceId(), "path")
         assertNull(none.videoRangeType)
         assertNull(none.toMediaStream().videoRangeType)
     }
@@ -74,7 +74,7 @@ class StoredVideoRangeTypeTest {
             val sourceId = "source-${range.name}"
             database.insertMediaStream(
                 video(range)
-                    .toMediaStreamEntity(UUID.randomUUID(), sourceId.toMediaSourceId(), "path")
+                    .toMediaStreamEntity(MediaStreamId.random(), sourceId.toMediaSourceId(), "path")
             )
 
             val stored = database.getMediaStreamsBySourceId(sourceId.toMediaSourceId()).single()

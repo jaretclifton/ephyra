@@ -4,20 +4,9 @@ import androidx.room3.ColumnTypeConverter
 import dev.jdtech.jellyfin.models.Chapter
 import java.time.LocalDateTime
 import java.time.ZoneOffset
-import java.util.UUID
 import kotlinx.serialization.json.Json
 
 class Converters {
-    @ColumnTypeConverter
-    fun fromStringToUUID(value: String?): UUID? {
-        return value?.let { UUID.fromString(it) }
-    }
-
-    @ColumnTypeConverter
-    fun fromUUIDToString(value: UUID?): String? {
-        return value?.toString()
-    }
-
     @ColumnTypeConverter
     fun fromDateTimeToLong(value: LocalDateTime?): Long? {
         return value?.toEpochSecond(ZoneOffset.UTC)

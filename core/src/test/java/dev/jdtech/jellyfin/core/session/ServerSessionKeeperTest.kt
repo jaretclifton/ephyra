@@ -17,11 +17,11 @@ import dev.jdtech.jellyfin.models.ServerEntity
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.UserEntity
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.models.toServerAddressId
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.time.Duration
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
@@ -321,7 +321,7 @@ class ServerSessionKeeperTest {
         const val SERVER = "server"
         const val ADDRESS = "http://127.0.0.1:8096"
         const val TOKEN = "token"
-        val ADDRESS_ID: UUID = UUID.fromString("00000000-0000-0000-0000-0000000000ad")
+        val ADDRESS_ID = "00000000-0000-0000-0000-0000000000ad".toServerAddressId()
         val USER_ID: UserId = "00000000-0000-0000-0000-000000000001".toUserId()
     }
 }

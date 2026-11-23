@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.setup.presentation.addresses
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.jdtech.jellyfin.models.ServerAddressId
 import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.toServerId
@@ -12,7 +13,6 @@ import dev.jdtech.jellyfin.setup.domain.LocalNetworkAccess
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.domain.blocks
 import dev.jdtech.jellyfin.utils.LoadErrorText
-import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,7 +43,7 @@ constructor(
         }
     }
 
-    fun deleteAddress(addressId: UUID) {
+    fun deleteAddress(addressId: ServerAddressId) {
         viewModelScope.launch(Dispatchers.IO) {
             _state.emit(_state.value.copy(error = null))
             val currentAddress = repository.getCurrentAddress(currentServerId)
