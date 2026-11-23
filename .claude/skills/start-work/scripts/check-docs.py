@@ -330,7 +330,7 @@ def check_model(models: dict[str, str]) -> list[str]:
 
     for element, rel in needs_source.items():
         if not sources.get(element):
-            problems.append(f"{rel}: `{element}` has no `link` to a Kotlin file or a folder of them in this repository")
+            problems.append(f"{rel}: `{element}` has no `link` to a source file (`.kt`, `.kts`, `.java`) or a folder of them in this repository")
     for scope, a, b, rel in arrows:
         a, b = resolve(scope, a), resolve(scope, b)
         if not sources.get(a) or not sources.get(b):
