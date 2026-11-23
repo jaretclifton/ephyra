@@ -27,6 +27,7 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.models.looksLikeJellyfinId
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.cast.models.CastConnectionState
 import dev.jdtech.jellyfin.player.cast.models.CastError
@@ -317,14 +318,7 @@ constructor(
 
     /** The Jellyfin id of the item the receiver has loaded now, from its custom data. */
     private fun remoteItemId(): ItemId? =
-        remoteMediaClient?.currentItem?.media?.customData?.optString("itemId")?.toUuidOrNull()
-
-    private fun String.toUuidOrNull(): ItemId? =
-        try {
-            toItemId()
-        } catch (_: IllegalArgumentException) {
-            null
-        }
+        remoteMediaClient?.currentItem?.media?.customData?.optString("itemId")?.castItemIdOrNull()
 
     private fun CastMediaItem.isTranscoded(): Boolean = source?.transcoded == true
 
@@ -511,7 +505,7 @@ constructor(
     private fun restoreRemoteItem() {
         val client = remoteMediaClient ?: return
         val media = client.currentItem?.media ?: return
-        val itemId = media.customData?.optString("itemId")?.toUuidOrNull() ?: return
+        val itemId = media.customData?.optString("itemId")?.castItemIdOrNull() ?: return
         // An item a version before #767 loaded has the server's whole answer instead. What cannot
         // be read at all brings the item back without its tracks.
         val customData = media.customData
@@ -811,7 +805,7 @@ constructor(
                 status.queueItems.map {
                     ReceiverQueueItem(
                         queueItemId = it.itemId,
-                        itemId = it.media?.customData?.optString("itemId")?.toUuidOrNull(),
+                        itemId = it.media?.customData?.optString("itemId")?.castItemIdOrNull(),
                     )
                 },
             currentQueueItemId = status.currentItemId,
@@ -1015,3 +1009,10 @@ constructor(
         forgetPlaylist()
     }
 }
+
+/**
+ * The item id a receiver's custom data names, or null when it names none: empty, or not an id this
+ * app sent (another sender's media on the receiver). Before #773 the `UUID` parse rejected those;
+ * an id is opaque text now, so its form is checked instead.
+ */
+internal fun String.castItemIdOrNull(): ItemId? = takeIf { it.looksLikeJellyfinId() }?.toItemId()
