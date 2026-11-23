@@ -302,6 +302,8 @@ class PlaybackReporterTest {
             advanceUntilIdle()
             s.reporter.updatePosition(positionMs = 60_000L, durationMs = 600_000L)
 
+            // The new stream is loaded at the position playback was at.
+            s.player.positionMs = 60_000L
             s.streamReplaced(item(session = "session-2", transcoded = true))
             advanceUntilIdle()
             // Not before the new stream has loaded, as after ExoPlayer's transition.
@@ -321,6 +323,8 @@ class PlaybackReporterTest {
                 ),
                 s.fake.calls,
             )
+            // CE (#868): the new stream's start carries where playback is, as ExoPlayer's does.
+            assertEquals(listOf<Long?>(0L, 600_000_000L), s.fake.startPositions)
             assertEquals(60_000L, s.reporter.playing?.positionMs)
         }
 
