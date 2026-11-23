@@ -44,7 +44,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.jdtech.jellyfin.core.Constants
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.spoiler.LocalSpoilers
 import dev.jdtech.jellyfin.core.presentation.spoiler.spoilerFreeName
@@ -52,6 +51,7 @@ import dev.jdtech.jellyfin.film.presentation.downloads.DownloadedShowViewModel
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.presentation.film.components.DownloadRow
 import dev.jdtech.jellyfin.presentation.film.components.SwipeActionBackground
 import dev.jdtech.jellyfin.presentation.film.components.downloadRowSize
@@ -228,7 +228,7 @@ private fun EpisodeRow(
                     add(
                         stringResource(
                             CoreR.string.runtime_minutes,
-                            (episode.runtimeTicks / Constants.TICKS_PER_MINUTE).toInt(),
+                            Ticks.toMinutes(episode.runtimeTicks).toInt(),
                         )
                     )
                 }

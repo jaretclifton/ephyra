@@ -64,6 +64,7 @@ import dev.jdtech.jellyfin.film.presentation.show.ShowState
 import dev.jdtech.jellyfin.film.presentation.show.ShowViewModel
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.ui.components.Direction
@@ -202,7 +203,7 @@ private fun ShowScreenLayout(state: ShowState, onAction: (ShowAction) -> Unit) {
                                     text =
                                         stringResource(
                                             CoreR.string.runtime_minutes,
-                                            show.runtimeTicks.div(600000000),
+                                            Ticks.toMinutes(show.runtimeTicks),
                                         ),
                                     style = MaterialTheme.typography.labelMedium,
                                 )

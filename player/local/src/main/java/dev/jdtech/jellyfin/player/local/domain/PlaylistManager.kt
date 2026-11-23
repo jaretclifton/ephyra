@@ -12,6 +12,7 @@ import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Playable
+import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.player.core.domain.models.ExternalSubtitle
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerChapter
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
@@ -231,7 +232,8 @@ internal constructor(
         currentItemIndex = items.indexOfFirst { it.id == initialItem.id }
 
         val playbackPosition =
-            if (shuffle || startFromBeginning) 0L else initialItem.playbackPositionTicks.div(10000)
+            if (shuffle || startFromBeginning) 0L
+            else Ticks.toMilliseconds(initialItem.playbackPositionTicks)
         val playerItem =
             initialItem.toPlayerItem(mediaSourceId, playbackPosition, prefetchedSources)
         playerItems.add(playerItem)

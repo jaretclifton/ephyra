@@ -7,6 +7,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
+import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.player.cast.CastPlayerController
 import dev.jdtech.jellyfin.player.cast.CastSessionManager
 import dev.jdtech.jellyfin.player.cast.di.CastStandIn
@@ -269,7 +270,8 @@ internal class FakeCastPlayerController(
             }
             val duration =
                 try {
-                    repository.getItem(loaded.itemId)?.runtimeTicks?.div(10_000L) ?: 0L
+                    repository.getItem(loaded.itemId)?.runtimeTicks?.let(Ticks::toMilliseconds)
+                        ?: 0L
                 } catch (_: Exception) {
                     0L
                 }

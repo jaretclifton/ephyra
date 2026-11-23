@@ -14,11 +14,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import dev.jdtech.jellyfin.core.Constants
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyEpisode
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.models.Item
+import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 
@@ -31,9 +31,7 @@ fun PlayButton(
 ) {
     val runtimeMinutesLeft by
         remember(item.playbackPositionTicks) {
-            mutableLongStateOf(
-                (item.runtimeTicks - item.playbackPositionTicks) / Constants.TICKS_PER_MINUTE
-            )
+            mutableLongStateOf(Ticks.toMinutes(item.runtimeTicks - item.playbackPositionTicks))
         }
 
     Button(onClick = onClick, modifier = modifier, enabled = enabled) {

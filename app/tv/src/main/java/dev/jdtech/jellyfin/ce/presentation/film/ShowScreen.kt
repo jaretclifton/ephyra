@@ -74,6 +74,7 @@ import dev.jdtech.jellyfin.film.presentation.show.ShowState
 import dev.jdtech.jellyfin.film.presentation.show.ShowViewModel
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.models.airSchedule
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
@@ -271,7 +272,7 @@ private fun ShowScreenContent(
                                     text =
                                         stringResource(
                                             CoreR.string.runtime_minutes,
-                                            show.runtimeTicks.div(600000000),
+                                            Ticks.toMinutes(show.runtimeTicks),
                                         ),
                                     style = MaterialTheme.typography.labelMedium,
                                 )

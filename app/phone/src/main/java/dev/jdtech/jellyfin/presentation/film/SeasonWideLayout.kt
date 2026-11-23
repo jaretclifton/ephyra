@@ -69,7 +69,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.jdtech.jellyfin.PlayerActivity
-import dev.jdtech.jellyfin.core.Constants
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadProgress
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadStatus
@@ -89,6 +88,7 @@ import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.Season
+import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.isDownloaded
 import dev.jdtech.jellyfin.presentation.cast.LocalCastPlayback
@@ -676,7 +676,7 @@ internal fun CompactEpisodeRow(
                     add(
                         stringResource(
                             CoreR.string.runtime_minutes,
-                            (episode.runtimeTicks / Constants.TICKS_PER_MINUTE).toInt(),
+                            Ticks.toMinutes(episode.runtimeTicks).toInt(),
                         )
                     )
                 }

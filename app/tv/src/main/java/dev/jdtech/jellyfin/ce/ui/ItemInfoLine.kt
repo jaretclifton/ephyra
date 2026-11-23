@@ -10,6 +10,7 @@ import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Show
+import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.utils.format
 import java.util.Date
 
@@ -47,7 +48,7 @@ fun itemInfoLine(item: Item): String {
             if (inProgress) {
                 add(stringResource(CoreR.string.runtime_minutes_left, minutes(remainingTicks)))
             }
-            val endsAt = Date(System.currentTimeMillis() + remainingTicks / TICKS_PER_MILLISECOND)
+            val endsAt = Date(System.currentTimeMillis() + Ticks.toMilliseconds(remainingTicks))
             add(
                 stringResource(
                     CoreR.string.ends_at,
@@ -60,7 +61,4 @@ fun itemInfoLine(item: Item): String {
 }
 
 /** Whole minutes, at least 1, so a short episode doesn't show "0 mins". */
-private fun minutes(ticks: Long): Long = (ticks / TICKS_PER_MINUTE).coerceAtLeast(1)
-
-private const val TICKS_PER_MILLISECOND = 10_000L
-private const val TICKS_PER_MINUTE = 600_000_000L
+private fun minutes(ticks: Long): Long = Ticks.toMinutes(ticks).coerceAtLeast(1)
