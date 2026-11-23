@@ -453,15 +453,16 @@ class PlaybackReporterTest {
             s.transition(item())
             advanceUntilIdle()
 
-            // No start for the item left, and its stop after the earlier one.
+            // No start for the item left: its stop is the only report it gets.
             assertEquals(
                 listOf(
                     "0: start $itemId false",
+                    "0: stop $nextId 50000000 0",
                     "10000: stop $itemId 600000000 10",
-                    "10000: stop $nextId 50000000 0",
                 ),
                 s.reports.take(3),
             )
+            assertTrue(s.reports.none { it.endsWith("start $nextId false") })
         }
 
     @Test

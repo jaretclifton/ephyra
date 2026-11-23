@@ -299,9 +299,6 @@ class PlaybackReporter(
             playbackEvents.onLeftWithoutStop()
             return null
         }
-        // CE (#890): and after the stops sent before it, so they reach the server in order.
-        stopsInFlight.removeAll { it.isCompleted }
-        val earlierStops = stopsInFlight.toList()
         return reportScope
             .launch(ioDispatcher) {
                 try {
@@ -311,7 +308,6 @@ class PlaybackReporter(
                                 "Start report for ${itemId.asString()} still running, sending stop anyway"
                             )
                     }
-                    earlierStops.joinAll()
                     if (report.playedPercentage == null) {
                         Timber.d(
                             "Sending playback stop for ${itemId.asString()} at its start, $position ms"
