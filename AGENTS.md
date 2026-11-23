@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Instructions for any coding agent working in this repository (Codex, Cursor, Copilot, Gemini CLI, Claude Code, …), and a fair start for people too. It is a map: what every task needs is here, the rest is one link away. Claude Code reads it through `CLAUDE.md`, which adds what only Claude Code has.
+Instructions for any coding agent working in this repository (Codex, Cursor, Copilot, Gemini CLI, Claude Code, …), and a fair start for people too. It is a map: what every task needs is here, the rest is one link away. Claude Code reads `CLAUDE.md` instead, which holds the same rules plus what only Claude Code has (its skills by name, its notes).
 
 The app is **Ephyra**, a fork of [Findroid](https://github.com/jarnedemeulemeester/findroid). It was called Findroid CE until #172. The repo is `midasvo/ephyra` (renamed from `midasvo/findroid-ce` in #174; GitHub redirects the old URL). The application ID, the Kotlin packages and internal names (`FindroidTheme`, `Theme.Findroid`) keep the old names on purpose. The repository and the models do not: since #774 they are `MediaRepository`, `Item`, `Movie`, `ItemSource`, `Library`, … (upstream calls them `JellyfinRepository` and `Findroid*`), and the architecture rule R11 allows no other `Findroid*` type.
 

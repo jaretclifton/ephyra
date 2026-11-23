@@ -57,7 +57,7 @@ scripts/avds.sh create ce_phone  # then: start ce_phone, install ce_phone
   or say in the description why it still holds (`Docs: no change needed — <reason>`; the pull
   request template has the line, and a check asks for it).
 - [AGENTS.md](AGENTS.md) has the conventions in one place: build commands, architecture rules,
-  commits and pull requests. Coding agents read it (Claude Code through [CLAUDE.md](CLAUDE.md)),
+  commits and pull requests. Coding agents read it (Claude Code reads [CLAUDE.md](CLAUDE.md), with the same rules),
   and it reads just as well for people.
 - [docs/](docs/README.md) lists the design documents and which of them are still current.
 - Ephyra is a fork of [Findroid](https://github.com/jarnedemeulemeester/findroid), and Findroid's
