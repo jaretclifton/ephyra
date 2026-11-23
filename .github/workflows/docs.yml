@@ -94,8 +94,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
-          # The head, not the merge commit: the map's line numbers must match the PR's patch.
-          ref: ${{ github.event.pull_request.head.sha }}
+          # The merge commit (the default) has the script even when the PR's head predates it.
+          # Its second parent is the head, whose map has the line numbers of the PR's patch.
+          fetch-depth: 2
 
       - name: Check that the area guides follow the change
         env:
@@ -107,4 +108,6 @@ jobs:
         run: |
           gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate \
             --jq '.[] | {filename, previous_filename, patch}' > "$RUNNER_TEMP/files.jsonl"
-          python3 .claude/skills/start-work/scripts/check-guides-follow.py --files "$RUNNER_TEMP/files.jsonl"
+          git show HEAD^2:docs/areas.yaml > "$RUNNER_TEMP/areas.yaml"
+          python3 .claude/skills/start-work/scripts/check-guides-follow.py \
+            --files "$RUNNER_TEMP/files.jsonl" --map "$RUNNER_TEMP/areas.yaml"

@@ -44,9 +44,9 @@ NO_CHANGE = re.compile(r"^[ \t]*Docs:[ \t]*no change needed[ \t]*[—–:-]+[ \t
 MIN_REASON = 10
 
 
-def areas() -> list[tuple[str, list[str], range]]:
+def areas(map_file: Path) -> list[tuple[str, list[str], range]]:
     """Each area with a guide: its id, its paths, and the lines of its entry in the map."""
-    lines = (ROOT / MAP).read_text(encoding="utf-8").splitlines()
+    lines = map_file.read_text(encoding="utf-8").splitlines()
     starts = [i for i, line in enumerate(lines) if line.startswith("  - id: ")]
     result = []
     for n, start in enumerate(starts):
@@ -120,6 +120,11 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--files", help="JSON lines of the pull request's files (default: git)")
     parser.add_argument("--body", help="a file with the pull request's description")
+    parser.add_argument(
+        "--map",
+        help="docs/areas.yaml as the pull request's head has it, so its line numbers match the patch "
+        "(default: the one in this tree)",
+    )
     args = parser.parse_args()
 
     author = os.environ.get("PR_AUTHOR", "")
@@ -143,7 +148,8 @@ def main() -> int:
             map_lines |= changed_lines(f.get("patch") or "")
 
     owed = []
-    for area, paths, entry_lines in areas():
+    map_file = Path(args.map) if args.map else ROOT / MAP
+    for area, paths, entry_lines in areas(map_file):
         hits = [
             (name, path)
             for name in counted
