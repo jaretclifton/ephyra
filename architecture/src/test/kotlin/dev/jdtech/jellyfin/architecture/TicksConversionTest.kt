@@ -81,6 +81,13 @@ class TicksConversionTest {
         )
     }
 
+    @Test
+    fun `R12 skips a multiline string`() {
+        val quotes = "\"\"\""
+        val source = "val s = $quotes\n    runtimeTicks /\n        10_000L\n$quotes\nval t = 1"
+        assertEquals(emptyList(), violations(source))
+    }
+
     private companion object {
         /** About 900 today; far fewer means the tree was not found. */
         const val MIN_FILES = 600
@@ -88,6 +95,9 @@ class TicksConversionTest {
         const val TICKS_FILE = "domain/src/main/kotlin/dev/jdtech/jellyfin/models/Ticks.kt"
 
         const val LITERAL = """(?:10_?000_?000|600_?000_?000|10_?000)(?:\.0)?L?(?![\w.])"""
+
+        /** A triple-quoted string, which may span lines. */
+        val RAW_STRING = Regex("\"\"\"[\\s\\S]*?\"\"\"")
 
         val CONSTANT = Regex("""\b(?:val|var)\s+(TICKS_PER\w*)""")
 
@@ -102,6 +112,7 @@ class TicksConversionTest {
         fun violations(source: String): List<String> {
             val code =
                 UuidBoundaryTest.withoutComments(source)
+                    .replace(RAW_STRING, "\"\"")
                     .lines()
                     .joinToString("\n", transform = ::withoutStrings)
             return CONSTANT.findAll(code).map { "declares ${it.groupValues[1]}" }.toList() +
