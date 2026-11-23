@@ -68,7 +68,7 @@ internal class ActiveServerClient(
 
     /**
      * Only the adapter's own tests set the client up this way. The app switches through the holder
-     * (`ActiveServerHolder`), and the build fails when production code calls this (rule R15).
+     * (`ActiveServerHolder`), and the build fails when production code calls this (rule R16).
      * Address and token change in one write; the client and device info are fixed.
      */
     override fun update(

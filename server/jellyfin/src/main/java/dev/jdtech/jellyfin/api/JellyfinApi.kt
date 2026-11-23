@@ -248,7 +248,7 @@ class JellyfinApi(
 
     /**
      * The user the client is signed in as, from the [snapshot]. #899: setting it is for the
-     * adapter's tests only; the app switches users through the holder (rule R15).
+     * adapter's tests only; the app switches users through the holder (rule R16).
      */
     var userId: UUID?
         get() = snapshot().userId?.toUuid()

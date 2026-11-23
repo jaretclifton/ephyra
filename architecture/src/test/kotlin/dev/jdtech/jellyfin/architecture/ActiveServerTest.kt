@@ -76,6 +76,8 @@ class ActiveServerTest {
         assertTrue(finds(MUTABLE_COPY, "val s = MutableStateFlow<ActiveServer>(x)"))
         assertTrue(finds(MUTABLE_COPY, "private val r = AtomicReference<ActiveServer>()"))
         assertTrue(finds(MUTABLE_COPY, "@Volatile var current: ActiveServer? = null"))
+        assertTrue(finds(MUTABLE_COPY, "val state = MutableStateFlow(ActiveServer(type = t))"))
+        assertTrue(finds(MUTABLE_COPY, "val r = AtomicReference( ActiveServer())"))
         assertEquals(false, finds(MUTABLE_COPY, "val current: ActiveServer = holder.value"))
         assertEquals(false, finds(MUTABLE_COPY, "// var current: ActiveServer"))
 
@@ -85,7 +87,10 @@ class ActiveServerTest {
 
         assertTrue(finds(TYPE_COPY, "active.switchTo(active.value.copy(type = \"emby\"))"))
         assertTrue(finds(TYPE_COPY, "it.copy( type= t, baseUrl = b)"))
+        assertTrue(finds(TYPE_COPY, "active.value.copy(accessToken = null, type = t)"))
+        assertTrue(finds(TYPE_COPY, "it.copy(baseUrl = url(a), type = t)"))
         assertEquals(false, finds(TYPE_COPY, "it.copy(accessToken = null, userId = null)"))
+        assertEquals(false, finds(TYPE_COPY, "it.copy(accessToken = token(type = t))"))
 
         assertTrue(finds(SDK_UPDATE, "api.update(baseUrl = url, accessToken = token)"))
         assertTrue(finds(SDK_UPDATE, "jellyfinApi.api.update(accessToken = null)"))
@@ -114,10 +119,11 @@ class ActiveServerTest {
 
         val MUTABLE_COPY =
             Regex(
-                """(MutableStateFlow|AtomicReference)\s*<\s*ActiveServer\b|\bvar\s+\w+\s*:\s*ActiveServer\b"""
+                """(MutableStateFlow|AtomicReference)\s*(<\s*ActiveServer\b|\(\s*ActiveServer\s*\()|\bvar\s+\w+\s*:\s*ActiveServer\b"""
             )
         val SWITCH = Regex("""\.switchTo\(""")
-        val TYPE_COPY = Regex("""\.copy\(\s*type\s*=""")
+        /** `type =` as any named argument of a copy, past one level of parentheses. */
+        val TYPE_COPY = Regex("""\.copy\((?:[^()]|\([^()]*\))*?\btype\s*=(?!=)""")
         val SDK_UPDATE = Regex("""\bapi\.update\(""")
         val ADAPTER_WRITE = Regex("""\.userId\s*=(?!=)|\bsession\.use\(""")
 

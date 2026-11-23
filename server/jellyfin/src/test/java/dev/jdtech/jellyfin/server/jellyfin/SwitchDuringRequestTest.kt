@@ -47,8 +47,12 @@ class SwitchDuringRequestTest {
         StandInServer(concurrent = true) { request ->
             if (request.path.endsWith("/ThemeSongs")) {
                 asked.countDown()
-                switched.await(5, TimeUnit.SECONDS)
-                StandInServer.Response(200, body = THEME_SONGS.toByteArray())
+                // Without the switch the test would not test it: no song then.
+                if (switched.await(5, TimeUnit.SECONDS)) {
+                    StandInServer.Response(200, body = THEME_SONGS.toByteArray())
+                } else {
+                    StandInServer.Response(500)
+                }
             } else {
                 StandInServer.Response(404)
             }
@@ -67,13 +71,13 @@ class SwitchDuringRequestTest {
         serverB.close()
     }
 
-    private fun on(server: StandInServer, token: String, id: String) =
+    private fun on(server: StandInServer, token: String, id: String, user: String = USER) =
         ActiveServer(
             type = ServerType.JELLYFIN.value,
             serverId = id.toServerId(),
             baseUrl = server.baseUrl,
             accessToken = token,
-            userId = USER.toUserId(),
+            userId = user.toUserId(),
         )
 
     /** Asks [catalog] for the theme song while the app switches from A to B. */
@@ -100,6 +104,22 @@ class SwitchDuringRequestTest {
     }
 
     @Test
+    fun `ports taken before a switch to another user ask with the user and token they were taken with`() {
+        active.switchTo(on(serverA, "token-a", "a"))
+        val catalog = jellyfin.at(active.value).catalog
+        active.switchTo(on(serverB, "token-b", "b", user = OTHER_USER))
+        switched.countDown()
+
+        val url = assertNotNull(runBlocking { catalog.themeSongUrl(SERIES.toItemId()) })
+
+        assertTrue(url.startsWith(serverA.baseUrl), url)
+        val request = serverA.requests.single()
+        assertTrue(request.headers.getValue("authorization").contains("token-a"))
+        assertTrue(request.target.contains("userId=$USER"), request.target)
+        assertEquals(emptyList(), serverB.requests.toList())
+    }
+
+    @Test
     fun `without a value the second step follows the switch`() {
         // What the check above rules out: the song from A, its URL on B.
         val url = assertNotNull(themeSongAcrossASwitch { jellyfin.catalog })
@@ -109,6 +129,7 @@ class SwitchDuringRequestTest {
 
     private companion object {
         const val USER = "00000000-0000-0000-0000-000000000001"
+        const val OTHER_USER = "00000000-0000-0000-0000-000000000002"
         const val SERIES = "00000000-0000-0000-0000-000000000201"
 
         val THEME_SONGS =

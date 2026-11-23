@@ -55,7 +55,7 @@ class JellyfinServerSession(private val api: JellyfinApi) : ServerSession {
 
     /**
      * #763: talks to [baseUrl] as [userId] with [accessToken] from now on. #899: for the adapter's
-     * tests only, in one write that keeps the server; the app writes the holder (rule R15).
+     * tests only, in one write that keeps the server; the app writes the holder (rule R16).
      */
     @VisibleForTesting
     fun use(baseUrl: String?, accessToken: String?, userId: UserId?) {
