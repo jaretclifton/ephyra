@@ -6,12 +6,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.film.presentation.DownloadPrompt
 import dev.jdtech.jellyfin.film.presentation.EpisodeDownloadPrompts
+import dev.jdtech.jellyfin.film.presentation.ExternalRatingsLoader
 import dev.jdtech.jellyfin.film.presentation.RelatedItems
 import dev.jdtech.jellyfin.film.presentation.RelatedItemsRequest
 import dev.jdtech.jellyfin.film.presentation.detailSections
 import dev.jdtech.jellyfin.film.presentation.inFlightIds
 import dev.jdtech.jellyfin.film.presentation.keeping
 import dev.jdtech.jellyfin.film.presentation.launchRelatedItems
+import dev.jdtech.jellyfin.film.presentation.ratingsLookup
 import dev.jdtech.jellyfin.film.presentation.selectEpisodesToDownload
 import dev.jdtech.jellyfin.film.presentation.shownIn
 import dev.jdtech.jellyfin.film.presentation.within
@@ -24,6 +26,7 @@ import dev.jdtech.jellyfin.models.PersonKind
 import dev.jdtech.jellyfin.models.SeasonEpisodeCounts
 import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.mergeDuplicateRoles
+import dev.jdtech.jellyfin.ratings.ExternalRatings
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.repository.MediaRepository
@@ -65,9 +68,16 @@ constructor(
     private val downloadQueue: DownloadQueue,
     private val downloadStore: DownloadStore,
     dataChanges: DataChangeEvents = DataChangeEvents(),
+    externalRatings: ExternalRatings = ExternalRatings.None,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ShowState())
     val state = _state.asStateFlow()
+
+    // CE (#331)
+    private val ratingsLoader =
+        ExternalRatingsLoader(externalRatings, viewModelScope) { ratings ->
+            _state.update { it.copy(externalRatings = ratings) }
+        }
 
     private val eventsChannel = Channel<ShowEvent>()
     val events = eventsChannel.receiveAsFlow()
@@ -172,14 +182,24 @@ constructor(
                     // Room answers long before the server does, so whether anything is
                     // downloaded is right in the first emit and the buttons don't flip later.
                     val localCounts = localCountsAsync.await()
+                    val sections = appPreferences.detailSections()
                     _state.emit(
                         _state.value.copy(
-                            show = show.shownIn(appPreferences.detailSections()),
+                            show = show.shownIn(sections),
                             nextUp = nextUp,
                             seasons = seasons,
                             actors = castAndCrew.actors,
                             director = castAndCrew.director.takeIf { displayCredits },
                             writers = castAndCrew.writers.takeIf { displayCredits }.orEmpty(),
+                            externalRatings =
+                                ratingsLoader.onItemLoaded(
+                                    showId,
+                                    // None on the downloads-only page, as no related rows.
+                                    show.ratingsLookup().takeUnless { downloadsOnly },
+                                    _state.value.externalRatings,
+                                    rottenTomatoes =
+                                        sections.criticRating && show.criticRating == null,
+                                ),
                             hasDownloads =
                                 localCounts?.let { counts ->
                                     seasons.any { (counts[it.id]?.downloaded ?: 0) > 0 }
@@ -264,13 +284,20 @@ constructor(
     fun loadRelated(showId: ItemId) {
         val show = _state.value.show?.takeIf { it.id == showId } ?: return
         if (downloadsOnly) return
+        val sections = appPreferences.detailSections()
+        // CE (#331): the external ratings, after the first frame like the rows.
+        ratingsLoader.load(
+            showId,
+            show.ratingsLookup(),
+            rottenTomatoes = sections.criticRating && show.criticRating == null,
+        )
         val request =
             RelatedItemsRequest.forItem(
                     localTrailerCount = show.localTrailerCount,
                     specialFeatureCount = show.specialFeatureCount,
                     collections = false,
                 )
-                .shownIn(appPreferences.detailSections())
+                .shownIn(sections)
                 .within(repository.capabilities)
         if (relatedFor == showId && relatedRequest == request) return
         relatedFor = showId

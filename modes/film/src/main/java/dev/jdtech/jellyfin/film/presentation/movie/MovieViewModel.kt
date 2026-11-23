@@ -4,11 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.film.domain.VideoMetadataParser
+import dev.jdtech.jellyfin.film.presentation.ExternalRatingsLoader
 import dev.jdtech.jellyfin.film.presentation.RelatedItems
 import dev.jdtech.jellyfin.film.presentation.RelatedItemsRequest
 import dev.jdtech.jellyfin.film.presentation.detailSections
 import dev.jdtech.jellyfin.film.presentation.keeping
 import dev.jdtech.jellyfin.film.presentation.launchRelatedItems
+import dev.jdtech.jellyfin.film.presentation.ratingsLookup
 import dev.jdtech.jellyfin.film.presentation.shownIn
 import dev.jdtech.jellyfin.film.presentation.within
 import dev.jdtech.jellyfin.models.ItemId
@@ -16,6 +18,7 @@ import dev.jdtech.jellyfin.models.ItemPerson
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.PersonKind
 import dev.jdtech.jellyfin.models.mergeDuplicateRoles
+import dev.jdtech.jellyfin.ratings.ExternalRatings
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.ReloadPolicy
@@ -41,9 +44,16 @@ constructor(
     private val appPreferences: AppPreferences,
     private val videoMetadataParser: VideoMetadataParser,
     dataChanges: DataChangeEvents = DataChangeEvents(),
+    externalRatings: ExternalRatings = ExternalRatings.None,
 ) : ViewModel() {
     private val _state = MutableStateFlow(MovieState())
     val state = _state.asStateFlow()
+
+    // CE (#331)
+    private val ratingsLoader =
+        ExternalRatingsLoader(externalRatings, viewModelScope) { ratings ->
+            _state.update { it.copy(externalRatings = ratings) }
+        }
 
     private var movieIdOrNull: ItemId? = null
     private val movieId: ItemId
@@ -97,13 +107,21 @@ constructor(
                     displayCastAndCrew && appPreferences.getValue(appPreferences.detailCredits)
                 val director = if (displayCredits) getDirector(movie) else null
                 val writers = if (displayCredits) getWriters(movie) else emptyList()
+                val sections = appPreferences.detailSections()
                 _state.emit(
                     _state.value.copy(
-                        movie = movie.shownIn(appPreferences.detailSections()),
+                        movie = movie.shownIn(sections),
                         videoMetadata = videoMetadata,
                         actors = actors,
                         director = director,
                         writers = writers,
+                        externalRatings =
+                            ratingsLoader.onItemLoaded(
+                                movieId,
+                                movie.ratingsLookup(),
+                                _state.value.externalRatings,
+                                rottenTomatoes = sections.criticRating && movie.criticRating == null,
+                            ),
                     )
                 )
                 // A reload of a page that has its rows: a switch may have changed since.
@@ -124,13 +142,20 @@ constructor(
      */
     fun loadRelated(movieId: ItemId) {
         val movie = _state.value.movie?.takeIf { it.id == movieId } ?: return
+        val sections = appPreferences.detailSections()
+        // CE (#331): the external ratings, after the first frame like the rows.
+        ratingsLoader.load(
+            movieId,
+            movie.ratingsLookup(),
+            rottenTomatoes = sections.criticRating && movie.criticRating == null,
+        )
         val request =
             RelatedItemsRequest.forItem(
                     localTrailerCount = movie.localTrailerCount,
                     specialFeatureCount = movie.specialFeatureCount,
                     collections = true,
                 )
-                .shownIn(appPreferences.detailSections())
+                .shownIn(sections)
                 .within(repository.capabilities)
         if (relatedFor == movieId && relatedRequest == request) return
         relatedFor = movieId
