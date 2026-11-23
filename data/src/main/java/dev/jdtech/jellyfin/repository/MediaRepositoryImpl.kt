@@ -646,7 +646,10 @@ class MediaRepositoryImpl(
                     // version the folder lists first; a version not downloaded goes to the server.
                     val source =
                         if (mediaSourceId != null) {
-                            File(context.filesDir, "trickplay/${itemId.asString()}/$mediaSourceId")
+                            File(
+                                    context.filesDir,
+                                    "trickplay/${itemId.asString()}/${mediaSourceId.asString()}",
+                                )
                                 .takeIf { it.isDirectory }
                         } else {
                             File(context.filesDir, "trickplay/${itemId.asString()}")

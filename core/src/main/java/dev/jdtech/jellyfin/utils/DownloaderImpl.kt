@@ -730,7 +730,7 @@ class DownloaderImpl(
                     File(
                             downloadsDir,
                             DownloadFiles.partialPath(
-                                "${sanitize(item.name)}.${source.id}.$id.$streamExt"
+                                "${sanitize(item.name)}.${source.id.asString()}.$id.$streamExt"
                             ),
                         )
                         .absolutePath
@@ -936,7 +936,7 @@ class DownloaderImpl(
         trickplayInfo: ItemTrickplayInfo,
         sheets: Map<Int, ByteArray>,
     ) {
-        val basePath = "trickplay/${itemId.asString()}/$sourceId"
+        val basePath = "trickplay/${itemId.asString()}/${sourceId.asString()}"
         database.insertTrickplayInfo(trickplayInfo.toItemTrickplayInfoEntity(sourceId))
         File(context.filesDir, basePath).mkdirs()
         for ((index, bytes) in sheets) {
@@ -1536,7 +1536,7 @@ class DownloaderImpl(
                 val folder = if (year != null) "$title ($year)" else title
                 "$folder/$folder.$extension"
             }
-            else -> "${item.id.asString()}.$sourceId.$extension"
+            else -> "${item.id.asString()}.${sourceId.asString()}.$extension"
         }
     }
 

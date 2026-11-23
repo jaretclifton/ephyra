@@ -13,8 +13,8 @@ import kotlin.test.assertTrue
  * `String` type.
  *
  * `architecture/baseline/string-ids.txt` is an allowlist: the serialized forms that carry the id as
- * text by design (navigation routes, the Cast receiver's custom data), each with its reason. A
- * text check, as R1 and R10; comments do not count.
+ * text by design (navigation routes, the Cast receiver's custom data), each with its reason. A text
+ * check, as R1 and R10; comments do not count.
  */
 class StringIdsTest {
 
@@ -82,8 +82,7 @@ class StringIdsTest {
         private const val NAMES = """(?:serverId|currentServerId|mediaSourceId|sourceId)s?"""
 
         /** A declaration of one of the names with a `String` type, or a collection of them. */
-        val AS_STRING =
-            Regex("""\b$NAMES\s*:\s*(?:String\b|(?:List|Set|Collection)<String>)""")
+        val AS_STRING = Regex("""\b$NAMES\s*:\s*(?:String\b|(?:List|Set|Collection)<String>)""")
 
         /** The same names declared with the domain's types: what the files should say. */
         val TYPED = Regex("""\b$NAMES\s*:\s*(?:ServerId|MediaSourceId)\b""")

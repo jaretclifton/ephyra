@@ -14,7 +14,7 @@ import javax.inject.Inject
 /** CE (#142): whose Home layout it is. Each user on each server has their own. */
 data class HomeRowsProfile(val serverId: ServerId, val userId: UserId) {
     val preference: Preference<String?>
-        get() = Preference("pref_ce_home_rows_${serverId}_${userId.asString()}", null)
+        get() = Preference("pref_ce_home_rows_${serverId.asString()}_${userId.asString()}", null)
 
     companion object {
         fun of(server: Server?): HomeRowsProfile? {
