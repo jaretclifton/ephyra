@@ -7,6 +7,8 @@ import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.settings.domain.QualityNetwork
+import dev.jdtech.jellyfin.settings.presentation.enums.AppVariant
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -133,7 +135,58 @@ class ResolvePlaybackTest {
         assertNull(resolve().pick(emptyList(), "source".toMediaSourceId()))
     }
 
-    private fun resolve(vararg values: Pair<String, Any>): ResolvePlayback {
+    @Test
+    fun `on Wi-Fi the Wi-Fi quality applies`() {
+        val resolve = resolve(MAX_BITRATE to 0, MAX_BITRATE_MOBILE to 4_000_000)
+
+        assertEquals(QualityNetwork.WIFI, resolve.qualityNetwork())
+        assertNull(resolve.maxBitrate())
+    }
+
+    @Test
+    fun `on mobile data the mobile quality applies`() {
+        val resolve =
+            resolve(
+                MAX_BITRATE to 0,
+                MAX_BITRATE_MOBILE to 4_000_000,
+                network = QualityNetwork.MOBILE,
+            )
+
+        assertEquals(QualityNetwork.MOBILE, resolve.qualityNetwork())
+        assertEquals(4_000_000, resolve.maxBitrate())
+        runBlocking { resolve.sources(itemId) }
+        assertEquals(4_000_000, requests.single().last(), "the cap asked for")
+    }
+
+    @Test
+    fun `the TV app keeps its one quality on a metered network`() {
+        val resolve =
+            resolve(
+                MAX_BITRATE to 8_000_000,
+                MAX_BITRATE_MOBILE to 720_000,
+                network = QualityNetwork.MOBILE,
+                appVariant = AppVariant.TV,
+            )
+
+        assertEquals(QualityNetwork.WIFI, resolve.qualityNetwork())
+        assertEquals(8_000_000, resolve.maxBitrate())
+    }
+
+    @Test
+    fun `a cap given to sources wins over the setting`() {
+        val resolve = resolve(MAX_BITRATE to 8_000_000)
+
+        runBlocking { resolve.sources(itemId, maxBitrate = 720_000) }
+        runBlocking { resolve.sources(itemId, maxBitrate = 0) }
+
+        assertEquals(listOf<Any?>(720_000, null), requests.map { it.last() }, "the caps asked for")
+    }
+
+    private fun resolve(
+        vararg values: Pair<String, Any>,
+        network: QualityNetwork = QualityNetwork.WIFI,
+        appVariant: AppVariant = AppVariant.PHONE,
+    ): ResolvePlayback {
         val repository =
             fakeProxy(
                 MediaRepository::class.java.classLoader,
@@ -150,7 +203,7 @@ class ResolvePlaybackTest {
                 }
             }
                 as MediaRepository
-        return ResolvePlayback(repository, testPreferences(values.toMap()))
+        return resolvePlayback(repository, testPreferences(values.toMap()), network, appVariant)
     }
 
     private fun source(id: String, type: ItemSourceType, path: String) =
@@ -166,6 +219,7 @@ class ResolvePlaybackTest {
     private companion object {
         const val BACKEND = "pref_player_backend"
         const val MAX_BITRATE = "pref_player_max_bitrate"
+        const val MAX_BITRATE_MOBILE = "pref_player_max_bitrate_mobile"
         const val DOLBY_VISION = "pref_player_direct_play_dovi"
     }
 }

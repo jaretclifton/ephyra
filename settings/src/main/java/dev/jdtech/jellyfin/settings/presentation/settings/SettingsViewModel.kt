@@ -11,11 +11,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.jdtech.jellyfin.domain.ports.CurrentServerCapabilities
 import dev.jdtech.jellyfin.models.ServerCapabilities
+import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.settings.R
 import dev.jdtech.jellyfin.settings.domain.AppCaches
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.settings.domain.Constants
 import dev.jdtech.jellyfin.settings.domain.KeepPlayerLandscape
+import dev.jdtech.jellyfin.settings.domain.QualityNetwork
+import dev.jdtech.jellyfin.settings.domain.VideoQualities
 import dev.jdtech.jellyfin.settings.domain.WideWindow
 import dev.jdtech.jellyfin.settings.domain.bounded
 import dev.jdtech.jellyfin.settings.domain.models.PermissionDefinitions
@@ -29,6 +32,7 @@ import dev.jdtech.jellyfin.settings.presentation.models.PreferenceDynamicSelect
 import dev.jdtech.jellyfin.settings.presentation.models.PreferenceFileEdit
 import dev.jdtech.jellyfin.settings.presentation.models.PreferenceGroup
 import dev.jdtech.jellyfin.settings.presentation.models.PreferenceIntInput
+import dev.jdtech.jellyfin.settings.presentation.models.PreferenceIntSelect
 import dev.jdtech.jellyfin.settings.presentation.models.PreferenceLongInput
 import dev.jdtech.jellyfin.settings.presentation.models.PreferenceMultiSelect
 import dev.jdtech.jellyfin.settings.presentation.models.PreferencePermission
@@ -114,6 +118,14 @@ constructor(
             listOf(DeviceType.PHONE)
         } else {
             emptyList()
+        }
+
+    /** CE (#837): the player's quality ladder, labelled as the player's quality picker has it. */
+    private val qualityOptions: List<Pair<Int, UiText>> =
+        VideoQualities.bitrates.map { bitrate ->
+            bitrate to
+                (VideoQualities.label(bitrate)?.let { UiText.DynamicString(it) }
+                    ?: UiText.StringResource(R.string.ce_pref_player_quality_original))
         }
 
     private val topLevelPreferences =
@@ -646,6 +658,40 @@ constructor(
                                                         ),
                                                 )
                                             )
+                                    ),
+                                    // CE (#837): a default quality per kind of network. A TV
+                                    // has no mobile data, and keeps the one value it had.
+                                    PreferenceGroup(
+                                        nameStringResource = R.string.ce_pref_player_quality_group,
+                                        preferences =
+                                            listOf(
+                                                PreferenceIntSelect(
+                                                    nameStringResource =
+                                                        R.string.ce_pref_player_quality_wifi,
+                                                    descriptionStringRes =
+                                                        R.string
+                                                            .ce_pref_player_quality_wifi_summary,
+                                                    supportedDeviceTypes = listOf(DeviceType.PHONE),
+                                                    backendPreference =
+                                                        appPreferences.maxBitrate(
+                                                            QualityNetwork.WIFI
+                                                        ),
+                                                    options = qualityOptions,
+                                                ),
+                                                PreferenceIntSelect(
+                                                    nameStringResource =
+                                                        R.string.ce_pref_player_quality_mobile,
+                                                    descriptionStringRes =
+                                                        R.string
+                                                            .ce_pref_player_quality_mobile_summary,
+                                                    supportedDeviceTypes = listOf(DeviceType.PHONE),
+                                                    backendPreference =
+                                                        appPreferences.maxBitrate(
+                                                            QualityNetwork.MOBILE
+                                                        ),
+                                                    options = qualityOptions,
+                                                ),
+                                            ),
                                     ),
                                     PreferenceGroup(
                                         preferences =
@@ -1657,6 +1703,19 @@ constructor(
                                                         ),
                                                 )
                                             }
+                                            is PreferenceIntSelect -> {
+                                                preference.copy(
+                                                    enabled =
+                                                        preference.enabled &&
+                                                            preference.dependencies.all {
+                                                                appPreferences.getValue(it)
+                                                            },
+                                                    value =
+                                                        appPreferences.getValue(
+                                                            preference.backendPreference
+                                                        ),
+                                                )
+                                            }
                                             is PreferenceDynamicSelect -> {
                                                 preference.copy(
                                                     enabled =
@@ -1721,6 +1780,11 @@ constructor(
                             ),
                         )
                     is PreferenceLongInput ->
+                        appPreferences.setValue(
+                            action.preference.backendPreference,
+                            action.preference.value,
+                        )
+                    is PreferenceIntSelect ->
                         appPreferences.setValue(
                             action.preference.backendPreference,
                             action.preference.value,

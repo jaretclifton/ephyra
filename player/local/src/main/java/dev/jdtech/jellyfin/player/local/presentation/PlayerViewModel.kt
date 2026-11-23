@@ -58,6 +58,7 @@ import dev.jdtech.jellyfin.player.local.domain.NeighbourLoader
 import dev.jdtech.jellyfin.player.local.domain.NetworkRecovery
 import dev.jdtech.jellyfin.player.local.domain.PlaybackReporter
 import dev.jdtech.jellyfin.player.local.domain.PlaylistManager
+import dev.jdtech.jellyfin.player.local.domain.ResolvePlayback
 import dev.jdtech.jellyfin.player.local.domain.SegmentDecision
 import dev.jdtech.jellyfin.player.local.domain.SegmentTracker
 import dev.jdtech.jellyfin.player.local.domain.SessionTrackPicks
@@ -93,6 +94,7 @@ import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.settings.domain.Constants
+import dev.jdtech.jellyfin.settings.domain.QualityNetwork
 import dev.jdtech.jellyfin.settings.presentation.enums.AppVariant
 import java.util.Collections
 import java.util.UUID
@@ -141,6 +143,8 @@ constructor(
     private val engines: Map<PlayerEngineId, @JvmSuppressWildcards PlayerEngine>,
     /** CE (#765): the start, progress and stop reports to the server. */
     private val playbackReporter: PlaybackReporter,
+    /** CE (#837): the streaming quality of the network in use. */
+    private val resolvePlayback: ResolvePlayback,
 ) : ViewModel(), Player.Listener {
     val player: Player
 
@@ -346,8 +350,8 @@ constructor(
     var playbackSpeed: Float = 1f
 
     /**
-     * Bitrate cap in bits per second, 0 = original quality. Mirrors
-     * [AppPreferences.playerMaxBitrate].
+     * Bitrate cap in bits per second, 0 = original quality: the one the queue's streams are asked
+     * for with. CE (#837): the setting of the network in use ([ResolvePlayback.maxBitrateSetting]).
      */
     var maxBitrate: Int = 0
         private set
@@ -619,7 +623,7 @@ constructor(
     init {
         sessionStore.onSessionCreated()
 
-        maxBitrate = appPreferences.getValue(appPreferences.playerMaxBitrate)
+        maxBitrate = resolvePlayback.maxBitrateSetting()
 
         // CE: the switch turns the whole prompt off, whatever the thresholds say.
         val enabled = appPreferences.getValue(appPreferences.stillWatchingEnabled)
@@ -1152,6 +1156,7 @@ constructor(
 
                         segmentTracker.setSegments(emptyList())
                         playlistManager.setCurrentMediaItemIndex(item.itemId)
+                        followNetworkQuality(item)
 
                         // Trickplay and the neighbouring items are not needed to show the first
                         // frame, so they wait for the player to be ready. When it already is (an
@@ -2150,8 +2155,41 @@ constructor(
      */
     fun selectMaxBitrate(bitrate: Int) {
         markUserInteraction()
+        // CE (#837): the pick is the quality of the network in use when it is made.
+        pickedBitrateNetwork = resolvePlayback.qualityNetwork()
         // CE (#726): one switch at a time, see StreamSwitches.
         streamSwitches.selectBitrate(bitrate)
+    }
+
+    /** CE (#837): the network the last quality pick is stored for, and a failed one undone for. */
+    private var pickedBitrateNetwork: QualityNetwork? = null
+
+    private fun pickedNetwork(): QualityNetwork =
+        pickedBitrateNetwork ?: resolvePlayback.qualityNetwork()
+
+    /** CE (#837): the item [followNetworkQuality] looked at last. */
+    private var networkQualityItemId: ItemId? = null
+
+    /**
+     * CE (#837): the item the player moved on to plays at the quality of the network in use now.
+     * Its stream was asked for earlier (the next item is queued when the one before it starts), so
+     * when the network changed since, it is asked for again, like a quality switch. A network
+     * change during an item leaves that item as it plays, also when its stream is reloaded
+     * (ExoPlayer reports a reload as a transition to the same item, mpv reports none). A download
+     * has no cap to follow.
+     */
+    private fun followNetworkQuality(item: PlayerItem) {
+        if (item.itemId == networkQualityItemId) return
+        networkQualityItemId = item.itemId
+        val cap = item.streamCap ?: return
+        val now = resolvePlayback.maxBitrateSetting()
+        if (cap == now) {
+            // Asked for under this network already: the quality shown is the one it plays at.
+            streamSwitches.playingAt(cap)
+            return
+        }
+        Timber.i("Network quality changed from %d to %d: asking for the queue again", cap, now)
+        streamSwitches.followBitrate(now)
     }
 
     /**
@@ -2178,6 +2216,7 @@ constructor(
 
                     override suspend fun recreate(
                         item: PlayerItem,
+                        bitrate: Int,
                         playingAudio: StoredChoice?,
                         pickedAudio: Int?,
                     ) =
@@ -2185,11 +2224,18 @@ constructor(
                             item,
                             selectedAudio = playingAudio,
                             audioStreamIndex = pickedAudio,
+                            maxBitrate = bitrate,
                         )
 
-                    override fun setBitrate(bitrate: Int) {
+                    override fun showBitrate(bitrate: Int) {
                         maxBitrate = bitrate
-                        appPreferences.setValue(appPreferences.playerMaxBitrate, bitrate)
+                    }
+
+                    override fun storeBitrate(bitrate: Int): () -> Unit {
+                        val network = pickedNetwork()
+                        val before = resolvePlayback.storedMaxBitrate(network)
+                        resolvePlayback.storeMaxBitrate(network, bitrate)
+                        return { resolvePlayback.storeMaxBitrate(network, before) }
                     }
 
                     override fun swapIn(rebuilt: List<PlayerItem>) = swapInQueue(rebuilt)
