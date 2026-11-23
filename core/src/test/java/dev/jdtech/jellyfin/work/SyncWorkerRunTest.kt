@@ -10,6 +10,7 @@ import androidx.work.WorkerParameters
 import androidx.work.testing.TestListenableWorkerBuilder
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.core.presentation.downloader.SmartDownloads
+import dev.jdtech.jellyfin.database.RoomPendingUserDataStore
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.ServerUserData
@@ -157,7 +158,7 @@ class SyncWorkerRunTest {
                             SyncWorker(
                                 appContext,
                                 workerParameters,
-                                database,
+                                RoomPendingUserDataStore(database),
                                 mapOf(ServerType.JELLYFIN to ports),
                                 smartDownloads(),
                                 PlaybackEvents(),
