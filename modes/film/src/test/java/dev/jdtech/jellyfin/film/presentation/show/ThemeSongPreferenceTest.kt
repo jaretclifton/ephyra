@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import androidx.lifecycle.viewModelScope
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
+import dev.jdtech.jellyfin.di.AppPreferencesDownloadSettings
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.repository.MediaRepositoryImpl
@@ -129,7 +130,7 @@ class ThemeSongPreferenceTest {
             downloadQueue =
                 DownloadQueue(
                     downloader = unused(),
-                    appPreferences = preferences,
+                    settings = AppPreferencesDownloadSettings(preferences),
                     repositoryProvider = { repository },
                     downloadStore = unused<DownloadStore>(),
                     context = ContextWrapper(null) as Context,

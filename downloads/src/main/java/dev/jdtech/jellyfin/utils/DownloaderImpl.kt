@@ -25,13 +25,14 @@ import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.looksLikeJellyfinId
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.repository.CurrentServerId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
+import dev.jdtech.jellyfin.repository.DownloadSettings
 import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.StoredMediaStream
 import dev.jdtech.jellyfin.repository.StoredPendingDownload
 import dev.jdtech.jellyfin.repository.StoredSource
-import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
 import dev.jdtech.jellyfin.utils.download.DownloadTexts
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
@@ -160,7 +161,8 @@ class DownloaderImpl(
     private val context: Context,
     private val store: DownloadStore,
     private val mediaRepositoryProvider: Provider<MediaRepository>,
-    private val appPreferences: AppPreferences,
+    private val settings: DownloadSettings,
+    private val currentServerId: CurrentServerId,
     // A Provider, so building this @Singleton (during Application.onCreate's field injection) does
     // not set up WorkManager; it is only needed once an image download is started (#250).
     private val workManagerProvider: Provider<WorkManager>,
@@ -208,13 +210,12 @@ class DownloaderImpl(
         maxBitrate: Int?,
         smartQueued: Boolean,
     ): Pair<Long, UiText?> = coroutineScope {
-        val transcodeDolbyVision =
-            appPreferences.getValue(appPreferences.downloadTranscodeDolbyVision)
-        val allowMetered = appPreferences.getValue(appPreferences.downloadOverMobileData)
-        val allowRoaming = appPreferences.getValue(appPreferences.downloadWhenRoaming)
+        val transcodeDolbyVision = settings.downloadTranscodeDolbyVision
+        val allowMetered = settings.downloadOverMobileData
+        val allowRoaming = settings.downloadWhenRoaming
         // CE (#718): read once, so a server switch while this runs cannot store the download, or
         // decide which copy gives way, under another server than the one it started for.
-        val serverId = appPreferences.currentServerId()
+        val serverId = currentServerId.get()
 
         // ---- RESUME BRANCH -------------------------------------------------------
         // Match the first in-progress .download source row for this item, regardless of
@@ -446,8 +447,7 @@ class DownloaderImpl(
                 mediaRepository.getMediaSources(
                     item.id,
                     includePath = true,
-                    transcodeDolbyVision =
-                        appPreferences.getValue(appPreferences.downloadTranscodeDolbyVision),
+                    transcodeDolbyVision = settings.downloadTranscodeDolbyVision,
                     maxBitrate = maxBitrate,
                 )
             } catch (e: Exception) {
@@ -772,7 +772,7 @@ class DownloaderImpl(
     override suspend fun retryFailedMediaStreams(item: Item) {
         val dbSourceDto =
             try {
-                partialSourceOfServer(item, appPreferences.currentServerId())
+                partialSourceOfServer(item, currentServerId.get())
             } catch (e: Exception) {
                 Timber.w(e, "Failed to load source for media-stream retry check on ${item.name}")
                 return
@@ -799,11 +799,7 @@ class DownloaderImpl(
         val serverSource =
             try {
                 mediaRepository
-                    .getMediaSources(
-                        item.id,
-                        true,
-                        appPreferences.getValue(appPreferences.downloadTranscodeDolbyVision),
-                    )
+                    .getMediaSources(item.id, true, settings.downloadTranscodeDolbyVision)
                     .firstOrNull { it.id == dbSourceDto.id }
             } catch (e: Exception) {
                 Timber.w(e, "Failed to re-resolve source for media-stream retry on ${item.name}")
@@ -812,8 +808,8 @@ class DownloaderImpl(
         restartExternalMediaStreamRows(
             rows = failedRows,
             serverSource = serverSource,
-            allowMetered = appPreferences.getValue(appPreferences.downloadOverMobileData),
-            allowRoaming = appPreferences.getValue(appPreferences.downloadWhenRoaming),
+            allowMetered = settings.downloadOverMobileData,
+            allowRoaming = settings.downloadWhenRoaming,
         )
     }
 
@@ -1352,7 +1348,7 @@ class DownloaderImpl(
                     .getMediaSources(
                         source.itemId,
                         true,
-                        appPreferences.getValue(appPreferences.downloadTranscodeDolbyVision),
+                        settings.downloadTranscodeDolbyVision,
                         source.downloadMaxBitrate,
                     )
                     .firstOrNull { it.id == source.id }
@@ -1363,8 +1359,8 @@ class DownloaderImpl(
         restartExternalMediaStreamRows(
             rows = failed,
             serverSource = serverSource,
-            allowMetered = appPreferences.getValue(appPreferences.downloadOverMobileData),
-            allowRoaming = appPreferences.getValue(appPreferences.downloadWhenRoaming),
+            allowMetered = settings.downloadOverMobileData,
+            allowRoaming = settings.downloadWhenRoaming,
         )
     }
 

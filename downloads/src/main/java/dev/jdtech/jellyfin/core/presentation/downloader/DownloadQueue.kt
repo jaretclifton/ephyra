@@ -16,9 +16,9 @@ import dev.jdtech.jellyfin.models.Playable
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.repository.DataChangeEvents
+import dev.jdtech.jellyfin.repository.DownloadSettings
 import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.repository.MediaRepository
-import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.NetworkConnectivity
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
@@ -66,7 +66,7 @@ class DownloadQueue
 @Inject
 constructor(
     private val downloader: Downloader,
-    private val appPreferences: AppPreferences,
+    private val settings: DownloadSettings,
     private val repositoryProvider: Provider<MediaRepository>,
     private val downloadStore: DownloadStore,
     @ApplicationContext private val context: Context,
@@ -732,7 +732,7 @@ constructor(
             //    pending entries wait for it instead of failing (#530).
             val online = connectivity.isOnline()
             markWaitingForNetwork(waiting = !online)
-            val maxConcurrent = appPreferences.getValue(appPreferences.maxConcurrentDownloads)
+            val maxConcurrent = settings.maxConcurrentDownloads
             val currentlyActive =
                 _entries.value.count {
                     it.state is EntryState.Downloading || it.state is EntryState.Paused
@@ -770,15 +770,13 @@ constructor(
     }
 
     private suspend fun startDownload(entry: Entry) {
-        val storageIndex =
-            appPreferences.getValue(appPreferences.downloadStorageIndex)?.toIntOrNull() ?: 0
+        val storageIndex = settings.downloadStorageIndex?.toIntOrNull() ?: 0
         // A Dolby Vision item (with the setting on) or a quality-capped download may
         // be transcoded server-side, which makes the download's length unknown up
         // front — flag it so the UI can say so.
         val isTranscode =
             entry.maxBitrate != null ||
-                (appPreferences.getValue(appPreferences.downloadTranscodeDolbyVision) &&
-                    entry.item.hasDolbyVision())
+                (settings.downloadTranscodeDolbyVision && entry.item.hasDolbyVision())
         // Drop the pending row *before* running setup. If the process dies
         // mid-setup, restoreAll() on next launch would otherwise resurrect the
         // pending entry and start a duplicate engine task + duplicate source row

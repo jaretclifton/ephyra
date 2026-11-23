@@ -1,7 +1,6 @@
 package dev.jdtech.jellyfin.core.presentation.downloader
 
 import android.app.Application
-import android.content.Context
 import dev.jdtech.jellyfin.database.RoomDownloadStore
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.models.Episode
@@ -12,12 +11,12 @@ import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.NetworkConnectivity
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
+import dev.jdtech.jellyfin.utils.download.TestDownloadSettings
 import dev.jdtech.jellyfin.utils.download.TestDownloadTexts
 import java.util.UUID
 import javax.inject.Provider
@@ -110,13 +109,9 @@ class DownloadQueueNetworkTest {
 
     private fun queue(): DownloadQueue {
         val context = RuntimeEnvironment.getApplication()
-        val preferences =
-            context
-                .getSharedPreferences("download-queue-network-test", Context.MODE_PRIVATE)
-                .apply { edit().clear().putInt("pref_downloads_max_concurrent", 1).commit() }
         return DownloadQueue(
             downloader = downloader,
-            appPreferences = AppPreferences(preferences),
+            settings = TestDownloadSettings(maxConcurrentDownloads = 1),
             repositoryProvider = Provider { error("No repository in this test") },
             downloadStore = RoomDownloadStore(database()),
             context = context,
