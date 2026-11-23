@@ -43,7 +43,7 @@ areas:
   - id: player
     title: Player
     summary: "The player as a whole: ExoPlayer and mpv behind `PlayerEngine`, `PlayerViewModel`, the play queue, versions and quality switches, trickplay and the media session."
-    keywords: [player, playback, play, speler, afspelen, exoplayer, mpv, engine, backend, decoder, hdr, refresh rate, trickplay, seek preview, scrubbing, seek, quality, version, versions, bitrate, transcode, direct play, queue, playlist, next episode, previous episode, up next, autoplay, shuffle, media session, notification, background audio, picture in picture, pip, sleep timer, still watching, chapters, skip intro, segments, buffering, stall, black screen, kwaliteit, versie, volgende aflevering, wachtrij, doorspoelen, voorvertoning, hapert, PlayerViewModel, PlayerEngine, onMediaItemTransition, PlaylistManager, StreamSwitches, ResolvePlayback, TrickplayLoader, PlaybackService]
+    keywords: [player, speler, afspelen, exoplayer, mpv, engine, backend, decoder, hdr, refresh rate, trickplay, seek preview, scrubbing, seek, quality, version, versions, bitrate, transcode, direct play, queue, playlist, next episode, previous episode, up next, autoplay, shuffle, media session, notification, background audio, picture in picture, pip, sleep timer, still watching, chapters, skip intro, segments, buffering, stall, black screen, kwaliteit, versie, volgende aflevering, wachtrij, doorspoelen, voorvertoning, hapert, PlayerViewModel, PlayerEngine, onMediaItemTransition, PlaylistManager, StreamSwitches, ResolvePlayback, TrickplayLoader, PlaybackService]
     paths:
       - player/local/src/main/java/dev/jdtech/jellyfin/player/local/presentation/PlayerViewModel.kt
       - player/local/src/main/java/dev/jdtech/jellyfin/player/local/engine/
@@ -62,7 +62,7 @@ areas:
   - id: playback-reporting
     title: Playback reporting
     summary: "Telling the server what plays (start, progress and stop reports, the play session), so its dashboard, resume position and played state follow."
-    keywords: [playback report, playback reports, reporting, report, start report, stop report, progress report, play session, playSessionId, now playing, dashboard, activity, server session shows, media source id, reported version, play method, second start, Sessions/Playing, voortgang, rapportage, melding aan de server, PlaybackReporter, PlaybackStartGate, PlaybackStopReport, postPlaybackStart, postPlaybackStop, reportStart, reportStopped]
+    keywords: [playback report, playback reports, reporting, report, start report, stop report, progress report, play session, playSessionId, now playing, dashboard, activity, server shows, media source id, reported version, chosen version, default version, play method, second start, Sessions/Playing, voortgang, rapportage, melding aan de server, PlaybackReporter, PlaybackStartGate, PlaybackStopReport, postPlaybackStart, postPlaybackStop, reportStart, reportStopped]
     paths:
       - player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/PlaybackReporter.kt
       - player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/PlaybackStartGate.kt
@@ -272,7 +272,7 @@ areas:
   - id: architecture
     title: Architecture
     summary: "Ports and adapters: the modules, the ports and stores, the Konsist rules, and how to add a port, a store, a module or a rule."
-    keywords: [architecture, ports and adapters, hexagonal, ddd, port, new port, store, new store, adapter, module, new module, rule, konsist, baseline, dependency, boundary, contract test, poort, nieuwe poort, toevoegen, regel, architectuur, MediaServer, MediaRepository, ServerStore, FakeMediaServer]
+    keywords: [architecture, ports and adapters, hexagonal, ddd, port, new port, store, new store, adapter, module, new module, rule, konsist, baseline, dependency, boundary, contract test, poort, nieuwe poort, nieuwe module, regel, architectuur, MediaServer, MediaRepository, ServerStore, FakeMediaServer]
     paths:
       - domain/src/main/kotlin/dev/jdtech/jellyfin/domain/ports/
       - application/src/main/kotlin/dev/jdtech/jellyfin/repository/
