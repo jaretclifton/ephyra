@@ -10,7 +10,10 @@ For each file in CHECKED it reports:
   - a Gradle task on a module that does not exist, or a `testDebugUnitTest`-style task on a module
     with flavours (it needs `testLibreDebugUnitTest`); other task names are not checked;
   - a test class pattern (`DownloadQueue*Test`) that matches no test file;
-and for docs/areas.yaml: unknown fields, a guide that is missing, an area without keywords.
+and for docs/areas.yaml: unknown or missing fields, 3 to 8 `paths` that exist and are not a whole
+module (unless the module is the area, such as `downloads/`), `docs` that exist, `rules` that are
+R-numbers rules.md lists, `tests` that are Gradle commands passing the checks above, and a guide in
+docs/areas/ without an entry.
 
 Run from anywhere: `python3 .claude/skills/start-work/scripts/check-docs.py`. It reads only files git tracks, needs no
 packages, and takes about a second. CI runs it on every pull request (.github/workflows/docs.yml).
@@ -72,10 +75,8 @@ NOT_CHECKED = {
     ".claude/skills/upstream-sync/SKILL.md",
 }
 
-AREA_FIELDS = {
-    "id", "title", "status", "guide", "summary", "keywords", "paths", "ports", "docs",
-    "checklist", "test_data", "rules", "tests", "pitfalls", "decisions",
-}
+AREA_FIELDS = {"id", "title", "summary", "keywords", "paths", "docs", "rules", "tests"}
+AREA_REQUIRED = ("title", "summary", "keywords", "paths")
 
 
 def git_files() -> list[str]:
@@ -276,6 +277,20 @@ def check_repo_links(text: str) -> list[str]:
     return problems
 
 
+def area_list(entry: str, field: str) -> list[str]:
+    """The items of a list field of an entry: `field: [a, b]` or `      - a` lines below it."""
+    m = re.search(rf"^    {field}:(.*(?:\n      - .*)*)", entry, re.M)
+    if not m:
+        return []
+    text = m.group(1).strip()
+    if text.startswith("["):
+        items = text.strip("[]").split(",")
+    else:
+        items = [line.strip().removeprefix("- ") for line in text.splitlines()]
+    items = [item.strip() for item in items if item.strip()]
+    return [i[1:-1] if len(i) > 1 and i[0] == i[-1] and i[0] in "'\"" else i for i in items]
+
+
 def check_model(models: dict[str, str]) -> list[str]:
     """The hand-written parts of the LikeC4 model: components, ports and their arrows.
 
@@ -351,43 +366,48 @@ def check_model(models: dict[str, str]) -> list[str]:
 
 
 def check_areas(rel: str, text: str) -> list[str]:
-    """docs/areas.yaml, read without a YAML package: the fields, the guides, then as text."""
+    """docs/areas.yaml, read without a YAML package: the fields, then each list."""
     problems: list[str] = []
     entries = re.split(r"^  - id: ", text, flags=re.M)[1:]
     ids = []
     for entry in entries:
         area = entry.split("\n", 1)[0].strip()
         ids.append(area)
-        fields = set(re.findall(r"^    (\w+):", entry, re.M)) | {"id"}
+        fields = set(re.findall(r"^    ([\w-]+):", entry, re.M)) | {"id"}
         for unknown in sorted(fields - AREA_FIELDS):
-            problems.append(f"area {area}: unknown field `{unknown}`")
-        for needed in ("title", "status", "summary", "keywords", "paths"):
+            problems.append(f"area {area}: unknown field `{unknown}` (it belongs in the guide)")
+        for needed in AREA_REQUIRED:
             if needed not in fields:
                 problems.append(f"area {area}: no `{needed}`")
-        status = re.search(r"^    status: (\w+)", entry, re.M)
-        guide = f"docs/areas/{area}.md"
-        if status and status.group(1) == "guide" and guide not in FILE_SET:
-            problems.append(f"area {area}: status guide, but {guide} does not exist")
-        if status and status.group(1) != "guide" and guide in FILE_SET:
-            problems.append(f"area {area}: {guide} exists, but the status is not `guide`")
-        for value in re.findall(r"(?:^|[\s\[,\"'(])((?:[\w.\-]+/)+[\w.\-]*)", entry):
-            if value.split("/")[0] in TOP and not path_exists(value):
-                problems.append(f"area {area}: path `{value}` does not exist")
-        listed = "\n".join(re.findall(r"^    (?:paths|docs):(.*(?:\n      - .*)*)", entry, re.M))
-        for value in re.findall(r"[\w.][\w.\-/]*", listed):
+        for field in ("keywords", "paths", "docs", "rules", "tests"):
+            value = re.search(rf"^    {field}:[ \t]*(\S.*)?$", entry, re.M)
+            if value and value.group(1) and not value.group(1).startswith("["):
+                problems.append(f"area {area}: `{field}` must be a list, not `{value.group(1)}`")
+        paths = area_list(entry, "paths")
+        for needed in ("keywords", "paths"):
+            if needed in fields and not area_list(entry, needed):
+                problems.append(f"area {area}: `{needed}` must be a list with at least one item")
+        if paths and not 3 <= len(paths) <= 8:
+            problems.append(f"area {area}: {len(paths)} paths, keep 3 to 8")
+        for value in paths:
+            bare = value.rstrip("/")
+            whole = bare in MODULES or ("/" not in bare and bare in DIRS)
+            if whole and bare.replace("/", "-") != area:
+                problems.append(f"area {area}: `{value}` is a whole module; name the files in it")
+        for value in paths + area_list(entry, "docs"):
             if not path_exists(value):
                 problems.append(f"area {area}: `{value}` in paths or docs does not exist")
-        for rule in set(re.findall(r"\bR(\d+)\b", entry)):
-            if f"R{rule}" not in RULES:
-                problems.append(f"area {area}: rule R{rule} is not in docs/architecture/rules.md")
-        for line in re.findall(r"^    ports:(.*(?:\n      - .*)*)", entry, re.M):
-            for name in re.findall(r"\b[A-Z][a-z0-9]+(?:[A-Z][a-z0-9]*)+\b|\b[a-z]+[A-Z]\w*\b", line):
-                if name not in WORDS:
-                    problems.append(f"area {area}: port or member `{name}` is in no source file")
+        for rule in area_list(entry, "rules"):
+            if not re.fullmatch(r"R\d+", rule):
+                problems.append(f"area {area}: rule `{rule}` is not an R-number")
+            elif rule not in RULES:
+                problems.append(f"area {area}: rule {rule} is not in docs/architecture/rules.md")
+        tests = area_list(entry, "tests")
         sub: list[str] = []
-        check_gradle(entry, sub)
-        tests = "\n".join(re.findall(r"^    tests:(.*(?:\n      - .*)*)", entry, re.M))
-        check_test_names(tests, sub)
+        for command in tests:
+            if not command.startswith("./gradlew "):
+                sub.append(f"test `{command}` is not a Gradle command")
+        check_gradle("\n".join(tests), sub)
         problems += [f"area {area}: {p}" for p in sub]
     for dup in sorted({i for i in ids if ids.count(i) > 1}):
         problems.append(f"area id `{dup}` is used twice")

@@ -40,8 +40,8 @@ export default defineConfig({
       social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/midasvo/ephyra' }],
       components: { Footer: './src/components/Footer.astro' },
       sidebar: [
-        { label: 'Start', items: [{ label: 'Overview', link: '/' }, { label: 'Areas', link: '/areas/' }] },
-        { label: 'Area guides', items: [{ autogenerate: { directory: 'areas' } }] },
+        { label: 'Start', items: [{ label: 'Overview', link: '/' }, { label: 'All areas', link: '/areas/' }] },
+        { label: 'Areas', items: [{ autogenerate: { directory: 'areas' } }] },
         {
           label: 'Architecture',
           items: [

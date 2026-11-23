@@ -8,6 +8,7 @@ Status: works on both engines, phone and TV, as of 2026-11-23 (`main` at `b24b19
 - Which tracks start: `domain/SeriesTrackPreference.kt` and `domain/TrackPicks.kt`. Subtitle files: `domain/SubtitleFiles.kt`, then `engine/exo/` or `engine/mpv/MpvSubtitleFiles.kt`.
 - Styles: `AppPreferences` → `core/.../SubtitleStyle.kt` (ExoPlayer) or `engine/mpv/MpvSubtitleOptions.kt` (mpv).
 - What the server sends: the device profile in `server/jellyfin/.../JellyfinDeviceProfiles.kt`.
+- Ports: `MediaRepository` (`getSeriesTrackPreferences`, `saveSeriesTrackPreference`), `PlaybackPort` (the `audioStreamIndex` of a `PlaybackRequest`, for a transcode), `EnginePlayer` (`setSubtitleDelayMs`).
 - Test fast: `./gradlew :player:local:testDebugUnitTest --tests '*Subtitle*' --tests '*Track*'`. On a device: Tracks Movie, Image Subs Movie, Tracks Show on the test server.
 - Before the PR: `docs/mpv-checklist.md` on both backends, and `docs/track-test-series.md` for the series choice.
 - Seen before: transcodes drop embedded tracks (#597, #613), a delay after a seek (#650), the ASS override on mpv (#833).
@@ -80,7 +81,7 @@ On the test server ([docs/dev-environment.md](../dev-environment.md), `tools/tes
 - **Tracks Show**: two audio tracks (`dut`-tagged Dutch); with the 1.5 Mbps cap, the series audio choice on a transcode.
 - **Und Audio Show**: an audio track tagged `und`.
 
-For the per-series choice and the ASS override, generate the series in [docs/track-test-series.md](../track-test-series.md) (`scripts/make-track-test-series.sh`, needs `ffmpeg`) and add them to a TV shows library. That doc has the step lists. The audit rows PLY-33 to PLY-47 in [docs/audit/checklist.md](../audit/checklist.md) list what to look at.
+For the per-series choice and the ASS override, generate the series in [docs/track-test-series.md](../track-test-series.md) (Track Test, Other Show and Subtitle Style Test; `scripts/make-track-test-series.sh`, needs `ffmpeg`) and add them to a TV shows library by hand: `setup.sh` does not. That doc has the step lists. The audit rows PLY-33 to PLY-47 in [docs/audit/checklist.md](../audit/checklist.md) list what to look at.
 
 Emulators: the `test-devices` skill. `scripts/avds.sh start <name>` uses software rendering, which mpv needs. Switch the backend under Settings → Player. Mute the emulator first.
 

@@ -1,191 +1,142 @@
-# The areas of Ephyra: where to work on what (#928).
+# The areas of Ephyra: an index of where to work on what (#928).
 #
 # One entry per area. The `start-work` skill (.claude/skills/start-work) and the development site
-# (devsite/) read this file. Paths are relative to the repository root and were checked against
-# `main` when the entry was written; the code is right where they differ.
+# (devsite/) read this file. It is an index: small enough to read whole. What an area's guide says
+# (ports, pitfalls, test data, decisions, the checklist before a PR) lives in the guide only.
 #
-# Fields:
-#   id         the area's name, also the guide's file name (docs/areas/<id>.md)
-#   title      shown on the site
-#   guide      the guide, when there is one
-#   status     `guide` (a guide in docs/areas/ and every field filled) or `row` (paths and a summary
-#              only, no guide yet)
-#   summary    one sentence: what the area is
-#   keywords   words someone uses for it, English and Dutch, for the skill to match a request
-#   paths      the code, most important first
-#   ports      the ports and stores it goes through (domain/ports, application)
-#   docs       the docs to read, most important first
-#   checklist  what to run by hand before a PR, if anything
-#   test_data  what on the test server (docs/dev-environment.md) exercises it
-#   rules      the Konsist rules (architecture/) that guard it
-#   tests      the unit tests that cover it: run these first
-#   pitfalls   what went wrong before
-#   decisions  the ADRs and issues that shaped it
+# An area has a guide when docs/areas/<id>.md exists; there is no field for it.
+#
+# Fields (no others; .claude/skills/start-work/scripts/check-docs.py checks them):
+#   id        the area's name, also the guide's file name (docs/areas/<id>.md)
+#   title     shown on the site
+#   summary   one sentence: what the area is
+#   keywords  the words someone uses for it, English and Dutch: features, symptoms, class names
+#   paths     3 to 8 files or folders to open first, most important first. Real paths from the
+#             repository root, never a bare module (`core/`) unless the module is the area
+#   docs      the docs to read, most important first (optional; the guide is not listed)
+#   rules     the Konsist rules that guard it, numbers only (docs/architecture/rules.md; optional)
+#   tests     one or two Gradle commands that test it fast (optional)
+#
+# Paths were checked against `main` when written; the code is right where they differ. Run
+# `python3 .claude/skills/start-work/scripts/check-docs.py` after editing this file.
 
 areas:
   - id: subtitles-and-tracks
     title: Subtitles and tracks
-    status: guide
-    guide: docs/areas/subtitles-and-tracks.md
     summary: "Choosing, styling and timing audio and subtitle streams in the player, on both engines."
-    keywords: [subtitle, subtitles, captions, track, tracks, audio track, language, subtitle delay, subtitle sync, subtitle style, pgs, vobsub, ass, srt, forced, sdh, ondertitel, ondertiteling, ondertitels, spoor, sporen, audiospoor, taal, vertraging, verspringen, springen, jump, out of sync]
+    keywords: [subtitle, subtitles, captions, cc, track, tracks, audio track, audio language, subtitle language, subtitle delay, subtitle sync, subtitle style, ass override, pgs, vobsub, image subtitles, ass, srt, forced, sdh, external subtitle, series choice, ondertitel, ondertiteling, ondertitels, spoor, sporen, audiospoor, taal, vertraging, verspringen, springen, jump, out of sync, TrackPicks, SeriesTrackPreference, SubtitleFiles, MpvSubtitleOptions]
     paths:
       - player/local/src/main/java/dev/jdtech/jellyfin/player/local/presentation/PlayerViewModel.kt
       - player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/SeriesTrackPreference.kt
       - player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/TrackPicks.kt
       - player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/SubtitleFiles.kt
-      - player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/StreamSwitches.kt
-      - player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/PlaylistManager.kt
-      - player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/Extensions.kt
-      - player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/AutoSyncSubtitleCueParser.kt
-      - player/local/src/main/java/dev/jdtech/jellyfin/player/local/engine/EngineDefaults.kt
       - player/local/src/main/java/dev/jdtech/jellyfin/player/local/engine/exo/
-      - player/local/src/main/java/dev/jdtech/jellyfin/player/local/engine/mpv/MpvSubtitleFiles.kt
       - player/local/src/main/java/dev/jdtech/jellyfin/player/local/engine/mpv/MpvSubtitleOptions.kt
-      - player/core/src/main/java/dev/jdtech/jellyfin/player/core/domain/models/
       - server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/JellyfinDeviceProfiles.kt
-      - server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/JellyfinPlayback.kt
-      - domain/src/main/kotlin/dev/jdtech/jellyfin/models/SeriesTrackPreference.kt
-      - data/src/main/java/dev/jdtech/jellyfin/models/SeriesTrackPreferenceDto.kt
-      - settings/src/main/java/dev/jdtech/jellyfin/settings/domain/AppPreferences.kt
-      - settings/src/main/java/dev/jdtech/jellyfin/settings/presentation/subtitle/
       - core/src/main/java/dev/jdtech/jellyfin/utils/SubtitleStyle.kt
-      - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/player/
-      - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/settings/SubtitleStyleScreen.kt
-      - app/tv/src/main/java/dev/jdtech/jellyfin/ce/presentation/player/
-    ports:
-      - MediaRepository (getSeriesTrackPreferences, saveSeriesTrackPreference)
-      - PlaybackPort (audioStreamIndex)
-      - EnginePlayer (setSubtitleDelayMs)
-    docs:
-      - docs/track-test-series.md
-      - docs/mpv-checklist.md
-      - docs/dev-environment.md
-      - docs/audit/checklist.md
-      - docs/tv-research/adr/0004-tv-player-ui.md
-    checklist:
-      - docs/mpv-checklist.md on both backends
-      - docs/track-test-series.md step lists for the series choice and the ASS override
-      - python3 .claude/skills/translate-strings/scripts/check-translations.py when strings change
-    test_data:
-      - "Tracks Movie: 2 audio, 2 embedded subtitles (one forced), external .de.srt"
-      - "Image Subs Movie: PGS and VobSub; a 1.5 Mbps cap transcodes it"
-      - "Tracks Show: 2 audio (dut-tagged Dutch); a 1.5 Mbps cap transcodes it"
-      - "Und Audio Show: audio tagged und"
-      - "Track Test, Other Show, Subtitle Style Test: scripts/make-track-test-series.sh, added by hand"
-    rules:
-      - R6 engine packages stay behind EnginePlayer
-      - R1-R3 no SDK outside server/jellyfin; device profile changes go there
-      - R4 series choice through MediaRepository, not ServerDatabaseDao
-      - R10 value-class ids
-      - R12 ticks through Ticks
+    docs: [docs/track-test-series.md, docs/mpv-checklist.md, docs/tv-research/adr/0004-tv-player-ui.md]
+    rules: [R6, R1, R2, R3, R4, R10, R12]
     tests:
-      - ./gradlew :player:local:testDebugUnitTest --tests '*Subtitle*' --tests '*Track*' --tests '*StreamSwitches*' --tests '*AudioChoice*' --tests '*SwitchFailureText*' --tests '*PlayerInvariantsTest'
+      - ./gradlew :player:local:testDebugUnitTest --tests '*Subtitle*' --tests '*Track*'
       - ./gradlew :data:testDebugUnitTest --tests '*SeriesTrackPreferenceTest'
-      - ./gradlew :server:jellyfin:testDebugUnitTest --tests '*JellyfinDeviceProfilesTest' --tests '*PlaybackSourceMappingTest'
-      - ./gradlew :core:testLibreDebugUnitTest --tests '*SubtitleStyleTest'
-    pitfalls:
-      - A transcode drops the tracks inside the file; load the server's extracted files, only for transcodes (#597, #613)
-      - The first subtitle request of a transcode waits for all extraction; never hold up the video (#711)
-      - media3 draws nothing from a whole image subtitle file; ImageSubtitleFileParser splits it (#613)
-      - Language codes differ per engine and server (en, eng, dut, nld); use normalizeLanguage (#580)
-      - mpv draws subtitles itself; style goes through MpvSubtitleOptions (#308)
-      - Toggling sub-ass-override while mpv plays loses a cue unless the track is reselected (#833)
-      - A positive delay lost cues after a forward seek and delayed the item end (#650, #619)
-      - On a LOCAL source every subtitle row is a sidecar file, whatever isExternal says
-      - Shared code reads media3 Tracks on both engines; player/core Track is the Cast model
-    decisions:
-      - "#19 image subtitles without a transcode"
-      - "#24 subtitle style settings"
-      - "#115, #120 choice per series; audio never remembered as off"
-      - "#300, #308 override embedded styles, also on mpv"
-      - "#451 one track name on both backends"
-      - "#580, #834 series choice and preferred language sent for a transcode"
-      - "#596, #726 audio switch during a transcode; latest switch wins"
-      - "#597, #613 embedded and image subtitles during a transcode"
-      - "#612 mpv capped profile never burns in a subtitle"
-      - "#617, #711 subtitle files off the main thread, only when wanted"
-      - "#619, #650 subtitle delay and sync"
-      - "#750 series choice through the repository"
-      - "TV ADR 0004: TV dialogs call switchToTrack()"
-  - id: player-engines
-    title: Player engines
-    status: row
-    summary: "ExoPlayer and mpv behind `PlayerEngine`, the player screen and its controls."
-    keywords: [player, exoplayer, mpv, engine, decoder, hdr, refresh rate, speler, afspelen]
-    paths: [player/local/src/main/java/dev/jdtech/jellyfin/player/local/engine/, player/local/src/main/java/dev/jdtech/jellyfin/player/local/presentation/, player/core/]
+
+  - id: player
+    title: Player
+    summary: "The player as a whole: ExoPlayer and mpv behind `PlayerEngine`, `PlayerViewModel`, the play queue, versions and quality switches, trickplay and the media session."
+    keywords: [player, speler, afspelen, exoplayer, mpv, engine, backend, decoder, hdr, refresh rate, trickplay, seek preview, scrubbing, seek, quality, version, versions, bitrate, transcode, direct play, queue, playlist, next episode, previous episode, up next, autoplay, shuffle, media session, notification, background audio, picture in picture, pip, sleep timer, still watching, chapters, skip intro, segments, buffering, stall, black screen, kwaliteit, versie, volgende aflevering, wachtrij, doorspoelen, voorvertoning, hapert, PlayerViewModel, PlayerEngine, onMediaItemTransition, PlaylistManager, StreamSwitches, ResolvePlayback, TrickplayLoader, PlaybackService]
+    paths:
+      - player/local/src/main/java/dev/jdtech/jellyfin/player/local/presentation/PlayerViewModel.kt
+      - player/local/src/main/java/dev/jdtech/jellyfin/player/local/engine/
+      - player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/PlaylistManager.kt
+      - player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/StreamSwitches.kt
+      - player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/ResolvePlayback.kt
+      - player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/TrickplayLoader.kt
+      - player/local/src/main/java/dev/jdtech/jellyfin/player/local/PlaybackService.kt
+      - app/phone/src/main/java/dev/jdtech/jellyfin/PlayerActivity.kt
+    docs: [docs/mpv-checklist.md, docs/dev-environment.md, docs/tv-research/adr/0004-tv-player-ui.md]
+    rules: [R6, R12, R10, R1, R2]
+    tests:
+      - ./gradlew :player:local:testDebugUnitTest
+      - ./gradlew :server:jellyfin:testDebugUnitTest --tests '*Trickplay*' --tests '*PlaybackSourceMappingTest'
 
   - id: playback-reporting
     title: Playback reporting
-    status: row
-    summary: "Telling the server what plays, where it is and when it stops; resume positions."
-    keywords: [playback report, progress, resume, stop report, play session, voortgang, hervatten]
-    paths: [player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/PlaybackReporter.kt, domain/]
+    summary: "Telling the server what plays (start, progress and stop reports, the play session), so its dashboard, resume position and played state follow."
+    keywords: [playback report, playback reports, reporting, report, start report, stop report, progress report, play session, playSessionId, now playing, dashboard, activity, server shows, media source id, reported version, chosen version, default version, play method, second start, Sessions/Playing, voortgang, rapportage, melding aan de server, PlaybackReporter, PlaybackStartGate, PlaybackStopReport, postPlaybackStart, postPlaybackStop, reportStart, reportStopped]
+    paths:
+      - player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/PlaybackReporter.kt
+      - player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/PlaybackStartGate.kt
+      - player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/PlaybackStopReport.kt
+      - domain/src/main/kotlin/dev/jdtech/jellyfin/domain/ports/PlaybackPort.kt
+      - server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/JellyfinPlayback.kt
+      - data/src/main/java/dev/jdtech/jellyfin/repository/MediaRepositoryImpl.kt
+      - app/tv/src/main/java/dev/jdtech/jellyfin/ce/presentation/player/TvProgressReports.kt
+      - player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/CastPlaybackReporter.kt
+    docs: [docs/mpv-checklist.md]
+    rules: [R14, R12, R1, R2]
+    tests:
+      - ./gradlew :player:local:testDebugUnitTest --tests '*PlaybackReporter*' --tests '*PlaybackStartGate*' --tests '*PlaybackStopReport*'
+      - ./gradlew :server:jellyfin:testDebugUnitTest --tests '*PlaybackReportRequestTest'
 
   - id: downloads
     title: Downloads
-    status: guide
-    guide: docs/areas/downloads.md
-    summary: Keeping items on the device - the queue, the engine, smart downloads and playing them without the server.
-    keywords: [download, downloads, downloading, queue, smart download, storage, offline, resume download, quality, downloaden, gedownload, wachtrij, opslag, hervat]
+    summary: "Keeping items on the device: the queue, the engine, smart downloads and playing them without the server."
+    keywords: [download, downloads, downloading, downloaded, queue, smart download, storage, offline, without server, resume download, download quality, failed download, retry, unreachable, cut off, downloaden, gedownload, wachtrij, opslag, hervat, mislukt, DownloadQueue, DownloaderImpl, MediaDownloadEngine, DownloadState, DownloadStore, StoredFallback]
     paths:
-      - downloads/
+      - downloads/src/main/java/dev/jdtech/jellyfin/core/presentation/downloader/DownloadQueue.kt
+      - downloads/src/main/java/dev/jdtech/jellyfin/utils/DownloaderImpl.kt
+      - downloads/src/main/java/dev/jdtech/jellyfin/utils/download/MediaDownloadEngine.kt
       - domain/src/main/kotlin/dev/jdtech/jellyfin/models/DownloadState.kt
       - application/src/main/kotlin/dev/jdtech/jellyfin/repository/DownloadStore.kt
-      - application/src/main/kotlin/dev/jdtech/jellyfin/repository/DownloadSettings.kt
       - application/src/main/kotlin/dev/jdtech/jellyfin/repository/StoredFallback.kt
-      - data/src/main/java/dev/jdtech/jellyfin/database/RoomDownloadStore.kt
-      - core/src/main/java/dev/jdtech/jellyfin/core/presentation/downloader/DownloaderViewModel.kt
-      - core/src/main/java/dev/jdtech/jellyfin/di/AppPreferencesPorts.kt
       - modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/downloads/
       - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/DownloadsScreen.kt
-      - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/components/DownloadQualityDialog.kt
-    ports: [DownloadStore, DownloadSettings, CurrentServerId, MediaRepository, DownloadTexts]
-    docs: [docs/areas/downloads.md, docs/dev-environment.md, docs/architecture/5-hexagonal-ddd.md, docs/open-decisions.md]
-    checklist:
-      - "./gradlew :downloads:testDebugUnitTest :data:testDebugUnitTest :modes:film:testDebugUnitTest"
-      - "Download, cut the server off with iptables, bring it back, check the queue"
-    test_data:
-      - "users: tester (may download), nodownload (may not)"
-      - "Plain Movie, Short Movie, Versions Movie, Tracks Movie (external .de.srt)"
-      - "Image Subs Movie and Tracks Show at 1.5 Mbps (transcoded download)"
-      - "Test Show, Long Season Show, Resume Show (seasons, smart downloads)"
-      - "forward.py 8097 8096 600 for a slow transfer"
+    docs: [docs/dev-environment.md, docs/open-decisions.md]
     rules: [R13, R15, R9, R4, R10, R1, R2]
     tests:
-      - "downloads: DownloadQueue*Test, MediaDownloadEngine*Test, ResumeValidatorsTest, SmartDownloadPlannerTest, OrphanSweep*Test"
-      - "domain: DownloadStateTest"
-      - "data: StoredFallbackTest, StoredItemFallbackTest, UnfinishedDownloadPlaybackTest"
-      - "modes/film: DownloadsViewModelUserSwitchTest, QueueCountsTest"
-      - "app/phone (testLibreDebugUnitTest): DownloadQualityDialogTest, DownloadStatusTextTest"
-    pitfalls:
-      - "#912: a download cut off by an unreachable server stays failed after 3 retries"
-      - "#718: one item id is stored for one server; a second server's download replaces it"
-      - "Re-download keeps old metadata (IGNORE inserts, open-decisions data-02)"
-      - "The engine is in-process: the pump service keeps it alive, restoreAll resumes"
-      - "#921: DownloadsViewModelUserSwitchTest is flaky on CI"
-    decisions: ["#38", "#116", "#281", "#560", "#850", "#897", "#899", "#901", "#918", "ADR 0002"]
+      - ./gradlew :downloads:testDebugUnitTest
+      - ./gradlew :data:testDebugUnitTest --tests '*StoredFallbackTest' --tests '*StoredItemFallbackTest'
 
-  - id: sync
-    title: Sync of user data
-    status: row
-    summary: "Sending played marks, favourites and resume positions written while the server was away."
-    keywords: [sync, toBeSynced, pending user data, worker, synchroniseren]
-    paths: [core/, domain/, application/]
+  - id: user-data
+    title: User data and sync
+    summary: "Played, favourite, resume position and last played: the rules in `PlayState`, the repository's writes, and the sync of changes made while the server was away."
+    keywords: [user data, userdata, played, unplayed, watched, unwatched, mark as played, mark as unplayed, mark as watched, favourite, favorite, favourites, resume position, last played, last-played date, progress bar, sync, toBeSynced, pending user data, merge, gezien, bekeken, ongezien, niet gezien, favoriet, favorieten, hervatpositie, verder kijken positie, synchroniseren, PlayState, PlayStop, SyncMerge, PendingUserDataStore, UserDataSync, SyncWorker, UserDataReport, markAsPlayed, markAsUnplayed, markAsFavorite]
+    paths:
+      - domain/src/main/kotlin/dev/jdtech/jellyfin/domain/userdata/PlayState.kt
+      - domain/src/main/kotlin/dev/jdtech/jellyfin/domain/userdata/SyncMerge.kt
+      - data/src/main/java/dev/jdtech/jellyfin/repository/MediaRepositoryImpl.kt
+      - data/src/main/java/dev/jdtech/jellyfin/repository/UserDataReport.kt
+      - application/src/main/kotlin/dev/jdtech/jellyfin/repository/PendingUserDataStore.kt
+      - core/src/main/java/dev/jdtech/jellyfin/work/UserDataSync.kt
+      - core/src/main/java/dev/jdtech/jellyfin/work/SyncWorker.kt
+      - server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/JellyfinUserData.kt
+    rules: [R14, R12, R4, R9]
+    tests:
+      - ./gradlew :domain:test :data:testDebugUnitTest
+      - ./gradlew :core:testLibreDebugUnitTest --tests '*Sync*'
 
   - id: cast
     title: Cast
-    status: row
-    summary: "Google Cast in the proprietary flavor; stubs in libre."
-    keywords: [cast, chromecast, receiver, casten]
-    paths: [player/cast/, app/phone/src/main/java/dev/jdtech/jellyfin/presentation/cast/]
+    summary: "Google Cast in the proprietary flavour: the device sheet, the mini player, playback on a receiver; stubs in libre."
+    keywords: [cast, casting, chromecast, google cast, receiver, cast button, mini player, device sheet, proprietary, play services, casten, CastViewModel, CastPlayerController, CastSessionManager, CastHost, FakeCast]
+    paths:
+      - player/cast/src/main/java/dev/jdtech/jellyfin/player/cast/presentation/CastViewModel.kt
+      - player/cast/src/main/java/dev/jdtech/jellyfin/player/cast/CastPlayerController.kt
+      - player/cast/src/main/java/dev/jdtech/jellyfin/player/cast/CastSessionManager.kt
+      - player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/CastPlayerControllerImpl.kt
+      - player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/CastUrls.kt
+      - player/cast/src/debug/java/dev/jdtech/jellyfin/player/cast/debug/FakeCast.kt
+      - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/cast/CastHost.kt
+      - server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/cast/
+    rules: [R1, R2, R10]
+    tests:
+      - ./gradlew :player:cast:testProprietaryDebugUnitTest
+      - ./gradlew :app:phone:compileLibreDebugKotlin :app:phone:compileProprietaryDebugKotlin
 
   - id: setup-and-servers
     title: Setup, servers and users
-    status: guide
-    guide: docs/areas/setup-and-servers.md
-    summary: Finding a server, signing in, adding and switching servers, addresses and users.
-    keywords: [setup, login, sign in, server, address, user, switch server, switch user, onboarding, quick connect, discovery, session, reachability, inloggen, aanmelden, server toevoegen, adres, gebruiker, wisselen]
+    summary: "Finding a server, signing in, adding and switching servers, addresses and users."
+    keywords: [setup, login, log in, sign in, sign out, server, add server, address, user, switch server, switch user, onboarding, welcome, quick connect, discovery, server session, token, reachability, unreachable banner, local network permission, inloggen, aanmelden, uitloggen, server toevoegen, adres, gebruiker, wisselen, SetupRepositoryImpl, ServerConnector, ActiveServer, CurrentMediaServer, ServerReachability, ServerSessionKeeper]
     paths:
       - setup/src/main/java/dev/jdtech/jellyfin/setup/data/SetupRepositoryImpl.kt
       - setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/
@@ -193,93 +144,200 @@ areas:
       - domain/src/main/kotlin/dev/jdtech/jellyfin/domain/ports/ActiveServer.kt
       - server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/JellyfinServerConnector.kt
       - core/src/main/java/dev/jdtech/jellyfin/core/server/
-      - core/src/main/java/dev/jdtech/jellyfin/di/ApiSession.kt
-      - core/src/main/java/dev/jdtech/jellyfin/core/session/ServerSessionKeeper.kt
       - core/src/main/java/dev/jdtech/jellyfin/core/reachability/
-      - application/src/main/kotlin/dev/jdtech/jellyfin/repository/ServerStore.kt
-      - data/src/main/java/dev/jdtech/jellyfin/database/RoomServerStore.kt
       - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/setup/
-      - app/tv/src/main/java/dev/jdtech/jellyfin/presentation/setup/
-    ports: [ServerConnector, ActiveServerHolder, ServerStore, MediaServer, ServerSession]
-    docs: [docs/areas/setup-and-servers.md, docs/dev-environment.md, docs/architecture/README.md, docs/architecture/adr/0002-hexagonal-ddd.md]
-    checklist:
-      - "Independent review when no bot reviewed the PR (setup flow)"
-      - "On an emulator: add server, log in, switch user, switch server, remove an address"
-      - "./gradlew :app:phone:compileLibreDebugKotlin :app:tv:compileLibreDebugKotlin"
-    test_data:
-      - "users: tester, second (user switch), nopass (empty password), nodownload; never admin"
-      - "forward.py on 8097 as a second address of the same server"
-      - "a second server: setup.sh with its own EPHYRA_TEST_SERVER_DIR, _PORT, _NAME"
+    docs: [docs/dev-environment.md, docs/open-decisions.md]
     rules: [R16, R1, R2, R3, R4, R9, R10, R11]
     tests:
-      - "setup: SetupRepositoryConnectorTest, AddSavedServerSessionTest, Login*Test, AddServer*Test"
-      - "core (testLibreDebugUnitTest): CurrentMediaServer*Test, ServerSessionKeeperTest, ServerReachability*Test, SavedSessionRestorerTest"
-      - "server/jellyfin: JellyfinServerConnector*Test, SwitchDuringRequestTest, contract tests"
-      - "data: RoomServerStoreTest"
-      - "app/tv (testLibreDebugUnitTest): LoginKeyboardTest, UsersFocusRestoreTest"
-    pitfalls:
-      - "Current server id is also a preference written by the ViewModels (#918)"
-      - "Login screens use the client's address, not Room's current one"
-      - "Checking another server's address must run unwatched (#819)"
-      - "The active user can delete itself (open-decisions setup-02)"
-      - "Reachability is not started on TV"
-    decisions: ["#761", "#763", "#770", "#819", "#899", "#281", "#334", "#250", "#425", "#376", "ADR 0001", "ADR 0002"]
+      - ./gradlew :setup:testDebugUnitTest :core:testLibreDebugUnitTest
 
   - id: profiles
     title: Profiles and PIN
-    status: row
-    summary: "Profiles on one device, the profile lock and PIN."
-    keywords: [profile, pin, lock, profiel, profielen, vergrendeling]
-    paths: [setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/pin/, docs/profiles/]
+    summary: "The users on one device as profiles: switching between them and the PIN or pattern lock."
+    keywords: [profile, profiles, profile switch, switch profile, profile picker, pin, pin code, pattern, lock, profile lock, locked, kids, profiel, profielen, profiel wisselen, pincode, patroon, vergrendeling, slot, kinderen, ProfileLock, ProfilePinHasher, ProfilePinGateViewModel, ProfileBottomSheet]
+    paths:
+      - application/src/main/kotlin/dev/jdtech/jellyfin/profilelock/ProfileLock.kt
+      - application/src/main/kotlin/dev/jdtech/jellyfin/profilelock/ProfilePinHasher.kt
+      - setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/pin/
+      - setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/users/UsersViewModel.kt
+      - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/setup/pin/
+      - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/components/ProfileBottomSheet.kt
+      - app/tv/src/main/java/dev/jdtech/jellyfin/ce/presentation/pin/
+      - core/src/main/java/dev/jdtech/jellyfin/viewmodels/MainViewModel.kt
+    docs: [docs/profiles/pin/]
+    rules: [R4, R9, R10]
+    tests:
+      - ./gradlew :application:test
+      - ./gradlew :setup:testDebugUnitTest --tests '*Pin*'
 
   - id: home-and-library
     title: Home and library
-    status: row
-    summary: "The home rows, libraries, the item screens (movie, show, season, episode)."
-    keywords: [home, library, movie, show, season, episode, collection, bibliotheek, film, serie, seizoen, aflevering]
-    paths: [modes/film/, app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/]
+    summary: "The home rows, the libraries and collections, and the item screens (movie, show, season, episode, person)."
+    keywords: [home, home screen, home rows, continue watching, next up, latest, carousel, library, libraries, collection, movie, show, series, season, episode, item screen, details, person, actor, favourites screen, sort, letter index, poster, artwork, startscherm, verder kijken, bibliotheek, film, serie, seizoen, aflevering, collectie, acteur, sorteren, HomeViewModel, LibraryViewModel, ShowViewModel, ItemButtonsBar, CatalogPort]
+    paths:
+      - modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/home/HomeViewModel.kt
+      - modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/library/LibraryViewModel.kt
+      - modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/show/ShowViewModel.kt
+      - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/HomeScreen.kt
+      - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/components/ItemButtonsBar.kt
+      - application/src/main/kotlin/dev/jdtech/jellyfin/repository/MediaRepository.kt
+      - domain/src/main/kotlin/dev/jdtech/jellyfin/domain/ports/CatalogPort.kt
+      - server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/JellyfinCatalog.kt
+    rules: [R1, R2, R4, R10]
+    tests:
+      - ./gradlew :modes:film:testDebugUnitTest
 
   - id: search
     title: Search
-    status: row
-    summary: "Searching the server's catalog."
-    keywords: [search, zoeken]
-    paths: [modes/film/]
+    summary: "Searching the server's catalog, on phone and TV."
+    keywords: [search, search bar, find, query, results, zoeken, zoekbalk, zoekresultaten, vinden, SearchViewModel, SearchBar, MediaScreen]
+    paths:
+      - modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/search/SearchViewModel.kt
+      - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/MediaScreen.kt
+      - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/components/SearchBar.kt
+      - app/tv/src/main/java/dev/jdtech/jellyfin/ce/presentation/film/SearchScreen.kt
+      - domain/src/main/kotlin/dev/jdtech/jellyfin/domain/ports/CatalogPort.kt
+      - server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/JellyfinCatalog.kt
+    rules: [R1, R2]
+    tests:
+      - ./gradlew :modes:film:testDebugUnitTest --tests '*Search*'
+      - ./gradlew :app:phone:testLibreDebugUnitTest --tests '*Search*'
 
   - id: settings
     title: Settings
-    status: row
-    summary: "`AppPreferences` (DataStore) and the settings screens."
-    keywords: [settings, preferences, datastore, instellingen, voorkeuren]
-    paths: [settings/]
+    summary: "`AppPreferences` (DataStore), the settings tree and its screens on phone and TV."
+    keywords: [settings, setting, add a setting, preference, preferences, option, toggle, datastore, instellingen, instelling, voorkeur, voorkeuren, optie, schakelaar, AppPreferences, SettingsViewModel, AppPreferencesPorts]
+    paths:
+      - settings/src/main/java/dev/jdtech/jellyfin/settings/domain/AppPreferences.kt
+      - settings/src/main/java/dev/jdtech/jellyfin/settings/presentation/settings/SettingsViewModel.kt
+      - settings/src/main/java/dev/jdtech/jellyfin/settings/presentation/models/
+      - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/settings/SettingsScreen.kt
+      - app/tv/src/main/java/dev/jdtech/jellyfin/ce/presentation/settings/TvSettingsLayout.kt
+      - core/src/main/java/dev/jdtech/jellyfin/di/AppPreferencesPorts.kt
+    rules: [R17]
+    tests:
+      - ./gradlew :settings:testDebugUnitTest
+      - ./gradlew :app:tv:testLibreDebugUnitTest --tests '*Settings*'
 
   - id: tv
     title: Android TV
-    status: row
-    summary: "The TV app: its own screens next to upstream's, D-pad focus, Watch Next."
-    keywords: [tv, android tv, leanback, d-pad, focus, watch next, televisie]
-    paths: [app/tv/src/main/java/dev/jdtech/jellyfin/ce/, app/tv/]
-    docs: [docs/tv-research/adr/]
+    summary: "The TV app: its own screens next to upstream's, D-pad focus, the TV player, Watch Next and the screensaver."
+    keywords: [tv, android tv, google tv, fire tv, leanback, d-pad, dpad, remote, focus, focus jumps, focus lost, focus restore, watch next, screensaver, drawer, side navigation, theme music, televisie, tv-app, afstandsbediening, focus springt, springt weg, focus kwijt, EphyraFocus, FocusPosition, TvPlayerScreen, WatchNextPublisher]
+    paths:
+      - app/tv/src/main/java/dev/jdtech/jellyfin/NavigationRoot.kt
+      - app/tv/src/main/java/dev/jdtech/jellyfin/ce/presentation/main/MainScreen.kt
+      - app/tv/src/main/java/dev/jdtech/jellyfin/ce/ui/focus/EphyraFocus.kt
+      - app/tv/src/main/java/dev/jdtech/jellyfin/ce/ui/focus/FocusPosition.kt
+      - app/tv/src/main/java/dev/jdtech/jellyfin/ce/presentation/film/
+      - app/tv/src/main/java/dev/jdtech/jellyfin/ce/presentation/player/TvPlayerScreen.kt
+      - app/tv/src/main/java/dev/jdtech/jellyfin/ce/watchnext/
+      - scripts/tv-dpad.sh
+    docs: [docs/tv-research/adr/, docs/tv-research/adr/0003-focus-restore.md]
+    tests:
+      - ./gradlew :app:tv:testLibreDebugUnitTest
+
+  - id: tablet-layouts
+    title: Tablet layouts
+    summary: "The phone app at tablet and foldable width: wide item layouts, grids, content widths."
+    keywords: [tablet, foldable, fold, large screen, wide, wide layout, width, landscape, grid, columns, two pane, list detail, max width, rooster, raster, breed, te breed, kolommen, liggend, groot scherm, vouwbaar, WidthClass, useWideItemLayout, WideWindow]
+    paths:
+      - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/utils/Layout.kt
+      - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/utils/GridCellsAdaptiveWithMinColumns.kt
+      - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/components/CollectionGrid.kt
+      - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/MovieWideLayout.kt
+      - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/ShowWideLayout.kt
+      - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/SeasonWideLayout.kt
+      - settings/src/main/java/dev/jdtech/jellyfin/settings/domain/WideWindow.kt
+      - scripts/tablet-avds.sh
+    docs: [docs/tablet/4-design.md, docs/tablet/6-test-matrix.md, docs/tablet/README.md]
+    tests:
+      - ./gradlew :app:phone:testLibreDebugUnitTest --tests '*Layout*'
+
+  - id: performance
+    title: Performance
+    summary: "Startup and scrolling speed: the baseline profiles, the startup benchmark and R8."
+    keywords: [performance, slow, slow start, startup, cold start, start time, jank, stutter, scrolling, frame drops, baseline profile, benchmark, macrobenchmark, r8, proguard, traag, langzaam, start traag, opstarten, haperen, schokkerig, scrollen, prestaties, StartupBenchmark, BaselineProfileGenerator]
+    paths:
+      - baselineprofile/src/main/kotlin/dev/jdtech/jellyfin/baselineprofile/Journey.kt
+      - baselineprofile/src/main/kotlin/dev/jdtech/jellyfin/baselineprofile/StartupBenchmark.kt
+      - baselineprofile-tv/src/main/kotlin/dev/jdtech/jellyfin/baselineprofile/tv/Journey.kt
+      - app/phone/src/libreRelease/generated/baselineProfiles/
+      - app/phone/proguard-rules.pro
+      - app/phone/src/main/java/dev/jdtech/jellyfin/BaseApplication.kt
+      - modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/home/HomeCache.kt
+    docs: [docs/performance.md, baselineprofile/README.md, baselineprofile-tv/README.md]
+    tests:
+      - ./gradlew :baselineprofile:connectedLibreBenchmarkReleaseAndroidTest
+
+  - id: architecture
+    title: Architecture
+    summary: "Ports and adapters: the modules, the ports and stores, the Konsist rules, and how to add a port, a store, a module or a rule."
+    keywords: [architecture, ports and adapters, hexagonal, ddd, port, new port, store, new store, adapter, module, new module, rule, konsist, baseline, dependency, boundary, contract test, poort, nieuwe poort, nieuwe module, regel, architectuur, MediaServer, MediaRepository, ServerStore, FakeMediaServer]
+    paths:
+      - domain/src/main/kotlin/dev/jdtech/jellyfin/domain/ports/
+      - application/src/main/kotlin/dev/jdtech/jellyfin/repository/
+      - data/src/main/java/dev/jdtech/jellyfin/data/di/
+      - server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/di/JellyfinServerModule.kt
+      - architecture/src/test/kotlin/dev/jdtech/jellyfin/architecture/
+      - architecture/baseline/
+      - testing/src/main/kotlin/dev/jdtech/jellyfin/testing/
+    docs: [docs/architecture/README.md, docs/architecture/rules.md, docs/architecture/modules.md, docs/architecture/5-hexagonal-ddd.md, docs/architecture/adr/]
+    rules: [R1, R3, R5, R7, R8, R9, R11, R15, R17]
+    tests:
+      - ./gradlew :domain:test :application:test :architecture:test
+      - ./gradlew :testing:test
+
+  - id: test-environment
+    title: Test server and emulators
+    summary: "The throwaway Jellyfin test server and the emulators the app is tested on."
+    keywords: [test server, testserver, test user, testgebruiker, jellyfin server, docker, wsl, emulator, emulators, avd, device, test device, phone emulator, tv emulator, iptables, forward.py, set up, opzetten, ontwikkelomgeving, development environment, test-server, test-devices]
+    paths:
+      - tools/test-server/setup.sh
+      - tools/test-server/user.py
+      - tools/test-server/forward.py
+      - .claude/skills/test-server/SKILL.md
+      - .claude/skills/test-devices/SKILL.md
+      - scripts/avds.sh
+      - scripts/tv-dpad.sh
+    docs: [docs/dev-environment.md, docs/track-test-series.md]
 
   - id: identity
     title: Identity and design
-    status: row
-    summary: "Colours, type, shape, motion; the launcher icons and the site."
-    keywords: [design, colour, color, theme, font, icon, branding, kleur, thema, huisstijl]
-    paths: [core/src/main/java/dev/jdtech/jellyfin/core/presentation/theme/, images/branding/ephyra/, site/]
+    summary: "Colours, type, shape, motion and glow; the launcher icons, the TV banner and the site."
+    keywords: [design, identity, colour, color, palette, theme, dark theme, font, typography, shape, motion, animation, glow, icon, launcher icon, logo, banner, branding, website, kleur, kleuren, thema, lettertype, huisstijl, icoon, animatie, EphyraColor, EphyraFont, EphyraMotion]
+    paths:
+      - core/src/main/java/dev/jdtech/jellyfin/core/presentation/theme/EphyraColor.kt
+      - core/src/main/java/dev/jdtech/jellyfin/core/presentation/theme/EphyraFont.kt
+      - core/src/main/java/dev/jdtech/jellyfin/core/presentation/ephyra/
+      - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/theme/Theme.kt
+      - app/tv/src/main/java/dev/jdtech/jellyfin/presentation/theme/Theme.kt
+      - images/branding/ephyra/make-ephyra.sh
+      - site/style.css
     docs: [docs/identity/VISION.md]
 
   - id: translations
     title: Translations
-    status: row
     summary: "CE strings in 36 languages, next to upstream's Weblate files."
-    keywords: [translation, string, language, locale, vertaling, vertalen]
-    paths: [.claude/skills/translate-strings/]
+    keywords: [translation, translations, translate, string, strings, strings_ce, ce_ key, app language, locale, weblate, plural, plurals, text, label, vertaling, vertalingen, vertalen, vertaald, tekst, check-translations]
+    paths:
+      - .claude/skills/translate-strings/SKILL.md
+      - .claude/skills/translate-strings/scripts/check-translations.py
+      - core/src/main/res/values/strings.xml
+      - core/src/main/res/values-nl/strings_ce.xml
+      - player/local/src/main/res/values/strings.xml
+    docs: [.claude/skills/translate-strings/SKILL.md]
 
   - id: releases
-    title: Releases and upstream sync
-    status: row
-    summary: "Versions, the changelog, betas, stores, and merging Findroid's changes."
-    keywords: [release, version, changelog, beta, play store, f-droid, upstream, findroid, uitbrengen, versie]
-    paths: [buildSrc/src/main/kotlin/EphyraVersion.kt, .github/workflows/, .claude/skills/release/, .claude/skills/upstream-sync/]
-    docs: [docs/play-store.md, docs/upstream-sync.md]
+    title: Releases, stores and upstream sync
+    summary: "Version numbers, the changelog, betas and releases, the store listings and screenshots, and merging Findroid's changes."
+    keywords: [release, releases, version number, version code, changelog, beta, tag, play store, google play, store listing, screenshots, feature graphic, fastlane, f-droid, fdroid, amazon, github release, apk, upstream, findroid, upstream sync, uitbrengen, uitgave, versienummer, schermafbeeldingen, EphyraVersion]
+    paths:
+      - buildSrc/src/main/kotlin/EphyraVersion.kt
+      - CHANGELOG.md
+      - .github/workflows/release.yml
+      - .github/workflows/beta.yml
+      - .claude/skills/release/SKILL.md
+      - .claude/skills/upstream-sync/SKILL.md
+      - .claude/skills/fdroid-update/SKILL.md
+      - fastlane/metadata/android/
+    docs: [docs/play-store.md, docs/screenshots.md, docs/upstream-sync.md, docs/upstream-ledger.md]
