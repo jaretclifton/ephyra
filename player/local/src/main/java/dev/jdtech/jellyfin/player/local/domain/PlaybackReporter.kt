@@ -202,9 +202,12 @@ class PlaybackReporter(
      * stream has loaded ([onItemReady]), and nothing when the player is no longer on the item.
      */
     fun onStreamReplaced(item: PlayerItem) {
+        // Nothing is owed for an item the player is not on, and the transition it is on keeps
+        // its start.
+        if (playing?.itemId != item.itemId) return
         // CE (#890): a transition still waiting for the previous item's stop owes nothing now.
         transitionSeq++
-        startGate.onTransition(item, ready = false, current = playing?.itemId == item.itemId)
+        startGate.onTransition(item, ready = false)
     }
 
     /** CE (#601): the player is ready. Returns the item whose start is due now, or `null`. */

@@ -444,6 +444,8 @@ class PlaybackReporterTest {
             s.fake.stopDelayMs = 10_000L
 
             s.transition(item(id = nextId))
+            // A switch whose new stream loads, so its start waits for the stop.
+            s.streamReplaced(item(id = nextId, session = "session-2"))
             s.loaded()
             s.reporter.updatePosition(positionMs = 5_000L, durationMs = 600_000L)
             // Previous, back to the first item, while the first stop is still being sent.
@@ -459,6 +461,31 @@ class PlaybackReporterTest {
                     "10000: stop $nextId 50000000 0",
                 ),
                 s.reports.take(3),
+            )
+        }
+
+    @Test
+    fun `a stream replaced for another item keeps the waiting transition's start (#890)`() =
+        test { s ->
+            s.transition(item())
+            s.loaded()
+            advanceUntilIdle()
+            s.reporter.updatePosition(positionMs = 60_000L, durationMs = 600_000L)
+            s.fake.stopDelayMs = 10_000L
+
+            s.transition(item(id = nextId))
+            // A late replacement for the item left: nothing is owed for it.
+            s.streamReplaced(item(session = "session-2"))
+            s.playerReady = true
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(
+                    "0: start $itemId false",
+                    "10000: stop $itemId 600000000 10",
+                    "10000: start $nextId false",
+                ),
+                s.reports,
             )
         }
 
