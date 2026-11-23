@@ -357,7 +357,7 @@ object ArchitectureModel {
         append(
             "The Konsist rules in `architecture/`, read from the names of their tests. Run them " +
                 "with `./gradlew :architecture:test` (also part of `testDebugUnitTest`). When one " +
-                "fails, fix the code: the two files in `architecture/baseline/` are allowlists, " +
+                "fails, fix the code: the files in `architecture/baseline/` are allowlists, " +
                 "not debt. A rule says what each of its tests checks; the tests of the scanner " +
                 "itself (`finds …`, `counts …`, `skips …`) are left out. Why each rule exists is " +
                 "in [README.md](README.md#the-rules) and the ADRs.\n\n"
