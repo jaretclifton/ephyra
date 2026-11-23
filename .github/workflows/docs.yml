@@ -51,7 +51,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
         run: |
-          files=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate --jq '.[].filename')
+          files=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate --jq '.[] | .filename, (.previous_filename // empty)')
           if grep -qxE 'docs/architecture/(modules|rules)\.md|docs/architecture/model/modules\.generated\.c4' <<<"$files"; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
