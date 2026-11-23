@@ -325,6 +325,13 @@
     <string name="ce_pref_cast_max_bitrate">Maximum bitrate</string>
     <string name="ce_pref_cast_max_bitrate_summary">The server lowers the quality of anything above it while casting</string>
     <string name="ce_pref_cast_max_bitrate_suffix">Mbps</string>
+    <!-- CE (#837): a default streaming quality per kind of network, phone app only. -->
+    <string name="ce_pref_player_quality_group">Streaming quality</string>
+    <string name="ce_pref_player_quality_wifi">On Wi-Fi</string>
+    <string name="ce_pref_player_quality_wifi_summary">Wi-Fi, Ethernet and other networks that are not metered. A quality picked in the player is saved for the kind of network you are on</string>
+    <string name="ce_pref_player_quality_mobile">On mobile data</string>
+    <string name="ce_pref_player_quality_mobile_summary">Mobile data and other metered networks, such as a phone\'s hotspot or a network marked as metered</string>
+    <string name="ce_pref_player_quality_original">Original quality</string>
     <string name="ce_pref_cast_hevc">The TV plays HEVC</string>
     <string name="ce_pref_cast_hevc_summary">Send HEVC (H.265) video as it is instead of converting it to H.264. A 4K Chromecast gets this by itself; turn it on for another TV or box that plays HEVC</string>
     <string name="ce_pref_side_backdrop">Backdrop beside the text</string>

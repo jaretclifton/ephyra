@@ -88,6 +88,8 @@ class BaseApplication : Application(), Configuration.Provider, SingletonImageLoa
         appPreferences.migrateMediaSegmentActions()
         // CE (#281): the Offline Mode setting is gone; its stored value goes too.
         appPreferences.removeOfflineMode()
+        // CE (#837): the one streaming quality becomes the one for Wi-Fi and for mobile data.
+        appPreferences.migrateMaxBitratePerNetwork()
 
         // Smart Downloads reacts to the player reporting a stop, which can happen at any time.
         smartDownloads.start()

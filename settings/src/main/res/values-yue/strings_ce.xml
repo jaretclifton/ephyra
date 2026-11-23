@@ -209,4 +209,10 @@
     <string name="ce_pref_hide_spoilers_summary">模糊未睇過嘅集數嘅圖片，並隱藏佢哋嘅標題同簡介。長按一集就會顯示</string>
     <string name="ce_pref_side_backdrop">背景圖喺文字旁邊</string>
     <string name="ce_pref_side_backdrop_summary">平板打橫時，將項目嘅背景圖以原本形狀顯示喺標題旁邊，而唔係鋪滿成個闊度</string>
+    <string name="ce_pref_player_quality_group">串流畫質</string>
+    <string name="ce_pref_player_quality_wifi">用 Wi-Fi 時</string>
+    <string name="ce_pref_player_quality_wifi_summary">Wi-Fi、以太網同其他唔係按用量計費嘅網絡。喺播放器揀嘅畫質會為你當時用緊嘅網絡類型儲存</string>
+    <string name="ce_pref_player_quality_mobile">用流動數據時</string>
+    <string name="ce_pref_player_quality_mobile_summary">流動數據同其他按用量計費嘅網絡，例如手機熱點，或者標示咗按用量計費嘅網絡</string>
+    <string name="ce_pref_player_quality_original">原始畫質</string>
 </resources>

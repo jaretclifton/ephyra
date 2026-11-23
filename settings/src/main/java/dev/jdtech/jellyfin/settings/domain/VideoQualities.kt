@@ -1,4 +1,4 @@
-package dev.jdtech.jellyfin.presentation.utils
+package dev.jdtech.jellyfin.settings.domain
 
 /**
  * The bitrate ladder offered by quality selectors (player streaming quality and download quality),

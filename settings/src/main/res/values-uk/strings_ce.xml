@@ -215,4 +215,10 @@
     <string name="ce_pref_hide_spoilers_summary">Розмивати зображення та приховувати назву й опис непереглянутих серій. Натисніть і утримуйте серію, щоб показати її</string>
     <string name="ce_pref_side_backdrop">Фон поруч із текстом</string>
     <string name="ce_pref_side_backdrop_summary">На планшеті в альбомній орієнтації показувати фон елемента в його власній формі поруч із назвою, а не на всю ширину</string>
+    <string name="ce_pref_player_quality_group">Якість потокового відео</string>
+    <string name="ce_pref_player_quality_wifi">Через Wi-Fi</string>
+    <string name="ce_pref_player_quality_wifi_summary">Wi-Fi, Ethernet та інші безлімітні мережі. Якість, вибрана в плеєрі, зберігається для того типу мережі, у якій ви перебуваєте</string>
+    <string name="ce_pref_player_quality_mobile">Через мобільний інтернет</string>
+    <string name="ce_pref_player_quality_mobile_summary">Мобільний інтернет та інші лімітні мережі, наприклад точка доступу телефона або мережа, позначена як лімітна</string>
+    <string name="ce_pref_player_quality_original">Оригінальна якість</string>
 </resources>

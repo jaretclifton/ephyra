@@ -94,7 +94,12 @@ class AppPreferences @Inject constructor(val sharedPreferences: SharedPreference
     // Maximum streaming bitrate in bits per second; the server transcodes
     // anything above it. 0 means no cap (original quality). Set from the
     // player's quality selector.
+    // CE (#837): this one is the cap on Wi-Fi and Ethernet (a network that is not metered), and
+    // the TV app's only one. The phone app has its own for mobile data, see [maxBitrate].
     val playerMaxBitrate = Preference("pref_player_max_bitrate", 0)
+    // CE (#837): the cap on mobile data (a metered network). Filled from [playerMaxBitrate] once,
+    // by [migrateMaxBitratePerNetwork].
+    val playerMaxBitrateMobile = Preference("pref_player_max_bitrate_mobile", 0)
 
     // Platform audio decoders that failed during playback on this device, see
     // AudioDecoderFallback. Not a user setting.
@@ -364,6 +369,25 @@ class AppPreferences @Inject constructor(val sharedPreferences: SharedPreference
             setValue(playerMpvAo, Constants.MpvAudioOutput.AUDIOTRACK)
         }
         setValue(mpvAoAaudioMigrated, true)
+    }
+
+    /** CE (#837): the streaming cap the player uses on [network]. */
+    fun maxBitrate(network: QualityNetwork): Preference<Int> =
+        when (network) {
+            QualityNetwork.WIFI -> playerMaxBitrate
+            QualityNetwork.MOBILE -> playerMaxBitrateMobile
+        }
+
+    /**
+     * CE (#837): the streaming quality used to be one value for every network. It stays the Wi-Fi
+     * value, and becomes the mobile-data value too, once: only while that has never been stored, so
+     * a later choice for mobile data is kept.
+     */
+    fun migrateMaxBitratePerNetwork() {
+        if (sharedPreferences.contains(playerMaxBitrateMobile.backendName)) return
+        val bitrate = getValue(playerMaxBitrate)
+        Timber.i("Copying the streaming quality %d to mobile data", bitrate)
+        setValue(playerMaxBitrateMobile, bitrate)
     }
 
     /**

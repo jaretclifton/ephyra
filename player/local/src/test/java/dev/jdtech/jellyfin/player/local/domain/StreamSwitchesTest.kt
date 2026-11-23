@@ -27,8 +27,19 @@ class StreamSwitchesTest {
     /** The queue: e2 plays, at 0 (original quality), with its default audio track. */
     private var queue = listOf(e1, e2, e3).map { item(it, bitrate = 0, audio = null) }
 
-    /** The quality setting, as the host stores it. */
-    private var setting = 0
+    /** The network in use, and the quality setting of each (CE #837), as the host stores them. */
+    private var network = "wifi"
+    private val settings = mutableMapOf("wifi" to 0, "mobile" to 0)
+
+    /** The quality setting of the network in use. */
+    private var setting: Int
+        get() = settings.getValue(network)
+        set(value) {
+            settings[network] = value
+        }
+
+    /** The quality the player shows as playing. */
+    private var shown = 0
     private val settingChanges = mutableListOf<Int>()
     private val swaps = mutableListOf<List<PlayerItem>>()
     private val errors = mutableListOf<Exception>()
@@ -62,17 +73,25 @@ class StreamSwitchesTest {
 
                 override suspend fun recreate(
                     item: PlayerItem,
+                    bitrate: Int,
                     playingAudio: StoredChoice?,
                     pickedAudio: Int?,
                 ): PlayerItem {
-                    val request = Request(item, setting, playingAudio, pickedAudio)
+                    val request = Request(item, bitrate, playingAudio, pickedAudio)
                     requests += request
                     return request.response.await()
                 }
 
-                override fun setBitrate(bitrate: Int) {
-                    setting = bitrate
+                override fun showBitrate(bitrate: Int) {
+                    shown = bitrate
+                }
+
+                override fun storeBitrate(bitrate: Int): () -> Unit {
+                    val storedIn = network
+                    val before = settings.getValue(storedIn)
+                    settings[storedIn] = bitrate
                     settingChanges += bitrate
+                    return { settings[storedIn] = before }
                 }
 
                 override fun swapIn(rebuilt: List<PlayerItem>) {
@@ -125,7 +144,7 @@ class StreamSwitchesTest {
     @Test
     fun `a second quality switch wins when the first one's streams come in last`() {
         switches.selectBitrate(360)
-        // The cap is read with each request: e1 and e2 come in, e3 is asked for under 360.
+        // e1 and e2 come in, e3 is asked for under 360.
         answer(360)
         answer(360)
         switches.selectBitrate(720)
@@ -226,5 +245,122 @@ class StreamSwitchesTest {
         switches.selectBitrate(720)
 
         assertEquals(listOf(e1), forgotten, "items forgotten")
+    }
+
+    @Test
+    fun `following the network asks for the queue under its cap and stores nothing`() {
+        // CE (#837): the setting of the network in use is 720; the player moved on to an item
+        // asked for under 0.
+        switches.followBitrate(720)
+        answerAll(720)
+
+        assertEquals(List(3) { "bitrate=720&audio=null" }, lastSwap(), "the streams that play")
+        assertEquals(720, shown, "the quality shown")
+        assertEquals(emptyList(), settingChanges, "the quality setting's changes")
+    }
+
+    @Test
+    fun `a failed follow stores nothing`() {
+        switches.followBitrate(720)
+        fail(720)
+
+        assertEquals(1, errors.size, "errors shown")
+        assertEquals(0, shown, "the quality shown")
+        assertEquals(emptyList(), settingChanges, "the quality setting's changes")
+    }
+
+    @Test
+    fun `a pick after a follow is stored and wins`() {
+        switches.followBitrate(720)
+        switches.selectBitrate(360)
+        answerAll(720)
+        answerAll(360)
+
+        assertEquals(1, swaps.size, "queues swapped in")
+        assertEquals(List(3) { "bitrate=360&audio=null" }, lastSwap(), "the streams that play")
+        assertEquals(listOf(360), settingChanges, "the quality setting's changes")
+    }
+
+    @Test
+    fun `following again while that follow is on its way asks once`() {
+        switches.followBitrate(720)
+        switches.followBitrate(720)
+        answerAll(720)
+
+        assertEquals(3, requests.size, "stream requests")
+    }
+
+    @Test
+    fun `a failed pick puts back the setting of its own network`() {
+        // CE (#837): the queue plays at 0 (asked for on Wi-Fi); the network is mobile data now,
+        // whose setting is 720.
+        setting = 720
+        switches.selectBitrate(1500)
+        fail(1500)
+
+        assertEquals(720, setting, "the mobile-data setting")
+        assertEquals(0, shown, "the quality shown")
+    }
+
+    @Test
+    fun `picking the quality that plays stores it`() {
+        // CE (#837): on mobile data (setting 720) the queue plays at 0; picking 0 keeps it there.
+        setting = 720
+        switches.selectBitrate(0)
+
+        assertEquals(emptyList(), requests, "stream requests")
+        assertEquals(listOf(0), settingChanges, "the quality setting's changes")
+    }
+
+    @Test
+    fun `an item asked for under another cap shows that cap and a failed pick goes back to it`() {
+        switches.playingAt(720)
+        assertEquals(720, shown, "the quality shown")
+
+        switches.selectBitrate(360)
+        fail(360)
+
+        assertEquals(720, shown, "the quality shown after the failed pick")
+    }
+
+    @Test
+    fun `a failed pick puts back each network's own setting`() {
+        settings["mobile"] = 720
+        switches.selectBitrate(360)
+        // The network changes and the user picks again before the first switch is in.
+        network = "mobile"
+        switches.selectBitrate(1500)
+        fail(1500)
+
+        assertEquals(mapOf("wifi" to 0, "mobile" to 720), settings, "the settings")
+    }
+
+    @Test
+    fun `a follow keeps the pick it cancels, also when it fails`() {
+        switches.selectBitrate(360)
+        switches.followBitrate(720)
+        fail(720)
+
+        assertEquals(360, setting, "the quality setting")
+        assertEquals(0, shown, "the quality shown")
+    }
+
+    @Test
+    fun `a failed switch goes back to the cap of an item that started meanwhile`() {
+        switches.selectBitrate(360)
+        switches.playingAt(720)
+        fail(360)
+
+        assertEquals(720, shown, "the quality shown")
+    }
+
+    @Test
+    fun `playingAt changes nothing while a switch is on its way`() {
+        switches.selectBitrate(360)
+        switches.playingAt(720)
+        answerAll(360)
+
+        assertEquals(360, shown, "the quality shown")
+        assertEquals(List(3) { "bitrate=360&audio=null" }, lastSwap(), "the streams that play")
     }
 }

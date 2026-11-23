@@ -6,7 +6,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.test.core.app.ApplicationProvider
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
-import dev.jdtech.jellyfin.presentation.utils.VideoQualities
+import dev.jdtech.jellyfin.settings.domain.VideoQualities
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import org.junit.Rule
