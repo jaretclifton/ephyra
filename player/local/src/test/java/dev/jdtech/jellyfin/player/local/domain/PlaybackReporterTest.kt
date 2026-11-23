@@ -64,6 +64,7 @@ class PlaybackReporterTest {
         val startPositions = mutableListOf<Long?>()
         var startDelayMs = 0L
         var progressDelayMs = 0L
+        var stopDelayMs = 0L
         var failStart = false
 
         private fun record(call: String) {
@@ -116,6 +117,7 @@ class PlaybackReporterTest {
                     positionTicks: Long,
                     playedPercentage: Int?,
                 ) {
+                    delay(stopDelayMs)
                     record("stop $itemId $positionTicks $playedPercentage")
                 }
             }
@@ -156,16 +158,25 @@ class PlaybackReporterTest {
         /** The player the start reports read (#868). */
         val player = Player(null)
 
-        /** The player moved to [item] and handled the transition; [ready] if already loaded. */
-        fun transition(item: PlayerItem, ready: Boolean = false): Job? {
+        /**
+         * Whether the player has loaded the item when a transition is handled, read then (after the
+         * previous item's stop), as `PlayerViewModel` reads it.
+         */
+        var playerReady = false
+
+        /**
+         * The player moved to [item] and handled the transition; [ready] if already loaded, else
+         * [playerReady] when the transition is handled.
+         */
+        fun transition(item: PlayerItem, ready: Boolean? = null): Job? {
             reporter.onStreamQueued(item)
-            val stop = reporter.onItemTransition(item.itemId)
+            val transition = reporter.onItemTransition(item.itemId)
             owner.launch {
-                stop?.join()
-                reporter.onTransitionHandled(item, ready, player)
+                transition.stopJob?.join()
+                reporter.onTransitionHandled(item, ready ?: playerReady, player, transition)
             }
             scope.testScheduler.runCurrent()
-            return stop
+            return transition.stopJob
         }
 
         /**
@@ -331,6 +342,62 @@ class PlaybackReporterTest {
             // CE (#868): the new stream's start carries where playback is, as ExoPlayer's does.
             assertEquals(listOf<Long?>(0L, 600_000_000L), s.fake.startPositions)
             assertEquals(60_000L, s.reporter.playing?.positionMs)
+        }
+
+    @Test
+    fun `a quality switch while the previous item's stop is sent owes one start, after it (#890)`() =
+        test { s ->
+            // ExoPlayer: Next, then a quality switch of the new item while the server still
+            // takes the previous item's stop. The switch is a second transition to the new item,
+            // whose new stream loads before that stop is through.
+            s.transition(item())
+            s.loaded()
+            advanceUntilIdle()
+            s.reporter.updatePosition(positionMs = 60_000L, durationMs = 600_000L)
+            s.fake.stopDelayMs = 10_000L
+
+            s.transition(item(id = nextId, session = "session-2", transcoded = true))
+            s.transition(item(id = nextId, session = "session-3", transcoded = false))
+            s.loaded()
+            s.playerReady = true
+            advanceUntilIdle()
+
+            // One start, for the stream that plays, and not before the previous item's stop.
+            assertEquals(
+                listOf(
+                    "0: start $itemId false",
+                    "10000: stop $itemId 600000000 10",
+                    "10000: start $nextId false",
+                ),
+                s.reports,
+            )
+        }
+
+    @Test
+    fun `mpv's quality switch while the previous item's stop is sent owes one start (#890)`() =
+        test { s ->
+            // mpv reports no transition for the switch: the new stream is handed over while the
+            // transition to the new item still waits for the previous item's stop.
+            s.transition(item())
+            s.loaded()
+            advanceUntilIdle()
+            s.reporter.updatePosition(positionMs = 60_000L, durationMs = 600_000L)
+            s.fake.stopDelayMs = 10_000L
+
+            s.transition(item(id = nextId, session = "session-2", transcoded = true))
+            s.streamReplaced(item(id = nextId, session = "session-3", transcoded = false))
+            s.loaded()
+            s.playerReady = true
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(
+                    "0: start $itemId false",
+                    "10000: stop $itemId 600000000 10",
+                    "10000: start $nextId false",
+                ),
+                s.reports,
+            )
         }
 
     @Test
