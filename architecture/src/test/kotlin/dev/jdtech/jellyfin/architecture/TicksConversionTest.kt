@@ -55,8 +55,14 @@ class TicksConversionTest {
             // val k = runtimeTicks / 10000
             val l = "runtimeTicks / 10000"
             val m = Ticks.toMinutes(runtimeTicks)
+            val n = ticksRemaining / 10_000L
+            val o = 600_000_000L * totalTicksLeft
+            val p = runtimeTicks /
+                10_000L
+            val q = ticksPerFrame / bitrate
             """
                 .trimIndent()
+        // Constants first, then `ticks <op> literal`, then `literal <op> ticks`.
         assertEquals(
             listOf(
                 "declares TICKS_PER_MINUTE",
@@ -65,8 +71,11 @@ class TicksConversionTest {
                 "converts playbackPositionTicks by 10_000L",
                 "converts positionTicks by 10000",
                 "converts startPositionTicks by 10000",
-                "converts toTicks by 10_000_000L",
                 "converts runtimeTicks by 10_000_000.0",
+                "converts ticksRemaining by 10_000L",
+                "converts runtimeTicks by 10_000L",
+                "converts toTicks by 10_000_000L",
+                "converts totalTicksLeft by 600_000_000L",
             ),
             violations(source),
         )
@@ -83,21 +92,25 @@ class TicksConversionTest {
         val CONSTANT = Regex("""\b(?:val|var)\s+(TICKS_PER\w*)""")
 
         val TICKS_BY_LITERAL =
-            Regex("""(\w*[Tt]icks)\)?\s*(?:[*/]|\.times\(|\.div\()\s*($LITERAL)""")
+            Regex("""(\w*[Tt]icks\w*)\)?\s*(?:[*/]|\.times\(|\.div\()\s*($LITERAL)""")
 
-        val LITERAL_BY_TICKS = Regex("""(?<![\w.])($LITERAL)\s*[*/]\s*[\w.]*?(\w*[Tt]icks)\b""")
+        val LITERAL_BY_TICKS = Regex("""(?<![\w.])($LITERAL)\s*[*/]\s*[\w.]*?(\w*[Tt]icks\w*)\b""")
 
+        /**
+         * The sanitized source is scanned as a whole, so an operator at a line end still counts.
+         */
         fun violations(source: String): List<String> {
-            val code = UuidBoundaryTest.withoutComments(source).lines().map(::withoutStrings)
-            return code.flatMap { line ->
-                CONSTANT.findAll(line).map { "declares ${it.groupValues[1]}" } +
-                    TICKS_BY_LITERAL.findAll(line).map {
-                        "converts ${it.groupValues[1]} by ${it.groupValues[2]}"
-                    } +
-                    LITERAL_BY_TICKS.findAll(line).map {
-                        "converts ${it.groupValues[2]} by ${it.groupValues[1]}"
-                    }
-            }
+            val code =
+                UuidBoundaryTest.withoutComments(source)
+                    .lines()
+                    .joinToString("\n", transform = ::withoutStrings)
+            return CONSTANT.findAll(code).map { "declares ${it.groupValues[1]}" }.toList() +
+                TICKS_BY_LITERAL.findAll(code).map {
+                    "converts ${it.groupValues[1]} by ${it.groupValues[2]}"
+                } +
+                LITERAL_BY_TICKS.findAll(code).map {
+                    "converts ${it.groupValues[2]} by ${it.groupValues[1]}"
+                }
         }
 
         fun withoutStrings(line: String) = line.replace(Regex(""""(?:[^"\\]|\\.)*""""), "\"\"")
