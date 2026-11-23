@@ -41,7 +41,8 @@ comes from that.
 - New features: the owner's choice. Propose, don't start.
 - A bug found and confirmed but not fixed in the current work: file an issue yourself.
 - An issue that comes from reading code, not from seeing it happen: its first step is
-  "reproduce it on an emulator before changing code".
+  "reproduce it before changing code", where the code runs (an emulator for the app, a workflow
+  run for CI).
 - When you are unsure whether something belongs in the repository or only in your notes, ask
   the owner, with your preference.
 
