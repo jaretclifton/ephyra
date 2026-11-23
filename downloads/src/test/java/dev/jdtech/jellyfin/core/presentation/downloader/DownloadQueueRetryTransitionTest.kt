@@ -232,10 +232,15 @@ class DownloadQueueRetryTransitionTest {
         assertEquals(3, thirdRetry.retryCount)
         assertEquals(601_000L, thirdRetry.retryAt)
 
-        // No retries left: it ends as failed, as it was.
+        // No retries left: it ends as failed, as it was, and goes on when the server is back
+        // (#912): the server gave no reason, it did not answer.
         val usedUp = failed.copy(retryCount = 3)
-        assertEquals(usedUp, DownloadQueue.afterFailure(usedUp, permanent = false, now = 1_000L))
-        // Refused by the server for good (#383): failed at once, whatever retries are left.
+        assertEquals(
+            usedUp.copy(retryWhenServerReturns = true),
+            DownloadQueue.afterFailure(usedUp, permanent = false, now = 1_000L),
+        )
+        // Refused by the server for good (#383): failed at once, whatever retries are left, and
+        // the server coming back changes nothing.
         assertEquals(failed, DownloadQueue.afterFailure(failed, permanent = true, now = 1_000L))
     }
 

@@ -19,6 +19,7 @@ import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.DownloadSettings
 import dev.jdtech.jellyfin.repository.DownloadStore
 import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ServerAvailability
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.NetworkConnectivity
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
@@ -74,6 +75,8 @@ constructor(
     private val texts: DownloadTexts,
     private val dataChanges: DataChangeEvents = DataChangeEvents(),
     private val connectivity: NetworkConnectivity = AlwaysOnline,
+    // CE (#912): a download that failed for want of the server goes on when the server is back.
+    private val serverAvailability: ServerAvailability = ServerAvailability.NONE,
 ) {
     // Resolved per use, never captured: the active repository can change at runtime without
     // this @Singleton being recreated (offline <-> online switch).
@@ -134,6 +137,11 @@ constructor(
          * itself once the network returns; the UI shows it as waiting for the network.
          */
         val waitingForNetwork: Boolean = false,
+        /**
+         * CE (#912): a Failed entry that failed for want of the server (it did not answer, as
+         * opposed to refusing the download), so it goes on by itself when the server is back.
+         */
+        val retryWhenServerReturns: Boolean = false,
     )
 
     private val _entries = MutableStateFlow<List<Entry>>(emptyList())
@@ -149,6 +157,10 @@ constructor(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mutex = Mutex()
+
+    init {
+        scope.launch { serverAvailability.serverConfirmed.collect { retryAfterServerReturned() } }
+    }
 
     // Refreshed at most every MEDIA_STREAM_RETRY_INTERVAL_MS, keyed by downloadId, by a
     // fire-and-forget check so the tight progress-polling loop below is never blocked on
@@ -423,38 +435,54 @@ constructor(
 
     /** Re-queues a failed entry. */
     fun retry(id: ItemId) {
-        scope.launch {
-            var retried: Entry? = null
-            mutex.withLock {
-                _entries.value =
-                    sort(
-                        _entries.value.map { entry ->
-                            if (entry.id == id && entry.state is EntryState.Failed) {
-                                retried = entry
-                                entry.copy(
-                                    state = EntryState.Pending,
-                                    addedAt = System.currentTimeMillis(),
-                                    downloadId = null,
-                                    startedAt = null,
-                                    progress = 0,
-                                    retryCount = 0,
-                                    retryAt = null,
-                                )
-                            } else {
-                                entry
-                            }
-                        }
-                    )
-            }
-            retried?.let { entry ->
-                try {
-                    downloader.savePendingDownload(entry.item, entry.maxBitrate, entry.smartQueued)
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to persist retried download ${entry.item.name}")
-                }
-            }
-            ensurePump()
+        scope.launch { requeueFailed { it.id == id } }
+    }
+
+    /**
+     * CE (#912): the server answers again, so the downloads that failed for want of it go on from
+     * their partial files, as if the user had pressed Retry. Others stay failed: a refusal by the
+     * server is no different now.
+     */
+    private suspend fun retryAfterServerReturned() {
+        if (requeueFailed { it.retryWhenServerReturns }) {
+            Timber.i("Server reachable again: resuming the downloads that failed without it")
         }
+    }
+
+    /** Puts the Failed entries that match back to Pending. True when there were any. */
+    private suspend fun requeueFailed(matches: (Entry) -> Boolean): Boolean {
+        val retried = mutableListOf<Entry>()
+        mutex.withLock {
+            _entries.value =
+                sort(
+                    _entries.value.map { entry ->
+                        if (entry.state is EntryState.Failed && matches(entry)) {
+                            retried.add(entry)
+                            entry.copy(
+                                state = EntryState.Pending,
+                                addedAt = System.currentTimeMillis(),
+                                downloadId = null,
+                                startedAt = null,
+                                progress = 0,
+                                retryCount = 0,
+                                retryAt = null,
+                                retryWhenServerReturns = false,
+                            )
+                        } else {
+                            entry
+                        }
+                    }
+                )
+        }
+        for (entry in retried) {
+            try {
+                downloader.savePendingDownload(entry.item, entry.maxBitrate, entry.smartQueued)
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to persist retried download ${entry.item.name}")
+            }
+        }
+        if (retried.isNotEmpty()) ensurePump()
+        return retried.isNotEmpty()
     }
 
     /** Removes all Completed entries from the queue view. */
@@ -710,6 +738,7 @@ constructor(
                                 )
                             }
                         } else {
+                            updates[failed.id] = next
                             exhausted.add(failed)
                         }
                     }
@@ -840,7 +869,15 @@ constructor(
                         } else if (waitForNetwork) {
                             e.copy(state = EntryState.Pending, waitingForNetwork = true)
                         } else {
-                            e.copy(state = EntryState.Failed(errorText))
+                            // CE (#912): the start failed while the network is there, most likely
+                            // because the server did not answer (also after an app restart, with
+                            // the
+                            // server still away): it goes on when the server is back. A start that
+                            // fails for a local reason fails again at once, without a download.
+                            e.copy(
+                                state = EntryState.Failed(errorText),
+                                retryWhenServerReturns = true,
+                            )
                         }
                     }
                 )
@@ -925,11 +962,13 @@ constructor(
         /**
          * CE (#560): what a download the engine [failed] becomes. With auto-retries left it waits
          * for the next one; with none left, or refused by the server for good ([permanent], #383),
-         * it stays failed.
+         * it stays failed. CE (#912): one that stays failed for want of an answer (the server gave
+         * no reason, no HTTP status) goes on when the server is back.
          */
         internal fun afterFailure(failed: Entry, permanent: Boolean, now: Long): Entry =
             if (permanent || failed.retryCount >= MAX_AUTO_RETRIES) {
-                failed
+                val unanswered = (failed.state as? EntryState.Failed)?.error == null
+                failed.copy(retryWhenServerReturns = !permanent && unanswered)
             } else {
                 failed.copy(
                     state = EntryState.Pending,

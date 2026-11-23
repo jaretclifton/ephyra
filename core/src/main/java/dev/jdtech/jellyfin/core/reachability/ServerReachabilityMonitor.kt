@@ -46,9 +46,10 @@ class ServerReachabilityMonitor(
         )
 
     /**
-     * Emits when it is worth sending the server what is waiting for it: a probe reached it, or the
-     * app came to the foreground and the server answered a moment ago. (The server answering a
-     * request again after failed ones is `ServerSession.serverReturned`.)
+     * Emits when it is worth sending the server what is waiting for it: a probe reached it, a
+     * request of the app was answered while the server counted as unreachable, or the app came to
+     * the foreground and the server answered a moment ago. (The server answering a request again
+     * after failed ones is `ServerSession.serverReturned`.)
      */
     val serverConfirmed: SharedFlow<Unit> = _serverConfirmed.asSharedFlow()
 
@@ -71,10 +72,15 @@ class ServerReachabilityMonitor(
     }
 
     override fun onAnswered() {
-        synchronized(lock) {
-            tracker.onRequestAnswered()
-            publish()
-        }
+        val returned =
+            synchronized(lock) {
+                val wasUnreachable = tracker.state.unreachable
+                tracker.onRequestAnswered()
+                publish()
+                wasUnreachable
+            }
+        // CE (#912): a request of the app that finds the server back says so too, not only a probe.
+        if (returned) _serverConfirmed.tryEmit(Unit)
     }
 
     override fun onUnanswered() {
