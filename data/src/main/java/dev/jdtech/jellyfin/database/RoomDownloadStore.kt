@@ -11,6 +11,7 @@ import dev.jdtech.jellyfin.models.ItemTrickplayInfo
 import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.MediaStream
 import dev.jdtech.jellyfin.models.MediaStreamEntity
+import dev.jdtech.jellyfin.models.MediaStreamId
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.PendingDownloadDto
 import dev.jdtech.jellyfin.models.Season
@@ -37,7 +38,6 @@ import dev.jdtech.jellyfin.repository.StoredMediaStream
 import dev.jdtech.jellyfin.repository.StoredPendingDownload
 import dev.jdtech.jellyfin.repository.StoredServer
 import dev.jdtech.jellyfin.repository.StoredSource
-import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
@@ -111,7 +111,7 @@ class RoomDownloadStore(private val database: ServerDatabaseDao) : DownloadStore
         database.getMediaStreamByDownloadId(downloadId)?.toStoredMediaStream()
 
     override suspend fun insertMediaStream(
-        id: UUID,
+        id: MediaStreamId,
         sourceId: MediaSourceId,
         stream: MediaStream,
         path: String,
@@ -119,15 +119,15 @@ class RoomDownloadStore(private val database: ServerDatabaseDao) : DownloadStore
         database.insertMediaStream(stream.toMediaStreamEntity(id, sourceId, path))
     }
 
-    override suspend fun setMediaStreamDownloadId(id: UUID, downloadId: Long) {
+    override suspend fun setMediaStreamDownloadId(id: MediaStreamId, downloadId: Long) {
         database.setMediaStreamDownloadId(id, downloadId)
     }
 
-    override suspend fun setMediaStreamPath(id: UUID, path: String) {
+    override suspend fun setMediaStreamPath(id: MediaStreamId, path: String) {
         database.setMediaStreamPath(id, path)
     }
 
-    override suspend fun deleteMediaStream(id: UUID) {
+    override suspend fun deleteMediaStream(id: MediaStreamId) {
         database.deleteMediaStream(id)
     }
 

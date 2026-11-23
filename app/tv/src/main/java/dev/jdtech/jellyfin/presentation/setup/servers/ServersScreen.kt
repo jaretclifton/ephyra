@@ -33,6 +33,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyDiscoveredServer
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyServer
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.ServerAddressId
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.presentation.setup.components.ServerItem
@@ -44,7 +45,6 @@ import dev.jdtech.jellyfin.setup.presentation.servers.ServersEvent
 import dev.jdtech.jellyfin.setup.presentation.servers.ServersState
 import dev.jdtech.jellyfin.setup.presentation.servers.ServersViewModel
 import dev.jdtech.jellyfin.utils.ObserveAsEvents
-import java.util.UUID
 
 @Composable
 fun ServersScreen(
@@ -188,7 +188,7 @@ private fun ServersScreenLayoutPreview() {
                                 addresses =
                                     listOf(
                                         ServerAddress(
-                                            id = UUID.randomUUID(),
+                                            id = ServerAddressId.random(),
                                             address = dummyDiscoveredServer.address,
                                             serverId = "".toServerId(),
                                         )

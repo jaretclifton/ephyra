@@ -1,7 +1,5 @@
 package dev.jdtech.jellyfin.models
 
-import java.util.UUID
-
 /**
  * A saved server (#899: the app's own model of a row of Room's `servers` table). It has no current
  * user until someone logs in: setup saves the server first.
@@ -9,7 +7,7 @@ import java.util.UUID
 data class Server(
     val id: ServerId,
     val name: String,
-    val currentServerAddressId: UUID?,
+    val currentServerAddressId: ServerAddressId?,
     val currentUserId: UserId?,
     /**
      * CE (#770): the kind of server, as [ServerType.value]. Every server saved before the type was
@@ -23,7 +21,7 @@ val Server.serverType: ServerType?
     get() = ServerType.fromValue(type)
 
 /** A saved address of a [Server]; the app gives each one a random id. */
-data class ServerAddress(val id: UUID, val serverId: ServerId, val address: String)
+data class ServerAddress(val id: ServerAddressId, val serverId: ServerId, val address: String)
 
 /** A saved server with all its addresses and its current user. */
 data class ServerWithAddresses(

@@ -4,12 +4,12 @@ import dev.jdtech.jellyfin.models.DiscoveredServer
 import dev.jdtech.jellyfin.models.QuickConnectState
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.ServerAddressId
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
-import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
 interface SetupRepository {
@@ -55,7 +55,7 @@ interface SetupRepository {
     /** CE (#299): no profile is open on the current server; the app goes to the user selection. */
     suspend fun clearCurrentUser()
 
-    suspend fun setCurrentAddress(addressId: UUID)
+    suspend fun setCurrentAddress(addressId: ServerAddressId)
 
     /**
      * Adds [address] to the saved server [serverId] after checking that the server answering there
@@ -70,5 +70,5 @@ interface SetupRepository {
     /** The address the app uses for [serverId]. */
     suspend fun getCurrentAddress(serverId: ServerId): ServerAddress?
 
-    suspend fun deleteAddress(addressId: UUID)
+    suspend fun deleteAddress(addressId: ServerAddressId)
 }

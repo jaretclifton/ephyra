@@ -7,6 +7,7 @@ import dev.jdtech.jellyfin.core.server.ServerConnectors
 import dev.jdtech.jellyfin.domain.ports.ActiveServerHolder
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.ServerAddressId
 import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.UiText
@@ -20,10 +21,10 @@ import dev.jdtech.jellyfin.setup.data.SetupRepositoryImpl
 import dev.jdtech.jellyfin.setup.domain.FakeLocalNetworkAccess
 import dev.jdtech.jellyfin.setup.presentation.addresses.ServerAddressesAction
 import dev.jdtech.jellyfin.setup.presentation.addresses.ServerAddressesViewModel
+import dev.jdtech.jellyfin.testing.asServerAddressId
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.Collections
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -55,11 +56,11 @@ import org.robolectric.annotation.Config
 class ServerAddressesFeedbackTest {
     private val serverId = "server"
     private val inUse =
-        ServerAddress(UUID.randomUUID(), serverId.toServerId(), "http://10.0.2.2:8096")
+        ServerAddress(ServerAddressId.random(), serverId.toServerId(), "http://10.0.2.2:8096")
     private val other =
-        ServerAddress(UUID.randomUUID(), serverId.toServerId(), "http://192.168.1.2:8096")
+        ServerAddress(ServerAddressId.random(), serverId.toServerId(), "http://192.168.1.2:8096")
     private val addresses = Collections.synchronizedList(mutableListOf(inUse, other))
-    private val deleted = Collections.synchronizedList(mutableListOf<UUID>())
+    private val deleted = Collections.synchronizedList(mutableListOf<ServerAddressId>())
 
     /** Thrown by getServerWithAddresses once set. */
     @Volatile private var failure: RuntimeException? = null
@@ -75,8 +76,8 @@ class ServerAddressesFeedbackTest {
                 // CE (#770): for its type, which picks the connector.
                 "server" -> Server(serverId.toServerId(), "Ephyra Test", inUse.id, null)
                 "deleteAddress" -> {
-                    deleted.add(args[0] as UUID)
-                    addresses.removeAll { it.id == args[0] }
+                    deleted.add(args[0].asServerAddressId())
+                    addresses.removeAll { it.id == args[0].asServerAddressId() }
                     Unit
                 }
                 "serverWithAddresses" -> {
@@ -149,7 +150,7 @@ class ServerAddressesFeedbackTest {
 
     @Test
     fun `adding an address that is already there says so`() = runBlocking {
-        addresses.add(ServerAddress(UUID.randomUUID(), serverId.toServerId(), stubAddress))
+        addresses.add(ServerAddress(ServerAddressId.random(), serverId.toServerId(), stubAddress))
 
         viewModel.onAction(ServerAddressesAction.AddAddress("$stubAddress/"))
 

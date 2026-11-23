@@ -6,6 +6,7 @@ import dev.jdtech.jellyfin.core.server.ServerConnectors
 import dev.jdtech.jellyfin.domain.ports.ResolvedServer
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
+import dev.jdtech.jellyfin.models.ServerAddressId
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.ServerWithAddresses
@@ -92,7 +93,7 @@ class AddSavedServerSessionTest {
     }
 
     private fun saveServer(id: String, address: String, user: User?, type: String = "jellyfin") {
-        val serverAddress = ServerAddress(UUID.randomUUID(), id.toServerId(), address)
+        val serverAddress = ServerAddress(ServerAddressId.random(), id.toServerId(), address)
         servers[id] = Server(id.toServerId(), "Server $id", serverAddress.id, user?.id, type)
         addresses += serverAddress
         user?.let { users[it.id] = it }

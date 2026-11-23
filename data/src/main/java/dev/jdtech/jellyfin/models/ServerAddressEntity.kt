@@ -4,7 +4,6 @@ import androidx.room3.ColumnInfo
 import androidx.room3.Entity
 import androidx.room3.ForeignKey
 import androidx.room3.PrimaryKey
-import java.util.UUID
 
 /** The Room row of a [ServerAddress] (#899). */
 @Entity(
@@ -20,7 +19,7 @@ import java.util.UUID
         ],
 )
 data class ServerAddressEntity(
-    @PrimaryKey val id: UUID,
+    @PrimaryKey val id: ServerAddressId,
     @ColumnInfo(index = true) val serverId: ServerId,
     val address: String,
 )
