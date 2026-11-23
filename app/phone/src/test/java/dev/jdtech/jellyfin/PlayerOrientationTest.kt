@@ -18,7 +18,6 @@ class PlayerOrientationTest {
         multiWindow: Boolean = false,
         pictureInPicture: Boolean = false,
         foldHalfOpened: Boolean = false,
-        sdkInt: Int = 34,
     ) =
         playerOrientation(
             shorterSideDp = shorterSideDp,
@@ -27,14 +26,12 @@ class PlayerOrientationTest {
             multiWindow = multiWindow,
             pictureInPicture = pictureInPicture,
             foldHalfOpened = foldHalfOpened,
-            sdkInt = sdkInt,
         )
 
     @Test
     fun `a phone plays in landscape whatever the setting`() {
         assertEquals(SCREEN_ORIENTATION_SENSOR_LANDSCAPE, orientation(phone))
         assertEquals(SCREEN_ORIENTATION_SENSOR_LANDSCAPE, orientation(phone, keepLandscape = true))
-        assertEquals(SCREEN_ORIENTATION_SENSOR_LANDSCAPE, orientation(phone, sdkInt = 36))
     }
 
     @Test
@@ -60,10 +57,6 @@ class PlayerOrientationTest {
     @Test
     fun `a wide window plays in landscape with the setting on`() {
         assertEquals(SCREEN_ORIENTATION_SENSOR_LANDSCAPE, orientation(keepLandscape = true))
-        assertEquals(
-            SCREEN_ORIENTATION_SENSOR_LANDSCAPE,
-            orientation(keepLandscape = true, sdkInt = 35),
-        )
     }
 
     @Test
@@ -85,12 +78,6 @@ class PlayerOrientationTest {
             SCREEN_ORIENTATION_UNSPECIFIED,
             orientation(keepLandscape = true, foldHalfOpened = true),
         )
-    }
-
-    @Test
-    fun `the setting does nothing where Android 16 and later ignore the request`() {
-        assertEquals(SCREEN_ORIENTATION_UNSPECIFIED, orientation(keepLandscape = true, sdkInt = 36))
-        assertEquals(SCREEN_ORIENTATION_UNSPECIFIED, orientation(keepLandscape = true, sdkInt = 37))
     }
 
     @Test

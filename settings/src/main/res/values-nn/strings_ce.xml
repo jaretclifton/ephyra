@@ -193,7 +193,7 @@
     <string name="ce_number_no_limit">Inga grense</string>
     <string name="ce_number_off">Av</string>
     <string name="ce_pref_player_keep_landscape">Hald avspelaren liggjande</string>
-    <string name="ce_pref_player_keep_landscape_summary">Spel av videoar liggjande, òg når du snur nettbrettet på høgkant</string>
+    <string name="ce_pref_player_keep_landscape_summary">Spel av videoar liggjande, òg når du snur nettbrettet på høgkant. Nokre nettbrett tillèt ikkje dette; då snur avspelaren seg med nettbrettet.</string>
     <string name="ce_pref_home_episode_images">Bruk episodebilete</string>
     <string name="ce_pref_home_episode_images_summary">Vis biletet til episoden i staden for biletet til serien i Hald fram å sjå og Neste</string>
     <string name="ce_pref_cast_group">Chromecast</string>

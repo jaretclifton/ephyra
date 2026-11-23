@@ -191,7 +191,7 @@
     <string name="ce_number_no_limit">Không giới hạn</string>
     <string name="ce_number_off">Tắt</string>
     <string name="ce_pref_player_keep_landscape">Giữ trình phát ở chế độ ngang</string>
-    <string name="ce_pref_player_keep_landscape_summary">Phát video ở chế độ ngang, kể cả khi bạn xoay máy tính bảng theo chiều dọc</string>
+    <string name="ce_pref_player_keep_landscape_summary">Phát video ở chế độ ngang, kể cả khi bạn xoay máy tính bảng theo chiều dọc. Một số máy tính bảng không cho phép điều này; khi đó trình phát xoay theo máy tính bảng.</string>
     <string name="ce_pref_home_episode_images">Dùng hình ảnh của tập</string>
     <string name="ce_pref_home_episode_images_summary">Hiển thị hình ảnh của tập thay cho hình ảnh của phim bộ trong Tiếp tục xem và Tiếp theo</string>
     <string name="ce_pref_cast_group">Chromecast</string>

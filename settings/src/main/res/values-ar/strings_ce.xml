@@ -201,7 +201,7 @@
     <string name="ce_number_no_limit">بلا حد</string>
     <string name="ce_number_off">إيقاف</string>
     <string name="ce_pref_player_keep_landscape">إبقاء المشغّل بالوضع الأفقي</string>
-    <string name="ce_pref_player_keep_landscape_summary">تشغيل الفيديوهات بالوضع الأفقي حتى عند تدوير الجهاز اللوحي عموديًا</string>
+    <string name="ce_pref_player_keep_landscape_summary">تشغيل الفيديوهات بالوضع الأفقي حتى عند تدوير الجهاز اللوحي عموديًا. بعض الأجهزة اللوحية لا تسمح بذلك، وعندها يدور المشغّل مع الجهاز اللوحي.</string>
     <string name="ce_pref_home_episode_images">استخدام صور الحلقات</string>
     <string name="ce_pref_home_episode_images_summary">عرض صورة الحلقة بدلًا من صورة المسلسل في «متابعة المشاهدة» و«التالي»</string>
     <string name="ce_pref_cast_group">Chromecast</string>

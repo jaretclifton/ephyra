@@ -191,7 +191,7 @@
     <string name="ce_number_no_limit">Tanpa batas</string>
     <string name="ce_number_off">Nonaktif</string>
     <string name="ce_pref_player_keep_landscape">Pertahankan pemutar dalam lanskap</string>
-    <string name="ce_pref_player_keep_landscape_summary">Putar video dalam lanskap, meskipun tablet diputar tegak</string>
+    <string name="ce_pref_player_keep_landscape_summary">Putar video dalam lanskap, meskipun tablet diputar tegak. Beberapa tablet tidak mengizinkannya; pemutar lalu berputar mengikuti tablet.</string>
     <string name="ce_pref_home_episode_images">Gunakan gambar episode</string>
     <string name="ce_pref_home_episode_images_summary">Tampilkan gambar episode, bukan gambar serial, di Lanjutkan menonton dan Berikutnya</string>
     <string name="ce_pref_cast_group">Chromecast</string>

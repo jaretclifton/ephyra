@@ -193,7 +193,7 @@
     <string name="ce_number_no_limit">Ingen grænse</string>
     <string name="ce_number_off">Fra</string>
     <string name="ce_pref_player_keep_landscape">Hold afspilleren i liggende format</string>
-    <string name="ce_pref_player_keep_landscape_summary">Afspil videoer i liggende format, også når du vender tabletten på højkant</string>
+    <string name="ce_pref_player_keep_landscape_summary">Afspil videoer i liggende format, også når du vender tabletten på højkant. Nogle tablets tillader det ikke; så drejer afspilleren med tabletten.</string>
     <string name="ce_pref_home_episode_images">Brug episodebilleder</string>
     <string name="ce_pref_home_episode_images_summary">Vis episodens billede i stedet for seriens billede i Fortsæt med at se og Næste</string>
     <string name="ce_pref_cast_group">Chromecast</string>
