@@ -20,7 +20,7 @@ The apps (`app/phone`, `app/tv`) are the composition root. Features call `MediaR
 | Path | What |
 |---|---|
 | [`domain/.../domain/ports/`](../../domain/src/main/kotlin/dev/jdtech/jellyfin/domain/ports/) | The server ports, `ActiveServer`, `DeviceCodecs` |
-| [`http/.../http/`](../../http/src/main/kotlin/dev/jdtech/jellyfin/http/) | `MediaHttpClient`, the OkHttp client the player streams over, provided by `server/jellyfin` (#964). Its own module because it names a library type, which no port may |
+| [`http/.../http/`](../../http/src/main/kotlin/dev/jdtech/jellyfin/http/) | `MediaHttpClient`, the API's OkHttp client that ExoPlayer streams media over (mpv: subtitle files only), provided by `server/jellyfin` (#964). Its own module because it names a library type, which no port may |
 | [`application/.../repository/`](../../application/src/main/kotlin/dev/jdtech/jellyfin/repository/) | `MediaRepository`, the store ports, the settings ports (`DownloadSettings`, `CurrentServerId`, `NetworkTimeouts`, …) |
 | [`server/jellyfin/.../server/jellyfin/`](../../server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/) | `JellyfinMediaServer`, `JellyfinCatalog`, `JellyfinUserData`, `JellyfinPlayback`, `JellyfinServerConnector`; `mappers/`; `SdkIds.kt`, `SdkEnums.kt`, `SdkErrors.kt`, `JellyfinCalls.kt` |
 | [`server/jellyfin/.../di/JellyfinServerModule.kt`](../../server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/di/JellyfinServerModule.kt) | What the adapter provides; the maps keyed by `ServerTypeKey` |

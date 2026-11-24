@@ -80,6 +80,7 @@ class PureKotlinTest {
             import okhttp3.*
             import `androidx`.paging.PagingData
             import javax.inject.Inject
+                import okio.Indented
             import kotlinxx.Thing
 
             val text = "import com.example.NotAnImport"
@@ -91,6 +92,7 @@ class PureKotlinTest {
                 "okhttp3.*",
                 "androidx.paging.PagingData",
                 "javax.inject.Inject",
+                "okio.Indented",
                 "kotlinxx.Thing",
             ),
             importsIn(file).filterNot(::isAllowed),
@@ -140,7 +142,7 @@ class PureKotlinTest {
             listOf("kotlin.", "kotlinx.", "java.", "javax.crypto.", "dev.jdtech.jellyfin.")
 
         private val IMPORT =
-            Regex("""^import\s+([\w`]+(?:\.[\w`]+)*(?:\.\*)?)""", RegexOption.MULTILINE)
+            Regex("""^[ 	]*import\s+([\w`]+(?:\.[\w`]+)*(?:\.\*)?)""", RegexOption.MULTILINE)
 
         /** The names a Kotlin file imports, without an alias; a wildcard import ends in `.*`. */
         fun importsIn(text: String): List<String> =

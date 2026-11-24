@@ -3,8 +3,9 @@ package dev.jdtech.jellyfin.http
 import okhttp3.OkHttpClient
 
 /**
- * The OkHttp client media is streamed through (#750). The player derives its own clients from it
- * with `newBuilder()`, so they share its connection pool with the server's API (#296).
+ * The server API's own OkHttp client, for the player (#750). ExoPlayer streams media over a client
+ * derived from it with `newBuilder()`, so media shares the connection pool with the API (#296); mpv
+ * uses it for subtitle files only, as libmpv fetches the media itself.
  *
  * Not a port of `domain` (#964): it names a library type, and `domain` is plain Kotlin (R19). The
  * adapter that owns the client (`server/jellyfin`) provides it, the player uses it; this module is

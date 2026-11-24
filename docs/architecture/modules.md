@@ -68,7 +68,7 @@ flowchart TD
 | `data` | Adapters | Room: the database, the stores (Room*Store) and MediaRepositoryImpl over the server's ports; no SDK. | `application`, `domain` | `testing` |
 | `domain` | Domain | Pure Kotlin, no Android or SDK: the models (Item, Movie, ItemSource, …), the ids, PlayState, DownloadState, Ticks, ActiveServer and the server ports. |  |  |
 | `downloads` | Features | The download engine (Downloader, DownloaderImpl, MediaDownloadEngine), DownloadQueue, smart downloads and their workers. | `application`, `domain`, `settings` | `data`, `testing` |
-| `http` | Shared contracts | MediaHttpClient, the OkHttp client media is streamed through: provided by server/jellyfin, used by the player, so it shares the API's connections. |  |  |
+| `http` | Shared contracts | MediaHttpClient, the API's OkHttp client: provided by server/jellyfin, used by the player (ExoPlayer's media, mpv's subtitle files), so they share the API's connections. |  |  |
 | `modes/film` | Features | The view models with their State and Action classes for home, library, search, the item screens and downloads. | `application`, `core`, `domain`, `downloads`, `settings` | `data`, `testing` |
 | `player/cast` | Features | Google Cast: the session and playback on a receiver; real in the proprietary flavour, stubs in libre. | `application`, `core`, `domain`, `player/core`, `player/local`, `settings` |  |
 | `player/core` | Features | The player models shared by the player and its callers: PlayerItem, Track, Trickplay. | `domain` |  |

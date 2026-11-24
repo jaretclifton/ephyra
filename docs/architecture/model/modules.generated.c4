@@ -44,7 +44,7 @@ model {
       link https://github.com/midasvo/ephyra/tree/main/downloads 'Source'
     }
     http = shared 'http' {
-      description 'MediaHttpClient, the OkHttp client media is streamed through: provided by server/jellyfin, used by the player, so it shares the API\'s connections.'
+      description 'MediaHttpClient, the API\'s OkHttp client: provided by server/jellyfin, used by the player (ExoPlayer\'s media, mpv\'s subtitle files), so they share the API\'s connections.'
       link https://github.com/midasvo/ephyra/tree/main/http 'Source'
     }
     modesFilm = feature 'modes/film' {

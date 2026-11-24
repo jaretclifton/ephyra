@@ -354,7 +354,7 @@ recognizes the server.
 
 More interfaces are in `domain` so that the adapter, which may not depend on `data` or `core`,
 can implement them. `RequestWatcher` moves there from `data/api`, into `domain.ports`. (This plan
-put `MediaHttpClient`, the OkHttp client media is streamed through, in `domain` too, as the one
+put `MediaHttpClient`, the player's OkHttp client, in `domain` too, as the one
 library type there. #964 moved it into a module of its own, `http`, which the adapter and the
 player both use, and rule R19 keeps libraries out of `domain` and `application`.)
 

@@ -196,7 +196,7 @@ object ArchitectureModel {
             "http" to
                 Module(
                     Layer.SHARED,
-                    "MediaHttpClient, the OkHttp client media is streamed through: provided by server/jellyfin, used by the player, so it shares the API's connections.",
+                    "MediaHttpClient, the API's OkHttp client: provided by server/jellyfin, used by the player (ExoPlayer's media, mpv's subtitle files), so they share the API's connections.",
                 ),
             "testing" to
                 Module(
