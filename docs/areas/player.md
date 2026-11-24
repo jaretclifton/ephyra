@@ -33,6 +33,7 @@ Paths are under `player/local/src/main/java/dev/jdtech/jellyfin/player/local/` u
 | [PlaybackService.kt](../../player/local/src/main/java/dev/jdtech/jellyfin/player/local/PlaybackService.kt), [PlaybackSessionStore.kt](../../player/local/src/main/java/dev/jdtech/jellyfin/player/local/PlaybackSessionStore.kt) | The media session service; the owner of the view model for the phone player |
 | [PlayerActivity.kt](../../app/phone/src/main/java/dev/jdtech/jellyfin/PlayerActivity.kt) | The phone player screen (Views); [PreviewScrubListener.kt](../../app/phone/src/main/java/dev/jdtech/jellyfin/utils/PreviewScrubListener.kt) shows the seek preview; dialogs in [presentation/player/](../../app/phone/src/main/java/dev/jdtech/jellyfin/presentation/player/) |
 | TV [ce/presentation/player/](../../app/tv/src/main/java/dev/jdtech/jellyfin/ce/presentation/player/) | `TvPlayerScreen`, `TvPlayerKeyHandler`, `TvTrickplayThumbnail`, `TvSeekBar`, `TvUpNextCard`, `TvResumeOnReturn` ([ADR 0004](../tv-research/adr/0004-tv-player-ui.md)) |
+| [http/.../MediaHttpClient.kt](../../http/src/main/kotlin/dev/jdtech/jellyfin/http/MediaHttpClient.kt) | The OkHttp client both engines stream over: `server/jellyfin` provides the API's own client, and the engines derive theirs with `newBuilder()`, so media shares the API's connection pool (#296). A module of its own so `domain` names no library (#964) |
 | [JellyfinPlayback.kt](../../server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/JellyfinPlayback.kt) | `trickplayTile` and `trickplayVersion` (the `mediaSourceId` of a tile request) |
 | [PlaybackInfoMappers.kt](../../server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/mappers/PlaybackInfoMappers.kt) | `toItemTrickplayInfo`, `preferredTrickplayInfo`: the width the player gets |
 | [MediaRepository.kt](../../application/src/main/kotlin/dev/jdtech/jellyfin/repository/MediaRepository.kt) | `getTrickplayData(itemId, width, sheetIndex, mediaSourceId)` |
@@ -43,7 +44,7 @@ Paths are under `player/local/src/main/java/dev/jdtech/jellyfin/player/local/` u
 - **R6**: `engine/exo` and `engine/mpv` use neither each other, and shared code uses neither; only `engine.di` binds both. A feature of one engine goes behind `EnginePlayer`.
 - **R1, R2, R3**: no Jellyfin SDK in the player. The adapter maps SDK types.
 - **R10**: ids are `ItemId` and `MediaSourceId`; no `UUID`, no `String` id in a signature. #860 writes `mediaSourceId: String?`; use `MediaSourceId?`.
-- **R12**: ticks only through `Ticks`. **R5**: `domain` and `application` stay pure Kotlin.
+- **R12**: ticks only through `Ticks`. **R5**, **R19**: `domain` and `application` stay pure Kotlin, with no library but kotlinx; an OkHttp type goes through `http`, not a port.
 - Player PRs: [docs/mpv-checklist.md](../mpv-checklist.md) on both backends. Do not fix mpv by touching the ExoPlayer path.
 - `PlayerInvariantsTest` fails the build when ExoPlayer loses its default frame rate strategy, when mpv stops hinting the surface with the frame rate (#338), and for other mpv invariants (no calls on the main thread, a network timeout, replaced playlists reported).
 - New strings: `translate-strings` skill, all 36 languages.
