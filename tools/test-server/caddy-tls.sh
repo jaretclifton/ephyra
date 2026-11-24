@@ -26,6 +26,7 @@
 #   EPHYRA_CADDY_PORT         BASE (default 8443)
 #   EPHYRA_CADDY_HOST         the server name (default jellyfin.10.0.2.2.nip.io)
 #   EPHYRA_CADDY_IMAGE        Caddy image (default below)
+#   EPHYRA_CADDY_BIND         the host address it listens on (default 127.0.0.1: only this machine)
 set -euo pipefail
 
 ROOT="${EPHYRA_TEST_SERVER_DIR:-$HOME/ephyra-test-server}"
@@ -33,6 +34,7 @@ JF_PORT="${EPHYRA_TEST_SERVER_PORT:-8096}"
 BASE="${EPHYRA_CADDY_PORT:-8443}"
 HOST="${EPHYRA_CADDY_HOST:-jellyfin.10.0.2.2.nip.io}"
 IMAGE="${EPHYRA_CADDY_IMAGE:-caddy:2.11}"
+BIND="${EPHYRA_CADDY_BIND:-127.0.0.1}"
 NAME=ephyra-test-caddy
 DIR="$ROOT/caddy-tls"
 
@@ -109,11 +111,12 @@ site() { # site <port> <client_auth mode or none> [protocols]
 } > Caddyfile
 
 docker rm -f "$NAME" >/dev/null 2>&1 || true
-# Published on 0.0.0.0 like the test server, so that on Windows the emulators reach it through
-# WSL's port forwarding (Caddy on the host network listens on IPv6 only, which WSL forwards to ::1).
+# Published on BIND only: five of the sites take no client certificate and the server has a user
+# without a password. Emulators reach 127.0.0.1 as 10.0.2.2, on Windows through WSL's port
+# forwarding (with Docker's host network Caddy listens on IPv6 only, which WSL forwards to ::1).
 docker run -d --name "$NAME" --restart unless-stopped \
   --add-host host.docker.internal:host-gateway \
-  -p "0.0.0.0:$BASE-$((BASE + 5)):$BASE-$((BASE + 5))" \
+  -p "$BIND:$BASE-$((BASE + 5)):$BASE-$((BASE + 5))" \
   -v "$DIR/Caddyfile:/etc/caddy/Caddyfile:ro" -v "$DIR:/certs:ro" "$IMAGE" >/dev/null
 sleep 3
 status
