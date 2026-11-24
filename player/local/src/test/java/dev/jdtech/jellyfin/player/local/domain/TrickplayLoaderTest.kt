@@ -10,6 +10,7 @@ import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -34,7 +35,16 @@ class TrickplayLoaderTest {
     private val itemId = "0f8fad5b-d9cb-469f-a165-70867728950e".toItemId()
     private val version = "b4ad6ac4d1d0ce1a1e2d5d4e3c2b1a09".toMediaSourceId()
 
-    private var now = 0L
+    @Volatile private var now = 0L
+
+    /** How often the loader read the clock; it reads it when it records or checks a failure. */
+    private val clockReads = AtomicInteger()
+
+    private fun awaitClockRead() {
+        val deadline = System.currentTimeMillis() + 5_000
+        while (clockReads.get() == 0 && System.currentTimeMillis() < deadline) Thread.sleep(10)
+        assertEquals(1, clockReads.get(), "the neighbour's failure was not recorded")
+    }
 
     private class Request(val width: Int, val index: Int, val mediaSourceId: MediaSourceId?)
 
@@ -115,7 +125,10 @@ class TrickplayLoaderTest {
             tileHeight = rows,
             thumbnailCount = thumbnailCount,
             interval = 10_000,
-            nowMs = { now },
+            nowMs = {
+                clockReads.incrementAndGet()
+                now
+            },
             maxSheetPixels = maxSheetPixels,
             cropTile = cropTile,
         )
@@ -248,13 +261,14 @@ class TrickplayLoaderTest {
         val loader = loader(thumbnailCount = 200)
 
         assertNotNull(loader.tileAt(0))
-        fake.awaitCount(2)
+        // Recording the neighbour's failure is the first read of the clock: wait for it, so the
+        // window starts at 0 and not at a time the test sets below.
+        awaitClockRead()
         assertEquals(listOf(0, 1), fake.requests.map { it.index })
 
-        // Scrubbing on in sheet 0 does not fetch sheet 1 again.
+        // Scrubbing on in sheet 0 does not fetch sheet 1 again: the prefetch decides at once.
         assertNotNull(loader.tileAt(10_000))
         assertNotNull(loader.tileAt(20_000))
-        Thread.sleep(300)
         assertEquals(2, fake.count())
 
         // After the window it is fetched ahead again.
