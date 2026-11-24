@@ -267,6 +267,21 @@ class CastSegmentSkipperTest {
     }
 
     @Test
+    fun `a user seek does not end the wait for a load's position`() {
+        // A reload at 5:00; a stale 0 comes in, the user seeks, another stale 0 comes in.
+        val opening = Segment(INTRO, startTicks = 0L, endTicks = 30_000L)
+        val skipper = skipper(segments = listOf(opening))
+        skipper.play(300_000L)
+        skipper.expectLoad(300_000L)
+
+        val before = skipper.play(0L)
+        skipper.onUserSeek(310_000L)
+        val after = skipper.play(0L, 310_000L)
+
+        assertEquals(List(3) { CastSegmentStep.None }, before + after)
+    }
+
+    @Test
     fun `an item resumed inside a segment set to skip skips it once the resume lands`() {
         val steps = skipper(resumePositionMs = 20_000L).play(0L, 20_500L)
 

@@ -23,7 +23,7 @@ import dev.jdtech.jellyfin.player.local.domain.SkipTarget
  * - **Resume, after every load:** until the receiver is at the position the item was loaded at
  *   ([resumePositionMs] for the first load, [expectLoad] for each load after it, such as an audio
  *   track switch), or plays on from where it is, a report is the stale position from before the
- *   load, and no step. A user seek before the load has reported anything does not end this.
+ *   load, and no step. A user seek does not end this wait.
  * - **The end of the item:** the receiver is at position 0 for a moment when an item runs out
  *   ([CastPositions.ranOut], as the playback reports read it). That is no entry.
  * - **Late reports after a skip:** the controller shows the target at once, but the receiver can
@@ -57,9 +57,6 @@ class CastSegmentSkipper(
     /** The receiver is where the last load started the item. */
     private var settled = resumePositionMs <= CastPositions.SEEK_TOLERANCE_MS
 
-    /** The receiver has reported a position for [itemId] since the last load. */
-    private var landed = false
-
     /** The last position reported for [itemId], or the user's last seek target. */
     private var lastPositionMs: Long? = null
 
@@ -70,7 +67,6 @@ class CastSegmentSkipper(
     fun expectLoad(positionMs: Long) {
         loadPositionMs = positionMs
         settled = positionMs <= CastPositions.SEEK_TOLERANCE_MS
-        landed = false
         lastPositionMs = null
     }
 
@@ -86,9 +82,9 @@ class CastSegmentSkipper(
      */
     fun onUserSeek(targetMs: Long) {
         recentSkips.keys.removeAll { targetMs in it }
-        // Before the load has reported anything, the next report can still be the stale one.
-        if (!landed) return
-        settled = true
+        // Until the receiver is where the load started the item, the next report can still be the
+        // stale one: the seek does not end that wait.
+        if (!settled) return
         lastPositionMs = targetMs
     }
 
@@ -98,7 +94,6 @@ class CastSegmentSkipper(
      */
     fun update(positionItemId: ItemId?, positionMs: Long, durationMs: Long): CastSegmentStep {
         if (positionItemId != itemId) return CastSegmentStep.None
-        landed = true
         val previous = lastPositionMs
         if (previous != null && CastPositions.ranOut(previous, positionMs, durationMs)) {
             return CastSegmentStep.None
