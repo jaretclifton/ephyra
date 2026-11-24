@@ -215,6 +215,31 @@ class CastSegmentSkipperTest {
     }
 
     @Test
+    fun `a late report after a skip to the end does not hide the end`() {
+        // The skip lands near the end; a report from before it arrives; then the moment at 0.
+        val opening = Segment(INTRO, startTicks = 0L, endTicks = 30_000L)
+        val longOutro = Segment(OUTRO, startTicks = 700_000L, endTicks = 730_000L)
+        val skipper = skipper(segments = listOf(opening, longOutro))
+        skipper.onUserSeek(699_000L)
+
+        val steps = skipper.play(700_000L, 718_000L, 701_000L, 0L)
+
+        assertEquals(listOf(seek(longOutro, to = 718_000L)), steps.seeks())
+    }
+
+    @Test
+    fun `the moment at 0 after a skip to the end counts even without a report there`() {
+        val opening = Segment(INTRO, startTicks = 0L, endTicks = 30_000L)
+        val longOutro = Segment(OUTRO, startTicks = 700_000L, endTicks = 730_000L)
+        val skipper = skipper(segments = listOf(opening, longOutro))
+        skipper.onUserSeek(699_000L)
+
+        val steps = skipper.play(700_000L, 0L)
+
+        assertEquals(listOf(seek(longOutro, to = 718_000L)), steps.seeks())
+    }
+
+    @Test
     fun `with the duration unknown a skip goes to the segment's end`() {
         val longOutro = Segment(OUTRO, startTicks = 700_000L, endTicks = 730_000L)
         val steps = skipper(segments = listOf(longOutro)).play(700_000L, durationMs = 0L)

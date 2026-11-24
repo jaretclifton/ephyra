@@ -93,7 +93,12 @@ class CastSegmentSkipper(
         recentSkips.values.removeAll { nowMs - it >= SETTLE_MS }
         // A report from before a seek landed. It does not reach the tracker, so it cannot count
         // as an entry, and a real one after it is still skipped.
-        if (recentSkips.keys.any { positionMs in it }) return CastSegmentStep.None
+        if (recentSkips.keys.any { positionMs in it }) {
+            // Going back, it is older than the position heard before: keep that one, so the
+            // moment at 0 after a skip to the end is still read as the end.
+            if (previous != null && positionMs < previous) lastPositionMs = previous
+            return CastSegmentStep.None
+        }
 
         val decision =
             tracker.update(
@@ -114,6 +119,8 @@ class CastSegmentSkipper(
                     CastSegmentStep.None
                 } else {
                     recentSkips[segment] = nowMs
+                    // Where the receiver goes, even if it ends the item before reporting it.
+                    lastPositionMs = target
                     CastSegmentStep.SeekTo(segment, target)
                 }
             }
