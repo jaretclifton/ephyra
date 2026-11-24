@@ -46,13 +46,17 @@ class SdkBoundaryTest {
         )
     }
 
-    /** R1. A text check: a type can be used by its full name without an import (`InfoText.kt`). */
+    /**
+     * R1. A text check: a type can be used by its full name without an import (`InfoText.kt`).
+     * Comments do not count, as in R10 and R17.
+     */
     @Test
     fun `R1 no production file outside the adapter mentions the SDK`() {
         val violations =
             ProjectTree.productionKotlinFiles
                 .filter { (path, file) ->
-                    !ProjectTree.inJellyfinAdapter(path) && SDK_PACKAGE in file.readText()
+                    !ProjectTree.inJellyfinAdapter(path) &&
+                        SDK_PACKAGE in UuidBoundaryTest.withoutComments(file.readText())
                 }
                 .keys
         assertNone(violations) {
