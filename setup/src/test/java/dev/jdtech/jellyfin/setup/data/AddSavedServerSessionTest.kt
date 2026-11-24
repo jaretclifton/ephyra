@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.setup.data
 import android.app.Application
 import android.content.Context
 import dev.jdtech.jellyfin.core.server.ServerConnectors
+import dev.jdtech.jellyfin.domain.ports.AuthenticatedUser
 import dev.jdtech.jellyfin.domain.ports.ResolvedServer
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
@@ -17,6 +18,7 @@ import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.asUserId
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
@@ -57,13 +59,24 @@ class AddSavedServerSessionTest {
                     )
                 }
                 "currentUser" -> servers[args[0] as String]?.currentUserId?.let { users[it] }
-                "insertServer" -> {
+                "insertServer",
+                "updateServer" -> {
                     val server = args[0] as Server
                     servers[server.id.asString()] = server
                     Unit
                 }
                 "insertAddress" -> {
                     addresses += args[0] as ServerAddress
+                    Unit
+                }
+                "insertUser" -> {
+                    val user = args[0] as User
+                    users[user.id] = user
+                    Unit
+                }
+                "setCurrentUser" -> {
+                    val id = args[0] as String
+                    servers[id] = servers.getValue(id).copy(currentUserId = args[1].asUserId())
                     Unit
                 }
                 "toString" -> "FakeServerStore"
@@ -166,6 +179,78 @@ class AddSavedServerSessionTest {
             addresses.filter { it.serverId.asString() == "a" }.map { it.address },
         )
     }
+
+    /** The address Room says [id] uses, which the copy of the session at start follows. */
+    private fun currentAddressInRoom(id: String): String? {
+        val server = servers.getValue(id)
+        return addresses.firstOrNull { it.id == server.currentServerAddressId }?.address
+    }
+
+    @Test
+    fun `adding the current server by another address makes that address current in Room`() =
+        runBlocking {
+            // CE (#984): the client went there while Room kept the first address, so a restart
+            // went back to the first one.
+            saveServer("a", "http://a.local:8096", alice)
+            signInClient("http://a.local:8096", alice)
+
+            add("a", "https://a.example/")
+
+            assertEquals("https://a.example/", session.baseUrl)
+            assertEquals("https://a.example/", currentAddressInRoom("a"))
+            // The server keeps its user: only the address changed.
+            assertEquals(alice.id, servers.getValue("a").currentUserId)
+        }
+
+    @Test
+    fun `signing in as another user through another address keeps that address in Room`() =
+        runBlocking {
+            // CE (#984): the steps of the issue. Add the saved server by its second address, then
+            // sign in there as another user.
+            saveServer("a", "http://a.local:8096", alice)
+            signInClient("http://a.local:8096", alice)
+            val carol = UUID.randomUUID().toString().toUserId()
+            connector.onLogin = { name, _ ->
+                AuthenticatedUser(carol, name, "a".toServerId(), "token-c", null)
+            }
+
+            add("a", "https://a.example/")
+            repository.login("carol", "")
+
+            assertEquals(listOf("login" to "https://a.example/"), connector.calls.toList())
+            assertEquals("https://a.example/", session.baseUrl)
+            assertEquals("token-c", session.accessToken)
+            // What a restart reads: the same address and user as the client has now.
+            assertEquals("https://a.example/", currentAddressInRoom("a"))
+            assertEquals(carol, servers.getValue("a").currentUserId)
+        }
+
+    @Test
+    fun `adding a server by an address it already has makes that one current`() = runBlocking {
+        saveServer("a", "http://a.local:8096", alice)
+        addresses += ServerAddress(ServerAddressId.random(), "a".toServerId(), "https://a.example/")
+        signInClient("http://a.local:8096", alice)
+
+        add("a", "https://a.example/")
+
+        assertEquals("https://a.example/", session.baseUrl)
+        assertEquals("https://a.example/", currentAddressInRoom("a"))
+        assertEquals(2, addresses.count { it.serverId.asString() == "a" })
+    }
+
+    @Test
+    fun `adding another saved server by another address makes that address its current one`() =
+        runBlocking {
+            saveServer("a", "https://a.example/", alice)
+            saveServer("b", "http://b.local:8096", bob)
+            signInClient("https://a.example/", alice)
+
+            add("b", "https://b.example/")
+
+            assertEquals("https://b.example/", session.baseUrl)
+            assertEquals("https://b.example/", currentAddressInRoom("b"))
+            assertEquals("https://a.example/", currentAddressInRoom("a"))
+        }
 
     @Test
     fun `adding another saved server again signs in as that server's user only`() = runBlocking {

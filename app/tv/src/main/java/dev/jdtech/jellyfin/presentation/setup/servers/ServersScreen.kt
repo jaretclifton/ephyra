@@ -35,6 +35,7 @@ import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.ServerAddressId
 import dev.jdtech.jellyfin.models.ServerWithAddresses
+import dev.jdtech.jellyfin.models.currentAddress
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.presentation.setup.components.ServerItem
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
@@ -103,7 +104,7 @@ private fun ServersScreenLayout(state: ServersState, onAction: (ServersAction) -
                     items(state.servers) { server ->
                         ServerItem(
                             name = server.server.name,
-                            address = server.addresses.first().address,
+                            address = server.currentAddress?.address.orEmpty(),
                             onClick = { onAction(ServersAction.OnServerClick(server.server.id)) },
                             onLongClick = {
                                 selectedServer = server.server

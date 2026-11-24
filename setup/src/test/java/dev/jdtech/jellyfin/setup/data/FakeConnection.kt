@@ -92,12 +92,18 @@ class RecordingServerSession(
     baseUrl: String? = null,
     accessToken: String? = null,
     userId: UserId? = null,
+    serverId: ServerId? = null,
 ) {
     data class Use(val baseUrl: String?, val accessToken: String?, val userId: UserId?)
 
     val active =
         ActiveServerHolder(
-            ActiveServer(baseUrl = baseUrl, accessToken = accessToken, userId = userId)
+            ActiveServer(
+                serverId = serverId,
+                baseUrl = baseUrl,
+                accessToken = accessToken,
+                userId = userId,
+            )
         )
 
     val uses: MutableList<Use> = Collections.synchronizedList(mutableListOf())
