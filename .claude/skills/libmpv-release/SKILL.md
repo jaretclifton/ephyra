@@ -50,23 +50,23 @@ prefixes. `PlayerInvariantsTest` pins the options that matter (`network-timeout`
 ### 3. Tag the fork
 ```bash
 cd C:/Users/midas/Projects/libmpv-android && git switch main && git pull
-git tag -a v1.2.0 -m "libmpv 1.2.0" && git push origin v1.2.0
+git tag -a v<version> -m "libmpv <version>" && git push origin v<version>
 gh run watch --repo midasvo/libmpv-android $(gh run list --repo midasvo/libmpv-android --workflow publish.yaml --limit 1 --json databaseId --jq '.[0].databaseId')
 ```
 The build takes about 25 minutes. Then check that the deployment is on Maven Central (it takes up
 to about 30 minutes):
 ```bash
-curl -sfI https://repo1.maven.org/maven2/io/github/midasvo/libmpv/1.2.0/libmpv-1.2.0.aar | head -1
+curl -sfI https://repo1.maven.org/maven2/io/github/midasvo/libmpv/<version>/libmpv-<version>.aar | head -1
 ```
 Fill in the draft GitHub release ("What changed for players") and publish it.
 
 ### 4. Bump Ephyra
-Make a branch, set `libmpv = "1.2.0"`, and apply what step 2 found. Then run:
+Make a branch, set `libmpv = "<version>"`, and apply what step 2 found. Then run:
 ```bash
 ./gradlew ktfmtCheck :player:local:testDebugUnitTest testDebugUnitTest :app:phone:assembleLibreDebug :app:tv:assembleLibreDebug
 ```
 Don't edit `CHANGELOG.md`: the `release` skill writes it (CLAUDE.md). Put the versions ("libmpv
-1.2.0: mpv …, FFmpeg …") and anything users see in the commit body and the PR description.
+<version>: mpv …, FFmpeg …") and anything users see in the commit body and the PR description.
 
 ### 5. Test on devices
 Run the whole of `docs/mpv-checklist.md` on a phone and on TV, not just the "Every PR" part: on an

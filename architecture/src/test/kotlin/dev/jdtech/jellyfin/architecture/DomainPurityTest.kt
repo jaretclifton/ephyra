@@ -21,7 +21,7 @@ class DomainPurityTest {
             violations.isEmpty(),
             violations.joinToString("\n") { (path, import) ->
                 "$path imports $import. The domain module is pure Kotlin " +
-                    "(docs/architecture/3-target.md): map the type to one of ours, or keep the " +
+                    "(docs/areas/architecture.md, recipe 5): map the type to one of ours, or keep the " +
                     "code in its adapter."
             },
         )
