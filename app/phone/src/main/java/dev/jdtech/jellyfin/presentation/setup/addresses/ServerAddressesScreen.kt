@@ -1,17 +1,24 @@
 package dev.jdtech.jellyfin.presentation.setup.addresses
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -32,12 +39,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.jdtech.jellyfin.core.R as CoreR
@@ -151,21 +162,39 @@ fun ServerAddressesLayout(state: ServerAddressesState, onAction: (ServerAddresse
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 items(items = state.addresses, key = { it.id }) { address ->
+                    val current = address.id == state.currentAddressId
                     Surface(
                         modifier =
                             Modifier.widthIn(max = Layout.formMaxWidth)
                                 .fillMaxWidth()
                                 .clip(CardDefaults.outlinedShape)
+                                // CE (#984): a tap makes the address the one the server uses.
                                 .combinedClickable(
-                                    onClick = {},
+                                    onClick = {
+                                        onAction(ServerAddressesAction.OnServerClick(address.id))
+                                    },
                                     onLongClick = {
                                         selectedAddress = address
                                         openDeleteDialog = true
                                     },
                                 )
+                                .semantics { selected = current }
                                 .padding(MaterialTheme.spacings.small)
                     ) {
-                        Text(address.address)
+                        // The mark of the server sheet's current address (ServerSelectionItem).
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier =
+                                    Modifier.size(8.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            if (current) MaterialTheme.colorScheme.primaryContainer
+                                            else Color.Transparent
+                                        )
+                            )
+                            Spacer(modifier = Modifier.width(MaterialTheme.spacings.medium))
+                            Text(address.address)
+                        }
                     }
                 }
             }
@@ -199,7 +228,11 @@ fun ServerAddressesLayout(state: ServerAddressesState, onAction: (ServerAddresse
 private fun ServerAddressesLayoutPreview() {
     FindroidTheme {
         ServerAddressesLayout(
-            state = ServerAddressesState(addresses = listOf(dummyServerAddress)),
+            state =
+                ServerAddressesState(
+                    addresses = listOf(dummyServerAddress),
+                    currentAddressId = dummyServerAddress.id,
+                ),
             onAction = {},
         )
     }

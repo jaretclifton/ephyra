@@ -30,6 +30,14 @@ data class ServerWithAddresses(
     val user: User?,
 )
 
+/**
+ * CE (#984): the address the server uses, which the server lists show; the first one when none is
+ * set as current. Null for a server without addresses.
+ */
+val ServerWithAddresses.currentAddress: ServerAddress?
+    get() =
+        addresses.firstOrNull { it.id == server.currentServerAddressId } ?: addresses.firstOrNull()
+
 /** A saved server with its current address and its current user, either of which may be unset. */
 data class ServerWithAddressAndUser(
     val server: Server,

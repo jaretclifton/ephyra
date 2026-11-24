@@ -40,6 +40,7 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyServer
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyServerAddress
 import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerWithAddresses
+import dev.jdtech.jellyfin.models.currentAddress
 import dev.jdtech.jellyfin.presentation.setup.components.RootLayout
 import dev.jdtech.jellyfin.presentation.setup.components.ServerBottomSheet
 import dev.jdtech.jellyfin.presentation.setup.components.ServerItem
@@ -134,7 +135,7 @@ private fun ServersScreenLayout(
                     items(state.servers) { server ->
                         ServerItem(
                             name = server.server.name,
-                            address = server.addresses.first().address,
+                            address = server.currentAddress?.address.orEmpty(),
                             modifier = Modifier.fillMaxWidth(),
                             onClick = {
                                 onAction(ServersAction.OnServerClick(serverId = server.server.id))
@@ -208,7 +209,7 @@ private fun ServersScreenLayout(
     if (showBottomSheet && selectedServer != null) {
         ServerBottomSheet(
             name = selectedServer!!.server.name,
-            address = selectedServer!!.addresses.first().address,
+            address = selectedServer!!.currentAddress?.address.orEmpty(),
             onAddresses = {
                 showBottomSheet = false
                 onAction(ServersAction.NavigateToAddresses(selectedServer!!.server.id))

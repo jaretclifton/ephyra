@@ -33,6 +33,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -101,9 +103,9 @@ class SetupRepositoryImpl(
     }
 
     /**
-     * #761: the address the client uses, which the login screens are about. It can differ from the
-     * server's current address in Room: re-adding a saved server by a new address points the client
-     * there and leaves Room's current address as it was.
+     * #761: the address the client uses, which the login screens are about. CE (#984): it is the
+     * server's current address in Room as well: re-adding a saved server by another address makes
+     * that one current in both.
      */
     private fun clientAddress(): String = checkNotNull(active.value.baseUrl) { "No server is set" }
 
@@ -116,9 +118,12 @@ class SetupRepositoryImpl(
     override suspend fun getQuickConnectState(secret: String): QuickConnectState =
         withContext(Dispatchers.IO) { clientConnector().quickConnectState(clientAddress(), secret) }
 
-    override suspend fun setCurrentServer(serverId: ServerId) {
-        val serverWithAddressAndUser = serverStore.serverWithAddressAndUser(serverId) ?: return
-        val serverAddress = serverWithAddressAndUser.address ?: return
+    // CE (#984): under the address lock, so a selection on this server cannot land between the
+    // read of its address and the switch, and leave the switch on the address it replaced.
+    override suspend fun setCurrentServer(serverId: ServerId) = addressSelection.withLock {
+        val serverWithAddressAndUser =
+            serverStore.serverWithAddressAndUser(serverId) ?: return@withLock
+        val serverAddress = serverWithAddressAndUser.address ?: return@withLock
         val user = serverWithAddressAndUser.user
 
         active.switchTo(
@@ -158,13 +163,31 @@ class SetupRepositoryImpl(
             else -> ExceptionUiTexts(createIssuesString(issues))
         }
 
-    private suspend fun saveServerInDatabase(type: ServerType, resolved: ResolvedServer): Server {
+    /**
+     * CE (#984): taken by every write of a server's current address together with the client's, so
+     * that Room and the client end on the same address when two of them meet.
+     */
+    private val addressSelection = Mutex()
+
+    private suspend fun saveServerInDatabase(type: ServerType, resolved: ResolvedServer): Server =
+        addressSelection.withLock {
+            saveServerInDatabaseLocked(type, resolved)
+        }
+
+    private suspend fun saveServerInDatabaseLocked(
+        type: ServerType,
+        resolved: ResolvedServer,
+    ): Server {
         val serverId = resolved.info.id
         val serverName = resolved.info.name
 
         Timber.d("Connecting to server: $serverName")
 
         val serverInDatabase = serverStore.server(serverId)
+        // CE (#425): a server that was saved before keeps its signed-in user, so the client keeps
+        // that user's token. Clearing it signed the app out until a restart. CE (#984): read before
+        // the address is written, so no read separates that write from the switch below.
+        val currentUser = serverInDatabase?.let { serverStore.currentUser(it.id) }
 
         // Check if server is already in the database
         // If so only add a new address to that server if it's different
@@ -172,17 +195,24 @@ class SetupRepositoryImpl(
             if (serverInDatabase != null) {
                 val addresses = serverStore.serverWithAddresses(serverInDatabase.id).addresses
                 // If address is not in database, add it
-                if (addresses.none { it.address == resolved.address }) {
-                    val serverAddress =
-                        ServerAddress(
-                            id = ServerAddressId.random(),
-                            serverId = serverInDatabase.id,
-                            address = resolved.address,
-                        )
-
-                    serverStore.insertAddress(serverAddress)
+                val serverAddress =
+                    addresses.firstOrNull { it.address == resolved.address }
+                        ?: ServerAddress(
+                                id = ServerAddressId.random(),
+                                serverId = serverInDatabase.id,
+                                address = resolved.address,
+                            )
+                            .also { serverStore.insertAddress(it) }
+                // CE (#984): the client goes to this address below, so it becomes the server's
+                // current address in Room too. Left as it was, the copy of the session in
+                // preferences kept the old address, and a restart went back to it.
+                if (serverInDatabase.currentServerAddressId == serverAddress.id) {
+                    serverInDatabase
+                } else {
+                    serverInDatabase.copy(currentServerAddressId = serverAddress.id).also {
+                        serverStore.updateServer(it)
+                    }
                 }
-                serverInDatabase
             } else {
                 val serverAddress =
                     ServerAddress(
@@ -205,9 +235,6 @@ class SetupRepositoryImpl(
                 server
             }
 
-        // CE (#425): a server that was saved before keeps its signed-in user, so the client keeps
-        // that user's token. Clearing it signed the app out until a restart.
-        val currentUser = serverInDatabase?.let { serverStore.currentUser(it.id) }
         // CE (#770): a server saved before keeps the type it was saved with.
         active.switchTo(
             ActiveServer(
@@ -349,15 +376,26 @@ class SetupRepositoryImpl(
         serverStore.clearCurrentUser(server.id)
     }
 
-    override suspend fun setCurrentAddress(addressId: ServerAddressId) {
-        val server = getCurrentServer() ?: return
-        val address = serverStore.address(addressId)
-        if (address.serverId != server.id) {
-            return
+    /**
+     * Makes [addressId] the current address of its server. CE (#984): of any saved server, as the
+     * Addresses screen opens for each; the client moves there only when that server is the one in
+     * use.
+     */
+    override suspend fun setCurrentAddress(addressId: ServerAddressId) =
+        // Two selections at once (two quick taps) must not end with Room on one address and the
+        // client on the other: each writes both before the next starts.
+        addressSelection.withLock {
+            val address = serverStore.address(addressId)
+            val server = serverStore.server(address.serverId) ?: return@withLock
+            if (server.currentServerAddressId != address.id) {
+                serverStore.updateServer(server.copy(currentServerAddressId = address.id))
+            }
+            // The server on the holder decides, in the same write: never another server's address
+            // under this one's token, also while a switch has not reached the preference yet.
+            active.onSameServer {
+                if (it.serverId == server.id) it.copy(baseUrl = address.address) else it
+            }
         }
-        serverStore.updateServer(server.copy(currentServerAddressId = address.id))
-        active.onSameServer { it.copy(baseUrl = address.address) }
-    }
 
     override suspend fun addAddress(serverId: ServerId, address: String): ServerAddress {
         // The connector normalises the input the same way addServer does, so a bare host or a
