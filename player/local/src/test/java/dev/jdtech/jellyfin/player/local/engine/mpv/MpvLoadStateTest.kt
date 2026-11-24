@@ -120,6 +120,19 @@ class MpvLoadStateTest {
     }
 
     @Test
+    fun `FFmpeg's line is kept after a full list of other lines`() {
+        state.errorLogged("stream: Failed to open https://jellyfin.example/Videos/1/stream")
+        repeat(30) { state.errorLogged("lavf: line $it") }
+
+        assertEquals(End.HOLD, state.endFile(idle))
+        assertEquals(
+            Logged.COMPLETES_FAILURE,
+            state.errorLogged("ffmpeg: tls: TLS handshake failed."),
+        )
+        assertEquals("ffmpeg: tls: TLS handshake failed.", state.failure.message)
+    }
+
+    @Test
     fun `without FFmpeg's line the timer reports mpv's`() {
         state.errorLogged("stream: Failed to open http://10.0.2.2:8096/Videos/1/stream")
 

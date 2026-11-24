@@ -105,15 +105,22 @@ internal class MpvLoadState {
     /** mpv logged [message] at error level. */
     fun errorLogged(message: String): Logged {
         if (holding) {
-            if (errors.size < MAX_ERRORS) errors.add(message)
+            keep(message)
             // #960: mpv's line for a network stream came first: wait for FFmpeg's.
             if (awaitsFfmpegLine()) return Logged.KEPT
             holding = false
             return Logged.COMPLETES_FAILURE
         }
         if (failed) return Logged.AFTER_FAILURE
-        if (errors.size < MAX_ERRORS) errors.add(message)
+        keep(message)
         return Logged.KEPT
+    }
+
+    /** Up to [MAX_ERRORS] lines, and FFmpeg's first line also past that: it gives the reason. */
+    private fun keep(message: String) {
+        val firstFfmpegLine =
+            message.startsWith(FFMPEG_PREFIX) && errors.none { it.startsWith(FFMPEG_PREFIX) }
+        if (errors.size < MAX_ERRORS || firstFfmpegLine) errors.add(message)
     }
 
     /**

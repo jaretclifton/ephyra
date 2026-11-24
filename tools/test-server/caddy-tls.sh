@@ -42,9 +42,9 @@ status() {
   docker ps -a --filter "name=^$NAME\$" --format '{{.Names}}: {{.Status}}'
   for p in $(seq "$BASE" $((BASE + 5))); do
     printf '%s: ' "$p"
-    echo | openssl s_client -connect "localhost:$p" -servername "$HOST" 2>/dev/null |
+    { echo | openssl s_client -connect "localhost:$p" -servername "$HOST" 2>/dev/null |
       grep -E '^ *Protocol *:|Acceptable client certificate CA names|No client certificate CA names' |
-      sed 's/^ *//' | tr '\n' ' '
+      sed 's/^ *//' | tr '\n' ' '; } || printf 'no answer'
     echo
   done
 }
