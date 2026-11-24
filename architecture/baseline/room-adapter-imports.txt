@@ -1,0 +1,5 @@
+# R20 (#965): what data imports of Android besides Room, SQLite and android.content.Context
+# (RoomAdapterTest). One line per import. Exact: a line that no longer applies fails until it is
+# deleted. A new line needs its issue and reason here, given in the PR that adds it.
+
+# Empty since #968, which moved the library pagers to modes/film.

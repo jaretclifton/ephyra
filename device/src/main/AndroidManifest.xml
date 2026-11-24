@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- NetworkConnectivityImpl reads the active network. The apps had it only through media3 and
+         WorkManager (docs/audit/static-checks.md); the module that asks declares it. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+</manifest>

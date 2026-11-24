@@ -118,7 +118,7 @@ areas:
   - id: cast
     title: Cast
     summary: "Google Cast in the proprietary flavour: the device sheet, the mini player, playback on a receiver; stubs in libre."
-    keywords: [cast, casting, chromecast, google cast, receiver, cast button, mini player, device sheet, proprietary, play services, CastViewModel, CastPlayerController, CastSessionManager, CastHost, FakeCast]
+    keywords: [cast, casting, chromecast, google cast, receiver, cast button, mini player, device sheet, proprietary, play services, skip intro, auto-skip, media segments, CastViewModel, CastPlayerController, CastSessionManager, CastHost, FakeCast, CastSegmentSkipper]
     paths:
       - player/cast/src/main/java/dev/jdtech/jellyfin/player/cast/presentation/CastViewModel.kt
       - player/cast/src/main/java/dev/jdtech/jellyfin/player/cast/CastPlayerController.kt
@@ -272,17 +272,18 @@ areas:
   - id: architecture
     title: Architecture
     summary: "Ports and adapters: the modules, the ports and stores, the Konsist rules, and how to add a port, a store, a module or a rule."
-    keywords: [architecture, ports and adapters, hexagonal, ddd, port, new port, store, new store, adapter, module, new module, rule, konsist, baseline, dependency, boundary, contract test, MediaServer, MediaRepository, ServerStore, FakeMediaServer]
+    keywords: [architecture, ports and adapters, hexagonal, ddd, port, new port, store, new store, adapter, module, new module, rule, konsist, baseline, dependency, boundary, contract test, MediaServer, MediaRepository, ServerStore, FakeMediaServer, device adapter, DeviceCodecs, DeviceCodecProbe, NetworkConnectivity]
     paths:
       - domain/src/main/kotlin/dev/jdtech/jellyfin/domain/ports/
       - application/src/main/kotlin/dev/jdtech/jellyfin/repository/
       - data/src/main/java/dev/jdtech/jellyfin/data/di/
+      - device/src/main/java/dev/jdtech/jellyfin/device/di/DeviceModule.kt
       - server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/di/JellyfinServerModule.kt
       - architecture/src/test/kotlin/dev/jdtech/jellyfin/architecture/
       - architecture/baseline/
       - testing/src/main/kotlin/dev/jdtech/jellyfin/testing/
     docs: [docs/architecture/README.md, docs/architecture/rules.md, docs/architecture/modules.md, docs/architecture/5-hexagonal-ddd.md, docs/architecture/adr/]
-    rules: [R1, R2, R3, R4, R5, R7, R8, R9, R10, R11, R15, R17]
+    rules: [R1, R2, R3, R4, R5, R7, R8, R9, R10, R11, R15, R17, R18, R19, R20]
     tests:
       - ./gradlew :domain:test :application:test :architecture:test
       - ./gradlew :testing:test

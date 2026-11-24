@@ -165,7 +165,7 @@ Ephyra did with it and why; the [changelog](CHANGELOG.md) has every release.
 flowchart LR
   apps["app/phone · app/tv"] --> features["modes/film · player · downloads<br/>setup · settings · core"]
   features --> pure["application · domain<br/>pure Kotlin, no Android"]
-  apps --> adapters["data (Room)<br/>server/jellyfin (the only module with the Jellyfin SDK)<br/>ratings/mdblist"]
+  apps --> adapters["data (Room)<br/>server/jellyfin (the only module with the Jellyfin SDK)<br/>ratings/mdblist · device"]
   adapters --> pure
 ```
 
@@ -173,7 +173,7 @@ Kotlin and Jetpack Compose, with Hilt, Room, Navigation 3, Coil, Media3 (ExoPlay
 the versions are in [gradle/libs.versions.toml](gradle/libs.versions.toml), and
 [every module](docs/architecture/modules.md) is listed with what it depends on.
 
-- **Ports and adapters, enforced by the build.** [Nineteen architecture rules](docs/architecture/rules.md)
+- **Ports and adapters, enforced by the build.** [Twenty architecture rules](docs/architecture/rules.md)
   run with the unit tests; a screen cannot reach the Jellyfin SDK or the database around a port.
 - **[About 2,500 unit tests](docs/testing.md)**, run on every pull request that changes code, with
   contract suites that a server adapter has to pass.

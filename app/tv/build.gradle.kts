@@ -173,6 +173,8 @@ dependencies {
     implementation(projects.downloads)
     implementation(projects.application)
     implementation(projects.data)
+    // CE (#965): the adapters over the device (codec probe, connectivity).
+    implementation(projects.device)
     implementation(projects.domain)
     implementation(projects.http)
     implementation(projects.setup)

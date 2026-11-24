@@ -1,5 +1,6 @@
 package dev.jdtech.jellyfin.player.cast.models
 
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.player.core.domain.models.Track
@@ -68,6 +69,24 @@ data class CastPlayerState(
     val status: CastPlaybackStatus = CastPlaybackStatus.IDLE,
     val currentPosition: Long = 0L,
     val duration: Long = 0L,
+    /**
+     * CE (#851): the item the receiver reported [currentPosition] for. Null while a load is on its
+     * way, after the item ended, and before the receiver has reported a position since: the
+     * position is then not one to act on.
+     */
+    val positionItemId: ItemId? = null,
+    /**
+     * CE (#851): [currentPosition] is the target of a seek the app sent, shown at once, and not yet
+     * a position the receiver reported.
+     */
+    val positionFromSeek: Boolean = false,
+    /**
+     * CE (#851): counts the times an item started on the receiver: each load sent to it (also of
+     * the same item, such as an audio track switch) and each item it went on to without one (a
+     * restored session, its queue moving on). [loadPositionMs] is where the last one starts.
+     */
+    val load: Int = 0,
+    val loadPositionMs: Long = 0L,
     val volume: Float = 1f,
     val isMuted: Boolean = false,
     val hasNextItem: Boolean = false,

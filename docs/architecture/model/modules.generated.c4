@@ -32,8 +32,12 @@ model {
       link https://github.com/midasvo/ephyra/tree/main/core 'Source'
     }
     data = adapter 'data' {
-      description 'Room: the database, the stores (Room*Store) and MediaRepositoryImpl over the server\'s ports; no SDK.'
+      description 'Room: the database, the stores (Room*Store) and MediaRepositoryImpl over the server\'s ports; no SDK, and of Android only Room (R20).'
       link https://github.com/midasvo/ephyra/tree/main/data 'Source'
+    }
+    device = adapter 'device' {
+      description 'The adapters over the device: the codec probe (DeviceCodecs, what the device profile is built from) and the connectivity check (NetworkConnectivity), with its own Hilt module.'
+      link https://github.com/midasvo/ephyra/tree/main/device 'Source'
     }
     domain = domain 'domain' {
       description 'Pure Kotlin, no Android or SDK: the models (Item, Movie, ItemSource, …), the ids, PlayState, DownloadState, Ticks, ActiveServer and the server ports.'
@@ -88,6 +92,7 @@ model {
     appPhone -> baselineprofile
     appPhone -> core
     appPhone -> data
+    appPhone -> device
     appPhone -> domain
     appPhone -> downloads
     appPhone -> http
@@ -102,6 +107,7 @@ model {
     appTv -> application
     appTv -> core
     appTv -> data
+    appTv -> device
     appTv -> domain
     appTv -> downloads
     appTv -> http
@@ -126,6 +132,8 @@ model {
     data -> application
     data -> domain
     data -[test]-> testing
+    device -> application
+    device -> domain
     downloads -> application
     downloads -[test]-> data
     downloads -> domain
@@ -144,6 +152,7 @@ model {
     playerCast -> playerCore
     playerCast -> playerLocal
     playerCast -> settings
+    playerCast -[test]-> testing
     playerCore -> domain
     playerLocal -> application
     playerLocal -> core
@@ -157,6 +166,7 @@ model {
     ratingsMdblist -> domain
     serverJellyfin -> application
     serverJellyfin -[test]-> data
+    serverJellyfin -[test]-> device
     serverJellyfin -> domain
     serverJellyfin -> http
     serverJellyfin -[test]-> settings
