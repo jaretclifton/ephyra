@@ -2,6 +2,7 @@ package dev.jdtech.jellyfin.player.cast.presentation
 
 import android.content.Context
 import android.net.Uri
+import android.os.SystemClock
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -25,6 +26,7 @@ import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.player.core.domain.models.Track
 import dev.jdtech.jellyfin.player.local.R as PlayerLocalR
 import dev.jdtech.jellyfin.player.local.domain.DebugSegments
+import dev.jdtech.jellyfin.player.local.domain.segmentTrackerFrom
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
@@ -144,8 +146,12 @@ constructor(
     private val _events = Channel<CastEvent>(Channel.BUFFERED)
     val events: Flow<CastEvent> = _events.receiveAsFlow()
 
-    private var segments: List<Segment> = emptyList()
-    /** The item [segments] belongs to, or is being loaded for. */
+    /**
+     * CE (#851): the local player's segment rule for the receiver's positions, built from the
+     * settings for each item.
+     */
+    private var segmentSkipper = newSegmentSkipper()
+    /** The item the segments belong to, or are being loaded for. */
     private var segmentsItemId: ItemId? = null
     private var segmentsJob: Job? = null
     private var discoveryJob: Job? = null
@@ -188,7 +194,7 @@ constructor(
                             it.failedItem.takeIf { player.status != CastPlaybackStatus.PLAYING },
                     )
                 }
-                updateSegment(player.currentPosition)
+                updateSegment(player.currentPosition, player.duration)
             }
             .launchIn(viewModelScope)
 
@@ -270,7 +276,8 @@ constructor(
 
         if (item.itemId == segmentsItemId) return
         segmentsItemId = item.itemId
-        segments = emptyList()
+        // The settings may have changed since the last item.
+        segmentSkipper = newSegmentSkipper()
         _state.update { it.copy(segment = null, segments = emptyList()) }
         segmentsJob?.cancel()
         segmentsJob = viewModelScope.launch {
@@ -286,7 +293,7 @@ constructor(
                 }
             // Another item took over, or the session ended, while these were loading.
             if (segmentsItemId == item.itemId) {
-                segments = loaded
+                segmentSkipper.setSegments(loaded)
                 // CE (#681): the seek bar shows them unless the setting is off.
                 if (appPreferences.getValue(appPreferences.playerMediaSegmentsOnSeekBar)) {
                     _state.update { it.copy(segments = loaded) }
@@ -298,7 +305,7 @@ constructor(
     private fun onNoItem() {
         segmentsJob?.cancel()
         segmentsItemId = null
-        segments = emptyList()
+        segmentSkipper.setSegments(emptyList())
         // The receiver finished its last item: that is what "play again" offers.
         val ended = playerController.playerState.value.status == CastPlaybackStatus.ENDED
         _state.update {
@@ -346,10 +353,25 @@ constructor(
         }
     }
 
-    private fun updateSegment(positionMs: Long) {
-        val active = segments.firstOrNull {
-            positionMs >= it.startTicks && positionMs < it.endTicks
-        }
+    private fun newSegmentSkipper() =
+        CastSegmentSkipper(segmentTrackerFrom(appPreferences), SystemClock::elapsedRealtime)
+
+    /**
+     * CE (#851): the same rule as the local player. A segment set to skip is skipped on the
+     * receiver, one set to ask shows the button, an ignored one nothing.
+     */
+    private fun updateSegment(positionMs: Long, durationMs: Long) {
+        val active =
+            when (val step = segmentSkipper.update(positionMs, durationMs)) {
+                CastSegmentStep.None -> null
+                is CastSegmentStep.ShowButton -> step.segment
+                is CastSegmentStep.SeekTo -> {
+                    Timber.d("Cast: skipping %s to %d ms", step.segment, step.positionMs)
+                    // Not seekTo(): this seek is not the user's.
+                    playerController.seekTo(step.positionMs)
+                    null
+                }
+            }
         if (active == _state.value.segment) return
         _state.update {
             it.copy(
@@ -502,6 +524,7 @@ constructor(
     }
 
     fun seekTo(positionMs: Long) {
+        segmentSkipper.onUserSeek()
         playerController.seekTo(positionMs)
     }
 

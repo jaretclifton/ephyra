@@ -331,6 +331,8 @@ internal class FakeCastPlayerController(
     }
 
     override fun seekTo(position: Long) {
+        // What a real receiver would get as SEEK, for checking skips in the log.
+        Timber.i("Stand-in: SEEK %d ms (from %d ms)", position, _playerState.value.currentPosition)
         _playerState.update { it.copy(currentPosition = position.coerceAtLeast(0L)) }
     }
 

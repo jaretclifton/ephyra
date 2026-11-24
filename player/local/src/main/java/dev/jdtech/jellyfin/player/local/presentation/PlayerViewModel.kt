@@ -34,7 +34,6 @@ import dev.jdtech.jellyfin.http.MediaHttpClient
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
-import dev.jdtech.jellyfin.models.MediaSegmentAction
 import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.Segment
@@ -83,6 +82,7 @@ import dev.jdtech.jellyfin.player.local.domain.isNewEndOfItem
 import dev.jdtech.jellyfin.player.local.domain.matchSeriesTrack
 import dev.jdtech.jellyfin.player.local.domain.playerTitle
 import dev.jdtech.jellyfin.player.local.domain.resolveAutoPlayNext
+import dev.jdtech.jellyfin.player.local.domain.segmentTrackerFrom
 import dev.jdtech.jellyfin.player.local.domain.seriesTrackChoice
 import dev.jdtech.jellyfin.player.local.domain.switchFailureText
 import dev.jdtech.jellyfin.player.local.domain.toTrackPick
@@ -93,7 +93,6 @@ import dev.jdtech.jellyfin.player.local.engine.PlayerEngineConfig
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import dev.jdtech.jellyfin.settings.domain.Constants
 import dev.jdtech.jellyfin.settings.domain.QualityNetwork
 import dev.jdtech.jellyfin.settings.presentation.enums.AppVariant
 import java.util.Collections
@@ -643,30 +642,7 @@ constructor(
                 .coerceAtLeast(5)
         _uiState.update { it.copy(stillWatchingTimeoutSeconds = stillWatchingPromptTimeoutSeconds) }
 
-        segmentTracker =
-            SegmentTracker(
-                actions =
-                    appPreferences.playerMediaSegmentsActions
-                        .mapNotNull { (type, preference) ->
-                            val segmentType =
-                                SegmentType.entries.firstOrNull { it.name == type }
-                                    ?: return@mapNotNull null
-                            segmentType to
-                                MediaSegmentAction.fromPreferenceValue(
-                                    appPreferences.getValue(preference),
-                                    default = MediaSegmentAction.IGNORE,
-                                )
-                        }
-                        .toMap(),
-                buttonDurationMs =
-                    appPreferences.getValue(appPreferences.playerMediaSegmentsSkipButtonDuration) *
-                        1000L,
-                nextEpisodeThresholdMs =
-                    appPreferences.getValue(appPreferences.playerMediaSegmentsNextEpisodeThreshold),
-                autoSkipOnlyInPip =
-                    appPreferences.getValue(appPreferences.playerMediaSegmentsAutoSkipMode) ==
-                        Constants.PlayerMediaSegmentsAutoSkip.PIP,
-            )
+        segmentTracker = segmentTrackerFrom(appPreferences)
 
         // CE (#764): the engine builds the player, see engine/exo and engine/mpv. An unknown value
         // fails here, as before.
