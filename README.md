@@ -191,7 +191,8 @@ guide per area of the code and every decision record.
 ## Bugs and contributions
 
 [Open an issue](https://github.com/midasvo/ephyra/issues). For playback problems, attach the
-device profile from About → Export device profile.
+device profile from About → Export device profile. A security problem is reported privately:
+[SECURITY.md](SECURITY.md).
 
 Pull requests are welcome: [CONTRIBUTING.md](CONTRIBUTING.md) has the build, the checks and the
 conventions. With JDK 21 and the Android SDK, this builds the phone app:

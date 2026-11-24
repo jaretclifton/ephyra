@@ -1,7 +1,8 @@
 # Contributing to Ephyra
 
 Bug reports and pull requests are welcome. For a larger change, open an issue first so we can
-agree on the direction before you build it.
+agree on the direction before you build it. A security problem is not for a public issue:
+[SECURITY.md](SECURITY.md) says how to report it.
 
 ## Building
 
