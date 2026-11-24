@@ -13,10 +13,12 @@ import dev.jdtech.jellyfin.player.local.domain.SkipTarget
  *
  * What Cast adds is a guard for late reports. After a skip, the controller shows the target at
  * once, but the receiver can still report a position from before the seek. To the tracker that is
- * playback entering the segment again. So for [SETTLE_MS] after a skip, the same segment is not
- * skipped again, unless the user seeks ([onUserSeek]).
+ * playback entering the segment again. So for [SETTLE_MS] after a skip, a report inside that
+ * segment is dropped before the tracker sees it, unless the user seeks ([onUserSeek]).
  *
  * Differences from the local player, on purpose:
+ * - The button shows for the whole segment of an "ask" type: the local player shows it after its
+ *   time only while the controls are visible, and the Cast controls are always on screen.
  * - No picture-in-picture: with auto-skip set to "only in picture-in-picture", Cast shows the
  *   button.
  * - A skip always seeks to the segment's end, also for an outro that closes the item: the
@@ -25,22 +27,30 @@ import dev.jdtech.jellyfin.player.local.domain.SkipTarget
  * Pure: no Android, no Cast SDK. [now] is a monotonic clock in milliseconds.
  */
 class CastSegmentSkipper(private val tracker: SegmentTracker, private val now: () -> Long) {
-    private var lastSkipped: Segment? = null
-    private var lastSkipAtMs: Long = 0L
+    /** The segments skipped in the last [SETTLE_MS], with when. */
+    private val recentSkips = mutableMapOf<Segment, Long>()
 
     /** The current item's segments. Call on every item change; it forgets the previous item. */
     fun setSegments(segments: List<Segment>) {
         tracker.setSegments(segments)
-        lastSkipped = null
+        recentSkips.clear()
     }
 
     /** The user moved the position: a report inside a skipped segment is then not a late one. */
     fun onUserSeek() {
-        lastSkipped = null
+        recentSkips.clear()
     }
 
     /** What to do at [positionMs], the receiver's position. */
     fun update(positionMs: Long, durationMs: Long): CastSegmentStep {
+        val nowMs = now()
+        recentSkips.values.removeAll { nowMs - it >= SETTLE_MS }
+        // A report from before a seek landed. It does not reach the tracker, so it cannot count
+        // as an entry, and a real one after it is still skipped. Each recent skip keeps its own
+        // guard, so skipping the next segment straight after does not drop this one's.
+        if (recentSkips.keys.any { positionMs >= it.startTicks && positionMs < it.endTicks }) {
+            return CastSegmentStep.None
+        }
         val decision =
             tracker.update(
                 positionMs = positionMs,
@@ -53,18 +63,12 @@ class CastSegmentSkipper(private val tracker: SegmentTracker, private val now: (
             is SegmentDecision.Ask -> CastSegmentStep.ShowButton(decision.segment)
             is SegmentDecision.AutoSkip -> {
                 val segment = decision.segment
-                if (segment == lastSkipped && now() - lastSkipAtMs < SETTLE_MS) {
-                    // A report from before the seek landed.
-                    CastSegmentStep.None
-                } else {
-                    lastSkipped = segment
-                    lastSkipAtMs = now()
-                    val target = decision.target
-                    CastSegmentStep.SeekTo(
-                        segment,
-                        if (target is SkipTarget.SeekTo) target.positionMs else segment.endTicks,
-                    )
-                }
+                recentSkips[segment] = nowMs
+                val target = decision.target
+                CastSegmentStep.SeekTo(
+                    segment,
+                    if (target is SkipTarget.SeekTo) target.positionMs else segment.endTicks,
+                )
             }
         }
     }

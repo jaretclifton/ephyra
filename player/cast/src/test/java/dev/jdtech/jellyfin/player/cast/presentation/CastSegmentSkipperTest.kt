@@ -105,6 +105,32 @@ class CastSegmentSkipperTest {
     }
 
     @Test
+    fun `a late report does not use up the next entry`() {
+        // The late report must not count as an entry: the user's seek back right after it skips.
+        val skipper = skipper()
+        skipper.play(10_000L, 40_000L, 11_000L)
+
+        skipper.onUserSeek()
+        val steps = skipper.play(20_000L)
+
+        assertEquals(listOf(CastSegmentStep.SeekTo(intro, 40_000L)), steps)
+    }
+
+    @Test
+    fun `skipping the next segment keeps the guard of the one before`() {
+        val first = Segment(RECAP, startTicks = 0L, endTicks = 10_000L)
+        val skipper = skipper(actions = mapOf(RECAP to SKIP, INTRO to SKIP))
+        skipper.setSegments(listOf(first, intro))
+
+        val steps = skipper.play(0L, 10_000L, 40_000L, 5_000L, 41_000L)
+
+        assertEquals(
+            listOf(CastSegmentStep.SeekTo(first, 10_000L), CastSegmentStep.SeekTo(intro, 40_000L)),
+            steps.seeks(),
+        )
+    }
+
+    @Test
     fun `the user seeking back into a skipped segment skips it again, as the local player does`() {
         val skipper = skipper()
         skipper.play(10_000L, 40_000L, 41_000L)
