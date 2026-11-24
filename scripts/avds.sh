@@ -176,13 +176,24 @@ install() { # install <name> [apk]
 }
 
 # The port says nothing about which AVD holds it: ask the emulator its name.
-avd_on_port() { "$ADB" -s "$(serial "$1")" emu avd name 2>/dev/null | tr -d '\r' | head -1; }
+avd_on_port() { # the AVD name the emulator on this AVD's port reports; tries for 10 seconds
+  local i name
+  for i in 1 2 3 4 5; do
+    name="$("$ADB" -s "$(serial "$1")" emu avd name 2>/dev/null | tr -d '\r' | head -1)"
+    if [ -n "$name" ] && [ "$name" != OK ]; then echo "$name"; return 0; fi
+    sleep 2
+  done
+  return 1
+}
 
-is_running() { # is_running <name>: its port answers, and as this AVD; fails loudly for another AVD
+is_running() { # is_running <name>: its port answers, as this AVD. Stops the script otherwise.
   local other
   "$ADB" devices | tr -d '\r' | grep -q "^$(serial "$1")[[:space:]]" || return 1
-  other="$(avd_on_port "$1")"
-  if [ -n "$other" ] && [ "$other" != "$1" ]; then
+  if ! other="$(avd_on_port "$1")"; then
+    echo "$(serial "$1") does not say which AVD it is: stop it, or use 'install' if you know it is $1" >&2
+    exit 1
+  fi
+  if [ "$other" != "$1" ]; then
     echo "$(serial "$1") is $other, not $1: stop it or start $1 yourself on another port" >&2
     exit 1
   fi
