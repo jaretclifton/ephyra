@@ -28,6 +28,16 @@ All of it is in the phone and tablet app, and most of it in the TV app too.
 
 <FeatureList area="pages" />
 
+## External ratings
+
+Movie and show pages can show the scores of IMDb, Rotten Tomatoes, Metacritic and Letterboxd.
+They come from [MDBList](https://mdblist.com/), not from your server, so this is off until you
+switch it on in the settings and enter a free MDBList key of your own.
+
+While it is on, opening a movie or show page sends that item's IMDb, TMDB or TVDB ID and your
+key to mdblist.com. Nothing is sent while it is off, and the key stays on the device: it is left
+out of backups and device transfers.
+
 ## When the server doesn't answer
 
 Ephyra notices when your server stops answering: on a network change, when you return to the

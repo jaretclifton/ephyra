@@ -13,6 +13,71 @@ following the Findroid version they were based on.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [v2.9.0] — 2026-11-24
+
+Movie and show pages can show the scores of IMDb, Rotten Tomatoes, Metacritic and Letterboxd,
+with your own MDBList key, and the player has a default streaming quality for Wi-Fi and one for
+mobile data. Underneath, the app was rebuilt in layers. You should notice nothing of that, except
+the fixes that came with it: in what the server is told about playback, in switching profiles and
+in downloads that were interrupted. Nothing needs doing after the update: downloads, logins and
+resume positions stay as they are.
+
+### Added
+- External ratings (Settings, off by default): the scores of IMDb, Rotten Tomatoes, Metacritic
+  and Letterboxd on movie and show pages, on phone, tablet and Android TV. They come from
+  MDBList, with a free key of your own. While it is on, opening a movie or show page sends its
+  IMDb, TMDB or TVDB ID and your key to mdblist.com; nothing is sent while it is off (#331).
+- Player: a default streaming quality for Wi-Fi and one for mobile data, on phone and tablet. A
+  quality picked in the player is saved for the kind of network you are on (#837).
+
+### Fixed
+- Player: the server is told what really plays. The start report carries the position after a
+  resume and names the chosen version, a quality switch on mpv reports the new stream, and
+  quick switches between items no longer send a second start or a stop out of order (#868,
+  #870, #890, #909).
+- Player (mpv): no progress report at position 0 at the end of an item, the buffered part of the
+  seek bar is right, and switching the style override on during playback keeps every subtitle
+  line (#869, #847, #833).
+- Player: a transcode starts with your preferred audio language (#834).
+- Player: a failed quality or audio switch says why in plain words (#825).
+- Player: leaving before playback starts no longer stops screens from reloading (#846).
+- Player: the keep-landscape switch is shown on Android 16 tablets too (#917).
+- Trickplay: previews are those of the version that plays, and a slow preview sheet gets the
+  time it needs instead of going missing (#860).
+- Hide spoilers: the "Up next" card and the queue caption of the TV player hide the episode name
+  (#856, #865).
+- Profiles: Home, the top bar, Media, Favorites, Search and Downloads follow a switch of user
+  without showing the previous user's rows or results for a moment (#810, #866, #872).
+- Profiles: marking something unplayed during a switch clears the last-played date of the right
+  user (#907).
+- Downloads: a download cut off because the server went away resumes when it is back (#912).
+- Downloads: a download whose last step failed is not shown as completed, and a finished video
+  is kept when only its subtitle failed (#848).
+- Downloads: resuming never appends to a partial file of a source that changed on the server
+  (#850).
+- Downloads: the HDR type of a download is kept, and the trickplay sheets of a download are
+  counted and matched correctly (#776, #849).
+- Cast: Next episode works when the receiver had not sent its queue yet, and a very high
+  bitrate cap no longer turns negative (#922, #828).
+- The live connection to the server is one socket, reconnected when the address or the sign-in
+  changes (#899).
+- Adding another server no longer counts as an answer from the server in use (#819).
+- Android TV: the Home rows setting says why the libraries did not load.
+- Accessibility: the Back button of the phone settings screens has a name for TalkBack (#950).
+
+### From Findroid
+- Synced with Findroid up to `cc3423a07` (2026-11-22). The [upstream ledger](docs/upstream-ledger.md)
+  now lists every Findroid commit with what Ephyra did with it.
+- Compose 1.13, Material 3 1.5 and compile SDK 37.1 (#843), Gradle 9.9.2, Android Gradle Plugin
+  9.5.2 and navigation3 1.2.2.
+- Translation updates for Dutch, German and Chinese (Traditional).
+
+### Maintenance
+- The code is split into ports and adapters: the domain and the application logic are pure
+  Kotlin, and Jellyfin and the database sit behind them. Seventeen architecture rules run with
+  the unit tests (#733).
+- mediarouter 1.9.0.
+
 ## [v2.8.0] — 2026-11-21
 
 Offline Mode is gone as a setting: when the server can't be reached, the app shows what you have
@@ -1136,6 +1201,7 @@ Initial CE fork off findroid `1.0.2`. These rapid early iterations established t
 `nl.midasvo.findroid.ce` application ID, downloads and SD-card storage improvements, and ongoing
 tracking of upstream. See the git history between the corresponding tags for commit-level detail.
 
+[v2.9.0]: https://github.com/midasvo/ephyra/releases/tag/v2.9.0
 [v2.8.0]: https://github.com/midasvo/ephyra/releases/tag/v2.8.0
 [v2.7.0]: https://github.com/midasvo/ephyra/releases/tag/v2.7.0
 [v2.6.0]: https://github.com/midasvo/ephyra/releases/tag/v2.6.0

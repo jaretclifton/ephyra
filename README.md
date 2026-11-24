@@ -71,7 +71,8 @@ when it is back. **[More about downloads →](https://midasvo.nl/ephyra/guide/do
 ### Playback
 
 Dolby Vision played directly where the device can, converted where it can't. A version picker
-before playing and a quality switch during it. Intros and credits skipped, asked or left alone,
+before playing, a quality switch during it, and a default quality for Wi-Fi and one for mobile
+data. Intros and credits skipped, asked or left alone,
 per kind. An "Up next" card, a sleep timer, and subtitles you can style and put back in sync,
 with your audio and subtitle choice remembered per series.
 **[Playback →](https://midasvo.nl/ephyra/guide/playback/)** ·
@@ -120,7 +121,8 @@ TV home screen and a screensaver with your library's artwork.
 </p>
 
 And more: profiles with a PIN, Home rows you choose, hide watched, hide spoilers, fuller movie and
-show pages, and a look of its own.
+show pages, ratings from IMDb, Rotten Tomatoes, Metacritic and Letterboxd (opt-in, with your own
+MDBList key), and a look of its own.
 **[Library and Home →](https://midasvo.nl/ephyra/guide/library/)** ·
 **[Profiles →](https://midasvo.nl/ephyra/guide/profiles/)** ·
 **[Look →](https://midasvo.nl/ephyra/guide/look/)**
@@ -137,7 +139,7 @@ screen.
   <a href="https://midasvo.nl/ephyra/guide/devices/">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="images/readme/radar-dark.svg">
-      <img src="images/readme/radar-light.svg" alt="Radar chart of what Ephyra adds per area. Phone and tablet against Android TV: downloads 8 and 0, playback 12 and 10, subtitles and audio 4 and 4, Cast 1 and 0, library and Home 8 and 7, item pages 4 and 3, profiles 3 and 2, look 2 and 1, made for the device 7 and 12" width="640">
+      <img src="images/readme/radar-light.svg" alt="Radar chart of what Ephyra adds per area. Phone and tablet against Android TV: downloads 8 and 0, playback 13 and 10, subtitles and audio 4 and 4, Cast 1 and 0, library and Home 8 and 7, item pages 5 and 4, profiles 3 and 2, look 2 and 1, made for the device 7 and 12" width="640">
     </picture>
   </a>
 </p>
@@ -191,7 +193,8 @@ conventions. With JDK 21 and the Android SDK, this builds the phone app:
 
 ## Privacy
 
-Ephyra collects nothing and only talks to the Jellyfin servers you add.
+Ephyra collects nothing. It talks to the Jellyfin servers you add, and to MDBList only if you
+switch on external ratings.
 [Privacy policy](https://midasvo.nl/ephyra/privacy.html).
 
 ## Thanks and license

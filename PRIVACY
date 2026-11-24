@@ -1,8 +1,10 @@
 The privacy policy of the Ephyra app (formerly Findroid CE) is published at
 https://midasvo.nl/ephyra/privacy.html. Its source is site/privacy.html in this repository.
 
-In short: Ephyra does not collect or access any personal information. No identifying information or
-user data of any kind is made available to third parties. The app only talks to the Jellyfin servers
-you add yourself.
+In short: Ephyra does not collect or access any personal information, and its developer receives
+nothing. The app talks to the Jellyfin servers you add yourself. There is one optional exception:
+external ratings are off by default, and while you have them on, with your own MDBList key,
+opening a movie or show page sends that item's IMDb, TMDB or TVDB ID and your key to mdblist.com.
+Nothing else is made available to third parties.
 
 Inquiries can be submitted via https://github.com/midasvo/ephyra/issues.
