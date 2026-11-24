@@ -152,6 +152,7 @@ model {
     playerCast -> playerCore
     playerCast -> playerLocal
     playerCast -> settings
+    playerCast -[test]-> testing
     playerCore -> domain
     playerLocal -> application
     playerLocal -> core

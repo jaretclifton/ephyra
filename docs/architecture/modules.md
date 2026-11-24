@@ -72,7 +72,7 @@ flowchart TD
 | `downloads` | Features | The download engine (Downloader, DownloaderImpl, MediaDownloadEngine), DownloadQueue, smart downloads and their workers. | `application`, `domain`, `settings` | `data`, `testing` |
 | `http` | Shared contracts | MediaHttpClient, the API's OkHttp client: provided by server/jellyfin, used by the player (ExoPlayer's media, mpv's subtitle files), so they share the API's connections. |  |  |
 | `modes/film` | Features | The view models with their State and Action classes for home, library, search, the item screens and downloads. | `application`, `core`, `domain`, `downloads`, `settings` | `data`, `testing` |
-| `player/cast` | Features | Google Cast: the session and playback on a receiver; real in the proprietary flavour, stubs in libre. | `application`, `core`, `domain`, `player/core`, `player/local`, `settings` |  |
+| `player/cast` | Features | Google Cast: the session and playback on a receiver; real in the proprietary flavour, stubs in libre. | `application`, `core`, `domain`, `player/core`, `player/local`, `settings` | `testing` |
 | `player/core` | Features | The player models shared by the player and its callers: PlayerItem, Track, Trickplay. | `domain` |  |
 | `player/local` | Features | The player: PlayerViewModel and playback, on ExoPlayer or mpv behind PlayerEngine (in its engine package). | `application`, `core`, `domain`, `http`, `player/core`, `settings` | `data`, `testing` |
 | `ratings/mdblist` | Adapters | The MDBList adapter of the external ratings on the movie and show pages: its HTTP client and the ratings cache on disk, with its own Hilt module. | `application`, `domain` |  |

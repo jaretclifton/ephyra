@@ -51,4 +51,8 @@ dependencies {
     "proprietaryImplementation"(libs.play.services.cast.framework)
 
     testImplementation(libs.junit)
+    // #851: CastViewModelSegmentTest runs the view model (Context, main dispatcher, fakes).
+    testImplementation(libs.robolectric)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(projects.testing)
 }
