@@ -91,3 +91,9 @@ is, or gives a command that fails, fix `docs/areas.yaml` or the guide in the sam
 (or say it in the report). Keep an entry an index: what is more than paths, docs, rules and tests
 goes in the guide. Run the checker after moving or renaming code that a doc names, and after
 editing the map or a guide; CI runs it on every pull request.
+
+The `Docs` workflow also checks that a pull request which changes a file an area with a guide
+lists (its `paths`) changes that guide or its map entry, or says in its description
+`Docs: no change needed — <reason>` (`scripts/check-guides-follow.py`; run it locally against
+`origin/main` before opening the PR). When you finish the work, say in the report what the guide
+missed, and fix it in the same PR.

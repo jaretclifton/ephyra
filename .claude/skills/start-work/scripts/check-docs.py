@@ -38,11 +38,14 @@ ROOT = Path(__file__).resolve().parents[4]
 # ADRs) describe the code as it was and are not checked.
 CHECKED = [
     "CLAUDE.md",
+    "AGENTS.md",
+    "CONTRIBUTING.md",
     "docs/areas.yaml",
     "docs/areas/*.md",
     "docs/architecture/README.md",
     "docs/architecture/model/*.c4",
     "docs/dev-environment.md",
+    "docs/get-started.md",
     "docs/mpv-checklist.md",
     "docs/track-test-series.md",
     "devsite/README.md",
@@ -54,6 +57,7 @@ CHECKED = [
     "docs/upstream-sync.md",
     "docs/play-store.md",
     "docs/screenshots.md",
+    ".github/pull_request_template.md",
     "docs/open-decisions.md",
 ]
 

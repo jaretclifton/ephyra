@@ -1127,7 +1127,7 @@ constructor(
         // Every item change goes through here, whatever caused it, so this is where the item being
         // left is reported as stopped (PlaybackReporter.onItemTransition).
         val newId = mediaItem?.mediaId?.takeIf { it.isNotEmpty() }?.toItemId()
-        val stopJob = playbackReporter.onItemTransition(newId)
+        val transition = playbackReporter.onItemTransition(newId)
         // Smart Downloads must not delete the file that is open, even once the server has marked
         // it played. Only releasePlayer clears this: a finished item stays open until the player
         // closes.
@@ -1173,12 +1173,15 @@ constructor(
                         // Keep the previous item's stop ahead of this item's start, as the old
                         // auto-advance code did. A stop that reaches the server after the start
                         // can clear the session's now-playing item.
-                        stopJob?.join()
+                        transition.stopJob?.join()
                         // CE (#601): the start waits for the item to load (the start gate).
+                        // CE (#890): and owes nothing when a quality or audio switch replaced
+                        // the stream taken above while this waited.
                         playbackReporter.onTransitionHandled(
                             item,
                             ready = player.playbackState == ExoPlayer.STATE_READY,
                             reportedPlayer,
+                            transition,
                         )
 
                         // CE (#681): the seek bar shows them even with every type ignored.
