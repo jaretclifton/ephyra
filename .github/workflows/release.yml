@@ -94,6 +94,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # For the attestation of the APKs: a signing token and the right to store the attestation.
+      id-token: write
+      attestations: write
 
     steps:
       - name: Download APKs and R8 mappings
@@ -114,6 +117,16 @@ jobs:
             fi
           done
           ls -l dist/*/apk dist/*/mapping
+
+      # One line per APK, with the file name as it is on the release, so that
+      # `sha256sum -c --ignore-missing ephyra-<tag>-sha256sums.txt` works next to a download (#977).
+      - name: Write the checksums of the APKs
+        run: |
+          sums="dist/ephyra-${GITHUB_REF_NAME}-sha256sums.txt"
+          for apk in dist/*/apk/*.apk; do
+            (cd "$(dirname "$apk")" && sha256sum "$(basename "$apk")")
+          done | sort -k 2 > "$sums"
+          cat "$sums"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
@@ -136,4 +149,13 @@ jobs:
           files: |
             dist/*/apk/*.apk
             dist/*/mapping/*.txt
+            dist/*-sha256sums.txt
           fail_on_unmatched_files: true
+
+      # Signed by GitHub: these APKs were built by this workflow from this tag. Check one with
+      # `gh attestation verify <apk> --repo midasvo/ephyra`. After the release on purpose: when
+      # this step fails the release is there and only the attestation is missing (rerun the job).
+      - name: Attest the build provenance of the APKs
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: dist/*/apk/*.apk
