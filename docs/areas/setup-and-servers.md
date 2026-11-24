@@ -51,7 +51,7 @@ Unit tests:
 
 ```bash
 ./gradlew :domain:test :application:test :architecture:test   # ServerTypeTest, ServerFailuresTest, R16
-./gradlew :setup:testDebugUnitTest                             # SetupRepositoryConnectorTest, AddSavedServerSessionTest, Login*, AddServer*, ServerAddressesFeedbackTest
+./gradlew :setup:testDebugUnitTest                             # SetupRepositoryConnectorTest, AddSavedServerSessionTest, Login*, AddServer*, ServerAddressesFeedbackTest, ServerAddressSelectTest
 ./gradlew :core:testLibreDebugUnitTest                         # CurrentMediaServer*Test, ServerConnectorsTest, ServerSessionKeeperTest, ServerReachability*Test, SavedSessionRestorerTest
 ./gradlew :data:testDebugUnitTest --tests '*RoomServerStoreTest*'
 ./gradlew :server:jellyfin:testDebugUnitTest                   # JellyfinServerConnector*Test, SwitchDuringRequestTest, SocketAcrossASwitchTest, contract tests
@@ -64,7 +64,7 @@ The connector contract tests replay recordings in `server/jellyfin/src/test/reso
 On a device: the test server (`docs/dev-environment.md`, `tools/test-server/setup.sh`, `test-server` skill). From an emulator the address is `http://10.0.2.2:8096`.
 
 - Users: `tester` (normal), `nodownload` (may not download), `second` (a second user on the same server, for user switching), `nopass` (empty password). Never log in to the app as `admin`. Add your own with `python3 tools/test-server/user.py add <name>` (`--no-password`) when someone else tests at the same time.
-- A second address of the same server: `python3 tools/test-server/forward.py` listens on 8097 and passes to 8096; add `http://10.0.2.2:8097` on the Addresses screen. Stopping the script takes that address away.
+- A second address of the same server: `python3 tools/test-server/forward.py` listens on 8097 and passes to 8096; add `http://10.0.2.2:8097` on the Addresses screen, or through Settings > Servers > Add server. Stopping the script takes that address away. With other sessions testing, give it a port of your own (`forward.py 8984 8096`).
 - A second server: `setup.sh` with other `EPHYRA_TEST_SERVER_DIR`, `EPHYRA_TEST_SERVER_PORT` and `EPHYRA_TEST_SERVER_NAME` runs one next to the first.
 - Server gone, internet still there (phone or tablet AVD): `adb root`, then `adb shell iptables -I OUTPUT -d 10.0.2.2 -p tcp --dport 8096 -j REJECT --reject-with tcp-reset`; `-D` removes it. On TV use `forward.py` instead.
 - A fresh login: `ce_phone_tmp` is the AVD for throwaway logins. On TV, type into text fields with `scripts/tv-dpad.sh`, not `adb shell input keyevent`.
@@ -102,7 +102,8 @@ Then walk the flow on an emulator: add the server, log in, switch user, switch s
 ## Pitfalls
 
 - **The current server id is a preference, not only `ActiveServer`.** `AddServerViewModel` and `ServersViewModel` write `AppPreferences.setCurrentServerId`; `SetupRepositoryImpl` switches the holder. Several ViewModels read the preference, and `MediaRepositoryImpl` reads it through the `CurrentServerId` port. A change to the switch must keep both in step ([#918](https://github.com/midasvo/ephyra/issues/918), [#926](https://github.com/midasvo/ephyra/pull/926)).
-- **The login screens use the client's address, not Room's.** Re-adding a saved server by a new address points `ActiveServer` there and leaves Room's current address as it was (`clientAddress()` in `SetupRepositoryImpl`).
+- **What runs and what is saved must name the same address.** The copy of the session in preferences (`pref_session_base_url`) follows Room's `currentServerAddressId`, not `ActiveServer`, and a start reads that copy. Re-adding a saved server by another address pointed `ActiveServer` there and left Room's current address as it was, so a restart went back to the old address ([#984](https://github.com/midasvo/ephyra/issues/984)). Now `saveServerInDatabase` makes that address current in Room in the same step, and every write of `baseUrl` (`setCurrentServer`, `setCurrentAddress`) comes from Room's current address. Check it on a device with `run-as … sqlite3 databases/servers` and the preferences file, then force-stop and start.
+- **A tap on the Addresses screen makes the address current** (of any server; the app moves only for the server in use). Upstream's Compose screen (#1012 upstream) had left the tap empty; Home's server sheet could always switch the address of the server in use. The server lists show `ServerWithAddresses.currentAddress`, not the first address.
 - **Checking another server's address must run unwatched**, or its silence shows the unreachable banner for the server in use ([#819](https://github.com/midasvo/ephyra/issues/819), `addAddress`).
 - **Deleting the active user is allowed**: the guard in `SetupRepositoryImpl.deleteUser` is commented out (setup-02 in [`docs/open-decisions.md`](../open-decisions.md)). It now clears the current user and the token.
 - **A server type without an adapter** gets `UnsupportedMediaServer`: every request fails; its downloads open from Room.

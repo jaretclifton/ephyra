@@ -101,9 +101,9 @@ class SetupRepositoryImpl(
     }
 
     /**
-     * #761: the address the client uses, which the login screens are about. It can differ from the
-     * server's current address in Room: re-adding a saved server by a new address points the client
-     * there and leaves Room's current address as it was.
+     * #761: the address the client uses, which the login screens are about. CE (#984): it is the
+     * server's current address in Room as well: re-adding a saved server by another address makes
+     * that one current in both.
      */
     private fun clientAddress(): String = checkNotNull(active.value.baseUrl) { "No server is set" }
 
@@ -172,17 +172,24 @@ class SetupRepositoryImpl(
             if (serverInDatabase != null) {
                 val addresses = serverStore.serverWithAddresses(serverInDatabase.id).addresses
                 // If address is not in database, add it
-                if (addresses.none { it.address == resolved.address }) {
-                    val serverAddress =
-                        ServerAddress(
-                            id = ServerAddressId.random(),
-                            serverId = serverInDatabase.id,
-                            address = resolved.address,
-                        )
-
-                    serverStore.insertAddress(serverAddress)
+                val serverAddress =
+                    addresses.firstOrNull { it.address == resolved.address }
+                        ?: ServerAddress(
+                                id = ServerAddressId.random(),
+                                serverId = serverInDatabase.id,
+                                address = resolved.address,
+                            )
+                            .also { serverStore.insertAddress(it) }
+                // CE (#984): the client goes to this address below, so it becomes the server's
+                // current address in Room too. Left as it was, the copy of the session in
+                // preferences kept the old address, and a restart went back to it.
+                if (serverInDatabase.currentServerAddressId == serverAddress.id) {
+                    serverInDatabase
+                } else {
+                    serverInDatabase.copy(currentServerAddressId = serverAddress.id).also {
+                        serverStore.updateServer(it)
+                    }
                 }
-                serverInDatabase
             } else {
                 val serverAddress =
                     ServerAddress(
@@ -349,14 +356,20 @@ class SetupRepositoryImpl(
         serverStore.clearCurrentUser(server.id)
     }
 
+    /**
+     * Makes [addressId] the current address of its server. CE (#984): of any saved server, as the
+     * Addresses screen opens for each; the client moves there only when that server is the one in
+     * use.
+     */
     override suspend fun setCurrentAddress(addressId: ServerAddressId) {
-        val server = getCurrentServer() ?: return
         val address = serverStore.address(addressId)
-        if (address.serverId != server.id) {
-            return
+        val server = serverStore.server(address.serverId) ?: return
+        if (server.currentServerAddressId != address.id) {
+            serverStore.updateServer(server.copy(currentServerAddressId = address.id))
         }
-        serverStore.updateServer(server.copy(currentServerAddressId = address.id))
-        active.onSameServer { it.copy(baseUrl = address.address) }
+        if (server.id == appPreferences.currentServerId()) {
+            active.onSameServer { it.copy(baseUrl = address.address) }
+        }
     }
 
     override suspend fun addAddress(serverId: ServerId, address: String): ServerAddress {
