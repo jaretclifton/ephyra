@@ -9,9 +9,6 @@ java { toolchain { languageVersion = Versions.JAVA } }
 dependencies {
     implementation(projects.domain)
     implementation(libs.kotlinx.coroutines.core)
-    // MediaRepository.getItemsPaging returns PagingData. paging-common is the plain Kotlin part of
-    // the paging library the apps use (same version), hence `api`.
-    api(libs.androidx.paging.common)
 
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)

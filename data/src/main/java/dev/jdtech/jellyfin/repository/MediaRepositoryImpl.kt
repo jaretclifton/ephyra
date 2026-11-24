@@ -1,9 +1,6 @@
 package dev.jdtech.jellyfin.repository
 
 import android.content.Context
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
-import androidx.paging.PagingData
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.CatalogPort
 import dev.jdtech.jellyfin.domain.ports.ItemQuery
@@ -51,7 +48,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -343,37 +339,6 @@ class MediaRepositoryImpl(
         withContext(Dispatchers.IO) {
             catalog.randomItemsWithBackdrop(includeTypes, limit).withLocalSources()
         }
-
-    override suspend fun getItemsPaging(
-        parentId: ItemId?,
-        includeTypes: List<ItemKind>?,
-        recursive: Boolean,
-        sortBy: SortBy,
-        sortOrder: SortOrder,
-        filters: Set<ItemFilter>,
-    ): Flow<PagingData<Item>> {
-        return Pager(
-                config =
-                    PagingConfig(
-                        pageSize = LIBRARY_PAGE_SIZE,
-                        prefetchDistance = LIBRARY_PAGE_SIZE,
-                        initialLoadSize = LIBRARY_PAGE_SIZE * 2,
-                        enablePlaceholders = false,
-                    ),
-                pagingSourceFactory = {
-                    ItemsPagingSource(
-                        this,
-                        parentId,
-                        includeTypes,
-                        recursive,
-                        sortBy,
-                        sortOrder,
-                        filters,
-                    )
-                },
-            )
-            .flow
-    }
 
     override suspend fun getItemCount(
         parentId: ItemId?,
@@ -969,11 +934,6 @@ class MediaRepositoryImpl(
                 else -> item
             }
         }
-    }
-
-    private companion object {
-        /** Library grid page; a fling on a 2-4 column grid outruns anything smaller. */
-        private const val LIBRARY_PAGE_SIZE = 40
     }
 }
 

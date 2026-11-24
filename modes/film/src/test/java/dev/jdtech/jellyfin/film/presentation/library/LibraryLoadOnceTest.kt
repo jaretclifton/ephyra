@@ -1,22 +1,21 @@
 package dev.jdtech.jellyfin.film.presentation.library
 
 import android.content.SharedPreferences
-import androidx.paging.PagingData
 import dev.jdtech.jellyfin.models.CollectionType
-import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import dev.jdtech.jellyfin.testing.asItemIdOrNull
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import kotlin.test.assertEquals
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -28,12 +27,18 @@ import org.junit.jupiter.api.Test
  * CE (#371): the library screen's first load is decided by the ViewModel, not by a flag saved in
  * the screen. After process death the saved flag came back as "loaded" while the ViewModel was new,
  * and the grid spun forever.
+ *
+ * #968: the ViewModel builds its pager itself, and a pager asks the repository nothing until the
+ * screen collects it. A load is therefore counted as a new pager in the state, for the library the
+ * ViewModel was set up with.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class LibraryLoadOnceTest {
     private val movies = "11111111-1111-1111-1111-111111111111".toItemId()
     private val shows = "22222222-2222-2222-2222-222222222222".toItemId()
-    private val requests = mutableListOf<ItemId?>()
+    private val loads = mutableListOf<ItemId?>()
+    private var currentLibrary: ItemId? = null
+    private val watchers = CoroutineScope(UnconfinedTestDispatcher())
 
     @BeforeEach
     fun setUp() {
@@ -42,65 +47,80 @@ class LibraryLoadOnceTest {
 
     @AfterEach
     fun tearDown() {
+        watchers.cancel()
         Dispatchers.resetMain()
     }
 
     @Test
     fun `a new ViewModel loads, as after process death`() {
-        val viewModel = viewModel()
-        viewModel.setup(parentId = movies, libraryType = CollectionType.Movies)
+        val viewModel = viewModel().watched()
+        viewModel.setUpFor(movies, CollectionType.Movies)
         viewModel.loadItemsIfNeeded()
 
-        assertEquals(listOf<ItemId?>(movies), requests)
+        assertEquals(listOf<ItemId?>(movies), loads)
     }
 
     @Test
     fun `coming back to the screen does not load again`() {
-        val viewModel = viewModel()
+        val viewModel = viewModel().watched()
         repeat(3) {
-            viewModel.setup(parentId = movies, libraryType = CollectionType.Movies)
+            viewModel.setUpFor(movies, CollectionType.Movies)
             viewModel.loadItemsIfNeeded()
         }
 
-        assertEquals(listOf<ItemId?>(movies), requests)
+        assertEquals(listOf<ItemId?>(movies), loads)
     }
 
     @Test
     fun `another library on the same ViewModel loads`() {
-        val viewModel = viewModel()
-        viewModel.setup(parentId = movies, libraryType = CollectionType.Movies)
+        val viewModel = viewModel().watched()
+        viewModel.setUpFor(movies, CollectionType.Movies)
         viewModel.loadItemsIfNeeded()
-        viewModel.setup(parentId = shows, libraryType = CollectionType.TvShows)
+        viewModel.setUpFor(shows, CollectionType.TvShows)
         viewModel.loadItemsIfNeeded()
 
-        assertEquals(listOf<ItemId?>(movies, shows), requests)
+        assertEquals(listOf<ItemId?>(movies, shows), loads)
     }
 
     @Test
     fun `a sort change still loads again`() {
-        val viewModel = viewModel()
-        viewModel.setup(parentId = movies, libraryType = CollectionType.Movies)
+        val viewModel = viewModel().watched()
+        viewModel.setUpFor(movies, CollectionType.Movies)
         viewModel.loadItemsIfNeeded()
         viewModel.onAction(LibraryAction.ChangeSorting(SortBy.DATE_ADDED, SortOrder.DESCENDING))
         viewModel.loadItemsIfNeeded()
 
-        assertEquals(listOf<ItemId?>(movies, movies), requests)
+        assertEquals(listOf<ItemId?>(movies, movies), loads)
     }
 
     private fun viewModel() = LibraryViewModel(repository(), appPreferences())
+
+    /** The ViewModel set up for [library]: every new pager in its state is a load of [library]. */
+    private fun LibraryViewModel.setUpFor(library: ItemId, type: CollectionType) {
+        currentLibrary = library
+        setup(parentId = library, libraryType = type)
+    }
+
+    private fun LibraryViewModel.watched(): LibraryViewModel {
+        var seen = state.value.items
+        watchers.launch {
+            state.collect {
+                if (it.items !== seen) {
+                    seen = it.items
+                    loads.add(currentLibrary)
+                }
+            }
+        }
+        return this
+    }
 
     private fun repository(): MediaRepository =
         fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
             _,
             method,
             args ->
-            when (method.kotlinName) {
-                "getItemsPaging" -> {
-                    requests.add(args!![0].asItemIdOrNull())
-                    flowOf(PagingData.empty<Item>())
-                }
-                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
-            }
+            // Nothing collects the pagers, so nothing is asked.
+            throw NotImplementedError("MediaRepository.${method.kotlinName}")
         }
             as MediaRepository
 

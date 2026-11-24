@@ -2,7 +2,6 @@ package dev.jdtech.jellyfin.repository
 
 import android.app.Application
 import android.content.Context
-import androidx.paging.PagingSource
 import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
@@ -487,46 +486,42 @@ class StoredListsFallbackTest {
     }
 
     @Test
-    fun `the paging sources read a stored library`() = runBlocking {
+    fun `the library pagers' reads page a stored library`() = runBlocking {
         storeMovie(id(1), "Bingo")
         storeMovie(id(2), "Bandit")
-        val refresh = PagingSource.LoadParams.Refresh<Int>(null, 40, false)
+        storeMovie(id(3), "Chilli")
 
-        // What getItemsPagingIndexed builds.
-        var total: Int? = null
-        val indexed =
-            IndexedItemsPagingSource(
-                    load = { start, limit, includeTotal ->
-                        repository.getItemsPage(
-                            parentId = StoredLibraries.MOVIES,
-                            startIndex = start,
-                            limit = limit,
-                            includeTotal = includeTotal,
-                        )
-                    },
-                    knownTotal = { total },
-                    onTotal = { total = it },
-                )
-                .load(refresh)
-        assertTrue(indexed is PagingSource.LoadResult.Page, "$indexed")
-        assertEquals(listOf("Bandit", "Bingo"), indexed.data.map { it.name })
-        assertEquals(0, indexed.itemsAfter)
-        assertEquals(2, total)
+        // The indexed pager's first page (#968: the pagers are in modes/film): with the total.
+        val first =
+            repository.getItemsPage(
+                parentId = StoredLibraries.MOVIES,
+                startIndex = 0,
+                limit = 2,
+                includeTotal = true,
+            )
+        assertEquals(listOf("Bandit", "Bingo"), first.items.map { it.name })
+        assertEquals(3, first.totalRecordCount)
+        // A later page, without the count.
+        val next =
+            repository.getItemsPage(
+                parentId = StoredLibraries.MOVIES,
+                startIndex = 2,
+                limit = 2,
+                includeTotal = false,
+            )
+        assertEquals(listOf("Chilli"), next.items.map { it.name })
+        assertEquals(null, next.totalRecordCount)
 
-        // What getItemsPaging builds.
+        // The plain pager's read.
         val plain =
-            ItemsPagingSource(
-                    repository,
-                    StoredLibraries.MOVIES,
-                    null,
-                    false,
-                    SortBy.NAME,
-                    SortOrder.DESCENDING,
-                    emptySet(),
-                )
-                .load(refresh)
-        assertTrue(plain is PagingSource.LoadResult.Page, "$plain")
-        assertEquals(listOf("Bingo", "Bandit"), plain.data.map { it.name })
+            repository.getItems(
+                parentId = StoredLibraries.MOVIES,
+                sortBy = SortBy.NAME,
+                sortOrder = SortOrder.DESCENDING,
+                startIndex = 1,
+                limit = 2,
+            )
+        assertEquals(listOf("Bingo", "Bandit"), plain.map { it.name })
     }
 
     @Test

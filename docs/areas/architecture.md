@@ -91,7 +91,7 @@ A PR with a Room migration that no review bot read gets an independent review be
 5. Regenerate with the command of recipe 3, step 5. `rules.md` is built from the test names. Forgotten: `the rules page is up to date` fails.
 6. By hand: the table in [`README.md`](../architecture/README.md#the-rules), the range of rule numbers in `AGENTS.md`, and the `rules` of the areas the rule touches in `docs/areas.yaml`.
 
-A baseline is a file `architecture/baseline/<name>` read by `Baseline`: one entry per line, `#` for comments. `assertExactly` fails on a violation that is not listed and on a listed entry that no longer violates, so a cleanup deletes its line. There is one today, `architecture/baseline/uuid-imports.txt`, and it is an allowlist, not debt: files that may name `java.util.UUID` for a random value the app makes itself. It lists none since #918. A new rule starts at zero, without a baseline.
+A baseline is a file `architecture/baseline/<name>` read by `Baseline`: one entry per line, `#` for comments. `assertExactly` fails on a violation that is not listed and on a listed entry that no longer violates, so a cleanup deletes its line. There are three today, all allowlists, not debt: `architecture/baseline/uuid-imports.txt` (files that may name `java.util.UUID` for a random value the app makes itself; none since #918) and R19's `pure-kotlin-imports.txt` and `pure-kotlin-libraries.txt` (none since #968). A new rule starts at zero, without a baseline.
 
 ## Recipe 5: a rule fails on your change
 
@@ -99,8 +99,8 @@ Read the message: it names the file and what to use instead. Fix the code. Do no
 
 The ones you are most likely to trip:
 
-- **R5** (`DomainPurityTest`): a file in `domain` or `application` imports `android.`, `androidx.` (but paging), the SDK, `dev.jdtech.jellyfin.database.` or a type `data` declares. Keep the type in its adapter and give the port a type of `domain`.
-- **R19** (`PureKotlinTest`): a file in `domain` or `application` imports anything but `kotlin.`, `kotlinx.`, `java.`, `javax.crypto.` or `dev.jdtech.jellyfin.`, or their build file declares a library but `libs.kotlinx.*`. The same fix as R5; a contract that has to name a library type (an OkHttp client) goes in a small module of its own, as `http` does. The exceptions are in `architecture/baseline/pure-kotlin-*.txt` (paging, until #968).
+- **R5** (`DomainPurityTest`): a file in `domain` or `application` imports `android.`, `androidx.`, the SDK, `dev.jdtech.jellyfin.database.` or a type `data` declares. Keep the type in its adapter and give the port a type of `domain`.
+- **R19** (`PureKotlinTest`): a file in `domain` or `application` imports anything but `kotlin.`, `kotlinx.`, `java.`, `javax.crypto.` or `dev.jdtech.jellyfin.`, or their build file declares a library but `libs.kotlinx.*`. The same fix as R5; a contract that has to name a library type (an OkHttp client) goes in a small module of its own, as `http` does. Its allowlists are `architecture/baseline/pure-kotlin-*.txt`, empty since #968. A list a screen pages is a plain read in `application` (`MediaRepository.getItemsPage`: items from an index, the total on request) and a `PagingSource` in the feature (`IndexedItemsPagingSource` in `modes/film`).
 - **R10** (`StringIdsTest`, `UuidBoundaryTest`): a parameter or property named `serverId`, `currentServerId`, `mediaSourceId` or `sourceId` typed as `String` (or a list or set of them), or `java.util.UUID` anywhere outside `server/jellyfin`. Use the id classes and `toServerId()`, `toMediaSourceId()`, `asString()`; a random value comes from `kotlin.uuid.Uuid`.
 - **R1, R2** (`SdkBoundaryTest`): a file outside `server/jellyfin` mentions the SDK's package or imports `JellyfinApi`. Add the operation to a port (recipe 1).
 - **R9, R4** (`DataDependencyTest`, `SdkBoundaryTest`): a feature takes `data` with `implementation`, or imports `ServerDatabaseDao`. Use a store port (recipe 2); for a test, `testImplementation`.

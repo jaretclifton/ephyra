@@ -105,8 +105,7 @@ class DomainPurityTest {
      */
     private fun isForbidden(import: String): Boolean {
         val name = import.removeSuffix(".*") + "."
-        return FORBIDDEN_PREFIXES.any { name.startsWith(it) } &&
-            ALLOWED_PREFIXES.none { name.startsWith(it) }
+        return FORBIDDEN_PREFIXES.any { name.startsWith(it) }
     }
 
     companion object {
@@ -123,8 +122,5 @@ class DomainPurityTest {
                 "dev.jdtech.jellyfin.database.",
                 "dev.jdtech.jellyfin.api.",
             )
-
-        /** Paging has a plain JVM artifact (`paging-common`), so the rule leaves it allowed. */
-        private val ALLOWED_PREFIXES = listOf("androidx.paging.")
     }
 }

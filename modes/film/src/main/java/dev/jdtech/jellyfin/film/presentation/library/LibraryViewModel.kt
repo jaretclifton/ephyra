@@ -11,7 +11,6 @@ import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.repository.MediaRepository
-import dev.jdtech.jellyfin.repository.getItemsPagingIndexed
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -123,7 +122,7 @@ constructor(
             try {
                 val items =
                     if (indexed) {
-                            mediaRepository.getItemsPagingIndexed(
+                            mediaRepository.indexedItemsPager(
                                 parentId = parentId,
                                 includeTypes = itemType,
                                 recursive = recursive,
@@ -145,7 +144,7 @@ constructor(
                                 },
                             )
                         } else {
-                            mediaRepository.getItemsPaging(
+                            mediaRepository.itemsPager(
                                 parentId = parentId,
                                 includeTypes = itemType,
                                 recursive = recursive,
