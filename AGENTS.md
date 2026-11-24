@@ -15,7 +15,7 @@ The app is **Ephyra**, a fork of [Findroid](https://github.com/jarnedemeulemeest
 - **New machine:** `docs/get-started.md` (from an empty machine to the app on an emulator with test data) and `scripts/doctor.sh`, which checks the tools and says what is missing.
 - **Tests:** `docs/testing.md` (the kinds of test, which one a change needs, what is checked by hand).
 - **A feature users get** is an entry in `docs/features.yaml` (which apps have it). The user guide (https://midasvo.nl/ephyra/guide/, `devsite/src/content/docs/guide/`) and the README's radar are drawn from it; the release skill brings it up to date.
-- **Modules:** `docs/architecture/modules.md` (generated from the build files: every module, what it is, what it depends on). **Rules R1–R17:** `docs/architecture/rules.md` (generated from the Konsist tests). **Ports and adapters:** `docs/architecture/README.md`, then `5-hexagonal-ddd.md` and the ADRs in `docs/architecture/adr/`.
+- **Modules:** `docs/architecture/modules.md` (generated from the build files: every module, what it is, what it depends on). **Rules R1–R18:** `docs/architecture/rules.md` (generated from the Konsist tests). **Ports and adapters:** `docs/architecture/README.md`, then `5-hexagonal-ddd.md` and the ADRs in `docs/architecture/adr/`.
 - The numbered files in `docs/mpv-research/`, `docs/tablet/` and `docs/tv-research/` are research from before the work was done. Where they differ from the code, the code is right.
 
 ## Build Commands

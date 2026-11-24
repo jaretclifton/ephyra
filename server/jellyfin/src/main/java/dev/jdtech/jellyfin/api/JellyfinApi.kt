@@ -5,10 +5,10 @@ import androidx.annotation.VisibleForTesting
 import dev.jdtech.jellyfin.domain.ports.ActiveServer
 import dev.jdtech.jellyfin.domain.ports.ActiveServerHolder
 import dev.jdtech.jellyfin.domain.ports.RequestWatcher
+import dev.jdtech.jellyfin.repository.NetworkTimeouts
 import dev.jdtech.jellyfin.server.jellyfin.BuildConfig
 import dev.jdtech.jellyfin.server.jellyfin.toUserId
 import dev.jdtech.jellyfin.server.jellyfin.toUuid
-import dev.jdtech.jellyfin.settings.domain.Constants
 import java.io.IOException
 import java.util.UUID
 import java.util.concurrent.TimeUnit
@@ -67,9 +67,9 @@ import timber.log.Timber
  */
 class JellyfinApi(
     private val androidContext: Context,
-    requestTimeout: Long = Constants.NETWORK_DEFAULT_REQUEST_TIMEOUT,
-    connectTimeout: Long = Constants.NETWORK_DEFAULT_CONNECT_TIMEOUT,
-    socketTimeout: Long = Constants.NETWORK_DEFAULT_SOCKET_TIMEOUT,
+    requestTimeout: Long = NetworkTimeouts.DEFAULT_REQUEST_TIMEOUT,
+    connectTimeout: Long = NetworkTimeouts.DEFAULT_CONNECT_TIMEOUT,
+    socketTimeout: Long = NetworkTimeouts.DEFAULT_SOCKET_TIMEOUT,
     /** CE (#860): see [trickplaySheetApi]. Shorter only in tests. */
     trickplaySheetTimeout: Long = TRICKPLAY_SHEET_TIMEOUT_MS,
     /**
@@ -416,9 +416,9 @@ class JellyfinApi(
 
         fun getInstance(
             context: Context,
-            requestTimeout: Long = Constants.NETWORK_DEFAULT_REQUEST_TIMEOUT,
-            connectTimeout: Long = Constants.NETWORK_DEFAULT_CONNECT_TIMEOUT,
-            socketTimeout: Long = Constants.NETWORK_DEFAULT_SOCKET_TIMEOUT,
+            requestTimeout: Long = NetworkTimeouts.DEFAULT_REQUEST_TIMEOUT,
+            connectTimeout: Long = NetworkTimeouts.DEFAULT_CONNECT_TIMEOUT,
+            socketTimeout: Long = NetworkTimeouts.DEFAULT_SOCKET_TIMEOUT,
             activeServer: ActiveServerHolder,
         ): JellyfinApi {
             synchronized(this) {
