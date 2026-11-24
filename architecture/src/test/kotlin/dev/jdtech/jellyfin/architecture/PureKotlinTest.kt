@@ -19,6 +19,7 @@ class PureKotlinTest {
 
     @Test
     fun `R19 domain and application import only Kotlin, kotlinx, the JDK and their own code`() {
+        // "<module> <import>" to the files that import it.
         val violations =
             MODULES.flatMap { module ->
                     ProjectTree.productionKotlinFiles
@@ -26,18 +27,19 @@ class PureKotlinTest {
                         .also {
                             assertTrue(it.isNotEmpty(), "No production Kotlin file under $module")
                         }
-                        .values
-                        .flatMap { file -> importsIn(file.readText()) }
-                        .filterNot(::isAllowed)
-                        .map { "$module $it" }
+                        .flatMap { (path, file) ->
+                            importsIn(file.readText()).filterNot(::isAllowed).map {
+                                "$module $it" to path
+                            }
+                        }
                 }
-                .toSet()
+                .groupBy({ it.first }, { it.second })
         IMPORTS_BASELINE.assertExactly(
-            violations,
+            violations.keys,
             unlisted = {
-                "${it.substringBefore(' ')} imports ${it.substringAfter(' ')}. domain and " +
-                    "application are plain Kotlin (R19): keep the library in an adapter or a " +
-                    "module of its own, behind a port with our own types " +
+                "${violations.getValue(it).joinToString()} imports ${it.substringAfter(' ')}. " +
+                    "domain and application are plain Kotlin (R19): keep the library in an " +
+                    "adapter or a module of its own, behind a port with our own types " +
                     "(docs/architecture/README.md)."
             },
         )
@@ -82,6 +84,11 @@ class PureKotlinTest {
             import javax.inject.Inject
                 import okio.Indented
             import kotlinxx.Thing
+            import /* a comment */ okio.AfterComment
+            /*
+            import okio.InABlockComment
+            */
+            // import okio.InALineComment
 
             val text = "import com.example.NotAnImport"
             """
@@ -94,6 +101,7 @@ class PureKotlinTest {
                 "javax.inject.Inject",
                 "okio.Indented",
                 "kotlinxx.Thing",
+                "okio.AfterComment",
             ),
             importsIn(file).filterNot(::isAllowed),
         )
@@ -142,11 +150,18 @@ class PureKotlinTest {
             listOf("kotlin.", "kotlinx.", "java.", "javax.crypto.", "dev.jdtech.jellyfin.")
 
         private val IMPORT =
-            Regex("""^[ 	]*import\s+([\w`]+(?:\.[\w`]+)*(?:\.\*)?)""", RegexOption.MULTILINE)
+            Regex("""^[ \t]*import\s+([\w`]+(?:\.[\w`]+)*(?:\.\*)?)""", RegexOption.MULTILINE)
 
-        /** The names a Kotlin file imports, without an alias; a wildcard import ends in `.*`. */
+        /**
+         * The names a Kotlin file imports, without an alias; a wildcard import ends in `.*`.
+         * Comments are dropped first, so `import /* x */ a.B` counts and a commented-out import
+         * does not. A line starting with `import` in a multiline string still counts: a false
+         * alarm, never a miss (imports come before any string in a Kotlin file).
+         */
         fun importsIn(text: String): List<String> =
-            IMPORT.findAll(text).map { it.groupValues[1].replace("`", "") }.toList()
+            IMPORT.findAll(COMMENT.replace(text, " "))
+                .map { it.groupValues[1].replace("`", "") }
+                .toList()
 
         fun isAllowed(import: String): Boolean = ALLOWED_PREFIXES.any { import.startsWith(it) }
 
