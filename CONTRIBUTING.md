@@ -36,7 +36,8 @@ scripts/avds.sh create ce_phone  # then: start ce_phone, install ce_phone
 ./gradlew testDebugUnitTest    # CI runs them too, but a local run is quicker to fix
 ```
 
-While you work, two checks answer in seconds:
+[docs/testing.md](docs/testing.md) says which kinds of test there are and which one a change
+needs. While you work, two checks answer in seconds:
 
 ```bash
 ./gradlew :domain:test :application:test :architecture:test   # pure Kotlin and the architecture rules
