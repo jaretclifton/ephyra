@@ -16,18 +16,18 @@ All use `system-images;android-34;google_apis;x86_64` and `hw.keyboard = yes`. T
 
 ## AVD script
 
-`scripts/tablet-avds.sh` (bash; Git Bash on Windows, Linux, macOS). It needs `ANDROID_HOME`.
+`scripts/avds.sh` (bash; Git Bash on Windows, Linux, macOS). It needs `ANDROID_HOME`. `scripts/tablet-avds.sh` is its old name and still works.
 
 ```bash
-export ANDROID_HOME=C:/Users/midas/AppData/Local/Android/Sdk   # this machine
+export ANDROID_HOME="<path to the Android SDK>"
 
-scripts/tablet-avds.sh create [name|all]    # default: all four
-scripts/tablet-avds.sh start ce_tablet_10   # cold boot, returns when booted
-scripts/tablet-avds.sh portrait ce_tablet_10
-scripts/tablet-avds.sh landscape ce_tablet_10
-scripts/tablet-avds.sh shot ce_tablet_10 out.png
-scripts/tablet-avds.sh stop ce_tablet_10
-scripts/tablet-avds.sh delete [name|all]
+scripts/avds.sh create [name|all]    # default: all four
+scripts/avds.sh start ce_tablet_10   # cold boot, returns when booted
+scripts/avds.sh portrait ce_tablet_10
+scripts/avds.sh landscape ce_tablet_10
+scripts/avds.sh shot ce_tablet_10 out.png
+scripts/avds.sh stop ce_tablet_10
+scripts/avds.sh delete [name|all]
 ```
 
 - `portrait` and `landscape` turn off auto-rotate and set `user_rotation`. The script knows that the natural orientation of the tablets and the unfolded fold is landscape (so portrait is `user_rotation 1` there), and of the phone is portrait.
@@ -91,7 +91,7 @@ The 10-inch screenshots in `fastlane/metadata/android/en-US/images/tenInchScreen
    ```
 
 2. Set the app language to English (`cmd locale set-app-locales ... --locales en-US`) and restore it afterwards. The demo server keeps a Continue Watching row by itself.
-3. Capture with `scripts/tablet-avds.sh shot`. The Pixel Tablet's taskbar shows third-party app icons at the bottom, so every shot except the player is cropped to 2560×1480:
+3. Capture with `scripts/avds.sh shot`. The Pixel Tablet's taskbar shows third-party app icons at the bottom, so every shot except the player is cropped to 2560×1480:
 
    ```bash
    ffmpeg -i in.png -vf "crop=2560:1480:0:0" 1_en-US.png

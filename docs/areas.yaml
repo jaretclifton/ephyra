@@ -334,11 +334,11 @@ areas:
     keywords: [release, releases, version number, version code, changelog, beta, tag, play store, google play, store listing, screenshots, feature graphic, fastlane, f-droid, fdroid, amazon, github release, apk, upstream, findroid, upstream sync, EphyraVersion]
     paths:
       - buildSrc/src/main/kotlin/EphyraVersion.kt
-      - CHANGELOG.md
+      - app/phone/build.gradle.kts
+      - app/tv/build.gradle.kts
       - .github/workflows/release.yml
       - .github/workflows/beta.yml
+      - .github/workflows/build.yaml
       - .claude/skills/release/SKILL.md
-      - .claude/skills/upstream-sync/SKILL.md
-      - .claude/skills/fdroid-update/SKILL.md
       - fastlane/metadata/android/
     docs: [docs/play-store.md, docs/screenshots.md, docs/upstream-sync.md, docs/upstream-ledger.md]
