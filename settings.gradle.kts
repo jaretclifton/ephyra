@@ -19,6 +19,7 @@ include(":baselineprofile")
 include(":baselineprofile-tv")
 include(":architecture")
 include(":domain")
+include(":http")
 include(":application")
 include(":testing")
 

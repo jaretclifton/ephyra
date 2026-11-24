@@ -19,7 +19,8 @@ The apps (`app/phone`, `app/tv`) are the composition root. Features call `MediaR
 
 | Path | What |
 |---|---|
-| [`domain/.../domain/ports/`](../../domain/src/main/kotlin/dev/jdtech/jellyfin/domain/ports/) | The server ports, `ActiveServer`, `MediaHttpClient`, `DeviceCodecs` |
+| [`domain/.../domain/ports/`](../../domain/src/main/kotlin/dev/jdtech/jellyfin/domain/ports/) | The server ports, `ActiveServer`, `DeviceCodecs` |
+| [`http/.../http/`](../../http/src/main/kotlin/dev/jdtech/jellyfin/http/) | `MediaHttpClient`, the API's OkHttp client that ExoPlayer streams media over (mpv: subtitle files only), provided by `server/jellyfin` (#964). Its own module because it names a library type, which no port may |
 | [`application/.../repository/`](../../application/src/main/kotlin/dev/jdtech/jellyfin/repository/) | `MediaRepository`, the store ports, the settings ports (`DownloadSettings`, `CurrentServerId`, `NetworkTimeouts`, …) |
 | [`server/jellyfin/.../server/jellyfin/`](../../server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/) | `JellyfinMediaServer`, `JellyfinCatalog`, `JellyfinUserData`, `JellyfinPlayback`, `JellyfinServerConnector`; `mappers/`; `SdkIds.kt`, `SdkEnums.kt`, `SdkErrors.kt`, `JellyfinCalls.kt` |
 | [`server/jellyfin/.../di/JellyfinServerModule.kt`](../../server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/di/JellyfinServerModule.kt) | What the adapter provides; the maps keyed by `ServerTypeKey` |
@@ -99,6 +100,7 @@ Read the message: it names the file and what to use instead. Fix the code. Do no
 The ones you are most likely to trip:
 
 - **R5** (`DomainPurityTest`): a file in `domain` or `application` imports `android.`, `androidx.` (but paging), the SDK, `dev.jdtech.jellyfin.database.` or a type `data` declares. Keep the type in its adapter and give the port a type of `domain`.
+- **R19** (`PureKotlinTest`): a file in `domain` or `application` imports anything but `kotlin.`, `kotlinx.`, `java.`, `javax.crypto.` or `dev.jdtech.jellyfin.`, or their build file declares a library but `libs.kotlinx.*`. The same fix as R5; a contract that has to name a library type (an OkHttp client) goes in a small module of its own, as `http` does. The exceptions are in `architecture/baseline/pure-kotlin-*.txt` (paging, until #968).
 - **R10** (`StringIdsTest`, `UuidBoundaryTest`): a parameter or property named `serverId`, `currentServerId`, `mediaSourceId` or `sourceId` typed as `String` (or a list or set of them), or `java.util.UUID` anywhere outside `server/jellyfin`. Use the id classes and `toServerId()`, `toMediaSourceId()`, `asString()`; a random value comes from `kotlin.uuid.Uuid`.
 - **R1, R2** (`SdkBoundaryTest`): a file outside `server/jellyfin` mentions the SDK's package or imports `JellyfinApi`. Add the operation to a port (recipe 1).
 - **R9, R4** (`DataDependencyTest`, `SdkBoundaryTest`): a feature takes `data` with `implementation`, or imports `ServerDatabaseDao`. Use a store port (recipe 2); for a test, `testImplementation`.

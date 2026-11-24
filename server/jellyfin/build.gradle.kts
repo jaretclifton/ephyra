@@ -58,6 +58,8 @@ dependencies {
     // #918: the ports the adapter reads its settings through (NetworkTimeouts), bound in core.
     implementation(projects.application)
     implementation(projects.domain)
+    // #964: MediaHttpClient, the API's client handed to the player.
+    implementation(projects.http)
     implementation(libs.coil.core)
     implementation(libs.coil.network.cache.control)
     implementation(libs.hilt.android)

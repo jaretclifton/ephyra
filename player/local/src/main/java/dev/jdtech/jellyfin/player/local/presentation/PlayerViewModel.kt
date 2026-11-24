@@ -30,7 +30,7 @@ import androidx.media3.common.text.CueGroup
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.jdtech.jellyfin.domain.ports.MediaHttpClient
+import dev.jdtech.jellyfin.http.MediaHttpClient
 import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
