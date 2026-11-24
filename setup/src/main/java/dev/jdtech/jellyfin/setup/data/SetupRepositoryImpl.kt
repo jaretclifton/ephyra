@@ -160,7 +160,21 @@ class SetupRepositoryImpl(
             else -> ExceptionUiTexts(createIssuesString(issues))
         }
 
-    private suspend fun saveServerInDatabase(type: ServerType, resolved: ResolvedServer): Server {
+    /**
+     * CE (#984): taken by every write of a server's current address together with the client's, so
+     * that Room and the client end on the same address when two of them meet.
+     */
+    private val addressSelection = Mutex()
+
+    private suspend fun saveServerInDatabase(type: ServerType, resolved: ResolvedServer): Server =
+        addressSelection.withLock {
+            saveServerInDatabaseLocked(type, resolved)
+        }
+
+    private suspend fun saveServerInDatabaseLocked(
+        type: ServerType,
+        resolved: ResolvedServer,
+    ): Server {
         val serverId = resolved.info.id
         val serverName = resolved.info.name
 
@@ -372,12 +386,12 @@ class SetupRepositoryImpl(
             if (server.currentServerAddressId != address.id) {
                 serverStore.updateServer(server.copy(currentServerAddressId = address.id))
             }
-            if (server.id == appPreferences.currentServerId()) {
-                active.onSameServer { it.copy(baseUrl = address.address) }
+            // The server on the holder decides, in the same write: never another server's address
+            // under this one's token, also while a switch has not reached the preference yet.
+            active.onSameServer {
+                if (it.serverId == server.id) it.copy(baseUrl = address.address) else it
             }
         }
-
-    private val addressSelection = Mutex()
 
     override suspend fun addAddress(serverId: ServerId, address: String): ServerAddress {
         // The connector normalises the input the same way addServer does, so a bare host or a

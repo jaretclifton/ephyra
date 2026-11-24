@@ -27,9 +27,11 @@ import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -110,23 +112,73 @@ class ServerAddressSelectTest {
             )
         )
 
+    /** Once set, the next server write waits for it after writing: a selection paused there. */
+    @Volatile private var pauseAfterWrite: CompletableDeferred<Unit>? = null
+
+    private val store =
+        object : ServerStore by database {
+            override suspend fun updateServer(server: Server) {
+                database.updateServer(server)
+                pauseAfterWrite?.let {
+                    pauseAfterWrite = null
+                    it.await()
+                }
+            }
+        }
+
+    private lateinit var preferences: AppPreferences
+    private lateinit var repository: SetupRepositoryImpl
     private lateinit var viewModel: ServerAddressesViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         val application = RuntimeEnvironment.getApplication()
-        val preferences =
-            AppPreferences(application.getSharedPreferences("test", Context.MODE_PRIVATE))
+        preferences = AppPreferences(application.getSharedPreferences("test", Context.MODE_PRIVATE))
         preferences.setCurrentServerId(a)
-        val repository =
+        repository =
             SetupRepositoryImpl(
                 ServerConnectors(mapOf(ServerType.JELLYFIN to FakeServerConnector())),
-                database,
+                store,
                 preferences,
                 active,
             )
         viewModel = ServerAddressesViewModel(repository, FakeLocalNetworkAccess())
+    }
+
+    @Test
+    fun `two selections at once leave Room and the app on the same address`() = runBlocking {
+        // The first selection has written Room and not yet the app when the second comes in.
+        val paused = CompletableDeferred<Unit>()
+        pauseAfterWrite = paused
+        val first = launch(Dispatchers.Unconfined) { repository.setCurrentAddress(aHttps.id) }
+        val second = launch(Dispatchers.Unconfined) { repository.setCurrentAddress(aLan.id) }
+        paused.complete(Unit)
+        first.join()
+        second.join()
+
+        val inRoom = addresses.single { it.id == servers.getValue(a).currentServerAddressId }
+        assertEquals(inRoom.address, active.value.baseUrl)
+        assertEquals(aLan.address, active.value.baseUrl)
+    }
+
+    @Test
+    fun `a selection while the app is on another server leaves the app alone`() = runBlocking {
+        // The holder is on b already; the preference still says a, as for a moment in a switch.
+        val onB =
+            ActiveServer(
+                type = "jellyfin",
+                serverId = b,
+                baseUrl = bLan.address,
+                accessToken = "token-b",
+                userId = "bob".toUserId(),
+            )
+        active.switchTo(onB)
+
+        repository.setCurrentAddress(aHttps.id)
+
+        assertEquals(aHttps.id, servers.getValue(a).currentServerAddressId)
+        assertEquals(onB, active.value)
     }
 
     @After

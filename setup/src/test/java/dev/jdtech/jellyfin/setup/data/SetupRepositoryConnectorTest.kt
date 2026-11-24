@@ -129,7 +129,12 @@ class SetupRepositoryConnectorTest {
 
     /** Points at another address than Room's current one, as after re-adding the server. */
     private val session =
-        RecordingServerSession(baseUrl = other.address, accessToken = "token-a", userId = alice.id)
+        RecordingServerSession(
+            baseUrl = other.address,
+            accessToken = "token-a",
+            userId = alice.id,
+            serverId = "a".toServerId(),
+        )
 
     private val preferences by lazy {
         AppPreferences(context.getSharedPreferences("test", Context.MODE_PRIVATE)).also {
