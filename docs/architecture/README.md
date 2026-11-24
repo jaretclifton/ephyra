@@ -19,6 +19,7 @@ the record of why, and where they differ from the code, the code is right.
 | [adr/0001-ports-and-adapters.md](adr/0001-ports-and-adapters.md) | The decision on ports and adapters, D1 to D5 |
 | [5-hexagonal-ddd.md](5-hexagonal-ddd.md) | 2026-11-22: what was not hexagonal yet, where DDD pays, the tasks T1 to T10 |
 | [adr/0002-hexagonal-ddd.md](adr/0002-hexagonal-ddd.md) | The decision on that, with the owner's answers (it replaces D1 and D2) |
+| [adr/0003-playback-and-download-use-cases.md](adr/0003-playback-and-download-use-cases.md) | 2026-11-25, proposed (#970): which flows of playback and downloads become rules in `domain` or services in `application`, the download state machine, and the order of the PRs |
 
 ## Why
 
