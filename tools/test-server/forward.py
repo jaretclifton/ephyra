@@ -26,13 +26,18 @@ that runs the script, or when the file named by --release-file exists (the scrip
 when it takes it, so create it again for the next one). Without a terminal (no stdin) the file is
 the only way. --hold-max SECONDS releases by itself after that long (default: never).
 
---log prints every request line on stdout, with a mark for the held ones.
+Held requests wait in arrival order and a release frees the oldest; a release while nothing is
+held is dropped. A request whose connection fails while it waits is forgotten.
+
+--log prints every request line on stdout, with a mark for the held ones, and the first 1000 bytes
+of each request body (a playback report's JSON, with its PlayMethod).
 
 When one side ends, the other side gets the rest of the data and then a clean close (half-close),
 not a reset: mpv (ffmpeg) reports "Connection reset by peer" otherwise.
 """
 import argparse
 import os
+import select
 import socket
 import sys
 import threading
@@ -54,29 +59,58 @@ bytes_per_second = args.kbit * 125
 holds = [(m.upper(), p) for m, p in args.hold]
 inspect = bool(holds) or args.log
 
-# One release per held request, handed out by the key press or the file.
-release_lock = threading.Condition()
-release_tokens = 0
+# Held requests wait in arrival order; each release (key press or file) frees the oldest one.
+# A release while nothing is held is dropped, so it never lets a later request through.
+waiters_lock = threading.Lock()
+waiters = []
+
+
+class Waiter:
+    def __init__(self):
+        self.event = threading.Event()
+        self.released = False
 
 
 def give_release():
-    global release_tokens
-    with release_lock:
-        release_tokens += 1
-        release_lock.notify_all()
+    with waiters_lock:
+        if waiters:
+            w = waiters.pop(0)
+            w.released = True
+            w.event.set()
 
 
-def wait_release(timeout):
-    global release_tokens
-    deadline = time.monotonic() + timeout if timeout else None
-    with release_lock:
-        while release_tokens == 0:
-            left = None if deadline is None else deadline - time.monotonic()
-            if left is not None and left <= 0:
-                return False
-            release_lock.wait(left)
-        release_tokens -= 1
+def client_reset(sock):
+    """True when the client's side of the connection has failed (a reset), not merely sent a FIN."""
+    try:
+        if select.select([sock], [], [], 0)[0]:
+            sock.recv(1, socket.MSG_PEEK)
+    except OSError:
         return True
+    return False
+
+
+def wait_release(conn, sock, timeout):
+    """Returns "released", "timeout" or "cancelled" (the connection failed while held)."""
+    w = Waiter()
+    with waiters_lock:
+        if conn.failed:
+            return "cancelled"
+        waiters.append(w)
+        conn.waiters.append(w)
+    deadline = time.monotonic() + timeout if timeout else None
+    while not w.event.wait(0.2):
+        if client_reset(sock):
+            conn.fail()
+        elif deadline is not None and time.monotonic() >= deadline:
+            break
+    with waiters_lock:
+        if w in waiters:
+            waiters.remove(w)
+        if w in conn.waiters:
+            conn.waiters.remove(w)
+        if w.released:
+            return "released"
+        return "cancelled" if conn.failed else "timeout"
 
 
 def watch_stdin():
@@ -93,7 +127,8 @@ def watch_file(path):
             try:
                 os.remove(path)
             except OSError:
-                pass
+                time.sleep(0.2)  # not taken: no release, try again
+                continue
             give_release()
         time.sleep(0.2)
 
@@ -107,10 +142,16 @@ def log(text):
         print(f"{time.strftime('%H:%M:%S')} {text}", flush=True)
 
 
-def forward_requests(src, dst):
+def log_body(body):
+    if body:
+        log("  body: " + body[:1000].decode("utf-8", "replace") + (" ..." if len(body) > 1000 else ""))
+
+
+def forward_requests(src, dst, conn):
     """Client to server: pass requests through, holding the chosen ones, until the stream ends."""
     buf = b""
     remaining = 0  # body bytes of the current request still to pass
+    body = b""  # the part of the current body seen so far, for --log
     raw = False  # chunked or upgraded: the rest of the connection passes untouched
     while True:
         if not buf:
@@ -124,8 +165,12 @@ def forward_requests(src, dst):
         if remaining:
             take = min(remaining, len(buf))
             dst.sendall(buf[:take])
+            if args.log and len(body) < 1001:
+                body += buf[:take]
             buf = buf[take:]
             remaining -= take
+            if not remaining:
+                log_body(body)
             continue
         end = buf.find(b"\r\n\r\n")
         if end < 0:
@@ -149,9 +194,13 @@ def forward_requests(src, dst):
         if held:
             hint = f" or create {args.release_file}" if args.release_file else ""
             log(f"holding {method} {path}: press Enter{hint}")
-            released = wait_release(args.hold_max)
-            log(f"{'released' if released else 'hold timed out, passing'} {method} {path}")
+            outcome = wait_release(conn, src, args.hold_max)
+            if outcome == "cancelled":
+                log(f"connection lost while holding {method} {path}")
+                raise ConnectionError("client connection lost while a request was held")
+            log(f"{'released' if outcome == 'released' else 'hold timed out, passing'} {method} {path}")
         dst.sendall(head)
+        body = b""
         if "chunked" in headers.get("transfer-encoding", "").lower() or headers.get("upgrade"):
             raw = True
         else:
@@ -159,13 +208,11 @@ def forward_requests(src, dst):
                 remaining = int(headers.get("content-length", "0"))
             except ValueError:
                 remaining = 0
-
-
 def pump(src, dst, done, rate=0, requests=False):
     clean = True
     try:
         if requests:
-            forward_requests(src, dst)
+            forward_requests(src, dst, done)
         else:
             while data := src.recv(8192 if rate else 65536):
                 dst.sendall(data)
@@ -173,6 +220,7 @@ def pump(src, dst, done, rate=0, requests=False):
                     time.sleep(len(data) / rate)
     except OSError:
         clean = False
+        done.fail()
     try:
         if clean:
             dst.shutdown(socket.SHUT_WR)  # half-close: the peer reads to the end, then sees EOF
@@ -188,11 +236,21 @@ def pump(src, dst, done, rate=0, requests=False):
 
 
 class Done:
-    """True for the second direction that ends: only then both sockets are closed."""
+    """One connection's state: both sockets are closed when the second direction ends, or at once on a failure."""
 
     def __init__(self):
         self.lock = threading.Lock()
         self.count = 0
+        self.failed = False
+        self.waiters = []  # held requests of this connection
+
+    def fail(self):
+        with waiters_lock:
+            self.failed = True
+            for w in self.waiters:
+                if w in waiters:
+                    waiters.remove(w)
+                w.event.set()
 
     def release_and_check(self):
         with self.lock:

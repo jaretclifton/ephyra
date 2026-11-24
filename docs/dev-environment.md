@@ -245,8 +245,9 @@ with it.
   one request instead, so the server answers late, add `--hold METHOD PATH-PREFIX` (repeatable),
   for example `forward.py 8984 8096 --hold POST /Sessions/Playing/Stopped`. A held request is
   passed on when Enter is pressed in the script's terminal or when the file named by
-  `--release-file` appears (one request per release; `--hold-max SECONDS` releases by itself),
-  and `--log` prints every request. The script half-closes a connection when one side ends, so
+  `--release-file` appears (the oldest held request per release; a release while nothing is held is dropped;
+  `--hold-max SECONDS` releases by itself), and `--log` prints every request with the start of
+  its body. The script half-closes a connection when one side ends, so
   mpv does not see a reset, and it refuses a port another process already listens on.
 - **Scripted taps**: dump the screen (`uiautomator dump`) and check it before every tap. Keys sent
   blind land on whatever screen is open.
