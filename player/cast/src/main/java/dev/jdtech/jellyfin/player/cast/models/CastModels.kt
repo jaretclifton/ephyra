@@ -1,5 +1,6 @@
 package dev.jdtech.jellyfin.player.cast.models
 
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.player.core.domain.models.Track
@@ -68,6 +69,12 @@ data class CastPlayerState(
     val status: CastPlaybackStatus = CastPlaybackStatus.IDLE,
     val currentPosition: Long = 0L,
     val duration: Long = 0L,
+    /**
+     * CE (#851): the item the receiver reported [currentPosition] for. Null while a load is on its
+     * way, after the item ended, and before the receiver has reported a position since: the
+     * position is then not one to act on.
+     */
+    val positionItemId: ItemId? = null,
     val volume: Float = 1f,
     val isMuted: Boolean = false,
     val hasNextItem: Boolean = false,

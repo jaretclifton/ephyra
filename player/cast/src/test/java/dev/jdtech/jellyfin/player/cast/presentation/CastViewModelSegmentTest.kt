@@ -1,0 +1,380 @@
+package dev.jdtech.jellyfin.player.cast.presentation
+
+import android.content.SharedPreferences
+import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.MediaSourceId
+import dev.jdtech.jellyfin.models.Segment
+import dev.jdtech.jellyfin.models.SegmentType.INTRO
+import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
+import dev.jdtech.jellyfin.player.cast.CastPlayerController
+import dev.jdtech.jellyfin.player.cast.CastSessionManager
+import dev.jdtech.jellyfin.player.cast.models.CastAvailability
+import dev.jdtech.jellyfin.player.cast.models.CastConnectionState
+import dev.jdtech.jellyfin.player.cast.models.CastError
+import dev.jdtech.jellyfin.player.cast.models.CastMediaItem
+import dev.jdtech.jellyfin.player.cast.models.CastPlaybackStatus
+import dev.jdtech.jellyfin.player.cast.models.CastPlayerState
+import dev.jdtech.jellyfin.player.cast.models.Device
+import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
+import dev.jdtech.jellyfin.player.core.domain.models.Track
+import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.fakeProxy
+import java.time.Duration
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
+import kotlin.test.assertEquals
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowSystemClock
+
+/**
+ * #851: how [CastViewModel] wires the segment rule to the receiver: which positions reach it, what
+ * its steps do to the controller, and which user actions count as the user's seeks. The rule itself
+ * is [CastSegmentSkipperTest].
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
+class CastViewModelSegmentTest {
+    private val itemA = "0b0e4e6f1c8a4d1f9a3b2c1d0e9f8a7b".toItemId()
+    private val itemB = "1c1f5f7a2d9b4e2a8b4c3d2e1f0a9b8c".toItemId()
+    private val intro = Segment(INTRO, startTicks = 10_000L, endTicks = 40_000L)
+    private val opening = Segment(INTRO, startTicks = 0L, endTicks = 30_000L)
+    private val duration = 720_000L
+
+    private val controller = FakeController()
+    private var segments = listOf(intro)
+    /** While true, a segment load waits for [releaseSegments]. */
+    private var holdSegments = false
+    private val heldLoads = mutableListOf<Continuation<Any?>>()
+
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    private fun viewModel(): CastViewModel {
+        val prefs = MemoryPreferences()
+        prefs.edit().putString("pref_player_media_segments_intro_action", "SKIP").apply()
+        return CastViewModel(
+            sessionManager = FakeSession(),
+            playerController = controller,
+            repository = repository(),
+            appPreferences = AppPreferences(prefs),
+            context = RuntimeEnvironment.getApplication(),
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun repository(): MediaRepository =
+        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
+            _,
+            method,
+            args ->
+            when {
+                method.name.startsWith("getSegments") ->
+                    if (holdSegments) {
+                        heldLoads += args!!.last() as Continuation<Any?>
+                        COROUTINE_SUSPENDED
+                    } else {
+                        segments
+                    }
+                else -> null
+            }
+        }
+            as MediaRepository
+
+    private fun releaseSegments() {
+        holdSegments = false
+        heldLoads.toList().forEach { it.resumeWith(Result.success(segments)) }
+        heldLoads.clear()
+    }
+
+    private fun playing(itemId: ItemId, playbackPosition: Long = 0L) {
+        controller.currentItem.value =
+            CastMediaItem(
+                PlayerItem(
+                    name = "Item",
+                    itemId = itemId,
+                    mediaSourceId = "source".toMediaSourceId(),
+                    playbackPosition = playbackPosition,
+                )
+            )
+    }
+
+    @Test
+    fun `a skip becomes exactly one seek on the receiver`() {
+        viewModel()
+        playing(itemA)
+
+        controller.report(itemA, 10_000L)
+        controller.report(itemA, 11_000L)
+
+        assertEquals(listOf(40_000L), controller.seeks)
+    }
+
+    @Test
+    fun `a resumed item is not sent back to the intro's end by the stale position`() {
+        segments = listOf(opening)
+        viewModel()
+        playing(itemA, playbackPosition = 600_000L)
+
+        // The state still holds 0 when the receiver starts; then its own first report is the
+        // stale 0 too, before the resume position lands.
+        controller.report(null, 0L)
+        controller.report(itemA, 0L)
+        controller.report(itemA, 601_000L)
+        controller.report(itemA, 602_000L)
+
+        assertEquals(emptyList(), controller.seeks)
+    }
+
+    @Test
+    fun `the moment at 0 at the end of an item is not an entry`() {
+        segments = listOf(opening)
+        viewModel()
+        playing(itemA, playbackPosition = 700_000L)
+
+        controller.report(itemA, 712_000L)
+        controller.report(itemA, 718_000L)
+        controller.report(itemA, 0L)
+
+        assertEquals(emptyList(), controller.seeks)
+    }
+
+    @Test
+    fun `positions of the next item do not reach the previous item's segments`() {
+        // The queue moved on to an item the controller has to restore first: until then the
+        // current item is the previous one, and the positions are the new one's.
+        segments = listOf(opening)
+        viewModel()
+        playing(itemA, playbackPosition = 600_000L)
+        controller.report(itemA, 601_000L)
+
+        controller.report(itemB, 0L)
+        controller.report(itemB, 1_000L)
+
+        assertEquals(emptyList(), controller.seeks)
+    }
+
+    @Test
+    fun `a user seek back into the skipped segment skips it again`() {
+        val viewModel = viewModel()
+        playing(itemA)
+        controller.report(itemA, 10_000L)
+
+        viewModel.seekTo(20_000L)
+        controller.report(itemA, 20_000L)
+
+        assertEquals(listOf(40_000L, 20_000L, 40_000L), controller.seeks)
+    }
+
+    @Test
+    fun `a user seek elsewhere keeps the guard against a late report`() {
+        val viewModel = viewModel()
+        playing(itemA)
+        controller.report(itemA, 10_000L)
+
+        viewModel.seekBy(30_000L)
+        controller.report(itemA, 11_000L) // from before the skip landed
+        controller.report(itemA, 71_000L)
+
+        assertEquals(listOf(40_000L, 70_000L), controller.seeks)
+    }
+
+    @Test
+    fun `previous restarting the item is the user's seek`() {
+        val viewModel = viewModel()
+        playing(itemA)
+        controller.report(itemA, 10_000L)
+        controller.report(itemA, 41_000L)
+
+        viewModel.previous()
+        controller.report(itemA, 0L)
+        ShadowSystemClock.advanceBy(Duration.ofSeconds(10))
+        controller.report(itemA, 10_000L)
+
+        assertEquals(listOf(40_000L, 0L, 40_000L), controller.seeks)
+    }
+
+    @Test
+    fun `each item gets its own skip`() {
+        viewModel()
+        playing(itemA)
+        controller.report(itemA, 10_000L)
+
+        playing(itemB)
+        controller.report(itemB, 10_000L)
+
+        assertEquals(listOf(40_000L, 40_000L), controller.seeks)
+    }
+
+    @Test
+    fun `segments that load late still skip`() {
+        holdSegments = true
+        viewModel()
+        playing(itemA)
+        controller.report(itemA, 10_000L)
+        controller.report(itemA, 11_000L)
+
+        releaseSegments()
+        controller.report(itemA, 12_000L)
+        controller.report(itemA, 13_000L)
+
+        assertEquals(listOf(40_000L), controller.seeks)
+    }
+
+    @Test
+    fun `segments of an item that is gone are dropped`() {
+        holdSegments = true
+        viewModel()
+        playing(itemA)
+        playing(itemB)
+
+        releaseSegments() // both loads answer; only B's count
+        controller.report(itemA, 10_000L)
+        controller.report(itemB, 10_000L)
+
+        assertEquals(listOf(40_000L), controller.seeks)
+    }
+
+    private inner class FakeController : CastPlayerController {
+        override val currentItem = MutableStateFlow<CastMediaItem?>(null)
+        override val playerState =
+            MutableStateFlow(
+                CastPlayerState(status = CastPlaybackStatus.PLAYING, duration = duration)
+            )
+        override val errors = emptyFlow<CastError>()
+        val seeks = mutableListOf<Long>()
+
+        /** The receiver reports [positionMs] for [itemId]. */
+        fun report(itemId: ItemId?, positionMs: Long) {
+            playerState.update { it.copy(currentPosition = positionMs, positionItemId = itemId) }
+        }
+
+        override fun seekTo(position: Long) {
+            seeks += position
+            // As the real controller: the target shows at once.
+            playerState.update { it.copy(currentPosition = position) }
+        }
+
+        override fun playItem(
+            itemId: ItemId,
+            itemKind: String,
+            startFromBeginning: Boolean,
+            mediaSourceId: MediaSourceId?,
+            shuffle: Boolean,
+        ) {}
+
+        override fun play() {}
+
+        override fun pause() {}
+
+        override fun seekToNext() {}
+
+        override fun seekToPrevious() {}
+
+        override fun setVolume(volume: Float) {}
+
+        override fun setAudioTrack(track: Track?, itemId: ItemId?) {}
+
+        override fun setSubtitleTrack(track: Track?) {}
+
+        override fun stop() {}
+    }
+
+    private class FakeSession : CastSessionManager {
+        override val availability = CastAvailability.AVAILABLE
+        override val connectionState = MutableStateFlow(CastConnectionState.CONNECTED)
+        override val availableDevices = MutableStateFlow<List<Device>>(emptyList())
+        override val connectedDevice = MutableStateFlow<Device?>(null)
+
+        override fun init() {}
+
+        override fun updateDiscovery(activeScan: Boolean) {}
+
+        override fun connect(device: Device) {}
+
+        override fun disconnect() {}
+
+        override fun release() {}
+    }
+
+    /** SharedPreferences in memory. */
+    private class MemoryPreferences : SharedPreferences {
+        private val values = mutableMapOf<String, Any?>()
+
+        override fun getAll(): Map<String, *> = values.toMap()
+
+        override fun getString(key: String, defValue: String?) = values[key] as? String ?: defValue
+
+        @Suppress("UNCHECKED_CAST")
+        override fun getStringSet(key: String, defValues: Set<String>?) =
+            values[key] as? Set<String> ?: defValues
+
+        override fun getInt(key: String, defValue: Int) = values[key] as? Int ?: defValue
+
+        override fun getLong(key: String, defValue: Long) = values[key] as? Long ?: defValue
+
+        override fun getFloat(key: String, defValue: Float) = values[key] as? Float ?: defValue
+
+        override fun getBoolean(key: String, defValue: Boolean) =
+            values[key] as? Boolean ?: defValue
+
+        override fun contains(key: String) = key in values
+
+        override fun edit(): SharedPreferences.Editor = Editor()
+
+        override fun registerOnSharedPreferenceChangeListener(
+            listener: SharedPreferences.OnSharedPreferenceChangeListener
+        ) {}
+
+        override fun unregisterOnSharedPreferenceChangeListener(
+            listener: SharedPreferences.OnSharedPreferenceChangeListener
+        ) {}
+
+        private inner class Editor : SharedPreferences.Editor {
+            override fun putString(key: String, value: String?) = apply { values[key] = value }
+
+            override fun putStringSet(key: String, values: Set<String>?) = apply {
+                this@MemoryPreferences.values[key] = values
+            }
+
+            override fun putInt(key: String, value: Int) = apply { values[key] = value }
+
+            override fun putLong(key: String, value: Long) = apply { values[key] = value }
+
+            override fun putFloat(key: String, value: Float) = apply { values[key] = value }
+
+            override fun putBoolean(key: String, value: Boolean) = apply { values[key] = value }
+
+            override fun remove(key: String) = apply { values.remove(key) }
+
+            override fun clear() = apply { values.clear() }
+
+            override fun commit() = true
+
+            override fun apply() {}
+        }
+    }
+}

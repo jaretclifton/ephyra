@@ -147,10 +147,10 @@ constructor(
     val events: Flow<CastEvent> = _events.receiveAsFlow()
 
     /**
-     * CE (#851): the local player's segment rule for the receiver's positions, built from the
-     * settings for each item.
+     * CE (#851): the local player's segment rule for the positions the receiver reports for the
+     * current item. A new one, built from the settings, for each item; null without an item.
      */
-    private var segmentSkipper = newSegmentSkipper()
+    private var segmentSkipper: CastSegmentSkipper? = null
     /** The item the segments belong to, or are being loaded for. */
     private var segmentsItemId: ItemId? = null
     private var segmentsJob: Job? = null
@@ -194,7 +194,7 @@ constructor(
                             it.failedItem.takeIf { player.status != CastPlaybackStatus.PLAYING },
                     )
                 }
-                updateSegment(player.currentPosition, player.duration)
+                updateSegment(player)
             }
             .launchIn(viewModelScope)
 
@@ -276,8 +276,10 @@ constructor(
 
         if (item.itemId == segmentsItemId) return
         segmentsItemId = item.itemId
-        // The settings may have changed since the last item.
-        segmentSkipper = newSegmentSkipper()
+        // The settings may have changed since the last item. Until its segments load, the new
+        // item's skipper has none, and no position of the previous item reaches it.
+        val skipper = newSegmentSkipper(item)
+        segmentSkipper = skipper
         _state.update { it.copy(segment = null, segments = emptyList()) }
         segmentsJob?.cancel()
         segmentsJob = viewModelScope.launch {
@@ -292,8 +294,8 @@ constructor(
                     emptyList()
                 }
             // Another item took over, or the session ended, while these were loading.
-            if (segmentsItemId == item.itemId) {
-                segmentSkipper.setSegments(loaded)
+            if (segmentSkipper === skipper) {
+                skipper.setSegments(loaded)
                 // CE (#681): the seek bar shows them unless the setting is off.
                 if (appPreferences.getValue(appPreferences.playerMediaSegmentsOnSeekBar)) {
                     _state.update { it.copy(segments = loaded) }
@@ -305,7 +307,7 @@ constructor(
     private fun onNoItem() {
         segmentsJob?.cancel()
         segmentsItemId = null
-        segmentSkipper.setSegments(emptyList())
+        segmentSkipper = null
         // The receiver finished its last item: that is what "play again" offers.
         val ended = playerController.playerState.value.status == CastPlaybackStatus.ENDED
         _state.update {
@@ -353,16 +355,25 @@ constructor(
         }
     }
 
-    private fun newSegmentSkipper() =
-        CastSegmentSkipper(segmentTrackerFrom(appPreferences), SystemClock::elapsedRealtime)
+    private fun newSegmentSkipper(item: PlayerItem) =
+        CastSegmentSkipper(
+            itemId = item.itemId,
+            tracker = segmentTrackerFrom(appPreferences),
+            now = SystemClock::elapsedRealtime,
+            resumePositionMs = item.playbackPosition,
+        )
 
     /**
      * CE (#851): the same rule as the local player. A segment set to skip is skipped on the
-     * receiver, one set to ask shows the button, an ignored one nothing.
+     * receiver, one set to ask shows the button, an ignored one nothing. Only a position the
+     * receiver reported for the current item counts ([CastSegmentSkipper]).
      */
-    private fun updateSegment(positionMs: Long, durationMs: Long) {
+    private fun updateSegment(player: CastPlayerState) {
+        val step =
+            segmentSkipper?.update(player.positionItemId, player.currentPosition, player.duration)
+                ?: CastSegmentStep.None
         val active =
-            when (val step = segmentSkipper.update(positionMs, durationMs)) {
+            when (step) {
                 CastSegmentStep.None -> null
                 is CastSegmentStep.ShowButton -> step.segment
                 is CastSegmentStep.SeekTo -> {
@@ -524,7 +535,7 @@ constructor(
     }
 
     fun seekTo(positionMs: Long) {
-        segmentSkipper.onUserSeek()
+        segmentSkipper?.onUserSeek(positionMs)
         playerController.seekTo(positionMs)
     }
 

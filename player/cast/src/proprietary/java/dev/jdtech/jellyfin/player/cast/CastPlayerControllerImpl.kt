@@ -139,7 +139,12 @@ constructor(
     private var pendingLoad: Int? = null
     private var loadCount = 0
 
-    private fun beginLoad(): Int = (++loadCount).also { pendingLoad = it }
+    private fun beginLoad(): Int =
+        (++loadCount).also {
+            pendingLoad = it
+            // The position held now is not one of what is loading (#851).
+            _playerState.update { state -> state.copy(positionItemId = null) }
+        }
 
     /** Decides which reports the server gets; [send] sends them. */
     private val reporter = CastPlaybackReporter(clock = { SystemClock.elapsedRealtime() })
@@ -215,8 +220,16 @@ constructor(
         RemoteMediaClient.ProgressListener { progressMs, durationMs ->
             val safeProgress = progressMs.coerceAtLeast(0L)
             val safeDuration = durationMs.coerceAtLeast(0L)
-            _playerState.update { it.copy(currentPosition = safeProgress, duration = safeDuration) }
-            remoteItemId()?.let { reporter.positionChanged(it, safeProgress, safeDuration) }
+            val itemId = remoteItemId()
+            _playerState.update {
+                it.copy(
+                    currentPosition = safeProgress,
+                    duration = safeDuration,
+                    // While a load is on its way the receiver still shows what it played before.
+                    positionItemId = itemId.takeIf { !loadPending },
+                )
+            }
+            itemId?.let { reporter.positionChanged(it, safeProgress, safeDuration) }
         }
 
     private val castSessionListener =
@@ -358,7 +371,18 @@ constructor(
         val client = remoteMediaClient ?: return
         val playbackStatus = mapPlaybackStatus(client)
 
-        _playerState.update { it.copy(status = playbackStatus) }
+        _playerState.update {
+            it.copy(
+                status = playbackStatus,
+                // An item that ended or failed has no position to act on (#851).
+                positionItemId =
+                    it.positionItemId.takeIf {
+                        playbackStatus == CastPlaybackStatus.PLAYING ||
+                            playbackStatus == CastPlaybackStatus.PAUSED ||
+                            playbackStatus == CastPlaybackStatus.BUFFERING
+                    },
+            )
+        }
         send(reporter.statusChanged(receiverState(client)))
 
         when (playbackStatus) {

@@ -216,6 +216,7 @@ internal class FakeCastPlayerController(
                             it.copy(
                                 status = CastPlaybackStatus.ENDED,
                                 currentPosition = it.duration,
+                                positionItemId = null,
                             )
                         }
                         _currentItem.value = null
@@ -229,7 +230,7 @@ internal class FakeCastPlayerController(
     }
 
     private fun fail() {
-        _playerState.update { it.copy(status = CastPlaybackStatus.ERROR) }
+        _playerState.update { it.copy(status = CastPlaybackStatus.ERROR, positionItemId = null) }
         _currentItem.value = null
         _errors.tryEmit(CastError.PLAYBACK_FAILED)
     }
@@ -256,7 +257,9 @@ internal class FakeCastPlayerController(
     private fun load(item: suspend () -> PlayerItem?) {
         playJob?.cancel()
         playJob = scope.launch {
-            _playerState.update { it.copy(status = CastPlaybackStatus.BUFFERING) }
+            _playerState.update {
+                it.copy(status = CastPlaybackStatus.BUFFERING, positionItemId = null)
+            }
             val loaded =
                 try {
                     item()
@@ -315,6 +318,7 @@ internal class FakeCastPlayerController(
                     status = CastPlaybackStatus.PLAYING,
                     currentPosition = loaded.playbackPosition.coerceAtLeast(0L),
                     duration = duration,
+                    positionItemId = loaded.itemId,
                     hasNextItem = loaded.seriesName != null,
                     hasPreviousItem = (loaded.indexNumber ?: 1) > 1,
                 )

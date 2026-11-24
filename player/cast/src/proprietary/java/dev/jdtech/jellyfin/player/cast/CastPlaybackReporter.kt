@@ -149,12 +149,7 @@ internal class CastPlaybackReporter(
         val position = state.positionMs.coerceAtLeast(0L)
         // An item that runs out is at position 0 for a moment before the receiver moves on. That
         // is not a seek back to the start, and the stop that follows must not say it was.
-        val duration = durations[itemId]
-        val ranOut =
-            duration != null &&
-                positionMs >= duration - END_WINDOW_MS &&
-                position < SEEK_TOLERANCE_MS
-        if (ranOut) return emptyList()
+        if (CastPositions.ranOut(positionMs, position, durations[itemId])) return emptyList()
         val isPaused =
             when (state.status) {
                 CastPlaybackStatus.PLAYING -> false
@@ -184,10 +179,10 @@ internal class CastPlaybackReporter(
         const val PROGRESS_INTERVAL_MS = 10_000L
 
         /** A position this far from where the clock puts it is a seek. */
-        const val SEEK_TOLERANCE_MS = 2_000L
+        const val SEEK_TOLERANCE_MS = CastPositions.SEEK_TOLERANCE_MS
 
         /** An item this close to its end that jumps to its start has run out. */
-        const val END_WINDOW_MS = 10_000L
+        const val END_WINDOW_MS = CastPositions.END_WINDOW_MS
 
         /** The interval timer is not exact: a tick this much early still counts. */
         const val TICK_SLACK_MS = 500L
