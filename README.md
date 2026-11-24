@@ -175,8 +175,8 @@ the versions are in [gradle/libs.versions.toml](gradle/libs.versions.toml), and
 
 - **Ports and adapters, enforced by the build.** [Seventeen architecture rules](docs/architecture/rules.md)
   run with the unit tests; a screen cannot reach the Jellyfin SDK or the database around a port.
-- **About 2,500 unit tests**, run on every pull request that changes code, with contract suites that a server
-  adapter has to pass.
+- **[About 2,500 unit tests](docs/testing.md)**, run on every pull request that changes code, with
+  contract suites that a server adapter has to pass.
 - **Two player engines**, ExoPlayer and mpv, behind one interface.
 - **Translated in 36 languages**, checked on every pull request
   ([how the translations work](https://midasvo.nl/ephyra/guide/findroid/#translations)).

@@ -47,6 +47,7 @@ CHECKED = [
     "docs/dev-environment.md",
     "docs/get-started.md",
     "docs/mpv-checklist.md",
+    "docs/testing.md",
     "docs/track-test-series.md",
     "devsite/README.md",
     "devsite/src/content/docs/dev/*.mdx",
