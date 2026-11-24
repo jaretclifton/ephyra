@@ -181,7 +181,7 @@ object ArchitectureModel {
             "data" to
                 Module(
                     Layer.ADAPTER,
-                    "Room: the database, the stores (Room*Store) and MediaRepositoryImpl over the server's ports; no SDK.",
+                    "Room: the database, the stores (Room*Store) and MediaRepositoryImpl over the server's ports; no SDK, and of Android only Room (R20).",
                 ),
             "server/jellyfin" to
                 Module(
@@ -192,6 +192,11 @@ object ArchitectureModel {
                 Module(
                     Layer.ADAPTER,
                     "The MDBList adapter of the external ratings on the movie and show pages: its HTTP client and the ratings cache on disk, with its own Hilt module.",
+                ),
+            "device" to
+                Module(
+                    Layer.ADAPTER,
+                    "The adapters over the device: the codec probe (DeviceCodecs, what the device profile is built from) and the connectivity check (NetworkConnectivity), with its own Hilt module.",
                 ),
             "http" to
                 Module(

@@ -14,7 +14,8 @@ import kotlin.test.assertTrue
  * had a baseline until then.
  *
  * The MDBList adapter (`ratings/mdblist`, #331) is held to the same: the features reach it through
- * the ratings ports of `application`.
+ * the ratings ports of `application`. So is the device adapter (`device`, #965): the features reach
+ * it through `DeviceCodecs` and `NetworkConnectivity`.
  */
 class DataDependencyTest {
 
@@ -54,6 +55,21 @@ class DataDependencyTest {
         )
     }
 
+    @Test
+    fun `R9 only the apps depend on the device adapter`() {
+        val dependents =
+            dependentsOf(
+                ProjectTree.moduleBuildFiles.mapValues { it.value.readText() },
+                DEVICE_MARKER,
+            )
+        assertEquals(
+            APP_MODULES,
+            dependents,
+            "Only ${APP_MODULES.sorted().joinToString(" and ")} may depend on $DEVICE: use the " +
+                "ports it implements (DeviceCodecs, NetworkConnectivity) instead.",
+        )
+    }
+
     /** The rule reads what it is meant to, however a dependency is written. */
     @Test
     fun `R9 counts every production configuration and no test one`() {
@@ -76,12 +92,14 @@ class DataDependencyTest {
     private companion object {
         const val DATA = "data"
         const val MDBLIST = "ratings/mdblist"
+        const val DEVICE = "device"
 
         /** The composition roots (as in R7). */
         val APP_MODULES = setOf("app/phone", "app/tv")
 
         val MARKER = BuildFileDependencies.markerOf(DATA)
         val MDBLIST_MARKER = BuildFileDependencies.markerOf(MDBLIST)
+        val DEVICE_MARKER = BuildFileDependencies.markerOf(DEVICE)
 
         /**
          * The modules, by path, whose build file takes the module of [marker] (`data` unless said)
