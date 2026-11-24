@@ -106,7 +106,7 @@ private fun SubtitleStyleScreenLayout(
                     IconButton(onClick = { onAction(SubtitleStyleAction.OnBackClick) }) {
                         Icon(
                             painter = painterResource(CoreR.drawable.ic_arrow_left),
-                            contentDescription = null,
+                            contentDescription = stringResource(CoreR.string.navigate_back),
                         )
                     }
                 },
