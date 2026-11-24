@@ -302,6 +302,7 @@ status, permanent), `Finalized`, `FinalizeFailed`, `NetworkChanged`, `ServerConf
 | (none) | Enqueue | Queued | save the pending row (deduplicated by item id) |
 | Queued | Start, `retryAt` passed, online | Queued (`starting`) | delete the pending row, call the downloader (today's order, `DownloadQueue` 830 to 838) |
 | Queued (`starting`) | Started | Running | none |
+| (removed: cancelled while starting) | Started | (removed) | cancel the engine task of the event's download id (today's orphan cancel, `DownloadQueue` 867 to 912) |
 | Queued (`starting`) | StartFailed, offline | Queued (`waitingForNetwork`) | save the pending row again |
 | Queued (`starting`) | StartFailed, online | Failed (local or no answer) | none: the downloader already deleted the rows and the engine task |
 | Queued | NetworkChanged | Queued (`waitingForNetwork` follows) | none |
@@ -415,6 +416,7 @@ fun DownloadStage?.on(event: DownloadEvent, now: Long): Transition = when {
     this is Queued && !starting && event is Start && event.online && (retryAt ?: 0) <= now ->
         Transition(copy(starting = true), listOf(RemovePending, CallDownloader))
     this is Queued && starting && event is Started -> Transition(Running(facts, event.downloadId), emptyList())
+    this == null && event is Started -> Transition(null, listOf(CancelEngine(event.downloadId)))  // cancelled meanwhile
     this is Queued && starting && event is StartFailed ->
         if (event.online) Transition(Failed(facts, event.reason), emptyList())
         else Transition(copy(starting = false, waitingForNetwork = true), listOf(SavePending))
