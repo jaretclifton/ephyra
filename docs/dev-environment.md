@@ -49,7 +49,27 @@ tools/test-server/setup.sh status        # is it up, and the report
 tools/test-server/setup.sh stop
 tools/test-server/setup.sh wipe          # new server, same media and passwords
 tools/test-server/setup.sh wipe --media  # also regenerate the media
+tools/test-server/setup.sh https         # a public https address for the server, printed
+tools/test-server/setup.sh https stop    # close it again
 ```
+
+### Over https
+
+The server itself speaks http. `setup.sh https` puts a Cloudflare quick tunnel in front of it (a
+second container, `cloudflared`, no account needed) and prints an address such as
+`https://some-random-words.trycloudflare.com`. Add that address in the app like any server. Use
+it when a change touches how a player loads a stream: mpv reads https through its own TLS
+library, not through the app's HTTP client, so a test over http says nothing about it (#960).
+
+- The address is public while the tunnel runs, and the user `nopass` has no password. Close it
+  with `setup.sh https stop` when the test is done. It is a new address every time.
+- On Windows the tunnel dies when WSL shuts down for being idle. Keep WSL awake for as long as
+  the test takes, for example with `wsl -d Ubuntu -- sleep 3600` in a second terminal.
+- The tunnel belongs to the server it was started for: `setup.sh stop` and `wipe` close it, and
+  after the server has restarted for another reason (a reboot, WSL waking up) run `setup.sh https`
+  again. `setup.sh status` shows whether one is up.
+- The tunnel is not a reverse proxy like Caddy or nginx on a home server: a bug that needs one
+  of those is not shown by it.
 
 `EPHYRA_TEST_SERVER_DIR`, `EPHYRA_TEST_SERVER_PORT`, `EPHYRA_TEST_SERVER_NAME` and
 `EPHYRA_TEST_SERVER_IMAGE` change the folder, the port, the container name and the image. With a
@@ -124,7 +144,8 @@ To add a case, add it to `setup.sh` under a marker file of its own (as `.generat
 and to the table above. A file dropped into `media/` by hand works until the next `wipe --media`,
 and nobody else gets it.
 
-Not on the server: Dolby Vision, collections, live TV, music, a base-URL path, HTTPS.
+Not on the server: Dolby Vision, collections, live TV, music, a base-URL path, and a reverse
+proxy of its own (for https there is the tunnel, see above).
 `docs/track-test-series.md` has a second generator, for track selection and subtitle styling.
 
 ## The emulators

@@ -7,6 +7,9 @@
 #   tools/test-server/setup.sh wipe       remove the container and the server's state; keeps the
 #                                         media and creds.env, so the next run is quick
 #   tools/test-server/setup.sh wipe --media   also remove the generated media
+#   tools/test-server/setup.sh https      give the running server a public https address through
+#                                         a Cloudflare quick tunnel, and print it
+#   tools/test-server/setup.sh https stop close that tunnel
 #
 # Needs Docker and python3 on the machine that runs it, nothing else: the media is made with the
 # ffmpeg inside the Jellyfin image. On Windows, run it inside WSL. docs/dev-environment.md has
@@ -19,6 +22,7 @@
 #   EPHYRA_TEST_SERVER_NAME   container name (default ephyra-test-jellyfin)
 #   EPHYRA_TEST_SERVER_IMAGE  Jellyfin image (default below: a fixed version, so the server
 #                             behaves the same for everyone; raise it on purpose)
+#   EPHYRA_TEST_SERVER_TUNNEL_IMAGE  cloudflared image for `https`
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -26,6 +30,8 @@ ROOT="${EPHYRA_TEST_SERVER_DIR:-$HOME/ephyra-test-server}"
 PORT="${EPHYRA_TEST_SERVER_PORT:-8096}"
 NAME="${EPHYRA_TEST_SERVER_NAME:-ephyra-test-jellyfin}"
 IMAGE="${EPHYRA_TEST_SERVER_IMAGE:-jellyfin/jellyfin:12.4}"
+TUNNEL_IMAGE="${EPHYRA_TEST_SERVER_TUNNEL_IMAGE:-cloudflare/cloudflared:latest}"
+TUNNEL="$NAME-https"
 CREDS="$ROOT/creds.env"
 export EPHYRA_TEST_SERVER_DIR="$ROOT"
 
@@ -34,18 +40,73 @@ command -v python3 >/dev/null || { echo "python3 not found" >&2; exit 1; }
 
 case "${1:-up}" in
   up) ;;
-  stop) docker stop "$NAME" >/dev/null && echo "stopped $NAME"; exit 0 ;;
+  stop)
+    # The tunnel lives in the server's network namespace, so it goes with the server: after a
+    # restart it would be public and reach nothing.
+    docker rm -f "$TUNNEL" >/dev/null 2>&1 || true
+    docker stop "$NAME" >/dev/null && echo "stopped $NAME"; exit 0 ;;
   status)
     docker ps -a --filter "name=^$NAME\$" --format '{{.Names}}: {{.Status}} ({{.Image}})'
+    docker ps -a --filter "name=^$TUNNEL\$" --format '{{.Names}}: {{.Status}} (public https tunnel)'
     [ -f "$CREDS" ] && python3 "$HERE/configure.py" --report-only
     exit 0 ;;
   wipe)
+    docker rm -f "$TUNNEL" >/dev/null 2>&1 || true
     docker rm -f "$NAME" >/dev/null 2>&1 || true
     # the container writes these folders as its own user, so remove them from inside a container
     docker run --rm --entrypoint sh -v "$ROOT:/root-dir" "$IMAGE" -c \
       "rm -rf /root-dir/config /root-dir/cache; [ '${2:-}' = --media ] && rm -rf /root-dir/media; true"
     echo "wiped $NAME in $ROOT (creds.env kept)"; exit 0 ;;
-  *) sed -n '2,20p' "$0"; exit 1 ;;
+  https)
+    # Players are tested over https too (#960): a quick tunnel needs no account, no certificate
+    # and no open port. The address is public for as long as the tunnel runs, and it is a new
+    # one every time.
+    # An old tunnel goes first, also for a new start. Only "there is none" is fine: a tunnel
+    # that could not be removed is still public.
+    if docker ps -a --filter "name=^$TUNNEL\$" --format '{{.Names}}' | grep -q .; then
+      docker rm -f "$TUNNEL" >/dev/null ||
+        { echo "could not remove $TUNNEL: it may still be public" >&2; exit 1; }
+    fi
+    if [ "${2:-}" = stop ]; then echo "closed $TUNNEL"; exit 0; fi
+    docker ps --filter "name=^$NAME\$" --format '{{.Names}}' | grep -q . ||
+      { echo "$NAME is not running: run setup.sh first" >&2; exit 1; }
+    # In the server's own network namespace, where Jellyfin listens on 8096 whatever the host
+    # port is. Host networking would need a setting of its own on Docker Desktop.
+    docker run -d --name "$TUNNEL" --network "container:$NAME" "$TUNNEL_IMAGE" \
+      tunnel --no-autoupdate --url "http://localhost:8096" >/dev/null
+    # First the tunnel has to say it is connected.
+    for _ in $(seq 45); do
+      docker logs "$TUNNEL" 2>&1 | grep -q 'Registered tunnel connection' && break
+      sleep 2
+    done
+    url=$(docker logs "$TUNNEL" 2>&1 | grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' | head -1 || true)
+    if ! docker logs "$TUNNEL" 2>&1 | grep -q 'Registered tunnel connection' || [ -z "$url" ]; then
+      # Not left running: it has no address anyone was told, and it may still get one.
+      echo "the tunnel did not connect; its last lines:" >&2
+      docker logs --tail 5 "$TUNNEL" >&2 || true
+      docker rm -f "$TUNNEL" >/dev/null 2>&1 || echo "and $TUNNEL could not be removed" >&2
+      exit 1
+    fi
+    # The name exists some seconds later. Ask Cloudflare's resolver over https until it does:
+    # a lookup through the machine's own resolver before that would be remembered as "not
+    # found" for minutes, here and on the emulators.
+    python3 - "${url#https://}" <<'PY' || echo "the name does not resolve yet: wait a minute before using it" >&2
+import json, sys, time, urllib.request
+query = "https://cloudflare-dns.com/dns-query?type=A&name=" + sys.argv[1]
+for _ in range(45):
+    try:
+        request = urllib.request.Request(query, headers={"accept": "application/dns-json"})
+        if json.load(urllib.request.urlopen(request, timeout=5)).get("Answer"):
+            sys.exit(0)
+    except Exception:
+        pass
+    time.sleep(2)
+sys.exit(1)
+PY
+    echo "$url"
+    echo "public until: tools/test-server/setup.sh https stop" >&2
+    exit 0 ;;
+  *) sed -n '2,24p' "$0"; exit 1 ;;
 esac
 
 mkdir -p "$ROOT"/{config,cache,media/movies,media/shows}
