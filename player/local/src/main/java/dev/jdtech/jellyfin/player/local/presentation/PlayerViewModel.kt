@@ -2293,6 +2293,8 @@ constructor(
             TrickplayLoader(
                 repository = repository,
                 itemId = item.itemId,
+                // CE (#860): the tiles of the version that plays, whose layout trickplayInfo is.
+                mediaSourceId = item.mediaSourceId,
                 width = trickplayInfo.width,
                 height = trickplayInfo.height,
                 tileWidth = trickplayInfo.tileWidth,
@@ -2330,6 +2332,7 @@ constructor(
             TrickplayRegionLoader(
                 repository = repository,
                 itemId = item.itemId,
+                mediaSourceId = item.mediaSourceId,
                 tiles = tiles,
                 targetWidth =
                     (TV_TRICKPLAY_WIDTH_DP * application.resources.displayMetrics.density).toInt(),

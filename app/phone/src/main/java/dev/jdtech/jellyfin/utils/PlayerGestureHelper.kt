@@ -630,6 +630,10 @@ class PlayerGestureHelper(
                         } catch (e: Exception) {
                             Timber.d(e, "Trickplay tile load failed (gesture)")
                             null
+                        } catch (e: OutOfMemoryError) {
+                            // CE (#860): costs the preview, not the player.
+                            Timber.e(e, "No memory for a trickplay tile (gesture)")
+                            null
                         } ?: return@launch
                     if (currentTrickplayBitmap != bitmap) {
                         activity.binding.progressScrubberTrickplay.load(bitmap) {

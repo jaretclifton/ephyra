@@ -5,10 +5,13 @@ import android.graphics.BitmapFactory
 import android.graphics.BitmapRegionDecoder
 import android.graphics.Rect
 import android.os.Build
+import android.os.SystemClock
 import android.util.LruCache
 import dev.jdtech.jellyfin.models.ItemId
+import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.player.core.domain.models.TrickplayTileLoader
 import dev.jdtech.jellyfin.repository.MediaRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -24,16 +27,24 @@ const val TV_TRICKPLAY_WIDTH_DP = 240
  * keeps only the compressed sheets and decodes one cell at a time with [BitmapRegionDecoder], in
  * RGB_565 and sub-sampled to [targetWidth]. A few recent thumbnails stay cached, so moving back and
  * forth over the same spot doesn't decode again.
+ *
+ * CE (#860): the sheets are those of [mediaSourceId], the version that plays (null: the item's
+ * own), and a sheet that fails is not asked for again for [TrickplaySheetFailures.RETRY_AFTER_MS].
  */
 class TrickplayRegionLoader(
     private val repository: MediaRepository,
     private val itemId: ItemId,
+    private val mediaSourceId: MediaSourceId?,
     private val tiles: TrickplayTiles,
     /** The width the thumbnail is shown at, in pixels. Decoding stops at the power of two above. */
     targetWidth: Int,
+    /** A monotonic clock in milliseconds, for how long a failed sheet is left alone. */
+    nowMs: () -> Long = SystemClock::elapsedRealtime,
 ) : TrickplayTileLoader {
 
     private val sampleSize = TrickplayTiles.sampleSize(tiles.width, targetWidth)
+
+    private val failures = TrickplaySheetFailures(nowMs)
 
     // One lock for fetching and decoding: decoders aren't shared between threads, and an evicted
     // decoder can be recycled without racing a decode. Seeking asks for one thumbnail at a time,
@@ -94,6 +105,9 @@ class TrickplayRegionLoader(
                     } catch (e: Exception) {
                         Timber.e(e, "Failed to decode trickplay tile ${location.index}")
                         null
+                    } catch (e: OutOfMemoryError) {
+                        Timber.e(e, "No memory for trickplay tile ${location.index}")
+                        null
                     }
                 }
                 ?.also { thumbnails.put(location.index, it) }
@@ -111,18 +125,30 @@ class TrickplayRegionLoader(
             return it
         }
         if (sheetIndex < 0 || sheetIndex >= tiles.sheetCount) return null
+        // A sheet that failed a moment ago would fail again: every seek step asked anew (#860).
+        if (!failures.mayTry(sheetIndex)) return null
         val decoder =
             withContext(Dispatchers.IO) {
                 try {
                     val bytes =
-                        repository.getTrickplayData(itemId, tiles.width, sheetIndex)
+                        repository.getTrickplayData(itemId, tiles.width, sheetIndex, mediaSourceId)
                             ?: return@withContext null
                     newDecoder(bytes)
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to load trickplay sheet $sheetIndex")
                     null
+                } catch (e: OutOfMemoryError) {
+                    Timber.e(e, "No memory for trickplay sheet $sheetIndex")
+                    null
                 }
-            } ?: return null
+            }
+        if (decoder == null) {
+            failures.failed(sheetIndex)
+            return null
+        }
+        failures.loaded(sheetIndex)
         decoders.put(sheetIndex, decoder)
         return decoder
     }
