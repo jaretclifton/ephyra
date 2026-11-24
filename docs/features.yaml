@@ -7,7 +7,9 @@
 #
 # A feature:
 #   id       unique, also the anchor on its guide page
-#   area     one of the areas below (an axis of the radar)
+#   area     one of the areas below (an axis of the radar). `device` is for the tablet layouts
+#            (on: [tablet]) and what the TV app has for the remote (on: [tv]): the guide lists
+#            it on those two pages, so a feature the phone has goes in another area
 #   title    a few words
 #   text     one or two sentences for the guide (optional)
 #   on       the apps that have it: phone, tablet (both are the phone app), tv

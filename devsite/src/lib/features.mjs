@@ -28,6 +28,8 @@ export function loadFeatures() {
     if (!areaIds.has(f.area)) throw new Error(`${where}: unknown area "${f.area}"`);
     if (!f.title) throw new Error(`${where}: no title`);
     if (!Array.isArray(f.on) || !f.on.length || f.on.some((d) => !deviceIds.has(d))) throw new Error(`${where}: "on" must list phone, tablet or tv`);
+    // The device area is shown on the tablet page and the TV page only.
+    if (f.area === 'device' && f.on.includes('phone')) throw new Error(`${where}: the "device" area is for the tablet layouts and the TV app; a feature the phone has goes in another area`);
     if (f.image && !fs.existsSync(path.join(ROOT, 'images/screenshots', f.image))) throw new Error(`${where}: no images/screenshots/${f.image}`);
   }
   return data;

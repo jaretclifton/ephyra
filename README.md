@@ -113,7 +113,7 @@ TV home screen and a screensaver with your library's artwork.
 And more: profiles with a PIN, Home rows you choose, hide watched, hide spoilers, fuller movie and
 show pages, and a look of its own. **[Library and Home →](https://midasvo.nl/ephyra/guide/library/)**
 
-<sub>Screenshots use the public-domain library of the Jellyfin demo server. All artwork shown belongs to its respective owners.</sub>
+<sub>Screenshots use the public-domain library of the Jellyfin demo server, except the download screens: the demo account can't download, so those come from the maintainer's server. All artwork shown belongs to its respective owners.</sub>
 
 ## What runs where
 

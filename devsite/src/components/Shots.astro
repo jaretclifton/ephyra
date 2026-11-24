@@ -54,6 +54,7 @@ const image = (file: string) => {
         const candidates = (img.srcset || img.src).split(',').map((c) => c.trim().split(' ')[0]);
         large.src = candidates[candidates.length - 1];
         large.alt = img.alt;
+        dialog.setAttribute('aria-label', (button.getAttribute('aria-label') ?? img.alt).replace(/^Enlarge: /, 'Screenshot: '));
         dialog.showModal();
       }),
     );
