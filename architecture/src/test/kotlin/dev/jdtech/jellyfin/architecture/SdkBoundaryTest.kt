@@ -119,7 +119,7 @@ class SdkBoundaryTest {
             others.joinToString("\n") {
                 "$it/build.gradle.kts depends on ${ProjectTree.JELLYFIN_ADAPTER_MODULE}. Only " +
                     "${APP_MODULES.sorted().joinToString(" and ")} may: use a port from domain " +
-                    "instead (docs/architecture/3-target.md)."
+                    "instead (${TARGET_DOC})."
             },
         )
         assertTrue(
@@ -171,7 +171,7 @@ class SdkBoundaryTest {
         private const val SDK_PACKAGE = "$SDK."
         private const val JELLYFIN_API = "dev.jdtech.jellyfin.api.JellyfinApi"
         private const val SERVER_DAO = "dev.jdtech.jellyfin.database.ServerDatabaseDao"
-        private const val TARGET_DOC = "docs/architecture/3-target.md"
+        private const val TARGET_DOC = "docs/areas/architecture.md, recipe 5"
 
         /** The composition roots, the only modules that may depend on a server adapter (R7). */
         private val APP_MODULES = setOf("app/phone", "app/tv")
