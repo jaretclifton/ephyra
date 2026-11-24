@@ -40,7 +40,7 @@ Android 10 or newer (Android 9 on TV).
 
 | | How | Updates |
 |---|---|---|
-| **Obtainium** | Add `https://github.com/midasvo/ephyra` and set the APK filter for your device | By themselves |
+| **Obtainium** | Add `https://github.com/midasvo/ephyra` and set the APK filter for your device | Obtainium finds them; you confirm the install |
 | **Releases** | Download the APK from [Releases](https://github.com/midasvo/ephyra/releases/latest) | By hand |
 | **F-Droid** | Not yet: [submitted](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/56048), waiting for review | |
 
