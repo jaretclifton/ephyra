@@ -360,7 +360,8 @@ internal constructor(
     private suspend fun refreshServerName(server: Server) {
         logFailure("server name") {
             val renamed = server.renamedTo(repository.getServerInfo()) ?: return@logFailure
-            serverStore.updateServer(renamed)
+            // #988: only the name; the server on screen may be older than its row.
+            serverStore.renameServer(renamed.id, renamed.name)
             updateState { if (it.server?.id == renamed.id) it.copy(server = renamed) else it }
         }
     }

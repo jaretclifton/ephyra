@@ -2,11 +2,13 @@ package dev.jdtech.jellyfin.film.presentation.home
 
 import android.content.SharedPreferences
 import dev.jdtech.jellyfin.models.Server
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.asServerId
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.IOException
@@ -30,7 +32,8 @@ import org.junit.jupiter.api.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelServerNameTest {
     private val stored = Server(id = SERVER_ID.toServerId(), name = "Old name", null, null)
-    private val updated = mutableListOf<Server>()
+    /** The server renames written, as the id and the new name. */
+    private val renamed = mutableListOf<Pair<ServerId, String>>()
     private var systemInfo: () -> ServerInfo = { info(SERVER_ID, "New name") }
 
     /** #955: Main and the loads on one test scheduler, so no load outlives its test. */
@@ -63,7 +66,7 @@ class HomeViewModelServerNameTest {
             val state = load()
 
             assertEquals("New name", state.server?.name)
-            assertEquals(listOf(stored.copy(name = "New name")), updated)
+            assertEquals(listOf(stored.id to "New name"), renamed)
         }
 
     @Test
@@ -74,7 +77,7 @@ class HomeViewModelServerNameTest {
             val state = load()
 
             assertEquals("Old name", state.server?.name)
-            assertTrue(updated.isEmpty())
+            assertTrue(renamed.isEmpty())
         }
 
     /** A Home load, to its end. */
@@ -120,7 +123,8 @@ class HomeViewModelServerNameTest {
             when (method.kotlinName) {
                 "server" -> stored
                 "currentUser" -> null
-                "updateServer" -> updated.add(args!![0] as Server).let { Unit }
+                "renameServer" ->
+                    renamed.add(args!![0].asServerId() to args[1] as String).let { Unit }
                 else -> throw NotImplementedError("ServerStore.${method.kotlinName}")
             }
         }

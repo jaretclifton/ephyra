@@ -72,13 +72,27 @@ class SetupRepositoryConnectorTest {
     /** The Room calls in order, with their first argument. */
     private val writes: MutableList<String> = Collections.synchronizedList(mutableListOf())
 
+    /**
+     * #988: runs once, right after the next read of the server row: another write to the row
+     * landing between a caller's read and its write.
+     */
+    private var afterServerRead: (() -> Unit)? = null
+
     private val database =
         fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
             _,
             method,
             args ->
             when (method.kotlinName) {
-                "server" -> server.takeIf { it.id == args[0].asServerId() }
+                "server" ->
+                    server
+                        .takeIf { it.id == args[0].asServerId() }
+                        .also {
+                            afterServerRead?.let {
+                                afterServerRead = null
+                                it()
+                            }
+                        }
                 "user" -> users[args[0].asUserId()]
                 "address" -> addresses.single { it.id == args[0].asServerAddressId() }
                 "serverWithAddresses" -> ServerWithAddresses(server, addresses.toList(), null)
@@ -104,9 +118,9 @@ class SetupRepositoryConnectorTest {
                     writes += "clearServerCurrentUser ${args[0]}"
                     Unit
                 }
-                "updateServer" -> {
-                    server = args[0] as Server
-                    writes += "updateServer"
+                "setCurrentAddress" -> {
+                    server = server.copy(currentServerAddressId = args[1].asServerAddressId())
+                    writes += "updateServerCurrentAddress ${args[0]}"
                     Unit
                 }
                 "deleteUser" -> {
@@ -296,6 +310,38 @@ class SetupRepositoryConnectorTest {
             listOf(RecordingServerSession.Use(other.address, "token-a", alice.id)),
             session.uses.toList(),
         )
+    }
+
+    @Test
+    fun `switching address keeps a sign-out that lands between the read and the write`() =
+        runBlocking {
+            // #988: the sign-out clears the current user while the selection holds the row it
+            // read; writing that row back pointed the server at the signed-out user again.
+            afterServerRead = { server = server.copy(currentUserId = null) }
+
+            repository.setCurrentAddress(other.id)
+
+            assertEquals(other.id, server.currentServerAddressId)
+            assertEquals(null, server.currentUserId)
+        }
+
+    @Test
+    fun `switching user keeps an address chosen between the read and the write`() = runBlocking {
+        val bob =
+            User(
+                UUID.randomUUID().toString().toUserId(),
+                "bob",
+                serverId = "a".toServerId(),
+                accessToken = "token-b",
+            )
+        users[bob.id] = bob
+        // #988: another address becomes current while the user switch holds the row it read.
+        afterServerRead = { server = server.copy(currentServerAddressId = other.id) }
+
+        repository.setCurrentUser(bob.id)
+
+        assertEquals(bob.id, server.currentUserId)
+        assertEquals(other.id, server.currentServerAddressId)
     }
 
     @Test

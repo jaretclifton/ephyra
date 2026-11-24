@@ -205,13 +205,13 @@ class SetupRepositoryImpl(
                             .also { serverStore.insertAddress(it) }
                 // CE (#984): the client goes to this address below, so it becomes the server's
                 // current address in Room too. Left as it was, the copy of the session in
-                // preferences kept the old address, and a restart went back to it.
+                // preferences kept the old address, and a restart went back to it. #988: only that
+                // column, so a write to the row since the read above (a sign-out) is kept.
                 if (serverInDatabase.currentServerAddressId == serverAddress.id) {
                     serverInDatabase
                 } else {
-                    serverInDatabase.copy(currentServerAddressId = serverAddress.id).also {
-                        serverStore.updateServer(it)
-                    }
+                    serverStore.setCurrentAddress(serverInDatabase.id, serverAddress.id)
+                    serverInDatabase.copy(currentServerAddressId = serverAddress.id)
                 }
             } else {
                 val serverAddress =
@@ -366,7 +366,8 @@ class SetupRepositoryImpl(
     override suspend fun setCurrentUser(userId: UserId) {
         val server = getCurrentServer() ?: return
         val user = serverStore.user(userId) ?: return
-        serverStore.updateServer(server.copy(currentUserId = user.id))
+        // #988: only the user column, not the row as read above.
+        serverStore.setCurrentUser(server.id, user.id)
 
         active.onSameServer { it.copy(accessToken = user.accessToken, userId = user.id) }
     }
@@ -388,7 +389,8 @@ class SetupRepositoryImpl(
             val address = serverStore.address(addressId)
             val server = serverStore.server(address.serverId) ?: return@withLock
             if (server.currentServerAddressId != address.id) {
-                serverStore.updateServer(server.copy(currentServerAddressId = address.id))
+                // #988: only the address column, so a sign-out since the read is kept.
+                serverStore.setCurrentAddress(server.id, address.id)
             }
             // The server on the holder decides, in the same write: never another server's address
             // under this one's token, also while a switch has not reached the preference yet.
