@@ -19,6 +19,9 @@ package dev.jdtech.jellyfin.player.local.engine.mpv
  * - A failure without an error line yet is held ([End.HOLD]) until the first line arrives or the
  *   caller's timer runs out, so that the report can say what went wrong.
  *
+ * CE (#960): so is a network stream with only mpv's "Failed to open" line: FFmpeg's line, which
+ * says why, can come after it.
+ *
  * Not thread-safe: [MPVPlayer] calls it on the main thread.
  */
 internal class MpvLoadState {
@@ -102,8 +105,10 @@ internal class MpvLoadState {
     /** mpv logged [message] at error level. */
     fun errorLogged(message: String): Logged {
         if (holding) {
+            if (errors.size < MAX_ERRORS) errors.add(message)
+            // #960: mpv's line for a network stream came first: wait for FFmpeg's.
+            if (awaitsFfmpegLine()) return Logged.KEPT
             holding = false
-            errors.add(message)
             return Logged.COMPLETES_FAILURE
         }
         if (failed) return Logged.AFTER_FAILURE
@@ -122,12 +127,22 @@ internal class MpvLoadState {
         val wanted = wantedIndex
         if (wanted != null && playingIndex() == wanted) return End.NOT_A_FAILURE
         failed = true
-        if (errors.isEmpty()) {
+        if (errors.isEmpty() || awaitsFfmpegLine()) {
             holding = true
             return End.HOLD
         }
         return End.FAILED
     }
+
+    /**
+     * CE (#960): mpv's own line for a network stream that did not open is there, FFmpeg's line with
+     * the reason is not yet. FFmpeg's lines come through the process' log ([MpvFfmpegLog]) and can
+     * arrive after mpv's and after END_FILE, and the reason decides what happens next
+     * ([MpvErrorRecovery], [MpvTlsFallback]).
+     */
+    private fun awaitsFfmpegLine(): Boolean =
+        errors.none { it.startsWith(FFMPEG_PREFIX) } &&
+            errors.any { it.startsWith(NETWORK_OPEN_FAILED) }
 
     /** The caller's timer for [End.HOLD] ran out. Returns true when the failure is still held. */
     fun holdTimedOut(): Boolean {
@@ -148,5 +163,10 @@ internal class MpvLoadState {
         const val HOLD_MS = 300L
 
         private const val MAX_ERRORS = 20
+
+        private const val FFMPEG_PREFIX = "ffmpeg:"
+
+        /** mpv's line for a stream it could not open over http or https. */
+        private const val NETWORK_OPEN_FAILED = "stream: Failed to open http"
     }
 }

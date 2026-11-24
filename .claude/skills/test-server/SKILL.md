@@ -53,6 +53,11 @@ Read it first; `docs/get-started.md` has what to install. This file is how to ac
   same session, and say so in your report. On Windows keep WSL awake while it runs
   (`wsl -d <distro> -- sleep 3600` in the background), or the tunnel dies mid-test.
 
+- **A reverse proxy with TLS:** `tools/test-server/caddy-tls.sh` puts Caddy with a throwaway CA
+  in front of the server, with sites that ask for a client certificate, require one, or do not
+  (#960, #993); `caddy-tls.sh stop` removes it. The emulator needs the CA as a user CA
+  (`docs/dev-environment.md`, "Behind a reverse proxy with TLS"). Stop it in the same session.
+
 ## Adding an edge case
 
 1. Add the file to `tools/test-server/setup.sh` in a block with its own marker file, the way

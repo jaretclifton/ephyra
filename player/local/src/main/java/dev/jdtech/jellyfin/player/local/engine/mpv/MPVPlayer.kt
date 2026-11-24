@@ -584,6 +584,9 @@ class MPVPlayer(
     /** CE (#474): what prepare() loads after an error. */
     private val errorRecovery = MpvErrorRecovery()
 
+    /** CE (#960): libcurl for a server whose TLS handshake FFmpeg cannot finish. */
+    private val tlsFallback = MpvTlsFallback()
+
     /**
      * CE (#474): [reloadAfterError] moved mpv's playlist and the new file has not started yet. mpv
      * can report the index in between, which belongs to another item.
@@ -967,6 +970,11 @@ class MPVPlayer(
      * is stopped here; prepare() loads the playlist again.
      */
     private fun onLoadError(failure: MpvLoadState.Failure) {
+        // #960: FFmpeg's TLS fails when the server asks for a client certificate: try libcurl.
+        if (tlsFallback.retryOverCurl(failure.errors)) {
+            reloadOverCurl(failure.errors.first(MpvTlsFallback::isClientCertificateFailure))
+            return
+        }
         val message = failure.message
         // #446: without an error line the message stays null, so the UI shows its own
         // (localized) text instead of an English sentence from here.
@@ -975,6 +983,20 @@ class MPVPlayer(
         // #576: so is a first load that could not connect.
         val errorCode = errorRecovery.loadErrorCode(message, failure.errors)
         failPlayback(PlaybackException(message, null, errorCode))
+    }
+
+    /**
+     * CE (#960): the current file failed to open in FFmpeg's TLS handshake ([MpvTlsFallback]).
+     * Switches this mpv to libcurl and loads the item again where it was to start, with no error
+     * reported. A failure over libcurl is reported as any other.
+     */
+    private fun reloadOverCurl(tlsError: String) {
+        Timber.w("mpv: FFmpeg's TLS failed the handshake ($tlsError), loading again over libcurl")
+        mpv.setOptionString("curl-enabled", "yes")
+        // mpv moves on to the next playlist entry by itself after a failure: stop it there.
+        loadState.expectEndFile()
+        mpv.command(arrayOf("stop", "keep-playlist"))
+        reloadAfterError(currentMediaItemIndex)
     }
 
     /**

@@ -93,6 +93,44 @@ class MpvLoadStateTest {
         )
     }
 
+    /** #960: seen on an emulator, FFmpeg's TLS line 190 ms after END_FILE. */
+    @Test
+    fun `mpv's open failure of a network stream waits for FFmpeg's line with the reason`() {
+        state.errorLogged("stream: Failed to open https://jellyfin.example/Videos/1/stream")
+
+        assertEquals(End.HOLD, state.endFile(idle))
+        assertEquals(Logged.KEPT, state.errorLogged("lavf: avformat_open_input() failed"))
+        assertEquals(
+            Logged.COMPLETES_FAILURE,
+            state.errorLogged("ffmpeg: tls: TLS handshake failed."),
+        )
+        assertEquals("ffmpeg: tls: TLS handshake failed.", state.failure.message)
+        assertEquals(3, state.failure.errors.size)
+    }
+
+    @Test
+    fun `a held failure that gets mpv's open line first still waits for FFmpeg's`() {
+        assertEquals(End.HOLD, state.endFile(idle))
+
+        assertEquals(
+            Logged.KEPT,
+            state.errorLogged("stream: Failed to open https://jellyfin.example/Videos/1/stream"),
+        )
+        assertEquals(Logged.COMPLETES_FAILURE, state.errorLogged("ffmpeg: tcp: refused"))
+    }
+
+    @Test
+    fun `without FFmpeg's line the timer reports mpv's`() {
+        state.errorLogged("stream: Failed to open http://10.0.2.2:8096/Videos/1/stream")
+
+        assertEquals(End.HOLD, state.endFile(idle))
+        assertTrue(state.holdTimedOut())
+        assertEquals(
+            "stream: Failed to open http://10.0.2.2:8096/Videos/1/stream",
+            state.failure.message,
+        )
+    }
+
     @Test
     fun `a file that loaded and then ended is no load failure`() {
         state.fileLoaded()
