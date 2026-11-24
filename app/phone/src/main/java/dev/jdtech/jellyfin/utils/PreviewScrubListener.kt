@@ -68,6 +68,11 @@ class PreviewScrubListener(
                         } catch (e: Exception) {
                             Timber.e(e, "Trickplay tile load failed")
                             null
+                        } catch (e: OutOfMemoryError) {
+                            // CE (#860): a tile too large for memory costs the preview, not the
+                            // player. The loaders sample sheets down; this is the last guard.
+                            Timber.e(e, "No memory for a trickplay tile")
+                            null
                         }
 
                     if (image == null) {

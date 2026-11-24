@@ -1,6 +1,6 @@
 # Player
 
-Status: works on both engines, phone and TV. As of 2026-11-23 (`main` at `26e62f27a`). Open: the player side of trickplay previews ([#860](https://github.com/midasvo/ephyra/issues/860)).
+Status: works on both engines, phone and TV. As of 2026-11-24. Trickplay previews: the player part of [#860](https://github.com/midasvo/ephyra/issues/860) is done; the original report (no previews on ExoPlayer on one phone) was never reproduced.
 
 ## Start here
 
@@ -8,7 +8,7 @@ Status: works on both engines, phone and TV. As of 2026-11-23 (`main` at `26e62f
 - The queue is `PlaylistManager`, how an item is asked for is `ResolvePlayback`, quality and transcode-audio switches are `StreamSwitches`, trickplay is `TrickplayLoader` (phone) and `TrickplayRegionLoader` (TV).
 - Reports to the server are `PlaybackReporter` and `PlaybackStartGate`: see [playback-reporting.md](playback-reporting.md). Resume position and played: [user-data.md](user-data.md). Tracks and subtitles: [subtitles-and-tracks.md](subtitles-and-tracks.md).
 - Test fast: `./gradlew :player:local:testDebugUnitTest`. Player PRs also run [docs/mpv-checklist.md](../mpv-checklist.md) on both backends.
-- **Open #860:** the player builds its trickplay loaders without the media source, and a failed sheet is asked for again at once: `getTrickplay` and `getTvTrickplay` in `PlayerViewModel.kt`, `TrickplayLoader.sheetLoad`, `TrickplayRegionLoader`. The adapter side is fixed (#878).
+- **Trickplay (#860):** the loaders are built with the played version (`PlayerItem.mediaSourceId`) and ask for that version's sheets; a sheet that failed is left alone for 30 s (`TrickplaySheetFailures`), and `TrickplayLoader` samples a sheet larger than `MAX_SHEET_PIXELS` down instead of running out of memory.
 - `onMediaItemTransition` in `PlayerViewModel.kt` takes the item before it waits for the previous item's stop, and hands it with its `ItemTransition` to `PlaybackReporter.onTransitionHandled`, which drops it when a switch came meanwhile (#890).
 
 ## What it does
@@ -28,7 +28,7 @@ Paths are under `player/local/src/main/java/dev/jdtech/jellyfin/player/local/` u
 | [domain/PlaylistManager.kt](../../player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/PlaylistManager.kt) | The queue, `getNextPlayerItem`, `jumpTo`, `recreatePlayerItem`, and `toPlayerItem`, which reads the trickplay layout of the played source |
 | [domain/ResolvePlayback.kt](../../player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/ResolvePlayback.kt) | `sources` and `pick`: the playback target, engine and cap (#766) |
 | [domain/StreamSwitches.kt](../../player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/StreamSwitches.kt), [QueueRebuild.kt](../../player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/QueueRebuild.kt) | `selectBitrate`, `followBitrate`, `rebuildQueue`, `switchFailureText` |
-| [domain/TrickplayLoader.kt](../../player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/TrickplayLoader.kt), [TrickplayRegionLoader.kt](../../player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/TrickplayRegionLoader.kt), [TrickplayTiles.kt](../../player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/TrickplayTiles.kt) | Sheet loads (`sheetLoad`, `tileAt`), the TV region loader, the tile arithmetic |
+| [domain/TrickplayLoader.kt](../../player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/TrickplayLoader.kt), [TrickplayRegionLoader.kt](../../player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/TrickplayRegionLoader.kt), [TrickplayTiles.kt](../../player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/TrickplayTiles.kt) | Sheet loads (`sheetLoad`, `decodeSheet`, `tileAt`), the TV region loader, the tile arithmetic; [TrickplaySheetFailures.kt](../../player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/TrickplaySheetFailures.kt): how long a failed sheet is left alone |
 | [domain/](../../player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/) | `NeighbourLoader`, `AutoPlayNext`, `EndOfItem`, `UpNextCountdown`, `SegmentTracker`, `SleepTimer`, `StillWatchingTracker`, `NetworkRecovery`, `DisplayRefreshRateManager`, `DebugSegments` |
 | [PlaybackService.kt](../../player/local/src/main/java/dev/jdtech/jellyfin/player/local/PlaybackService.kt), [PlaybackSessionStore.kt](../../player/local/src/main/java/dev/jdtech/jellyfin/player/local/PlaybackSessionStore.kt) | The media session service; the owner of the view model for the phone player |
 | [PlayerActivity.kt](../../app/phone/src/main/java/dev/jdtech/jellyfin/PlayerActivity.kt) | The phone player screen (Views); [PreviewScrubListener.kt](../../app/phone/src/main/java/dev/jdtech/jellyfin/utils/PreviewScrubListener.kt) shows the seek preview; dialogs in [presentation/player/](../../app/phone/src/main/java/dev/jdtech/jellyfin/presentation/player/) |
@@ -43,7 +43,7 @@ Paths are under `player/local/src/main/java/dev/jdtech/jellyfin/player/local/` u
 
 - **R6**: `engine/exo` and `engine/mpv` use neither each other, and shared code uses neither; only `engine.di` binds both. A feature of one engine goes behind `EnginePlayer`.
 - **R1, R2, R3**: no Jellyfin SDK in the player. The adapter maps SDK types.
-- **R10**: ids are `ItemId` and `MediaSourceId`; no `UUID`, no `String` id in a signature. #860 writes `mediaSourceId: String?`; use `MediaSourceId?`.
+- **R10**: ids are `ItemId` and `MediaSourceId`; no `UUID`, no `String` id in a signature.
 - **R12**: ticks only through `Ticks`. **R5**, **R19**: `domain` and `application` stay pure Kotlin, with no library but kotlinx; an OkHttp type goes through `http`, not a port.
 - Player PRs: [docs/mpv-checklist.md](../mpv-checklist.md) on both backends. Do not fix mpv by touching the ExoPlayer path.
 - `PlayerInvariantsTest` fails the build when ExoPlayer loses its default frame rate strategy, when mpv stops hinting the surface with the frame rate (#338), and for other mpv invariants (no calls on the main thread, a network timeout, replaced playlists reported).
@@ -59,7 +59,7 @@ Unit tests, no device:
 ./gradlew :architecture:test
 ```
 
-Useful classes: `PlayerInvariantsTest`, `StreamSwitchesTest`, `ResolvePlaybackTest`, `PlaylistManagerQueueTest`, `PlaylistManagerNextUpTest`, `NeighbourLoaderTest`, `TrickplayTilesTest`, `NetworkRecoveryTest`, `PlaybackStartGateTest`, `MpvItemTransitionsTest`, `MpvStallWatchTest`. In the adapter: `TrickplayTileRequestTest`, `TrickplaySheetTimeoutTest`, `TrickplayWidthTest`.
+Useful classes: `PlayerInvariantsTest`, `StreamSwitchesTest`, `ResolvePlaybackTest`, `PlaylistManagerQueueTest`, `PlaylistManagerNextUpTest`, `NeighbourLoaderTest`, `TrickplayTilesTest`, `TrickplayLoaderTest`, `TrickplaySheetFailuresTest`, `NetworkRecoveryTest`, `PlaybackStartGateTest`, `MpvItemTransitionsTest`, `MpvStallWatchTest`. In the adapter: `TrickplayTileRequestTest`, `TrickplaySheetTimeoutTest`, `TrickplayWidthTest`.
 
 On a device, on the test server ([docs/dev-environment.md](../dev-environment.md), `test-server` and `test-devices` skills):
 
@@ -89,11 +89,11 @@ Add `:app:phone:compileProprietaryDebugKotlin` when Cast code or the `player/cor
 - [#338](https://github.com/midasvo/ephyra/issues/338): the refresh rate vote, pinned by `PlayerInvariantsTest`. [#450](https://github.com/midasvo/ephyra/issues/450): wait for the network, then reload.
 - [#657](https://github.com/midasvo/ephyra/issues/657): neighbours load when the item is ready. [#723](https://github.com/midasvo/ephyra/issues/723), [#726](https://github.com/midasvo/ephyra/issues/726): switches on mpv; the latest switch wins. [#837](https://github.com/midasvo/ephyra/issues/837): a default quality per network.
 - [#764](https://github.com/midasvo/ephyra/issues/764), [#765](https://github.com/midasvo/ephyra/issues/765), [#766](https://github.com/midasvo/ephyra/issues/766): `PlayerEngine`, `PlaybackReporter` and `ResolvePlayback` out of `PlayerViewModel`. [#870](https://github.com/midasvo/ephyra/issues/870) / [#889](https://github.com/midasvo/ephyra/pull/889): mpv reports a replaced playlist itself.
-- [#860](https://github.com/midasvo/ephyra/issues/860) / [#878](https://github.com/midasvo/ephyra/pull/878): the adapter sends the version, compares widths as numbers and gives sheets 30 s; the player part is open.
+- [#860](https://github.com/midasvo/ephyra/issues/860) / [#878](https://github.com/midasvo/ephyra/pull/878): the adapter sends the version, compares widths as numbers and gives sheets 30 s. The player part: the played version in the tile request, no new try of a failed sheet for 30 s, sheets sampled down above 3200x5760 pixels (every 320-wide 10x10 sheet up to portrait 9:16 stays whole) and an out-of-memory error caught. The width choice of #878 compares the sheet's width (at most 3200) before its pixels, so 4:3 and portrait items keep width 320 over 160; 16:9 items on a square grid get the same width as before.
 
 ## Pitfalls
 
-- **#860, the player part.** `getTrickplay` and `getTvTrickplay` (`PlayerViewModel.kt`) build the loaders with `itemId` only. `TrickplayLoader.sheetLoad` and `TrickplayRegionLoader` call `repository.getTrickplayData(itemId, width, sheetIndex)` with no `mediaSourceId`, so a second version shows the first version's images. The layout is read for the played source (`PlaylistManager.toPlayerItem`, `trickplayInfo?.get(mediaSource.id)`), the tiles are not. `sheetLoad` removes a failed load in `finally`, so the next scrub frame asks again at once; it catches `Exception` only, so a sheet too large to decode (an out-of-memory error) escapes it. `PreviewScrubListener` decodes too. The width as text is fixed (`preferredTrickplayInfo`).
+- **Trickplay previews that do not show (#860).** A sheet that failed is not asked for again for 30 s, also when the server is back: scrub again after that before calling it a bug. To stage a failing or slow sheet, put a proxy that answers `/Trickplay/` with an error between the emulator and the server and log in through it; the request carries `mediaSourceId` only for a version other than the item's own (the adapter leaves it out otherwise). Tiles of a sheet sampled down come out smaller (half size above 3200x5760, such as a 10x10 sheet of 640 wide). The test server only has 16:9 sheets at 320: a 4:3 or portrait case is in the unit tests (`TrickplayLoaderTest`, `TrickplayWidthTest`), not on the server.
 - **A switch during a stop (#890).** `onMediaItemTransition` finds `item` in `items`, waits for the previous item's stop, then calls `onTransitionHandled(item, ..., transition)`; a switch that lands in that wait makes `item` stale, and the reporter drops it by the transition's number. Details: [playback-reporting.md](playback-reporting.md#pitfalls). Both backends.
 - **A quality switch is a new playlist.** ExoPlayer reports a transition to the same item; mpv reports none (`transitionsOnReplacedPlaylist`). Code keyed on transitions must handle both (#870).
 - **Find an item by id, not by index.** Indexes shift when neighbours load (#869).

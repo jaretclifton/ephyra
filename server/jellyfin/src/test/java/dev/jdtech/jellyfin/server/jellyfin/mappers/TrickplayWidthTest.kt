@@ -14,10 +14,10 @@ import org.junit.Test
  * as text, so of 320 and 1280 they took 320 by accident, and of 320 and 960 a sheet of 104 MB.
  */
 class TrickplayWidthTest {
-    private fun layout(width: Int, tiles: Int = 10) =
+    private fun layout(width: Int, tiles: Int = 10, height: Int = width * 9 / 16) =
         TrickplayInfoDto(
             width = width,
-            height = width * 9 / 16,
+            height = height,
             tileWidth = tiles,
             tileHeight = tiles,
             thumbnailCount = 720,
@@ -51,6 +51,25 @@ class TrickplayWidthTest {
         )
         // 640 on a 5 x 5 grid is a sheet of 3200 x 1800, as the default.
         assertEquals(640, preferredWidth("320" to layout(320), "640" to layout(640, tiles = 5)))
+    }
+
+    @Test
+    fun `a 4 by 3 or portrait item keeps the default width over a narrower one`() {
+        // A 10 x 10 sheet of 320 x 240 is 3200 x 2400: taller than the 16:9 sheet, as wide.
+        val fourByThree = { width: Int -> layout(width, height = width * 3 / 4) }
+        assertEquals(320, preferredWidth("160" to fourByThree(160), "320" to fourByThree(320)))
+        assertEquals(320, preferredWidth("320" to fourByThree(320), "640" to fourByThree(640)))
+        assertEquals(320, preferredWidth("320" to fourByThree(320)))
+        // Portrait 9:16: 320 x 569 tiles, a sheet of 3200 x 5690.
+        val portrait = { width: Int -> layout(width, height = width * 16 / 9) }
+        assertEquals(320, preferredWidth("160" to portrait(160), "320" to portrait(320)))
+    }
+
+    @Test
+    fun `a 16 by 9 item gets the same width as before`() {
+        // 480 on the default grid is a sheet of 4800 x 2700: too wide, as before.
+        assertEquals(320, preferredWidth("320" to layout(320), "480" to layout(480)))
+        assertEquals(320, preferredWidth("160" to layout(160), "320" to layout(320)))
     }
 
     @Test
