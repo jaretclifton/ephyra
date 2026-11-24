@@ -40,8 +40,8 @@ class PlayerEngineBoundaryTest {
             violations.isEmpty(),
             violations.joinToString("\n") {
                 "$it. Only the engine itself and $ENGINE_DI may name an engine's package: go " +
-                    "through PlayerEngine and EnginePlayer in $ENGINE (docs/architecture/" +
-                    "3-target.md, 3.5)."
+                    "through PlayerEngine and EnginePlayer in $ENGINE (docs/areas/" +
+                    "architecture.md, recipe 5)."
             },
         )
     }

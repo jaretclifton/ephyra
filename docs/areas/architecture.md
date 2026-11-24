@@ -150,7 +150,7 @@ python3 .claude/skills/start-work/scripts/check-docs.py
 
 ## Pitfalls
 
-- **R1 reads the whole file, comments included.** `SdkBoundaryTest` looks for the SDK's package name in the text. A KDoc outside the adapter that names an SDK class by its full name fails. The rule tests build the name from parts for the same reason. R10 and R17 do strip comments.
+- **R1 is a text check.** `SdkBoundaryTest` looks for the SDK's package name in the code, with comments removed (as R10 and R17 do). A type used by its full name without an import, or a string that holds the name, still fails.
 - **A folder is not a package.** Moved files kept their package (ADR 0001, decision 8): the ports of `application` are in package `dev.jdtech.jellyfin.repository`, and `data`'s entities share `dev.jdtech.jellyfin.models` with the models of `domain`. That is why R5 for `application` compares names, not package prefixes.
 - **No production Java outside the adapter.** The rules read Kotlin only; `SdkBoundaryTest` fails on a `.java` file elsewhere instead of letting it pass unread.
 - **Not everything is per server type yet.** `ServerSession`, `MediaHttpClient` and `DeviceReportSource` are bound once, to Jellyfin, in `JellyfinServerModule`; `MediaServer`, `ServerConnector` and the sync ports are maps by `ServerType` ([README](../architecture/README.md), "Not done").

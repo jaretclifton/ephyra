@@ -144,7 +144,6 @@ Ephyra stays 0 commits behind Findroid: every Findroid commit is in `main`'s his
 | [`fastlane/Fastfile`](../../fastlane/Fastfile), `fastlane/metadata/android/en-US/` | The Play upload lane; the listing and the changelog per version code |
 | `.claude/skills/release/`, `.claude/skills/fdroid-update/`, `.claude/skills/upstream-sync/` | The procedures and their scripts |
 | [`play-store.md`](../play-store.md), [`screenshots.md`](../screenshots.md), [`upstream-sync.md`](../upstream-sync.md), [`upstream-ledger.md`](../upstream-ledger.md) | Google Play, the screenshots, the sync |
-| `packaging/fdroid/nl.midasvo.findroid.ce.yml` | A copy of the F-Droid recipe, at 2.1.0. No script or doc reads it; the live recipe is in the merge request |
 
 ## How to test it
 
@@ -213,5 +212,4 @@ python3 .claude/skills/start-work/scripts/check-docs.py
 - **Listing screenshots come from the Jellyfin demo server only**, never a personal server: third-party artwork risks a rejection ([`play-store.md`](../play-store.md)).
 - **A sync PR is merged with a merge commit, never squashed.** A squash drops the upstream parent and the "behind" counter does not move. `git merge -s ours` marks translations as merged without taking them (`upstream-sync` skill).
 - **Never fetch Findroid's tags** (`--no-tags`): they would clash with Ephyra's `vX.Y.Z` once Findroid reaches 2.0.0.
-- **`.github/workflows/sync-upstream.yaml` is from before the manual sync.** It merges upstream into `main` nightly without a PR, fetches upstream's tags and mirrors them as `-midasvo.1`. It is disabled in the repository's Actions settings (checked 2026-11-24) and contradicts the `upstream-sync` skill on each point: leave it off.
 - **On a device, the TV beta replaces the phone beta**, and the other way round: one application ID per build type. The login stays.

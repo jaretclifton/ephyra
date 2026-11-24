@@ -112,7 +112,7 @@ On a branch `release/v$next` (`git switch -c "release/v$next"`):
 - Add `[v$next]: https://github.com/midasvo/ephyra/releases/tag/v$next` at the top of the
   link list at the bottom, or the heading renders as plain bracketed text.
 - Write the store changelog to `fastlane/metadata/android/en-US/changelogs/$code.txt` and the
-  same text to `$((code + 1)).txt` (the TV build). F-Droid shows it as "what's new" and reads it
+  same text to `$((code + 1)).txt` (the TV build); the TV text may drop lines about phone-only changes. F-Droid shows it as "what's new" and reads it
   from the tagged commit, so it can't be added after the tag. Plain text, at most 500
   characters: one sentence on what the release brings, then a few `- ` lines for the changes
   users will notice.
