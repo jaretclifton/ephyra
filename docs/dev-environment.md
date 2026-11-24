@@ -12,13 +12,9 @@ environment", "start the test server", "give me a TV emulator"): the `test-serve
 
 ## What you need
 
-| For | Needs |
-|---|---|
-| Building | JDK 21 and the Android SDK (`ANDROID_HOME` set) |
-| The test server | Docker and `python3`. On Windows: inside WSL, with Docker in WSL or Docker Desktop's WSL integration |
-| The emulators | The SDK's `emulator`, `platform-tools` and `cmdline-tools`, hardware acceleration (KVM, HVF or WHPX), and two system images |
-
-The server needs about 1.5 GB of disk, each system image over 1 GB, each AVD a few GB once used.
+[get-started.md](get-started.md) lists what to install per system and the order of the steps;
+`scripts/doctor.sh` checks a machine against it. The server needs about 1.5 GB of disk, each
+system image over 1 GB, each AVD a few GB once used.
 
 ## The test server
 
@@ -57,7 +53,10 @@ tools/test-server/setup.sh wipe --media  # also regenerate the media
 
 `EPHYRA_TEST_SERVER_DIR`, `EPHYRA_TEST_SERVER_PORT`, `EPHYRA_TEST_SERVER_NAME` and
 `EPHYRA_TEST_SERVER_IMAGE` change the folder, the port, the container name and the image. With a
-different folder, port and name you can run a second server next to the first.
+different folder, port and name you can run a second server next to the first. Pick a port
+nothing else holds: on Windows a process listening on `0.0.0.0:<port>` wins over WSL for IPv4,
+so an emulator (`10.0.2.2` is IPv4) reaches that process while `curl localhost` on the host
+reaches the new server. `netstat -ano | grep :<port>` on Windows, `ss -ltn` on Linux.
 
 ### Users
 
@@ -133,9 +132,14 @@ Not on the server: Dolby Vision, collections, live TV, music, a base-URL path, H
 ```bash
 scripts/avds.sh images          # which system images are needed, and whether they are installed
 scripts/avds.sh create          # every AVD that does not exist yet
-scripts/avds.sh start ce_phone  # cold boot, returns when booted
+scripts/avds.sh start ce_phone  # cold boot, returns when booted, media volume at 0
+scripts/avds.sh up ce_phone     # create if missing, start if not running, install the debug build
 scripts/avds.sh list
 ```
+
+`start` (and so `up`) passes `-crash-report-mode never -no-metrics`, without which a new emulator
+can hang on a dialog nobody sees, and turns the media volume down to 0 after boot: the test media
+is a test tone. `EMULATOR_FLAGS` adds flags of your own, such as `-no-window`.
 
 | AVD | Serial | What |
 |---|---|---|
@@ -157,12 +161,35 @@ software rendering, because mpv crashes emulators that render on the host GPU; `
 --gpu` is faster for work that never opens mpv. Three emulators next to a Gradle build is fine on
 a strong machine; more makes everything slow.
 
+### Older Android versions
+
+`avds.sh` makes API 34 AVDs only. Tests across Android versions have used these as well, made by
+hand with `avdmanager create avd -n <name> -k "<image>" -d pixel_6` (quoted: the image name has semicolons) (`-d tv_1080p` for TV) after
+installing the image with `sdkmanager`:
+
+| API | Image | Why it is worth a run |
+|---|---|---|
+| 28 | `system-images;android-28;android-tv;x86` | The TV app's oldest version. Only GLES 2.0: mpv's default `gpu-next` shows a black picture, `pref_player_mpv_vo=gpu` shows video. No `uinput`, so `scripts/tv-dpad.sh` fails there |
+| 29 | `system-images;android-29;google_apis;x86_64` | The phone app's oldest version |
+| 30, 33 | `system-images;android-<NN>;google_apis;x86_64` | Versions in between |
+| 36 | `system-images;android-36;google_apis;x86_64` | Takes over a minute to show up in `adb devices` |
+| 37 | `system-images;android-37.0;google_apis;x86_64` | ExoPlayer cannot decode H.264 there (test playback on mpv); the app asks for the local network permission at first start (`adb shell pm grant <package> android.permission.ACCESS_LOCAL_NETWORK`) |
+
+Give each a port of its own (`-port` on the emulator command line) that the table above does not
+use. What the table says about each version comes from the test runs of November 2026; the image
+names were checked against `sdkmanager --list`.
+
+`sdkmanager` now prints that it is deprecated in favour of `android sdk` (the `android` binary in
+the same `cmdline-tools/latest/bin` folder). It still installs packages.
+
 ### The app on an emulator
 
 ```bash
 ./gradlew :app:phone:assembleLibreDebug   # or :app:tv:
 scripts/avds.sh install ce_phone          # picks phone or tv and the ABI
 ```
+
+`scripts/avds.sh up ce_phone` does the create, the start and the install in one go.
 
 The debug build is its own app (`nl.midasvo.findroid.ce.debug`). Then, in the app: add the server
 `http://10.0.2.2:8096` and log in as a test user. `install` keeps the app's data, so you log in
@@ -175,8 +202,13 @@ with it.
 - **TV text fields ignore `adb shell input keyevent` D-pad keys**: they come from a virtual device.
   `scripts/tv-dpad.sh` sends them from a real one, and holds each key like a finger does:
   `scripts/tv-dpad.sh ce_tv_1080p down down ok`.
-- **A new emulator that never shows up in `adb devices`** is waiting on the crash-report dialog:
-  start it with `EMULATOR_FLAGS="-crash-report-mode never -no-metrics"`.
+- **A new emulator that never shows up in `adb devices`** is waiting on the crash-report dialog.
+  `avds.sh start` passes `-crash-report-mode never -no-metrics`; pass them yourself when you start
+  an emulator another way.
+- **`cmd media_session volume --stream 3 --set 0`** reports success and leaves the volume as it
+  was on the API 34 images. Volume-down key presses work: `avds.sh start` sends sixteen.
+- **A restarted emulator can come up on another port** when the old one is still shutting down.
+  Run `adb devices` again instead of assuming the serial.
 - **Server gone, internet still there**: on a phone or tablet AVD, `adb root`, then
   `adb shell iptables -I OUTPUT -d 10.0.2.2 -p tcp --dport 8096 -j REJECT --reject-with tcp-reset`;
   the same rule with `-D` removes it. Airplane mode: `adb shell cmd connectivity airplane-mode enable`.

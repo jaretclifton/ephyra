@@ -1,6 +1,6 @@
 # Player
 
-Status: works on both engines, phone and TV. As of 2026-11-23 (`main` at `26e62f27a`). Open: the player side of trickplay previews ([#860](https://github.com/midasvo/ephyra/issues/860)), a start report with the old play method after a switch ([#890](https://github.com/midasvo/ephyra/issues/890)).
+Status: works on both engines, phone and TV. As of 2026-11-23 (`main` at `26e62f27a`). Open: the player side of trickplay previews ([#860](https://github.com/midasvo/ephyra/issues/860)).
 
 ## Start here
 
@@ -9,7 +9,7 @@ Status: works on both engines, phone and TV. As of 2026-11-23 (`main` at `26e62f
 - Reports to the server are `PlaybackReporter` and `PlaybackStartGate`: see [playback-reporting.md](playback-reporting.md). Resume position and played: [user-data.md](user-data.md). Tracks and subtitles: [subtitles-and-tracks.md](subtitles-and-tracks.md).
 - Test fast: `./gradlew :player:local:testDebugUnitTest`. Player PRs also run [docs/mpv-checklist.md](../mpv-checklist.md) on both backends.
 - **Open #860:** the player builds its trickplay loaders without the media source, and a failed sheet is asked for again at once: `getTrickplay` and `getTvTrickplay` in `PlayerViewModel.kt`, `TrickplayLoader.sheetLoad`, `TrickplayRegionLoader`. The adapter side is fixed (#878).
-- **Open #890:** `onMediaItemTransition` in `PlayerViewModel.kt` takes the item before `stopJob?.join()` and hands it to `PlaybackReporter.onTransitionHandled` after it.
+- `onMediaItemTransition` in `PlayerViewModel.kt` takes the item before it waits for the previous item's stop, and hands it with its `ItemTransition` to `PlaybackReporter.onTransitionHandled`, which drops it when a switch came meanwhile (#890).
 
 ## What it does
 
@@ -93,7 +93,7 @@ Add `:app:phone:compileProprietaryDebugKotlin` when Cast code or the `player/cor
 ## Pitfalls
 
 - **#860, the player part.** `getTrickplay` and `getTvTrickplay` (`PlayerViewModel.kt`) build the loaders with `itemId` only. `TrickplayLoader.sheetLoad` and `TrickplayRegionLoader` call `repository.getTrickplayData(itemId, width, sheetIndex)` with no `mediaSourceId`, so a second version shows the first version's images. The layout is read for the played source (`PlaylistManager.toPlayerItem`, `trickplayInfo?.get(mediaSource.id)`), the tiles are not. `sheetLoad` removes a failed load in `finally`, so the next scrub frame asks again at once; it catches `Exception` only, so a sheet too large to decode (an out-of-memory error) escapes it. `PreviewScrubListener` decodes too. The width as text is fixed (`preferredTrickplayInfo`).
-- **#890, a switch during a stop.** `onMediaItemTransition` finds `item` in `items`, waits for `stopJob?.join()`, then calls `onTransitionHandled(item, ...)`; a switch that lands in that wait leaves the old `item` to reach `PlaybackStartGate`. Details and the fix options: [playback-reporting.md](playback-reporting.md#pitfalls). Both backends.
+- **A switch during a stop (#890).** `onMediaItemTransition` finds `item` in `items`, waits for the previous item's stop, then calls `onTransitionHandled(item, ..., transition)`; a switch that lands in that wait makes `item` stale, and the reporter drops it by the transition's number. Details: [playback-reporting.md](playback-reporting.md#pitfalls). Both backends.
 - **A quality switch is a new playlist.** ExoPlayer reports a transition to the same item; mpv reports none (`transitionsOnReplacedPlaylist`). Code keyed on transitions must handle both (#870).
 - **Find an item by id, not by index.** Indexes shift when neighbours load (#869).
 - **mpv is not called on the main thread after init** (`MpvCallQueue`), and its state can drift from media3's: read the log, not the picture (checklist).

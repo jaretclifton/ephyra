@@ -78,7 +78,7 @@ export default defineConfig({
         },
         { label: 'Developing Ephyra', link: '/dev/' },
         { label: 'Using Ephyra: the guide', link: '/guide/' },
-        { label: 'Start', items: [{ label: 'Overview', link: '/dev/' }, { label: 'All areas', link: '/dev/areas/' }] },
+        { label: 'Start', items: [{ label: 'Overview', link: '/dev/' }, { label: 'Get started', link: '/dev/working/get-started/' }, { label: 'All areas', link: '/dev/areas/' }] },
         { label: 'Areas', items: [{ autogenerate: { directory: 'dev/areas' } }] },
         {
           label: 'Architecture',

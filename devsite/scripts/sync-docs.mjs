@@ -39,6 +39,7 @@ add('docs/architecture/rules.md', 'architecture/rules.md');
 for (const f of list('docs/architecture', /^\d-.*\.md$/)) add(f, `architecture/history/${path.basename(f)}`, { history: true });
 for (const f of list('docs/architecture/adr')) add(f, `decisions/architecture/${path.basename(f)}`, { adr: 'Architecture' });
 for (const f of list('docs/tv-research/adr')) add(f, `decisions/tv/${path.basename(f)}`, { adr: 'TV' });
+add('docs/get-started.md', 'working/get-started.md');
 add('CLAUDE.md', 'working/claude-md.md', { title: 'CLAUDE.md: the agent instructions' });
 add('docs/dev-environment.md', 'working/dev-environment.md');
 add('docs/mpv-checklist.md', 'working/mpv-checklist.md');

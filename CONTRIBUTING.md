@@ -5,9 +5,11 @@ agree on the direction before you build it.
 
 ## Building
 
-You need JDK 21 and the Android SDK. The default flavour is `libre`; the phone app also has
-`proprietary`, which adds Google Cast (`assembleProprietaryDebug`). A change to the Cast code has
-to compile in both.
+You need JDK 21 and the Android SDK. Build the `libre` flavour; the phone app also has a
+`proprietary` flavour with Google Cast, which you only need for Cast work. New to the project, or
+on a new machine? [docs/get-started.md](docs/get-started.md) walks through what to install per
+system, `scripts/doctor.sh` (checks the machine), the first build, the test server and an
+emulator.
 
 ```bash
 ./gradlew :app:phone:assembleLibreDebug   # phone and tablet
@@ -49,13 +51,21 @@ scripts/avds.sh create ce_phone  # then: start ce_phone, install ce_phone
 
 ## Finding your way
 
-- [CLAUDE.md](CLAUDE.md) describes the modules and the architecture. It is written for Claude
-  Code, which does much of the work here, and reads just as well for people.
-- The [development site](https://midasvo.nl/ephyra/dev/) has a guide per area of the code, the
-  architecture model and the decision records. It is built from [docs/](docs/README.md), which
-  also lists the design documents and which of them are still current.
-- A feature users get is added to [docs/features.yaml](docs/features.yaml): the guide on the site
-  and the chart in the README are drawn from it (`npm run readme-assets` in `devsite/`).
+- The [development site](https://midasvo.nl/ephyra/dev/) is the way in: the areas of the app,
+  a guide per area (where the code is, the rules, how to test it, what went wrong before), the
+  modules, the architecture rules and an interactive model. Its pages are the Markdown in
+  [docs/](docs/), so you can read them on GitHub too. Start with the area you want to change in
+  [docs/areas.yaml](docs/areas.yaml).
+- When you change code that an area guide describes, update the guide in the same pull request,
+  or say in the description why it still holds (`Docs: no change needed — <reason>`; the pull
+  request template has the line, and a check asks for it).
+- [AGENTS.md](AGENTS.md) has the conventions in one place: build commands, architecture rules,
+  commits and pull requests. Coding agents read it (Claude Code reads [CLAUDE.md](CLAUDE.md), with the same rules),
+  and it reads just as well for people.
+- [docs/](docs/README.md) lists the design documents and which of them are still current.
+- A feature users get is added to [docs/features.yaml](docs/features.yaml): the
+  [guide](https://midasvo.nl/ephyra/guide/) on the site and the chart in the README are drawn
+  from it (`npm run readme-assets` in `devsite/`).
 - Ephyra is a fork of [Findroid](https://github.com/jarnedemeulemeester/findroid), and Findroid's
   changes are merged in regularly. Code Ephyra adds is kept in its own files where it can be, so
   those merges stay small. A fix in code that Findroid still owns is best sent to Findroid too.

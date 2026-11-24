@@ -64,6 +64,7 @@ class PlaybackReporterTest {
         val startPositions = mutableListOf<Long?>()
         var startDelayMs = 0L
         var progressDelayMs = 0L
+        var stopDelayMs = 0L
         var failStart = false
 
         private fun record(call: String) {
@@ -116,6 +117,7 @@ class PlaybackReporterTest {
                     positionTicks: Long,
                     playedPercentage: Int?,
                 ) {
+                    delay(stopDelayMs)
                     record("stop $itemId $positionTicks $playedPercentage")
                 }
             }
@@ -156,16 +158,25 @@ class PlaybackReporterTest {
         /** The player the start reports read (#868). */
         val player = Player(null)
 
-        /** The player moved to [item] and handled the transition; [ready] if already loaded. */
-        fun transition(item: PlayerItem, ready: Boolean = false): Job? {
+        /**
+         * Whether the player has loaded the item when a transition is handled, read then (after the
+         * previous item's stop), as `PlayerViewModel` reads it.
+         */
+        var playerReady = false
+
+        /**
+         * The player moved to [item] and handled the transition; [ready] if already loaded, else
+         * [playerReady] when the transition is handled.
+         */
+        fun transition(item: PlayerItem, ready: Boolean? = null): Job? {
             reporter.onStreamQueued(item)
-            val stop = reporter.onItemTransition(item.itemId)
+            val transition = reporter.onItemTransition(item.itemId)
             owner.launch {
-                stop?.join()
-                reporter.onTransitionHandled(item, ready, player)
+                transition.stopJob?.join()
+                reporter.onTransitionHandled(item, ready ?: playerReady, player, transition)
             }
             scope.testScheduler.runCurrent()
-            return stop
+            return transition.stopJob
         }
 
         /**
@@ -331,6 +342,152 @@ class PlaybackReporterTest {
             // CE (#868): the new stream's start carries where playback is, as ExoPlayer's does.
             assertEquals(listOf<Long?>(0L, 600_000_000L), s.fake.startPositions)
             assertEquals(60_000L, s.reporter.playing?.positionMs)
+        }
+
+    @Test
+    fun `a quality switch while the previous item's stop is sent owes one start, after it (#890)`() =
+        test { s ->
+            // ExoPlayer: Next, then a quality switch of the new item while the server still
+            // takes the previous item's stop. The switch is a second transition to the new item,
+            // whose new stream loads before that stop is through.
+            s.transition(item())
+            s.loaded()
+            advanceUntilIdle()
+            s.reporter.updatePosition(positionMs = 60_000L, durationMs = 600_000L)
+            s.fake.stopDelayMs = 10_000L
+
+            s.transition(item(id = nextId, session = "session-2", transcoded = true))
+            s.transition(item(id = nextId, session = "session-3", transcoded = false))
+            s.loaded()
+            s.playerReady = true
+            advanceUntilIdle()
+
+            // One start, for the stream that plays, and not before the previous item's stop.
+            assertEquals(
+                listOf(
+                    "0: start $itemId false",
+                    "10000: stop $itemId 600000000 10",
+                    "10000: start $nextId false",
+                ),
+                s.reports,
+            )
+        }
+
+    @Test
+    fun `mpv's quality switch while the previous item's stop is sent owes one start (#890)`() =
+        test { s ->
+            // mpv reports no transition for the switch: the new stream is handed over while the
+            // transition to the new item still waits for the previous item's stop.
+            s.transition(item())
+            s.loaded()
+            advanceUntilIdle()
+            s.reporter.updatePosition(positionMs = 60_000L, durationMs = 600_000L)
+            s.fake.stopDelayMs = 10_000L
+
+            s.transition(item(id = nextId, session = "session-2", transcoded = true))
+            s.streamReplaced(item(id = nextId, session = "session-3", transcoded = false))
+            s.loaded()
+            s.playerReady = true
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(
+                    "0: start $itemId false",
+                    "10000: stop $itemId 600000000 10",
+                    "10000: start $nextId false",
+                ),
+                s.reports,
+            )
+        }
+
+    @Test
+    fun `a start waiting for the previous item's stop reads the player after it (#890)`() =
+        test { s ->
+            s.transition(item())
+            s.loaded()
+            advanceUntilIdle()
+            s.reporter.updatePosition(positionMs = 60_000L, durationMs = 600_000L)
+            s.fake.stopDelayMs = 10_000L
+
+            // Next, and a switch of the next item whose new stream loads while the stop is sent.
+            s.transition(item(id = nextId, session = "session-2", transcoded = true))
+            s.streamReplaced(item(id = nextId, session = "session-3"))
+            s.player.mediaId = nextId.asString()
+            s.loaded()
+            s.playerReady = true
+            // It plays meanwhile. No progress before its start, which has not gone out.
+            s.reporter.updatePosition(positionMs = 9_000L, durationMs = 600_000L)
+            s.progress(s.player)
+            testScheduler.advanceTimeBy(9_999L)
+            s.player.positionMs = 10_000L
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(
+                    "0: start $itemId false",
+                    "10000: stop $itemId 600000000 10",
+                    "10000: start $nextId false",
+                ),
+                s.reports,
+            )
+            // Where the player was when the start went out, not when it was asked for.
+            assertEquals(100_000_000L, s.fake.startPositions.last())
+        }
+
+    @Test
+    fun `an item left while its start waits for the previous stop sends no start (#890)`() =
+        test { s ->
+            s.transition(item())
+            s.loaded()
+            advanceUntilIdle()
+            s.reporter.updatePosition(positionMs = 60_000L, durationMs = 600_000L)
+            s.fake.stopDelayMs = 10_000L
+
+            s.transition(item(id = nextId))
+            // A switch whose new stream loads, so its start waits for the stop.
+            s.streamReplaced(item(id = nextId, session = "session-2"))
+            s.loaded()
+            s.reporter.updatePosition(positionMs = 5_000L, durationMs = 600_000L)
+            // Previous, back to the first item, while the first stop is still being sent.
+            s.fake.stopDelayMs = 0L
+            s.transition(item())
+            advanceUntilIdle()
+
+            // No start for the item left: its stop is the only report it gets.
+            assertEquals(
+                listOf(
+                    "0: start $itemId false",
+                    "0: stop $nextId 50000000 0",
+                    "10000: stop $itemId 600000000 10",
+                ),
+                s.reports.take(3),
+            )
+            assertTrue(s.reports.none { it.endsWith("start $nextId false") })
+        }
+
+    @Test
+    fun `a stream replaced for another item keeps the waiting transition's start (#890)`() =
+        test { s ->
+            s.transition(item())
+            s.loaded()
+            advanceUntilIdle()
+            s.reporter.updatePosition(positionMs = 60_000L, durationMs = 600_000L)
+            s.fake.stopDelayMs = 10_000L
+
+            s.transition(item(id = nextId))
+            // A late replacement for the item left: nothing is owed for it.
+            s.streamReplaced(item(session = "session-2"))
+            s.playerReady = true
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(
+                    "0: start $itemId false",
+                    "10000: stop $itemId 600000000 10",
+                    "10000: start $nextId false",
+                ),
+                s.reports,
+            )
         }
 
     @Test

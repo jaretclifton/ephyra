@@ -108,6 +108,8 @@ jobs:
         run: |
           gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate \
             --jq '.[] | {filename, previous_filename, patch}' > "$RUNNER_TEMP/files.jsonl"
-          git show HEAD^2:docs/areas.yaml > "$RUNNER_TEMP/areas.yaml"
+          # A head from before the map existed has none: then the merge commit's map is the one.
+          git show HEAD^2:docs/areas.yaml > "$RUNNER_TEMP/areas.yaml" 2>/dev/null \
+            || cp docs/areas.yaml "$RUNNER_TEMP/areas.yaml"
           python3 .claude/skills/start-work/scripts/check-guides-follow.py \
             --files "$RUNNER_TEMP/files.jsonl" --map "$RUNNER_TEMP/areas.yaml"
