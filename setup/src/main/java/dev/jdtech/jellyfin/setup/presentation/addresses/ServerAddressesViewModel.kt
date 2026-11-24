@@ -18,6 +18,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
 @HiltViewModel
@@ -32,19 +34,28 @@ constructor(
 
     private var currentServerId: ServerId = "".toServerId()
 
+    /**
+     * CE (#984): selecting, removing and reading the list run one at a time, so a removal checks
+     * the address in use after any selection before it, and a list read before a selection cannot
+     * show its old mark after it.
+     */
+    private val addressWork = Mutex()
+
     fun loadAddresses(serverId: ServerId) {
         currentServerId = serverId
-        viewModelScope.launch {
-            try {
-                _state.emit(
-                    ServerAddressesState(
-                        addresses = repository.getAddresses(serverId),
-                        currentAddressId = repository.getCurrentAddress(serverId)?.id,
-                    )
+        viewModelScope.launch { addressWork.withLock { reload(serverId) } }
+    }
+
+    private suspend fun reload(serverId: ServerId) {
+        try {
+            _state.emit(
+                ServerAddressesState(
+                    addresses = repository.getAddresses(serverId),
+                    currentAddressId = repository.getCurrentAddress(serverId)?.id,
                 )
-            } catch (e: Exception) {
-                Timber.e(e)
-            }
+            )
+        } catch (e: Exception) {
+            Timber.e(e)
         }
     }
 
@@ -54,28 +65,32 @@ constructor(
      */
     fun selectAddress(addressId: ServerAddressId) {
         viewModelScope.launch(Dispatchers.IO) {
-            _state.emit(_state.value.copy(error = null))
-            try {
-                repository.setCurrentAddress(addressId)
-                loadAddresses(currentServerId)
-            } catch (e: Exception) {
-                Timber.e(e)
-                _state.emit(_state.value.copy(error = listOf(LoadErrorText.reason(e))))
+            addressWork.withLock {
+                _state.emit(_state.value.copy(error = null))
+                try {
+                    repository.setCurrentAddress(addressId)
+                    reload(currentServerId)
+                } catch (e: Exception) {
+                    Timber.e(e)
+                    _state.emit(_state.value.copy(error = listOf(LoadErrorText.reason(e))))
+                }
             }
         }
     }
 
     fun deleteAddress(addressId: ServerAddressId) {
         viewModelScope.launch(Dispatchers.IO) {
-            _state.emit(_state.value.copy(error = null))
-            val currentAddress = repository.getCurrentAddress(currentServerId)
-            if (addressId == currentAddress?.id) {
-                // CE (#390): say why instead of dropping the removal without a word.
-                setError(SetupR.string.ce_server_address_in_use)
-                return@launch
+            addressWork.withLock {
+                _state.emit(_state.value.copy(error = null))
+                val currentAddress = repository.getCurrentAddress(currentServerId)
+                if (addressId == currentAddress?.id) {
+                    // CE (#390): say why instead of dropping the removal without a word.
+                    setError(SetupR.string.ce_server_address_in_use)
+                    return@withLock
+                }
+                repository.deleteAddress(addressId)
+                reload(currentServerId)
             }
-            repository.deleteAddress(addressId)
-            loadAddresses(currentServerId)
         }
     }
 

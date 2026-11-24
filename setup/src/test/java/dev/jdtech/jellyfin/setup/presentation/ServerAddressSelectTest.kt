@@ -23,6 +23,7 @@ import dev.jdtech.jellyfin.testing.asServerAddressId
 import dev.jdtech.jellyfin.testing.asServerId
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -57,7 +58,7 @@ class ServerAddressSelectTest {
     private val aHttps = ServerAddress(ServerAddressId.random(), a, "https://a.example")
     private val bLan = ServerAddress(ServerAddressId.random(), b, "http://192.168.1.2:8096")
     private val bHttps = ServerAddress(ServerAddressId.random(), b, "https://b.example")
-    private val addresses = listOf(aLan, aHttps, bLan, bHttps)
+    private val addresses = Collections.synchronizedList(mutableListOf(aLan, aHttps, bLan, bHttps))
     private val servers =
         ConcurrentHashMap(
             mapOf(
@@ -77,6 +78,10 @@ class ServerAddressSelectTest {
                 "currentAddress" -> {
                     val server = servers.getValue(args[0].asServerId())
                     addresses.single { it.id == server.currentServerAddressId }
+                }
+                "deleteAddress" -> {
+                    addresses.removeAll { it.id == args[0].asServerAddressId() }
+                    Unit
                 }
                 "updateServer" -> {
                     val server = args[0] as Server
@@ -150,6 +155,19 @@ class ServerAddressSelectTest {
             assertEquals("token-a", active.value.accessToken)
             assertNull(viewModel.state.value.error)
         }
+
+    @Test
+    fun `removing an address right after selecting it is refused`() = runBlocking {
+        // A removal waits for the selection before it, so it sees the address in use.
+        viewModel.loadAddresses(a)
+
+        viewModel.onAction(ServerAddressesAction.OnServerClick(aHttps.id))
+        viewModel.onAction(ServerAddressesAction.DeleteAddress(aHttps.id))
+
+        withTimeout(5_000) { viewModel.state.first { it.error != null } }
+        assertEquals(aHttps.id, servers.getValue(a).currentServerAddressId)
+        assertEquals(true, addresses.any { it.id == aHttps.id })
+    }
 
     @Test
     fun `a tap on an address of another server saves it and leaves the app where it is`() =

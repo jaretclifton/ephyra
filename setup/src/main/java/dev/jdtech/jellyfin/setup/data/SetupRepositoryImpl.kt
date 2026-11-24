@@ -33,6 +33,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -361,16 +363,21 @@ class SetupRepositoryImpl(
      * Addresses screen opens for each; the client moves there only when that server is the one in
      * use.
      */
-    override suspend fun setCurrentAddress(addressId: ServerAddressId) {
-        val address = serverStore.address(addressId)
-        val server = serverStore.server(address.serverId) ?: return
-        if (server.currentServerAddressId != address.id) {
-            serverStore.updateServer(server.copy(currentServerAddressId = address.id))
+    override suspend fun setCurrentAddress(addressId: ServerAddressId) =
+        // Two selections at once (two quick taps) must not end with Room on one address and the
+        // client on the other: each writes both before the next starts.
+        addressSelection.withLock {
+            val address = serverStore.address(addressId)
+            val server = serverStore.server(address.serverId) ?: return@withLock
+            if (server.currentServerAddressId != address.id) {
+                serverStore.updateServer(server.copy(currentServerAddressId = address.id))
+            }
+            if (server.id == appPreferences.currentServerId()) {
+                active.onSameServer { it.copy(baseUrl = address.address) }
+            }
         }
-        if (server.id == appPreferences.currentServerId()) {
-            active.onSameServer { it.copy(baseUrl = address.address) }
-        }
-    }
+
+    private val addressSelection = Mutex()
 
     override suspend fun addAddress(serverId: ServerId, address: String): ServerAddress {
         // The connector normalises the input the same way addServer does, so a bare host or a
