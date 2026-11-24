@@ -35,6 +35,9 @@ BASE="${EPHYRA_CADDY_PORT:-8443}"
 HOST="${EPHYRA_CADDY_HOST:-jellyfin.10.0.2.2.nip.io}"
 IMAGE="${EPHYRA_CADDY_IMAGE:-caddy:2.11}"
 BIND="${EPHYRA_CADDY_BIND:-127.0.0.1}"
+# status probes where the ports are published; 0.0.0.0 answers on loopback too.
+PROBE="$BIND"
+[ "$BIND" = 0.0.0.0 ] && PROBE=127.0.0.1
 NAME=ephyra-test-caddy
 DIR="$ROOT/caddy-tls"
 
@@ -44,7 +47,7 @@ status() {
   docker ps -a --filter "name=^$NAME\$" --format '{{.Names}}: {{.Status}}'
   for p in $(seq "$BASE" $((BASE + 5))); do
     printf '%s: ' "$p"
-    { echo | openssl s_client -connect "localhost:$p" -servername "$HOST" 2>/dev/null |
+    { echo | openssl s_client -connect "$PROBE:$p" -servername "$HOST" 2>/dev/null |
       grep -E '^ *Protocol *:|Acceptable client certificate CA names|No client certificate CA names' |
       sed 's/^ *//' | tr '\n' ' '; } || printf 'no answer'
     echo
