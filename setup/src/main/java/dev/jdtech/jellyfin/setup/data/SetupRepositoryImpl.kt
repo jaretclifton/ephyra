@@ -184,6 +184,10 @@ class SetupRepositoryImpl(
         Timber.d("Connecting to server: $serverName")
 
         val serverInDatabase = serverStore.server(serverId)
+        // CE (#425): a server that was saved before keeps its signed-in user, so the client keeps
+        // that user's token. Clearing it signed the app out until a restart. CE (#984): read before
+        // the address is written, so no read separates that write from the switch below.
+        val currentUser = serverInDatabase?.let { serverStore.currentUser(it.id) }
 
         // Check if server is already in the database
         // If so only add a new address to that server if it's different
@@ -231,9 +235,6 @@ class SetupRepositoryImpl(
                 server
             }
 
-        // CE (#425): a server that was saved before keeps its signed-in user, so the client keeps
-        // that user's token. Clearing it signed the app out until a restart.
-        val currentUser = serverInDatabase?.let { serverStore.currentUser(it.id) }
         // CE (#770): a server saved before keeps the type it was saved with.
         active.switchTo(
             ActiveServer(
