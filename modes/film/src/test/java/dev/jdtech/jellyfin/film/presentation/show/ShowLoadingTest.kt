@@ -23,18 +23,19 @@ import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.CoreDownloadTexts
 import java.util.UUID
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -57,9 +58,15 @@ class ShowLoadingTest {
     private var season2CanDownload = true
     private var episodesFail = false
 
+    /**
+     * #809: Main and the ViewModel's cast and crew and Room reads on one test scheduler, so no load
+     * is still on a real thread when the test ends.
+     */
+    private val dispatcher = StandardTestDispatcher()
+
     @BeforeEach
     fun setUp() {
-        Dispatchers.setMain(UnconfinedTestDispatcher())
+        Dispatchers.setMain(dispatcher)
     }
 
     @AfterEach
@@ -68,80 +75,73 @@ class ShowLoadingTest {
     }
 
     @Test
-    fun `download counts come from one series request and Room`() = runBlocking {
-        val viewModel = viewModel(SeasonEpisodeCounts(season1, total = 1, downloaded = 1))
-        viewModel.loadShow(showId)
-        val state =
-            withTimeout(5_000) { viewModel.state.first { it.seasonDownloadInfo.isNotEmpty() } }
+    fun `download counts come from one series request and Room`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel(SeasonEpisodeCounts(season1, total = 1, downloaded = 1))
+            val state = loaded(viewModel)
 
-        assertEquals(listOf<ItemId?>(null), episodeSeasonIds)
-        assertEquals(
-            SeasonDownloadInfo(downloadedCount = 1, totalCount = 3, canDownload = true),
-            state.seasonDownloadInfo[season1],
-        )
-        assertEquals(
-            SeasonDownloadInfo(downloadedCount = 0, totalCount = 2, canDownload = true),
-            state.seasonDownloadInfo[season2],
-        )
-        assertTrue(state.hasDownloads)
-        assertNull(state.error)
-    }
-
-    @Test
-    fun `nothing downloaded`() = runBlocking {
-        val viewModel = viewModel()
-        viewModel.loadShow(showId)
-        val state =
-            withTimeout(5_000) { viewModel.state.first { it.seasonDownloadInfo.isNotEmpty() } }
-
-        assertEquals(false, state.hasDownloads)
-        assertEquals(0, state.seasonDownloadInfo[season1]?.downloadedCount)
-    }
+            assertEquals(listOf<ItemId?>(null), episodeSeasonIds)
+            assertEquals(
+                SeasonDownloadInfo(downloadedCount = 1, totalCount = 3, canDownload = true),
+                state.seasonDownloadInfo[season1],
+            )
+            assertEquals(
+                SeasonDownloadInfo(downloadedCount = 0, totalCount = 2, canDownload = true),
+                state.seasonDownloadInfo[season2],
+            )
+            assertTrue(state.hasDownloads)
+            assertNull(state.error)
+        }
 
     @Test
-    fun `favourite toggles in place`() = runBlocking {
-        val viewModel = viewModel()
-        viewModel.loadShow(showId)
-        withTimeout(5_000) { viewModel.state.first { it.seasonDownloadInfo.isNotEmpty() } }
-        calls.clear()
+    fun `nothing downloaded`() =
+        runTest(dispatcher) {
+            val state = loaded(viewModel())
 
-        viewModel.onAction(ShowAction.MarkAsFavorite)
-        val state = withTimeout(5_000) { viewModel.state.first { it.show?.favorite == true } }
-
-        assertEquals(listOf("markAsFavorite"), calls)
-        assertEquals(2, state.seasons.size)
-    }
+            assertEquals(false, state.hasDownloads)
+            assertEquals(0, state.seasonDownloadInfo[season1]?.downloadedCount)
+        }
 
     @Test
-    fun `the series request asks for CanDownload`() = runBlocking {
-        val viewModel = viewModel()
-        viewModel.loadShow(showId)
-        withTimeout(5_000) { viewModel.state.first { it.seasonDownloadInfo.isNotEmpty() } }
+    fun `favourite toggles in place`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel()
+            loaded(viewModel)
+            calls.clear()
 
-        assertEquals(1, episodeFields.size)
-        assertTrue(episodeFields.single().orEmpty().contains(EpisodeField.CAN_DOWNLOAD))
-    }
+            viewModel.onAction(ShowAction.MarkAsFavorite)
+            advanceUntilIdle()
+            val state = viewModel.state.value
+
+            assertEquals(true, state.show?.favorite)
+            assertEquals(listOf("markAsFavorite"), calls)
+            assertEquals(2, state.seasons.size)
+        }
 
     @Test
-    fun `all allowed offers Download for every season`() = runBlocking {
-        val viewModel = viewModel()
-        viewModel.loadShow(showId)
-        val state =
-            withTimeout(5_000) { viewModel.state.first { it.seasonDownloadInfo.isNotEmpty() } }
+    fun `the series request asks for CanDownload`() =
+        runTest(dispatcher) {
+            loaded(viewModel())
 
-        assertTrue(state.canDownload)
-        assertEquals(listOf(season1, season2), state.downloadableSeasons.map { it.id })
-    }
+            assertEquals(1, episodeFields.size)
+            assertTrue(episodeFields.single().orEmpty().contains(EpisodeField.CAN_DOWNLOAD))
+        }
+
+    @Test
+    fun `all allowed offers Download for every season`() =
+        runTest(dispatcher) {
+            val state = loaded(viewModel())
+
+            assertTrue(state.canDownload)
+            assertEquals(listOf(season1, season2), state.downloadableSeasons.map { it.id })
+        }
 
     @Test
     fun `none allowed offers no Download, and Delete still shows what is downloaded`() =
-        runBlocking {
+        runTest(dispatcher) {
             season1CanDownload = false
             season2CanDownload = false
-            val viewModel = viewModel(SeasonEpisodeCounts(season1, total = 1, downloaded = 1))
-            viewModel.loadShow(showId)
-            val state =
-                withTimeout(5_000) { viewModel.state.first { it.seasonDownloadInfo.isNotEmpty() } }
+            val state = loaded(viewModel(SeasonEpisodeCounts(season1, total = 1, downloaded = 1)))
 
             assertEquals(false, state.canDownload)
             assertEquals(emptyList<ItemId>(), state.downloadableSeasons.map { it.id })
@@ -150,49 +150,61 @@ class ShowLoadingTest {
         }
 
     @Test
-    fun `mixed offers only the allowed seasons`() = runBlocking {
-        season1CanDownload = false
-        val viewModel = viewModel()
-        viewModel.loadShow(showId)
-        val state =
-            withTimeout(5_000) { viewModel.state.first { it.seasonDownloadInfo.isNotEmpty() } }
+    fun `mixed offers only the allowed seasons`() =
+        runTest(dispatcher) {
+            season1CanDownload = false
+            val state = loaded(viewModel())
 
-        assertTrue(state.canDownload)
-        assertEquals(listOf(season2), state.downloadableSeasons.map { it.id })
-    }
+            assertTrue(state.canDownload)
+            assertEquals(listOf(season2), state.downloadableSeasons.map { it.id })
+        }
 
     @Test
-    fun `a failed series request offers no Download and shows the page`() = runBlocking {
-        episodesFail = true
-        val viewModel = viewModel(SeasonEpisodeCounts(season1, total = 1, downloaded = 1))
-        viewModel.loadShow(showId)
-        val state = withTimeout(5_000) { viewModel.state.first { it.show != null } }
-        // The counts request runs alongside; give it the time to fail.
-        Thread.sleep(200)
+    fun `a failed series request offers no Download and shows the page`() =
+        runTest(dispatcher) {
+            episodesFail = true
+            val viewModel = viewModel(SeasonEpisodeCounts(season1, total = 1, downloaded = 1))
+            viewModel.loadShow(showId)
+            // The counts request runs alongside: the whole load, its failure included.
+            advanceUntilIdle()
+            val state = viewModel.state.value
 
-        assertEquals(false, viewModel.state.value.canDownload)
-        assertTrue(viewModel.state.value.hasDownloads)
-        assertNull(viewModel.state.value.error)
-        assertEquals(2, state.seasons.size)
-    }
+            assertNotNull(state.show)
+            assertEquals(false, state.canDownload)
+            assertTrue(state.hasDownloads)
+            assertNull(state.error)
+            assertEquals(2, state.seasons.size)
+        }
 
     @Test
-    fun `a reload keeps Download on screen`() = runBlocking {
-        val viewModel = viewModel()
-        viewModel.loadShow(showId)
-        withTimeout(5_000) { viewModel.state.first { it.canDownload } }
-        val seen = mutableListOf<Boolean>()
-        val collector =
-            launch(Dispatchers.Unconfined) { viewModel.state.collect { seen.add(it.canDownload) } }
-        calls.clear()
+    fun `a reload keeps Download on screen`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel()
+            viewModel.loadShow(showId)
+            advanceUntilIdle()
+            assertTrue(viewModel.state.value.canDownload)
+            val seen = mutableListOf<Boolean>()
+            // Unconfined, so it sees every state the reload goes through.
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.state.collect { seen.add(it.canDownload) }
+            }
+            calls.clear()
 
-        viewModel.loadShow(showId)
-        withTimeout(5_000) { while (synchronized(calls) { "getEpisodes" !in calls }) delay(10) }
-        delay(100)
-        collector.cancel()
+            viewModel.loadShow(showId)
+            advanceUntilIdle()
 
-        assertTrue(seen.isNotEmpty())
-        assertTrue(seen.all { it }, message = "Download vanished during a reload: $seen")
+            assertTrue("getEpisodes" in calls)
+            assertTrue(seen.isNotEmpty())
+            assertTrue(seen.all { it }, message = "Download vanished during a reload: $seen")
+        }
+
+    /** Loads the show to its end, the download counts included. */
+    private fun TestScope.loaded(viewModel: ShowViewModel): ShowState {
+        viewModel.loadShow(showId)
+        advanceUntilIdle()
+        val state = viewModel.state.value
+        assertTrue(state.seasonDownloadInfo.isNotEmpty())
+        return state
     }
 
     private fun viewModel(vararg counts: SeasonEpisodeCounts): ShowViewModel {
@@ -212,6 +224,8 @@ class ShowLoadingTest {
                     texts = CoreDownloadTexts,
                 ),
             downloadStore = downloadStore(counts.toList()),
+            defaultDispatcher = dispatcher,
+            ioDispatcher = dispatcher,
         )
     }
 

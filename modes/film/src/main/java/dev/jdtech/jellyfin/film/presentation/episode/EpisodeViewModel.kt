@@ -17,6 +17,7 @@ import dev.jdtech.jellyfin.repository.ReloadPolicy
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -30,13 +31,22 @@ import timber.log.Timber
 
 @HiltViewModel
 class EpisodeViewModel
-@Inject
-constructor(
+internal constructor(
     private val repository: MediaRepository,
     private val appPreferences: AppPreferences,
     private val videoMetadataParser: VideoMetadataParser,
     dataChanges: DataChangeEvents = DataChangeEvents(),
+    /** CE (#809): where the actors are sorted out; the tests run it on their own dispatcher. */
+    private val defaultDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
+    @Inject
+    constructor(
+        repository: MediaRepository,
+        appPreferences: AppPreferences,
+        videoMetadataParser: VideoMetadataParser,
+        dataChanges: DataChangeEvents = DataChangeEvents(),
+    ) : this(repository, appPreferences, videoMetadataParser, dataChanges, Dispatchers.Default)
+
     private val _state = MutableStateFlow(EpisodeState())
     val state = _state.asStateFlow()
 
@@ -99,7 +109,7 @@ constructor(
     }
 
     private suspend fun getActors(item: Episode): List<ItemPerson> {
-        return withContext(Dispatchers.Default) {
+        return withContext(defaultDispatcher) {
             item.people.mergeDuplicateRoles().filter { it.type == PersonKind.ACTOR }
         }
     }

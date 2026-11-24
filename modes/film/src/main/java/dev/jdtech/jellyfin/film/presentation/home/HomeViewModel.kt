@@ -34,6 +34,7 @@ import javax.inject.Inject
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -55,14 +56,27 @@ import timber.log.Timber
 
 @HiltViewModel
 class HomeViewModel
-@Inject
-constructor(
+internal constructor(
     private val repository: MediaRepository,
     private val appPreferences: AppPreferences,
     private val serverStore: ServerStore,
     dataChanges: DataChangeEvents = DataChangeEvents(),
     private val homeCache: HomeCache? = null,
+    /**
+     * CE (#809): where a load runs; the tests run it on their own dispatcher, so no load outlives
+     * its test.
+     */
+    private val loadDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
+    @Inject
+    constructor(
+        repository: MediaRepository,
+        appPreferences: AppPreferences,
+        serverStore: ServerStore,
+        dataChanges: DataChangeEvents = DataChangeEvents(),
+        homeCache: HomeCache? = null,
+    ) : this(repository, appPreferences, serverStore, dataChanges, homeCache, Dispatchers.Default)
+
     private val _state = MutableStateFlow(HomeState())
     val state = _state.asStateFlow()
 
@@ -189,7 +203,7 @@ constructor(
         Timber.i("Loading data")
         loadJob?.cancel()
         val job =
-            viewModelScope.launch(Dispatchers.Default + LoadGeneration(generation.get())) {
+            viewModelScope.launch(loadDispatcher + LoadGeneration(generation.get())) {
                 runLoad(silent)
             }
         loadJob = job

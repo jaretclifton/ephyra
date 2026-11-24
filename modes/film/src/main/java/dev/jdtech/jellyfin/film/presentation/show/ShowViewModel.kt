@@ -38,6 +38,7 @@ import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.TimberFallbackLog
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -60,8 +61,7 @@ internal val showEpisodeFields = setOf(EpisodeField.CAN_DOWNLOAD)
 
 @HiltViewModel
 class ShowViewModel
-@Inject
-constructor(
+internal constructor(
     private val repository: MediaRepository,
     private val appPreferences: AppPreferences,
     private val downloader: Downloader,
@@ -69,7 +69,35 @@ constructor(
     private val downloadStore: DownloadStore,
     dataChanges: DataChangeEvents = DataChangeEvents(),
     externalRatings: ExternalRatings = ExternalRatings.None,
+    /**
+     * CE (#809): where the cast and crew are sorted out ([defaultDispatcher]) and Room and the
+     * downloads are read ([ioDispatcher]); the tests run both on their own dispatcher, so no load
+     * outlives its test.
+     */
+    private val defaultDispatcher: CoroutineDispatcher,
+    private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
+    @Inject
+    constructor(
+        repository: MediaRepository,
+        appPreferences: AppPreferences,
+        downloader: Downloader,
+        downloadQueue: DownloadQueue,
+        downloadStore: DownloadStore,
+        dataChanges: DataChangeEvents = DataChangeEvents(),
+        externalRatings: ExternalRatings = ExternalRatings.None,
+    ) : this(
+        repository,
+        appPreferences,
+        downloader,
+        downloadQueue,
+        downloadStore,
+        dataChanges,
+        externalRatings,
+        Dispatchers.Default,
+        Dispatchers.IO,
+    )
+
     private val _state = MutableStateFlow(ShowState())
     val state = _state.asStateFlow()
 
@@ -173,7 +201,7 @@ constructor(
                     val displayCredits =
                         displayCastAndCrew && appPreferences.getValue(appPreferences.detailCredits)
                     val castAndCrewAsync =
-                        async(Dispatchers.Default) {
+                        async(defaultDispatcher) {
                             if (displayCastAndCrew) castAndCrew(show) else CastAndCrew()
                         }
                     val nextUp = nextUpAsync.await()
@@ -244,7 +272,7 @@ constructor(
 
     /** Stored and downloaded episodes per season, from Room only, of the current server (#718). */
     private suspend fun getLocalEpisodeCounts(showId: ItemId): Map<ItemId, SeasonEpisodeCounts> =
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             val serverId = appPreferences.currentServerId() ?: return@withContext emptyMap()
             downloadStore.seasonEpisodeCounts(showId, serverId).associateBy { it.seasonId }
         }
@@ -341,7 +369,7 @@ constructor(
     /** CE (#636): the answer to [DownloadPrompt.Quality], which starts the download. */
     fun chooseQuality(maxBitrate: Int?) {
         val answer = downloadPrompts.chooseQuality(maxBitrate) ?: return
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             enqueue(answer.episodes, answer.maxBitrate, answer.unwatchedOnly)
         }
     }
@@ -363,7 +391,7 @@ constructor(
     }
 
     fun downloadSeasons(seasonIds: Set<ItemId>) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             val episodes = seasonIds.flatMap { seasonId ->
                 repository.getEpisodes(
                     seriesId = showId,
@@ -386,7 +414,7 @@ constructor(
     }
 
     fun deleteShowDownloads() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             for (season in _state.value.seasons) {
                 val episodes =
                     repository.getEpisodes(seriesId = showId, seasonId = season.id, offline = true)
