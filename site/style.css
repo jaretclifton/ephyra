@@ -667,7 +667,7 @@ figcaption {
 
 @media (max-width: 640px) {
   .cards {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -696,6 +696,13 @@ figcaption {
 .card strong {
   color: var(--on-surface);
   font-weight: 500;
+}
+
+/* An address or a filter in a card breaks where it has to: on a 360 px phone it is wider than
+   the card. */
+.card code {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 table {
