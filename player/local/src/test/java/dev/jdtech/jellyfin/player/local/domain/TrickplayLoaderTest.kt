@@ -126,8 +126,10 @@ class TrickplayLoaderTest {
             thumbnailCount = thumbnailCount,
             interval = 10_000,
             nowMs = {
+                // Read first, then signal, so the test cannot move the clock in between.
+                val current = now
                 clockReads.incrementAndGet()
-                now
+                current
             },
             maxSheetPixels = maxSheetPixels,
             cropTile = cropTile,
