@@ -25,6 +25,7 @@ import dev.jdtech.jellyfin.repository.ReloadPolicy
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -38,14 +39,34 @@ import timber.log.Timber
 
 @HiltViewModel
 class MovieViewModel
-@Inject
-constructor(
+internal constructor(
     private val repository: MediaRepository,
     private val appPreferences: AppPreferences,
     private val videoMetadataParser: VideoMetadataParser,
     dataChanges: DataChangeEvents = DataChangeEvents(),
     externalRatings: ExternalRatings = ExternalRatings.None,
+    /**
+     * CE (#809): where the cast and crew are sorted out; the tests run it on their own dispatcher,
+     * so no load outlives its test.
+     */
+    private val defaultDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
+    @Inject
+    constructor(
+        repository: MediaRepository,
+        appPreferences: AppPreferences,
+        videoMetadataParser: VideoMetadataParser,
+        dataChanges: DataChangeEvents = DataChangeEvents(),
+        externalRatings: ExternalRatings = ExternalRatings.None,
+    ) : this(
+        repository,
+        appPreferences,
+        videoMetadataParser,
+        dataChanges,
+        externalRatings,
+        Dispatchers.Default,
+    )
+
     private val _state = MutableStateFlow(MovieState())
     val state = _state.asStateFlow()
 
@@ -174,19 +195,19 @@ constructor(
     }
 
     private suspend fun getActors(item: Movie): List<ItemPerson> {
-        return withContext(Dispatchers.Default) {
+        return withContext(defaultDispatcher) {
             item.people.mergeDuplicateRoles().filter { it.type == PersonKind.ACTOR }
         }
     }
 
     private suspend fun getDirector(item: Movie): ItemPerson? {
-        return withContext(Dispatchers.Default) {
+        return withContext(defaultDispatcher) {
             item.people.mergeDuplicateRoles().firstOrNull { it.type == PersonKind.DIRECTOR }
         }
     }
 
     private suspend fun getWriters(item: Movie): List<ItemPerson> {
-        return withContext(Dispatchers.Default) {
+        return withContext(defaultDispatcher) {
             item.people.mergeDuplicateRoles().filter { it.type == PersonKind.WRITER }
         }
     }

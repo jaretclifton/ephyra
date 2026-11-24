@@ -9,17 +9,15 @@ import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.IOException
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -40,10 +38,13 @@ class HomeViewModelOfflineCrashTest {
 
     private var originalUncaughtHandler: Thread.UncaughtExceptionHandler? = null
 
+    /** #955: Main and the load on one test scheduler, so the load ends before the test does. */
+    private val dispatcher = StandardTestDispatcher()
+
     @BeforeEach
     fun setUp() {
         // viewModelScope is built with Dispatchers.Main.immediate; provide one.
-        Dispatchers.setMain(StandardTestDispatcher())
+        Dispatchers.setMain(dispatcher)
         originalUncaughtHandler = Thread.getDefaultUncaughtExceptionHandler()
     }
 
@@ -54,49 +55,45 @@ class HomeViewModelOfflineCrashTest {
     }
 
     @Test
-    fun `loadData surfaces the offline failure in state without crashing`() {
-        // An uncaught coroutine exception with no CoroutineExceptionHandler in
-        // context ends up here; on a real device this handler kills the process.
-        val uncaught = CompletableDeferred<Throwable>()
-        Thread.setDefaultUncaughtExceptionHandler { _, e -> uncaught.complete(e) }
+    fun `loadData surfaces the offline failure in state without crashing`() =
+        runTest(dispatcher) {
+            // An uncaught coroutine exception with no CoroutineExceptionHandler in
+            // context ends up here; on a real device this handler kills the process.
+            // (runTest also fails on an exception that escapes a coroutine of its scheduler.)
+            val uncaught = CompletableDeferred<Throwable>()
+            Thread.setDefaultUncaughtExceptionHandler { _, e -> uncaught.complete(e) }
 
-        val viewModel =
-            HomeViewModel(
-                repository = offlineRepository(),
-                appPreferences = AppPreferences(defaultsOnlySharedPreferences()),
-                serverStore = unusedDao(),
+            val viewModel =
+                HomeViewModel(
+                    repository = offlineRepository(),
+                    appPreferences = AppPreferences(defaultsOnlySharedPreferences()),
+                    serverStore = unusedDao(),
+                    loadDispatcher = dispatcher,
+                )
+
+            val load = viewModel.loadData()
+            advanceUntilIdle()
+            val state = viewModel.state.value
+
+            // The fix: nothing escapes -> the app does not crash.
+            assertFalse(
+                uncaught.isCompleted,
+                message =
+                    "HomeViewModel.loadData() must not leak an uncaught exception while offline",
             )
 
-        viewModel.loadData()
-
-        // loadData() runs on Dispatchers.Default; wait for it to settle.
-        val state = runBlocking {
-            withTimeoutOrNull(5_000) {
-                while (with(viewModel.state.value) { error == null || isLoading }) {
-                    delay(20)
-                }
-                viewModel.state.value
-            }
+            // The offline failure is surfaced in HomeState instead, for the UI to show.
+            assertTrue(load.isCompleted, message = "loadData() should have settled")
+            assertFalse(state.isLoading, message = "loadData() should finish loading")
+            assertNotNull(
+                state.error,
+                message = "loadData() should surface the offline error in HomeState",
+            )
+            assertTrue(
+                generateSequence<Throwable>(state.error) { it.cause }.any { it is IOException },
+                message = "the surfaced error should be the offline IOException",
+            )
         }
-
-        // The fix: nothing escapes -> the app does not crash.
-        assertNull(
-            runBlocking { withTimeoutOrNull(500) { uncaught.await() } },
-            message = "HomeViewModel.loadData() must not leak an uncaught exception while offline",
-        )
-
-        // The offline failure is surfaced in HomeState instead, for the UI to show.
-        assertNotNull(state, message = "loadData() should have settled within the timeout")
-        assertFalse(state!!.isLoading, message = "loadData() should finish loading")
-        assertNotNull(
-            state.error,
-            message = "loadData() should surface the offline error in HomeState",
-        )
-        assertTrue(
-            generateSequence<Throwable>(state.error) { it.cause }.any { it is IOException },
-            message = "the surfaced error should be the offline IOException",
-        )
-    }
 
     /**
      * Every repository call throws [IOException] — models a device with no network, which is how

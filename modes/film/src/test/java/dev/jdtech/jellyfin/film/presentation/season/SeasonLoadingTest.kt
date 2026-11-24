@@ -22,13 +22,14 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -42,9 +43,12 @@ class SeasonLoadingTest {
     private var episodesFail = false
     private var storedEpisodes = emptyList<Any>()
 
+    /** #955: Main on a test scheduler, so the test waits for the whole load, and no real thread. */
+    private val dispatcher = StandardTestDispatcher()
+
     @BeforeEach
     fun setUp() {
-        Dispatchers.setMain(UnconfinedTestDispatcher())
+        Dispatchers.setMain(dispatcher)
     }
 
     @AfterEach
@@ -53,76 +57,90 @@ class SeasonLoadingTest {
     }
 
     @Test
-    fun `a season without episodes ends loaded with no episodes`() = runBlocking {
-        val viewModel = viewModel()
-        viewModel.loadSeason(seasonId, seriesId = seriesId)
-        val state = withTimeout(5_000) { viewModel.state.first { !it.isLoading } }
+    fun `a season without episodes ends loaded with no episodes`() =
+        runTest(dispatcher) {
+            val state = loaded { it.loadSeason(seasonId, seriesId = seriesId) }
 
-        assertNotNull(state.season)
-        assertTrue(state.episodes.isEmpty())
-        assertEquals(null, state.error)
-    }
-
-    @Test
-    fun `the season is loading until its episodes have come`() = runBlocking {
-        val viewModel = viewModel()
-        val seen = mutableListOf<SeasonState>()
-        val collector = launch(Dispatchers.Unconfined) { viewModel.state.collect { seen.add(it) } }
-        viewModel.loadSeason(seasonId, seriesId = seriesId)
-        withTimeout(5_000) { viewModel.state.first { !it.isLoading && it.season != null } }
-        collector.cancel()
-
-        // Every state before the last one, the season shown early included, is still loading.
-        val loading = seen.drop(1).dropLast(1)
-        assertTrue(loading.isNotEmpty(), message = "no state while loading: $seen")
-        assertTrue(
-            loading.all { it.isLoading },
-            message = "not loading before the episodes came: $seen",
-        )
-        assertFalse(seen.last().isLoading)
-    }
+            assertFalse(state.isLoading)
+            assertNotNull(state.season)
+            assertTrue(state.episodes.isEmpty())
+            assertEquals(null, state.error)
+        }
 
     @Test
-    fun `a failed load is no longer loading`() = runBlocking {
-        episodesFail = true
-        val viewModel = viewModel()
-        viewModel.loadSeason(seasonId, seriesId = seriesId)
-        val state = withTimeout(5_000) { viewModel.state.first { it.error != null } }
+    fun `the season is loading until its episodes have come`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel()
+            val seen = mutableListOf<SeasonState>()
+            // Unconfined, so it sees every state the load goes through.
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.state.collect { seen.add(it) }
+            }
+            viewModel.loadSeason(seasonId, seriesId = seriesId)
+            advanceUntilIdle()
+            assertNotNull(viewModel.state.value.season)
 
-        assertFalse(state.isLoading)
-    }
-
-    @Test
-    fun `episodes from the server are not stored only`() = runBlocking {
-        storedEpisodes = listOf(dummyEpisode)
-        val viewModel = viewModel()
-        viewModel.loadSeason(seasonId, seriesId = seriesId)
-        val state = withTimeout(5_000) { viewModel.state.first { !it.isLoading } }
-
-        assertFalse(state.storedOnly, message = "the server's list keeps a removed download")
-    }
-
-    @Test
-    fun `the stored episodes stand in for a server that fails, and say so`() = runBlocking {
-        // #281: without Offline Mode, a removed download leaves such a list at once.
-        storedEpisodes = listOf(dummyEpisode)
-        episodesFail = true
-        val viewModel = viewModel()
-        viewModel.loadSeason(seasonId, seriesId = seriesId)
-        val state = withTimeout(5_000) { viewModel.state.first { !it.isLoading } }
-
-        assertEquals(listOf(dummyEpisode.id), state.episodes.map { it.id })
-        assertTrue(state.storedOnly, message = "the list is the stored episodes")
-    }
+            // Every state before the last one, the season shown early included, is still loading.
+            val loading = seen.drop(1).dropLast(1)
+            assertTrue(loading.isNotEmpty(), message = "no state while loading: $seen")
+            assertTrue(
+                loading.all { it.isLoading },
+                message = "not loading before the episodes came: $seen",
+            )
+            assertFalse(seen.last().isLoading)
+        }
 
     @Test
-    fun `the downloads-only page is stored only`() = runBlocking {
-        storedEpisodes = listOf(dummyEpisode)
-        val viewModel = viewModel()
-        viewModel.loadSeason(seasonId, downloadsOnly = true, seriesId = seriesId)
-        val state = withTimeout(5_000) { viewModel.state.first { !it.isLoading } }
+    fun `a failed load is no longer loading`() =
+        runTest(dispatcher) {
+            episodesFail = true
+            val state = loaded { it.loadSeason(seasonId, seriesId = seriesId) }
 
-        assertTrue(state.storedOnly)
+            assertNotNull(state.error)
+            assertFalse(state.isLoading)
+        }
+
+    @Test
+    fun `episodes from the server are not stored only`() =
+        runTest(dispatcher) {
+            storedEpisodes = listOf(dummyEpisode)
+            val state = loaded { it.loadSeason(seasonId, seriesId = seriesId) }
+
+            assertFalse(state.isLoading)
+            assertFalse(state.storedOnly, message = "the server's list keeps a removed download")
+        }
+
+    @Test
+    fun `the stored episodes stand in for a server that fails, and say so`() =
+        runTest(dispatcher) {
+            // #281: without Offline Mode, a removed download leaves such a list at once.
+            storedEpisodes = listOf(dummyEpisode)
+            episodesFail = true
+            val state = loaded { it.loadSeason(seasonId, seriesId = seriesId) }
+
+            assertFalse(state.isLoading)
+            assertEquals(listOf(dummyEpisode.id), state.episodes.map { it.id })
+            assertTrue(state.storedOnly, message = "the list is the stored episodes")
+        }
+
+    @Test
+    fun `the downloads-only page is stored only`() =
+        runTest(dispatcher) {
+            storedEpisodes = listOf(dummyEpisode)
+            val state = loaded {
+                it.loadSeason(seasonId, downloadsOnly = true, seriesId = seriesId)
+            }
+
+            assertFalse(state.isLoading)
+            assertTrue(state.storedOnly)
+        }
+
+    /** Runs [load] on a new view model and waits until it has ended. */
+    private fun TestScope.loaded(load: (SeasonViewModel) -> Unit): SeasonState {
+        val viewModel = viewModel()
+        load(viewModel)
+        advanceUntilIdle()
+        return viewModel.state.value
     }
 
     private fun viewModel(): SeasonViewModel {

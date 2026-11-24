@@ -26,14 +26,16 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -72,43 +74,35 @@ class HomeViewModelUserSwitchTest {
     private val currentUser = MutableStateFlow<User?>(alice)
 
     /** The user the client sends requests for; null when nobody is signed in. */
-    @Volatile private var sessionUser: User? = alice
+    private var sessionUser: User? = alice
 
     /** Whom each request for rows was sent as. */
-    private val requests = java.util.concurrent.CopyOnWriteArrayList<String>()
+    private val requests = mutableListOf<String>()
 
     /** Set to hold the next requests for [bob] until it opens. */
-    @Volatile private var bobGate: Gate? = null
+    private var bobGate: Gate? = null
 
     /** Set to hold the next requests for [alice] until it opens. */
-    @Volatile private var aliceGate: Gate? = null
+    private var aliceGate: Gate? = null
 
-    /**
-     * Requests that wait for the test, suspended: they hold no thread, so a few held requests
-     * cannot keep the next load off `Dispatchers.Default`.
-     */
+    /** Requests that wait for the test, suspended until it opens the gate. */
     private class Gate {
         private val waiting = mutableListOf<() -> Unit>()
         private var opened = false
 
         /** False when the gate is open already: the request answers at once. */
-        @Synchronized
         fun hold(answer: () -> Unit): Boolean {
             if (opened) return false
             waiting += answer
             return true
         }
 
-        @get:Synchronized
         val held: Int
             get() = waiting.size
 
         fun open() {
-            val answers =
-                synchronized(this) {
-                    opened = true
-                    waiting.toList().also { waiting.clear() }
-                }
+            opened = true
+            val answers = waiting.toList().also { waiting.clear() }
             answers.forEach { it() }
         }
     }
@@ -116,18 +110,24 @@ class HomeViewModelUserSwitchTest {
     private val dataChanges = DataChangeEvents()
     private val playbackEvents = PlaybackEvents(dataChanges)
 
+    /**
+     * #955: Main and the loads on one test scheduler. Home hears of a change to the current user
+     * once the test lets the scheduler run, and no load is left on a real thread when a test ends.
+     */
+    private val dispatcher = StandardTestDispatcher()
+
     private lateinit var viewModel: HomeViewModel
 
     @BeforeEach
     fun setUp() {
-        // Unconfined: Home hears of a change to the current user as Room emits it.
-        Dispatchers.setMain(UnconfinedTestDispatcher())
+        Dispatchers.setMain(dispatcher)
         viewModel =
             HomeViewModel(
                 repository = repository(),
                 appPreferences = AppPreferences(sharedPreferences()),
                 serverStore = database(),
                 dataChanges = dataChanges,
+                loadDispatcher = dispatcher,
             )
     }
 
@@ -137,165 +137,185 @@ class HomeViewModelUserSwitchTest {
     }
 
     @Test
-    fun `adding a user by password shows their Home`() = switchUser(::login, playerFirst = false)
+    fun `adding a user by password shows their Home`() =
+        runTest(dispatcher) { switchUser(::login, playerFirst = false) }
 
     @Test
     fun `adding a user by password after the player shows their Home`() =
-        switchUser(::login, playerFirst = true)
+        runTest(dispatcher) { switchUser(::login, playerFirst = true) }
 
     @Test
     fun `adding a user by Quick Connect shows their Home`() =
-        switchUser(::quickConnect, playerFirst = false)
+        runTest(dispatcher) { switchUser(::quickConnect, playerFirst = false) }
 
     @Test
     fun `adding a user by Quick Connect after the player shows their Home`() =
-        switchUser(::quickConnect, playerFirst = true)
+        runTest(dispatcher) { switchUser(::quickConnect, playerFirst = true) }
 
     @Test
-    fun `switching user on the Users screen shows their Home`() {
-        users[bob.id] = bob
-        switchUser(::pickOnUsersScreen, playerFirst = false)
-    }
-
-    @Test
-    fun `switching user on the Users screen after the player shows their Home`() {
-        users[bob.id] = bob
-        switchUser(::pickOnUsersScreen, playerFirst = true)
-    }
-
-    @Test
-    fun `a load for the previous user that answers after the switch leaves nothing behind`() {
-        homeShowsAlice()
-
-        val gate = Gate()
-        aliceGate = gate
-        val aliceLoad = viewModel.loadData(silent = true)
-        // The load is waiting for the server, for Alice's Continue Watching and Next Up.
-        waitUntil { gate.held == 2 }
-        users[bob.id] = bob
-        pickOnUsersScreen(bob)
-        val bobLoaded = waitFor {
-            it.user?.id == bob.id && it.resumeSection != null && !it.isLoading
-        }
-        assertEquals(listOf(bobItem), bobLoaded.resumeSection?.homeSection?.items)
-        // Alice's answers are still due, after Bob's rows: now the server gives them.
-        assertFalse(aliceLoad.isCompleted)
-        aliceGate = null
-        gate.open()
-        runBlocking { withTimeout(5_000) { aliceLoad.join() } }
-
-        val state = settle { it.resumeSection == null }
-        assertEquals(bob, state.user)
-        assertEquals(listOf(bobItem), state.resumeSection?.homeSection?.items)
-        assertEquals(listOf(bobItem), state.nextUpSection?.homeSection?.items)
-    }
-
-    @Test
-    fun `the new user's load waits until the client acts for them`() {
-        homeShowsAlice()
-        requests.clear()
-
-        // A login has written Room; the client still acts for Alice.
-        loginRoomOnly(bob)
-        val between = waitFor { it.user?.id == bob.id }
-        assertTrue(between.isEmpty)
-        // Long enough for a load that does not wait to have asked the server as Alice.
-        Thread.sleep(300)
-        assertEquals(emptyList(), requests, "Home asked the server as the previous user")
-
-        sessionUser = bob
-        val state = settle { it.resumeSection == null || it.nextUpSection == null }
-        assertEquals(bob, state.user)
-        assertEquals(listOf(bobItem), state.resumeSection?.homeSection?.items)
-        assertEquals(listOf(bobItem), state.nextUpSection?.homeSection?.items)
-        assertTrue(requests.all { it == bob.name }, "requests: $requests")
-    }
-
-    @Test
-    fun `a client that never switches leaves Home empty, not waiting for good`() {
-        homeShowsAlice()
-        requests.clear()
-
-        loginRoomOnly(bob)
-        // The load gives up after its few seconds.
-        val state = runBlocking {
-            withTimeout(10_000) {
-                while (viewModel.state.value.isLoading || viewModel.state.value.user == alice) {
-                    delay(50)
-                }
-                viewModel.state.value
-            }
+    fun `switching user on the Users screen shows their Home`() =
+        runTest(dispatcher) {
+            users[bob.id] = bob
+            switchUser(::pickOnUsersScreen, playerFirst = false)
         }
 
-        assertEquals(bob.id, state.user?.id)
-        assertTrue(state.isEmpty)
-        assertEquals(emptyList(), requests)
-        // Not counted as loaded: coming back loads again, once the given-up load has ended.
-        waitUntil { viewModel.shouldReload(stopEventFollows = true) }
-    }
+    @Test
+    fun `switching user on the Users screen after the player shows their Home`() =
+        runTest(dispatcher) {
+            users[bob.id] = bob
+            switchUser(::pickOnUsersScreen, playerFirst = true)
+        }
 
     @Test
-    fun `signing the user out leaves no rows`() {
-        homeShowsAlice()
+    fun `a load for the previous user that answers after the switch leaves nothing behind`() =
+        runTest(dispatcher) {
+            homeShowsAlice()
 
-        server = server.copy(currentUserId = null)
-        currentUser.value = null
+            val gate = Gate()
+            aliceGate = gate
+            val aliceLoad = viewModel.loadData(silent = true)
+            advanceUntilIdle()
+            // The load is waiting for the server, for Alice's Continue Watching and Next Up.
+            assertEquals(2, gate.held)
+            users[bob.id] = bob
+            pickOnUsersScreen(bob)
+            advanceUntilIdle()
+            val bobLoaded = viewModel.state.value
+            assertEquals(bob.id, bobLoaded.user?.id)
+            assertFalse(bobLoaded.isLoading)
+            assertEquals(listOf(bobItem), bobLoaded.resumeSection?.homeSection?.items)
+            // Alice's answers are still due, after Bob's rows: now the server gives them.
+            assertFalse(aliceLoad.isCompleted)
+            aliceGate = null
+            gate.open()
+            advanceUntilIdle()
+            assertTrue(aliceLoad.isCompleted)
 
-        val state = waitFor { it.user == null }
-        assertNull(state.user)
-        assertTrue(state.isEmpty)
-    }
+            val state = viewModel.state.value
+            assertFalse(state.isLoading)
+            assertEquals(bob, state.user)
+            assertEquals(listOf(bobItem), state.resumeSection?.homeSection?.items)
+            assertEquals(listOf(bobItem), state.nextUpSection?.homeSection?.items)
+        }
 
     @Test
-    fun `the same user written again changes nothing`() {
-        val before = homeShowsAlice()
+    fun `the new user's load waits until the client acts for them`() =
+        runTest(dispatcher) {
+            homeShowsAlice()
+            requests.clear()
 
-        currentUser.value = alice.copy(primaryImageTag = "new")
+            // A login has written Room; the client still acts for Alice.
+            loginRoomOnly(bob)
+            // Long enough for a load that does not wait to have asked the server as Alice.
+            advanceTimeBy(300)
+            runCurrent()
+            val between = viewModel.state.value
+            assertEquals(bob.id, between.user?.id)
+            assertTrue(between.isEmpty)
+            assertEquals(emptyList(), requests, "Home asked the server as the previous user")
 
-        assertEquals(before, viewModel.state.value)
-        assertFalse(viewModel.shouldReload(stopEventFollows = true))
-    }
+            sessionUser = bob
+            advanceUntilIdle()
+            val state = viewModel.state.value
+            assertFalse(state.isLoading)
+            assertEquals(bob, state.user)
+            assertEquals(listOf(bobItem), state.resumeSection?.homeSection?.items)
+            assertEquals(listOf(bobItem), state.nextUpSection?.homeSection?.items)
+            assertTrue(requests.all { it == bob.name }, "requests: $requests")
+        }
 
     @Test
-    fun `the screen shows nothing of a user that is not the signed in one`() {
-        val shown = homeShowsAlice()
+    fun `a client that never switches leaves Home empty, not waiting for good`() =
+        runTest(dispatcher) {
+            homeShowsAlice()
+            requests.clear()
 
-        val forBob = shown.shownTo(bob.id)
-        //
-        assertNull(forBob.user)
-        assertTrue(forBob.isEmpty)
-        assertTrue(forBob.isLoading)
-        assertEquals(shown.server, forBob.server)
-        assertEquals(shown, shown.shownTo(alice.id))
-        // No session at hand (previews): everything shows.
-        assertEquals(shown, shown.shownTo(null))
-    }
+            loginRoomOnly(bob)
+            // The load gives up after its few seconds.
+            advanceUntilIdle()
+            val state = viewModel.state.value
 
-    private fun switchUser(flow: (User) -> Unit, playerFirst: Boolean) {
+            assertFalse(state.isLoading)
+            assertEquals(bob.id, state.user?.id)
+            assertTrue(state.isEmpty)
+            assertEquals(emptyList(), requests)
+            // Not counted as loaded: coming back loads again, once the given-up load has ended.
+            assertTrue(viewModel.shouldReload(stopEventFollows = true))
+        }
+
+    @Test
+    fun `signing the user out leaves no rows`() =
+        runTest(dispatcher) {
+            homeShowsAlice()
+
+            server = server.copy(currentUserId = null)
+            currentUser.value = null
+            advanceUntilIdle()
+
+            val state = viewModel.state.value
+            assertNull(state.user)
+            assertTrue(state.isEmpty)
+        }
+
+    @Test
+    fun `the same user written again changes nothing`() =
+        runTest(dispatcher) {
+            val before = homeShowsAlice()
+            requests.clear()
+
+            currentUser.value = alice.copy(primaryImageTag = "new")
+            advanceUntilIdle()
+
+            assertEquals(before, viewModel.state.value)
+            assertEquals(emptyList(), requests, "Home loaded again")
+            assertFalse(viewModel.shouldReload(stopEventFollows = true))
+        }
+
+    @Test
+    fun `the screen shows nothing of a user that is not the signed in one`() =
+        runTest(dispatcher) {
+            val shown = homeShowsAlice()
+
+            val forBob = shown.shownTo(bob.id)
+            //
+            assertNull(forBob.user)
+            assertTrue(forBob.isEmpty)
+            assertTrue(forBob.isLoading)
+            assertEquals(shown.server, forBob.server)
+            assertEquals(shown, shown.shownTo(alice.id))
+            // No session at hand (previews): everything shows.
+            assertEquals(shown, shown.shownTo(null))
+        }
+
+    private fun TestScope.switchUser(flow: (User) -> Unit, playerFirst: Boolean) {
         homeShowsAlice()
         if (playerFirst) {
             // The player opens over Home, and its stop reloads Home (ReloadOnResume).
             playbackEvents.onPlaying(aliceItemId)
             playbackEvents.onPlaying(null)
             playbackEvents.onStopped(aliceItemId)
-            runBlocking { withTimeout(5_000) { viewModel.loadData(silent = true).join() } }
+            loadToItsEnd(viewModel.loadData(silent = true))
         }
 
         // Home is under the Login or Users screen now. Bob's rows wait for the test.
         val gate = Gate()
         bobGate = gate
         flow(bob)
+        advanceUntilIdle()
 
         // Between the switch and Bob's rows: Bob's avatar, none of Alice's rows.
-        val between = waitFor { it.user?.id == bob.id }
+        val between = viewModel.state.value
+        assertEquals(bob.id, between.user?.id)
         assertTrue(between.isEmpty, "Alice's rows are still there: $between")
 
         // Home comes back into view (ON_RESUME); it must not load a second time.
         if (viewModel.shouldReload(stopEventFollows = true)) viewModel.loadData(silent = true)
         bobGate = null
         gate.open()
+        advanceUntilIdle()
 
-        val state = settle { it.resumeSection == null || it.nextUpSection == null }
+        val state = viewModel.state.value
+        assertFalse(state.isLoading)
         assertEquals(bob, state.user)
         assertEquals(listOf(bobItem), state.resumeSection?.homeSection?.items)
         assertEquals(listOf(bobItem), state.nextUpSection?.homeSection?.items)
@@ -303,12 +323,17 @@ class HomeViewModelUserSwitchTest {
         assertFalse(viewModel.shouldReload(stopEventFollows = true))
     }
 
-    private fun homeShowsAlice(): HomeState {
-        runBlocking { withTimeout(5_000) { viewModel.loadData().join() } }
+    private fun TestScope.homeShowsAlice(): HomeState {
+        loadToItsEnd(viewModel.loadData())
         val state = viewModel.state.value
         assertEquals(alice, state.user)
         assertEquals(listOf(aliceItem), state.resumeSection?.homeSection?.items)
         return state
+    }
+
+    private fun TestScope.loadToItsEnd(load: Job) {
+        advanceUntilIdle()
+        assertTrue(load.isCompleted, "the load did not end")
     }
 
     /** `saveAuthenticationResult`, after a login with a password. */
@@ -332,30 +357,6 @@ class HomeViewModelUserSwitchTest {
         server = server.copy(currentUserId = user.id)
         currentUser.value = users.getValue(user.id)
         sessionUser = user
-    }
-
-    /** The first state that is [done], within a few seconds; fails with the last one otherwise. */
-    private fun waitFor(done: (HomeState) -> Boolean): HomeState = runBlocking {
-        val found =
-            withTimeoutOrNull(5_000) {
-                while (!done(viewModel.state.value)) delay(10)
-                viewModel.state.value
-            }
-        found ?: throw AssertionError("Home never got there: ${viewModel.state.value}")
-    }
-
-    /** loadData() runs on Dispatchers.Default; wait until it has finished. */
-    private fun settle(waiting: (HomeState) -> Boolean): HomeState = runBlocking {
-        withTimeout(5_000) {
-            while (with(viewModel.state.value) { isLoading || waiting(this) }) delay(10)
-            viewModel.state.value
-        }
-    }
-
-    /** Polls [done] until it holds, within a few seconds. */
-    private fun waitUntil(done: () -> Boolean) = runBlocking {
-        withTimeoutOrNull(5_000) { while (!done()) delay(10) }
-            ?: throw AssertionError("never happened")
     }
 
     /**

@@ -11,16 +11,17 @@ import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.IOException
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -32,10 +33,13 @@ class HomeViewModelServerNameTest {
     private val updated = mutableListOf<Server>()
     private var systemInfo: () -> ServerInfo = { info(SERVER_ID, "New name") }
 
+    /** #955: Main and the loads on one test scheduler, so no load outlives its test. */
+    private val dispatcher = StandardTestDispatcher()
+
     @BeforeEach
     fun setUp() {
         // viewModelScope is built with Dispatchers.Main.immediate; provide one.
-        Dispatchers.setMain(StandardTestDispatcher())
+        Dispatchers.setMain(dispatcher)
     }
 
     @AfterEach
@@ -54,38 +58,39 @@ class HomeViewModelServerNameTest {
     }
 
     @Test
-    fun `a Home load stores and shows the new name`() {
-        val state = load { it.server?.name == "New name" }
+    fun `a Home load stores and shows the new name`() =
+        runTest(dispatcher) {
+            val state = load()
 
-        assertEquals("New name", state.server?.name)
-        assertEquals(listOf(stored.copy(name = "New name")), updated)
-    }
+            assertEquals("New name", state.server?.name)
+            assertEquals(listOf(stored.copy(name = "New name")), updated)
+        }
 
     @Test
-    fun `an unreachable server keeps the stored name`() {
-        systemInfo = { throw IOException("no connection") }
+    fun `an unreachable server keeps the stored name`() =
+        runTest(dispatcher) {
+            systemInfo = { throw IOException("no connection") }
 
-        val state = load { it.server != null }
+            val state = load()
 
-        assertEquals("Old name", state.server?.name)
-        assertTrue(updated.isEmpty())
-    }
+            assertEquals("Old name", state.server?.name)
+            assertTrue(updated.isEmpty())
+        }
 
-    private fun load(done: (HomeState) -> Boolean): HomeState {
+    /** A Home load, to its end. */
+    private fun TestScope.load(): HomeState {
         val viewModel =
             HomeViewModel(
                 repository = repository(),
                 appPreferences = AppPreferences(sharedPreferences()),
                 serverStore = database(),
+                loadDispatcher = dispatcher,
             )
-        viewModel.loadData()
-        // loadData() runs on Dispatchers.Default; wait until it has finished.
-        return runBlocking {
-            withTimeout(5_000) {
-                while (with(viewModel.state.value) { isLoading || !done(this) }) delay(10)
-                viewModel.state.value
-            }
-        }
+        val load = viewModel.loadData()
+        advanceUntilIdle()
+        assertTrue(load.isCompleted)
+        assertFalse(viewModel.state.value.isLoading)
+        return viewModel.state.value
     }
 
     private fun info(id: String, name: String) = ServerInfo(id.toServerId(), name, null, null)
