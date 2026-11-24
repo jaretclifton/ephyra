@@ -139,6 +139,37 @@ constructor(
     private var pendingLoad: Int? = null
     private var loadCount = 0
 
+    /**
+     * A load request goes to the receiver, starting the item at [positionMs]: the segment skip
+     * waits until the receiver is there (#851).
+     */
+    private fun loadSent(positionMs: Long) {
+        _playerState.update {
+            it.copy(load = it.load + 1, loadPositionMs = positionMs, positionItemId = null)
+        }
+    }
+
+    /**
+     * The receiver's position now, for the item it has loaded, when no load of ours is on its way.
+     * The progress listener runs only while playing, so a load that lands paused, or a paused
+     * session that is restored, would otherwise have no position for its item (#851). With
+     * [started], the item became the current one without a load of ours (a restored session, the
+     * receiver's queue moving on): the receiver's position is then where it starts.
+     */
+    private fun takePosition(client: RemoteMediaClient, started: Boolean = false) {
+        if (loadPending) return
+        val itemId = remoteItemId() ?: return
+        val position = client.approximateStreamPosition.coerceAtLeast(0L)
+        _playerState.update {
+            it.copy(
+                currentPosition = position,
+                positionItemId = itemId,
+                load = if (started) it.load + 1 else it.load,
+                loadPositionMs = if (started) position else it.loadPositionMs,
+            )
+        }
+    }
+
     private fun beginLoad(): Int =
         (++loadCount).also {
             pendingLoad = it
@@ -192,6 +223,7 @@ constructor(
                 val cachedItem = itemCache[itemId]
                 if (cachedItem != null) {
                     _currentItem.value = cachedItem
+                    takePosition(client, started = true)
                     reporter.durationChanged(itemId, client.streamDuration)
                     onCurrentItemSet(itemId)
                 } else {
@@ -588,6 +620,7 @@ constructor(
                 playlist.restart(item)
                 itemCache[itemId] = castItem
                 _currentItem.value = castItem
+                remoteMediaClient?.let { takePosition(it, started = true) }
                 onCurrentItemSet(itemId)
             } catch (e: CancellationException) {
                 throw e
@@ -773,11 +806,13 @@ constructor(
                     .setActiveTrackIds(built.activeTrackIds)
                     .build()
 
+            loadSent(item.playbackPosition.coerceAtLeast(0L))
             client.load(loadRequest).setResultCallback { result ->
                 if (pendingLoad != load) return@setResultCallback
                 pendingLoad = null
                 val stillCurrent = _currentItem.value?.item?.itemId == item.itemId
                 if (result.status.isSuccess) {
+                    takePosition(client)
                     // onMetadataUpdated skips an item that is current already, as this one
                     // is, so the queue is filled from here.
                     if (stillCurrent) onCurrentItemSet(item.itemId)
@@ -1013,18 +1048,21 @@ constructor(
 
             // Loading replaces the receiver's queue; manageQueue fills it again once the
             // receiver has the item.
+            val position = client.approximateStreamPosition.coerceAtLeast(0L)
             val loadRequest =
                 MediaLoadRequestData.Builder()
                     .setMediaInfo(built.mediaInfo)
-                    .setCurrentTime(client.approximateStreamPosition.coerceAtLeast(0L))
+                    .setCurrentTime(position)
                     .setAutoplay(client.isPlaying || client.isBuffering)
                     .setActiveTrackIds(built.activeTrackIds)
                     .build()
 
+            loadSent(position)
             client.load(loadRequest).setResultCallback { result ->
                 if (pendingLoad != load) return@setResultCallback
                 pendingLoad = null
                 if (result.status.isSuccess) {
+                    takePosition(client)
                     onCurrentItemSet(currentItemId)
                 } else {
                     fail(message = "Failed to set audio track: ${result.status.statusMessage}")

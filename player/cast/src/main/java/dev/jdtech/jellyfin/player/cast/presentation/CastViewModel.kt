@@ -151,6 +151,8 @@ constructor(
      * current item. A new one, built from the settings, for each item; null without an item.
      */
     private var segmentSkipper: CastSegmentSkipper? = null
+    /** The receiver's [CastPlayerState.load] the skipper knows of. */
+    private var segmentLoad = 0
     /** The item the segments belong to, or are being loaded for. */
     private var segmentsItemId: ItemId? = null
     private var segmentsJob: Job? = null
@@ -280,6 +282,7 @@ constructor(
         // item's skipper has none, and no position of the previous item reaches it.
         val skipper = newSegmentSkipper(item)
         segmentSkipper = skipper
+        segmentLoad = playerController.playerState.value.load
         _state.update { it.copy(segment = null, segments = emptyList()) }
         segmentsJob?.cancel()
         segmentsJob = viewModelScope.launch {
@@ -369,6 +372,11 @@ constructor(
      * receiver reported for the current item counts ([CastSegmentSkipper]).
      */
     private fun updateSegment(player: CastPlayerState) {
+        // Another load of the item, or a start the controller learned of: wait for its position.
+        if (player.load != segmentLoad) {
+            segmentLoad = player.load
+            segmentSkipper?.expectLoad(player.loadPositionMs)
+        }
         val step =
             segmentSkipper?.update(player.positionItemId, player.currentPosition, player.duration)
                 ?: CastSegmentStep.None

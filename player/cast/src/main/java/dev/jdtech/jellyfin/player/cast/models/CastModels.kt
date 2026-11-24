@@ -75,6 +75,13 @@ data class CastPlayerState(
      * position is then not one to act on.
      */
     val positionItemId: ItemId? = null,
+    /**
+     * CE (#851): counts the times an item started on the receiver: each load sent to it (also of
+     * the same item, such as an audio track switch) and each item it went on to without one (a
+     * restored session, its queue moving on). [loadPositionMs] is where the last one starts.
+     */
+    val load: Int = 0,
+    val loadPositionMs: Long = 0L,
     val volume: Float = 1f,
     val isMuted: Boolean = false,
     val hasNextItem: Boolean = false,

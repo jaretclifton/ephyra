@@ -150,6 +150,38 @@ class CastViewModelSegmentTest {
     }
 
     @Test
+    fun `an audio track switch does not send a resumed item back to the intro's end`() {
+        segments = listOf(opening)
+        val viewModel = viewModel()
+        playing(itemA, playbackPosition = 300_000L)
+        controller.report(itemA, 300_000L)
+
+        // The switch reloads the same item at 5:00; the first report after it is a stale 0.
+        viewModel.setAudioTrack(Track(2, "Nederlands", "nld", "eac3", false, true))
+        controller.reload(300_000L)
+        controller.report(itemA, 0L)
+        controller.report(itemA, 300_000L)
+        controller.report(itemA, 301_000L)
+
+        assertEquals(emptyList(), controller.seeks)
+    }
+
+    @Test
+    fun `a user seek while a load is on its way does not let the stale position skip`() {
+        segments = listOf(opening)
+        val viewModel = viewModel()
+        playing(itemA, playbackPosition = 300_000L)
+        controller.report(itemA, 300_000L)
+
+        controller.reload(300_000L)
+        viewModel.seekTo(310_000L)
+        controller.report(itemA, 0L)
+        controller.report(itemA, 310_000L)
+
+        assertEquals(listOf(310_000L), controller.seeks)
+    }
+
+    @Test
     fun `the moment at 0 at the end of an item is not an entry`() {
         segments = listOf(opening)
         viewModel()
@@ -270,6 +302,13 @@ class CastViewModelSegmentTest {
         /** The receiver reports [positionMs] for [itemId]. */
         fun report(itemId: ItemId?, positionMs: Long) {
             playerState.update { it.copy(currentPosition = positionMs, positionItemId = itemId) }
+        }
+
+        /** A load of the current item goes to the receiver, starting it at [positionMs]. */
+        fun reload(positionMs: Long) {
+            playerState.update {
+                it.copy(load = it.load + 1, loadPositionMs = positionMs, positionItemId = null)
+            }
         }
 
         override fun seekTo(position: Long) {

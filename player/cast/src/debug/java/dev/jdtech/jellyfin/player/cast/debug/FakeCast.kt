@@ -319,6 +319,8 @@ internal class FakeCastPlayerController(
                     currentPosition = loaded.playbackPosition.coerceAtLeast(0L),
                     duration = duration,
                     positionItemId = loaded.itemId,
+                    load = it.load + 1,
+                    loadPositionMs = loaded.playbackPosition.coerceAtLeast(0L),
                     hasNextItem = loaded.seriesName != null,
                     hasPreviousItem = (loaded.indexNumber ?: 1) > 1,
                 )

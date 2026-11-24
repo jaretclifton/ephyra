@@ -20,8 +20,10 @@ import dev.jdtech.jellyfin.player.local.domain.SkipTarget
  * Only positions the receiver reported for [itemId] count, so Cast adds these guards:
  * - **Another item's position:** a report for another item (the queue moved on and the controller
  *   has not caught up yet), or no item (a load on its way, an item that ended), is no step.
- * - **Resume:** until the receiver is at [resumePositionMs] (or plays on from where it is), a
- *   report is the stale position from before the load, and no step.
+ * - **Resume, after every load:** until the receiver is at the position the item was loaded at
+ *   ([resumePositionMs] for the first load, [expectLoad] for each load after it, such as an audio
+ *   track switch), or plays on from where it is, a report is the stale position from before the
+ *   load, and no step. A user seek before the load has reported anything does not end this.
  * - **The end of the item:** the receiver is at position 0 for a moment when an item runs out
  *   ([CastPositions.ranOut], as the playback reports read it). That is no entry.
  * - **Late reports after a skip:** the controller shows the target at once, but the receiver can
@@ -49,11 +51,28 @@ class CastSegmentSkipper(
     /** The segments skipped in the last [SETTLE_MS], with when. */
     private val recentSkips = mutableMapOf<Segment, Long>()
 
-    /** The receiver is where the item was loaded to start. */
+    /** Where the last load started the item. */
+    private var loadPositionMs = resumePositionMs
+
+    /** The receiver is where the last load started the item. */
     private var settled = resumePositionMs <= CastPositions.SEEK_TOLERANCE_MS
+
+    /** The receiver has reported a position for [itemId] since the last load. */
+    private var landed = false
 
     /** The last position reported for [itemId], or the user's last seek target. */
     private var lastPositionMs: Long? = null
+
+    /**
+     * The item was loaded again (the same item: an audio track switch, a second play), starting at
+     * [positionMs]. Until the receiver is there, its reports are stale, as after the first load.
+     */
+    fun expectLoad(positionMs: Long) {
+        loadPositionMs = positionMs
+        settled = positionMs <= CastPositions.SEEK_TOLERANCE_MS
+        landed = false
+        lastPositionMs = null
+    }
 
     /** The item's segments, when they have loaded. */
     fun setSegments(segments: List<Segment>) {
@@ -67,6 +86,8 @@ class CastSegmentSkipper(
      */
     fun onUserSeek(targetMs: Long) {
         recentSkips.keys.removeAll { targetMs in it }
+        // Before the load has reported anything, the next report can still be the stale one.
+        if (!landed) return
         settled = true
         lastPositionMs = targetMs
     }
@@ -77,13 +98,14 @@ class CastSegmentSkipper(
      */
     fun update(positionItemId: ItemId?, positionMs: Long, durationMs: Long): CastSegmentStep {
         if (positionItemId != itemId) return CastSegmentStep.None
+        landed = true
         val previous = lastPositionMs
         if (previous != null && CastPositions.ranOut(previous, positionMs, durationMs)) {
             return CastSegmentStep.None
         }
         lastPositionMs = positionMs
         if (!settled) {
-            val atResume = positionMs >= resumePositionMs - CastPositions.SEEK_TOLERANCE_MS
+            val atResume = positionMs >= loadPositionMs - CastPositions.SEEK_TOLERANCE_MS
             val playsOn = previous != null && positionMs - previous in 1..PLAYS_ON_MS
             if (!atResume && !playsOn) return CastSegmentStep.None
             settled = true
