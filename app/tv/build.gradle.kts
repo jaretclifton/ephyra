@@ -174,6 +174,7 @@ dependencies {
     implementation(projects.application)
     implementation(projects.data)
     implementation(projects.domain)
+    implementation(projects.http)
     implementation(projects.setup)
     implementation(projects.modes.film)
     implementation(projects.player.core)

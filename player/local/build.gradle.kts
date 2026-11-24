@@ -26,6 +26,8 @@ dependencies {
     implementation(projects.application)
     implementation(projects.core)
     implementation(projects.domain)
+    // #964: MediaHttpClient, the server adapter's client the media is streamed through.
+    implementation(projects.http)
     implementation(projects.settings)
     implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.androidx.lifecycle.viewmodel)
@@ -38,6 +40,8 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.libmpv)
+    // The engines and PlayerViewModel use OkHttp themselves, not only through MediaHttpClient.
+    implementation(libs.okhttp)
     implementation(libs.timber)
 
     testImplementation(libs.junit)

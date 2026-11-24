@@ -1,0 +1,13 @@
+# R19 (#964): what domain and application use besides Kotlin, kotlinx, the JDK and their own code
+# (PureKotlinTest). One line per import, as "<module> <name>". Exact: a line that no longer
+# applies fails until it is deleted. A new line needs its issue and reason here, given in the
+# PR that adds it.
+
+# #968: MediaRepository.getItemsPaging returns PagingData, and the paging sources are in
+# application. paging-common is plain Kotlin, but a library all the same; #968 takes paging out of
+# application and deletes these lines.
+application androidx.paging.Pager
+application androidx.paging.PagingConfig
+application androidx.paging.PagingData
+application androidx.paging.PagingSource
+application androidx.paging.PagingState

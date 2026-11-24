@@ -353,13 +353,12 @@ the server in use, and `ServerConnectors.resolve(address)` tries each connector 
 recognizes the server.
 
 More interfaces are in `domain` so that the adapter, which may not depend on `data` or `core`,
-can implement them. `MediaHttpClient` is the one place where `domain` names a type of a library
-(OkHttp, plain JVM). `RequestWatcher` moves there from `data/api`, into `domain.ports`:
+can implement them. `RequestWatcher` moves there from `data/api`, into `domain.ports`. (This plan
+put `MediaHttpClient`, the player's OkHttp client, in `domain` too, as the one
+library type there. #964 moved it into a module of its own, `http`, which the adapter and the
+player both use, and rule R19 keeps libraries out of `domain` and `application`.)
 
 ```kotlin
-/** The OkHttp client that media is streamed through, so the player shares the API's connections. */
-fun interface MediaHttpClient { fun client(): okhttp3.OkHttpClient }
-
 /** The device report the About screen copies: what the adapter would tell the server about this device. */
 fun interface DeviceReportSource {
     suspend fun buildJson(appVersion: String, buildType: String, transcodeDolbyVision: Boolean, directPlayDolbyVision: Boolean): String
