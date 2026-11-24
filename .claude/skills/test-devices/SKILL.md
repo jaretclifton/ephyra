@@ -46,6 +46,11 @@ The server the app logs in to comes from the `test-server` skill.
 - **Git Bash:** `export MSYS_NO_PATHCONV=1`, or `/sdcard/…` and `/data/…` arguments get rewritten.
 - **Screenshots:** `scripts/avds.sh shot <name> <file.png>`, then look at the image. A screenshot
   you did not look at is not evidence.
+- **Your own scratch folder.** Agents of one session can share a scratch or temp folder, and a
+  helper script, screenshot or log with a common name (`ui.sh`, `play.sh`, `shot.png`) gets
+  overwritten by another agent mid-test. Put your files in a subfolder of your own, with a name no
+  other agent uses (the issue and your emulator serial, or `mktemp -d`), and check a script's
+  contents before running it again later.
 
 ## Rules
 
