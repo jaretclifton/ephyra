@@ -13,6 +13,7 @@ import java.io.IOException
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,8 +41,15 @@ class TrickplayLoaderTest {
     private class FakeRepository {
         val requests = mutableListOf<Request>()
 
-        /** What the next request answers: bytes, null, or a throwable to throw. */
-        var answer: () -> ByteArray? = { null }
+        /** What a request for a sheet index answers: bytes, null, or a throwable to throw. */
+        var answerFor: (index: Int) -> ByteArray? = { null }
+
+        /** The same answer for every sheet. */
+        var answer: () -> ByteArray?
+            get() = { answerFor(0) }
+            set(value) {
+                answerFor = { value() }
+            }
 
         private val unused =
             fakeProxy(
@@ -61,11 +69,17 @@ class TrickplayLoaderTest {
                     mediaSourceId: MediaSourceId?,
                 ): ByteArray? {
                     synchronized(requests) { requests += Request(width, index, mediaSourceId) }
-                    return answer()
+                    return answerFor(index)
                 }
             }
 
         fun count() = synchronized(requests) { requests.size }
+
+        /** Waits until [n] requests were made; the neighbours are fetched in the background. */
+        fun awaitCount(n: Int) {
+            val deadline = System.currentTimeMillis() + 5_000
+            while (count() < n && System.currentTimeMillis() < deadline) Thread.sleep(10)
+        }
     }
 
     private val fake = FakeRepository()
@@ -79,7 +93,18 @@ class TrickplayLoaderTest {
             .also { bitmap.recycle() }
     }
 
-    private fun loader(width: Int = 320, height: Int = 180, columns: Int = 10, rows: Int = 10) =
+    private fun loader(
+        width: Int = 320,
+        height: Int = 180,
+        columns: Int = 10,
+        rows: Int = 10,
+        // One sheet by default: no neighbours to fetch ahead.
+        thumbnailCount: Int = columns * rows,
+        maxSheetPixels: Long = TrickplayLoader.MAX_SHEET_PIXELS,
+        cropTile: (Bitmap, Int, Int, Int, Int) -> Bitmap = { sheet, x, y, w, h ->
+            Bitmap.createBitmap(sheet, x, y, w, h)
+        },
+    ) =
         TrickplayLoader(
             repository = fake.repository,
             itemId = itemId,
@@ -88,10 +113,11 @@ class TrickplayLoaderTest {
             height = height,
             tileWidth = columns,
             tileHeight = rows,
-            // One sheet: no neighbours to fetch ahead.
-            thumbnailCount = columns * rows,
+            thumbnailCount = thumbnailCount,
             interval = 10_000,
             nowMs = { now },
+            maxSheetPixels = maxSheetPixels,
+            cropTile = cropTile,
         )
 
     @Test
@@ -156,21 +182,21 @@ class TrickplayLoaderTest {
     }
 
     @Test
-    fun `a sheet larger than the limit is decoded sampled down`() = runBlocking {
-        // 4x4 thumbnails of 1280x720: 5120x2880, 2.6 times the limit, so decoded at half size.
-        fake.answer = { sheet(1280, 720, 4, 4) }
-        val loader = loader(width = 1280, height = 720, columns = 4, rows = 4)
+    fun `a sheet clearly over the limit is decoded sampled down`() = runBlocking {
+        // 4x4 thumbnails of 1600x900: 6400x3600, 1.25 times the limit, so decoded at half size.
+        fake.answer = { sheet(1600, 900, 4, 4) }
+        val loader = loader(width = 1600, height = 900, columns = 4, rows = 4)
 
         val first = assertNotNull(loader.tileAt(0))
-        assertEquals(640, first.width)
-        assertEquals(360, first.height)
+        assertEquals(800, first.width)
+        assertEquals(450, first.height)
         // The last cell, at the far corner of the sheet, is still inside the sampled sheet.
         val last = assertNotNull(loader.tileAt(15 * 10_000L))
-        assertEquals(640, last.width)
+        assertEquals(800, last.width)
     }
 
     @Test
-    fun `a sheet within the limit is decoded at full size`() = runBlocking {
+    fun `a 16 by 9 sheet at the default width is decoded at full size`() = runBlocking {
         fake.answer = { sheet(320, 180, 10, 10) }
 
         val tile = assertNotNull(loader().tileAt(0))
@@ -180,11 +206,107 @@ class TrickplayLoaderTest {
     }
 
     @Test
+    fun `a 4 by 3 sheet at the default width is decoded at full size`() = runBlocking {
+        // 10x10 thumbnails of 320x240: 3200x2400, taller than the 16:9 default sheet.
+        fake.answer = { sheet(320, 240, 10, 10) }
+
+        val tile = assertNotNull(loader(width = 320, height = 240).tileAt(99 * 10_000L))
+
+        assertEquals(320, tile.width)
+        assertEquals(240, tile.height)
+    }
+
+    @Test
+    fun `a sampled sheet whose size is not a multiple of the sample still gives its last cell`() =
+        runBlocking {
+            // 3x3 thumbnails of 427x241: 1281x723, decoded at half size as 640 or 641 wide.
+            fake.answer = { sheet(427, 241, 3, 3) }
+            val loader =
+                loader(width = 427, height = 241, columns = 3, rows = 3, maxSheetPixels = 300_000)
+
+            val last = assertNotNull(loader.tileAt(8 * 10_000L))
+
+            assertEquals(213, last.width)
+            assertEquals(120, last.height)
+        }
+
+    @Test
     fun `the sample size is the power of two that brings a sheet within the limit`() {
         assertEquals(1, TrickplayLoader.sheetSampleSize(3200, 1800))
-        assertEquals(2, TrickplayLoader.sheetSampleSize(3201, 1800))
+        assertEquals(1, TrickplayLoader.sheetSampleSize(3200, 2400))
+        // Portrait 9:16 at 320 wide: 320x569 tiles.
+        assertEquals(1, TrickplayLoader.sheetSampleSize(3200, 5690))
+        assertEquals(2, TrickplayLoader.sheetSampleSize(3201, 5760))
         assertEquals(2, TrickplayLoader.sheetSampleSize(6400, 3600))
         assertEquals(4, TrickplayLoader.sheetSampleSize(12800, 7200))
+    }
+
+    @Test
+    fun `a failed neighbour is not fetched ahead again within the window`() = runBlocking {
+        // Two sheets: 0 loads, 1 (the neighbour fetched ahead) fails.
+        fake.answerFor = { index -> if (index == 0) sheet(320, 180, 10, 10) else null }
+        val loader = loader(thumbnailCount = 200)
+
+        assertNotNull(loader.tileAt(0))
+        fake.awaitCount(2)
+        assertEquals(listOf(0, 1), fake.requests.map { it.index })
+
+        // Scrubbing on in sheet 0 does not fetch sheet 1 again.
+        assertNotNull(loader.tileAt(10_000))
+        assertNotNull(loader.tileAt(20_000))
+        Thread.sleep(300)
+        assertEquals(2, fake.count())
+
+        // After the window it is fetched ahead again.
+        now = TrickplaySheetFailures.RETRY_AFTER_MS
+        assertNotNull(loader.tileAt(30_000))
+        fake.awaitCount(3)
+        assertEquals(listOf(0, 1, 1), fake.requests.map { it.index })
+    }
+
+    @Test
+    fun `a cancelled load is not remembered as a failure`() = runBlocking {
+        var first = true
+        fake.answer = {
+            if (first) {
+                first = false
+                throw CancellationException("load cancelled")
+            }
+            sheet(320, 180, 10, 10)
+        }
+        val loader = loader()
+
+        assertNull(loader.tileAt(0))
+        // Asked again at once, without waiting for the window.
+        assertNotNull(loader.tileAt(0))
+
+        assertEquals(2, fake.count())
+    }
+
+    @Test
+    fun `running out of memory on a crop leaves the sheet alone for the window`() = runBlocking {
+        fake.answer = { sheet(320, 180, 10, 10) }
+        var crops = 0
+        val loader =
+            loader(
+                cropTile = { sheet, x, y, w, h ->
+                    crops++
+                    if (crops == 1) throw OutOfMemoryError("crop")
+                    Bitmap.createBitmap(sheet, x, y, w, h)
+                }
+            )
+
+        assertNull(loader.tileAt(0))
+        // Within the window: no new crop, no new request.
+        assertNull(loader.tileAt(10_000))
+        assertEquals(1, crops)
+        assertEquals(1, fake.count())
+
+        // After it: the sheet (dropped to free memory) is loaded again and shows.
+        now = TrickplaySheetFailures.RETRY_AFTER_MS
+        assertNotNull(loader.tileAt(10_000))
+        assertEquals(2, crops)
+        assertEquals(2, fake.count())
     }
 
     @Test

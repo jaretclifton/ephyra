@@ -51,6 +51,13 @@ class TrickplayLoader(
     cacheSize: Int = DEFAULT_CACHE_SIZE,
     /** A monotonic clock in milliseconds, for how long a failed sheet is left alone. */
     nowMs: () -> Long = SystemClock::elapsedRealtime,
+    /** The most pixels a sheet is decoded with; a larger one is sampled down. */
+    private val maxSheetPixels: Long = MAX_SHEET_PIXELS,
+    /** Copies one cell out of a decoded sheet. A parameter only so tests can fail it. */
+    private val cropTile: (sheet: Bitmap, x: Int, y: Int, width: Int, height: Int) -> Bitmap =
+        { sheet, x, y, w, h ->
+            Bitmap.createBitmap(sheet, x, y, w, h)
+        },
 ) : TrickplayTileLoader {
 
     private val tiles =
@@ -101,9 +108,13 @@ class TrickplayLoader(
             // createBitmap copies the pixels into a fresh bitmap. The cropped tile is
             // independent of the cached sheet, so it survives sheet eviction.
             try {
-                Bitmap.createBitmap(bitmap, offsetX, offsetY, tileWidth, tileHeight)
+                cropTile(bitmap, offsetX, offsetY, tileWidth, tileHeight)
             } catch (e: OutOfMemoryError) {
+                // Memory is short: drop the sheet and leave it alone for the window, so the
+                // next move event neither crops nor logs again (#860).
                 Timber.e(e, "No memory for trickplay tile ${location.index}")
+                sheetCache.remove(sheetIndex)
+                failures.failed(sheetIndex)
                 null
             }
         }
@@ -122,6 +133,8 @@ class TrickplayLoader(
     }
 
     private suspend fun loadSheet(sheetIndex: Int): Sheet? {
+        // A sheet that failed a moment ago would fail again: every scrub frame asked anew (#860).
+        if (!failures.mayTry(sheetIndex)) return null
         sheetCache
             .get(sheetIndex)
             ?.takeIf { !it.bitmap.isRecycled }
@@ -129,8 +142,6 @@ class TrickplayLoader(
                 return it
             }
         if (sheetIndex < 0 || sheetIndex >= tiles.sheetCount) return null
-        // A sheet that failed a moment ago would fail again: every scrub frame asked anew (#860).
-        if (!failures.mayTry(sheetIndex)) return null
         return try {
             sheetLoad(sheetIndex).await()
         } catch (e: CancellationException) {
@@ -173,12 +184,12 @@ class TrickplayLoader(
             }
         }
 
-    /** The sheet in [bytes], sampled down to at most [MAX_SHEET_PIXELS]; null if not an image. */
+    /** The sheet in [bytes], sampled down to at most [maxSheetPixels]; null if not an image. */
     private fun decodeSheet(bytes: ByteArray): Sheet? {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
-        val sampleSize = sheetSampleSize(bounds.outWidth, bounds.outHeight)
+        val sampleSize = sheetSampleSize(bounds.outWidth, bounds.outHeight, maxSheetPixels)
         val options =
             BitmapFactory.Options().apply {
                 inSampleSize = sampleSize
@@ -201,10 +212,13 @@ class TrickplayLoader(
         const val DEFAULT_CACHE_SIZE = 3
 
         /**
-         * The most pixels a sheet is decoded with: Jellyfin's default sheet, 10x10 thumbnails of
-         * 320x180, about 11.5 MB as RGB_565. A larger sheet is sampled down to fit (#860).
+         * The most pixels a sheet is decoded with: a 10x10 sheet of 320-wide thumbnails of any
+         * shape up to portrait 9:16 (320x569 tiles, 3200x5690), so every sheet at Jellyfin's
+         * default width keeps its full size: 16:9 (3200x1800, 11.5 MB as RGB_565), 4:3 (3200x2400)
+         * and portrait (about 37 MB). A larger sheet, such as 10x10 of 640 or 1280 wide, is sampled
+         * down to fit (#860).
          */
-        const val MAX_SHEET_PIXELS = 3200L * 1800L
+        const val MAX_SHEET_PIXELS = 3200L * 5760L
 
         /** The power of two that brings a [width] x [height] sheet within [maxPixels]. */
         fun sheetSampleSize(width: Int, height: Int, maxPixels: Long = MAX_SHEET_PIXELS): Int {
