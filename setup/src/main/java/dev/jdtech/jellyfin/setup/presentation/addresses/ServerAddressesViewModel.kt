@@ -36,9 +36,31 @@ constructor(
         currentServerId = serverId
         viewModelScope.launch {
             try {
-                _state.emit(ServerAddressesState(addresses = repository.getAddresses(serverId)))
+                _state.emit(
+                    ServerAddressesState(
+                        addresses = repository.getAddresses(serverId),
+                        currentAddressId = repository.getCurrentAddress(serverId)?.id,
+                    )
+                )
             } catch (e: Exception) {
                 Timber.e(e)
+            }
+        }
+    }
+
+    /**
+     * CE (#984): a tap makes the address the server's current one, as it did before upstream's
+     * Compose screen (#1012) left the tap empty. For the server in use the app moves there too.
+     */
+    fun selectAddress(addressId: ServerAddressId) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _state.emit(_state.value.copy(error = null))
+            try {
+                repository.setCurrentAddress(addressId)
+                loadAddresses(currentServerId)
+            } catch (e: Exception) {
+                Timber.e(e)
+                _state.emit(_state.value.copy(error = listOf(LoadErrorText.reason(e))))
             }
         }
     }
@@ -93,6 +115,9 @@ constructor(
 
     fun onAction(action: ServerAddressesAction) {
         when (action) {
+            is ServerAddressesAction.OnServerClick -> {
+                selectAddress(action.addressId)
+            }
             is ServerAddressesAction.AddAddress -> {
                 addAddress(action.address)
             }
