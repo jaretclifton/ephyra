@@ -3,7 +3,7 @@
 What kinds of test the app has, where each lives, which one to write for a change, and what is
 still checked by hand. For contributors and for agents.
 
-Every automated test is a unit test that runs on the JVM, without a device: `./gradlew
+Every test that checks what the app does is a unit test that runs on the JVM, without a device: `./gradlew
 testDebugUnitTest` runs all of them, and CI runs the same command. What needs a device (the
 player on a real decoder, layouts on five screen sizes, a real server) has a checklist instead:
 see [What the unit tests do not cover](#what-the-unit-tests-do-not-cover).
@@ -82,10 +82,11 @@ EPHYRA_WRITE_GENERATED=1 ./gradlew :architecture:test --rerun --tests '*Generate
 
 ### What does not exist
 
-- **No instrumented tests.** No module has an `androidTest` source set, and no test in CI runs on
-  a device or an emulator.
+- **No instrumented tests of what the app does.** No module has an `androidTest` source set, and
+  no test in CI runs on a device or an emulator.
 - **No screenshot tests.**
-- `baselineprofile` and `baselineprofile-tv` are Macrobenchmark modules. They record the baseline
+- `baselineprofile` and `baselineprofile-tv` are the exception: Macrobenchmark modules whose
+  classes (`StartupBenchmark`, `BaselineProfileGenerator`) are instrumented tests. They record the baseline
   profiles and measure startup on a connected device, by hand: [performance.md](performance.md)
   and [`baselineprofile/README.md`](../baselineprofile/README.md). They are not part of
   `testDebugUnitTest`.
