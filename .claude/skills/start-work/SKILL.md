@@ -5,8 +5,8 @@ description: >-
   the ports, the architecture rules, the tests and checks to run, known pitfalls, and a brief for a
   side session that is ready to send. Use this at the start of any task in this repo that names a
   feature, a bug or a part of the app ("I want to work on subtitles", "subtitles jump on mpv", "a
-  download doesn't resume", "add a setting for X", "ik wil aan downloads werken", "waar zit de
-  login?", "de app start traag", "focus springt weg op tv", "hoe zet ik de testserver op"), before
+  download doesn't resume", "add a setting for X", "where is the
+  login?", "the app starts slowly", "focus jumps away on TV", "how do I set up the test server"), before
   reading code, and whenever someone asks where something is, which rules apply to it or how to
   test it. Also use it to write the brief when handing an issue to another session or agent.
 ---
@@ -22,11 +22,11 @@ data, decisions, the checks before a PR). The same files are the development sit
 ## Steps
 
 1. **Find the area.** Read `docs/areas.yaml` and match the request against each entry's
-   `keywords`, `title` and `summary` (keywords are English and Dutch, and include symptoms and
-   class names). A request can touch two areas, such as "subtitles of a download"
+   `keywords`, `title` and `summary` (keywords are English and include symptoms and class names; match a request in
+   another language by its meaning). A request can touch two areas, such as "subtitles of a download"
    (subtitles-and-tracks and downloads): take the area of the behaviour that is wrong first, and
-   name the second. Match on the thing more than the verb: "een download hervat niet" is
-   downloads, though "hervatten" also means resuming playback. If nothing matches, say so and use
+   name the second. Match on the thing more than the verb: "a download doesn't resume" is
+   downloads, though "resume" also means resuming playback. If nothing matches, say so and use
    the module list in `docs/architecture/modules.md` instead.
 2. **Read the guide**, if `docs/areas/<id>.md` exists. The guides are long: read the "Start here"
    block first, then only the sections the task needs (where the code is, rules, how to test it,
@@ -42,7 +42,7 @@ data, decisions, the checks before a PR). The same files are the development sit
    bug itself. Then search the issues in English words, whatever the request's language
    (`gh issue list --repo midasvo/ephyra --search "<words>" --state all`); the search is loose,
    so read what it returns. When an open issue matches, lead with it: "This is #912." When the
-   request is vague ("ondertitels verspringen": in time, on screen, or the track itself?), say
+   request is vague ("subtitles jump": in time, on screen, or the track itself?), say
    which readings there are and make reproducing it the first step of the brief.
 5. **Write the brief** if the work should go to a side session or agent (see below).
 

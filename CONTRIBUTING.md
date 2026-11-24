@@ -6,7 +6,10 @@ agree on the direction before you build it.
 ## Building
 
 You need JDK 21 and the Android SDK. Build the `libre` flavour; the phone app also has a
-`proprietary` flavour with Google Cast, which you only need for Cast work.
+`proprietary` flavour with Google Cast, which you only need for Cast work. New to the project, or
+on a new machine? [docs/get-started.md](docs/get-started.md) walks through what to install per
+system, `scripts/doctor.sh` (checks the machine), the first build, the test server and an
+emulator.
 
 ```bash
 ./gradlew :app:phone:assembleLibreDebug   # phone and tablet
