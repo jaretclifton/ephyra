@@ -241,7 +241,14 @@ with it.
   again is "back", and nobody else notices. A connection to the dead port times out instead of
   being refused, so a player takes a minute or more to give up. A third argument limits the speed
   (`forward.py 8097 8096 600` for 600 kbit/s): without it a player has a whole test file buffered
-  within a second and plays on without the server.
+  within a second and plays on without the server. The limit slows long answers only: to hold
+  one request instead, so the server answers late, add `--hold METHOD PATH-PREFIX` (repeatable),
+  for example `forward.py 8984 8096 --hold POST /Sessions/Playing/Stopped`. A held request is
+  passed on when Enter is pressed in the script's terminal or when the file named by
+  `--release-file` appears (the oldest held request per release; a release while nothing is held is dropped;
+  `--hold-max SECONDS` releases by itself), and `--log` prints every request with the start of
+  its body. The script half-closes a connection when one side ends, so
+  mpv does not see a reset, and it refuses a port another process already listens on.
 - **Scripted taps**: dump the screen (`uiautomator dump`) and check it before every tap. Keys sent
   blind land on whatever screen is open.
 - **A script that logs in to the server** needs a `DeviceId` of its own in its `Authorization`
