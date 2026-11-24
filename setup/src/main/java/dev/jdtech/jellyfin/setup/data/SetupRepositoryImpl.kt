@@ -118,9 +118,12 @@ class SetupRepositoryImpl(
     override suspend fun getQuickConnectState(secret: String): QuickConnectState =
         withContext(Dispatchers.IO) { clientConnector().quickConnectState(clientAddress(), secret) }
 
-    override suspend fun setCurrentServer(serverId: ServerId) {
-        val serverWithAddressAndUser = serverStore.serverWithAddressAndUser(serverId) ?: return
-        val serverAddress = serverWithAddressAndUser.address ?: return
+    // CE (#984): under the address lock, so a selection on this server cannot land between the
+    // read of its address and the switch, and leave the switch on the address it replaced.
+    override suspend fun setCurrentServer(serverId: ServerId) = addressSelection.withLock {
+        val serverWithAddressAndUser =
+            serverStore.serverWithAddressAndUser(serverId) ?: return@withLock
+        val serverAddress = serverWithAddressAndUser.address ?: return@withLock
         val user = serverWithAddressAndUser.user
 
         active.switchTo(
