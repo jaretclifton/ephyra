@@ -29,8 +29,10 @@ the only way. --hold-max SECONDS releases by itself after that long (default: ne
 Held requests wait in arrival order and a release frees the oldest; a release while nothing is
 held is dropped. A request whose connection fails while it waits is forgotten.
 
---log prints every request line on stdout, with a mark for the held ones, and the first 1000 bytes
-of each request body (a playback report's JSON, with its PlayMethod).
+--log prints on stdout, per request with a number (#n): its request line when it arrives (with a mark
+for a held one), when it is released, when it is forwarded to the server, and the first 1000 bytes
+of its body (a playback report's JSON, with its PlayMethod). The order of the "forwarded" lines is
+the order the server saw the requests in.
 
 When one side ends, the other side gets the rest of the data and then a clean close (half-close),
 not a reset: mpv (ffmpeg) reports "Connection reset by peer" otherwise.
@@ -142,15 +144,19 @@ def log(text):
         print(f"{time.strftime('%H:%M:%S')} {text}", flush=True)
 
 
-def log_body(body):
+request_ids = iter(range(1, 1 << 62))  # next() is atomic in CPython
+
+
+def log_body(rid, body):
     if body:
-        log("  body: " + body[:1000].decode("utf-8", "replace") + (" ..." if len(body) > 1000 else ""))
+        log(f"#{rid} body: " + body[:1000].decode("utf-8", "replace") + (" ..." if len(body) > 1000 else ""))
 
 
 def forward_requests(src, dst, conn):
     """Client to server: pass requests through, holding the chosen ones, until the stream ends."""
     buf = b""
     remaining = 0  # body bytes of the current request still to pass
+    rid = 0  # the current request's number in the log
     body = b""  # the part of the current body seen so far, for --log
     raw = False  # chunked or upgraded: the rest of the connection passes untouched
     while True:
@@ -170,7 +176,7 @@ def forward_requests(src, dst, conn):
             buf = buf[take:]
             remaining -= take
             if not remaining:
-                log_body(body)
+                log_body(rid, body)
             continue
         end = buf.find(b"\r\n\r\n")
         if end < 0:
@@ -190,16 +196,18 @@ def forward_requests(src, dst, conn):
                 k, v = line.split(":", 1)
                 headers[k.strip().lower()] = v.strip()
         held = is_held(method, path)
-        log(f"{'HELD ' if held else ''}{method} {path}")
+        rid = next(request_ids)
+        log(f"#{rid} {'HELD ' if held else ''}{method} {path}")
         if held:
             hint = f" or create {args.release_file}" if args.release_file else ""
-            log(f"holding {method} {path}: press Enter{hint}")
+            log(f"#{rid} holding: press Enter{hint}")
             outcome = wait_release(conn, src, args.hold_max)
             if outcome == "cancelled":
-                log(f"connection lost while holding {method} {path}")
+                log(f"#{rid} connection lost while held")
                 raise ConnectionError("client connection lost while a request was held")
-            log(f"{'released' if outcome == 'released' else 'hold timed out, passing'} {method} {path}")
+            log(f"#{rid} {'released' if outcome == 'released' else 'hold timed out'}")
         dst.sendall(head)
+        log(f"#{rid} forwarded")
         body = b""
         if "chunked" in headers.get("transfer-encoding", "").lower() or headers.get("upgrade"):
             raw = True
