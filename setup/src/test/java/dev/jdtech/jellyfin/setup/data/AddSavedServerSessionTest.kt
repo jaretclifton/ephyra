@@ -18,6 +18,8 @@ import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.asServerAddressId
+import dev.jdtech.jellyfin.testing.asServerId
 import dev.jdtech.jellyfin.testing.asUserId
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -43,6 +45,9 @@ class AddSavedServerSessionTest {
     private val addresses = mutableListOf<ServerAddress>()
     private val users = mutableMapOf<UserId, User>()
 
+    /** #988: runs once, right after the next address is saved: another write to the server row. */
+    private var afterAddressInsert: (() -> Unit)? = null
+
     private val database =
         fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
             _,
@@ -67,6 +72,18 @@ class AddSavedServerSessionTest {
                 }
                 "insertAddress" -> {
                     addresses += args[0] as ServerAddress
+                    afterAddressInsert?.let {
+                        afterAddressInsert = null
+                        it()
+                    }
+                    Unit
+                }
+                "setCurrentAddress" -> {
+                    val id = args[0].asServerId().asString()
+                    servers[id] =
+                        servers
+                            .getValue(id)
+                            .copy(currentServerAddressId = args[1].asServerAddressId())
                     Unit
                 }
                 "insertUser" -> {
@@ -223,6 +240,23 @@ class AddSavedServerSessionTest {
             // What a restart reads: the same address and user as the client has now.
             assertEquals("https://a.example/", currentAddressInRoom("a"))
             assertEquals(carol, servers.getValue("a").currentUserId)
+        }
+
+    @Test
+    fun `adding a server by another address keeps a sign-out that lands in between`() =
+        runBlocking {
+            // #988: the server row was read before the new address was saved; writing it back
+            // with the new address restored the user a sign-out had just cleared.
+            saveServer("a", "http://a.local:8096", alice)
+            signInClient("http://a.local:8096", alice)
+            afterAddressInsert = {
+                servers["a"] = servers.getValue("a").copy(currentUserId = null)
+            }
+
+            add("a", "https://a.example/")
+
+            assertEquals("https://a.example/", currentAddressInRoom("a"))
+            assertNull(servers.getValue("a").currentUserId)
         }
 
     @Test
