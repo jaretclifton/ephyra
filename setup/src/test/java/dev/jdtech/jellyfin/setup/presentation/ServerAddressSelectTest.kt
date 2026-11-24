@@ -8,6 +8,7 @@ import dev.jdtech.jellyfin.domain.ports.ActiveServerHolder
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerAddress
 import dev.jdtech.jellyfin.models.ServerAddressId
+import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.toServerId
@@ -115,14 +116,34 @@ class ServerAddressSelectTest {
     /** Once set, the next server write waits for it after writing: a selection paused there. */
     @Volatile private var pauseAfterWrite: CompletableDeferred<Unit>? = null
 
+    /** Completed when a write has paused on [pauseAfterWrite]. */
+    private val pausedAtWrite = CompletableDeferred<Unit>()
+
+    /** Once set, the next read of a current address waits for it after reading. */
+    @Volatile private var pauseAfterCurrentRead: CompletableDeferred<Unit>? = null
+
+    /** Completed when a read has paused on [pauseAfterCurrentRead]. */
+    private val pausedAtCurrentRead = CompletableDeferred<Unit>()
+
     private val store =
         object : ServerStore by database {
             override suspend fun updateServer(server: Server) {
                 database.updateServer(server)
                 pauseAfterWrite?.let {
                     pauseAfterWrite = null
+                    pausedAtWrite.complete(Unit)
                     it.await()
                 }
+            }
+
+            override suspend fun currentAddress(serverId: ServerId): ServerAddress? {
+                val current = database.currentAddress(serverId)
+                pauseAfterCurrentRead?.let {
+                    pauseAfterCurrentRead = null
+                    pausedAtCurrentRead.complete(Unit)
+                    it.await()
+                }
+                return current
             }
         }
 
@@ -209,12 +230,38 @@ class ServerAddressSelectTest {
         }
 
     @Test
-    fun `removing an address right after selecting it is refused`() = runBlocking {
-        // A removal waits for the selection before it, so it sees the address in use.
+    fun `a selection waits for a removal under way, so the current address is never removed`() =
+        runBlocking {
+            // The removal has checked that the address is not in use when the tap selects it.
+            viewModel.loadAddresses(a)
+            withTimeout(5_000) { viewModel.state.first { it.addresses.isNotEmpty() } }
+            val removal = CompletableDeferred<Unit>()
+            pauseAfterCurrentRead = removal
+
+            viewModel.onAction(ServerAddressesAction.DeleteAddress(aHttps.id))
+            withTimeout(5_000) { pausedAtCurrentRead.await() }
+            viewModel.onAction(ServerAddressesAction.OnServerClick(aHttps.id))
+            removal.complete(Unit)
+
+            // The selection, after the removal, finds the address gone and says so.
+            withTimeout(5_000) { viewModel.state.first { it.error != null } }
+            val current = servers.getValue(a).currentServerAddressId
+            assertEquals(aLan.id, current)
+            assertEquals(aLan.address, active.value.baseUrl)
+        }
+
+    @Test
+    fun `removing an address while it is being selected is refused`() = runBlocking {
+        // A removal waits for the selection that is under way, so it sees the address in use.
         viewModel.loadAddresses(a)
+        val selection = CompletableDeferred<Unit>()
+        pauseAfterWrite = selection
 
         viewModel.onAction(ServerAddressesAction.OnServerClick(aHttps.id))
+        // The selection has written Room and holds the screen's lock when the removal comes in.
+        withTimeout(5_000) { pausedAtWrite.await() }
         viewModel.onAction(ServerAddressesAction.DeleteAddress(aHttps.id))
+        selection.complete(Unit)
 
         withTimeout(5_000) { viewModel.state.first { it.error != null } }
         assertEquals(aHttps.id, servers.getValue(a).currentServerAddressId)
