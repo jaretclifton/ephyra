@@ -63,7 +63,7 @@ Read it first; `docs/get-started.md` has what to install. This file is how to ac
   `host.docker.internal` (`--add-host host.docker.internal:host-gateway`).
 - **A reverse proxy with TLS:** `tools/test-server/caddy-tls.sh` puts Caddy with a throwaway CA
   in front of the server, with sites that ask for a client certificate, require one, or do not
-  (#960, #993); `caddy-tls.sh stop` removes it. The emulator needs the CA as a user CA
+  (#960, #993); `tools/test-server/caddy-tls.sh stop` removes it. The emulator needs the CA as a user CA
   (`docs/dev-environment.md`, "Behind a reverse proxy with TLS"). Stop it in the same session.
 
 ## Adding an edge case
