@@ -1,13 +1,15 @@
 name: Pages
 
-# Publishes the Ephyra site and the development site to GitHub Pages at https://midasvo.nl/ephyra/
-# (the custom domain of midasvo.github.io). Needs Settings → Pages → Source set to "GitHub Actions".
+# Publishes the Ephyra site to GitHub Pages at https://midasvo.nl/ephyra/ (the custom domain of
+# midasvo.github.io). Needs Settings → Pages → Source set to "GitHub Actions".
 #
 # - site/ (the landing page and the privacy policy that Google Play links to) is published as it
-#   is, at the root.
-# - devsite/ (Astro Starlight, #928) is built from the repository's Markdown and the LikeC4 model in
-#   docs/architecture/model/, and published at dev/. `npm run pages` composes both the same way
-#   locally.
+#   is, at the root, with the screenshots of images/screenshots/ beside it.
+# - devsite/ (Astro Starlight) is the documentation: guide/ (using Ephyra, with its feature lists
+#   from docs/features.yaml) and dev/ (#928: the repository's Markdown and the LikeC4 model in
+#   docs/architecture/model/). `npm run pages` composes it all the same way locally.
+#
+# It also checks that the README's radar (images/readme/) is what docs/features.yaml gives.
 #
 # A pull request that touches either builds them, so a broken page or model fails before the merge;
 # only a push to main deploys.
@@ -21,6 +23,8 @@ on:
       - "site/**"
       - "devsite/**"
       - "docs/**"
+      - "images/screenshots/**"
+      - "images/readme/**"
       - "CLAUDE.md"
       - ".github/workflows/pages.yml"
   pull_request:
@@ -60,16 +64,25 @@ jobs:
         working-directory: devsite
         run: npm run check-model
 
-      - name: Build the development site
+      - name: Check that the README's radar matches docs/features.yaml
+        working-directory: devsite
+        run: npm run readme-assets -- --check
+
+      - name: Build the documentation site
         working-directory: devsite
         run: npm run build
 
-      - name: Put both sites together
+      - name: Put the sites together
         working-directory: devsite
         run: node scripts/compose.mjs "$RUNNER_TEMP/pages"
 
+      # Every file of site/ is in the result as it is: nothing the build wrote replaced one.
       - name: Check that site/ is published unchanged
-        run: diff -r site "$RUNNER_TEMP/pages" --exclude=dev
+        run: |
+          cd site
+          find . -type f -print0 | while IFS= read -r -d '' f; do
+            cmp "$f" "$RUNNER_TEMP/pages/$f"
+          done
 
       - name: Upload site
         if: github.event_name != 'pull_request'

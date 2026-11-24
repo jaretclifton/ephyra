@@ -1,0 +1,361 @@
+# What Ephyra adds to Findroid, feature by feature, and which app has it.
+#
+# This is the one list. The guide on the site (devsite/src/content/docs/guide/) draws its feature
+# lists, the "What runs where" table and the radar from it, and the radar in the README
+# (images/readme/radar-*.svg) is the same drawing: `npm run readme-assets` in devsite/ writes it
+# again, and the Pages workflow fails when it is out of date.
+#
+# A feature:
+#   id       unique, also the anchor on its guide page
+#   area     one of the areas below (an axis of the radar). `device` is for the tablet layouts
+#            (on: [tablet]) and what the TV app has for the remote (on: [tv]): the guide lists
+#            it on those two pages, so a feature the phone has goes in another area
+#   title    a few words
+#   text     one or two sentences for the guide (optional)
+#   on       the apps that have it: phone, tablet (both are the phone app), tv
+#   optIn    true when it is off until the user switches it on (optional)
+#   setting  where the switch is (optional)
+#
+# Add a feature when a release gives users something new; `on` says tv only once the TV app has it.
+# The counts in the radar are the number of entries, so one entry is one thing a user would name,
+# not one per switch.
+
+areas:
+  - id: downloads
+    title: Downloads
+    page: downloads
+  - id: playback
+    title: Playback
+    page: playback
+  - id: subtitles
+    title: Subtitles and audio
+    page: subtitles-and-audio
+  - id: cast
+    title: Cast
+    page: cast
+  - id: library
+    title: Library and Home
+    page: library
+  - id: pages
+    title: Item pages
+    page: library
+  - id: profiles
+    title: Profiles
+    page: profiles
+  - id: look
+    title: Look
+    page: look
+  - id: device
+    title: Made for the device
+    page: devices
+
+features:
+  # Downloads: phone and tablet only (docs/tv-research/adr/0007-no-offline-on-tv.md).
+  - id: downloads-resumable
+    area: downloads
+    title: Resumable downloads, also to an SD card
+    text: A download picks up where it stopped after a lost connection or a restart.
+    on: [phone, tablet]
+  - id: downloads-quality
+    area: downloads
+    title: A quality per download
+    text: The original file, or a copy the server converts, from 4K down to 360p.
+    on: [phone, tablet]
+  - id: downloads-bulk
+    area: downloads
+    title: Whole seasons and series at once
+    text: Or only their unwatched episodes, with a limit on how many download at the same time.
+    on: [phone, tablet]
+  - id: downloads-screen
+    area: downloads
+    title: A Downloads screen
+    text: Progress per episode and per show, a storage breakdown, multi-select and undo.
+    on: [phone, tablet]
+  - id: downloads-smart
+    area: downloads
+    title: Smart Downloads
+    text: Keeps the next episodes of what you are watching and removes them once watched.
+    on: [phone, tablet]
+    optIn: true
+    setting: Settings → Downloads → Smart Downloads
+  - id: downloads-without-server
+    area: downloads
+    title: Downloads play without the server
+    text: There is no offline mode to switch on. When the server can't be reached, downloads open and play, and Favorites, Media and search show what is downloaded.
+    on: [phone, tablet]
+  - id: downloads-sync
+    area: downloads
+    title: In step with the server
+    text: What you watch without the server is sent when it is back and moves up in Continue Watching, and progress made on your other devices reaches your downloads.
+    on: [phone, tablet]
+  - id: downloads-dolby-vision
+    area: downloads
+    title: Dolby Vision downloads your device can play
+    text: A Dolby Vision file the device can't play can be downloaded as a converted, compatible copy.
+    on: [phone, tablet]
+
+  - id: dolby-vision
+    area: playback
+    title: Dolby Vision
+    text: Played directly where the device supports it, converted by the server where it doesn't.
+    on: [phone, tablet, tv]
+  - id: decoder-fallback
+    area: playback
+    title: The device's decoder first, ffmpeg when it fails
+    text: Dolby Atmos goes through the device's own decoder; when a decoder fails, playback goes on with ffmpeg.
+    on: [phone, tablet, tv]
+  - id: version-picker
+    area: playback
+    title: Version picker
+    text: When an item has more than one version, you choose before it plays.
+    on: [phone, tablet, tv]
+  - id: quality-switch
+    area: playback
+    title: Change the video quality while playing
+    on: [phone, tablet]
+  - id: next-season
+    area: playback
+    title: Plays on into the next season
+    on: [phone, tablet, tv]
+  - id: shuffle
+    area: playback
+    title: Shuffle a show
+    text: On the phone and tablet a single season too.
+    on: [phone, tablet, tv]
+  - id: chapters
+    area: playback
+    title: Chapter list in the player
+    on: [phone, tablet, tv]
+  - id: segments
+    area: playback
+    title: Intros, credits and recaps your way
+    text: Skip, ask or ignore per kind of media segment, with the segments marked on the seek bar.
+    on: [phone, tablet, tv]
+  - id: still-watching
+    area: playback
+    title: "\"Still watching?\""
+    text: Asks after a run of episodes that started by themselves.
+    on: [phone, tablet, tv]
+  - id: up-next
+    area: playback
+    title: "\"Up next\" card with a countdown"
+    text: At the end of an episode, with Cancel and Play now.
+    on: [phone, tablet, tv]
+  - id: sleep-timer
+    area: playback
+    title: Sleep timer
+    on: [phone, tablet, tv]
+  - id: background-audio
+    area: playback
+    title: Background audio
+    text: Sound plays on with the screen off, with controls on the lock screen.
+    on: [phone, tablet]
+    optIn: true
+    setting: Settings → Player → Background playback
+
+  - id: image-subtitles
+    area: subtitles
+    title: PGS, VobSub and DVB subtitles
+    text: Shown by the app itself, so the server does not have to convert the video for them.
+    on: [phone, tablet, tv]
+  - id: subtitle-style
+    area: subtitles
+    title: Subtitle styling
+    text: Colour, outline, font and size, on ExoPlayer and mpv, with a switch to override a track's own styling. The phone shows a live preview.
+    on: [phone, tablet, tv]
+  - id: subtitle-sync
+    area: subtitles
+    title: Subtitle sync
+    text: Move subtitles earlier or later while playing. On the phone you can also line one up with what is said.
+    on: [phone, tablet, tv]
+  - id: track-memory
+    area: subtitles
+    title: Audio and subtitle choice remembered
+    text: Per series and per user, for streams and for downloads.
+    on: [phone, tablet, tv]
+
+  - id: chromecast
+    area: cast
+    title: Google Cast
+    text: Pick a Chromecast from the top bar and cast from any item. A mini player and a remote control player (seek, previous and next, volume, audio and subtitle tracks, skip segments) take over.
+    on: [phone, tablet]
+    setting: Only in the proprietary variant, which needs Google Play services
+
+  - id: favorites
+    area: library
+    title: Favorites tab
+    on: [phone, tablet, tv]
+  - id: home-rows
+    area: library
+    title: Home rows you choose and reorder
+    on: [phone, tablet, tv]
+    setting: Settings → Interface → Home rows
+  - id: hide-watched
+    area: library
+    title: Hide-watched filter
+    text: Kept across libraries.
+    on: [phone, tablet, tv]
+  - id: az-jump
+    area: library
+    title: A to Z jump in a library
+    on: [phone, tablet, tv]
+  - id: hide-spoilers
+    area: library
+    title: Hide spoilers
+    text: Blurs the still and hides the title and overview of episodes you haven't watched.
+    on: [phone, tablet, tv]
+    optIn: true
+  - id: home-videos
+    area: library
+    title: Home Videos and Music Videos libraries
+    on: [phone, tablet, tv]
+  - id: unreachable-banner
+    area: library
+    title: A banner when the server doesn't answer
+    text: It leads to your downloads and goes by itself when the server is back.
+    on: [phone, tablet]
+  - id: error-screens
+    area: library
+    title: Error screens with Retry, and real empty states
+    on: [phone, tablet, tv]
+
+  - id: detail-extras
+    area: pages
+    title: Fuller movie and show pages
+    text: Critic score, tagline, studios, every trailer, extras, collections and "More like this", each with a switch.
+    on: [phone, tablet, tv]
+    setting: Settings → Interface → Detail pages
+  - id: media-badges
+    area: pages
+    title: HDR10+ and Dolby Atmos badges
+    text: On movie and episode pages; on TV on the episode panel.
+    on: [phone, tablet, tv]
+  - id: hide-cast
+    area: pages
+    title: Option to hide cast and crew
+    on: [phone, tablet, tv]
+  - id: copy-text
+    area: pages
+    title: Long-press to copy text
+    on: [phone, tablet]
+
+  - id: profile-switching
+    area: profiles
+    title: Profiles with faces
+    text: User pictures, default avatars and quick switching between the users of a server.
+    on: [phone, tablet, tv]
+  - id: profile-pin
+    area: profiles
+    title: PIN lock per profile
+    text: Kept on the device, not on the server.
+    on: [phone, tablet, tv]
+  - id: profile-pattern
+    area: profiles
+    title: Pattern lock
+    on: [phone, tablet]
+
+  - id: identity
+    area: look
+    title: Its own identity
+    text: Deep navy, cyan for what is playing, downloading or focused, violet for what is yours (favorites, watched, ratings), the Outfit typeface and pill buttons.
+    on: [phone, tablet, tv]
+  - id: material-you
+    area: look
+    title: Material You colours
+    text: Follows the wallpaper colours of the device.
+    on: [phone, tablet]
+    optIn: true
+
+  # Made for the device: the tablet layouts of the phone app, and what the TV app has for the remote.
+  - id: tablet-rail
+    area: device
+    title: Navigation rail and a wider Home
+    text: From 600 dp. Home shows two or three carousel pages and wider cards.
+    on: [tablet]
+  - id: tablet-pages
+    area: device
+    title: Item pages in two columns
+    text: The poster and the text beside each other over a full-width backdrop; text never runs wider than it can be read. Optionally a 16:9 backdrop in landscape.
+    on: [tablet]
+  - id: tablet-seasons
+    area: device
+    title: Seasons as list and detail
+    text: The episode list with the selected episode beside it on a landscape tablet. An episode opened from Home or search lands in the same place.
+    on: [tablet]
+  - id: tablet-player
+    area: device
+    title: A player for a large screen
+    text: Plays in the orientation you hold the tablet in, volume and brightness swipes only near the edges, roomier controls and an episode panel.
+    on: [tablet]
+  - id: tablet-keyboard
+    area: device
+    title: Keyboard and mouse in the player
+    text: Space, arrows, M, L and Esc, and mouse support.
+    on: [tablet]
+  - id: tablet-foldable
+    area: device
+    title: Tabletop on a foldable
+    text: Half folded, the video sits above the fold and the controls below it.
+    on: [tablet]
+  - id: tablet-widths
+    area: device
+    title: Every screen fits the window
+    text: Downloads in two columns, grids that use the width, settings and forms at a readable width. Laid out for the window, so a split-screen half and a desktop window get what fits.
+    on: [tablet]
+
+  - id: tv-drawer
+    area: device
+    title: Side drawer
+    text: Search, Home, Favorites, your libraries and Settings.
+    on: [tv]
+  - id: tv-home
+    area: device
+    title: Home with a hero for the focused item
+    text: Rows stay put while you move through them.
+    on: [tv]
+  - id: tv-library
+    area: device
+    title: Library grid with a jump bar and a counter
+    on: [tv]
+  - id: tv-season
+    area: device
+    title: Episodes open in their season
+    text: Details first, with Resume and Restart.
+    on: [tv]
+  - id: tv-people
+    area: device
+    title: Cast rows and person pages
+    on: [tv]
+  - id: tv-seeking
+    area: device
+    title: Seeking with the remote
+    text: D-pad steps you set, faster while you hold, and media keys.
+    on: [tv]
+  - id: tv-trickplay
+    area: device
+    title: Trickplay thumbnails while seeking
+    on: [tv]
+  - id: tv-overlay
+    area: device
+    title: Player overlay
+    text: The series, when it ends, previous and next, and the queue.
+    on: [tv]
+  - id: tv-refresh-rate
+    area: device
+    title: Refresh rate switching to match the video
+    on: [tv]
+    optIn: true
+  - id: tv-watch-next
+    area: device
+    title: Watch Next on the Android TV home screen
+    text: Continue Watching and Next Up appear in the system's own row.
+    on: [tv]
+  - id: tv-screensaver
+    area: device
+    title: Screensaver with your library's artwork
+    on: [tv]
+  - id: tv-theme-music
+    area: device
+    title: Theme music on show pages
+    on: [tv]
+    optIn: true

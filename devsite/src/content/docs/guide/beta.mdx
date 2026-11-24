@@ -1,0 +1,53 @@
+---
+title: Beta
+description: The beta of Ephyra, a build of every change, installed next to the stable app.
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+Every change that lands on `main` publishes a prerelease, `v<next version>-beta.<n>`. It
+installs as a separate app, **Ephyra Beta**, with its own login, settings and downloads, so it
+does not touch the stable app.
+
+<Aside type="caution">A beta is untested. Expect bugs, and keep the stable app for the evening's film.</Aside>
+
+## With Obtainium
+
+Add the repository again, as a second entry:
+
+- Source URL `https://github.com/midasvo/ephyra`
+- **Include prereleases** on
+- **Filter release titles by regular expression**: `^Beta`. Without it the entry switches to
+  the stable release right after one comes out.
+- **Filter APKs by regular expression**: the line for your device.
+
+<Tabs syncKey="device">
+  <TabItem label="Phone or tablet">
+    ```
+    -beta\.\d+-libre-arm64-v8a\.apk$
+    ```
+  </TabItem>
+  <TabItem label="Phone or tablet, with Cast">
+    ```
+    -beta\.\d+-proprietary-arm64-v8a\.apk$
+    ```
+  </TabItem>
+  <TabItem label="Android TV">
+    ```
+    -beta\.\d+-libre-tv-arm64-v8a\.apk$
+    ```
+  </TabItem>
+  <TabItem label="Android TV, 32-bit">
+    ```
+    -beta\.\d+-libre-tv-armeabi-v7a\.apk$
+    ```
+  </TabItem>
+</Tabs>
+
+## By hand
+
+The prereleases are on the [releases page](https://github.com/midasvo/ephyra/releases), marked
+**Pre-release**. The file names follow the [stable ones](/ephyra/guide/install/#which-file).
+
+Found a bug in a beta? [Open an issue](https://github.com/midasvo/ephyra/issues) and say
+which beta you run.

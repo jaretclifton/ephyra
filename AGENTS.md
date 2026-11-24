@@ -13,6 +13,7 @@ The app is **Ephyra**, a fork of [Findroid](https://github.com/jarnedemeulemeest
   4. For a bug, read the guide's pitfalls, then search the issues: `gh issue list --repo midasvo/ephyra --search "<words>" --state all`. An open issue that matches is often the bug itself.
   5. At the end, say what the guide missed or got wrong, and fix it in the same pull request.
 - **New machine:** `docs/get-started.md` (from an empty machine to the app on an emulator with test data) and `scripts/doctor.sh`, which checks the tools and says what is missing.
+- **A feature users get** is an entry in `docs/features.yaml` (which apps have it). The user guide (https://midasvo.nl/ephyra/guide/, `devsite/src/content/docs/guide/`) and the README's radar are drawn from it; the release skill brings it up to date.
 - **Modules:** `docs/architecture/modules.md` (generated from the build files: every module, what it is, what it depends on). **Rules R1–R17:** `docs/architecture/rules.md` (generated from the Konsist tests). **Ports and adapters:** `docs/architecture/README.md`, then `5-hexagonal-ddd.md` and the ADRs in `docs/architecture/adr/`.
 - The numbered files in `docs/mpv-research/`, `docs/tablet/` and `docs/tv-research/` are research from before the work was done. Where they differ from the code, the code is right.
 

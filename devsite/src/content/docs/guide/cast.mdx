@@ -1,0 +1,39 @@
+---
+title: Cast
+description: Casting from Ephyra to a Chromecast, with the phone as the remote.
+---
+
+import FeatureList from '../../../components/FeatureList.astro';
+import Shots from '../../../components/Shots.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+<Aside>
+  Cast is in the **proprietary** variant of the phone app, because it needs Google Play
+  services. See [Install](/ephyra/guide/install/#two-variants-of-the-phone-app). The libre
+  variant and the TV app have no Cast.
+</Aside>
+
+<Shots
+  shots={[
+    { file: 'cast-devices.webp', alt: 'The Cast to a device sheet over Home, listing Living room TV and Bedroom', caption: 'Pick a device from the top bar' },
+    { file: 'cast-player.webp', alt: 'The Cast player for Sahara on Living room TV with the poster, seek bar, transport controls, audio, subtitle and chapter buttons and volume', caption: 'The phone becomes the remote' },
+    { file: 'cast-mini.webp', alt: 'Home with the Cast button lit and a mini player for Sahara above the bottom bar', caption: 'A mini player while you browse' },
+  ]}
+/>
+
+<Shots
+  kind="wide"
+  shots={[
+    { file: 'tablet-cast.webp', alt: 'A movie page on a tablet with the Cast player beside it: connected to Living room TV, with the seek bar, transport controls, track buttons and volume', caption: 'On a tablet the Cast player sits beside the page' },
+  ]}
+/>
+
+## What you get
+
+<FeatureList area="cast" />
+
+## How it works
+
+Tap the Cast button in the top bar and pick a device, then cast from any item. A mini player
+stays above the bottom bar while you browse; tap it for the full remote: seek, previous and
+next, volume, audio and subtitle tracks, and skipping segments.

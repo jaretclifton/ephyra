@@ -63,6 +63,9 @@ scripts/avds.sh create ce_phone  # then: start ce_phone, install ce_phone
   commits and pull requests. Coding agents read it (Claude Code reads [CLAUDE.md](CLAUDE.md), with the same rules),
   and it reads just as well for people.
 - [docs/](docs/README.md) lists the design documents and which of them are still current.
+- A feature users get is added to [docs/features.yaml](docs/features.yaml): the
+  [guide](https://midasvo.nl/ephyra/guide/) on the site and the chart in the README are drawn
+  from it (`npm run readme-assets` in `devsite/`).
 - Ephyra is a fork of [Findroid](https://github.com/jarnedemeulemeester/findroid), and Findroid's
   changes are merged in regularly. Code Ephyra adds is kept in its own files where it can be, so
   those merges stay small. A fix in code that Findroid still owns is best sent to Findroid too.

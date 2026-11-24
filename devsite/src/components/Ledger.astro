@@ -1,0 +1,40 @@
+---
+// What Ephyra did with Findroid's commits, counted from docs/upstream-ledger.md: one stacked bar
+// with a segment per verdict. The verdicts are named and counted in the legend, so the bar never
+// relies on colour alone.
+import { ledgerCounts } from '../lib/features.mjs';
+
+const MEANING: Record<string, string> = {
+  taken: 'in Ephyra as Findroid made it',
+  covered: 'Ephyra already had it in its own form',
+  're-implemented': 'built again in Ephyra’s structure',
+  're-implement': 'worth having, to be built in Ephyra’s structure',
+  skipped: 'not taken, with the reason in the ledger',
+};
+// Fixed order and a fixed tone per verdict, so a verdict keeps its look when the counts change.
+const ORDER = ['taken', 're-implemented', 'covered', 're-implement', 'skipped'];
+const counts = ledgerCounts().sort((a, b) => ORDER.indexOf(a.verdict) - ORDER.indexOf(b.verdict));
+const total = counts.reduce((sum, c) => sum + c.count, 0);
+const slug = (v: string) => (ORDER.includes(v) ? v : 'other');
+---
+
+<figure class="ledger">
+  <div class="ledger-bar" role="img" aria-label={`${total} Findroid commits: ${counts.map((c) => `${c.count} ${c.verdict}`).join(', ')}`}>
+    {counts.map((c) => <span class={`seg v-${slug(c.verdict)}`} style={`flex-grow:${c.count}`} title={`${c.verdict}: ${c.count}`} />)}
+  </div>
+  <ul class="ledger-legend">
+    {
+      counts.map((c) => (
+        <li>
+          <span class={`key v-${slug(c.verdict)}`} aria-hidden="true" />
+          <strong>{c.count}</strong> {c.verdict}
+          <span class="meaning">{MEANING[c.verdict] ?? ''}</span>
+        </li>
+      ))
+    }
+  </ul>
+  <figcaption>
+    The {total} code and dependency commits of Findroid since the ledger began (22 November 2026).
+    Translation commits are always taken and not counted.
+  </figcaption>
+</figure>

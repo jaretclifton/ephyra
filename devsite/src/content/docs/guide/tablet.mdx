@@ -1,0 +1,40 @@
+---
+title: Tablet and foldable
+description: The phone app of Ephyra on a tablet, a foldable, a split screen or a desktop window.
+---
+
+import FeatureList from '../../../components/FeatureList.astro';
+import Shots from '../../../components/Shots.astro';
+
+The tablet runs the phone app, laid out for the window rather than the device. A tablet, an
+unfolded foldable, a split-screen half and a desktop window each get what fits, and everything
+the phone app does is there.
+
+<Shots
+  kind="wide"
+  shots={[
+    { file: 'tablet-home.webp', alt: 'Tablet Home in landscape with a navigation rail on the left, a three-page backdrop carousel and a Continue Watching row', caption: 'Home with a navigation rail and a wider carousel' },
+    { file: 'tablet-movie.webp', alt: 'A movie page on a tablet: a full-width backdrop with the poster, title, metadata, Play button and overview beside it, and the cast row below', caption: 'Item pages with the poster beside the text' },
+    { file: 'tablet-season.webp', alt: 'A season as a list-detail: the episode list on the left with an episode highlighted, that episode and its details on the right', caption: 'Seasons as list and detail side by side' },
+    { file: 'tablet-player.webp', alt: 'The player with its controls and an episode panel open on the right listing the episodes of the season', caption: 'Episode panel in the player' },
+    { file: 'tablet-library.webp', alt: 'The Movies library as a six-column poster grid', caption: 'Grids use the width' },
+  ]}
+/>
+
+## Made for the width
+
+<FeatureList area="device" device="tablet" />
+
+## Foldables
+
+<Shots
+  shots={[
+    { file: 'fold-tabletop.webp', alt: 'The player on a half-folded foldable: the video on the upper half, the transport controls and seek bar on the lower half', caption: 'Tabletop: video above the fold, controls below' },
+  ]}
+/>
+
+Folded, a foldable is a phone. Unfolded it gets the tablet layouts, and half folded on a table
+the player splits at the hinge.
+
+For the design and the sizes it is tested at, see
+[docs/tablet](https://github.com/midasvo/ephyra/tree/main/docs/tablet).

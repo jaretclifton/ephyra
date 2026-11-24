@@ -1,0 +1,53 @@
+---
+title: Using Ephyra
+description: What Ephyra is, what it adds to Findroid and where to read more.
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+import Radar from '../../../components/Radar.astro';
+import Shots from '../../../components/Shots.astro';
+
+Ephyra plays the movies and series of your own [Jellyfin](https://jellyfin.org/) server on
+Android phones, tablets and Android TV. It is a fork of
+[Findroid](https://github.com/jarnedemeulemeester/findroid): everything Findroid does, with
+downloads worth using, Dolby Vision, tablet layouts and a TV app built for the remote on top.
+
+It is free, licensed under the GPLv3, and collects nothing. It needs a Jellyfin server
+(12.0 or newer), and Android 10 or newer on phones and tablets or Android 9 or newer on TV.
+
+<Shots
+  kind="wide"
+  shots={[
+    { file: 'tv-home.webp', alt: 'TV Home with a full-bleed backdrop hero for the focused movie and a Suggestions row with the focused card glowing', caption: 'Android TV' },
+    { file: 'tablet-home.webp', alt: 'Tablet Home in landscape with a navigation rail on the left, a three-page backdrop carousel and a Continue Watching row', caption: 'Tablet' },
+  ]}
+/>
+
+<CardGrid>
+  <LinkCard title="Install" description="Obtainium, the releases page, F-Droid, and which file is for which device." href="/ephyra/guide/install/" />
+  <LinkCard title="Downloads" description="Resumable, a quality per download, whole series at once, and they play without the server." href="/ephyra/guide/downloads/" />
+  <LinkCard title="Playback" description="Dolby Vision, a version picker, quality switching, segments, Up next and a sleep timer." href="/ephyra/guide/playback/" />
+  <LinkCard title="Android TV" description="A separate app for the remote: a hero Home, trickplay, Watch Next and a screensaver." href="/ephyra/guide/tv/" />
+</CardGrid>
+
+## What Ephyra adds, at a glance
+
+One axis per area, with the number of things Ephyra adds to Findroid there. The phone and
+tablet are one app; the TV app is a separate one, and it has no downloads and no Cast.
+
+<Radar />
+
+[What runs where](/ephyra/guide/devices/) lists every feature per device.
+
+## More
+
+<CardGrid>
+  <LinkCard title="Subtitles and audio" description="PGS and VobSub, styling, sync, and a choice remembered per series." href="/ephyra/guide/subtitles-and-audio/" />
+  <LinkCard title="Library and Home" description="Home rows you choose, hide watched, hide spoilers and fuller item pages." href="/ephyra/guide/library/" />
+  <LinkCard title="Tablet and foldable" description="The phone app, laid out for the width." href="/ephyra/guide/tablet/" />
+  <LinkCard title="Ephyra and Findroid" description="What happens with Findroid's changes, and moving over from Findroid or Findroid CE." href="/ephyra/guide/findroid/" />
+  <LinkCard title="Developing Ephyra" description="The architecture, the areas of the code and how to test a change." href="/ephyra/dev/" />
+</CardGrid>
+
+Something not working? [Open an issue](https://github.com/midasvo/ephyra/issues). For a
+playback problem, attach the device profile from About → Export device profile.

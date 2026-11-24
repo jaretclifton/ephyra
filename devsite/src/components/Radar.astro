@@ -1,0 +1,28 @@
+---
+// The radar of docs/features.yaml: features per area, for the phone and tablet app and for the TV
+// app. The README shows the same drawing as an image (scripts/readme-assets.mjs). Here the colours
+// are CSS variables (ephyra.css), so it follows the theme switch, and each marker has a tooltip.
+import { countsByArea, radarSvg } from '../lib/features.mjs';
+
+const svg = radarSvg({ theme: 'css', frame: false });
+const areas = countsByArea();
+---
+
+<figure class="radar">
+  <Fragment set:html={svg} />
+  <figcaption>
+    The number of things Ephyra adds to Findroid in each area, per app. The counts come from the
+    feature list; the table below has every feature.
+  </figcaption>
+  <details>
+    <summary>The numbers as a table</summary>
+    <table>
+      <thead>
+        <tr><th scope="col">Area</th><th scope="col">Phone and tablet</th><th scope="col">Android TV</th></tr>
+      </thead>
+      <tbody>
+        {areas.map((a) => <tr><th scope="row">{a.title}</th><td>{a.handheld}</td><td>{a.tv}</td></tr>)}
+      </tbody>
+    </table>
+  </details>
+</figure>

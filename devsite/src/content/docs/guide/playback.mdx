@@ -1,0 +1,39 @@
+---
+title: Playback
+description: What Ephyra adds to playing a movie or an episode. Dolby Vision, versions and quality, segments, Up next and more.
+---
+
+import FeatureList from '../../../components/FeatureList.astro';
+import Shots from '../../../components/Shots.astro';
+
+Ephyra plays with ExoPlayer or with [mpv](https://midasvo.nl/libmpv-android/), whichever you
+set, and plays the file as it is whenever the device can.
+
+<Shots
+  kind="wide"
+  shots={[
+    { file: 'player-quality.webp', alt: 'Video quality dialog open over the player', caption: 'Change the video quality while playing' },
+    { file: 'up-next.webp', alt: 'Up next card in the corner of the player with the next episode, a countdown, Cancel and Play now', caption: 'Up next, with a countdown, as an episode ends' },
+    { file: 'tv-player.webp', alt: 'TV player overlay with the title, the clock, elapsed and remaining time, the seek bar and previous, pause, next, audio, subtitle and speed buttons', caption: 'The player on Android TV' },
+    { file: 'tv-trickplay.webp', alt: 'A trickplay thumbnail above the seek time while skipping forward on TV', caption: 'Trickplay thumbnails while seeking' },
+  ]}
+/>
+
+## What you get
+
+<FeatureList area="playback" />
+
+## Dolby Vision and Atmos
+
+Dolby Vision plays directly where the device supports it. Where it doesn't, the server
+converts it, so you get a picture instead of wrong colours. Dolby Atmos goes through the
+device's own decoder; when a decoder fails, playback continues with ffmpeg instead of stopping.
+
+Movie and episode pages show HDR10+ and Dolby Atmos badges, so you know what a version is
+before it plays. About → Export device profile writes down what your device says it can play;
+attach it to a [bug report](https://github.com/midasvo/ephyra/issues) about playback.
+
+## Subtitles and audio
+
+Subtitle formats, styling, sync and the remembered track choice have
+[their own page](/ephyra/guide/subtitles-and-audio/).

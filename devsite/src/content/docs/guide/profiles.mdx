@@ -1,0 +1,23 @@
+---
+title: Profiles
+description: Switching between the users of a Jellyfin server in Ephyra, and locking a profile with a PIN or a pattern.
+---
+
+import FeatureList from '../../../components/FeatureList.astro';
+import Shots from '../../../components/Shots.astro';
+
+<Shots
+  shots={[
+    { file: 'profile-lock.webp', alt: 'Profile lock dialog with an unlock pattern drawn across a grid of nine dots', caption: 'Lock a profile with a PIN or a pattern' },
+  ]}
+/>
+
+## What you get
+
+<FeatureList area="profiles" />
+
+## Locking a profile
+
+A lock keeps a child out of a grown-up's profile on a shared phone or TV. It is kept on the
+device, not on the server: it does not change the user's Jellyfin password, and another device
+does not ask for it. The TV app locks with a PIN.

@@ -1,0 +1,44 @@
+---
+title: Downloads
+description: Downloading from Jellyfin with Ephyra, in a quality you choose, and watching without the server.
+---
+
+import FeatureList from '../../../components/FeatureList.astro';
+import Shots from '../../../components/Shots.astro';
+
+Download an episode, a season or a whole series to the phone or tablet, to internal storage or
+an SD card, and watch it anywhere. Downloads are on the phone and tablet app; the TV app has
+none.
+
+<Shots
+  shots={[
+    { file: 'downloads.webp', alt: 'Downloads screen with a storage bar, two downloads with progress rings, one waiting, and a downloaded show', caption: 'Downloads, with a storage breakdown' },
+    { file: 'season.webp', alt: 'Season episode list showing downloaded, downloading and not yet downloaded episodes', caption: 'Progress per episode' },
+    { file: 'download-quality.webp', alt: 'Download quality dialog listing original quality and bitrates from 4K down', caption: 'Every download asks for a quality' },
+    { file: 'downloaded-show.webp', alt: 'Downloaded show page listing episodes by season with their sizes', caption: 'A page per downloaded show' },
+    { file: 'smart-downloads.webp', alt: 'Downloads settings with the storage location, the limit on concurrent downloads and Smart Downloads switched on', caption: 'Smart Downloads' },
+  ]}
+/>
+
+## What you get
+
+<FeatureList area="downloads" />
+
+## Choosing a quality
+
+Each download asks for a quality. **Original** copies the file as it is on the server: the best
+picture, the largest file, and no work for the server. Every other choice is a copy the server
+converts while you download, from 4K down to 360p: smaller, and it plays on a device that can't
+play the original. Your account on the server needs permission to download.
+
+## Without the server
+
+There is no offline mode to switch on. On a plane or when the server is down, open the app as
+usual: a banner says the server doesn't answer and leads to Downloads, and Favorites, Media and
+search show what is downloaded. What you watch is kept and sent to the server when it is back,
+so Continue Watching is right on your other devices too.
+
+## Where they are stored
+
+Settings → Downloads sets the storage (internal or an SD card) and how many downloads run at
+the same time. Downloads resume by themselves after a lost connection or a restart.

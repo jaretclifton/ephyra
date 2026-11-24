@@ -1,0 +1,39 @@
+---
+// The features of one area of docs/features.yaml, as a list. A feature that is not on every
+// device says where it is.
+import { loadFeatures } from '../lib/features.mjs';
+
+interface Props {
+  area: string;
+  /** Only features on this device ('tablet' or 'tv'), for the device pages. */
+  device?: string;
+}
+const { area, device } = Astro.props;
+const data = loadFeatures();
+if (!data.areas.some((a) => a.id === area)) throw new Error(`FeatureList: unknown area "${area}"`);
+const features = data.features.filter((f) => f.area === area && (!device || f.on.includes(device)));
+
+function where(on: string[]): string | undefined {
+  const has = (d: string) => on.includes(d);
+  if (has('phone') && has('tablet') && has('tv')) return undefined;
+  if (has('phone') && has('tablet')) return 'Phone and tablet';
+  if (has('tv') && !has('phone') && !has('tablet')) return 'Android TV';
+  if (has('tablet') && !has('phone') && !has('tv')) return 'Tablet';
+  if (has('phone') && !has('tablet') && !has('tv')) return 'Phone';
+  return on.map((d) => ({ phone: 'Phone', tablet: 'Tablet', tv: 'Android TV' })[d]).join(' and ');
+}
+---
+
+<ul class="feature-list">
+  {
+    features.map((f) => (
+      <li id={f.id}>
+        <strong>{f.title}</strong>
+        {!device && where(f.on) && <span class="chip">{where(f.on)}</span>}
+        {f.optIn && <span class="chip">Opt-in</span>}
+        {f.text && <p>{f.text}</p>}
+        {f.setting && <p class="setting">{f.setting}</p>}
+      </li>
+    ))
+  }
+</ul>

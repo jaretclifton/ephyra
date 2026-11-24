@@ -1,0 +1,34 @@
+---
+title: Subtitles and audio
+description: Image subtitles without conversion, subtitle styling and sync, and an audio and subtitle choice remembered per series.
+---
+
+import FeatureList from '../../../components/FeatureList.astro';
+import Shots from '../../../components/Shots.astro';
+
+<Shots
+  shots={[
+    { file: 'subtitle-style.webp', alt: 'Subtitle style screen with a live preview of coloured subtitles', caption: 'Subtitle styling, with a live preview' },
+  ]}
+/>
+
+## What you get
+
+<FeatureList area="subtitles" />
+
+## Styling
+
+Colour, outline, font and size are set in the player settings and apply on ExoPlayer and on
+mpv. Styled tracks (SSA/ASS) keep their own look unless you switch on the override. On Android
+TV the same choices are a list in Settings.
+
+## Sync
+
+When subtitles run early or late, move them from the subtitle menu in the player, in small
+steps. On the phone and tablet you can also line a subtitle up with what is said.
+
+## Remembered per series
+
+Choose Japanese audio with English subtitles for one series, and the next episode starts that
+way: on a stream, on a download and on both players. The choice is kept per series and per
+user, so it does not change what someone else on the same device hears.

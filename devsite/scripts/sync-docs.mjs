@@ -16,8 +16,8 @@ import YAML from 'yaml';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(here, '../..');
 const SITE = path.resolve(here, '..');
-const CONTENT = path.join(SITE, 'src/content/docs');
-const PUBLIC = path.join(SITE, 'public');
+const CONTENT = path.join(SITE, 'src/content/docs/dev');
+const PUBLIC = path.join(SITE, 'public/dev');
 const BASE = '/ephyra/dev/';
 const SITE_URL = 'https://midasvo.nl' + BASE;
 const GITHUB = 'https://github.com/midasvo/ephyra';
@@ -119,6 +119,12 @@ function write(file, content) {
 }
 
 // Start clean, so a page removed from the repository leaves the site too.
+// Before the guide, this script wrote one level up (src/content/docs/areas, public/fonts, …).
+// A checkout that was built then still has those files, ignored by git: Astro would publish them
+// at the root, where public/fonts collides with site/fonts in compose.mjs. None of these paths
+// holds a hand-written file now.
+for (const old of ['areas', 'architecture', 'decisions', 'working', 'index.mdx']) fs.rmSync(path.join(SITE, 'src/content/docs', old), { recursive: true, force: true });
+for (const old of ['raw', 'llms.txt', 'fonts', 'favicon.png']) fs.rmSync(path.join(SITE, 'public', old), { recursive: true, force: true });
 for (const g of GENERATED) fs.rmSync(path.join(CONTENT, g), { recursive: true, force: true });
 for (const g of ['raw', 'llms.txt', 'fonts', 'favicon.png']) fs.rmSync(path.join(PUBLIC, g), { recursive: true, force: true });
 

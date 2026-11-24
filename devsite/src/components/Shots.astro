@@ -1,0 +1,63 @@
+---
+// A row of screenshots from images/screenshots/ (the one place they are kept). Click one to see it
+// large. `shots` is a list of { file, alt, caption }; `kind` sets the column width: 'phone' for
+// portrait phone shots, 'wide' for tablet, TV and landscape player shots.
+import { Image } from 'astro:assets';
+
+interface Shot {
+  file: string;
+  alt: string;
+  caption?: string;
+}
+interface Props {
+  shots: Shot[];
+  kind?: 'phone' | 'wide';
+}
+const { shots, kind = 'phone' } = Astro.props;
+const files = import.meta.glob<{ default: ImageMetadata }>('../../../images/screenshots/*.webp', { eager: true });
+const image = (file: string) => {
+  const found = files[`../../../images/screenshots/${file}`];
+  if (!found) throw new Error(`Shots: no images/screenshots/${file}`);
+  return found.default;
+};
+---
+
+<div class={`shots shots-${kind}`}>
+  {
+    shots.map((shot) => (
+      <figure>
+        <button type="button" class="shot-zoom" aria-label={`Enlarge: ${shot.caption ?? shot.alt}`}>
+          <Image src={image(shot.file)} alt={shot.alt} widths={kind === 'phone' ? [270, 540] : [640, 1280]} sizes={kind === 'phone' ? '(min-width: 50rem) 14rem, 45vw' : '(min-width: 50rem) 22rem, 90vw'} />
+        </button>
+        {shot.caption && <figcaption>{shot.caption}</figcaption>}
+      </figure>
+    ))
+  }
+</div>
+
+<script>
+  // One dialog for the page: a click on a screenshot shows it at full size; Esc or a click closes it.
+  function setUp() {
+    const buttons = document.querySelectorAll<HTMLButtonElement>('.shot-zoom');
+    if (!buttons.length || document.querySelector('dialog.shot-dialog')) return;
+    const dialog = document.createElement('dialog');
+    dialog.className = 'shot-dialog';
+    const large = document.createElement('img');
+    dialog.append(large);
+    document.body.append(dialog);
+    dialog.addEventListener('click', () => dialog.close());
+    buttons.forEach((button) =>
+      button.addEventListener('click', () => {
+        const img = button.querySelector('img');
+        if (!img) return;
+        // The largest candidate of the srcset is the original size.
+        const candidates = (img.srcset || img.src).split(',').map((c) => c.trim().split(' ')[0]);
+        large.src = candidates[candidates.length - 1];
+        large.alt = img.alt;
+        dialog.setAttribute('aria-label', (button.getAttribute('aria-label') ?? img.alt).replace(/^Enlarge: /, 'Screenshot: '));
+        dialog.showModal();
+      }),
+    );
+  }
+  setUp();
+</script>

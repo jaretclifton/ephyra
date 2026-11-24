@@ -1,0 +1,33 @@
+---
+title: Library and Home
+description: Home rows you choose, filters, hide spoilers, fuller item pages, and what happens when the server doesn't answer.
+---
+
+import FeatureList from '../../../components/FeatureList.astro';
+import Shots from '../../../components/Shots.astro';
+
+<Shots
+  shots={[
+    { file: 'home.webp', alt: 'Home with a backdrop carousel, Continue Watching and Next Up', caption: 'Home' },
+    { file: 'movie.webp', alt: 'Movie page for Sahara with the backdrop, media chips, a Play button and the overview', caption: 'Movie page' },
+    { file: 'episode.webp', alt: 'Episode page with the episode still, season and episode number, Play button and overview', caption: 'Episode page' },
+    { file: 'library.webp', alt: 'Movies library grid of posters with the hide-watched and sort icons', caption: 'Library grid' },
+    { file: 'favorites.webp', alt: 'Favorites tab with a grid of favorite movies', caption: 'Favorites' },
+    { file: 'home-rows.webp', alt: 'Home rows setting listing the Home rows with arrows to reorder them and switches to hide them', caption: 'Choose and order the Home rows' },
+  ]}
+/>
+
+## Home and libraries
+
+<FeatureList area="library" />
+
+## Item pages
+
+<FeatureList area="pages" />
+
+## When the server doesn't answer
+
+Ephyra notices when your server stops answering: on a network change, when you return to the
+app and after a failed request. On the phone and tablet a banner then says so, with a way to
+your [downloads](/ephyra/guide/downloads/#without-the-server), and it goes by itself when the
+server is back. Screens that fail to load say so and offer Retry.
