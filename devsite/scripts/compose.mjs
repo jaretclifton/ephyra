@@ -21,6 +21,8 @@ const out = path.resolve(process.argv[2] ?? path.join(here, '../.pages/ephyra'))
 for (const page of ['dev/index.html', 'guide/index.html'])
   if (!fs.existsSync(path.join(DIST, page))) throw new Error(`No devsite/dist/${page}: run \`npm run build\` first`);
 if (!fs.existsSync(path.join(DIST, 'dev/model/index.html'))) throw new Error('No devsite/dist/dev/model: the LikeC4 build is missing');
+// site/sitemap.xml is an index that names the build's sitemap next to site/sitemap-pages.xml.
+if (!fs.existsSync(path.join(DIST, 'sitemap-0.xml'))) throw new Error('No devsite/dist/sitemap-0.xml: site/sitemap.xml names it');
 // Nothing the build writes may replace a file of site/.
 const clash = fs.readdirSync(DIST).filter((name) => fs.existsSync(path.join(SITE_DIR, name)));
 if (clash.length) throw new Error(`site/ and devsite/dist both have: ${clash.join(', ')}`);

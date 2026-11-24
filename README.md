@@ -13,6 +13,7 @@
   <a href="https://midasvo.nl/ephyra/guide/">Guide</a> ·
   <a href="#install">Install</a> ·
   <a href="#what-you-get">What you get</a> ·
+  <a href="#what-runs-where">What runs where</a> ·
   <a href="#under-the-hood">Under the hood</a> ·
   <a href="https://midasvo.nl/ephyra/dev/">Developing</a>
 </p>
@@ -28,8 +29,8 @@ Android phones, tablets and Android TV.
   separate TV app built for the remote.
 
 Free, GPLv3, and it collects nothing. It is a fork of
-[Findroid](https://github.com/jarnedemeulemeester/findroid) and needs Android 10 or newer
-(Android 9 on TV).
+[Findroid](https://github.com/jarnedemeulemeester/findroid) and needs Jellyfin 12.0 or newer and
+Android 10 or newer (Android 9 on TV).
 
 <p align="center">
   <a href="https://midasvo.nl/ephyra/guide/"><img src="images/readme/hero.webp" alt="Ephyra's Home on an Android TV, a tablet and a phone: a backdrop for the focused movie on TV, a navigation rail and carousel on the tablet, Continue Watching and Next Up on the phone" width="860"></a>
@@ -37,11 +38,11 @@ Free, GPLv3, and it collects nothing. It is a fork of
 
 ## Install
 
-| | How | For |
+| | How | Updates |
 |---|---|---|
-| **Obtainium** | Add `https://github.com/midasvo/ephyra` and set the APK filter for your device | Updates by themselves |
-| **Releases** | Download the APK from [Releases](https://github.com/midasvo/ephyra/releases/latest) | One install by hand |
-| **F-Droid** | [Submitted](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/56048), waiting for review | Soon |
+| **Obtainium** | Add `https://github.com/midasvo/ephyra` and set the APK filter for your device | Obtainium finds them; you confirm the install |
+| **Releases** | Download the APK from [Releases](https://github.com/midasvo/ephyra/releases/latest) | By hand |
+| **F-Droid** | Not yet: [submitted](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/56048), waiting for review | |
 
 Phones and tablets take a `-libre-` file, or `-proprietary-` for Google Cast; Android TV takes a
 `-libre-tv-` file. The **[install guide](https://midasvo.nl/ephyra/guide/install/)** has the
@@ -87,6 +88,14 @@ Pick a Chromecast from the top bar and the phone becomes the remote, with a mini
 you browse. In the proprietary variant, on phones and tablets.
 **[Cast →](https://midasvo.nl/ephyra/guide/cast/)**
 
+<table>
+  <tr>
+    <td width="33%" align="center"><img src="images/screenshots/cast-devices.webp" alt="The Cast to a device sheet over Home, listing Living room TV and Bedroom"><br><sub>Pick a device from the top bar</sub></td>
+    <td width="33%" align="center"><img src="images/screenshots/cast-player.webp" alt="The Cast player with the poster, seek bar, transport controls, audio, subtitle and chapter buttons and volume"><br><sub>The phone becomes the remote</sub></td>
+    <td width="33%" align="center"><img src="images/screenshots/cast-mini.webp" alt="Home with the Cast button lit and a mini player above the bottom bar"><br><sub>A mini player while you browse</sub></td>
+  </tr>
+</table>
+
 ### Tablet and foldable
 
 The phone app, laid out for the window: a navigation rail, item pages in two columns, seasons as
@@ -111,7 +120,10 @@ TV home screen and a screensaver with your library's artwork.
 </p>
 
 And more: profiles with a PIN, Home rows you choose, hide watched, hide spoilers, fuller movie and
-show pages, and a look of its own. **[Library and Home →](https://midasvo.nl/ephyra/guide/library/)**
+show pages, and a look of its own.
+**[Library and Home →](https://midasvo.nl/ephyra/guide/library/)** ·
+**[Profiles →](https://midasvo.nl/ephyra/guide/profiles/)** ·
+**[Look →](https://midasvo.nl/ephyra/guide/look/)**
 
 <sub>Screenshots use the public-domain library of the Jellyfin demo server, except the download screens: the demo account can't download, so those come from the maintainer's server. All artwork shown belongs to its respective owners.</sub>
 
@@ -157,7 +169,8 @@ flowchart LR
 - **Ports and adapters, enforced by the build.** Seventeen architecture rules run with the unit
   tests; a screen cannot reach the Jellyfin SDK or the database around a port.
 - **Two player engines**, ExoPlayer and mpv, behind one interface.
-- **Translated in 36 languages**, checked on every pull request.
+- **Translated in 36 languages**, checked on every pull request
+  ([how the translations work](https://midasvo.nl/ephyra/guide/findroid/#translations)).
 - **Reproducible builds**, verified against the published APKs.
 
 The **[development site](https://midasvo.nl/ephyra/dev/)** has the
@@ -170,7 +183,7 @@ guide per area of the code and every decision record.
 device profile from About → Export device profile.
 
 Pull requests are welcome: [CONTRIBUTING.md](CONTRIBUTING.md) has the build, the checks and the
-conventions.
+conventions. With JDK 21 and the Android SDK, this builds the phone app:
 
 ```bash
 ./gradlew :app:phone:assembleLibreDebug

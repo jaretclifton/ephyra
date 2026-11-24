@@ -1,10 +1,11 @@
 # Ephyra
 
-> Ephyra is a free, open-source (GPLv3) Jellyfin client for Android phones, tablets and Android TV. It is a fork of Findroid and was called Findroid CE until version 2.0.0. It needs a Jellyfin server and Android 10 or newer (Android 9 or newer on TV).
+> Ephyra is a free, open-source (GPLv3) Jellyfin client for Android phones, tablets and Android TV. It is a fork of Findroid and was called Findroid CE until version 2.0.0. It needs a Jellyfin server (12.0 or newer) and Android 10 or newer (Android 9 or newer on TV).
 
 What Ephyra adds to Findroid:
 
 - Downloads: resumable, to internal storage or an SD card, with a quality per download (the original, or a server conversion from 4K down to 360p), whole seasons or series at once, and opt-in Smart Downloads that keep the next episodes of what you are watching. Downloads play without a connection, with no offline mode to switch on.
+- Cast: Google Cast (Chromecast) from phones and tablets, in the proprietary variant of the app. The libre variant has no Google code.
 - Playback: Dolby Vision direct play where the device supports it, Dolby Atmos through the device's decoder, PGS, VobSub and DVB subtitles without transcoding, subtitle styling on ExoPlayer and mpv, a version picker, a quality switch during playback, and audio and subtitle choices remembered per series.
 - Library: Home rows you choose and order, a hide-watched filter, and profiles that can be locked with a PIN.
 - Tablets and foldables: a navigation rail, list-detail seasons, keyboard and mouse support in the player.
@@ -15,9 +16,16 @@ Ephyra collects nothing and only talks to the Jellyfin servers the user adds.
 ## Links
 
 - [Website](https://midasvo.nl/ephyra/): features, screenshots and install instructions
-- [Source code](https://github.com/midasvo/ephyra): README with the full feature list
+- [Guide](https://midasvo.nl/ephyra/guide/): how to install and use Ephyra, with every feature per area
+- [Install](https://midasvo.nl/ephyra/guide/install/): Obtainium, the releases page, the stores, and which file is for which device
+- [What runs where](https://midasvo.nl/ephyra/guide/devices/): every feature and whether the phone, the tablet and the TV app have it
+- [Ephyra and Findroid](https://midasvo.nl/ephyra/guide/findroid/): what happens with Findroid's changes, and moving over from Findroid or Findroid CE
+- [Developing Ephyra](https://midasvo.nl/ephyra/dev/): the architecture, the areas of the code and the decision records
+- [Source code](https://github.com/midasvo/ephyra)
 - [Releases](https://github.com/midasvo/ephyra/releases): APK downloads for phone, tablet and Android TV
+- [Beta](https://midasvo.nl/ephyra/guide/beta/): a prerelease of every change, installed next to the stable app
 - [Changelog](https://github.com/midasvo/ephyra/blob/main/CHANGELOG.md)
+- [Issues](https://github.com/midasvo/ephyra/issues): bug reports and requests
 - [Privacy policy](https://midasvo.nl/ephyra/privacy.html)
 - [Findroid](https://github.com/jarnedemeulemeester/findroid): the app Ephyra is forked from
 - [libmpv for Android](https://midasvo.nl/libmpv-android/): Ephyra's own build of mpv and FFmpeg, used by its mpv player
