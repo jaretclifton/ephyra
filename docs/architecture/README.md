@@ -50,7 +50,7 @@ app/phone, app/tv   (composition root, screens)
   models with rules: `PlayState` (marks, stops, the sync's merge) and `DownloadState`. `Ticks` for
   the unit conversions.
 - `application` (pure Kotlin): `MediaRepository`, the event flows, and the store ports
-  `ServerStore` (keyed by `ServerId` and `UserId`), `DownloadStore` and `PendingUserDataStore` (both keyed by `AccountKey(serverId, userId)`),
+  `ServerStore` (keyed by `ServerId` and `UserId`), `DownloadStore` (source rows by `ServerId`, user queries by `AccountKey(serverId, userId)`) and `PendingUserDataStore` (by `AccountKey`),
   and the settings the adapters read (#918), which `core` implements over `AppPreferences`.
 - `data`: Room, the three `Room*Store` and `MediaRepositoryImpl`, which composes the server in use
   with Room (stored fallback, local sources, write then report).

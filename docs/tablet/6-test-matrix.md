@@ -19,7 +19,7 @@ All use `system-images;android-34;google_apis;x86_64` and `hw.keyboard = yes`. T
 `scripts/avds.sh` (bash; Git Bash on Windows, Linux, macOS). It needs `ANDROID_HOME`. `scripts/tablet-avds.sh` is its old name and still works.
 
 ```bash
-export ANDROID_HOME=<path to the Android SDK>
+export ANDROID_HOME="<path to the Android SDK>"
 
 scripts/avds.sh create [name|all]    # default: all four
 scripts/avds.sh start ce_tablet_10   # cold boot, returns when booted

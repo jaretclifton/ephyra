@@ -20,7 +20,7 @@ triggers.
 
 ## Publishing a beta
 
-A push to `main` publishes a beta, except a docs-only push, the merge of a release PR or of a `refactor/` branch, and a merge with `[skip beta]` (see `beta.yml`). To publish one by hand:
+A push to `main` publishes a beta, except a push that touches only docs, the site, Markdown, images, `fastlane/`, `.claude/` or issue templates (the `paths` list in `beta.yml`), the merge of a release PR or of a `refactor/` branch, and a merge with `[skip beta]` (see `beta.yml`). To publish one by hand:
 
 ```bash
 # An open pull request, built merged into main
