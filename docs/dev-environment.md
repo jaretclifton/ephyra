@@ -69,7 +69,30 @@ library, not through the app's HTTP client, so a test over http says nothing abo
   after the server has restarted for another reason (a reboot, WSL waking up) run `setup.sh https`
   again. `setup.sh status` shows whether one is up.
 - The tunnel is not a reverse proxy like Caddy or nginx on a home server: a bug that needs one
-  of those is not shown by it.
+  of those is not shown by it. For that there is the next section.
+
+### Behind a reverse proxy with TLS
+
+`tools/test-server/caddy-tls.sh` (in WSL on Windows, like `setup.sh`) puts Caddy in front of the
+running server, with a certificate from a throwaway CA, on six ports from 8443: client certificate
+asked for but optional (`client_auth` mode `verify_if_given`, the case of #960), no client
+certificate (the control), the same two with TLS 1.2 or TLS 1.3 only, and one that requires a
+certificate (#993). `caddy-tls.sh status` shows what each port speaks, `caddy-tls.sh stop`
+removes it. The CA and a client certificate signed by it are in `caddy-tls/` in the server's
+folder.
+
+The address from an emulator is `https://jellyfin.10.0.2.2.nip.io:8443` (a public name that
+resolves to `10.0.2.2`, so the app sends a host name as with a real server). mpv does not check
+the server's certificate (`tls-verify=no`), but the app's own HTTP client does: make the CA a user
+CA on the emulator first. On a phone image with `adb root`:
+
+```bash
+h=$(openssl x509 -subject_hash_old -noout -in ca.crt)
+adb push ca.crt /data/local/tmp/$h.0
+adb shell "mkdir -p /data/misc/user/0/cacerts-added && cp /data/local/tmp/$h.0 /data/misc/user/0/cacerts-added/ && chown system:system /data/misc/user/0/cacerts-added/$h.0 && chmod 644 /data/misc/user/0/cacerts-added/$h.0"
+```
+
+No reboot is needed for the app; the TV image has no root, so there it goes through Settings.
 
 `EPHYRA_TEST_SERVER_DIR`, `EPHYRA_TEST_SERVER_PORT`, `EPHYRA_TEST_SERVER_NAME` and
 `EPHYRA_TEST_SERVER_IMAGE` change the folder, the port, the container name and the image. With a
@@ -144,8 +167,8 @@ To add a case, add it to `setup.sh` under a marker file of its own (as `.generat
 and to the table above. A file dropped into `media/` by hand works until the next `wipe --media`,
 and nobody else gets it.
 
-Not on the server: Dolby Vision, collections, live TV, music, a base-URL path, and a reverse
-proxy of its own (for https there is the tunnel, see above).
+Not on the server: Dolby Vision, collections, live TV, music and a base-URL path. For https
+there is the tunnel, and Caddy for a reverse proxy with TLS (see above).
 `docs/track-test-series.md` has a second generator, for track selection and subtitle styling.
 
 ## The emulators

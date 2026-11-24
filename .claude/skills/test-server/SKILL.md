@@ -52,6 +52,19 @@ Read it first; `docs/get-started.md` has what to install. This file is how to ac
   a change touches how a player loads a stream, and for the release smoke test. Close it in the
   same session, and say so in your report. On Windows keep WSL awake while it runs
   (`wsl -d <distro> -- sleep 3600` in the background), or the tunnel dies mid-test.
+- **On Windows, WSL shuts down when nothing runs in it,** and that stops every container: the
+  server comes back with its restart policy, a container of your own (a proxy, a second server)
+  stays stopped. For any test with a container of your own, keep a `wsl -d <distro> -- sleep 3600`
+  of your own running in the background and stop it afterwards; never kill another session's.
+- **Docker's host network in WSL is not reachable from Windows for IPv4:** a container with
+  `--network host` that listens on all interfaces gets an IPv6 socket, which WSL forwards only to
+  `[::1]`, so an emulator (`10.0.2.2`, IPv4) is refused. Publish ports instead (`-p
+  127.0.0.1:<port>:<port>`) and reach the server from the container as
+  `host.docker.internal` (`--add-host host.docker.internal:host-gateway`).
+- **A reverse proxy with TLS:** `tools/test-server/caddy-tls.sh` puts Caddy with a throwaway CA
+  in front of the server, with sites that ask for a client certificate, require one, or do not
+  (#960, #993); `tools/test-server/caddy-tls.sh stop` removes it. The emulator needs the CA as a user CA
+  (`docs/dev-environment.md`, "Behind a reverse proxy with TLS"). Stop it in the same session.
 
 ## Adding an edge case
 

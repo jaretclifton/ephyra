@@ -21,7 +21,7 @@ Same item, both backends, and write down what differed. A shared failure is not 
 ### When the PR touches loading, the profile or the quality switch
 
 - [ ] **Quality switch** to a cap below the file's bitrate: reloads at the same position, keeps playing, the play/pause button shows Pause, the media session says `PLAYING`.
-- [ ] **Over https.** One start from 0 and one quality switch with the server added by its https address (`tools/test-server/setup.sh https`, see `docs/dev-environment.md`). mpv reads https through its own TLS library, so the http test server does not cover it (#960).
+- [ ] **Over https.** One start from 0 and one quality switch with the server added by its https address (`tools/test-server/setup.sh https`, see `docs/dev-environment.md`). mpv reads https through its own TLS library, so the http test server does not cover it. When the PR touches how mpv opens a stream or its network options, also one start through `tools/test-server/caddy-tls.sh`'s `verify_if_given` site (#960).
 - [ ] **Slow link** (emulator at 3G): the state settles, no `BUFFERING` ↔ `READY` flapping for mpv.
 
 ### What not to do
