@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://midasvo.nl/ephyra/</loc></url>
-  <url><loc>https://midasvo.nl/ephyra/privacy.html</loc></url>
-</urlset>
+<!-- sitemap-pages.xml has the pages of site/; sitemap-0.xml is written by the build of devsite/
+     (the guide and the development site). devsite/scripts/compose.mjs checks that it is there. -->
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap><loc>https://midasvo.nl/ephyra/sitemap-pages.xml</loc></sitemap>
+  <sitemap><loc>https://midasvo.nl/ephyra/sitemap-0.xml</loc></sitemap>
+</sitemapindex>

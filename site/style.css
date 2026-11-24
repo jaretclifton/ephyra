@@ -93,6 +93,7 @@
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  scrollbar-color: var(--outline-variant) var(--surface);
 }
 
 body {
@@ -109,6 +110,40 @@ h3 {
   font-family: var(--display);
   margin: 0;
   color: var(--on-surface);
+}
+
+/* Headings and captions break into lines of about the same length. */
+h1,
+h2,
+h3,
+figcaption {
+  text-wrap: balance;
+}
+
+p,
+li {
+  text-wrap: pretty;
+}
+
+::selection {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+}
+
+/* The first stop for the keyboard: past the header to the content. Off screen until focused. */
+.skip {
+  position: absolute;
+  left: var(--gutter);
+  top: -4rem;
+  z-index: 20;
+  padding: 0.75rem 1rem;
+  background: var(--surface-container-highest);
+  color: var(--on-surface);
+  border-radius: var(--r-xs);
+}
+
+.skip:focus {
+  top: 0.5rem;
 }
 
 h1 {
@@ -194,6 +229,27 @@ li::marker {
   color: var(--on-surface-variant);
 }
 
+/* A link on to the guide, under a block of the landing page. */
+.more {
+  display: inline-block;
+  margin-right: 1.25rem;
+  font-weight: 500;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.more::after {
+  content: " \2192";
+}
+
+.more:hover {
+  text-decoration: underline;
+}
+
+.more-row {
+  margin-top: 1.5rem;
+}
+
 .meta {
   font: 500 0.875rem/1.5 var(--body);
   color: var(--on-surface-variant);
@@ -207,6 +263,7 @@ li::marker {
   align-items: center;
   gap: 0.5em;
   padding: 0.75rem 1.5rem;
+  min-height: 44px;
   border-radius: 999px;
   font: 500 0.9375rem/1 var(--body);
   text-decoration: none;
@@ -290,6 +347,8 @@ li::marker {
 .top nav a {
   text-decoration: none;
   color: var(--on-surface-variant);
+  /* A taller target for a finger; the bar keeps its height. */
+  padding: 0.9rem 0;
 }
 
 .top nav a:hover {
@@ -299,6 +358,15 @@ li::marker {
 @media (max-width: 600px) {
   .top nav .optional {
     display: none;
+  }
+
+  /* Five links beside the brand have to fit a 360 px phone. */
+  .top .wrap {
+    gap: 0.75rem;
+  }
+
+  .top nav {
+    gap: 0.8rem;
   }
 }
 
@@ -485,6 +553,20 @@ section + section {
   grid-column: 1 / -1;
 }
 
+/* Two landscape shots stacked beside one portrait shot: together they are about as tall. */
+.shots.mix {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.shots.mix .landscape {
+  grid-column: span 2;
+}
+
+.shots.mix .tall {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+}
+
 figure {
   margin: 0;
 }
@@ -516,8 +598,18 @@ figcaption {
 @media (max-width: 480px) {
   .shots,
   .shots.three,
-  .shots.four {
+  .shots.four,
+  .shots.mix {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .shots.mix .landscape {
+    grid-column: 1 / -1;
+  }
+
+  .shots.mix .tall {
+    grid-column: auto;
+    grid-row: auto;
   }
 }
 
@@ -631,9 +723,11 @@ tr:first-child td {
   border-top: 0;
 }
 
+/* A filter is copied whole: one tap or click selects all of it. */
 td code {
   white-space: normal;
   overflow-wrap: anywhere;
+  user-select: all;
 }
 
 /* ---------- footer ---------- */
@@ -733,5 +827,22 @@ footer nav a {
   .btn,
   a {
     transition: none;
+  }
+}
+
+/* ---------- print ---------- */
+
+/* On paper everything shows (a section that was never scrolled to is still hidden by .reveal)
+   and the sticky bar and the specks are left out. */
+@media print {
+  .top,
+  .skip,
+  .specks {
+    display: none;
+  }
+
+  .js .reveal {
+    opacity: 1;
+    transform: none;
   }
 }
