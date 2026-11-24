@@ -40,6 +40,7 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.androidx.paging.testing)
     // #771: FakeMediaServer.
     // #899 (R9): the tests build the real stores over Room; the production code cannot see data.
     testImplementation(projects.data)

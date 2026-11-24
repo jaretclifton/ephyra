@@ -1,5 +1,8 @@
-package dev.jdtech.jellyfin.repository
+package dev.jdtech.jellyfin.film.presentation.library
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import dev.jdtech.jellyfin.models.Item
@@ -8,9 +11,45 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
+import dev.jdtech.jellyfin.repository.MediaRepository
+import kotlinx.coroutines.flow.Flow
 import timber.log.Timber
 
-class ItemsPagingSource(
+/**
+ * The library grid without placeholders, page by page over [MediaRepository.getItems]. #968: was
+ * `MediaRepository.getItemsPaging` in `data`; the pager lives with the screen that shows it.
+ */
+internal fun MediaRepository.itemsPager(
+    parentId: ItemId? = null,
+    includeTypes: List<ItemKind>? = null,
+    recursive: Boolean = false,
+    sortBy: SortBy = SortBy.defaultValue,
+    sortOrder: SortOrder = SortOrder.ASCENDING,
+    filters: Set<ItemFilter> = emptySet(),
+): Flow<PagingData<Item>> =
+    Pager(
+            config =
+                PagingConfig(
+                    pageSize = LIBRARY_PAGE_SIZE,
+                    prefetchDistance = LIBRARY_PAGE_SIZE,
+                    initialLoadSize = LIBRARY_PAGE_SIZE * 2,
+                    enablePlaceholders = false,
+                ),
+            pagingSourceFactory = {
+                ItemsPagingSource(
+                    this,
+                    parentId,
+                    includeTypes,
+                    recursive,
+                    sortBy,
+                    sortOrder,
+                    filters,
+                )
+            },
+        )
+        .flow
+
+internal class ItemsPagingSource(
     private val mediaRepository: MediaRepository,
     private val parentId: ItemId?,
     private val includeTypes: List<ItemKind>?,

@@ -11,10 +11,11 @@ import kotlin.test.assertTrue
  * kotlinx. R5 names what they may not use (Android, the SDK, Room); this names what they may, so
  * the next library is caught too, not only the ones R5 thought of.
  *
- * `domain` declared OkHttp for `MediaHttpClient` until #964 moved it into the module `http`. The
- * exceptions are in `architecture/baseline/pure-kotlin-imports.txt` and
- * `pure-kotlin-libraries.txt`, each with its issue, and the check is exact: an entry that no longer
- * applies fails until its line is deleted.
+ * `domain` declared OkHttp for `MediaHttpClient` until #964 moved it into the module `http`;
+ * `application` declared paging until #968 moved the library pagers to `modes/film`. The exceptions
+ * are in `architecture/baseline/pure-kotlin-imports.txt` and `pure-kotlin-libraries.txt`, each with
+ * its issue, and the check is exact: an entry that no longer applies fails until its line is
+ * deleted.
  */
 class PureKotlinTest {
 

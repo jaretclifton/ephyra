@@ -80,7 +80,7 @@ ids opaque and renamed the repository and the models at once.
 one fails, fix the code. `architecture/baseline/` has one allowlist, not debt: `uuid-imports.txt`
 (files that may name `java.util.UUID`, for a random value the app makes itself; empty since #918).
 The others are exceptions with an issue each: `pure-kotlin-*.txt` (R19) and
-`room-adapter-imports.txt` (R20), both paging until #968. A line is added only with its reason,
+`room-adapter-imports.txt` (R20), both empty since #968. A line is added only with its reason,
 given in the PR.
 
 | Rule | Says |
@@ -102,8 +102,8 @@ given in the PR.
 | R16 | The server in use is written as one `ActiveServer` value, in one place |
 | R17 | `data`, `server/jellyfin`, `ratings/mdblist`, `device` and `downloads` read no `AppPreferences`: their settings come through ports of `application` |
 | R18 | No adapter (`data`, `server/jellyfin`, `ratings/mdblist`, `device`) depends on a feature module |
-| R19 | `domain` and `application` import only Kotlin, kotlinx, the JDK and their own code, and declare no library but kotlinx (an allowlist: paging until #968) |
-| R20 | `data` is Room and nothing else: of Android it imports only Room, SQLite and `android.content.Context` (an allowlist: paging until #968) |
+| R19 | `domain` and `application` import only Kotlin, kotlinx, the JDK and their own code, and declare no library but kotlinx (an allowlist, empty since #968 moved the library pagers to `modes/film`) |
+| R20 | `data` is Room and nothing else: of Android it imports only Room, SQLite and `android.content.Context` (an allowlist, empty since #968) |
 
 ## Not done
 

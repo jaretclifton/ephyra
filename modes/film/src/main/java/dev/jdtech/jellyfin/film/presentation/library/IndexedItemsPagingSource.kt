@@ -1,4 +1,4 @@
-package dev.jdtech.jellyfin.repository
+package dev.jdtech.jellyfin.film.presentation.library
 
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -11,15 +11,20 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
+import dev.jdtech.jellyfin.repository.ItemsPage
+import dev.jdtech.jellyfin.repository.MediaRepository
 import kotlinx.coroutines.flow.Flow
 
 /**
- * CE: like [MediaRepository.getItemsPaging], but with placeholders for the items that aren't loaded
- * yet. The list then has its full length from the first page, so a screen can show a position
- * counter and scroll straight to any index (a letter of the A–Z jump bar). Paging loads the pages
- * around that index instead of every page before it.
+ * CE: like [itemsPager], but with placeholders for the items that aren't loaded yet. The list then
+ * has its full length from the first page, so a screen can show a position counter and scroll
+ * straight to any index (a letter of the A–Z jump bar). Paging loads the pages around that index
+ * instead of every page before it.
+ *
+ * #968: the pager lives with the screen that shows it; `application` offers only the plain page
+ * read, [MediaRepository.getItemsPage].
  */
-fun MediaRepository.getItemsPagingIndexed(
+internal fun MediaRepository.indexedItemsPager(
     parentId: ItemId? = null,
     includeTypes: List<ItemKind>? = null,
     recursive: Boolean = false,
@@ -35,10 +40,10 @@ fun MediaRepository.getItemsPagingIndexed(
     return Pager(
             config =
                 PagingConfig(
-                    pageSize = PAGE_SIZE,
-                    initialLoadSize = PAGE_SIZE * 2,
+                    pageSize = LIBRARY_PAGE_SIZE,
+                    initialLoadSize = LIBRARY_PAGE_SIZE * 2,
                     enablePlaceholders = true,
-                    jumpThreshold = PAGE_SIZE * 3,
+                    jumpThreshold = LIBRARY_PAGE_SIZE * 3,
                 ),
             pagingSourceFactory = {
                 IndexedItemsPagingSource(
@@ -69,7 +74,8 @@ fun MediaRepository.getItemsPagingIndexed(
         .flow
 }
 
-private const val PAGE_SIZE = 40
+/** The page size of both library pagers: a fling on a 2-4 column grid outruns anything smaller. */
+internal const val LIBRARY_PAGE_SIZE = 40
 
 /**
  * The key is an item index: where a refresh is centred, where an append starts and where a prepend
@@ -78,7 +84,7 @@ private const val PAGE_SIZE = 40
  * The total comes from the response of the first page that loads ([knownTotal] is null until then,
  * and [load] is asked to include it); later pages, and later sources after a jump, reuse it.
  */
-class IndexedItemsPagingSource(
+internal class IndexedItemsPagingSource(
     private val load: suspend (start: Int, limit: Int, includeTotal: Boolean) -> ItemsPage,
     private val knownTotal: () -> Int?,
     private val onTotal: (Int) -> Unit,
