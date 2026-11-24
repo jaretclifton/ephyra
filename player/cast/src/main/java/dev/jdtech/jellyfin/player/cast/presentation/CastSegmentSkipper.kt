@@ -23,7 +23,8 @@ import dev.jdtech.jellyfin.player.local.domain.SkipTarget
  * - **Resume, after every load:** until the receiver is at the position the item was loaded at
  *   ([resumePositionMs] for the first load, [expectLoad] for each load after it, such as an audio
  *   track switch), or plays on from where it is, a report is the stale position from before the
- *   load, and no step. A user seek does not end this wait.
+ *   load, and no step. A user seek, or the seek target the controller shows at once, does not end
+ *   this wait.
  * - **The end of the item:** the receiver is at position 0 for a moment when an item runs out
  *   ([CastPositions.ranOut], as the playback reports read it). That is no entry.
  * - **Late reports after a skip:** the controller shows the target at once, but the receiver can
@@ -90,10 +91,17 @@ class CastSegmentSkipper(
 
     /**
      * What to do at [positionMs], which the receiver reported for [positionItemId], in an item of
-     * [durationMs] (0 when unknown).
+     * [durationMs] (0 when unknown). [fromSeek]: the position is the target of a seek the app sent,
+     * shown before the receiver reported it; it does not end the wait for a load's position.
      */
-    fun update(positionItemId: ItemId?, positionMs: Long, durationMs: Long): CastSegmentStep {
+    fun update(
+        positionItemId: ItemId?,
+        positionMs: Long,
+        durationMs: Long,
+        fromSeek: Boolean = false,
+    ): CastSegmentStep {
         if (positionItemId != itemId) return CastSegmentStep.None
+        if (fromSeek && !settled) return CastSegmentStep.None
         val previous = lastPositionMs
         if (previous != null && CastPositions.ranOut(previous, positionMs, durationMs)) {
             return CastSegmentStep.None

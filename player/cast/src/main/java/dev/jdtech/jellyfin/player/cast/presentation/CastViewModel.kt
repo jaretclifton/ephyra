@@ -378,8 +378,12 @@ constructor(
             segmentSkipper?.expectLoad(player.loadPositionMs)
         }
         val step =
-            segmentSkipper?.update(player.positionItemId, player.currentPosition, player.duration)
-                ?: CastSegmentStep.None
+            segmentSkipper?.update(
+                player.positionItemId,
+                player.currentPosition,
+                player.duration,
+                fromSeek = player.positionFromSeek,
+            ) ?: CastSegmentStep.None
         val active =
             when (step) {
                 CastSegmentStep.None -> null

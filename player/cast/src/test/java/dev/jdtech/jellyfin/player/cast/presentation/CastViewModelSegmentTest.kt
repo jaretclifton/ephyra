@@ -182,6 +182,24 @@ class CastViewModelSegmentTest {
     }
 
     @Test
+    fun `the seek target shown at once does not end the wait for a load's position`() {
+        // A reload at 5:00; a stale 0; the user seeks and the controller shows 5:10 at once;
+        // another stale 0 arrives before the receiver reports the seek.
+        segments = listOf(opening)
+        val viewModel = viewModel()
+        playing(itemA, playbackPosition = 300_000L)
+        controller.report(itemA, 300_000L)
+
+        controller.reload(300_000L)
+        controller.report(itemA, 0L)
+        viewModel.seekTo(310_000L)
+        controller.report(itemA, 0L)
+        controller.report(itemA, 310_000L)
+
+        assertEquals(listOf(310_000L), controller.seeks)
+    }
+
+    @Test
     fun `the moment at 0 at the end of an item is not an entry`() {
         segments = listOf(opening)
         viewModel()
@@ -301,7 +319,13 @@ class CastViewModelSegmentTest {
 
         /** The receiver reports [positionMs] for [itemId]. */
         fun report(itemId: ItemId?, positionMs: Long) {
-            playerState.update { it.copy(currentPosition = positionMs, positionItemId = itemId) }
+            playerState.update {
+                it.copy(
+                    currentPosition = positionMs,
+                    positionItemId = itemId,
+                    positionFromSeek = false,
+                )
+            }
         }
 
         /** A load of the current item goes to the receiver, starting it at [positionMs]. */
@@ -314,7 +338,7 @@ class CastViewModelSegmentTest {
         override fun seekTo(position: Long) {
             seeks += position
             // As the real controller: the target shows at once.
-            playerState.update { it.copy(currentPosition = position) }
+            playerState.update { it.copy(currentPosition = position, positionFromSeek = true) }
         }
 
         override fun playItem(

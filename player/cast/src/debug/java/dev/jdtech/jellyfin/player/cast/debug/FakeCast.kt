@@ -223,7 +223,12 @@ internal class FakeCastPlayerController(
                     }
                     state.status == CastPlaybackStatus.PLAYING &&
                         session.connectionState.value == CastConnectionState.CONNECTED ->
-                        _playerState.update { it.copy(currentPosition = it.currentPosition + 1000) }
+                        _playerState.update {
+                            it.copy(
+                                currentPosition = it.currentPosition + 1000,
+                                positionFromSeek = false,
+                            )
+                        }
                 }
             }
         }
@@ -339,7 +344,9 @@ internal class FakeCastPlayerController(
     override fun seekTo(position: Long) {
         // What a real receiver would get as SEEK, for checking skips in the log.
         Timber.i("Stand-in: SEEK %d ms (from %d ms)", position, _playerState.value.currentPosition)
-        _playerState.update { it.copy(currentPosition = position.coerceAtLeast(0L)) }
+        _playerState.update {
+            it.copy(currentPosition = position.coerceAtLeast(0L), positionFromSeek = true)
+        }
     }
 
     override fun seekToNext() {

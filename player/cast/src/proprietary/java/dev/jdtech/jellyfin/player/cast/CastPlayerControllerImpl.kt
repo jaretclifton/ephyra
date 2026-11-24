@@ -164,6 +164,7 @@ constructor(
             it.copy(
                 currentPosition = position,
                 positionItemId = itemId,
+                positionFromSeek = false,
                 load = if (started) it.load + 1 else it.load,
                 loadPositionMs = if (started) position else it.loadPositionMs,
             )
@@ -259,6 +260,7 @@ constructor(
                     duration = safeDuration,
                     // While a load is on its way the receiver still shows what it played before.
                     positionItemId = itemId.takeIf { !loadPending },
+                    positionFromSeek = false,
                 )
             }
             itemId?.let { reporter.positionChanged(it, safeProgress, safeDuration) }
@@ -937,7 +939,7 @@ constructor(
 
     override fun seekTo(position: Long) {
         val safePosition = position.coerceAtLeast(0L)
-        _playerState.update { it.copy(currentPosition = safePosition) }
+        _playerState.update { it.copy(currentPosition = safePosition, positionFromSeek = true) }
         try {
             val options =
                 MediaSeekOptions.Builder()

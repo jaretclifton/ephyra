@@ -76,6 +76,11 @@ data class CastPlayerState(
      */
     val positionItemId: ItemId? = null,
     /**
+     * CE (#851): [currentPosition] is the target of a seek the app sent, shown at once, and not yet
+     * a position the receiver reported.
+     */
+    val positionFromSeek: Boolean = false,
+    /**
      * CE (#851): counts the times an item started on the receiver: each load sent to it (also of
      * the same item, such as an audio track switch) and each item it went on to without one (a
      * restored session, its queue moving on). [loadPositionMs] is where the last one starts.
