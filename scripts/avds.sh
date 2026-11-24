@@ -175,22 +175,40 @@ install() { # install <name> [apk]
   "$ADB" -s "$(serial "$n")" install -r "$apk"
 }
 
-is_running() { "$ADB" devices | tr -d '\r' | grep -q "^$(serial "$1")[[:space:]]*device$"; }
+# The port says nothing about which AVD holds it: ask the emulator its name.
+avd_on_port() { "$ADB" -s "$(serial "$1")" emu avd name 2>/dev/null | tr -d '\r' | head -1; }
+
+is_running() { # is_running <name>: its port answers, and as this AVD; fails loudly for another AVD
+  local other
+  "$ADB" devices | tr -d '\r' | grep -q "^$(serial "$1")[[:space:]]" || return 1
+  other="$(avd_on_port "$1")"
+  if [ -n "$other" ] && [ "$other" != "$1" ]; then
+    echo "$(serial "$1") is $other, not $1: stop it or start $1 yourself on another port" >&2
+    exit 1
+  fi
+}
+
+wait_booted() { # wait_booted <name> [emulator pid]: one 10-minute deadline for adb and the boot
+  local s deadline
+  s="$(serial "$1")"
+  deadline=$(($(date +%s) + 600))
+  until [ "$("$ADB" -s "$s" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; do
+    if [ -n "${2:-}" ] && ! kill -0 "$2" 2>/dev/null; then echo "the emulator for $1 exited before it booted" >&2; return 1; fi
+    if [ "$(date +%s)" -ge "$deadline" ]; then echo "$1 did not finish booting in 10 minutes" >&2; return 1; fi
+    sleep 3
+  done
+}
 
 start_one() { # start_one <name> [--gpu]
-  local n="$1" p gpu="-gpu swiftshader_indirect" waited=0
+  local n="$1" p gpu="-gpu swiftshader_indirect" pid
   p="$(port "$n")"
   if [ "${2:-}" = --gpu ]; then gpu=""; fi
   if is_running "$n"; then echo "$n is running already as emulator-$p" >&2; return 1; fi
   # shellcheck disable=SC2086
   "$EMULATOR" -avd "$n" -port "$p" -no-snapshot -no-boot-anim $gpu -crash-report-mode never -no-metrics \
     ${EMULATOR_FLAGS:-} >/dev/null 2>&1 &
-  "$ADB" -s "emulator-$p" wait-for-device
-  until [ "$("$ADB" -s "emulator-$p" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; do
-    sleep 3
-    waited=$((waited + 3))
-    if [ "$waited" -ge 600 ]; then echo "$n did not finish booting in 10 minutes" >&2; return 1; fi
-  done
+  pid=$!
+  wait_booted "$n" "$pid" || return 1
   # Volume down to 0. `cmd media_session volume --set 0` reports success and changes nothing on
   # the API 34 images; key presses do.
   "$ADB" -s "emulator-$p" shell 'for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16; do input keyevent 25; done' || true
@@ -213,7 +231,12 @@ case "$cmd" in
     n="${1:?name}"
     FORCE=no
     create_one "$n"
-    if is_running "$n"; then echo "$n is running already as $(serial "$n")"; else start_one "$n" "${2:-}"; fi
+    if is_running "$n"; then
+      echo "$n is running already as $(serial "$n")"
+      wait_booted "$n" # it may still be booting
+    else
+      start_one "$n" "${2:-}"
+    fi
     install "$n" ;;
   stop) "$ADB" -s "$(serial "${1:?name}")" emu kill ;;
   portrait | landscape) rotate "${1:?name}" "$cmd" ;;

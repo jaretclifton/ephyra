@@ -164,7 +164,7 @@ a strong machine; more makes everything slow.
 ### Older Android versions
 
 `avds.sh` makes API 34 AVDs only. Tests across Android versions have used these as well, made by
-hand with `avdmanager create avd -n <name> -k <image> -d pixel_6` (`-d tv_1080p` for TV) after
+hand with `avdmanager create avd -n <name> -k "<image>" -d pixel_6` (quoted: the image name has semicolons) (`-d tv_1080p` for TV) after
 installing the image with `sdkmanager`:
 
 | API | Image | Why it is worth a run |
