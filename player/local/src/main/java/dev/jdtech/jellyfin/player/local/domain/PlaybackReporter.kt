@@ -11,6 +11,7 @@ import dev.jdtech.jellyfin.repository.PlaybackEvents
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -38,6 +39,12 @@ data class PlayingSnapshot(
     /** CE (#616): left from its closing outro, so the stop reports it as played to the end. */
     val finished: Boolean = false,
 )
+
+/**
+ * CE (#890): one item transition as [PlaybackReporter.onItemTransition] saw it, handed back to
+ * [PlaybackReporter.onTransitionHandled]. [stopJob] is the stop report of the item left.
+ */
+class ItemTransition internal constructor(val stopJob: Job?, internal val seq: Long)
 
 /**
  * CE (#765): sends the start, progress and stop reports of the local player, in the right order. It
@@ -80,6 +87,20 @@ class PlaybackReporter(
 
     /** CE (#601): holds an item's start report until the player has loaded it. */
     private val startGate = PlaybackStartGate<PlayerItem>()
+
+    /**
+     * CE (#890): the number of the latest transition or replaced stream. A transition handled after
+     * a newer one (a quality switch while the previous item's stop was being sent) owes no start:
+     * the newer one owes it, for the stream that plays now.
+     */
+    private var transitionSeq = 0L
+
+    /**
+     * CE (#890): the stop reports sent and not yet done. A start waits for them, so it reaches the
+     * server after the stop of the item left, whichever way it comes (a transition, a ready state,
+     * a replaced stream). Main thread only.
+     */
+    private val stopsInFlight = mutableListOf<Job>()
 
     /**
      * The player's item for this stream. Every stream goes through here on its way into the player,
@@ -134,9 +155,9 @@ class PlaybackReporter(
      * stopped. The first load (nothing playing yet) reports nothing, and a reload of the same item
      * (quality switch) keeps its snapshot and reports nothing.
      *
-     * @return the stop report of the item left, for the next item's start to wait for.
+     * @return the transition, for [onTransitionHandled], with the stop report of the item left.
      */
-    fun onItemTransition(newId: ItemId?): Job? {
+    fun onItemTransition(newId: ItemId?): ItemTransition {
         val previous = playing
         val stopJob =
             if (previous != null && previous.itemId != newId) reportStopped(previous) else null
@@ -146,15 +167,28 @@ class PlaybackReporter(
                 newId != null -> PlayingSnapshot(newId, 0L, C.TIME_UNSET)
                 else -> null
             }
-        return stopJob
+        return ItemTransition(stopJob, ++transitionSeq)
     }
 
     /**
      * The player's transition to [item] is handled, after the previous item's stop. CE (#601): the
      * start waits for the item to load ([PlaybackStartGate]); [ready] is whether it already has.
      * Call it on the main thread: a start sent now reads [player]'s position.
+     *
+     * CE (#890): [transition] is what [onItemTransition] returned. When a newer transition or a
+     * replaced stream came while this one waited for the previous item's stop, [item] is a stream
+     * the player no longer plays, and the newer one owes the start: nothing is sent or held for it.
      */
-    suspend fun onTransitionHandled(item: PlayerItem, ready: Boolean, player: ReportedPlayer) {
+    suspend fun onTransitionHandled(
+        item: PlayerItem,
+        ready: Boolean,
+        player: ReportedPlayer,
+        transition: ItemTransition,
+    ) {
+        if (transition.seq != transitionSeq) {
+            Timber.d("No playback start for ${item.itemId.asString()}: a newer stream owes it")
+            return
+        }
         startGate.onTransition(item, ready = ready, current = playing?.itemId == item.itemId)?.let {
             sendPlaybackStart(it, player)
         }
@@ -168,7 +202,12 @@ class PlaybackReporter(
      * stream has loaded ([onItemReady]), and nothing when the player is no longer on the item.
      */
     fun onStreamReplaced(item: PlayerItem) {
-        startGate.onTransition(item, ready = false, current = playing?.itemId == item.itemId)
+        // Nothing is owed for an item the player is not on, and the transition it is on keeps
+        // its start.
+        if (playing?.itemId != item.itemId) return
+        // CE (#890): a transition still waiting for the previous item's stop owes nothing now.
+        transitionSeq++
+        startGate.onTransition(item, ready = false)
     }
 
     /** CE (#601): the player is ready. Returns the item whose start is due now, or `null`. */
@@ -189,8 +228,24 @@ class PlaybackReporter(
      *
      * The report runs in [reportScope] so that closing the player does not cut it off halfway;
      * [reportStopped] waits for it (with a time limit) to keep the stop behind it.
+     *
+     * CE (#890): it first waits for the stop reports still being sent, so the server hears of the
+     * item left first, also when the start comes from a ready state or a replaced stream that did
+     * not wait for that stop itself. Then it reads the player, and sends nothing for an item the
+     * player has left or a stream a switch replaced meanwhile.
      */
     suspend fun sendPlaybackStart(item: PlayerItem, player: ReportedPlayer) {
+        // CE (#890): the stops still being sent go first. Waited for here, before the start is
+        // recorded on [playing], so no progress report goes out ahead of the start meanwhile; and
+        // what follows is checked after the wait.
+        val seq = transitionSeq
+        stopsInFlight.removeAll { it.isCompleted }
+        stopsInFlight.toList().joinAll()
+        // A switch replaced the stream while this waited: the new stream owes the start.
+        if (seq != transitionSeq) {
+            Timber.d("No playback start for ${item.itemId.asString()}: a newer stream owes it")
+            return
+        }
         // The player moved on while the previous item's stop was being sent (Previous or Next
         // pressed while this item was loading). A start now would arrive after the next item's,
         // and nothing would stop it.
@@ -244,31 +299,37 @@ class PlaybackReporter(
             playbackEvents.onLeftWithoutStop()
             return null
         }
-        return reportScope.launch(ioDispatcher) {
-            try {
-                if (startJob != null && !startJob.isCompleted) {
-                    withTimeoutOrNull(START_REPORT_WAIT_MS) { startJob.join() }
-                        ?: Timber.w(
-                            "Start report for ${itemId.asString()} still running, sending stop anyway"
+        return reportScope
+            .launch(ioDispatcher) {
+                try {
+                    if (startJob != null && !startJob.isCompleted) {
+                        withTimeoutOrNull(START_REPORT_WAIT_MS) { startJob.join() }
+                            ?: Timber.w(
+                                "Start report for ${itemId.asString()} still running, sending stop anyway"
+                            )
+                    }
+                    if (report.playedPercentage == null) {
+                        Timber.d(
+                            "Sending playback stop for ${itemId.asString()} at its start, $position ms"
                         )
-                }
-                if (report.playedPercentage == null) {
-                    Timber.d(
-                        "Sending playback stop for ${itemId.asString()} at its start, $position ms"
+                    } else {
+                        Timber.d(
+                            "Sending playback stop for $itemId at $position / $duration ms" +
+                                if (finished) ", as finished" else ""
+                        )
+                    }
+                    repository.postPlaybackStop(
+                        itemId,
+                        report.positionTicks,
+                        report.playedPercentage,
                     )
-                } else {
-                    Timber.d(
-                        "Sending playback stop for $itemId at $position / $duration ms" +
-                            if (finished) ", as finished" else ""
-                    )
+                } catch (e: Exception) {
+                    Timber.e(e)
+                } finally {
+                    playbackEvents.onStopped(itemId)
                 }
-                repository.postPlaybackStop(itemId, report.positionTicks, report.playedPercentage)
-            } catch (e: Exception) {
-                Timber.e(e)
-            } finally {
-                playbackEvents.onStopped(itemId)
             }
-        }
+            .also { stopsInFlight += it }
     }
 
     /** CE (#674): one progress report at a time; see [newProgressReport]. */
