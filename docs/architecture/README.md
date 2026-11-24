@@ -94,6 +94,7 @@ A line is added only with its reason, given in the PR.
 | R15 | `downloads` depends on no adapter, not on `core` and not on an app, and nothing else names its engine's implementation |
 | R16 | The server in use is written as one `ActiveServer` value, in one place |
 | R17 | `data`, `server/jellyfin`, `ratings/mdblist` and `downloads` read no `AppPreferences`: their settings come through ports of `application` |
+| R18 | No adapter (`data`, `server/jellyfin`, `ratings/mdblist`) depends on a feature module |
 | R19 | `domain` and `application` import only Kotlin, kotlinx, the JDK and their own code, and declare no library but kotlinx (an allowlist: paging until #968) |
 
 ## Not done

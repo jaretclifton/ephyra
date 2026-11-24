@@ -24,4 +24,5 @@ The Konsist rules in `architecture/`, read from the names of their tests. Run th
 | R15 | downloads depends on no adapter, not on core and not on an app<br>no file outside downloads names the engine's implementation | [DownloadsModuleTest.kt](../../architecture/src/test/kotlin/dev/jdtech/jellyfin/architecture/DownloadsModuleTest.kt) |
 | R16 | the server in use is written as one value, in one place | [ActiveServerTest.kt](../../architecture/src/test/kotlin/dev/jdtech/jellyfin/architecture/ActiveServerTest.kt) |
 | R17 | no production file of data, server jellyfin, ratings mdblist or downloads names AppPreferences | [AdapterSettingsTest.kt](../../architecture/src/test/kotlin/dev/jdtech/jellyfin/architecture/AdapterSettingsTest.kt) |
+| R18 | no adapter module depends on a feature module | [AdapterDependencyTest.kt](../../architecture/src/test/kotlin/dev/jdtech/jellyfin/architecture/AdapterDependencyTest.kt) |
 | R19 | domain and application import only Kotlin, kotlinx, the JDK and their own code<br>domain and application declare no library but kotlinx | [PureKotlinTest.kt](../../architecture/src/test/kotlin/dev/jdtech/jellyfin/architecture/PureKotlinTest.kt) |

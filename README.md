@@ -7,6 +7,7 @@
   <a href="https://github.com/midasvo/ephyra/releases"><img src="https://img.shields.io/github/downloads/midasvo/ephyra/total?label=downloads&color=4FD8F0" alt="Total downloads"></a>
   <a href="https://jellyfin.org/"><img src="https://img.shields.io/badge/Jellyfin-12.0%2B-B9A3FF" alt="Jellyfin 12.0 or newer"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPLv3-B9A3FF" alt="License: GPLv3"></a>
+  <a href="https://github.com/midasvo/ephyra/actions/workflows/build.yaml?query=branch%3Amain"><img src="https://github.com/midasvo/ephyra/actions/workflows/build.yaml/badge.svg?branch=main" alt="Build and tests on main"></a>
 </p>
 <p align="center">
   <a href="https://midasvo.nl/ephyra/">Website</a> ·
@@ -164,16 +165,24 @@ Ephyra did with it and why; the [changelog](CHANGELOG.md) has every release.
 flowchart LR
   apps["app/phone · app/tv"] --> features["modes/film · player · downloads<br/>setup · settings · core"]
   features --> pure["application · domain<br/>pure Kotlin, no Android"]
-  apps --> adapters["data (Room)<br/>server/jellyfin (the only module with the Jellyfin SDK)"]
+  apps --> adapters["data (Room)<br/>server/jellyfin (the only module with the Jellyfin SDK)<br/>ratings/mdblist"]
   adapters --> pure
 ```
 
-- **Ports and adapters, enforced by the build.** Seventeen architecture rules run with the unit
-  tests; a screen cannot reach the Jellyfin SDK or the database around a port.
+Kotlin and Jetpack Compose, with Hilt, Room, Navigation 3, Coil, Media3 (ExoPlayer) and libmpv;
+the versions are in [gradle/libs.versions.toml](gradle/libs.versions.toml), and
+[every module](docs/architecture/modules.md) is listed with what it depends on.
+
+- **Ports and adapters, enforced by the build.** [Nineteen architecture rules](docs/architecture/rules.md)
+  run with the unit tests; a screen cannot reach the Jellyfin SDK or the database around a port.
+- **[About 2,500 unit tests](docs/testing.md)**, run on every pull request that changes code, with
+  contract suites that a server adapter has to pass.
 - **Two player engines**, ExoPlayer and mpv, behind one interface.
 - **Translated in 36 languages**, checked on every pull request
   ([how the translations work](https://midasvo.nl/ephyra/guide/findroid/#translations)).
-- **Reproducible builds**, verified against the published APKs.
+- **Reproducible builds.** The F-Droid recipe builds a release from its tag and compares the
+  result with the APK published here. A release has checksums and a signed statement of where it
+  was built: [checking a download](https://midasvo.nl/ephyra/guide/install/#checking-a-download).
 
 The **[development site](https://midasvo.nl/ephyra/dev/)** has the
 [architecture model](https://midasvo.nl/ephyra/dev/architecture/model/) to click through, a
@@ -182,7 +191,8 @@ guide per area of the code and every decision record.
 ## Bugs and contributions
 
 [Open an issue](https://github.com/midasvo/ephyra/issues). For playback problems, attach the
-device profile from About → Export device profile.
+device profile from About → Export device profile. A security problem is reported privately:
+[SECURITY.md](SECURITY.md).
 
 Pull requests are welcome: [CONTRIBUTING.md](CONTRIBUTING.md) has the build, the checks and the
 conventions. With JDK 21 and the Android SDK, this builds the phone app:

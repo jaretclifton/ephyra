@@ -41,6 +41,7 @@ for (const f of list('docs/architecture/adr')) add(f, `decisions/architecture/${
 for (const f of list('docs/tv-research/adr')) add(f, `decisions/tv/${path.basename(f)}`, { adr: 'TV' });
 add('docs/get-started.md', 'working/get-started.md');
 add('CLAUDE.md', 'working/claude-md.md', { title: 'CLAUDE.md: the agent instructions' });
+add('docs/testing.md', 'working/testing.md');
 add('docs/dev-environment.md', 'working/dev-environment.md');
 add('docs/mpv-checklist.md', 'working/mpv-checklist.md');
 add('docs/track-test-series.md', 'working/track-test-series.md');

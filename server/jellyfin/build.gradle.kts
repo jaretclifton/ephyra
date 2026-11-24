@@ -60,7 +60,6 @@ dependencies {
     implementation(projects.domain)
     // #964: MediaHttpClient, the API's client handed to the player.
     implementation(projects.http)
-    implementation(projects.settings)
     implementation(libs.coil.core)
     implementation(libs.coil.network.cache.control)
     implementation(libs.hilt.android)
@@ -75,6 +74,9 @@ dependencies {
     // server, so they pin what goes over the wire end to end. Tests only: the adapter's own code
     // cannot see `data`.
     testImplementation(projects.data)
+    // StandInServer builds the real AppPreferences; production code reads settings through ports
+    // (R18).
+    testImplementation(projects.settings)
     // #771: the contract suites the adapter passes.
     testImplementation(projects.testing)
     testImplementation(libs.androidx.room3.runtime)

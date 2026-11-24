@@ -159,7 +159,7 @@ model {
     serverJellyfin -[test]-> data
     serverJellyfin -> domain
     serverJellyfin -> http
-    serverJellyfin -> settings
+    serverJellyfin -[test]-> settings
     serverJellyfin -[test]-> testing
     settings -> application
     settings -> domain
