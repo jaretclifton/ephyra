@@ -65,6 +65,9 @@ library, not through the app's HTTP client, so a test over http says nothing abo
   with `setup.sh https stop` when the test is done. It is a new address every time.
 - On Windows the tunnel dies when WSL shuts down for being idle. Keep WSL awake for as long as
   the test takes, for example with `wsl -d Ubuntu -- sleep 3600` in a second terminal.
+- The tunnel belongs to the server it was started for: `setup.sh stop` and `wipe` close it, and
+  after the server has restarted for another reason (a reboot, WSL waking up) run `setup.sh https`
+  again. `setup.sh status` shows whether one is up.
 - The tunnel is not a reverse proxy like Caddy or nginx on a home server: a bug that needs one
   of those is not shown by it.
 

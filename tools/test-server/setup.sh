@@ -40,12 +40,18 @@ command -v python3 >/dev/null || { echo "python3 not found" >&2; exit 1; }
 
 case "${1:-up}" in
   up) ;;
-  stop) docker stop "$NAME" >/dev/null && echo "stopped $NAME"; exit 0 ;;
+  stop)
+    # The tunnel lives in the server's network namespace, so it goes with the server: after a
+    # restart it would be public and reach nothing.
+    docker rm -f "$TUNNEL" >/dev/null 2>&1 || true
+    docker stop "$NAME" >/dev/null && echo "stopped $NAME"; exit 0 ;;
   status)
     docker ps -a --filter "name=^$NAME\$" --format '{{.Names}}: {{.Status}} ({{.Image}})'
+    docker ps -a --filter "name=^$TUNNEL\$" --format '{{.Names}}: {{.Status}} (public https tunnel)'
     [ -f "$CREDS" ] && python3 "$HERE/configure.py" --report-only
     exit 0 ;;
   wipe)
+    docker rm -f "$TUNNEL" >/dev/null 2>&1 || true
     docker rm -f "$NAME" >/dev/null 2>&1 || true
     # the container writes these folders as its own user, so remove them from inside a container
     docker run --rm --entrypoint sh -v "$ROOT:/root-dir" "$IMAGE" -c \
