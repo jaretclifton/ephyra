@@ -64,8 +64,7 @@ class AddSavedServerSessionTest {
                     )
                 }
                 "currentUser" -> servers[args[0] as String]?.currentUserId?.let { users[it] }
-                "insertServer",
-                "updateServer" -> {
+                "insertServer" -> {
                     val server = args[0] as Server
                     servers[server.id.asString()] = server
                     Unit
@@ -249,9 +248,7 @@ class AddSavedServerSessionTest {
             // with the new address restored the user a sign-out had just cleared.
             saveServer("a", "http://a.local:8096", alice)
             signInClient("http://a.local:8096", alice)
-            afterAddressInsert = {
-                servers["a"] = servers.getValue("a").copy(currentUserId = null)
-            }
+            afterAddressInsert = { servers["a"] = servers.getValue("a").copy(currentUserId = null) }
 
             add("a", "https://a.example/")
 

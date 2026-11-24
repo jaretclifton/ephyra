@@ -86,9 +86,12 @@ class ServerAddressSelectTest {
                     addresses.removeAll { it.id == args[0].asServerAddressId() }
                     Unit
                 }
-                "updateServer" -> {
-                    val server = args[0] as Server
-                    servers[server.id] = server
+                "setCurrentAddress" -> {
+                    val id = args[0].asServerId()
+                    servers[id] =
+                        servers
+                            .getValue(id)
+                            .copy(currentServerAddressId = args[1].asServerAddressId())
                     Unit
                 }
                 "serverWithAddresses" -> {
@@ -127,8 +130,8 @@ class ServerAddressSelectTest {
 
     private val store =
         object : ServerStore by database {
-            override suspend fun updateServer(server: Server) {
-                database.updateServer(server)
+            override suspend fun setCurrentAddress(serverId: ServerId, addressId: ServerAddressId) {
+                database.setCurrentAddress(serverId, addressId)
                 pauseAfterWrite?.let {
                     pauseAfterWrite = null
                     pausedAtWrite.complete(Unit)

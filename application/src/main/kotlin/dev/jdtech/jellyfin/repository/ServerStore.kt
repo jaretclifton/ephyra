@@ -44,8 +44,14 @@ interface ServerStore {
     /** Saves [server], replacing a saved server with its id. */
     suspend fun insertServer(server: Server)
 
-    /** Writes every column of [server] to its row. */
-    suspend fun updateServer(server: Server)
+    /**
+     * #988: renames the server [id]; nothing when it is not saved. Only the name: a server's
+     * columns change one at a time, so a write to another column in between is kept.
+     */
+    suspend fun renameServer(id: ServerId, name: String)
+
+    /** #988: makes [addressId] the current address of [serverId]; nothing when it is not saved. */
+    suspend fun setCurrentAddress(serverId: ServerId, addressId: ServerAddressId)
 
     /** Deletes the server, and with it its addresses and users. */
     suspend fun deleteServer(id: ServerId)

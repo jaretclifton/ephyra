@@ -118,11 +118,6 @@ class SetupRepositoryConnectorTest {
                     writes += "clearServerCurrentUser ${args[0]}"
                     Unit
                 }
-                "updateServer" -> {
-                    server = args[0] as Server
-                    writes += "updateServer"
-                    Unit
-                }
                 "setCurrentAddress" -> {
                     server = server.copy(currentServerAddressId = args[1].asServerAddressId())
                     writes += "updateServerCurrentAddress ${args[0]}"

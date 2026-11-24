@@ -5,7 +5,6 @@ import androidx.room3.Insert
 import androidx.room3.OnConflictStrategy
 import androidx.room3.Query
 import androidx.room3.Transaction
-import androidx.room3.Update
 import dev.jdtech.jellyfin.domain.userdata.PlayState
 import dev.jdtech.jellyfin.models.DownloadFiles
 import dev.jdtech.jellyfin.models.EpisodeEntity
@@ -91,8 +90,6 @@ interface ServerDatabaseDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertUser(user: UserEntity)
 
-    @Update suspend fun updateServer(server: ServerEntity)
-
     @Query("SELECT * FROM servers WHERE id = :id")
     suspend fun getServer(id: ServerId): ServerEntity?
 
@@ -151,6 +148,13 @@ interface ServerDatabaseDao {
 
     @Query("UPDATE servers SET currentUserId = :userId WHERE id = :serverId")
     suspend fun updateServerCurrentUser(serverId: ServerId, userId: UserId)
+
+    // #988: one column each, so a write to another column in between is kept.
+    @Query("UPDATE servers SET currentServerAddressId = :addressId WHERE id = :serverId")
+    suspend fun updateServerCurrentAddress(serverId: ServerId, addressId: ServerAddressId)
+
+    @Query("UPDATE servers SET name = :name WHERE id = :id")
+    suspend fun updateServerName(id: ServerId, name: String)
 
     // CE (#299): profile PIN.
     @Query("UPDATE servers SET currentUserId = NULL WHERE id = :serverId")

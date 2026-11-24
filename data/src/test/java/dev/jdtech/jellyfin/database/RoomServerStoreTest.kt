@@ -114,40 +114,76 @@ class RoomServerStoreTest {
     }
 
     @Test
-    fun `an update keeps the current address and user, and the user calls change one column`() =
-        runBlocking {
-            save()
+    fun `each server and user write changes its own column and keeps the others`() = runBlocking {
+        save()
 
-            store.updateServer(server.copy(name = "Renamed"))
-            assertEquals(server.copy(name = "Renamed"), store.server(serverId))
+        store.renameServer(serverId, "Renamed")
+        assertEquals(server.copy(name = "Renamed"), store.server(serverId))
 
-            store.updateServer(server.copy(currentServerAddressId = other.id))
-            assertEquals(other, store.currentAddress(serverId))
-            assertEquals(user.id, store.server(serverId)?.currentUserId)
+        store.setCurrentAddress(serverId, other.id)
+        assertEquals(other, store.currentAddress(serverId))
+        assertEquals(
+            server.copy(name = "Renamed", currentServerAddressId = other.id),
+            store.server(serverId),
+        )
 
-            store.setCurrentUser(serverId, bob.id)
-            assertEquals(bob, store.currentUser(serverId))
-            assertEquals(other.id, store.server(serverId)?.currentServerAddressId)
+        store.setCurrentUser(serverId, bob.id)
+        assertEquals(bob, store.currentUser(serverId))
+        assertEquals(
+            server.copy(
+                name = "Renamed",
+                currentServerAddressId = other.id,
+                currentUserId = bob.id,
+            ),
+            store.server(serverId),
+        )
 
-            store.setUserImageTag(user.id, "tag-b")
-            store.setUserPinOnStart(user.id, true)
-            assertEquals(
-                user.copy(primaryImageTag = "tag-b", pinOnStart = true),
-                store.user(user.id),
-            )
+        store.setUserImageTag(user.id, "tag-b")
+        store.setUserPinOnStart(user.id, true)
+        assertEquals(user.copy(primaryImageTag = "tag-b", pinOnStart = true), store.user(user.id))
 
-            store.setUserPin(user.id, "hash-pin", "salt-pin")
-            assertEquals(
-                user.copy(
-                    primaryImageTag = "tag-b",
-                    pinOnStart = true,
-                    pinHash = "hash-pin",
-                    pinSalt = "salt-pin",
-                    lockType = ProfileLockType.PIN.value,
-                ),
-                store.user(user.id),
-            )
-        }
+        store.setUserPin(user.id, "hash-pin", "salt-pin")
+        assertEquals(
+            user.copy(
+                primaryImageTag = "tag-b",
+                pinOnStart = true,
+                pinHash = "hash-pin",
+                pinSalt = "salt-pin",
+                lockType = ProfileLockType.PIN.value,
+            ),
+            store.user(user.id),
+        )
+    }
+
+    @Test
+    fun `a column write to a server that is not saved does nothing`() = runBlocking {
+        save()
+        val missing = "server-2".toServerId()
+
+        store.renameServer(missing, "Renamed")
+        store.setCurrentAddress(missing, other.id)
+        store.setCurrentUser(missing, bob.id)
+        store.clearCurrentUser(missing)
+
+        assertNull(store.server(missing))
+        assertEquals(listOf(server), store.serversWithAddresses().map { it.server })
+    }
+
+    @Test
+    fun `a sign-out between a read and an address change is kept`() = runBlocking {
+        // #988: the address selection read the row before the sign-out cleared its user; it
+        // writes only the address, so the server stays without a user.
+        save()
+        val read = checkNotNull(store.server(serverId))
+
+        store.clearCurrentUser(serverId)
+        store.setCurrentAddress(read.id, other.id)
+
+        assertEquals(
+            server.copy(currentServerAddressId = other.id, currentUserId = null),
+            store.server(serverId),
+        )
+    }
 
     @Test
     fun `clearing the current user leaves the server without one`() = runBlocking {

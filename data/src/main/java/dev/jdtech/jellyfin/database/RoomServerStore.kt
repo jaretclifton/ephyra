@@ -44,8 +44,11 @@ class RoomServerStore(private val database: ServerDatabaseDao) : ServerStore {
     override suspend fun insertServer(server: Server) =
         database.insertServer(server.toServerEntity())
 
-    override suspend fun updateServer(server: Server) =
-        database.updateServer(server.toServerEntity())
+    override suspend fun renameServer(id: ServerId, name: String) =
+        database.updateServerName(id, name)
+
+    override suspend fun setCurrentAddress(serverId: ServerId, addressId: ServerAddressId) =
+        database.updateServerCurrentAddress(serverId, addressId)
 
     override suspend fun deleteServer(id: ServerId) = database.deleteServer(id)
 

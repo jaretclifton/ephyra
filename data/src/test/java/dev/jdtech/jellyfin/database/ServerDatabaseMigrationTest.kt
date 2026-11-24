@@ -429,7 +429,7 @@ class ServerDatabaseMigrationTest {
                     ServerAddressEntity(NEW_ADDRESS_ID.toServerAddressId(), server.id, "http://a")
                 )
                 dao.insertServerAddress(ServerAddressEntity(randomAddress, server.id, "http://b"))
-                dao.updateServer(server.copy(currentServerAddressId = randomAddress))
+                dao.updateServerCurrentAddress(server.id, randomAddress)
                 dao.insertMediaStream(stream(NEW_STREAM_ID.toMediaStreamId()))
                 dao.insertMediaStream(stream(randomStream))
                 assertEquals(randomAddress, dao.getServerCurrentAddress(SERVER.toServerId())!!.id)
