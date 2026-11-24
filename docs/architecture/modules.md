@@ -76,7 +76,7 @@ flowchart TD
 | `player/core` | Features | The player models shared by the player and its callers: PlayerItem, Track, Trickplay. | `domain` |  |
 | `player/local` | Features | The player: PlayerViewModel and playback, on ExoPlayer or mpv behind PlayerEngine (in its engine package). | `application`, `core`, `domain`, `http`, `player/core`, `settings` | `data`, `testing` |
 | `ratings/mdblist` | Adapters | The MDBList adapter of the external ratings on the movie and show pages: its HTTP client and the ratings cache on disk, with its own Hilt module. | `application`, `domain` |  |
-| `server/jellyfin` | Adapters | The Jellyfin adapter, the only module with the Jellyfin SDK: JellyfinApi, the mappers, the port implementations, the device profiles and its own Hilt module. | `application`, `domain`, `http` | `data`, `settings`, `testing` |
+| `server/jellyfin` | Adapters | The Jellyfin adapter, the only module with the Jellyfin SDK: JellyfinApi, the mappers, the port implementations, the device profiles and its own Hilt module. | `application`, `domain`, `http` | `data`, `device`, `settings`, `testing` |
 | `settings` | Features | AppPreferences (over SharedPreferences), SettingsViewModel and the preference models; the screens are in the apps. | `application`, `domain` |  |
 | `setup` | Features | Server discovery, signing in and the onboarding flow. | `application`, `core`, `domain`, `settings` | `data`, `testing` |
 | `testing` | Tests and tooling | Test only (R8): FakeMediaServer, FakeServerConnector and the contract suites a server adapter passes. | `application`, `domain` |  |

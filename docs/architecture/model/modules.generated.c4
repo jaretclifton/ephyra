@@ -165,6 +165,7 @@ model {
     ratingsMdblist -> domain
     serverJellyfin -> application
     serverJellyfin -[test]-> data
+    serverJellyfin -[test]-> device
     serverJellyfin -> domain
     serverJellyfin -> http
     serverJellyfin -[test]-> settings
