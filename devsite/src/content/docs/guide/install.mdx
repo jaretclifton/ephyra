@@ -75,6 +75,32 @@ Download the file for your device from
 changed; the full history is in the
 [changelog](https://github.com/midasvo/ephyra/blob/main/CHANGELOG.md).
 
+### Checking a download
+
+You don't have to, but you can check that a file is the one that was built from the source.
+Releases after 2.9.0 have what the first two checks need; the third works for every release.
+
+- **The checksum.** A release has a file `ephyra-v<version>-sha256sums.txt`. Next to your
+  download:
+
+  ```sh
+  sha256sum -c --ignore-missing ephyra-v<version>-sha256sums.txt
+  ```
+
+- **Where it was built.** GitHub signs a statement that the APK was built by the release
+  workflow of this repository, from the tag of the release. With the
+  [GitHub CLI](https://cli.github.com/):
+
+  ```sh
+  gh attestation verify ephyra-v<version>-libre-arm64-v8a.apk --repo midasvo/ephyra
+  ```
+
+- **The signature.** Every APK, the betas too, is signed with one key. `apksigner verify
+  --print-certs <file>` from the Android SDK shows the certificate; its SHA-256 is
+  `e2d940cbed02a4719a2dc0e54735c4565a7b7b4549b75a820bd723546fd498f3`. Android checks the same
+  thing by itself on every update: a file signed with another key does not install over the
+  app.
+
 ## Stores
 
 | Store | Variant | Status |
