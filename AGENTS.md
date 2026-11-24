@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Instructions for any coding agent working in this repository (Codex, Cursor, Copilot, Gemini CLI, Claude Code, …), and a fair start for people too. It is a map: what every task needs is here, the rest is one link away. Claude Code reads `CLAUDE.md` instead, which holds the same rules plus what only Claude Code has (its skills by name, its notes).
+Instructions for any coding agent working in this repository (Codex, Cursor, Copilot, Gemini CLI, Claude Code, …), and a fair start for people too. It is a map: what every task needs is here, the rest is one link away. Claude Code reads `CLAUDE.md`, which imports this file and adds what only Claude Code has (its skills by name, its notes).
 
 The app is **Ephyra**, a fork of [Findroid](https://github.com/jarnedemeulemeester/findroid). It was called Findroid CE until #172. The repo is `midasvo/ephyra` (renamed from `midasvo/findroid-ce` in #174; GitHub redirects the old URL). The application ID, the Kotlin packages and internal names (`FindroidTheme`, `Theme.Findroid`) keep the old names on purpose. The repository and the models do not: since #774 they are `MediaRepository`, `Item`, `Movie`, `ItemSource`, `Library`, … (upstream calls them `JellyfinRepository` and `Findroid*`), and the architecture rule R11 allows no other `Findroid*` type.
 
@@ -12,6 +12,7 @@ The app is **Ephyra**, a fork of [Findroid](https://github.com/jarnedemeulemeest
   3. Check the map against the tree: `python3 .claude/skills/start-work/scripts/check-docs.py`. Where a doc and the code differ, the code is right.
   4. For a bug, read the guide's pitfalls, then search the issues: `gh issue list --repo midasvo/ephyra --search "<words>" --state all`. An open issue that matches is often the bug itself.
   5. At the end, say what the guide missed or got wrong, and fix it in the same pull request.
+- **New machine:** `docs/get-started.md` (from an empty machine to the app on an emulator with test data) and `scripts/doctor.sh`, which checks the tools and says what is missing.
 - **Modules:** `docs/architecture/modules.md` (generated from the build files: every module, what it is, what it depends on). **Rules R1–R17:** `docs/architecture/rules.md` (generated from the Konsist tests). **Ports and adapters:** `docs/architecture/README.md`, then `5-hexagonal-ddd.md` and the ADRs in `docs/architecture/adr/`.
 - The numbered files in `docs/mpv-research/`, `docs/tablet/` and `docs/tv-research/` are research from before the work was done. Where they differ from the code, the code is right.
 
