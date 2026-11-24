@@ -151,7 +151,7 @@ model {
     serverJellyfin -> application
     serverJellyfin -[test]-> data
     serverJellyfin -> domain
-    serverJellyfin -> settings
+    serverJellyfin -[test]-> settings
     serverJellyfin -[test]-> testing
     settings -> application
     settings -> domain

@@ -168,7 +168,7 @@ flowchart LR
   adapters --> pure
 ```
 
-- **Ports and adapters, enforced by the build.** Seventeen architecture rules run with the unit
+- **Ports and adapters, enforced by the build.** Eighteen architecture rules run with the unit
   tests; a screen cannot reach the Jellyfin SDK or the database around a port.
 - **Two player engines**, ExoPlayer and mpv, behind one interface.
 - **Translated in 36 languages**, checked on every pull request
