@@ -36,6 +36,16 @@ scripts/avds.sh create ce_phone  # then: start ce_phone, install ce_phone
 ./gradlew testDebugUnitTest    # CI runs them too, but a local run is quicker to fix
 ```
 
+While you work, two checks answer in seconds:
+
+```bash
+./gradlew :domain:test :application:test :architecture:test   # pure Kotlin and the architecture rules
+python3 .claude/skills/start-work/scripts/check-docs.py       # every path and name the docs mention exists
+```
+
+When an architecture rule fails, change the code: the files in `architecture/baseline/` are
+allowlists with a reason per entry, not a way past a rule.
+
 - **Commit messages** follow [Conventional Commits](https://www.conventionalcommits.org/):
   `fix(player): …`, `feat(downloads): …`. The next version number is picked from them, so use
   `feat` only for something a user gets.
@@ -48,6 +58,16 @@ scripts/avds.sh create ce_phone  # then: start ce_phone, install ce_phone
   on mpv.
 - **Anything visual** follows [docs/identity/VISION.md](docs/identity/VISION.md).
 - Leave `CHANGELOG.md` and the version alone; both are written at release time.
+
+## After you open it
+
+- CI checks the formatting, the translations, a debug build of every app and the unit tests. A
+  change to docs only runs the docs checks.
+- Two review bots, Sourcery and CodeRabbit, comment within a few minutes, and again after each
+  push. Their checks are green whatever they find, so read the comments. They are often right
+  and sometimes wrong: fix what holds, and answer the rest in the thread with the reason.
+- A pull request is merged with a merge commit once the checks are green and every review
+  comment has an answer.
 
 ## Finding your way
 
