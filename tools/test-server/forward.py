@@ -31,8 +31,9 @@ held is dropped. A request whose connection fails while it waits is forgotten.
 
 --log prints on stdout, per request with a number (#n): its request line when it arrives (with a mark
 for a held one), when it is released, when it is forwarded to the server, and the first 1000 bytes
-of its body (a playback report's JSON, with its PlayMethod). The order of the "forwarded" lines is
-the order the server saw the requests in.
+of its body (a playback report's JSON, with its PlayMethod). "forwarded" is when this
+forwarder passed the request on: for requests on one connection that is the order the server saw,
+for requests on different connections it is close to, but no proof of, that order.
 
 When one side ends, the other side gets the rest of the data and then a clean close (half-close),
 not a reset: mpv (ffmpeg) reports "Connection reset by peer" otherwise.
