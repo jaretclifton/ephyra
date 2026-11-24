@@ -64,9 +64,11 @@ What points the wrong way:
    `getPlaybackSources`, `localPlayerTarget()`). The adapter's Hilt module reads timeouts. A port
    implementation that reads the UI's preferences decides things the caller should say.
    #766 (PR 874) removes the player part.
-4. `domain` itself is clean: no Android, no SDK, no Room (rule R5). Its three outside
-   dependencies are deliberate: coroutines (`Flow` in ports), serialization (one annotation on
-   `FindroidChapter`, for a Room JSON column) and OkHttp (`MediaHttpClient`).
+4. `domain` itself is clean: no Android, no SDK, no Room (rule R5). Its two outside
+   dependencies are deliberate: coroutines (`Flow` in ports) and serialization (one annotation on
+   `FindroidChapter`, for a Room JSON column). It had OkHttp too, for `MediaHttpClient`, until #964
+   moved that into the module `http`; rule R19 now allows `domain` and `application` nothing but
+   Kotlin, kotlinx and the JDK.
 
 ### What `domain` lacks or leaks
 

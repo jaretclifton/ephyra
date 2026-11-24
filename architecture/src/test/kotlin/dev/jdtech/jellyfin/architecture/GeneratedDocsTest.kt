@@ -193,6 +193,11 @@ object ArchitectureModel {
                     Layer.ADAPTER,
                     "The MDBList adapter of the external ratings on the movie and show pages: its HTTP client and the ratings cache on disk, with its own Hilt module.",
                 ),
+            "http" to
+                Module(
+                    Layer.SHARED,
+                    "MediaHttpClient, the OkHttp client media is streamed through: provided by server/jellyfin, used by the player, so it shares the API's connections.",
+                ),
             "testing" to
                 Module(
                     Layer.TOOLING,
@@ -223,6 +228,8 @@ object ArchitectureModel {
         APPLICATION("application", "Application"),
         DOMAIN("domain", "Domain"),
         ADAPTER("adapter", "Adapters"),
+        /** A contract between an adapter and a feature that names a library type (#964). */
+        SHARED("shared", "Shared contracts"),
         TOOLING("tooling", "Tests and tooling"),
     }
 

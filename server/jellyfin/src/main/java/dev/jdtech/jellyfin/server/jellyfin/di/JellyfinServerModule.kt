@@ -12,11 +12,11 @@ import dev.jdtech.jellyfin.api.JellyfinApi
 import dev.jdtech.jellyfin.domain.ports.ActiveServerHolder
 import dev.jdtech.jellyfin.domain.ports.DeviceCodecs
 import dev.jdtech.jellyfin.domain.ports.DeviceReportSource
-import dev.jdtech.jellyfin.domain.ports.MediaHttpClient
 import dev.jdtech.jellyfin.domain.ports.MediaServer
 import dev.jdtech.jellyfin.domain.ports.ServerConnector
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.domain.ports.UserDataSyncPorts
+import dev.jdtech.jellyfin.http.MediaHttpClient
 import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.repository.NetworkTimeouts
 import dev.jdtech.jellyfin.server.jellyfin.JellyfinDeviceProfiles

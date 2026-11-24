@@ -59,6 +59,13 @@ specification {
       color ephyra-surface-highest
     }
   }
+  element shared {
+    notation 'Gradle module: shared contract'
+    style {
+      color ephyra-surface-highest
+      border dotted
+    }
+  }
   element tooling {
     notation 'Gradle module: tests and tooling'
     style {

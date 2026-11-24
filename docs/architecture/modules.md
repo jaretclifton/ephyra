@@ -32,6 +32,9 @@ flowchart TD
     ratingsMdblist["ratings/mdblist"]
     serverJellyfin["server/jellyfin"]
   end
+  subgraph shared["Shared contracts"]
+    http["http"]
+  end
   application --> domain
   core --> downloads
   core --> playerCore
@@ -45,8 +48,10 @@ flowchart TD
   playerCast --> playerLocal
   playerCast --> settings
   playerLocal --> core
+  playerLocal --> http
   playerLocal --> playerCore
   playerLocal --> settings
+  serverJellyfin --> http
   serverJellyfin --> settings
   setup --> core
   setup --> settings
@@ -54,8 +59,8 @@ flowchart TD
 
 | Module | Layer | What | Depends on | Test-only |
 |---|---|---|---|---|
-| `app/phone` | Apps (composition root) | The phone app: screens, navigation and layouts; with app/tv the composition root. | `application`, `baselineprofile`, `core`, `data`, `domain`, `downloads`, `modes/film`, `player/cast`, `player/core`, `player/local`, `ratings/mdblist`, `server/jellyfin`, `settings`, `setup` |  |
-| `app/tv` | Apps (composition root) | The Android TV app: its own screens in its ce package, next to upstream's (TV ADR 0001). | `application`, `core`, `data`, `domain`, `downloads`, `modes/film`, `player/core`, `player/local`, `ratings/mdblist`, `server/jellyfin`, `settings`, `setup` | `testing` |
+| `app/phone` | Apps (composition root) | The phone app: screens, navigation and layouts; with app/tv the composition root. | `application`, `baselineprofile`, `core`, `data`, `domain`, `downloads`, `http`, `modes/film`, `player/cast`, `player/core`, `player/local`, `ratings/mdblist`, `server/jellyfin`, `settings`, `setup` |  |
+| `app/tv` | Apps (composition root) | The Android TV app: its own screens in its ce package, next to upstream's (TV ADR 0001). | `application`, `core`, `data`, `domain`, `downloads`, `http`, `modes/film`, `player/core`, `player/local`, `ratings/mdblist`, `server/jellyfin`, `settings`, `setup` | `testing` |
 | `application` | Application | Pure Kotlin: MediaRepository, the store ports (ServerStore, DownloadStore, PendingUserDataStore) and the event flows (DataChangeEvents, ReloadPolicy, …). | `domain` |  |
 | `architecture` | Tests and tooling | The Konsist rules over the source tree, their allowlists in architecture/baseline/, and the generated architecture docs. |  |  |
 | `baselineprofile` | Tests and tooling | Macrobenchmark: the baseline profile and startup benchmark of app/phone. | `app/phone` |  |
@@ -64,12 +69,13 @@ flowchart TD
 | `data` | Adapters | Room: the database, the stores (Room*Store) and MediaRepositoryImpl over the server's ports; no SDK. | `application`, `domain` | `testing` |
 | `domain` | Domain | Pure Kotlin, no Android or SDK: the models (Item, Movie, ItemSource, …), the ids, PlayState, DownloadState, Ticks, ActiveServer and the server ports. |  |  |
 | `downloads` | Features | The download engine (Downloader, DownloaderImpl, MediaDownloadEngine), DownloadQueue, smart downloads and their workers. | `application`, `domain`, `settings` | `data`, `testing` |
+| `http` | Shared contracts | MediaHttpClient, the OkHttp client media is streamed through: provided by server/jellyfin, used by the player, so it shares the API's connections. |  |  |
 | `modes/film` | Features | The view models with their State and Action classes for home, library, search, the item screens and downloads. | `application`, `core`, `domain`, `downloads`, `settings` | `data`, `testing` |
 | `player/cast` | Features | Google Cast: the session and playback on a receiver; real in the proprietary flavour, stubs in libre. | `application`, `core`, `domain`, `player/core`, `player/local`, `settings` |  |
 | `player/core` | Features | The player models shared by the player and its callers: PlayerItem, Track, Trickplay. | `domain` |  |
-| `player/local` | Features | The player: PlayerViewModel and playback, on ExoPlayer or mpv behind PlayerEngine (in its engine package). | `application`, `core`, `domain`, `player/core`, `settings` | `data`, `testing` |
+| `player/local` | Features | The player: PlayerViewModel and playback, on ExoPlayer or mpv behind PlayerEngine (in its engine package). | `application`, `core`, `domain`, `http`, `player/core`, `settings` | `data`, `testing` |
 | `ratings/mdblist` | Adapters | The MDBList adapter of the external ratings on the movie and show pages: its HTTP client and the ratings cache on disk, with its own Hilt module. | `application`, `domain` |  |
-| `server/jellyfin` | Adapters | The Jellyfin adapter, the only module with the Jellyfin SDK: JellyfinApi, the mappers, the port implementations, the device profiles and its own Hilt module. | `application`, `domain`, `settings` | `data`, `testing` |
+| `server/jellyfin` | Adapters | The Jellyfin adapter, the only module with the Jellyfin SDK: JellyfinApi, the mappers, the port implementations, the device profiles and its own Hilt module. | `application`, `domain`, `http`, `settings` | `data`, `testing` |
 | `settings` | Features | AppPreferences (over SharedPreferences), SettingsViewModel and the preference models; the screens are in the apps. | `application`, `domain` |  |
 | `setup` | Features | Server discovery, signing in and the onboarding flow. | `application`, `core`, `domain`, `settings` | `data`, `testing` |
 | `testing` | Tests and tooling | Test only (R8): FakeMediaServer, FakeServerConnector and the contract suites a server adapter passes. | `application`, `domain` |  |
