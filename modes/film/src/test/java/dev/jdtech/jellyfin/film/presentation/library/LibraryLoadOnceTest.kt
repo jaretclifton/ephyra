@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.film.presentation.library
 
 import android.content.SharedPreferences
+import androidx.paging.testing.asSnapshot
 import dev.jdtech.jellyfin.models.CollectionType
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.SortBy
@@ -8,6 +9,7 @@ import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.asItemIdOrNull
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import kotlin.test.assertEquals
@@ -18,6 +20,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -37,6 +40,9 @@ class LibraryLoadOnceTest {
     private val movies = "11111111-1111-1111-1111-111111111111".toItemId()
     private val shows = "22222222-2222-2222-2222-222222222222".toItemId()
     private val loads = mutableListOf<ItemId?>()
+
+    /** The library of each page a pager asked the repository for, once something collects it. */
+    private val requested = mutableListOf<ItemId?>()
     private var currentLibrary: ItemId? = null
     private val watchers = CoroutineScope(UnconfinedTestDispatcher())
 
@@ -93,6 +99,19 @@ class LibraryLoadOnceTest {
         assertEquals(listOf<ItemId?>(movies, movies), loads)
     }
 
+    @Test
+    fun `each pager asks the repository for its own library`() = runTest {
+        val viewModel = viewModel()
+        viewModel.setUpFor(movies, CollectionType.Movies)
+        viewModel.loadItemsIfNeeded()
+        viewModel.state.value.items.asSnapshot()
+        viewModel.setUpFor(shows, CollectionType.TvShows)
+        viewModel.loadItemsIfNeeded()
+        viewModel.state.value.items.asSnapshot()
+
+        assertEquals(listOf<ItemId?>(movies, shows), requested)
+    }
+
     private fun viewModel() = LibraryViewModel(repository(), appPreferences())
 
     /** The ViewModel set up for [library]: every new pager in its state is a load of [library]. */
@@ -119,8 +138,14 @@ class LibraryLoadOnceTest {
             _,
             method,
             args ->
-            // Nothing collects the pagers, so nothing is asked.
-            throw NotImplementedError("MediaRepository.${method.kotlinName}")
+            when (method.kotlinName) {
+                // The grid without placeholders (setup without `indexed`), an empty library.
+                "getItems" -> {
+                    requested.add(args!![0].asItemIdOrNull())
+                    emptyList<Any>()
+                }
+                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
+            }
         }
             as MediaRepository
 
