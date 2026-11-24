@@ -1,12 +1,20 @@
 package dev.jdtech.jellyfin.player.local.engine.mpv
 
+import dev.jdtech.mpv.MPVLib.MpvEndFileReason
+
 /**
  * CE (#446): whether mpv's END_FILE means the current file failed to load.
  *
- * The JNI layer passes no END_FILE reason. A file that ends without reaching FILE_LOADED, and that
- * this player did not replace, remove or stop, failed to load. mpv's error lines are no signal of
- * their own: libmpv hands out a pending event before pending log messages, so the error that
- * explains the failure can arrive after END_FILE.
+ * A file that ends without reaching FILE_LOADED, and that this player did not replace, remove or
+ * stop, failed to load. mpv's error lines are no signal of their own: libmpv hands out a pending
+ * event before pending log messages, so the error that explains the failure can arrive after
+ * END_FILE.
+ *
+ * CE (#786): since libmpv 1.3.0 mpv's own reason comes just before END_FILE ([endFileReason]). An
+ * end that mpv gives any reason but an error (a redirect to a playlist, the end of the file, a
+ * stop) is no load failure, and a failure keeps mpv's error code. The reason does not replace the
+ * rules below: the ends of the entries mpv tries after a failure carry an error too. Without a
+ * reason (an older libmpv) the rest decides alone.
  *
  * CE (#576):
  * - One failure is reported once. After a failed open mpv goes on to the next playlist entries by
@@ -18,9 +26,6 @@ package dev.jdtech.jellyfin.player.local.engine.mpv
  *   first entry of a new playlist that mpv had started to open before it was told to play another.
  * - A failure without an error line yet is held ([End.HOLD]) until the first line arrives or the
  *   caller's timer runs out, so that the report can say what went wrong.
- *
- * CE (#960): so is a network stream with only mpv's "Failed to open" line: FFmpeg's line, which
- * says why, can come after it.
  *
  * Not thread-safe: [MPVPlayer] calls it on the main thread.
  */
@@ -49,6 +54,13 @@ internal class MpvLoadState {
 
     /** The playlist entry this player last told mpv to play, when it named one. */
     private var wantedIndex: Int? = null
+
+    /** mpv's reason for the END_FILE that comes next, from [endFileReason]. */
+    private var pendingReason: Int? = null
+    private var pendingError: Int? = null
+
+    /** mpv's error code for the current failure, when mpv gave one. */
+    private var mpvError: Int? = null
 
     enum class End {
         /** Not a load failure, or one that was reported before. */
@@ -99,28 +111,29 @@ internal class MpvLoadState {
         failed = false
         holding = false
         errors.clear()
+        mpvError = null
         wantedIndex = index
+    }
+
+    /**
+     * mpv's [MpvEndFileReason] and, for an error, its error code, for the END_FILE that follows
+     * ([dev.jdtech.mpv.MPVLib.EventObserver.eventEndFile]). Read by the next [endFile] only.
+     */
+    fun endFileReason(reason: Int, error: Int) {
+        pendingReason = reason
+        pendingError = error
     }
 
     /** mpv logged [message] at error level. */
     fun errorLogged(message: String): Logged {
         if (holding) {
-            keep(message)
-            // #960: mpv's line for a network stream came first: wait for FFmpeg's.
-            if (awaitsFfmpegLine()) return Logged.KEPT
             holding = false
+            errors.add(message)
             return Logged.COMPLETES_FAILURE
         }
         if (failed) return Logged.AFTER_FAILURE
-        keep(message)
+        if (errors.size < MAX_ERRORS) errors.add(message)
         return Logged.KEPT
-    }
-
-    /** Up to [MAX_ERRORS] lines, and FFmpeg's first line also past that: it gives the reason. */
-    private fun keep(message: String) {
-        val firstFfmpegLine =
-            message.startsWith(FFMPEG_PREFIX) && errors.none { it.startsWith(FFMPEG_PREFIX) }
-        if (errors.size < MAX_ERRORS || firstFfmpegLine) errors.add(message)
     }
 
     /**
@@ -128,28 +141,27 @@ internal class MpvLoadState {
      * for none); it is only called when the answer decides.
      */
     fun endFile(playingIndex: () -> Int?): End {
+        val reason = pendingReason
+        val error = pendingError
+        pendingReason = null
+        pendingError = null
         if (failed || fileLoaded || endFileExpected) return End.NOT_A_FAILURE
+        // #786: mpv says why the file ended, and it was no error.
+        if (reason != null && reason != MpvEndFileReason.MPV_END_FILE_REASON_ERROR) {
+            return End.NOT_A_FAILURE
+        }
         // mpv leaves an entry that failed, so while it is on the wanted one this end is an older
         // file's.
         val wanted = wantedIndex
         if (wanted != null && playingIndex() == wanted) return End.NOT_A_FAILURE
         failed = true
-        if (errors.isEmpty() || awaitsFfmpegLine()) {
+        mpvError = error?.takeIf { reason == MpvEndFileReason.MPV_END_FILE_REASON_ERROR }
+        if (errors.isEmpty()) {
             holding = true
             return End.HOLD
         }
         return End.FAILED
     }
-
-    /**
-     * CE (#960): mpv's own line for a network stream that did not open is there, FFmpeg's line with
-     * the reason is not yet. FFmpeg's lines come through the process' log ([MpvFfmpegLog]) and can
-     * arrive after mpv's and after END_FILE, and the reason decides what happens next
-     * ([MpvErrorRecovery], [MpvTlsFallback]).
-     */
-    private fun awaitsFfmpegLine(): Boolean =
-        errors.none { it.startsWith(FFMPEG_PREFIX) } &&
-            errors.any { it.startsWith(NETWORK_OPEN_FAILED) }
 
     /** The caller's timer for [End.HOLD] ran out. Returns true when the failure is still held. */
     fun holdTimedOut(): Boolean {
@@ -158,22 +170,27 @@ internal class MpvLoadState {
         return true
     }
 
-    /** The failure to report: the last error mpv logged for the file, and all of them. */
+    /**
+     * The failure to report: the last error mpv logged for the file, all of them, and mpv's error
+     * code.
+     */
     val failure: Failure
-        get() = Failure(errors.lastOrNull(), errors.toList())
+        get() = Failure(errors.lastOrNull(), errors.toList(), mpvError)
 
-    /** [message] is null when mpv logged no error for the file. */
-    data class Failure(val message: String?, val errors: List<String> = listOfNotNull(message))
+    /**
+     * [message] is null when mpv logged no error for the file. [mpvError] is mpv's error code
+     * ([dev.jdtech.mpv.MPVLib.MpvError]), null when mpv gave none.
+     */
+    data class Failure(
+        val message: String?,
+        val errors: List<String> = listOfNotNull(message),
+        val mpvError: Int? = null,
+    )
 
     companion object {
         /** How long a failure waits for its error line. They came 20 to 40 ms after END_FILE. */
         const val HOLD_MS = 300L
 
         private const val MAX_ERRORS = 20
-
-        private const val FFMPEG_PREFIX = "ffmpeg:"
-
-        /** mpv's line for a stream it could not open over http or https. */
-        private const val NETWORK_OPEN_FAILED = "stream: Failed to open http"
     }
 }
