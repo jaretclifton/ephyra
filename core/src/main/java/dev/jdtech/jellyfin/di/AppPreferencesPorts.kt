@@ -7,6 +7,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.jdtech.jellyfin.core.settings.SharedPreferencesResumeThresholdsStore
 import dev.jdtech.jellyfin.models.ServerId
+import dev.jdtech.jellyfin.ratings.ExternalRatingsSettings
 import dev.jdtech.jellyfin.repository.CurrentServerId
 import dev.jdtech.jellyfin.repository.DownloadSettings
 import dev.jdtech.jellyfin.repository.NetworkTimeouts
@@ -74,6 +75,18 @@ class AppPreferencesNetworkTimeouts @Inject constructor(private val preferences:
     override fun socketTimeout(): Long = preferences.getValue(preferences.socketTimeout)
 }
 
+/** CE (#331): [ExternalRatingsSettings] from the ratings switch and key, read on every call. */
+@Singleton
+class AppPreferencesExternalRatingsSettings
+@Inject
+constructor(private val preferences: AppPreferences) : ExternalRatingsSettings {
+    override val enabled: Boolean
+        get() = preferences.getValue(preferences.externalRatings)
+
+    override val apiKey: String?
+        get() = preferences.getValue(preferences.mdbListApiKey)
+}
+
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class AppPreferencesPortsModule {
@@ -84,6 +97,11 @@ abstract class AppPreferencesPortsModule {
     @Binds abstract fun bindNextUpMaxDays(impl: AppPreferencesNextUpMaxDays): NextUpMaxDays
 
     @Binds abstract fun bindNetworkTimeouts(impl: AppPreferencesNetworkTimeouts): NetworkTimeouts
+
+    @Binds
+    abstract fun bindExternalRatingsSettings(
+        impl: AppPreferencesExternalRatingsSettings
+    ): ExternalRatingsSettings
 
     companion object {
         /**

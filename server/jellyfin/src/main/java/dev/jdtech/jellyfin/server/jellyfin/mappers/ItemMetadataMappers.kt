@@ -1,5 +1,6 @@
 package dev.jdtech.jellyfin.server.jellyfin.mappers
 
+import dev.jdtech.jellyfin.models.ExternalIds
 import dev.jdtech.jellyfin.models.ExternalLink
 import dev.jdtech.jellyfin.models.Trailer
 import java.time.DayOfWeek
@@ -68,6 +69,20 @@ internal fun externalLinks(
 
 internal fun BaseItemDto.toExternalLinks(): List<ExternalLink> =
     externalLinks(externalUrls, providerIds, type)
+
+/**
+ * CE (#331): the item's IMDb, TMDB and TVDB ids, for the external ratings. The server names its
+ * providers `Imdb`, `Tmdb` and `Tvdb`; the case is not relied on, and an empty id is none.
+ */
+internal fun Map<String, String?>?.toExternalIds(): ExternalIds {
+    val ids =
+        orEmpty()
+            .mapNotNull { (provider, id) ->
+                id?.trim()?.takeIf { it.isNotEmpty() }?.let { provider.lowercase() to it }
+            }
+            .toMap()
+    return ExternalIds(imdb = ids["imdb"], tmdb = ids["tmdb"], tvdb = ids["tvdb"])
+}
 
 /** The studio (movie) or network (show) names, in the server's order. */
 internal fun BaseItemDto.studioNames(): List<String> =

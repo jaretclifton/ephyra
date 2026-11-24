@@ -40,6 +40,8 @@ data class Movie(
     val localTrailerCount: Int = 0,
     /** Null when the server didn't say, which is no reason not to ask for the extras. */
     val specialFeatureCount: Int? = null,
+    /** CE (#331): the ids at outside sites, for the external ratings. Empty for a download. */
+    val externalIds: ExternalIds = ExternalIds(),
     override val images: ItemImages,
     override val chapters: List<Chapter>,
     override val trickplayInfo: Map<MediaSourceId, ItemTrickplayInfo>?,

@@ -39,6 +39,8 @@ data class Show(
     val airTime: String? = null,
     val localTrailerCount: Int = 0,
     val specialFeatureCount: Int? = null,
+    /** CE (#331): the ids at outside sites, for the external ratings. Empty for a download. */
+    val externalIds: ExternalIds = ExternalIds(),
     override val images: ItemImages,
     override val chapters: List<Chapter> = emptyList(),
 ) : Item

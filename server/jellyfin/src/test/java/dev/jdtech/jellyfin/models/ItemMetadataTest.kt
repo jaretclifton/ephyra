@@ -108,6 +108,26 @@ class ItemMetadataTest {
     }
 
     @Test
+    fun `movie and show keep their IMDb, TMDB and TVDB ids`() {
+        val ids = mapOf("Imdb" to "tt1", "Tmdb" to " 2 ", "Tvdb" to "", "Other" to "4")
+        val movie = runBlocking {
+            BaseItemDto(id = id, type = BaseItemKind.MOVIE, providerIds = ids)
+                .toMovie(context, emptyMap())
+        }
+        assertEquals(ExternalIds(imdb = "tt1", tmdb = "2"), movie.externalIds)
+
+        val show =
+            BaseItemDto(id = id, type = BaseItemKind.SERIES, providerIds = mapOf("tvdb" to "3"))
+                .toShow(baseUrl)
+        assertEquals(ExternalIds(tvdb = "3"), show.externalIds)
+
+        val bare = runBlocking {
+            BaseItemDto(id = id, type = BaseItemKind.MOVIE).toMovie(context, emptyMap())
+        }
+        assertEquals(ExternalIds(), bare.externalIds)
+    }
+
+    @Test
     fun `show maps networks and the air schedule`() {
         val show =
             BaseItemDto(

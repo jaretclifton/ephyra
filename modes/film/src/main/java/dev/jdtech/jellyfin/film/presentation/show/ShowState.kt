@@ -1,5 +1,6 @@
 package dev.jdtech.jellyfin.film.presentation.show
 
+import dev.jdtech.jellyfin.film.presentation.ExternalRatingsState
 import dev.jdtech.jellyfin.film.presentation.RelatedItems
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
@@ -27,6 +28,8 @@ data class ShowState(
     val themeSongUrl: String? = null,
     // CE (#332): loaded after the page is shown, see ShowViewModel.loadRelated.
     val related: RelatedItems = RelatedItems(),
+    // CE (#331): the external ratings, loaded after the page is shown.
+    val externalRatings: ExternalRatingsState = ExternalRatingsState.Hidden,
     val error: Exception? = null,
     /**
      * #769: whether a download can be transcoded down to a chosen quality. Without it the quality

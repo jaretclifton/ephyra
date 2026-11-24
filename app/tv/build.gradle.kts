@@ -179,6 +179,8 @@ dependencies {
     implementation(projects.player.core)
     implementation(projects.player.local)
     implementation(projects.server.jellyfin)
+    // CE (#331): the MDBList adapter of the external ratings.
+    implementation(projects.ratings.mdblist)
     implementation(projects.settings)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.foundation)

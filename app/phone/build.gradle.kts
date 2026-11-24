@@ -187,6 +187,8 @@ dependencies {
     implementation(projects.setup)
     implementation(projects.modes.film)
     implementation(projects.server.jellyfin)
+    // CE (#331): the MDBList adapter of the external ratings.
+    implementation(projects.ratings.mdblist)
     implementation(projects.settings)
 
     implementation(libs.aboutlibraries.core)

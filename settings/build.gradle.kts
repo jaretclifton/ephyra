@@ -31,6 +31,8 @@ android {
 dependencies {
     // #769: ServerCapabilities and CurrentServerCapabilities, to hide what the server cannot do.
     implementation(projects.domain)
+    // CE (#331): ExternalRatings, for the Test button of the ratings key.
+    implementation(projects.application)
 
     implementation(libs.timber)
 
@@ -47,4 +49,5 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

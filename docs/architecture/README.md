@@ -39,7 +39,8 @@ app/phone, app/tv   (composition root, screens)
    ├─► modes/film, setup, settings, player/*, core, downloads ─► application ─► domain
    │                                                                  ▲
    ├─► data  (Room: the stores and MediaRepositoryImpl) ──────────────┘
-   └─► server/jellyfin  (the server ports, the only module with the SDK) ───► application, domain
+   ├─► server/jellyfin  (the server ports, the only module with the SDK) ───► application, domain
+   └─► ratings/mdblist  (the ratings ports: MDBList over HTTP, a file cache) ─► application, domain
 ```
 
 - `domain` (pure Kotlin): the models without the `Findroid` prefix (`Item`, `Movie`, `ItemSource`,
@@ -55,6 +56,9 @@ app/phone, app/tv   (composition root, screens)
   with Room (stored fallback, local sources, write then report).
 - `server/jellyfin`: the SDK, `JellyfinApi`, the mappers, the port implementations, the device
   profiles. `CurrentMediaServer` in `core` picks the adapter by the active server's type.
+- `ratings/mdblist` (#331): the external ratings of the movie and show pages from MDBList, behind
+  the ports `RatingsProvider` and `RatingsCache` of `application`. When to ask (the cache's
+  lifetimes, the back-offs, a rejected key) is `ExternalRatingsService` in `application`.
 - `downloads`: the download engine and queue, out of `core`.
 - `player/local`: ExoPlayer and mpv behind `PlayerEngine`; playback logic in
   `player/local/.../domain/` (`PlaybackReporter`, `ResolvePlayback`, `PlaylistManager`, …).
@@ -81,7 +85,7 @@ A line is added only with its reason, given in the PR.
 | R6 | The engine packages of `player/local` use neither each other nor are used by shared code |
 | R7 | Only the apps depend on `server/jellyfin` |
 | R8 | `testing` is only a test dependency |
-| R9 | Only the apps depend on `data` |
+| R9 | Only the apps depend on `data`, and on `ratings/mdblist` |
 | R10 | No `java.util.UUID` outside the adapter (an allowlist), and no server or source id typed as `String` (no exceptions) |
 | R11 | No production type is named `Findroid*`, and none `Jellyfin*` outside the adapter |
 | R12 | Only `Ticks` declares tick constants and converts ticks by a literal |
@@ -89,7 +93,7 @@ A line is added only with its reason, given in the PR.
 | R14 | The play state rules are declared in `domain` alone; `data` and the sync compare no dates |
 | R15 | `downloads` depends on no adapter, not on `core` and not on an app, and nothing else names its engine's implementation |
 | R16 | The server in use is written as one `ActiveServer` value, in one place |
-| R17 | `data`, `server/jellyfin` and `downloads` read no `AppPreferences`: their settings come through ports of `application` |
+| R17 | `data`, `server/jellyfin`, `ratings/mdblist` and `downloads` read no `AppPreferences`: their settings come through ports of `application` |
 
 ## Not done
 

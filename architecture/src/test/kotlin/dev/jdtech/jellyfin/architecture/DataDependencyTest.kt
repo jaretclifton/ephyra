@@ -12,6 +12,9 @@ import kotlin.test.assertTrue
  *
  * No exceptions since T7 (#899) put Room behind the store ports: `core`, `modes/film` and `setup`
  * had a baseline until then.
+ *
+ * The MDBList adapter (`ratings/mdblist`, #331) is held to the same: the features reach it through
+ * the ratings ports of `application`.
  */
 class DataDependencyTest {
 
@@ -36,6 +39,21 @@ class DataDependencyTest {
         )
     }
 
+    @Test
+    fun `R9 only the apps depend on the MDBList adapter`() {
+        val dependents =
+            dependentsOf(
+                ProjectTree.moduleBuildFiles.mapValues { it.value.readText() },
+                MDBLIST_MARKER,
+            )
+        assertEquals(
+            APP_MODULES,
+            dependents,
+            "Only ${APP_MODULES.sorted().joinToString(" and ")} may depend on $MDBLIST: use the " +
+                "ratings ports of application (ExternalRatings) instead.",
+        )
+    }
+
     /** The rule reads what it is meant to, however a dependency is written. */
     @Test
     fun `R9 counts every production configuration and no test one`() {
@@ -57,17 +75,22 @@ class DataDependencyTest {
 
     private companion object {
         const val DATA = "data"
+        const val MDBLIST = "ratings/mdblist"
 
         /** The composition roots (as in R7). */
         val APP_MODULES = setOf("app/phone", "app/tv")
 
         val MARKER = BuildFileDependencies.markerOf(DATA)
+        val MDBLIST_MARKER = BuildFileDependencies.markerOf(MDBLIST)
 
-        /** The modules, by path, whose build file takes `data` in a configuration not for tests. */
-        fun dependentsOf(buildFiles: Map<String, String>): Set<String> =
+        /**
+         * The modules, by path, whose build file takes the module of [marker] (`data` unless said)
+         * in a configuration not for tests.
+         */
+        fun dependentsOf(buildFiles: Map<String, String>, marker: Regex = MARKER): Set<String> =
             buildFiles
                 .filter { (_, text) ->
-                    BuildFileDependencies.configurationsOf(text, MARKER).any {
+                    BuildFileDependencies.configurationsOf(text, marker).any {
                         !BuildFileDependencies.isTestOnly(it)
                     }
                 }

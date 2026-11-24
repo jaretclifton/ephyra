@@ -66,6 +66,9 @@ data class SeasonRoute(
 // CE (#299)
 @Serializable data object ProfilePinRoute : NavKey
 
+// CE (#331)
+@Serializable data object ExternalRatingsRoute : NavKey
+
 @Serializable data class SettingsFileEditRoute(val filePath: String) : NavKey
 
 @Serializable data object AboutRoute : NavKey

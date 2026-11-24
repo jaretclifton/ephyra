@@ -6,11 +6,12 @@ import kotlin.test.assertTrue
 
 /**
  * R17 (#918, docs/architecture/5-hexagonal-ddd.md 5.1 point 3). The adapters and the download
- * engine do not read the UI's preferences: no production file of `data`, `server/jellyfin` or
- * `downloads` names `AppPreferences` (`dev.jdtech.jellyfin.settings.domain.AppPreferences`). What
- * they read of the settings comes through the ports of `application` (`CurrentServerId`,
- * `NextUpMaxDays`, `ResumeThresholdsStore`, `NetworkTimeouts`, `DownloadSettings`), which `core`
- * implements (`AppPreferencesPorts.kt`). Tests may build an `AppPreferences`.
+ * engine do not read the UI's preferences: no production file of `data`, `server/jellyfin`,
+ * `ratings/mdblist` (#331) or `downloads` names `AppPreferences`
+ * (`dev.jdtech.jellyfin.settings.domain.AppPreferences`). What they read of the settings comes
+ * through the ports of `application` (`CurrentServerId`, `NextUpMaxDays`, `ResumeThresholdsStore`,
+ * `NetworkTimeouts`, `DownloadSettings`, `ExternalRatingsSettings`), which `core` implements
+ * (`AppPreferencesPorts.kt`). Tests may build an `AppPreferences`.
  *
  * A text check, as R10: an import, the full name and the simple name all count; comments do not. No
  * baseline.
@@ -18,7 +19,7 @@ import kotlin.test.assertTrue
 class AdapterSettingsTest {
 
     @Test
-    fun `R17 no production file of data, server jellyfin or downloads names AppPreferences`() {
+    fun `R17 no production file of data, server jellyfin, ratings mdblist or downloads names AppPreferences`() {
         val files = ProjectTree.productionKotlinFiles
         MODULES.forEach { module ->
             assertTrue(
@@ -67,7 +68,7 @@ class AdapterSettingsTest {
     }
 
     private companion object {
-        val MODULES = listOf("data", "server/jellyfin", "downloads")
+        val MODULES = listOf("data", "server/jellyfin", "ratings/mdblist", "downloads")
 
         val NAME = Regex("""\bAppPreferences\b""")
 
