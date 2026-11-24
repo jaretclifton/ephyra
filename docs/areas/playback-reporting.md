@@ -39,7 +39,7 @@ With the server away, `PlaybackReporter` catches and logs each failure; playback
 | [`server/jellyfin/.../JellyfinPlayback.kt`](../../server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/JellyfinPlayback.kt) | The request bodies; `playMethod()` |
 | [`application/.../repository/PlaybackEvents.kt`](../../application/src/main/kotlin/dev/jdtech/jellyfin/repository/PlaybackEvents.kt) | Tells screens an item was reported, so they reload |
 | [`app/tv/.../ce/presentation/player/TvProgressReports.kt`](../../app/tv/src/main/java/dev/jdtech/jellyfin/ce/presentation/player/TvProgressReports.kt) | TV: the 5 s loop with a 1 s guard, used in `TvPlayerScreen.kt` |
-| [`player/cast/src/proprietary/.../CastPlaybackReporter.kt`](../../player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/CastPlaybackReporter.kt) | Cast: which reports a receiver's state owes; `CastPlayerControllerImpl.kt` sends them |
+| [`player/cast/src/proprietary/.../CastPlaybackReporter.kt`](../../player/cast/src/proprietary/java/dev/jdtech/jellyfin/player/cast/CastPlaybackReporter.kt) | Cast: which reports a receiver's state owes; `CastPlayerControllerImpl.kt` sends them. The "item ran out, position 0 for a moment" rule is `CastPositions.ranOut` in `src/main`, which the segment skip reads too (#851) |
 
 On the phone the progress loop is in `PlayerActivity.kt` and a report on pause in `BasePlayerActivity.kt`. Both call `PlayerViewModel.updatePlaybackProgress`, as TV does.
 

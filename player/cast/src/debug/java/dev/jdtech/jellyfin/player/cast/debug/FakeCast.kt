@@ -216,20 +216,26 @@ internal class FakeCastPlayerController(
                             it.copy(
                                 status = CastPlaybackStatus.ENDED,
                                 currentPosition = it.duration,
+                                positionItemId = null,
                             )
                         }
                         _currentItem.value = null
                     }
                     state.status == CastPlaybackStatus.PLAYING &&
                         session.connectionState.value == CastConnectionState.CONNECTED ->
-                        _playerState.update { it.copy(currentPosition = it.currentPosition + 1000) }
+                        _playerState.update {
+                            it.copy(
+                                currentPosition = it.currentPosition + 1000,
+                                positionFromSeek = false,
+                            )
+                        }
                 }
             }
         }
     }
 
     private fun fail() {
-        _playerState.update { it.copy(status = CastPlaybackStatus.ERROR) }
+        _playerState.update { it.copy(status = CastPlaybackStatus.ERROR, positionItemId = null) }
         _currentItem.value = null
         _errors.tryEmit(CastError.PLAYBACK_FAILED)
     }
@@ -256,7 +262,9 @@ internal class FakeCastPlayerController(
     private fun load(item: suspend () -> PlayerItem?) {
         playJob?.cancel()
         playJob = scope.launch {
-            _playerState.update { it.copy(status = CastPlaybackStatus.BUFFERING) }
+            _playerState.update {
+                it.copy(status = CastPlaybackStatus.BUFFERING, positionItemId = null)
+            }
             val loaded =
                 try {
                     item()
@@ -315,6 +323,9 @@ internal class FakeCastPlayerController(
                     status = CastPlaybackStatus.PLAYING,
                     currentPosition = loaded.playbackPosition.coerceAtLeast(0L),
                     duration = duration,
+                    positionItemId = loaded.itemId,
+                    load = it.load + 1,
+                    loadPositionMs = loaded.playbackPosition.coerceAtLeast(0L),
                     hasNextItem = loaded.seriesName != null,
                     hasPreviousItem = (loaded.indexNumber ?: 1) > 1,
                 )
@@ -331,7 +342,11 @@ internal class FakeCastPlayerController(
     }
 
     override fun seekTo(position: Long) {
-        _playerState.update { it.copy(currentPosition = position.coerceAtLeast(0L)) }
+        // What a real receiver would get as SEEK, for checking skips in the log.
+        Timber.i("Stand-in: SEEK %d ms (from %d ms)", position, _playerState.value.currentPosition)
+        _playerState.update {
+            it.copy(currentPosition = position.coerceAtLeast(0L), positionFromSeek = true)
+        }
     }
 
     override fun seekToNext() {
