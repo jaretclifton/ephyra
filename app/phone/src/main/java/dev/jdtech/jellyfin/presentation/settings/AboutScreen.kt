@@ -173,7 +173,7 @@ private fun AboutScreenLayout(
                     IconButton(onClick = navigateBack) {
                         Icon(
                             painter = painterResource(CoreR.drawable.ic_arrow_left),
-                            contentDescription = null,
+                            contentDescription = stringResource(CoreR.string.navigate_back),
                         )
                     }
                 },
