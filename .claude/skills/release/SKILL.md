@@ -81,12 +81,16 @@ On a branch `release/v$next` (`git switch -c "release/v$next"`):
   from the tagged commit, so it can't be added after the tag. Plain text, at most 500
   characters: one sentence on what the release brings, then a few `- ` lines for the changes
   users will notice.
-- Bring the feature lists up to date with what this release adds: "What Ephyra adds to
-  Findroid", "Tablet" and "Android TV" in `README.md`, and the same sections in
-  `site/index.html`. Only list what a user would pick the app for; fixes stay in the changelog.
+- Bring the feature lists up to date with what this release adds. `docs/features.yaml` is the
+  list: add an entry per new feature, with the apps that have it. The guide on the site and the
+  radar follow from it; run `npm run readme-assets` in `devsite/` (after `npm ci`) to draw the
+  README's radar again. Then the prose that names features by hand: "What you get" in
+  `README.md`, the guide page of the area in `devsite/src/content/docs/guide/` when the feature
+  needs explaining, and the sections of `site/index.html`. Only list what a user would pick the
+  app for; fixes stay in the changelog.
 
 ```bash
-git add buildSrc/src/main/kotlin/EphyraVersion.kt CHANGELOG.md fastlane/metadata/android/en-US/changelogs README.md site
+git add buildSrc/src/main/kotlin/EphyraVersion.kt CHANGELOG.md fastlane/metadata/android/en-US/changelogs README.md site docs/features.yaml images/readme devsite/src/content/docs/guide
 git commit -m "chore(release): v$next"
 git push -u origin HEAD
 gh pr create --repo midasvo/ephyra --title "chore(release): v$next" --body "<the changelog section>"

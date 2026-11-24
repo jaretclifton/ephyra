@@ -5,7 +5,9 @@ agree on the direction before you build it.
 
 ## Building
 
-You need JDK 21 and the Android SDK. There is one flavour, `libre`.
+You need JDK 21 and the Android SDK. The default flavour is `libre`; the phone app also has
+`proprietary`, which adds Google Cast (`assembleProprietaryDebug`). A change to the Cast code has
+to compile in both.
 
 ```bash
 ./gradlew :app:phone:assembleLibreDebug   # phone and tablet
@@ -49,7 +51,11 @@ scripts/avds.sh create ce_phone  # then: start ce_phone, install ce_phone
 
 - [CLAUDE.md](CLAUDE.md) describes the modules and the architecture. It is written for Claude
   Code, which does much of the work here, and reads just as well for people.
-- [docs/](docs/README.md) lists the design documents and which of them are still current.
+- The [development site](https://midasvo.nl/ephyra/dev/) has a guide per area of the code, the
+  architecture model and the decision records. It is built from [docs/](docs/README.md), which
+  also lists the design documents and which of them are still current.
+- A feature users get is added to [docs/features.yaml](docs/features.yaml): the guide on the site
+  and the chart in the README are drawn from it (`npm run readme-assets` in `devsite/`).
 - Ephyra is a fork of [Findroid](https://github.com/jarnedemeulemeester/findroid), and Findroid's
   changes are merged in regularly. Code Ephyra adds is kept in its own files where it can be, so
   those merges stay small. A fix in code that Findroid still owns is best sent to Findroid too.

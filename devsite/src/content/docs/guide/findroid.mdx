@@ -1,0 +1,54 @@
+---
+title: Ephyra and Findroid
+description: How Ephyra relates to Findroid, what it does with Findroid's changes, and moving over from Findroid or Findroid CE.
+---
+
+import Ledger from '../../../components/Ledger.astro';
+
+Ephyra is a fork of [Findroid](https://github.com/jarnedemeulemeester/findroid) by
+[Jarne Demeulemeester](https://github.com/jarnedemeulemeester) and its
+[contributors](https://github.com/jarnedemeulemeester/findroid/graphs/contributors). It was
+called Findroid CE until version 2.0.0.
+
+## What Ephyra does with Findroid's changes
+
+Ephyra stays **0 commits behind** Findroid: every Findroid commit is in Ephyra's history. That
+does not mean Ephyra has Findroid's code as it is.
+
+- **Translations** are merged in as they are. The strings Ephyra shares with Findroid are
+  translated on Findroid's Weblate.
+- **Code** is read change by change. Ephyra has moved the code into a different structure, so a
+  Findroid change no longer fits as text. One that is worth having is built again in Ephyra's
+  structure.
+
+<Ledger />
+
+The [upstream ledger](https://github.com/midasvo/ephyra/blob/main/docs/upstream-ledger.md)
+lists every one of those commits with the verdict and the reason. What each release brought is
+in the [changelog](https://github.com/midasvo/ephyra/blob/main/CHANGELOG.md).
+
+## What Ephyra adds
+
+[What runs where](/ephyra/guide/devices/) has the full list, per device. In short: resumable
+downloads with a quality per download, Dolby Vision, subtitle styling and sync, Google Cast,
+profiles with a PIN, tablet layouts and a TV app rebuilt for the remote.
+
+## Moving over
+
+- **From Findroid CE.** Ephyra is the same app under a new name. The update installs over
+  Findroid CE and keeps your login, settings and downloads. An Obtainium entry for
+  `midasvo/findroid-ce` keeps working; GitHub redirects it.
+- **From Findroid.** Ephyra has its own application ID (`nl.midasvo.findroid.ce`), so it
+  installs next to Findroid and shares nothing with it. Sign in to your server again; downloads
+  made in Findroid stay Findroid's.
+- **Phone and TV** share the application ID and the login to your server works on both.
+
+## Translations
+
+Strings shared with Findroid are translated on Findroid's Weblate. Ephyra's own are kept in
+separate files, in 36 languages; a fix to one is a welcome
+[pull request](https://github.com/midasvo/ephyra/blob/main/CONTRIBUTING.md).
+
+## The name
+
+An ephyra is a young jellyfish, the animal in the Jellyfin logo.

@@ -11,7 +11,7 @@ Where they live:
 
 | Use | Folder | Format |
 |---|---|---|
-| README and website | `images/screenshots/` (copy to `site/images/screenshots/` after a change: GitHub Pages deploys only `site/`) | webp, phone 540 wide, tablet and TV 1280 wide |
+| README and website | `images/screenshots/`, the only copy: the Pages build puts them next to the landing page (`devsite/scripts/compose.mjs`) and the guide reads them from there. After changing a Home shot (`home.webp`, `tablet-home.webp`, `tv-home.webp`), run `npm run readme-assets` in `devsite/` for the README's hero | webp, phone 540 wide, tablet and TV 1280 wide |
 | Play listing | `fastlane/metadata/android/en-US/images/{phone,sevenInch,tenInch,tv}Screenshots/` | PNG, native size, `N_en-US.png` |
 
 General rules: dark theme, English UI (`adb shell cmd locale set-app-locales

@@ -1,0 +1,99 @@
+---
+title: Install
+description: How to install Ephyra on a phone, a tablet or an Android TV, and which file is for which device.
+---
+
+import { Tabs, TabItem, Steps, Aside } from '@astrojs/starlight/components';
+
+Ephyra needs a [Jellyfin](https://jellyfin.org/) server, and Android 10 or newer on phones and
+tablets or Android 9 or newer on TV. Until it is in the stores, install it with Obtainium, which
+keeps it up to date, or by hand from the releases page.
+
+## Which file
+
+Every [release](https://github.com/midasvo/ephyra/releases) has one file per kind of device.
+Nearly every device is `arm64-v8a`; 32-bit TV boxes such as the Xiaomi Mi Box need `armeabi-v7a`.
+
+| Device | File |
+|---|---|
+| Phone or tablet | `ephyra-v<version>-libre-<abi>.apk` |
+| Phone or tablet, with Google Cast | `ephyra-v<version>-proprietary-<abi>.apk` |
+| Android TV | `ephyra-v<version>-libre-tv-<abi>.apk` |
+
+### Two variants of the phone app
+
+- **libre** has no Google code.
+- **proprietary** is libre plus [Google Cast](/ephyra/guide/cast/), which needs Google Play
+  services. Without them it still runs; Cast is just unavailable.
+
+Both have the same application ID and the same signing key, so one installs over the other and
+keeps your login, settings and downloads. The Android TV app is libre only.
+
+## Obtainium
+
+[Obtainium](https://github.com/ImranR98/Obtainium) installs an app straight from its releases
+and tells you when there is a new one.
+
+<Steps>
+
+1. Add the app with the source URL `https://github.com/midasvo/ephyra`.
+2. Leave **Include prereleases** off.
+3. Set **Filter APKs by regular expression** to the line for your device. A release has more
+   than one APK, so without a filter Obtainium asks which one to install.
+
+</Steps>
+
+<Tabs syncKey="device">
+  <TabItem label="Phone or tablet">
+    ```
+    -libre-arm64-v8a\.apk$
+    ```
+  </TabItem>
+  <TabItem label="Phone or tablet, with Cast">
+    ```
+    -proprietary-arm64-v8a\.apk$
+    ```
+  </TabItem>
+  <TabItem label="Android TV">
+    ```
+    .*-tv-arm64-v8a\.apk
+    ```
+  </TabItem>
+  <TabItem label="Android TV, 32-bit">
+    For the Xiaomi Mi Box and similar boxes:
+
+    ```
+    .*-tv-armeabi-v7a\.apk
+    ```
+  </TabItem>
+</Tabs>
+
+## Releases page
+
+Download the file for your device from
+[Releases](https://github.com/midasvo/ephyra/releases) and open it. Each release lists what
+changed; the full history is in the
+[changelog](https://github.com/midasvo/ephyra/blob/main/CHANGELOG.md).
+
+## Stores
+
+| Store | Variant | Status |
+|---|---|---|
+| F-Droid | libre | [Submitted](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/56048), waiting for review |
+| Google Play, phone | proprietary | Coming |
+| Google Play, Android TV | libre | Coming |
+| Amazon Appstore | libre | Coming |
+
+The F-Droid build is reproducible and verified against the GitHub APKs, so once it is listed
+you can switch sources without reinstalling.
+
+## After installing
+
+Open Ephyra, let it find your server or type its address, and sign in. The TV app uses the same
+server and login. [Coming from Findroid or Findroid CE](/ephyra/guide/findroid/#moving-over)
+says what carries over.
+
+<Aside>
+  Want the newest changes before a release? The [beta](/ephyra/guide/beta/) installs next to
+  the stable app.
+</Aside>

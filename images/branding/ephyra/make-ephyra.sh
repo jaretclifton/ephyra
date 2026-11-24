@@ -167,7 +167,7 @@ EOF
 
 # GitHub social preview, 1280x640.
 wide ephyra-banner.svg 1280 640 330 320 2.4 580 310 140 3 \
-  '  <text class="tag" x="585" y="376" font-size="31">A Jellyfin client for your phone and your TV</text>
+  '  <text class="tag" x="585" y="376" font-size="31">A Jellyfin client for your phone, tablet and TV</text>
   <text class="small" x="587" y="434" font-size="18">DOWNLOADS · ANDROID TV · DOLBY VISION · OPEN SOURCE</text>'
 
 # Play Store feature graphic, 1024x500.

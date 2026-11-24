@@ -1,0 +1,28 @@
+---
+title: What runs where
+description: Every feature Ephyra adds to Findroid, and whether the phone, the tablet and the Android TV app have it.
+---
+
+import Radar from '../../../components/Radar.astro';
+import FeatureMatrix from '../../../components/FeatureMatrix.astro';
+
+Ephyra is two apps. The **phone app** also runs on tablets, foldables and desktop windows,
+with [layouts for the width](/ephyra/guide/tablet/). The **TV app** is a separate one,
+[built for the remote](/ephyra/guide/tv/). They share the player, the library code and the
+login to your server.
+
+## Per area
+
+<Radar />
+
+The TV app has no downloads and no Cast. The phone app has none of the remote-only features,
+and the tablet layouts show from 600 dp of width.
+
+## Every feature
+
+<FeatureMatrix />
+
+This table and the chart are drawn from one list,
+[`docs/features.yaml`](https://github.com/midasvo/ephyra/blob/main/docs/features.yaml).
+Everything else the apps do is Findroid's: see
+[Ephyra and Findroid](/ephyra/guide/findroid/).

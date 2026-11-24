@@ -1,0 +1,47 @@
+---
+// Every feature of docs/features.yaml against the three devices: the table behind the radar.
+import { DEVICES, loadFeatures } from '../lib/features.mjs';
+
+const data = loadFeatures();
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<table class="feature-matrix">
+  <thead>
+    <tr>
+      <th scope="col">Feature</th>
+      {DEVICES.map((d) => <th scope="col">{d.label}</th>)}
+    </tr>
+  </thead>
+  {
+    data.areas.map((area) => (
+      <tbody>
+        <tr class="area">
+          <th scope="rowgroup" colspan={DEVICES.length + 1}>
+            {area.page ? <a href={`${base}/guide/${area.page}/`}>{area.title}</a> : area.title}
+          </th>
+        </tr>
+        {data.features
+          .filter((f) => f.area === area.id)
+          .map((f) => (
+            <tr>
+              <th scope="row">{f.title}</th>
+              {DEVICES.map((d) =>
+                f.on.includes(d.id) ? (
+                  <td class="yes">
+                    <span aria-hidden="true">●</span>
+                    <span class="sr-only">yes</span>
+                  </td>
+                ) : (
+                  <td class="no">
+                    <span aria-hidden="true">–</span>
+                    <span class="sr-only">no</span>
+                  </td>
+                ),
+              )}
+            </tr>
+          ))}
+      </tbody>
+    ))
+  }
+</table>

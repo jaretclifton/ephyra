@@ -104,3 +104,201 @@ h1#_top {
   background: var(--sl-color-black);
   box-shadow: 0 0 24px var(--ephyra-glow);
 }
+
+/* ---- The guide (src/content/docs/guide) ---- */
+
+/* Chart colours: primary and tertiary of each scheme (VISION.md §3), with the neutrals. */
+:root {
+  --radar-surface: #070b16;
+  --radar-grid: #2a3650;
+  --radar-text: #e4fbff;
+  --radar-muted: #9fb3c8;
+  --radar-handheld: #4fd8f0;
+  --radar-tv: #b9a3ff;
+  --ledger-taken: #4fd8f0; /* primary */
+  --ledger-reimplemented: #b9a3ff; /* tertiary */
+  --ledger-covered: #a3b0ff; /* secondary */
+  --ledger-reimplement: #4a3a9a; /* tertiaryContainer */
+  --ledger-skipped: #5a6b85; /* outline */
+}
+:root[data-theme='light'] {
+  --radar-surface: #f3fbff;
+  --radar-grid: #bcc9d8;
+  --radar-text: #0b1326;
+  --radar-muted: #3f4f64;
+  --radar-handheld: #007a8e;
+  --radar-tv: #6b4fd1;
+  --ledger-taken: #007a8e;
+  --ledger-reimplemented: #6b4fd1;
+  --ledger-covered: #3e4db8;
+  --ledger-reimplement: #eaddff;
+  --ledger-skipped: #6b7a90;
+}
+
+.radar,
+.ledger {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 16px;
+  background: var(--sl-color-black);
+}
+.radar svg {
+  display: block;
+  width: 100%;
+  max-width: 760px;
+  height: auto;
+  margin: 0 auto;
+}
+.radar figcaption,
+.ledger figcaption,
+.shots figcaption {
+  color: var(--sl-color-gray-2);
+  font-size: var(--sl-text-sm);
+}
+.radar details {
+  margin-top: 0.75rem;
+}
+
+.ledger-bar {
+  display: flex;
+  gap: 2px;
+  height: 20px;
+}
+.ledger-bar .seg {
+  flex-basis: 0;
+  min-width: 6px;
+  border-radius: 4px;
+}
+.ledger-legend {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+  display: grid;
+  gap: 0.35rem;
+}
+.ledger-legend li {
+  margin: 0;
+}
+.ledger-legend .key {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 3px;
+  margin-inline-end: 0.4rem;
+}
+.ledger-legend .meaning {
+  color: var(--sl-color-gray-2);
+}
+.ledger-legend .meaning::before {
+  content: '· ';
+}
+.v-taken { background: var(--ledger-taken); }
+.v-re-implemented { background: var(--ledger-reimplemented); }
+.v-covered { background: var(--ledger-covered); }
+.v-re-implement { background: var(--ledger-reimplement); }
+.v-skipped, .v-other { background: var(--ledger-skipped); }
+
+/* Feature lists and the feature table, from docs/features.yaml. */
+.feature-list {
+  list-style: none;
+  padding: 0;
+}
+.feature-list li {
+  margin: 0;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--sl-color-hairline);
+}
+.feature-list li p {
+  margin: 0.25rem 0 0;
+  color: var(--sl-color-gray-2);
+}
+.feature-list li p.setting {
+  font-size: var(--sl-text-sm);
+}
+.chip {
+  display: inline-block;
+  margin-inline-start: 0.5rem;
+  padding: 0.05rem 0.6rem;
+  border-radius: 999px;
+  background: var(--sl-color-gray-6);
+  color: var(--sl-color-gray-2);
+  font-size: var(--sl-text-xs);
+  vertical-align: 0.1em;
+}
+.feature-matrix td {
+  text-align: center;
+  width: 6.5rem;
+}
+.feature-matrix th[scope='row'] {
+  font-weight: 400;
+  text-align: start;
+}
+.feature-matrix tr.area th {
+  font-family: var(--ephyra-display);
+  text-align: start;
+  background: var(--sl-color-gray-6);
+}
+.feature-matrix td.yes {
+  color: var(--sl-color-accent);
+}
+.feature-matrix td.no {
+  color: var(--sl-color-gray-4);
+}
+
+/* Screenshots (Shots.astro). */
+.shots {
+  display: grid;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  align-items: start;
+}
+.shots-wide {
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+}
+.shots figure {
+  margin: 0;
+}
+.shots .shot-zoom {
+  display: block;
+  padding: 0;
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 16px;
+  overflow: hidden;
+  background: none;
+  cursor: zoom-in;
+}
+.shots .shot-zoom:hover,
+.shots .shot-zoom:focus-visible {
+  border-color: var(--sl-color-accent);
+  box-shadow: 0 0 24px var(--ephyra-glow);
+}
+.shots img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.shots figcaption {
+  margin-top: 0.4rem;
+  text-align: center;
+}
+dialog.shot-dialog {
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  background: none;
+  max-width: 96vw;
+  max-height: 94vh;
+  cursor: zoom-out;
+}
+dialog.shot-dialog img {
+  display: block;
+  max-width: 96vw;
+  max-height: 94vh;
+  width: auto;
+  height: auto;
+}
+dialog.shot-dialog::backdrop {
+  background: rgb(0 0 0 / 0.8);
+}

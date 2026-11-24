@@ -1,0 +1,27 @@
+---
+title: Look
+description: The visual identity of Ephyra, and the Material You option.
+---
+
+import FeatureList from '../../../components/FeatureList.astro';
+import Shots from '../../../components/Shots.astro';
+
+<Shots
+  kind="wide"
+  shots={[
+    { file: 'tv-home.webp', alt: 'TV Home with a full-bleed backdrop hero for the focused movie and a Suggestions row with the focused card glowing cyan', caption: 'Cyan marks what is focused' },
+    { file: 'tablet-movie.webp', alt: 'A movie page on a tablet: a full-width backdrop with the poster, title, metadata, Play button and overview beside it, and the cast row below', caption: 'Deep navy, Outfit and pill buttons' },
+  ]}
+/>
+
+## What you get
+
+<FeatureList area="look" />
+
+## Two colours with a meaning
+
+- **Cyan means alive**: what is playing, downloading or in focus.
+- **Violet means yours**: favorites, what you have watched, your ratings.
+
+Everything else stays navy and quiet, so the artwork carries the colour. The design is written
+down in the [identity document](/ephyra/dev/working/identity/).

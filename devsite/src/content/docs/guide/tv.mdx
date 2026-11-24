@@ -1,0 +1,41 @@
+---
+title: Android TV
+description: The Android TV app of Ephyra, built for the remote.
+---
+
+import FeatureList from '../../../components/FeatureList.astro';
+import Shots from '../../../components/Shots.astro';
+
+A separate app in every release (the `-tv-` files, see [Install](/ephyra/guide/install/)), for
+64-bit devices and for 32-bit boxes such as the Xiaomi Mi Box. It uses the same server and
+login as the phone app, and it is built for the remote: everything is reachable with the D-pad,
+and settings that only make sense on a phone are hidden.
+
+<Shots
+  kind="wide"
+  shots={[
+    { file: 'tv-home.webp', alt: 'TV Home with a full-bleed backdrop hero for the focused movie, its title logo and runtime, and a Suggestions row with the focused card glowing', caption: 'Home, with a hero and a glow for the focused item' },
+    { file: 'tv-library.webp', alt: 'Movies library grid with Hide watched and Sort by buttons, an A to Z bar on the right and a counter', caption: 'Library grid with an A to Z jump bar' },
+    { file: 'tv-season.webp', alt: 'A season with the details of the focused episode, Resume and Restart buttons, and a row of episodes', caption: 'Episodes open in their season' },
+    { file: 'tv-movie.webp', alt: 'A movie page on TV with the backdrop, ratings, tagline and overview, and Play, Watch trailer, Mark as played and Add to favorites buttons', caption: 'Movie page' },
+    { file: 'tv-player.webp', alt: 'Player overlay with the title, the clock, elapsed and remaining time, the seek bar and previous, pause, next, audio, subtitle and speed buttons', caption: 'Player overlay' },
+    { file: 'tv-trickplay.webp', alt: 'A trickplay thumbnail above the seek time while skipping forward', caption: 'Trickplay thumbnails while seeking' },
+    { file: 'tv-screensaver.webp', alt: 'Screensaver showing a full-screen backdrop of a movie with its title logo and a clock', caption: 'Screensaver with your library artwork' },
+  ]}
+/>
+
+## Built for the remote
+
+<FeatureList area="device" device="tv" />
+
+## Shared with the phone app
+
+Most of what the phone app adds is on TV too: Dolby Vision, the version picker, media
+segments, the "Up next" card, the sleep timer, subtitle styling and sync, Home rows you choose,
+hide watched, hide spoilers, fuller item pages and profiles with a PIN.
+
+Not on TV: downloads, changing the quality while playing, Cast, background audio and Material
+You colours. [What runs where](/ephyra/guide/devices/) has the whole list.
+
+The decisions behind the TV app are in the
+[TV decision records](/ephyra/dev/decisions/#tv).

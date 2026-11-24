@@ -1,20 +1,22 @@
 {
-  "name": "ephyra-devsite",
+  "name": "ephyra-site",
   "private": true,
   "type": "module",
   "scripts": {
     "sync": "node scripts/sync-docs.mjs",
     "dev": "node scripts/sync-docs.mjs && astro dev",
     "build": "node scripts/sync-docs.mjs && astro build && npm run model",
-    "model": "likec4 build ../docs/architecture/model --base /ephyra/dev/model/ -o dist/model --use-hash-history --theme dark --title \"Ephyra architecture\"",
+    "model": "likec4 build ../docs/architecture/model --base /ephyra/dev/model/ -o dist/dev/model --use-hash-history --theme dark --title \"Ephyra architecture\"",
     "check-model": "likec4 validate ../docs/architecture/model",
-    "pages": "node scripts/compose.mjs"
+    "pages": "node scripts/compose.mjs",
+    "readme-assets": "node scripts/readme-assets.mjs"
   },
   "devDependencies": {
     "@astrojs/starlight": "0.43.1",
     "astro": "7.4.13",
     "likec4": "1.61.0",
     "mermaid": "12.3.0",
+    "sharp": "0.35.5",
     "yaml": "2.9.1"
   }
 }
