@@ -1,6 +1,5 @@
 package dev.jdtech.jellyfin.architecture
 
-import com.lemonappdev.konsist.api.Konsist
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -161,25 +160,9 @@ class PureKotlinTest {
         val ALLOWED_PREFIXES =
             listOf("kotlin.", "kotlinx.", "java.", "javax.crypto.", "dev.jdtech.jellyfin.")
 
-        /**
-         * The imports of [files] (path to file), as (path, import name), read by Konsist's Kotlin
-         * parser, as R5 reads them: comments, strings and layout do not fool it. A wildcard import
-         * ends in `.*`, an alias is left out, backticks are dropped.
-         */
-        fun importsOf(files: Map<String, File>): List<Pair<String, String>> {
-            // Konsist resolves the paths against the root it finds itself.
-            val konsistRoot = File(Konsist.projectRootPath)
-            val paths = files.entries.associate { (path, file) -> file.canonicalPath to path }
-            return Konsist.scopeFromFiles(files.values.map { it.relativeTo(konsistRoot).path })
-                .files
-                .flatMap { file ->
-                    val path = paths[File(file.path).canonicalPath] ?: file.path
-                    file.imports.map {
-                        val name = if (it.isWildcard) it.name.removeSuffix(".*") + ".*" else it.name
-                        path to name.replace("`", "")
-                    }
-                }
-        }
+        /** See [KotlinImports.of]: R19 and R20 read imports the same way. */
+        fun importsOf(files: Map<String, File>): List<Pair<String, String>> =
+            KotlinImports.of(files)
 
         fun isAllowed(import: String): Boolean = ALLOWED_PREFIXES.any { import.startsWith(it) }
 

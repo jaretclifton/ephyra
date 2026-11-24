@@ -1,0 +1,12 @@
+# R20 (#965): what data imports of Android besides Room, SQLite and android.content.Context
+# (RoomAdapterTest). One line per import. Exact: a line that no longer applies fails until it is
+# deleted. A new line needs its issue and reason here, given in the PR that adds it.
+
+# #968: MediaRepository.getItemsPaging returns PagingData, so MediaRepositoryImpl builds the Pager
+# over ItemsPagingSource in data. #968 takes paging out of MediaRepository (and #966 moves
+# MediaRepositoryImpl out of data); whichever lands first deletes these lines.
+androidx.paging.Pager
+androidx.paging.PagingConfig
+androidx.paging.PagingData
+androidx.paging.PagingSource
+androidx.paging.PagingState

@@ -74,6 +74,9 @@ dependencies {
     // server, so they pin what goes over the wire end to end. Tests only: the adapter's own code
     // cannot see `data`.
     testImplementation(projects.data)
+    // #965: the tests build the device profile from the real codec probe (DeviceCodecProbe) under
+    // Robolectric, as the app does. Tests only: the adapter's code sees only DeviceCodecs.
+    testImplementation(projects.device)
     // StandInServer builds the real AppPreferences; production code reads settings through ports
     // (R18).
     testImplementation(projects.settings)

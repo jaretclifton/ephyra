@@ -6,9 +6,10 @@ import kotlin.test.assertTrue
 
 /**
  * R18 (#733). An adapter implements the ports of `domain` and `application` and knows nothing of
- * the features that use them: `data`, `server/jellyfin` and `ratings/mdblist` depend on no feature
- * module. What an adapter needs from the settings it reads through a port (`NetworkTimeouts`, R17).
- * A test configuration is allowed: an adapter's test may build a feature's class.
+ * the features that use them: `data`, `server/jellyfin`, `ratings/mdblist` and `device` (#965)
+ * depend on no feature module. What an adapter needs from the settings it reads through a port
+ * (`NetworkTimeouts`, R17). A test configuration is allowed: an adapter's test may build a
+ * feature's class.
  *
  * `server/jellyfin` depended on `settings` for the three default timeouts until they moved to
  * `NetworkTimeouts`.
@@ -54,7 +55,7 @@ class AdapterDependencyTest {
     }
 
     private companion object {
-        val ADAPTER_MODULES = setOf("data", "server/jellyfin", "ratings/mdblist")
+        val ADAPTER_MODULES = setOf("data", "server/jellyfin", "ratings/mdblist", "device")
 
         /** The feature layer, as docs/architecture/modules.md has it. */
         val FEATURE_MODULES =
