@@ -40,6 +40,7 @@ from Findroid; that happens beforehand, in its own PR (see the `upstream-sync` s
 git fetch origin
 git switch --detach origin/main
 gh run list --repo midasvo/ephyra --branch main --limit 3   # main must be green
+last=$(git tag -l 'v*' --sort=-v:refname | grep -E '^v([2-9]|[1-9][0-9]+)\.[0-9]+\.[0-9]+$' | head -1)   # the previous release
 ```
 
 Work from `origin/main`, not the local `main` branch: in a worktree `git switch main` fails,
@@ -84,7 +85,6 @@ After publishing, watch the issues for a day.
 
 ```bash
 next=$(.claude/skills/release/scripts/next-version.sh)   # prints the reason on stderr
-last=$(git tag -l 'v*' --sort=-v:refname | grep -E '^v([2-9]|[1-9][0-9]+)\.[0-9]+\.[0-9]+$' | head -1)
 git log --no-merges --format='- %s' "${last:-v1.2.0-ce.6}"..HEAD
 IFS=. read -r major minor patch <<< "$next"
 code=$((major * 1000000 + minor * 10000 + patch * 100))
@@ -141,7 +141,7 @@ notes **right away**: `release.yml` appends the APK guide to those notes and att
 when its build finishes, a few minutes later.
 
 `--generate-notes` adds GitHub's "What's Changed" list of PRs and new contributors below the
-changelog. Always pass `--notes-start-tag "$last"` with it (`$last` from step 2, the previous
+changelog. Always pass `--notes-start-tag "$last"` with it (`$last` from step 1, the previous
 release): on its own GitHub compares with Findroid's `v1.0.2`, inherited with the fork, and lists
 every PR since the fork.
 

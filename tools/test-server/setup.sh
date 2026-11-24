@@ -55,20 +55,32 @@ case "${1:-up}" in
     # Players are tested over https too (#960): a quick tunnel needs no account, no certificate
     # and no open port. The address is public for as long as the tunnel runs, and it is a new
     # one every time.
-    docker rm -f "$TUNNEL" >/dev/null 2>&1 || true
+    # An old tunnel goes first, also for a new start. Only "there is none" is fine: a tunnel
+    # that could not be removed is still public.
+    if docker ps -a --filter "name=^$TUNNEL\$" --format '{{.Names}}' | grep -q .; then
+      docker rm -f "$TUNNEL" >/dev/null ||
+        { echo "could not remove $TUNNEL: it may still be public" >&2; exit 1; }
+    fi
     if [ "${2:-}" = stop ]; then echo "closed $TUNNEL"; exit 0; fi
     docker ps --filter "name=^$NAME\$" --format '{{.Names}}' | grep -q . ||
       { echo "$NAME is not running: run setup.sh first" >&2; exit 1; }
-    docker run -d --name "$TUNNEL" --network host "$TUNNEL_IMAGE" \
-      tunnel --no-autoupdate --url "http://localhost:$PORT" >/dev/null
+    # In the server's own network namespace, where Jellyfin listens on 8096 whatever the host
+    # port is. Host networking would need a setting of its own on Docker Desktop.
+    docker run -d --name "$TUNNEL" --network "container:$NAME" "$TUNNEL_IMAGE" \
+      tunnel --no-autoupdate --url "http://localhost:8096" >/dev/null
     # First the tunnel has to say it is connected.
     for _ in $(seq 45); do
       docker logs "$TUNNEL" 2>&1 | grep -q 'Registered tunnel connection' && break
       sleep 2
     done
     url=$(docker logs "$TUNNEL" 2>&1 | grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' | head -1 || true)
-    docker logs "$TUNNEL" 2>&1 | grep -q 'Registered tunnel connection' && [ -n "$url" ] ||
-      { echo "the tunnel did not connect: docker logs $TUNNEL" >&2; exit 1; }
+    if ! docker logs "$TUNNEL" 2>&1 | grep -q 'Registered tunnel connection' || [ -z "$url" ]; then
+      # Not left running: it has no address anyone was told, and it may still get one.
+      echo "the tunnel did not connect; its last lines:" >&2
+      docker logs --tail 5 "$TUNNEL" >&2 || true
+      docker rm -f "$TUNNEL" >/dev/null 2>&1 || echo "and $TUNNEL could not be removed" >&2
+      exit 1
+    fi
     # The name exists some seconds later. Ask Cloudflare's resolver over https until it does:
     # a lookup through the machine's own resolver before that would be remembered as "not
     # found" for minutes, here and on the emulators.
