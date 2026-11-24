@@ -1,7 +1,7 @@
-Ratings from IMDb and others on movie and show pages, a default streaming quality per network, and many fixes.
+Ratings from IMDb and others on movie and show pages, and many fixes.
 
 - External ratings (off by default, with your own MDBList key).
-- A default streaming quality for Wi-Fi and one for mobile data.
 - The server shows the right position and version of what plays.
 - Switching profiles no longer shows the previous user for a moment.
-- Interrupted downloads resume when the server is back.
+- Trickplay previews match the version that plays.
+- The "Up next" card and the player queue hide spoilers.
