@@ -113,6 +113,11 @@ features:
     area: playback
     title: Change the video quality while playing
     on: [phone, tablet]
+  - id: quality-default
+    area: playback
+    title: A default streaming quality per network
+    text: One for Wi-Fi and one for mobile data. A quality picked in the player is saved for the kind of network you are on.
+    on: [phone, tablet]
   - id: next-season
     area: playback
     title: Plays on into the next season
@@ -225,6 +230,12 @@ features:
     text: Critic score, tagline, studios, every trailer, extras, collections and "More like this", each with a switch.
     on: [phone, tablet, tv]
     setting: Settings → Interface → Detail pages
+  - id: external-ratings
+    area: pages
+    title: Ratings from IMDb, Rotten Tomatoes, Metacritic and Letterboxd
+    text: On movie and show pages, through MDBList with a free key of your own.
+    on: [phone, tablet, tv]
+    optIn: true
   - id: media-badges
     area: pages
     title: HDR10+ and Dolby Atmos badges

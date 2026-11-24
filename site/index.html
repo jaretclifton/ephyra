@@ -134,7 +134,7 @@
             <li>Platform decoder first (Atmos), ffmpeg if a decoder fails.</li>
             <li>PGS, VobSub and DVB subtitles without transcoding. Subtitle colour, outline, font and size, on ExoPlayer and <a href="https://midasvo.nl/libmpv-android/">mpv</a>, with a switch to override a track's own styling.</li>
             <li><strong>Subtitle sync</strong> during playback: move subtitles earlier or later, or line one up with what is said.</li>
-            <li>Version picker before playing, quality switch during playback.</li>
+            <li>Version picker before playing, quality switch during playback, and a default quality for Wi-Fi and one for mobile data.</li>
             <li>Audio and subtitle choice remembered per series and per user.</li>
             <li><strong>Intros and credits:</strong> skip, ask or ignore per kind of segment, with the segments marked on the seek bar.</li>
             <li>Plays on into the next season. Shuffle a show or a season. Chapter list. "Still watching?" after a run of autoplayed episodes.</li>
@@ -183,6 +183,7 @@
             <li>Long-press to copy text on detail screens. Option to hide cast and crew.</li>
             <li>HDR10+ and Dolby Atmos badges on movie and episode pages.</li>
             <li>Movie and show pages with the critic score, tagline, studios, every trailer, extras, collections and "More like this", each with a switch.</li>
+            <li><strong>External ratings</strong> (opt-in): the scores of IMDb, Rotten Tomatoes, Metacritic and Letterboxd on movie and show pages, through MDBList with your own key.</li>
             <li><strong>Profiles:</strong> user faces, default avatars and one-tap switching between users. A profile can be locked with a PIN, or a pattern on the phone, kept on the device.</li>
             <li><strong>Its own look:</strong> deep navy, cyan for what is playing, downloading or focused, violet for what is yours. Material You colours are an option.</li>
           </ul>
@@ -348,7 +349,7 @@
         </div>
         <div class="card">
           <h3>Is it free, and what does it collect?</h3>
-          <p>Ephyra is free and licensed under the GPLv3, without ads or tracking. It collects nothing and only talks to the Jellyfin servers you add. See the <a href="privacy.html">privacy policy</a>.</p>
+          <p>Ephyra is free and licensed under the GPLv3, without ads or tracking. It collects nothing. It talks to the Jellyfin servers you add, and to MDBList only if you switch on external ratings. See the <a href="privacy.html">privacy policy</a>.</p>
         </div>
         <div class="card">
           <h3>Where do I read more, or report a problem?</h3>
@@ -363,7 +364,7 @@
 <footer>
   <div class="wrap">
     <div>
-      <p>Ephyra collects nothing and only talks to the Jellyfin servers you add. <a href="privacy.html">Privacy policy</a>.</p>
+      <p>Ephyra collects nothing. It talks to the Jellyfin servers you add, and to MDBList only if you switch on external ratings. <a href="privacy.html">Privacy policy</a>.</p>
       <p>Forked from <a href="https://github.com/jarnedemeulemeester/findroid">Findroid</a> by Jarne Demeulemeester and its contributors. Licensed under the <a href="https://github.com/midasvo/ephyra/blob/main/LICENSE">GPLv3</a>.</p>
       <p>The mpv player comes from <a href="https://midasvo.nl/libmpv-android/">libmpv for Android</a>, Ephyra's own build of mpv and FFmpeg.</p>
       <p>An ephyra is a young jellyfish, the animal in the Jellyfin logo.</p>
