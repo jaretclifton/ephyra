@@ -1,0 +1,4 @@
+Before reading code for a task, find its area: run the start-work skill (docs/areas.yaml, then the area's guide in docs/areas/).
+Where the guide and the code differ, the code is right.
+At the end, say what the guide missed or got wrong, and fix it in the same pull request.
+A pull request that changes a file a guide lists updates the guide or says "Docs: no change needed — <reason>".

@@ -187,6 +187,8 @@ class JellyfinPlayback(
                     isMuted = false,
                     playMethod = report.playMethod(),
                     playSessionId = report.playSessionId,
+                    // CE (#909): the version that plays; without it the server shows the first.
+                    mediaSourceId = report.mediaSourceId?.asString(),
                     repeatMode = RepeatMode.REPEAT_NONE,
                     playbackOrder = PlaybackOrder.DEFAULT,
                     // CE (#868): where the player is, as the web client sends it. Without it the
@@ -207,6 +209,7 @@ class JellyfinPlayback(
                     isMuted = false,
                     playMethod = report.playMethod(),
                     playSessionId = report.playSessionId,
+                    mediaSourceId = report.mediaSourceId?.asString(),
                     repeatMode = RepeatMode.REPEAT_NONE,
                     playbackOrder = PlaybackOrder.DEFAULT,
                     positionTicks = report.positionTicks,
@@ -224,6 +227,7 @@ class JellyfinPlayback(
                     failed = false,
                     // With it the server ends the item's transcode now, not a minute later.
                     playSessionId = report.playSessionId,
+                    mediaSourceId = report.mediaSourceId?.asString(),
                 )
             )
         }

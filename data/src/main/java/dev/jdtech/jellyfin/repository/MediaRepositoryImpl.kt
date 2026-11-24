@@ -715,8 +715,12 @@ class MediaRepositoryImpl(
         server.playback.announceCapabilities()
     }
 
-    override fun setPlaySession(itemId: ItemId, playSessionId: String?, transcodes: Boolean) =
-        playSessions.onPlaybackInfo(itemId, playSessionId, transcodes)
+    override fun setPlaySession(
+        itemId: ItemId,
+        playSessionId: String?,
+        transcodes: Boolean,
+        mediaSourceId: MediaSourceId?,
+    ) = playSessions.onPlaybackInfo(itemId, playSessionId, transcodes, mediaSourceId)
 
     override suspend fun postPlaybackStart(
         itemId: ItemId,
@@ -741,6 +745,7 @@ class MediaRepositoryImpl(
                         isPaused = false,
                         transcoded = report.transcoded,
                         playSessionId = report.playSessionId,
+                        mediaSourceId = report.mediaSourceId,
                     )
                 )
             }
@@ -764,6 +769,8 @@ class MediaRepositoryImpl(
                     thresholds = resumeThresholds.get(currentServerId()),
                 )
             val stop = suspend {
+                // CE (#909): the session and the version of one stream, read once.
+                val stream = playSessions.streamOf(itemId)
                 server.playback.reportStopped(
                     PlaybackReport(
                         itemId = itemId,
@@ -771,7 +778,8 @@ class MediaRepositoryImpl(
                         isPaused = false,
                         transcoded = false,
                         // With it the server ends the item's transcode now, not a minute later.
-                        playSessionId = playSessions.sessionOf(itemId),
+                        playSessionId = stream?.playSessionId,
+                        mediaSourceId = stream?.mediaSourceId,
                     )
                 )
             }
@@ -809,6 +817,7 @@ class MediaRepositoryImpl(
                             isPaused = isPaused,
                             transcoded = report.transcoded,
                             playSessionId = report.playSessionId,
+                            mediaSourceId = report.mediaSourceId,
                         )
                     )
                 },
@@ -846,25 +855,32 @@ class MediaRepositoryImpl(
         withContext(Dispatchers.IO) {
             // CE (#635): the time of the mark, taken before the request (see markedUnplayed).
             val markedAt = System.currentTimeMillis()
+            // CE (#907): the user who marked it, read once: a profile switch while the request
+            // waits must not clear the other user's date.
+            val userId = currentUserId
             val reached =
-                reportUserData(itemId, report = { server.userData.setPlayed(itemId, false) }) {
+                reportUserData(
+                    itemId,
+                    report = { server.userData.setPlayed(itemId, false) },
+                    userId = userId,
+                ) {
                     it.markedUnplayed(markedAt)
                 }
-            database.updatePlayState(currentUserId, itemId) { it.afterUnplayedReport(reached) }
+            database.updatePlayState(userId, itemId) { it.afterUnplayedReport(reached) }
         }
     }
 
     /**
      * See the top-level [writeAndReport]: the play state [change] computes is written and marked
      * before [report]. #898: the rules are in [PlayState]; this reads the row and writes the
-     * result.
+     * result. [userId] is the user the change is for, the current one unless the caller read it.
      */
     private suspend fun reportUserData(
         itemId: ItemId,
         report: suspend () -> Unit,
+        userId: UserId = currentUserId,
         change: (PlayState) -> PlayState,
     ): Boolean {
-        val userId = currentUserId
         return writeAndReport(
             database,
             syncRequester,

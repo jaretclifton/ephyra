@@ -287,6 +287,29 @@ class ServerReachabilityMonitorTest {
     }
 
     @Test
+    fun `a request answered while the server counts as unreachable confirms it too (#912)`() =
+        runTest {
+            probe = { false }
+            val monitor = monitor()
+            var confirmed = 0
+            backgroundScope.launch { monitor.serverConfirmed.collect { confirmed++ } }
+            monitor.check()
+            runCurrent()
+            assertTrue(monitor.state.value.unreachable)
+
+            monitor.onStarted()
+            monitor.onAnswered()
+            runCurrent()
+            assertEquals(1, confirmed)
+
+            // Answers from a server that is there already say nothing new.
+            monitor.onStarted()
+            monitor.onAnswered()
+            runCurrent()
+            assertEquals(1, confirmed)
+        }
+
+    @Test
     fun `an answer about the old server is dropped and the new one is asked`() = runTest {
         var reached = false
         probe = {

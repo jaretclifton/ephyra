@@ -1,6 +1,7 @@
 package dev.jdtech.jellyfin.repository
 
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.models.toMediaSourceId
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import org.junit.jupiter.api.Test
@@ -18,6 +19,37 @@ class PlaySessionsTest {
         // Still there after a stop: Previous can go back to the stream the player already has.
         assertEquals("abc", sessions.sessionOf(item))
         assertNull(sessions.sessionOf(other))
+    }
+
+    @Test
+    fun `the version of the stream is kept for the reports, and replaced by the next stream`() {
+        // #909: a direct play keeps no session, but still its version.
+        sessions.onPlaybackInfo(item, null, transcodes = false, "360p".toMediaSourceId())
+        assertEquals("360p".toMediaSourceId(), sessions.sourceOf(item))
+        assertNull(sessions.sourceOf(other))
+
+        sessions.onPlaybackInfo(item, "abc", transcodes = true, "720p".toMediaSourceId())
+        assertEquals("720p".toMediaSourceId(), sessions.sourceOf(item))
+
+        // A stream without a known version names none, rather than the one before it.
+        sessions.onPlaybackInfo(item, null, transcodes = false)
+        assertNull(sessions.sourceOf(item))
+    }
+
+    @Test
+    fun `a report takes the session and the version of the same stream`() {
+        sessions.onPlaybackInfo(item, "abc", transcodes = true, "360p".toMediaSourceId())
+
+        assertEquals(
+            PlayReport(transcoded = true, "abc", "360p".toMediaSourceId()),
+            sessions.playReport(item, true),
+        )
+        assertEquals(PlayingStream("abc", "360p".toMediaSourceId()), sessions.streamOf(item))
+        // Played directly: no session, the version still.
+        assertEquals(
+            PlayReport(transcoded = false, null, "360p".toMediaSourceId()),
+            sessions.playReport(item, false),
+        )
     }
 
     @Test

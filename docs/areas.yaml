@@ -10,7 +10,7 @@
 #   id        the area's name, also the guide's file name (docs/areas/<id>.md)
 #   title     shown on the site
 #   summary   one sentence: what the area is
-#   keywords  the words someone uses for it, English and Dutch: features, symptoms, class names
+#   keywords  the words someone uses for it, in English: features, symptoms, class names
 #   paths     3 to 8 files or folders to open first, most important first. Real paths from the
 #             repository root, never a bare module (`core/`) unless the module is the area
 #   docs      the docs to read, most important first (optional; the guide is not listed)
@@ -24,7 +24,7 @@ areas:
   - id: subtitles-and-tracks
     title: Subtitles and tracks
     summary: "Choosing, styling and timing audio and subtitle streams in the player, on both engines."
-    keywords: [subtitle, subtitles, captions, cc, track, tracks, audio track, audio language, subtitle language, subtitle delay, subtitle sync, subtitle style, ass override, pgs, vobsub, image subtitles, ass, srt, forced, sdh, external subtitle, series choice, ondertitel, ondertiteling, ondertitels, spoor, sporen, audiospoor, taal, vertraging, verspringen, springen, jump, out of sync, TrackPicks, SeriesTrackPreference, SubtitleFiles, MpvSubtitleOptions]
+    keywords: [subtitle, subtitles, captions, cc, track, tracks, audio track, audio language, subtitle language, subtitle delay, subtitle sync, subtitle style, ass override, pgs, vobsub, image subtitles, ass, srt, forced, sdh, external subtitle, series choice, jump, out of sync, TrackPicks, SeriesTrackPreference, SubtitleFiles, MpvSubtitleOptions]
     paths:
       - player/local/src/main/java/dev/jdtech/jellyfin/player/local/presentation/PlayerViewModel.kt
       - player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/SeriesTrackPreference.kt
@@ -43,7 +43,7 @@ areas:
   - id: player
     title: Player
     summary: "The player as a whole: ExoPlayer and mpv behind `PlayerEngine`, `PlayerViewModel`, the play queue, versions and quality switches, trickplay and the media session."
-    keywords: [player, speler, afspelen, exoplayer, mpv, engine, backend, decoder, hdr, refresh rate, trickplay, seek preview, scrubbing, seek, quality, version, versions, bitrate, transcode, direct play, queue, playlist, next episode, previous episode, up next, autoplay, shuffle, media session, notification, background audio, picture in picture, pip, sleep timer, still watching, chapters, skip intro, segments, buffering, stall, black screen, kwaliteit, versie, volgende aflevering, wachtrij, doorspoelen, voorvertoning, hapert, PlayerViewModel, PlayerEngine, onMediaItemTransition, PlaylistManager, StreamSwitches, ResolvePlayback, TrickplayLoader, PlaybackService]
+    keywords: [player, exoplayer, mpv, engine, backend, decoder, hdr, refresh rate, trickplay, seek preview, scrubbing, seek, quality, version, versions, bitrate, transcode, direct play, queue, playlist, next episode, previous episode, up next, autoplay, shuffle, media session, notification, background audio, picture in picture, pip, sleep timer, still watching, chapters, skip intro, segments, buffering, stall, black screen, PlayerViewModel, PlayerEngine, onMediaItemTransition, PlaylistManager, StreamSwitches, ResolvePlayback, TrickplayLoader, PlaybackService]
     paths:
       - player/local/src/main/java/dev/jdtech/jellyfin/player/local/presentation/PlayerViewModel.kt
       - player/local/src/main/java/dev/jdtech/jellyfin/player/local/engine/
@@ -62,7 +62,7 @@ areas:
   - id: playback-reporting
     title: Playback reporting
     summary: "Telling the server what plays (start, progress and stop reports, the play session), so its dashboard, resume position and played state follow."
-    keywords: [playback report, playback reports, reporting, report, start report, stop report, progress report, play session, playSessionId, now playing, dashboard, activity, server shows, media source id, reported version, chosen version, default version, play method, second start, Sessions/Playing, voortgang, rapportage, melding aan de server, PlaybackReporter, PlaybackStartGate, PlaybackStopReport, postPlaybackStart, postPlaybackStop, reportStart, reportStopped]
+    keywords: [playback report, playback reports, reporting, report, start report, stop report, progress report, play session, playSessionId, now playing, dashboard, activity, server shows, media source id, reported version, chosen version, default version, play method, second start, Sessions/Playing, PlaybackReporter, PlaybackStartGate, PlaybackStopReport, postPlaybackStart, postPlaybackStop, reportStart, reportStopped]
     paths:
       - player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/PlaybackReporter.kt
       - player/local/src/main/java/dev/jdtech/jellyfin/player/local/domain/PlaybackStartGate.kt
@@ -81,7 +81,7 @@ areas:
   - id: downloads
     title: Downloads
     summary: "Keeping items on the device: the queue, the engine, smart downloads and playing them without the server."
-    keywords: [download, downloads, downloading, downloaded, queue, smart download, storage, offline, without server, resume download, download quality, failed download, retry, unreachable, cut off, downloaden, gedownload, wachtrij, opslag, hervat, mislukt, DownloadQueue, DownloaderImpl, MediaDownloadEngine, DownloadState, DownloadStore, StoredFallback]
+    keywords: [download, downloads, downloading, downloaded, queue, smart download, storage, offline, without server, resume download, download quality, failed download, retry, unreachable, cut off, DownloadQueue, DownloaderImpl, MediaDownloadEngine, DownloadState, DownloadStore, StoredFallback]
     paths:
       - downloads/src/main/java/dev/jdtech/jellyfin/core/presentation/downloader/DownloadQueue.kt
       - downloads/src/main/java/dev/jdtech/jellyfin/utils/DownloaderImpl.kt
@@ -100,7 +100,7 @@ areas:
   - id: user-data
     title: User data and sync
     summary: "Played, favourite, resume position and last played: the rules in `PlayState`, the repository's writes, and the sync of changes made while the server was away."
-    keywords: [user data, userdata, played, unplayed, watched, unwatched, mark as played, mark as unplayed, mark as watched, favourite, favorite, favourites, resume position, last played, last-played date, progress bar, sync, toBeSynced, pending user data, merge, gezien, bekeken, ongezien, niet gezien, favoriet, favorieten, hervatpositie, verder kijken positie, synchroniseren, PlayState, PlayStop, SyncMerge, PendingUserDataStore, UserDataSync, SyncWorker, UserDataReport, markAsPlayed, markAsUnplayed, markAsFavorite]
+    keywords: [user data, userdata, played, unplayed, watched, unwatched, mark as played, mark as unplayed, mark as watched, favourite, favorite, favourites, resume position, last played, last-played date, progress bar, sync, toBeSynced, pending user data, merge, PlayState, PlayStop, SyncMerge, PendingUserDataStore, UserDataSync, SyncWorker, UserDataReport, markAsPlayed, markAsUnplayed, markAsFavorite]
     paths:
       - domain/src/main/kotlin/dev/jdtech/jellyfin/domain/userdata/PlayState.kt
       - domain/src/main/kotlin/dev/jdtech/jellyfin/domain/userdata/SyncMerge.kt
@@ -118,7 +118,7 @@ areas:
   - id: cast
     title: Cast
     summary: "Google Cast in the proprietary flavour: the device sheet, the mini player, playback on a receiver; stubs in libre."
-    keywords: [cast, casting, chromecast, google cast, receiver, cast button, mini player, device sheet, proprietary, play services, casten, CastViewModel, CastPlayerController, CastSessionManager, CastHost, FakeCast]
+    keywords: [cast, casting, chromecast, google cast, receiver, cast button, mini player, device sheet, proprietary, play services, CastViewModel, CastPlayerController, CastSessionManager, CastHost, FakeCast]
     paths:
       - player/cast/src/main/java/dev/jdtech/jellyfin/player/cast/presentation/CastViewModel.kt
       - player/cast/src/main/java/dev/jdtech/jellyfin/player/cast/CastPlayerController.kt
@@ -136,7 +136,7 @@ areas:
   - id: setup-and-servers
     title: Setup, servers and users
     summary: "Finding a server, signing in, adding and switching servers, addresses and users."
-    keywords: [setup, login, log in, sign in, sign out, server, add server, address, user, switch server, switch user, onboarding, welcome, quick connect, discovery, server session, token, reachability, unreachable banner, local network permission, inloggen, aanmelden, uitloggen, server toevoegen, adres, gebruiker, wisselen, SetupRepositoryImpl, ServerConnector, ActiveServer, CurrentMediaServer, ServerReachability, ServerSessionKeeper]
+    keywords: [setup, login, log in, sign in, sign out, server, add server, address, user, switch server, switch user, onboarding, welcome, quick connect, discovery, server session, token, reachability, unreachable banner, local network permission, SetupRepositoryImpl, ServerConnector, ActiveServer, CurrentMediaServer, ServerReachability, ServerSessionKeeper]
     paths:
       - setup/src/main/java/dev/jdtech/jellyfin/setup/data/SetupRepositoryImpl.kt
       - setup/src/main/java/dev/jdtech/jellyfin/setup/presentation/
@@ -154,7 +154,7 @@ areas:
   - id: profiles
     title: Profiles and PIN
     summary: "The users on one device as profiles: switching between them and the PIN or pattern lock."
-    keywords: [profile, profiles, profile switch, switch profile, profile picker, pin, pin code, pattern, lock, profile lock, locked, kids, profiel, profielen, profiel wisselen, pincode, patroon, vergrendeling, slot, kinderen, ProfileLock, ProfilePinHasher, ProfilePinGateViewModel, ProfileBottomSheet]
+    keywords: [profile, profiles, profile switch, switch profile, profile picker, pin, pin code, pattern, lock, profile lock, locked, kids, ProfileLock, ProfilePinHasher, ProfilePinGateViewModel, ProfileBottomSheet]
     paths:
       - application/src/main/kotlin/dev/jdtech/jellyfin/profilelock/ProfileLock.kt
       - application/src/main/kotlin/dev/jdtech/jellyfin/profilelock/ProfilePinHasher.kt
@@ -173,7 +173,7 @@ areas:
   - id: home-and-library
     title: Home and library
     summary: "The home rows, the libraries and collections, and the item screens (movie, show, season, episode, person)."
-    keywords: [home, home screen, home rows, continue watching, next up, latest, carousel, library, libraries, collection, movie, show, series, season, episode, item screen, details, person, actor, favourites screen, sort, letter index, poster, artwork, startscherm, verder kijken, bibliotheek, film, serie, seizoen, aflevering, collectie, acteur, sorteren, HomeViewModel, LibraryViewModel, ShowViewModel, ItemButtonsBar, CatalogPort, ratings, external ratings, imdb, rotten tomatoes, metacritic, letterboxd, mdblist, beoordelingen, ExternalRatingsLoader, ExternalRatings]
+    keywords: [home, home screen, home rows, continue watching, next up, latest, carousel, library, libraries, collection, movie, show, series, season, episode, item screen, details, person, actor, favourites screen, sort, letter index, poster, artwork, film, HomeViewModel, LibraryViewModel, ShowViewModel, ItemButtonsBar, CatalogPort, ratings, external ratings, imdb, rotten tomatoes, metacritic, letterboxd, mdblist, beoordelingen, ExternalRatingsLoader, ExternalRatings]
     paths:
       - modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/home/HomeViewModel.kt
       - modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/library/LibraryViewModel.kt
@@ -190,7 +190,7 @@ areas:
   - id: search
     title: Search
     summary: "Searching the server's catalog, on phone and TV."
-    keywords: [search, search bar, find, query, results, zoeken, zoekbalk, zoekresultaten, vinden, SearchViewModel, SearchBar, MediaScreen]
+    keywords: [search, search bar, find, query, results, SearchViewModel, SearchBar, MediaScreen]
     paths:
       - modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/search/SearchViewModel.kt
       - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/MediaScreen.kt
@@ -206,7 +206,7 @@ areas:
   - id: settings
     title: Settings
     summary: "`AppPreferences` (over SharedPreferences), the settings tree and its screens on phone and TV."
-    keywords: [settings, setting, add a setting, preference, preferences, option, toggle, datastore, instellingen, instelling, voorkeur, voorkeuren, optie, schakelaar, AppPreferences, SettingsViewModel, AppPreferencesPorts]
+    keywords: [settings, setting, add a setting, preference, preferences, option, toggle, datastore, AppPreferences, SettingsViewModel, AppPreferencesPorts]
     paths:
       - settings/src/main/java/dev/jdtech/jellyfin/settings/domain/AppPreferences.kt
       - settings/src/main/java/dev/jdtech/jellyfin/settings/presentation/settings/SettingsViewModel.kt
@@ -222,7 +222,7 @@ areas:
   - id: tv
     title: Android TV
     summary: "The TV app: its own screens next to upstream's, D-pad focus, the TV player, Watch Next and the screensaver."
-    keywords: [tv, android tv, google tv, fire tv, leanback, d-pad, dpad, remote, focus, focus jumps, focus lost, focus restore, watch next, screensaver, drawer, side navigation, theme music, televisie, tv-app, afstandsbediening, focus springt, springt weg, focus kwijt, EphyraFocus, FocusPosition, TvPlayerScreen, WatchNextPublisher]
+    keywords: [tv, android tv, google tv, fire tv, leanback, d-pad, dpad, remote, focus, focus jumps, focus lost, focus restore, watch next, screensaver, drawer, side navigation, theme music, EphyraFocus, FocusPosition, TvPlayerScreen, WatchNextPublisher]
     paths:
       - app/tv/src/main/java/dev/jdtech/jellyfin/NavigationRoot.kt
       - app/tv/src/main/java/dev/jdtech/jellyfin/ce/presentation/main/MainScreen.kt
@@ -239,7 +239,7 @@ areas:
   - id: tablet-layouts
     title: Tablet layouts
     summary: "The phone app at tablet and foldable width: wide item layouts, grids, content widths."
-    keywords: [tablet, foldable, fold, large screen, wide, wide layout, width, landscape, grid, columns, two pane, list detail, max width, rooster, raster, breed, te breed, kolommen, liggend, groot scherm, vouwbaar, WidthClass, useWideItemLayout, WideWindow]
+    keywords: [tablet, foldable, fold, large screen, wide, wide layout, width, landscape, grid, columns, two pane, list detail, max width, WidthClass, useWideItemLayout, WideWindow]
     paths:
       - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/utils/Layout.kt
       - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/utils/GridCellsAdaptiveWithMinColumns.kt
@@ -256,7 +256,7 @@ areas:
   - id: performance
     title: Performance
     summary: "Startup and scrolling speed: the baseline profiles, the startup benchmark and R8."
-    keywords: [performance, slow, slow start, startup, cold start, start time, jank, stutter, scrolling, frame drops, baseline profile, benchmark, macrobenchmark, r8, proguard, traag, langzaam, start traag, opstarten, haperen, schokkerig, scrollen, prestaties, StartupBenchmark, BaselineProfileGenerator]
+    keywords: [performance, slow, slow start, startup, cold start, start time, jank, stutter, scrolling, frame drops, baseline profile, benchmark, macrobenchmark, r8, proguard, StartupBenchmark, BaselineProfileGenerator]
     paths:
       - baselineprofile/src/main/kotlin/dev/jdtech/jellyfin/baselineprofile/Journey.kt
       - baselineprofile/src/main/kotlin/dev/jdtech/jellyfin/baselineprofile/StartupBenchmark.kt
@@ -272,7 +272,7 @@ areas:
   - id: architecture
     title: Architecture
     summary: "Ports and adapters: the modules, the ports and stores, the Konsist rules, and how to add a port, a store, a module or a rule."
-    keywords: [architecture, ports and adapters, hexagonal, ddd, port, new port, store, new store, adapter, module, new module, rule, konsist, baseline, dependency, boundary, contract test, poort, nieuwe poort, nieuwe module, regel, architectuur, MediaServer, MediaRepository, ServerStore, FakeMediaServer]
+    keywords: [architecture, ports and adapters, hexagonal, ddd, port, new port, store, new store, adapter, module, new module, rule, konsist, baseline, dependency, boundary, contract test, MediaServer, MediaRepository, ServerStore, FakeMediaServer]
     paths:
       - domain/src/main/kotlin/dev/jdtech/jellyfin/domain/ports/
       - application/src/main/kotlin/dev/jdtech/jellyfin/repository/
@@ -289,9 +289,10 @@ areas:
 
   - id: test-environment
     title: Test server and emulators
-    summary: "The throwaway Jellyfin test server and the emulators the app is tested on."
-    keywords: [test server, testserver, test user, testgebruiker, jellyfin server, docker, wsl, emulator, emulators, avd, device, test device, phone emulator, tv emulator, iptables, forward.py, set up, opzetten, ontwikkelomgeving, development environment, test-server, test-devices]
+    summary: "Setting up a machine (what to install, scripts/doctor.sh), the throwaway Jellyfin test server and the emulators the app is tested on."
+    keywords: [test server, testserver, test user, jellyfin server, docker, wsl, emulator, emulators, avd, device, test device, phone emulator, tv emulator, iptables, forward.py, set up, development environment, test-server, test-devices, get started, getting started, doctor, install, new machine, jdk, android sdk, android_home, local.properties, cloud, devcontainer, testcontainers]
     paths:
+      - scripts/doctor.sh
       - tools/test-server/setup.sh
       - tools/test-server/user.py
       - tools/test-server/forward.py
@@ -299,12 +300,12 @@ areas:
       - .claude/skills/test-devices/SKILL.md
       - scripts/avds.sh
       - scripts/tv-dpad.sh
-    docs: [docs/dev-environment.md, docs/track-test-series.md]
+    docs: [docs/get-started.md, docs/dev-environment.md, docs/track-test-series.md]
 
   - id: identity
     title: Identity and design
     summary: "Colours, type, shape, motion and glow; the launcher icons, the TV banner and the site."
-    keywords: [design, identity, colour, color, palette, theme, dark theme, font, typography, shape, motion, animation, glow, icon, launcher icon, logo, banner, branding, website, kleur, kleuren, thema, lettertype, huisstijl, icoon, animatie, EphyraColor, EphyraFont, EphyraMotion]
+    keywords: [design, identity, colour, color, palette, theme, dark theme, font, typography, shape, motion, animation, glow, icon, launcher icon, logo, banner, branding, website, EphyraColor, EphyraFont, EphyraMotion]
     paths:
       - core/src/main/java/dev/jdtech/jellyfin/core/presentation/theme/EphyraColor.kt
       - core/src/main/java/dev/jdtech/jellyfin/core/presentation/theme/EphyraFont.kt
@@ -318,7 +319,7 @@ areas:
   - id: translations
     title: Translations
     summary: "CE strings in 36 languages, next to upstream's Weblate files."
-    keywords: [translation, translations, translate, string, strings, strings_ce, ce_ key, app language, locale, weblate, plural, plurals, text, label, vertaling, vertalingen, vertalen, vertaald, tekst, check-translations]
+    keywords: [translation, translations, translate, string, strings, strings_ce, ce_ key, app language, locale, weblate, plural, plurals, text, label, check-translations]
     paths:
       - .claude/skills/translate-strings/SKILL.md
       - .claude/skills/translate-strings/scripts/check-translations.py
@@ -330,7 +331,7 @@ areas:
   - id: releases
     title: Releases, stores and upstream sync
     summary: "Version numbers, the changelog, betas and releases, the store listings and screenshots, and merging Findroid's changes."
-    keywords: [release, releases, version number, version code, changelog, beta, tag, play store, google play, store listing, screenshots, feature graphic, fastlane, f-droid, fdroid, amazon, github release, apk, upstream, findroid, upstream sync, uitbrengen, uitgave, versienummer, schermafbeeldingen, EphyraVersion]
+    keywords: [release, releases, version number, version code, changelog, beta, tag, play store, google play, store listing, screenshots, feature graphic, fastlane, f-droid, fdroid, amazon, github release, apk, upstream, findroid, upstream sync, EphyraVersion]
     paths:
       - buildSrc/src/main/kotlin/EphyraVersion.kt
       - CHANGELOG.md

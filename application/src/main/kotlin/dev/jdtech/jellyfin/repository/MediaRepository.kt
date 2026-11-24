@@ -268,8 +268,16 @@ interface MediaRepository {
      * local player calls this for each stream it loads. [getPlaybackSources] records nothing: a
      * quality or audio switch that fails after asking for the playing item's new stream keeps the
      * old stream, whose session the reports must keep naming.
+     *
+     * CE (#909): [mediaSourceId] is the version the stream is of; the reports name it, so the
+     * server shows the version that plays.
      */
-    fun setPlaySession(itemId: ItemId, playSessionId: String?, transcodes: Boolean) {}
+    fun setPlaySession(
+        itemId: ItemId,
+        playSessionId: String?,
+        transcodes: Boolean,
+        mediaSourceId: MediaSourceId? = null,
+    ) {}
 
     /**
      * Report that [itemId] started playing at [positionTicks], the player's position when the start

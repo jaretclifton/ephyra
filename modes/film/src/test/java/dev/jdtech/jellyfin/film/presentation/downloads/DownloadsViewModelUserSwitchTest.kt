@@ -24,18 +24,16 @@ import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.CoreDownloadTexts
 import java.util.UUID
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -62,14 +60,18 @@ class DownloadsViewModelUserSwitchTest {
     private val bobMovie = aliceMovie.copy(playbackPositionTicks = 0)
 
     /** The user the client acts for. */
-    @Volatile private var sessionUser: UserId? = alice
+    private var sessionUser: UserId? = alice
 
-    /** Holds Bob's read (on the IO thread) until the test has looked at the screen before it. */
-    private val bobsRead = CountDownLatch(1)
+    /**
+     * #921: Main and the ViewModel's IO work on one test scheduler. On the real IO threads a load
+     * could still be running when the test ended, and its return to Main, which tearDown had reset,
+     * failed the next test in the module.
+     */
+    private val dispatcher = StandardTestDispatcher()
 
     @BeforeEach
     fun setUp() {
-        Dispatchers.setMain(UnconfinedTestDispatcher())
+        Dispatchers.setMain(dispatcher)
     }
 
     @AfterEach
@@ -78,63 +80,57 @@ class DownloadsViewModelUserSwitchTest {
     }
 
     @Test
-    fun `the screen shows the new user's progress after a switch, never the previous user's`():
-        Unit = runBlocking {
-        val viewModel = viewModel()
-        // The screen's first ON_RESUME, which leaves the load to the ViewModel's own.
-        viewModel.onScreenResumed()
-        val first = withTimeout(5_000) { viewModel.state.first { it.sections.isNotEmpty() } }
-        assertEquals(listOf<Item>(aliceMovie), items(first))
+    fun `the screen shows the new user's progress after a switch, never the previous user's`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel()
+            // The screen's first ON_RESUME, which leaves the load to the ViewModel's own.
+            viewModel.onScreenResumed()
+            advanceUntilIdle()
+            assertEquals(listOf<Item>(aliceMovie), items(viewModel.state.value))
 
-        // Home's profile sheet, a login or the Users screen: the client acts for Bob now.
-        sessionUser = bob
+            // Home's profile sheet, a login or the Users screen: the client acts for Bob now.
+            sessionUser = bob
 
-        // The screen comes back (DownloadsScreen's ON_RESUME).
-        viewModel.onScreenResumed()
-        // Before Bob's user data is read: none of Alice's progress, and a loading list.
-        assertEquals(emptyList(), items(viewModel.state.value))
-        assertTrue(viewModel.state.value.isLoading)
+            // The screen comes back (DownloadsScreen's ON_RESUME).
+            viewModel.onScreenResumed()
+            // Before Bob's user data is read: none of Alice's progress, and a loading list.
+            assertEquals(emptyList(), items(viewModel.state.value))
+            assertTrue(viewModel.state.value.isLoading)
 
-        bobsRead.countDown()
-        val after =
-            withTimeout(5_000) {
-                viewModel.state.first { it.userId == bob && it.sections.isNotEmpty() }
-            }
-        assertEquals(listOf<Item>(bobMovie), items(after))
-
-        // The load ends with the storage walk, which comes back on Dispatchers.Main: wait for
-        // it before tearDown resets Main, or it fails in the next test. Without a real Context
-        // the walk fails, which is its end too.
-        withTimeout(5_000) {
-            viewModel.state.first { it.error != null || it.storageTotalBytes > 0 }
+            advanceUntilIdle()
+            assertEquals(bob, viewModel.state.value.userId)
+            assertEquals(listOf<Item>(bobMovie), items(viewModel.state.value))
         }
-    }
 
     @Test
-    fun `a load while no one is signed in does not hide the next switch`(): Unit = runBlocking {
-        val viewModel = viewModel()
-        viewModel.onScreenResumed()
-        withTimeout(5_000) { viewModel.state.first { it.error != null } }
-        assertEquals(listOf<Item>(aliceMovie), items(viewModel.state.value))
+    fun `a load while no one is signed in does not hide the next switch`() =
+        runTest(dispatcher) {
+            val viewModel = viewModel()
+            viewModel.onScreenResumed()
+            advanceUntilIdle()
+            // Without a real Context the storage walk fails, which ends each load with an error.
+            assertNotNull(viewModel.state.value.error)
+            assertEquals(listOf<Item>(aliceMovie), items(viewModel.state.value))
 
-        // The session is cleared (token revoked, current user removed), and a load runs in that
-        // gap, such as the queue's reload when a download finishes. It fails without a user.
-        sessionUser = null
-        viewModel.loadItems()
-        withTimeout(5_000) { viewModel.state.first { it.error != null } }
+            // The session is cleared (token revoked, current user removed), and a load runs in
+            // that gap, such as the queue's reload when a download finishes. It fails without a
+            // user.
+            sessionUser = null
+            viewModel.loadItems()
+            advanceUntilIdle()
+            assertNotNull(viewModel.state.value.error)
 
-        // Bob signs in and opens Downloads.
-        sessionUser = bob
-        viewModel.onScreenResumed()
-        // None of Alice's progress, as after a switch without the gap.
-        assertEquals(emptyList(), items(viewModel.state.value))
-        assertEquals(bob, viewModel.state.value.userId)
+            // Bob signs in and opens Downloads.
+            sessionUser = bob
+            viewModel.onScreenResumed()
+            // None of Alice's progress, as after a switch without the gap.
+            assertEquals(emptyList(), items(viewModel.state.value))
+            assertEquals(bob, viewModel.state.value.userId)
 
-        bobsRead.countDown()
-        withTimeout(5_000) {
-            viewModel.state.first { it.sections.isNotEmpty() && it.error != null }
+            advanceUntilIdle()
+            assertEquals(listOf<Item>(bobMovie), items(viewModel.state.value))
+            assertNotNull(viewModel.state.value.error)
         }
-    }
 
     @Test
     fun `the screen shows nothing of another user's progress`() {
@@ -183,6 +179,7 @@ class DownloadsViewModelUserSwitchTest {
                 ),
             downloader = unused(),
             downloadStore = downloadStore,
+            ioDispatcher = dispatcher,
         )
     }
 
@@ -199,7 +196,6 @@ class DownloadsViewModelUserSwitchTest {
                     if (sessionUser == null) {
                         throw IllegalStateException("No user")
                     } else if (sessionUser == bob) {
-                        bobsRead.await(5, TimeUnit.SECONDS)
                         listOf(bobMovie)
                     } else {
                         listOf(aliceMovie)
