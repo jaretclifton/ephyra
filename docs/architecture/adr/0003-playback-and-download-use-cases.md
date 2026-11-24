@@ -279,7 +279,12 @@ finalizing stage; the file operations stay here.
 
 States (`DownloadStage`, a sealed type in `domain`):
 
-- **Queued** (`retryCount`, `retryAt`, `waitingForNetwork`, `smart`): waits for a slot.
+Every stage carries the facts of the download itself: the item, the quality asked for, whether
+Smart Downloads queued it, and `retryCount`, which goes along through Running, Paused and Failed so
+that `EngineFailed` can count the retries (as `Entry.retryCount` does today). On top of that:
+
+- **Queued** (`retryAt`, `waitingForNetwork`, `starting`): waits for a slot; `starting` while the
+  downloader sets the download up.
 - **Running** (`downloadId`, progress): the engine transfers.
 - **Paused** (`downloadId`): the engine stopped for the network; keeps its slot.
 - **Finalizing** (`downloadId`): the engine finished; rename and rows in progress.
@@ -287,18 +292,19 @@ States (`DownloadStage`, a sealed type in `domain`):
 - **Failed** (`reason`: refused with a status, no answer, finalize failed, local such as storage):
   waits for the user, or for the server when the reason is no answer.
 
-Events: `Enqueue`, `Start` (a slot is free, `now`), `StartFailed` (online or not, the reason),
-`EngineRunning`, `EnginePaused`, `EngineProgress`, `EngineSucceeded`, `EngineFailed` (HTTP
+Events: `Enqueue`, `Start` (a slot is free, `now`), `Started` (the downloader's download id),
+`StartFailed` (online or not, the reason), `EngineRunning`, `EnginePaused`, `EngineProgress`, `EngineSucceeded`, `EngineFailed` (HTTP
 status, permanent), `Finalized`, `FinalizeFailed`, `NetworkChanged`, `ServerConfirmed`, `Retry`,
 `Cancel`, `Delete`, `Restored` (process start, from what Room has).
 
 | From | Event | To | Effects (done by the queue, the engine or `DownloaderImpl`) |
 |---|---|---|---|
 | (none) | Enqueue | Queued | save the pending row (deduplicated by item id) |
-| Queued | Start, `retryAt` passed, online | Running | delete the pending row, start the engine |
-| Queued | Start, offline | Queued (`waitingForNetwork`) | save the pending row again |
-| Queued | NetworkChanged | Queued (flag follows) | none |
-| Queued | StartFailed, online | Failed (local or no answer) | delete the rows and the engine task |
+| Queued | Start, `retryAt` passed, online | Queued (`starting`) | delete the pending row, call the downloader (today's order, `DownloadQueue` 830 to 838) |
+| Queued (`starting`) | Started | Running | none |
+| Queued (`starting`) | StartFailed, offline | Queued (`waitingForNetwork`) | save the pending row again |
+| Queued (`starting`) | StartFailed, online | Failed (local or no answer) | none: the downloader already deleted the rows and the engine task |
+| Queued | NetworkChanged | Queued (`waitingForNetwork` follows) | none |
 | Running | EnginePaused | Paused | none |
 | Paused | EngineRunning | Running | none |
 | Running, Paused | EngineProgress | same | publish progress |
@@ -405,18 +411,24 @@ A sketch of the download machine's transition function (not compiled):
 data class Transition(val stage: DownloadStage?, val effects: List<DownloadEffect>)
 
 fun DownloadStage?.on(event: DownloadEvent, now: Long): Transition = when {
-    this == null && event is Enqueue -> Transition(Queued(), listOf(SavePending))
-    this is Queued && event is Start && event.online && (retryAt ?: 0) <= now ->
-        Transition(Running(event.downloadId), listOf(RemovePending, StartEngine))
-    this is Queued && event is Start -> Transition(copy(waitingForNetwork = true), listOf(SavePending))
+    this == null && event is Enqueue -> Transition(Queued(DownloadFacts(event.item)), listOf(SavePending))
+    this is Queued && !starting && event is Start && event.online && (retryAt ?: 0) <= now ->
+        Transition(copy(starting = true), listOf(RemovePending, CallDownloader))
+    this is Queued && starting && event is Started -> Transition(Running(facts, event.downloadId), emptyList())
+    this is Queued && starting && event is StartFailed ->
+        if (event.online) Transition(Failed(facts, event.reason), emptyList())
+        else Transition(copy(starting = false, waitingForNetwork = true), listOf(SavePending))
     (this is Running || this is Paused) && event is EngineSucceeded ->
-        Transition(Finalizing(downloadId()), listOf(Finalize))
-    (this is Running || this is Paused) && event is EngineFailed ->
-        if (event.permanent || retryCount() >= MAX_AUTO_RETRIES)
-            Transition(Failed(event.reason()), listOf(NotifyFailure))
-        else Transition(Queued(retryCount() + 1, retryAt = now + backoff(retryCount())), listOf(SavePending))
+        Transition(Finalizing(facts, downloadId()), listOf(Finalize))
+    (this is Running || this is Paused) && event is EngineFailed ->        // facts.retryCount came along
+        if (event.permanent || facts.retryCount >= MAX_AUTO_RETRIES)
+            Transition(Failed(facts, event.reason()), listOf(NotifyFailure))
+        else Transition(
+            Queued(facts.copy(retryCount = facts.retryCount + 1), retryAt = now + backoff(facts.retryCount)),
+            listOf(SavePending),
+        )
     this is Failed && (event is Retry || (event is ServerConfirmed && reason == NoAnswer)) ->
-        Transition(Queued(), listOf(SavePending))
+        Transition(Queued(facts.copy(retryCount = 0)), listOf(SavePending))
     this != null && this !is Finished && event is Cancel -> Transition(null, listOf(CancelEngine, DeletePartial))
     else -> Transition(this, emptyList())            // not legal: unchanged, logged by the caller
 }
@@ -449,7 +461,9 @@ installed over it, and the database and the queue compared before and after.
 | 14 | The stream switches to `application` | `StreamSwitches` over 11 and 13 | the newest switch wins; the reload | the switches over fakes | Player, with the checklist's switch and slow link lines | 11, 13 |
 
 Rules R21 to R24 (below) come in the PR that makes them true: R21 and R22 with 2 (R21's numbers
-lowered by each later PR), R24 with 3, R23 with 9.
+lowered by each later PR), R24 with 3, R23 with 10: until then Cast's controller still calls the
+three report operations itself (`CastPlayerControllerImpl` 505, 520 and 535), and PR 10 routes them
+through the shared service.
 
 **Order around the other issues.** The downloads come first: they need nothing from #966, #967 or
 #969, and their tests are the slowest today. #969's player settings port is the one dependency
@@ -513,7 +527,10 @@ rule") is replaced by what a test can:
 
 Found while reading, not reproduced, to be filed with a "reproduce first" section rather than fixed
 in a move: a download whose start fails while online loses its pending row and is gone after a
-restart (`DownloadQueue` 830 to 838 with `DownloaderImpl` 413 to 436); Cast asks the server for
+restart (`DownloadQueue` 830 to 838 with `DownloaderImpl` 413 to 436), and so is one whose process
+dies after the pending row is deleted and before the downloader has written its source row (the
+order is deliberate today, against duplicate tasks after a crash; keeping the pending row until
+the download is finished, Q3, closes both); Cast asks the server for
 every item twice, and once more for the chosen audio, and drops the series' remembered audio; Cast
 sends no `PlaybackEvents`; `Segment.startTicks` and `endTicks` hold milliseconds.
 
