@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cat .claude/hooks/start-reminder.txt",
+            "command": "cat \"$(git rev-parse --show-toplevel)/.claude/hooks/start-reminder.txt\"",
             "timeout": 5
           }
         ]
