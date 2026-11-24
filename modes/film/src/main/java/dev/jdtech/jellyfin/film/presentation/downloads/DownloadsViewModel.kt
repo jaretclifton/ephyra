@@ -30,6 +30,7 @@ import dev.jdtech.jellyfin.utils.Downloader
 import java.io.File
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -49,15 +50,37 @@ internal val downloadDeletionScope = CoroutineScope(SupervisorJob() + Dispatcher
 
 @HiltViewModel
 class DownloadsViewModel
-@Inject
-constructor(
-    @ApplicationContext private val context: Context,
+internal constructor(
+    private val context: Context,
     private val repository: MediaRepository,
     private val appPreferences: AppPreferences,
     private val downloadQueue: DownloadQueue,
     private val downloader: Downloader,
     private val downloadStore: DownloadStore,
+    /**
+     * CE (#921): where the reads, the sorting and the storage walk run; the tests run them on their
+     * own dispatcher, so no load outlives its test.
+     */
+    private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
+    @Inject
+    constructor(
+        @ApplicationContext context: Context,
+        repository: MediaRepository,
+        appPreferences: AppPreferences,
+        downloadQueue: DownloadQueue,
+        downloader: Downloader,
+        downloadStore: DownloadStore,
+    ) : this(
+        context,
+        repository,
+        appPreferences,
+        downloadQueue,
+        downloader,
+        downloadStore,
+        Dispatchers.IO,
+    )
+
     private val _state = MutableStateFlow(DownloadsState())
     val state = _state.asStateFlow()
 
@@ -184,7 +207,7 @@ constructor(
                 val library = readLibrary()
                 loaded = library
                 val sections =
-                    withContext(Dispatchers.IO) { buildSections(library, _state.value.sortOrder) }
+                    withContext(ioDispatcher) { buildSections(library, _state.value.sortOrder) }
                 _state.update { it.withLibrary(library, sections).copy(userId = user) }
 
                 // The directory walk is the slow part, so the list goes out first.
@@ -229,7 +252,7 @@ constructor(
      * the Library tab again, even after restart.
      */
     private suspend fun reconcileStuckDownloads() =
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             for (src in downloadStore.activeDownloadSources()) {
                 val finalPath = DownloadFiles.finalPath(src.path)
                 val finalFile = File(finalPath)
@@ -263,7 +286,7 @@ constructor(
             return
         }
         viewModelScope.launch {
-            val sections = withContext(Dispatchers.IO) { buildSections(library, order) }
+            val sections = withContext(ioDispatcher) { buildSections(library, order) }
             // CE (#866): not when a switch or a newer load replaced what was sorted.
             _state.update { if (loaded === library) it.withLibrary(library, sections) else it }
         }
@@ -367,7 +390,7 @@ constructor(
     private class StorageWalk(val signature: Long, val usedBytes: Long)
 
     private suspend fun readLibrary(): LoadedLibrary =
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             val items = repository.getDownloads()
             val shows = items.filterIsInstance<Show>()
             val episodesByShow = shows.associate { it.id to storedEpisodes(it.id) }
@@ -465,7 +488,7 @@ constructor(
     }
 
     private suspend fun calculateStorageInfo(signature: Long): StorageInfo =
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             val storageIndex =
                 appPreferences.getValue(appPreferences.downloadStorageIndex)?.toIntOrNull() ?: 0
             val dirs = context.getExternalFilesDirs(null)
