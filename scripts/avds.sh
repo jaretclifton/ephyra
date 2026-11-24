@@ -6,7 +6,8 @@
 #   scripts/avds.sh list                       every AVD here: port, exists, running
 #   scripts/avds.sh images                     the system images they need, and how to install them
 #   scripts/avds.sh create  [--force] [name|all]   skips an AVD that exists, unless --force
-#   scripts/avds.sh start   <name> [--gpu]     cold boot, waits until booted
+#   scripts/avds.sh start   <name> [--gpu]     cold boot, waits until booted, media volume to 0
+#   scripts/avds.sh up      <name> [--gpu]     create if missing, start if not running, install
 #   scripts/avds.sh stop    <name>
 #   scripts/avds.sh delete  <name|all>
 #   scripts/avds.sh install <name> [apk]       the debug build that fits the AVD (phone or tv, its ABI)
@@ -15,7 +16,9 @@
 #
 # `start` renders in software (-gpu swiftshader_indirect): slower, but mpv crashes emulators that
 # use the host GPU. `--gpu` leaves the choice to the emulator, for work that never opens mpv.
-# EMULATOR_FLAGS adds flags of your own, such as -no-window.
+# Every start passes -crash-report-mode never -no-metrics: without them a new emulator can hang on
+# a consent dialog nobody sees. EMULATOR_FLAGS adds flags of your own, such as -no-window.
+# The media volume is set to 0 after boot: the test media is a test tone.
 #
 # The 13" Chromebook (1600x900 dp) needs no AVD of its own: use the `resizable` device profile
 # or the emulator's resizable window and resize it.
@@ -172,6 +175,57 @@ install() { # install <name> [apk]
   "$ADB" -s "$(serial "$n")" install -r "$apk"
 }
 
+# The port says nothing about which AVD holds it: ask the emulator its name.
+avd_on_port() { # the AVD name the emulator on this AVD's port reports; tries for 10 seconds
+  local i name
+  for i in 1 2 3 4 5; do
+    name="$("$ADB" -s "$(serial "$1")" emu avd name 2>/dev/null | tr -d '\r' | head -1)"
+    if [ -n "$name" ] && [ "$name" != OK ]; then echo "$name"; return 0; fi
+    sleep 2
+  done
+  return 1
+}
+
+is_running() { # is_running <name>: its port answers, as this AVD. Stops the script otherwise.
+  local other
+  "$ADB" devices | tr -d '\r' | grep -q "^$(serial "$1")[[:space:]]" || return 1
+  if ! other="$(avd_on_port "$1")"; then
+    echo "$(serial "$1") does not say which AVD it is: stop it, or use 'install' if you know it is $1" >&2
+    exit 1
+  fi
+  if [ "$other" != "$1" ]; then
+    echo "$(serial "$1") is $other, not $1: stop it or start $1 yourself on another port" >&2
+    exit 1
+  fi
+}
+
+wait_booted() { # wait_booted <name> [emulator pid]: one 10-minute deadline for adb and the boot
+  local s deadline
+  s="$(serial "$1")"
+  deadline=$(($(date +%s) + 600))
+  until [ "$("$ADB" -s "$s" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; do
+    if [ -n "${2:-}" ] && ! kill -0 "$2" 2>/dev/null; then echo "the emulator for $1 exited before it booted" >&2; return 1; fi
+    if [ "$(date +%s)" -ge "$deadline" ]; then echo "$1 did not finish booting in 10 minutes" >&2; return 1; fi
+    sleep 3
+  done
+}
+
+start_one() { # start_one <name> [--gpu]
+  local n="$1" p gpu="-gpu swiftshader_indirect" pid
+  p="$(port "$n")"
+  if [ "${2:-}" = --gpu ]; then gpu=""; fi
+  if is_running "$n"; then echo "$n is running already as emulator-$p" >&2; return 1; fi
+  # shellcheck disable=SC2086
+  "$EMULATOR" -avd "$n" -port "$p" -no-snapshot -no-boot-anim $gpu -crash-report-mode never -no-metrics \
+    ${EMULATOR_FLAGS:-} >/dev/null 2>&1 &
+  pid=$!
+  wait_booted "$n" "$pid" || return 1
+  # Volume down to 0. `cmd media_session volume --set 0` reports success and changes nothing on
+  # the API 34 images; key presses do.
+  "$ADB" -s "emulator-$p" shell 'for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16; do input keyevent 25; done' || true
+  echo "$n is up as emulator-$p"
+}
+
 cmd="${1:-}"
 shift || true
 case "$cmd" in
@@ -183,18 +237,18 @@ case "$cmd" in
   images) images ;;
   list) list ;;
   install) install "${1:?name}" "${2:-}" ;;
-  start)
+  start) start_one "${1:?name}" "${2:-}" ;;
+  up)
     n="${1:?name}"
-    p="$(port "$n")"
-    gpu="-gpu swiftshader_indirect"
-    if [ "${2:-}" = --gpu ]; then gpu=""; fi
-    # shellcheck disable=SC2086
-    "$EMULATOR" -avd "$n" -port "$p" -no-snapshot -no-boot-anim $gpu ${EMULATOR_FLAGS:-} >/dev/null 2>&1 &
-    "$ADB" -s "emulator-$p" wait-for-device
-    until [ "$("$ADB" -s "emulator-$p" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; do
-      sleep 3
-    done
-    echo "$n is up as emulator-$p" ;;
+    FORCE=no
+    create_one "$n"
+    if is_running "$n"; then
+      echo "$n is running already as $(serial "$n")"
+      wait_booted "$n" # it may still be booting
+    else
+      start_one "$n" "${2:-}"
+    fi
+    install "$n" ;;
   stop) "$ADB" -s "$(serial "${1:?name}")" emu kill ;;
   portrait | landscape) rotate "${1:?name}" "$cmd" ;;
   shot)
@@ -204,5 +258,5 @@ case "$cmd" in
     "$ADB" -s "$(serial "$n")" shell screencap -p /data/local/tmp/cap.png
     "$ADB" -s "$(serial "$n")" pull /data/local/tmp/cap.png "$out" >/dev/null
     echo "Saved $out" ;;
-  *) sed -n '2,21p' "$0"; exit 1 ;;
+  *) sed -n '2,24p' "$0"; exit 1 ;;
 esac
