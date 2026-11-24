@@ -181,7 +181,8 @@ the versions are in [gradle/libs.versions.toml](gradle/libs.versions.toml), and
 - **Translated in 36 languages**, checked on every pull request
   ([how the translations work](https://midasvo.nl/ephyra/guide/findroid/#translations)).
 - **Reproducible builds.** The F-Droid recipe builds a release from its tag and compares the
-  result with the APK published here.
+  result with the APK published here. A release has checksums and a signed statement of where it
+  was built: [checking a download](https://midasvo.nl/ephyra/guide/install/#checking-a-download).
 
 The **[development site](https://midasvo.nl/ephyra/dev/)** has the
 [architecture model](https://midasvo.nl/ephyra/dev/architecture/model/) to click through, a
