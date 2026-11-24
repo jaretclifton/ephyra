@@ -1,5 +1,7 @@
 package dev.jdtech.jellyfin.architecture
 
+import com.lemonappdev.konsist.api.Konsist
+import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -27,11 +29,9 @@ class PureKotlinTest {
                         .also {
                             assertTrue(it.isNotEmpty(), "No production Kotlin file under $module")
                         }
-                        .flatMap { (path, file) ->
-                            importsIn(file.readText()).filterNot(::isAllowed).map {
-                                "$module $it" to path
-                            }
-                        }
+                        .let(::importsOf)
+                        .filterNot { (_, import) -> isAllowed(import) }
+                        .map { (path, import) -> "$module $import" to path }
                 }
                 .groupBy({ it.first }, { it.second })
         IMPORTS_BASELINE.assertExactly(
@@ -66,10 +66,14 @@ class PureKotlinTest {
         )
     }
 
-    /** The rule reads every way an import is written, and the allowlist holds what it should. */
+    /**
+     * The rule reads every way an import is written (Konsist parses the file as Kotlin), and the
+     * allowlist holds what it should.
+     */
     @Test
     fun `R19 finds every import outside the allowlist`() {
-        val file =
+        val tripleQuote = "\"\"\""
+        val text =
             """
             package dev.jdtech.jellyfin.models
 
@@ -81,29 +85,37 @@ class PureKotlinTest {
             import okhttp3.OkHttpClient
             import okhttp3.*
             import `androidx`.paging.PagingData
-            import javax.inject.Inject
                 import okio.Indented
-            import kotlinxx.Thing
             import /* a comment */ okio.AfterComment
+            import kotlin.math.abs; import javax.inject.Inject
+            import kotlinxx.Thing
             /*
             import okio.InABlockComment
             */
             // import okio.InALineComment
 
-            val text = "import com.example.NotAnImport"
+            val text = ${tripleQuote}
+            import okio.InAString
+            ${tripleQuote}
             """
                 .trimIndent()
+        // Under build/, which no rule reads.
+        val file =
+            ProjectTree.root.resolve("architecture/build/r19-scanner/Fixture.kt").apply {
+                parentFile.mkdirs()
+                writeText(text)
+            }
         assertEquals(
             listOf(
                 "okhttp3.OkHttpClient",
                 "okhttp3.*",
                 "androidx.paging.PagingData",
-                "javax.inject.Inject",
                 "okio.Indented",
-                "kotlinxx.Thing",
                 "okio.AfterComment",
+                "javax.inject.Inject",
+                "kotlinxx.Thing",
             ),
-            importsIn(file).filterNot(::isAllowed),
+            importsOf(mapOf("fixture" to file)).map { it.second }.filterNot(::isAllowed),
         )
     }
 
@@ -149,19 +161,25 @@ class PureKotlinTest {
         val ALLOWED_PREFIXES =
             listOf("kotlin.", "kotlinx.", "java.", "javax.crypto.", "dev.jdtech.jellyfin.")
 
-        private val IMPORT =
-            Regex("""^[ \t]*import\s+([\w`]+(?:\.[\w`]+)*(?:\.\*)?)""", RegexOption.MULTILINE)
-
         /**
-         * The names a Kotlin file imports, without an alias; a wildcard import ends in `.*`.
-         * Comments are dropped first, so `import /* x */ a.B` counts and a commented-out import
-         * does not. A line starting with `import` in a multiline string still counts: a false
-         * alarm, never a miss (imports come before any string in a Kotlin file).
+         * The imports of [files] (path to file), as (path, import name), read by Konsist's Kotlin
+         * parser, as R5 reads them: comments, strings and layout do not fool it. A wildcard import
+         * ends in `.*`, an alias is left out, backticks are dropped.
          */
-        fun importsIn(text: String): List<String> =
-            IMPORT.findAll(COMMENT.replace(text, " "))
-                .map { it.groupValues[1].replace("`", "") }
-                .toList()
+        fun importsOf(files: Map<String, File>): List<Pair<String, String>> {
+            // Konsist resolves the paths against the root it finds itself.
+            val konsistRoot = File(Konsist.projectRootPath)
+            val paths = files.entries.associate { (path, file) -> file.canonicalPath to path }
+            return Konsist.scopeFromFiles(files.values.map { it.relativeTo(konsistRoot).path })
+                .files
+                .flatMap { file ->
+                    val path = paths[File(file.path).canonicalPath] ?: file.path
+                    file.imports.map {
+                        val name = if (it.isWildcard) it.name.removeSuffix(".*") + ".*" else it.name
+                        path to name.replace("`", "")
+                    }
+                }
+        }
 
         fun isAllowed(import: String): Boolean = ALLOWED_PREFIXES.any { import.startsWith(it) }
 
