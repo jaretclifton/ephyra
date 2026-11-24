@@ -45,8 +45,13 @@ Read it first; `docs/get-started.md` has what to install. This file is how to ac
   signs an emulator out in the middle of someone's test.
 - **Server state is free to change:** marking items watched, resume positions, favourites. The
   media and the libraries are not: change those through `setup.sh`.
-- **This is a test server.** It has no HTTPS and generated passwords. Do not expose its port
-  outside the machine, and do not put real media on it.
+- **This is a test server.** It has generated passwords and one user without a password. Do not
+  expose its port outside the machine, and do not put real media on it.
+- **https only for as long as a test needs it.** `tools/test-server/setup.sh https` prints a
+  public https address (a Cloudflare quick tunnel); `setup.sh https stop` closes it. Use it when
+  a change touches how a player loads a stream, and for the release smoke test. Close it in the
+  same session, and say so in your report. On Windows keep WSL awake while it runs
+  (`wsl -d <distro> -- sleep 3600` in the background), or the tunnel dies mid-test.
 
 ## Adding an edge case
 
@@ -75,5 +80,6 @@ and remove it afterwards with the same settings and `setup.sh wipe --media`.
 | `HTTP 503` for a while after start | The server is still starting; the scripts wait for it |
 | `HTTP 401` in the middle of a script | Another login used the same `DeviceId` |
 | An emulator cannot reach `10.0.2.2:8096` | The container is stopped, or on Windows WSL was shut down: run `setup.sh` |
+| The https address answers `530` | The tunnel is gone (on Windows: WSL went idle). Run `setup.sh https` again; the address is new |
 | The app shows no Download button | The user is `nodownload`, which is what that user is for |
 | A resume position does not stick | The item is under 5 minutes, or playback stopped under 10 % |

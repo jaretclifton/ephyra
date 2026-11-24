@@ -45,6 +45,41 @@ gh run list --repo midasvo/ephyra --branch main --limit 3   # main must be green
 Work from `origin/main`, not the local `main` branch: in a worktree `git switch main` fails,
 because `main` is checked out in the main checkout.
 
+### 1b. Smoke test what will ship
+
+Before the version is picked, play something on the build users will get. It takes about half
+an hour on emulators (the `test-devices` and `test-server` skills) and it is the one check that
+runs the minified app against a server the way a user does. It was added after #960: 2.9.0
+shipped with every test on a debug build over http.
+
+- **The build:** the newest beta (`gh release list --repo midasvo/ephyra --limit 5`), which is
+  minified like the release. If `git log <beta tag>..origin/main` has app changes that no beta
+  has (merges of `refactor/` branches, `[skip beta]`), build the staging variant of `origin/main`
+  yourself, or use a debug build and say so in the report.
+- **The runs,** on a phone emulator, each one until the position has moved for ten seconds:
+
+  | Backend | Server | What |
+  |---|---|---|
+  | ExoPlayer and mpv | `http://10.0.2.2:8096` | an item from 0, and a resume from Continue Watching |
+  | ExoPlayer and mpv | the https address of `tools/test-server/setup.sh https` | an item from 0 |
+  | ExoPlayer and mpv | either | a quality below the file's bitrate, picked in the player |
+  | one of them | either | start a download, wait until it is finished, play it with the server stopped |
+
+  On the TV emulator: one item from 0 and one resume.
+- **A player change since the last release** (`git log "$last"..origin/main -- player/local`)
+  also gets `docs/mpv-checklist.md`, on both backends.
+- **Cast** cannot be tested on an emulator. If `player/cast` or the Cast part of the adapter
+  changed since the last release and nobody tried a real receiver, say so to the user before
+  the tag, not after.
+
+Put the table with the results in the release PR's description. A run that fails stops the
+release: fix it on `main` first. A run you could not do is named in the PR and in the report of
+step 6; it is the user's call whether to release without it.
+
+What this does not cover: an upgrade over an installed stable release (the beta is another
+package, and the release APK does not exist before the tag), and a user's own reverse proxy.
+After publishing, watch the issues for a day.
+
 ### 2. Pick the version
 
 ```bash
@@ -142,6 +177,8 @@ issue).
 
 - Never reuse or move a tag that has been pushed. A broken release gets a new patch version.
 - Never tag from a branch other than `main`, and never tag a commit whose CI isn't green.
+- Never tag without the smoke test of step 1b, or without the user knowing which of its runs
+  were not done.
 - The version only changes in a release PR, never in a feature PR.
 - Never change the application ID `nl.midasvo.findroid.ce`; every release must update over the
   previous one, so the versionCode only goes up.
