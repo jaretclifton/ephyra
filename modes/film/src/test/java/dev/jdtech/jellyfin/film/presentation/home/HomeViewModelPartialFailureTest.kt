@@ -16,17 +16,20 @@ import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.IOException
 import java.util.UUID
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -41,18 +44,22 @@ class HomeViewModelPartialFailureTest {
     private val turnedOff = mutableSetOf<String>()
     private var libraries = listOf(libraryA, libraryB)
 
+    /** #955: Main and the loads on one test scheduler, so no load outlives its test. */
+    private val dispatcher = StandardTestDispatcher()
+
     private val viewModel by lazy {
         HomeViewModel(
             repository = repository(),
             appPreferences = AppPreferences(sharedPreferences()),
             serverStore = unusedDao(),
+            loadDispatcher = dispatcher,
         )
     }
 
     @BeforeEach
     fun setUp() {
         // viewModelScope is built with Dispatchers.Main.immediate; provide one.
-        Dispatchers.setMain(StandardTestDispatcher())
+        Dispatchers.setMain(dispatcher)
     }
 
     @AfterEach
@@ -61,93 +68,101 @@ class HomeViewModelPartialFailureTest {
     }
 
     @Test
-    fun `a failing row leaves the other rows loaded without an error`() {
-        failing += "getNextUp"
+    fun `a failing row leaves the other rows loaded without an error`() =
+        runTest(dispatcher) {
+            failing += "getNextUp"
 
-        val state = load { it.resumeSection != null && it.views.size == 2 }
+            val state = load()
 
-        assertNull(state.nextUpSection)
-        assertNotNull(state.suggestionsSection)
-        assertNull(state.error)
-    }
-
-    @Test
-    fun `a failing library leaves the other libraries loaded without an error`() {
-        failingLibraries += libraryA.id
-
-        val state = load { it.views.size == 1 }
-
-        assertEquals(libraryB.id, state.views.single().id)
-        assertNotNull(state.resumeSection)
-        assertNull(state.error)
-    }
-
-    @Test
-    fun `a row that fails on a silent reload keeps its content`() {
-        val first = load { it.nextUpSection != null && it.views.size == 2 }
-
-        failing += "getNextUp"
-        failingLibraries += libraryA.id
-        viewModel.loadData(silent = true)
-        // The libraries update together, so a new library B means library A has been handled.
-        val state = settle { it.views.first { v -> v.id == libraryB.id } == first.views.last() }
-
-        assertSame(first.nextUpSection, state.nextUpSection)
-        assertSame(
-            first.views.first { it.id == libraryA.id },
-            state.views.first { it.id == libraryA.id },
-        )
-        assertNull(state.error)
-    }
-
-    @Test
-    fun `no libraries left removes the Latest rows that were on screen`() {
-        // #428: offline with nothing downloaded there are no libraries, and the Latest rows
-        // remembered from an online start stayed. Rows from an earlier load stand in for them.
-        load { it.views.size == 2 }
-
-        libraries = emptyList()
-        runBlocking { withTimeout(5_000) { viewModel.loadData(silent = true).join() } }
-
-        assertEquals(0, viewModel.state.value.views.size)
-        assertNotNull(viewModel.state.value.resumeSection)
-        assertNull(viewModel.state.value.error)
-    }
-
-    @Test
-    fun `every row failing shows the error`() {
-        failing += listOf("getSuggestions", "getResumeItems", "getNextUp", "getUserViews")
-
-        assertNotNull(load { it.error != null }.error)
-    }
-
-    @Test
-    fun `every library failing counts as the row failing`() {
-        failing += listOf("getSuggestions", "getResumeItems", "getNextUp")
-        failingLibraries += listOf(libraryA.id, libraryB.id)
-
-        assertNotNull(load { it.error != null }.error)
-    }
-
-    @Test
-    fun `rows turned off don't hide that every other row failed`() {
-        turnedOff += listOf("home_suggestions", "home_continue_watching", "home_latest")
-        failing += "getNextUp"
-
-        assertNotNull(load { it.error != null }.error)
-    }
-
-    private fun load(done: (HomeState) -> Boolean): HomeState {
-        viewModel.loadData()
-        return settle { !done(it) }
-    }
-
-    /** loadData() runs on Dispatchers.Default; wait until it has finished. */
-    private fun settle(waiting: (HomeState) -> Boolean): HomeState = runBlocking {
-        withTimeout(5_000) {
-            while (with(viewModel.state.value) { isLoading || waiting(this) }) delay(10)
-            viewModel.state.value
+            assertNotNull(state.resumeSection)
+            assertEquals(2, state.views.size)
+            assertNull(state.nextUpSection)
+            assertNotNull(state.suggestionsSection)
+            assertNull(state.error)
         }
+
+    @Test
+    fun `a failing library leaves the other libraries loaded without an error`() =
+        runTest(dispatcher) {
+            failingLibraries += libraryA.id
+
+            val state = load()
+
+            assertEquals(libraryB.id, state.views.single().id)
+            assertNotNull(state.resumeSection)
+            assertNull(state.error)
+        }
+
+    @Test
+    fun `a row that fails on a silent reload keeps its content`() =
+        runTest(dispatcher) {
+            val first = load()
+            assertNotNull(first.nextUpSection)
+            assertEquals(2, first.views.size)
+
+            failing += "getNextUp"
+            failingLibraries += libraryA.id
+            val state = settle(viewModel.loadData(silent = true))
+
+            // The libraries update together, so a new library B means library A has been handled.
+            assertTrue(state.views.first { v -> v.id == libraryB.id } != first.views.last())
+            assertSame(first.nextUpSection, state.nextUpSection)
+            assertSame(
+                first.views.first { it.id == libraryA.id },
+                state.views.first { it.id == libraryA.id },
+            )
+            assertNull(state.error)
+        }
+
+    @Test
+    fun `no libraries left removes the Latest rows that were on screen`() =
+        runTest(dispatcher) {
+            // #428: offline with nothing downloaded there are no libraries, and the Latest rows
+            // remembered from an online start stayed. Rows from an earlier load stand in for them.
+            assertEquals(2, load().views.size)
+
+            libraries = emptyList()
+            settle(viewModel.loadData(silent = true))
+
+            assertEquals(0, viewModel.state.value.views.size)
+            assertNotNull(viewModel.state.value.resumeSection)
+            assertNull(viewModel.state.value.error)
+        }
+
+    @Test
+    fun `every row failing shows the error`() =
+        runTest(dispatcher) {
+            failing += listOf("getSuggestions", "getResumeItems", "getNextUp", "getUserViews")
+
+            assertNotNull(load().error)
+        }
+
+    @Test
+    fun `every library failing counts as the row failing`() =
+        runTest(dispatcher) {
+            failing += listOf("getSuggestions", "getResumeItems", "getNextUp")
+            failingLibraries += listOf(libraryA.id, libraryB.id)
+
+            assertNotNull(load().error)
+        }
+
+    @Test
+    fun `rows turned off don't hide that every other row failed`() =
+        runTest(dispatcher) {
+            turnedOff += listOf("home_suggestions", "home_continue_watching", "home_latest")
+            failing += "getNextUp"
+
+            assertNotNull(load().error)
+        }
+
+    private fun TestScope.load(): HomeState = settle(viewModel.loadData())
+
+    /** Runs [load] to its end. */
+    private fun TestScope.settle(load: Job): HomeState {
+        advanceUntilIdle()
+        assertTrue(load.isCompleted)
+        assertFalse(viewModel.state.value.isLoading)
+        return viewModel.state.value
     }
 
     private fun library() =

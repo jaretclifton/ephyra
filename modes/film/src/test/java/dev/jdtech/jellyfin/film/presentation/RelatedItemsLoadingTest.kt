@@ -24,17 +24,16 @@ import dev.jdtech.jellyfin.utils.CoreDownloadTexts
 import java.io.IOException
 import java.util.UUID
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -61,9 +60,16 @@ class RelatedItemsLoadingTest {
     private val collection =
         BoxSet(id = UUID.randomUUID().toString().toItemId(), name = "Saga", images = ItemImages())
 
+    /**
+     * #809: Main and the ViewModels' own work (the cast and crew, Room) on one test scheduler: no
+     * load can still be on a real thread when the test ends and come back to a Main that tearDown
+     * has reset.
+     */
+    private val dispatcher = StandardTestDispatcher()
+
     @BeforeEach
     fun setUp() {
-        Dispatchers.setMain(UnconfinedTestDispatcher())
+        Dispatchers.setMain(dispatcher)
     }
 
     @AfterEach
@@ -72,258 +78,284 @@ class RelatedItemsLoadingTest {
     }
 
     @Test
-    fun `loading the movie asks for none of the related rows`() = runBlocking {
-        val viewModel =
-            movieViewModel(movie(itemId, "Movie", localTrailers = 1, specialFeatures = 2))
-        viewModel.loadMovie(itemId)
-        withTimeout(5_000) { viewModel.state.first { it.movie != null } }
+    fun `loading the movie asks for none of the related rows`() =
+        runTest(dispatcher) {
+            val viewModel =
+                movieViewModel(movie(itemId, "Movie", localTrailers = 1, specialFeatures = 2))
+            viewModel.loadMovie(itemId)
+            advanceUntilIdle()
+            assertNotNull(viewModel.state.value.movie)
 
-        assertEquals(listOf("getMovie"), calls)
-        assertEquals(RelatedItems(), viewModel.state.value.related)
-    }
-
-    @Test
-    fun `the movie's related rows load once, each from its own request`() = runBlocking {
-        val viewModel =
-            movieViewModel(movie(itemId, "Movie", localTrailers = 1, specialFeatures = 2))
-        viewModel.loadMovie(itemId)
-        withTimeout(5_000) { viewModel.state.first { it.movie != null } }
-
-        viewModel.loadRelated(itemId)
-        val related =
-            withTimeout(5_000) {
-                    viewModel.state.first {
-                        it.related.extras.isNotEmpty() &&
-                            it.related.collections.isNotEmpty() &&
-                            it.related.similar.isNotEmpty()
-                    }
-                }
-                .related
-
-        assertEquals(listOf(extra), related.extras)
-        assertEquals(listOf(collection), related.collections)
-        assertEquals(listOf(similar), related.similar)
-        assertEquals(listOf(true to true), extraArgs)
-
-        calls.clear()
-        viewModel.loadRelated(itemId)
-        assertTrue(calls.isEmpty())
-    }
+            assertEquals(listOf("getMovie"), calls)
+            assertEquals(RelatedItems(), viewModel.state.value.related)
+        }
 
     @Test
-    fun `no extras request when the movie has none`() = runBlocking {
-        val viewModel =
-            movieViewModel(movie(itemId, "Movie", localTrailers = 0, specialFeatures = 0))
-        viewModel.loadMovie(itemId)
-        withTimeout(5_000) { viewModel.state.first { it.movie != null } }
+    fun `the movie's related rows load once, each from its own request`() =
+        runTest(dispatcher) {
+            val viewModel =
+                movieViewModel(movie(itemId, "Movie", localTrailers = 1, specialFeatures = 2))
+            viewModel.loadMovie(itemId)
+            advanceUntilIdle()
+            assertNotNull(viewModel.state.value.movie)
 
-        viewModel.loadRelated(itemId)
-        withTimeout(5_000) { viewModel.state.first { it.related.similar.isNotEmpty() } }
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            val related = viewModel.state.value.related
 
-        assertTrue("getExtras" !in calls)
-    }
+            assertEquals(listOf(extra), related.extras)
+            assertEquals(listOf(collection), related.collections)
+            assertEquals(listOf(similar), related.similar)
+            assertEquals(listOf(true to true), extraArgs)
 
-    @Test
-    fun `a failing request leaves only its own row empty`() = runBlocking {
-        failing += "getSimilarItems"
-        failing += "getItemCollections"
-        val viewModel =
-            movieViewModel(movie(itemId, "Movie", localTrailers = 1, specialFeatures = null))
-        viewModel.loadMovie(itemId)
-        withTimeout(5_000) { viewModel.state.first { it.movie != null } }
-
-        viewModel.loadRelated(itemId)
-        val state = withTimeout(5_000) { viewModel.state.first { it.related.extras.isNotEmpty() } }
-
-        assertTrue(state.related.similar.isEmpty())
-        assertTrue(state.related.collections.isEmpty())
-        assertNull(state.error)
-        // An unknown special feature count still asks for them.
-        assertEquals(listOf(true to true), extraArgs)
-    }
+            calls.clear()
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            assertTrue(calls.isEmpty())
+        }
 
     @Test
-    fun `nothing is asked before the movie is there`() {
-        val viewModel = movieViewModel(movie(itemId, "Movie"))
-        viewModel.loadRelated(itemId)
+    fun `no extras request when the movie has none`() =
+        runTest(dispatcher) {
+            val viewModel =
+                movieViewModel(movie(itemId, "Movie", localTrailers = 0, specialFeatures = 0))
+            viewModel.loadMovie(itemId)
+            advanceUntilIdle()
+            assertNotNull(viewModel.state.value.movie)
 
-        assertTrue(calls.isEmpty())
-    }
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            assertTrue(viewModel.state.value.related.similar.isNotEmpty())
 
-    @Test
-    fun `the show asks for extras and similar items, not collections`() = runBlocking {
-        val viewModel = showViewModel()
-        viewModel.loadShow(itemId)
-        withTimeout(5_000) { viewModel.state.first { it.show != null } }
-        calls.clear()
-
-        viewModel.loadRelated(itemId)
-        val related =
-            withTimeout(5_000) {
-                    viewModel.state.first {
-                        it.related.similar.isNotEmpty() && it.related.extras.isNotEmpty()
-                    }
-                }
-                .related
-
-        assertEquals(listOf(similar), related.similar)
-        assertTrue(related.collections.isEmpty())
-        assertTrue("getItemCollections" !in calls)
-        assertEquals(listOf(false to true), extraArgs)
-    }
+            assertTrue("getExtras" !in calls)
+        }
 
     @Test
-    fun `rows switched off in the settings are never requested`() = runBlocking {
-        switchedOff += listOf("pref_detail_extras", "pref_detail_similar")
-        val viewModel =
-            movieViewModel(movie(itemId, "Movie", localTrailers = 1, specialFeatures = 2))
-        viewModel.loadMovie(itemId)
-        withTimeout(5_000) { viewModel.state.first { it.movie != null } }
+    fun `a failing request leaves only its own row empty`() =
+        runTest(dispatcher) {
+            failing += "getSimilarItems"
+            failing += "getItemCollections"
+            val viewModel =
+                movieViewModel(movie(itemId, "Movie", localTrailers = 1, specialFeatures = null))
+            viewModel.loadMovie(itemId)
+            advanceUntilIdle()
+            assertNotNull(viewModel.state.value.movie)
 
-        viewModel.loadRelated(itemId)
-        val related =
-            withTimeout(5_000) { viewModel.state.first { it.related.collections.isNotEmpty() } }
-                .related
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            val state = viewModel.state.value
 
-        assertEquals(listOf("getMovie", "getItemCollections"), calls)
-        assertTrue(related.extras.isEmpty() && related.similar.isEmpty())
-    }
-
-    @Test
-    fun `#769 rows the server cannot fill are never requested`() = runBlocking {
-        capabilities =
-            ServerCapabilities.ALL.copy(
-                extras = false,
-                itemCollections = false,
-                similarItems = false,
-            )
-        val viewModel =
-            movieViewModel(movie(itemId, "Movie", localTrailers = 1, specialFeatures = 2))
-        viewModel.loadMovie(itemId)
-        withTimeout(5_000) { viewModel.state.first { it.movie != null } }
-
-        viewModel.loadRelated(itemId)
-
-        assertEquals(listOf("getMovie"), synchronized(calls) { calls.toList() })
-        assertEquals(RelatedItems(), viewModel.state.value.related)
-    }
+            assertTrue(state.related.extras.isNotEmpty())
+            assertTrue(state.related.similar.isEmpty())
+            assertTrue(state.related.collections.isEmpty())
+            assertNull(state.error)
+            // An unknown special feature count still asks for them.
+            assertEquals(listOf(true to true), extraArgs)
+        }
 
     @Test
-    fun `#769 each row follows its own capability`() = runBlocking {
-        capabilities =
-            ServerCapabilities.ALL.copy(similarItems = false, cappedDownloadTranscode = false)
-        val viewModel = showViewModel()
-        viewModel.loadShow(itemId)
-        val loaded = withTimeout(5_000) { viewModel.state.first { it.show != null } }
-        assertEquals(false, loaded.cappedDownloads)
-        calls.clear()
+    fun `nothing is asked before the movie is there`() =
+        runTest(dispatcher) {
+            val viewModel = movieViewModel(movie(itemId, "Movie"))
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
 
-        viewModel.loadRelated(itemId)
-        val related =
-            withTimeout(5_000) { viewModel.state.first { it.related.extras.isNotEmpty() } }.related
+            assertTrue(calls.isEmpty())
+        }
 
-        assertTrue(related.similar.isEmpty())
-        assertTrue("getSimilarItems" !in calls)
-    }
+    @Test
+    fun `the show asks for extras and similar items, not collections`() =
+        runTest(dispatcher) {
+            val viewModel = showViewModel()
+            viewModel.loadShow(itemId)
+            advanceUntilIdle()
+            assertNotNull(viewModel.state.value.show)
+            calls.clear()
+
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            val related = viewModel.state.value.related
+
+            assertTrue(related.extras.isNotEmpty())
+            assertEquals(listOf(similar), related.similar)
+            assertTrue(related.collections.isEmpty())
+            assertTrue("getItemCollections" !in calls)
+            assertEquals(listOf(false to true), extraArgs)
+        }
+
+    @Test
+    fun `rows switched off in the settings are never requested`() =
+        runTest(dispatcher) {
+            switchedOff += listOf("pref_detail_extras", "pref_detail_similar")
+            val viewModel =
+                movieViewModel(movie(itemId, "Movie", localTrailers = 1, specialFeatures = 2))
+            viewModel.loadMovie(itemId)
+            advanceUntilIdle()
+            assertNotNull(viewModel.state.value.movie)
+
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            val related = viewModel.state.value.related
+
+            assertTrue(related.collections.isNotEmpty())
+            assertEquals(listOf("getMovie", "getItemCollections"), calls)
+            assertTrue(related.extras.isEmpty() && related.similar.isEmpty())
+        }
+
+    @Test
+    fun `#769 rows the server cannot fill are never requested`() =
+        runTest(dispatcher) {
+            capabilities =
+                ServerCapabilities.ALL.copy(
+                    extras = false,
+                    itemCollections = false,
+                    similarItems = false,
+                )
+            val viewModel =
+                movieViewModel(movie(itemId, "Movie", localTrailers = 1, specialFeatures = 2))
+            viewModel.loadMovie(itemId)
+            advanceUntilIdle()
+            assertNotNull(viewModel.state.value.movie)
+
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+
+            assertEquals(listOf("getMovie"), calls)
+            assertEquals(RelatedItems(), viewModel.state.value.related)
+        }
+
+    @Test
+    fun `#769 each row follows its own capability`() =
+        runTest(dispatcher) {
+            capabilities =
+                ServerCapabilities.ALL.copy(similarItems = false, cappedDownloadTranscode = false)
+            val viewModel = showViewModel()
+            viewModel.loadShow(itemId)
+            advanceUntilIdle()
+            val loaded = viewModel.state.value
+            assertNotNull(loaded.show)
+            assertEquals(false, loaded.cappedDownloads)
+            calls.clear()
+
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            val related = viewModel.state.value.related
+
+            assertTrue(related.extras.isNotEmpty())
+            assertTrue(related.similar.isEmpty())
+            assertTrue("getSimilarItems" !in calls)
+        }
 
     @Test
     fun `#769 the quality dialog offers the cap only where the server can transcode`() =
-        runBlocking {
+        runTest(dispatcher) {
             val capped = movieViewModel(movie(itemId, "Movie"))
             capped.loadMovie(itemId)
-            assertTrue(
-                withTimeout(5_000) { capped.state.first { it.movie != null } }.cappedDownloads
-            )
+            advanceUntilIdle()
+            assertNotNull(capped.state.value.movie)
+            assertTrue(capped.state.value.cappedDownloads)
 
             capabilities = ServerCapabilities.ALL.copy(cappedDownloadTranscode = false)
             val original = movieViewModel(movie(itemId, "Movie"))
             original.loadMovie(itemId)
-            val state = withTimeout(5_000) { original.state.first { it.movie != null } }
+            advanceUntilIdle()
+            val state = original.state.value
 
+            assertNotNull(state.movie)
             assertEquals(false, state.cappedDownloads)
         }
 
     @Test
-    fun `metadata switched off in the settings is cleared before the page gets it`() = runBlocking {
-        switchedOff += listOf("pref_detail_tagline", "pref_detail_watch_history")
-        val viewModel =
-            movieViewModel(
-                movie(itemId, "Movie")
-                    .copy(tagline = "In space…", criticRating = 98f, playCount = 3)
-            )
-        viewModel.loadMovie(itemId)
-        val movie = withTimeout(5_000) { viewModel.state.first { it.movie != null } }.movie!!
+    fun `metadata switched off in the settings is cleared before the page gets it`() =
+        runTest(dispatcher) {
+            switchedOff += listOf("pref_detail_tagline", "pref_detail_watch_history")
+            val viewModel =
+                movieViewModel(
+                    movie(itemId, "Movie")
+                        .copy(tagline = "In space…", criticRating = 98f, playCount = 3)
+                )
+            viewModel.loadMovie(itemId)
+            advanceUntilIdle()
+            val movie = assertNotNull(viewModel.state.value.movie)
 
-        assertNull(movie.tagline)
-        assertEquals(0, movie.playCount)
-        assertEquals(98f, movie.criticRating)
-    }
-
-    @Test
-    fun `a row switched off goes away when the page reloads`() = runBlocking {
-        val viewModel = movieViewModel(movie(itemId, "Movie"))
-        viewModel.loadMovie(itemId)
-        withTimeout(5_000) { viewModel.state.first { it.movie != null } }
-        viewModel.loadRelated(itemId)
-        withTimeout(5_000) {
-            viewModel.state.first {
-                it.related.similar.isNotEmpty() && it.related.collections.isNotEmpty()
-            }
+            assertNull(movie.tagline)
+            assertEquals(0, movie.playCount)
+            assertEquals(98f, movie.criticRating)
         }
 
-        switchedOff += "pref_detail_similar"
-        calls.clear()
-        viewModel.loadMovie(itemId)
-        val related =
-            withTimeout(5_000) { viewModel.state.first { it.related.similar.isEmpty() } }.related
-        // The row goes before the reload asks for the others: wait for that request too, or it
-        // reaches Dispatchers.Main after tearDown has reset it and fails a later runTest.
-        withTimeout(5_000) {
-            while ("getItemCollections" !in synchronized(calls) { calls.toList() }) delay(10)
+    @Test
+    fun `a row switched off goes away when the page reloads`() =
+        runTest(dispatcher) {
+            val viewModel = movieViewModel(movie(itemId, "Movie"))
+            viewModel.loadMovie(itemId)
+            advanceUntilIdle()
+            assertNotNull(viewModel.state.value.movie)
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            assertTrue(viewModel.state.value.related.similar.isNotEmpty())
+            assertTrue(viewModel.state.value.related.collections.isNotEmpty())
+
+            switchedOff += "pref_detail_similar"
+            calls.clear()
+            viewModel.loadMovie(itemId)
+            // The whole reload, the rows it asks for again included.
+            advanceUntilIdle()
+            val related = viewModel.state.value.related
+
+            assertTrue(related.similar.isEmpty())
+            assertTrue("getItemCollections" in calls)
+            assertEquals(listOf(collection), related.collections)
+            assertTrue("getSimilarItems" !in calls)
         }
 
-        assertEquals(listOf(collection), related.collections)
-        assertTrue("getSimilarItems" !in calls)
-    }
+    @Test
+    fun `a row switched on is requested when the page reloads`() =
+        runTest(dispatcher) {
+            switchedOff += "pref_detail_similar"
+            val viewModel = movieViewModel(movie(itemId, "Movie"))
+            viewModel.loadMovie(itemId)
+            advanceUntilIdle()
+            assertNotNull(viewModel.state.value.movie)
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            assertTrue(viewModel.state.value.related.collections.isNotEmpty())
+
+            switchedOff.clear()
+            viewModel.loadMovie(itemId)
+            advanceUntilIdle()
+
+            assertEquals(listOf(similar), viewModel.state.value.related.similar)
+        }
 
     @Test
-    fun `a row switched on is requested when the page reloads`() = runBlocking {
-        switchedOff += "pref_detail_similar"
-        val viewModel = movieViewModel(movie(itemId, "Movie"))
-        viewModel.loadMovie(itemId)
-        withTimeout(5_000) { viewModel.state.first { it.movie != null } }
-        viewModel.loadRelated(itemId)
-        withTimeout(5_000) { viewModel.state.first { it.related.collections.isNotEmpty() } }
+    fun `a reload with the same switches asks for no row again`() =
+        runTest(dispatcher) {
+            val viewModel = movieViewModel(movie(itemId, "Movie"))
+            viewModel.loadMovie(itemId)
+            advanceUntilIdle()
+            assertNotNull(viewModel.state.value.movie)
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            assertTrue(viewModel.state.value.related.similar.isNotEmpty())
 
-        switchedOff.clear()
-        viewModel.loadMovie(itemId)
-        val related =
-            withTimeout(5_000) { viewModel.state.first { it.related.similar.isNotEmpty() } }.related
+            // The reload's answer can be told apart, so the test sees that the reload ran to its
+            // end, its call of loadRelated included (#809).
+            answer = movie(itemId, "Movie, reloaded")
+            calls.clear()
+            viewModel.loadMovie(itemId)
+            advanceUntilIdle()
+            assertEquals("Movie, reloaded", viewModel.state.value.movie?.name)
 
-        assertEquals(listOf(similar), related.similar)
-    }
-
-    @Test
-    fun `a reload with the same switches asks for no row again`() = runBlocking {
-        val viewModel = movieViewModel(movie(itemId, "Movie"))
-        viewModel.loadMovie(itemId)
-        withTimeout(5_000) { viewModel.state.first { it.movie != null } }
-        viewModel.loadRelated(itemId)
-        withTimeout(5_000) { viewModel.state.first { it.related.similar.isNotEmpty() } }
-
-        // The reload's answer can be told apart, so the test waits until the reload has shown it,
-        // past its hop to Dispatchers.Default and back: a load still on its way back to Main when
-        // tearDown resets it fails a later runTest (#809).
-        answer = movie(itemId, "Movie, reloaded")
-        calls.clear()
-        viewModel.loadMovie(itemId)
-        withTimeout(5_000) { viewModel.state.first { it.movie?.name == "Movie, reloaded" } }
-
-        assertEquals(listOf("getMovie"), synchronized(calls) { calls.toList() })
-    }
+            assertEquals(listOf("getMovie"), calls)
+        }
 
     private fun movieViewModel(movie: Movie) =
-        MovieViewModel(repository(movie), appPreferences(), VideoMetadataParser)
+        MovieViewModel(
+            repository(movie),
+            appPreferences(),
+            VideoMetadataParser,
+            defaultDispatcher = dispatcher,
+        )
 
     private fun showViewModel(): ShowViewModel {
         val repository = repository(movie(itemId, "unused"))
@@ -342,6 +374,8 @@ class RelatedItemsLoadingTest {
                     texts = CoreDownloadTexts,
                 ),
             downloadStore = noDownloads(),
+            defaultDispatcher = dispatcher,
+            ioDispatcher = dispatcher,
         )
     }
 

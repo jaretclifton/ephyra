@@ -6,8 +6,11 @@ import android.content.SharedPreferences
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.di.AppPreferencesDownloadSettings
 import dev.jdtech.jellyfin.film.domain.VideoMetadataParser
+import dev.jdtech.jellyfin.film.presentation.episode.EpisodeState
 import dev.jdtech.jellyfin.film.presentation.episode.EpisodeViewModel
+import dev.jdtech.jellyfin.film.presentation.movie.MovieState
 import dev.jdtech.jellyfin.film.presentation.movie.MovieViewModel
+import dev.jdtech.jellyfin.film.presentation.show.ShowState
 import dev.jdtech.jellyfin.film.presentation.show.ShowViewModel
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemImages
@@ -26,16 +29,17 @@ import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.CoreDownloadTexts
 import java.util.UUID
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -53,9 +57,12 @@ class CastAndCrewPreferenceTest {
     private val writer = person("Writer", PersonKind.WRITER)
     private val people = listOf(actor, director, writer)
 
+    /** #809: Main and the ViewModels' cast and crew work on one test scheduler, no real thread. */
+    private val dispatcher = StandardTestDispatcher()
+
     @BeforeEach
     fun setUp() {
-        Dispatchers.setMain(UnconfinedTestDispatcher())
+        Dispatchers.setMain(dispatcher)
     }
 
     @AfterEach
@@ -64,80 +71,94 @@ class CastAndCrewPreferenceTest {
     }
 
     @Test
-    fun `movie shows the cast by default, and the director and writers once asked for`() {
-        val byDefault = loadMovie(appPreferences(stored = null))
+    fun `movie shows the cast by default, and the director and writers once asked for`() =
+        runTest(dispatcher) {
+            val byDefault = loadMovie(appPreferences(stored = null))
 
-        assertEquals(listOf(actor), byDefault.actors)
-        // #510: the credits under the overview are off until turned on.
-        assertNull(byDefault.director)
-        assertTrue(byDefault.writers.isEmpty())
+            assertEquals(listOf(actor), byDefault.actors)
+            // #510: the credits under the overview are off until turned on.
+            assertNull(byDefault.director)
+            assertTrue(byDefault.writers.isEmpty())
 
-        val withCredits = loadMovie(appPreferences(stored = null, credits = true))
+            val withCredits = loadMovie(appPreferences(stored = null, credits = true))
 
-        assertEquals(listOf(actor), withCredits.actors)
-        assertEquals(director, withCredits.director)
-        assertEquals(listOf(writer), withCredits.writers)
-    }
-
-    @Test
-    fun `movie credits stay hidden while cast and crew is off`() {
-        val state = loadMovie(appPreferences(stored = false, credits = true))
-
-        assertTrue(state.actors.isEmpty())
-        assertNull(state.director)
-        assertTrue(state.writers.isEmpty())
-    }
+            assertEquals(listOf(actor), withCredits.actors)
+            assertEquals(director, withCredits.director)
+            assertEquals(listOf(writer), withCredits.writers)
+        }
 
     @Test
-    fun `movie hides cast and crew when turned off`() {
-        val state = loadMovie(appPreferences(stored = false))
+    fun `movie credits stay hidden while cast and crew is off`() =
+        runTest(dispatcher) {
+            val state = loadMovie(appPreferences(stored = false, credits = true))
 
-        assertTrue(state.actors.isEmpty())
-        assertNull(state.director)
-        assertTrue(state.writers.isEmpty())
-    }
-
-    @Test
-    fun `show shows the cast by default, and the director and writers once asked for`() {
-        val byDefault = loadShow(appPreferences(stored = null))
-
-        assertEquals(listOf(actor), byDefault.actors)
-        assertNull(byDefault.director)
-        assertTrue(byDefault.writers.isEmpty())
-
-        val withCredits = loadShow(appPreferences(stored = null, credits = true))
-
-        assertEquals(listOf(actor), withCredits.actors)
-        assertEquals(director, withCredits.director)
-        assertEquals(listOf(writer), withCredits.writers)
-    }
+            assertTrue(state.actors.isEmpty())
+            assertNull(state.director)
+            assertTrue(state.writers.isEmpty())
+        }
 
     @Test
-    fun `show hides cast and crew when turned off`() {
-        val state = loadShow(appPreferences(stored = false))
+    fun `movie hides cast and crew when turned off`() =
+        runTest(dispatcher) {
+            val state = loadMovie(appPreferences(stored = false))
 
-        assertTrue(state.actors.isEmpty())
-        assertNull(state.director)
-        assertTrue(state.writers.isEmpty())
-    }
-
-    @Test
-    fun `episode shows actors by default`() {
-        assertEquals(listOf(actor), loadEpisode(appPreferences(stored = null)).actors)
-    }
+            assertTrue(state.actors.isEmpty())
+            assertNull(state.director)
+            assertTrue(state.writers.isEmpty())
+        }
 
     @Test
-    fun `episode hides actors when turned off`() {
-        assertTrue(loadEpisode(appPreferences(stored = false)).actors.isEmpty())
-    }
+    fun `show shows the cast by default, and the director and writers once asked for`() =
+        runTest(dispatcher) {
+            val byDefault = loadShow(appPreferences(stored = null))
 
-    private fun loadMovie(preferences: AppPreferences) = runBlocking {
-        val viewModel = MovieViewModel(repository(), preferences, VideoMetadataParser)
+            assertEquals(listOf(actor), byDefault.actors)
+            assertNull(byDefault.director)
+            assertTrue(byDefault.writers.isEmpty())
+
+            val withCredits = loadShow(appPreferences(stored = null, credits = true))
+
+            assertEquals(listOf(actor), withCredits.actors)
+            assertEquals(director, withCredits.director)
+            assertEquals(listOf(writer), withCredits.writers)
+        }
+
+    @Test
+    fun `show hides cast and crew when turned off`() =
+        runTest(dispatcher) {
+            val state = loadShow(appPreferences(stored = false))
+
+            assertTrue(state.actors.isEmpty())
+            assertNull(state.director)
+            assertTrue(state.writers.isEmpty())
+        }
+
+    @Test
+    fun `episode shows actors by default`() =
+        runTest(dispatcher) {
+            assertEquals(listOf(actor), loadEpisode(appPreferences(stored = null)).actors)
+        }
+
+    @Test
+    fun `episode hides actors when turned off`() =
+        runTest(dispatcher) {
+            assertTrue(loadEpisode(appPreferences(stored = false)).actors.isEmpty())
+        }
+
+    private fun TestScope.loadMovie(preferences: AppPreferences): MovieState {
+        val viewModel =
+            MovieViewModel(
+                repository(),
+                preferences,
+                VideoMetadataParser,
+                defaultDispatcher = dispatcher,
+            )
         viewModel.loadMovie(itemId)
-        withTimeout(5_000) { viewModel.state.first { it.movie != null } }
+        advanceUntilIdle()
+        return viewModel.state.value.also { assertNotNull(it.movie) }
     }
 
-    private fun loadShow(preferences: AppPreferences) = runBlocking {
+    private fun TestScope.loadShow(preferences: AppPreferences): ShowState {
         val repository = repository()
         val viewModel =
             ShowViewModel(
@@ -154,15 +175,25 @@ class CastAndCrewPreferenceTest {
                         texts = CoreDownloadTexts,
                     ),
                 downloadStore = noDownloads(),
+                defaultDispatcher = dispatcher,
+                ioDispatcher = dispatcher,
             )
         viewModel.loadShow(itemId)
-        withTimeout(5_000) { viewModel.state.first { it.show != null } }
+        advanceUntilIdle()
+        return viewModel.state.value.also { assertNotNull(it.show) }
     }
 
-    private fun loadEpisode(preferences: AppPreferences) = runBlocking {
-        val viewModel = EpisodeViewModel(repository(), preferences, VideoMetadataParser)
+    private fun TestScope.loadEpisode(preferences: AppPreferences): EpisodeState {
+        val viewModel =
+            EpisodeViewModel(
+                repository(),
+                preferences,
+                VideoMetadataParser,
+                defaultDispatcher = dispatcher,
+            )
         viewModel.loadEpisode(itemId)
-        withTimeout(5_000) { viewModel.state.first { it.episode != null } }
+        advanceUntilIdle()
+        return viewModel.state.value.also { assertNotNull(it.episode) }
     }
 
     private fun person(name: String, type: PersonKind) =

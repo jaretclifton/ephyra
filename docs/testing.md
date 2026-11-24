@@ -34,7 +34,14 @@ see [What the unit tests do not cover](#what-the-unit-tests-do-not-cover).
 - **Assertions** are `kotlin.test` (`assertEquals`, `assertIs`, `assertFailsWith`). They work
   under both engines.
 - **Coroutines** are tested with `kotlinx-coroutines-test`: `runTest`, and `setMain` with a test
-  dispatcher for a ViewModel.
+  dispatcher for a ViewModel. A ViewModel that moves work to `Dispatchers.Default` or `IO` takes
+  that dispatcher as a constructor parameter (the `@Inject` constructor passes the real one, as in
+  `MovieViewModel` or `DownloadsViewModel`), and its test passes the same `StandardTestDispatcher`
+  it gives `setMain` and `runTest`, then `advanceUntilIdle()`. No `runBlocking` with real
+  dispatchers: work a test did not wait for comes back to `Main` after `resetMain()` and fails
+  the next `runTest` in the module ("uncaught exceptions before the test started"), a test that
+  is innocent
+  ([#809](https://github.com/midasvo/ephyra/issues/809)).
 - **Robolectric** where a test needs Android classes: `data`, `core`, `downloads`, `setup`,
   `server/jellyfin`, `player/local` and both apps.
 - **Room** tests use `inMemoryDatabaseBuilder`; the migration test uses `MigrationTestHelper`.

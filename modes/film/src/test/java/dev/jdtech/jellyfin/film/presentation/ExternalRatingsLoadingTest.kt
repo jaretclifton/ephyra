@@ -29,17 +29,20 @@ import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.CoreDownloadTexts
 import java.util.Collections
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -85,9 +88,16 @@ class ExternalRatingsLoadingTest {
 
     private val ratings = FakeRatings()
 
+    /**
+     * #809: Main and the ViewModels' cast and crew work on one test scheduler. On the real
+     * Dispatchers.Default a reload the test did not wait for came back to Main after tearDown had
+     * reset it, and failed the next runTest in the module (ServerAwayReloadTest).
+     */
+    private val dispatcher = StandardTestDispatcher()
+
     @BeforeEach
     fun setUp() {
-        Dispatchers.setMain(UnconfinedTestDispatcher())
+        Dispatchers.setMain(dispatcher)
     }
 
     @AfterEach
@@ -95,89 +105,105 @@ class ExternalRatingsLoadingTest {
         Dispatchers.resetMain()
     }
 
-    private fun loaded(movie: Movie = movie()): MovieViewModel = runBlocking {
+    private fun TestScope.loaded(movie: Movie = movie()): MovieViewModel {
         val viewModel =
             MovieViewModel(
                 repository(movie),
                 appPreferences(),
                 VideoMetadataParser,
                 externalRatings = ratings,
+                defaultDispatcher = dispatcher,
             )
         viewModel.loadMovie(itemId)
-        withTimeout(5_000) { viewModel.state.first { it.movie != null } }
-        viewModel
+        advanceUntilIdle()
+        assertNotNull(viewModel.state.value.movie)
+        return viewModel
     }
 
     @Test
-    fun `switched off while the lookup runs, its answer is dropped`() {
-        ratings.during = { ratings.on = false }
-        val viewModel = loaded()
-        viewModel.loadRelated(itemId)
-        assertEquals(ExternalRatingsState.Hidden, viewModel.state.value.externalRatings)
-        assertEquals(1, ratings.asked.size)
-    }
-
-    @Test
-    fun `a lookup the service could not answer is tried again on a reload`() = runBlocking {
-        ratings.allowed = false
-        val viewModel = loaded()
-        viewModel.loadRelated(itemId)
-        assertEquals(ExternalRatingsState.Hidden, viewModel.state.value.externalRatings)
-
-        ratings.allowed = true
-        viewModel.loadMovie(itemId)
-        val state =
-            withTimeout(5_000) {
-                viewModel.state.first { it.externalRatings is ExternalRatingsState.Shown }
-            }
-        assertEquals(ExternalRatingsState.Shown(listOf(imdb, tomatoes)), state.externalRatings)
-        assertEquals(2, ratings.asked.size)
-    }
-
-    @Test
-    fun `a title the service has nothing for is not asked again on a reload`() = runBlocking {
-        ratings.answer = emptyList()
-        val viewModel = loaded()
-        viewModel.loadRelated(itemId)
-        viewModel.loadRelated(itemId)
-        viewModel.loadMovie(itemId)
-        withTimeout(5_000) { viewModel.state.first { it.movie != null } }
-        assertEquals(1, ratings.asked.size)
-        assertEquals(ExternalRatingsState.Hidden, viewModel.state.value.externalRatings)
-    }
-
-    @Test
-    fun `the Rotten Tomatoes switch applies again on a reload`() = runBlocking {
-        val viewModel = loaded()
-        viewModel.loadRelated(itemId)
-        withTimeout(5_000) {
-            viewModel.state.first { it.externalRatings is ExternalRatingsState.Shown }
+    fun `switched off while the lookup runs, its answer is dropped`() =
+        runTest(dispatcher) {
+            ratings.during = { ratings.on = false }
+            val viewModel = loaded()
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            assertEquals(ExternalRatingsState.Hidden, viewModel.state.value.externalRatings)
+            assertEquals(1, ratings.asked.size)
         }
 
-        switchedOff += "pref_detail_critic_rating"
-        viewModel.loadMovie(itemId)
-        withTimeout(5_000) {
-            viewModel.state.first { it.externalRatings == ExternalRatingsState.Shown(listOf(imdb)) }
+    @Test
+    fun `a lookup the service could not answer is tried again on a reload`() =
+        runTest(dispatcher) {
+            ratings.allowed = false
+            val viewModel = loaded()
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            assertEquals(ExternalRatingsState.Hidden, viewModel.state.value.externalRatings)
+
+            ratings.allowed = true
+            viewModel.loadMovie(itemId)
+            advanceUntilIdle()
+            assertEquals(
+                ExternalRatingsState.Shown(listOf(imdb, tomatoes)),
+                viewModel.state.value.externalRatings,
+            )
+            assertEquals(2, ratings.asked.size)
         }
 
-        switchedOff.clear()
-        viewModel.loadMovie(itemId)
-        withTimeout(5_000) {
-            viewModel.state.first {
-                it.externalRatings == ExternalRatingsState.Shown(listOf(imdb, tomatoes))
-            }
+    @Test
+    fun `a title the service has nothing for is not asked again on a reload`() =
+        runTest(dispatcher) {
+            ratings.answer = emptyList()
+            val viewModel = loaded()
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            // #809: the reload runs to its end before the test does, its cast and crew included.
+            viewModel.loadMovie(itemId)
+            advanceUntilIdle()
+            assertNotNull(viewModel.state.value.movie)
+            assertEquals(1, ratings.asked.size)
+            assertEquals(ExternalRatingsState.Hidden, viewModel.state.value.externalRatings)
         }
-        assertEquals(1, ratings.asked.size)
-    }
+
+    @Test
+    fun `the Rotten Tomatoes switch applies again on a reload`() =
+        runTest(dispatcher) {
+            val viewModel = loaded()
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            assertIs<ExternalRatingsState.Shown>(viewModel.state.value.externalRatings)
+
+            switchedOff += "pref_detail_critic_rating"
+            viewModel.loadMovie(itemId)
+            advanceUntilIdle()
+            assertEquals(
+                ExternalRatingsState.Shown(listOf(imdb)),
+                viewModel.state.value.externalRatings,
+            )
+
+            switchedOff.clear()
+            viewModel.loadMovie(itemId)
+            advanceUntilIdle()
+            assertEquals(
+                ExternalRatingsState.Shown(listOf(imdb, tomatoes)),
+                viewModel.state.value.externalRatings,
+            )
+            assertEquals(1, ratings.asked.size)
+        }
 
     @Test
     fun `a lookup that comes back after a reload uses the reload's Rotten Tomatoes rule`() =
-        runBlocking {
+        runTest(dispatcher) {
             val gate = CompletableDeferred<Unit>()
             ratings.gate = gate
             val updates = mutableListOf<ExternalRatingsState>()
             val loader =
-                ExternalRatingsLoader(ratings, CoroutineScope(UnconfinedTestDispatcher())) {
+                ExternalRatingsLoader(
+                    ratings,
+                    CoroutineScope(UnconfinedTestDispatcher(testScheduler)),
+                ) {
                     updates += it
                 }
             val lookup = movie().ratingsLookup()
@@ -192,6 +218,7 @@ class ExternalRatingsLoadingTest {
             // The page is loaded again while the lookup waits, with the score switched off.
             loader.onItemLoaded(itemId, lookup, first, rottenTomatoes = false)
             gate.complete(Unit)
+            advanceUntilIdle()
             assertEquals(
                 listOf<ExternalRatingsState>(ExternalRatingsState.Shown(listOf(imdb))),
                 updates,
@@ -199,129 +226,143 @@ class ExternalRatingsLoadingTest {
         }
 
     @Test
-    fun `the first load keeps room and asks for nothing`() {
-        val viewModel = loaded()
-        assertEquals(ExternalRatingsState.Pending, viewModel.state.value.externalRatings)
-        assertTrue(ratings.asked.isEmpty())
-    }
-
-    @Test
-    fun `the ratings come once the page is shown, once per movie`() = runBlocking {
-        val viewModel = loaded()
-        viewModel.loadRelated(itemId)
-        val state =
-            withTimeout(5_000) {
-                viewModel.state.first { it.externalRatings is ExternalRatingsState.Shown }
-            }
-        assertEquals(ExternalRatingsState.Shown(listOf(imdb, tomatoes)), state.externalRatings)
-        assertEquals(
-            listOf(RatingsLookup(ExternalIdType.TMDB, RatedKind.MOVIE, "603")),
-            ratings.asked.toList(),
-        )
-
-        viewModel.loadRelated(itemId)
-        viewModel.loadMovie(itemId)
-        withTimeout(5_000) { viewModel.state.first { it.movie != null } }
-        assertEquals(1, ratings.asked.size)
-        assertEquals(
-            ExternalRatingsState.Shown(listOf(imdb, tomatoes)),
-            viewModel.state.value.externalRatings,
-        )
-    }
-
-    @Test
-    fun `off, nothing is asked and nothing is kept`() {
-        ratings.on = false
-        val viewModel = loaded()
-        viewModel.loadRelated(itemId)
-        assertEquals(ExternalRatingsState.Hidden, viewModel.state.value.externalRatings)
-        assertTrue(ratings.asked.isEmpty())
-    }
-
-    @Test
-    fun `a movie without an IMDb or TMDB id asks for nothing`() {
-        val viewModel = loaded(movie(ExternalIds(tvdb = "1")))
-        viewModel.loadRelated(itemId)
-        assertEquals(ExternalRatingsState.Hidden, viewModel.state.value.externalRatings)
-        assertTrue(ratings.asked.isEmpty())
-    }
-
-    @Test
-    fun `no ratings hides the row`() = runBlocking {
-        ratings.answer = emptyList()
-        val viewModel = loaded()
-        viewModel.loadRelated(itemId)
-        withTimeout(5_000) {
-            viewModel.state.first { it.externalRatings == ExternalRatingsState.Hidden }
+    fun `the first load keeps room and asks for nothing`() =
+        runTest(dispatcher) {
+            val viewModel = loaded()
+            assertEquals(ExternalRatingsState.Pending, viewModel.state.value.externalRatings)
+            assertTrue(ratings.asked.isEmpty())
         }
-        assertEquals(1, ratings.asked.size)
-    }
 
     @Test
-    fun `the server's own Rotten Tomatoes score is not shown twice`() = runBlocking {
-        val viewModel = loaded(movie().copy(criticRating = 90f))
-        viewModel.loadRelated(itemId)
-        val state =
-            withTimeout(5_000) {
-                viewModel.state.first { it.externalRatings is ExternalRatingsState.Shown }
-            }
-        assertEquals(ExternalRatingsState.Shown(listOf(imdb)), state.externalRatings)
-    }
+    fun `the ratings come once the page is shown, once per movie`() =
+        runTest(dispatcher) {
+            val viewModel = loaded()
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            assertEquals(
+                ExternalRatingsState.Shown(listOf(imdb, tomatoes)),
+                viewModel.state.value.externalRatings,
+            )
+            assertEquals(
+                listOf(RatingsLookup(ExternalIdType.TMDB, RatedKind.MOVIE, "603")),
+                ratings.asked.toList(),
+            )
 
-    @Test
-    fun `Rotten Tomatoes switched off hides the service's score too`() = runBlocking {
-        switchedOff += "pref_detail_critic_rating"
-        val viewModel = loaded()
-        viewModel.loadRelated(itemId)
-        val state =
-            withTimeout(5_000) {
-                viewModel.state.first { it.externalRatings is ExternalRatingsState.Shown }
-            }
-        assertEquals(ExternalRatingsState.Shown(listOf(imdb)), state.externalRatings)
-    }
-
-    @Test
-    fun `switched off later, a reload hides the row`() = runBlocking {
-        val viewModel = loaded()
-        viewModel.loadRelated(itemId)
-        withTimeout(5_000) {
-            viewModel.state.first { it.externalRatings is ExternalRatingsState.Shown }
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            // #809: the reload runs to its end before the test does, its cast and crew included.
+            viewModel.loadMovie(itemId)
+            advanceUntilIdle()
+            assertNotNull(viewModel.state.value.movie)
+            assertEquals(1, ratings.asked.size)
+            assertEquals(
+                ExternalRatingsState.Shown(listOf(imdb, tomatoes)),
+                viewModel.state.value.externalRatings,
+            )
         }
-        ratings.on = false
-        viewModel.loadMovie(itemId)
-        withTimeout(5_000) {
-            viewModel.state.first { it.externalRatings == ExternalRatingsState.Hidden }
-        }
-        assertEquals(1, ratings.asked.size)
-    }
 
     @Test
-    fun `a show is looked up as a show, by its TVDB id when it has no other`() = runBlocking {
-        val viewModel = showViewModel()
-        viewModel.loadShow(itemId)
-        withTimeout(5_000) { viewModel.state.first { it.show != null } }
-        assertEquals(ExternalRatingsState.Pending, viewModel.state.value.externalRatings)
-        assertTrue(ratings.asked.isEmpty())
-
-        viewModel.loadRelated(itemId)
-        withTimeout(5_000) {
-            viewModel.state.first { it.externalRatings is ExternalRatingsState.Shown }
+    fun `off, nothing is asked and nothing is kept`() =
+        runTest(dispatcher) {
+            ratings.on = false
+            val viewModel = loaded()
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            assertEquals(ExternalRatingsState.Hidden, viewModel.state.value.externalRatings)
+            assertTrue(ratings.asked.isEmpty())
         }
-        assertEquals(
-            listOf(RatingsLookup(ExternalIdType.TVDB, RatedKind.SHOW, "81189")),
-            ratings.asked.toList(),
-        )
-    }
 
     @Test
-    fun `the downloads-only show page asks for nothing`() = runBlocking {
-        val viewModel = showViewModel()
-        viewModel.loadShow(itemId, downloadsOnly = true)
-        withTimeout(5_000) { viewModel.state.first { it.show != null } }
-        viewModel.loadRelated(itemId)
-        assertEquals(ExternalRatingsState.Hidden, viewModel.state.value.externalRatings)
-        assertTrue(ratings.asked.isEmpty())
-    }
+    fun `a movie without an IMDb or TMDB id asks for nothing`() =
+        runTest(dispatcher) {
+            val viewModel = loaded(movie(ExternalIds(tvdb = "1")))
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            assertEquals(ExternalRatingsState.Hidden, viewModel.state.value.externalRatings)
+            assertTrue(ratings.asked.isEmpty())
+        }
+
+    @Test
+    fun `no ratings hides the row`() =
+        runTest(dispatcher) {
+            ratings.answer = emptyList()
+            val viewModel = loaded()
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            assertEquals(ExternalRatingsState.Hidden, viewModel.state.value.externalRatings)
+            assertEquals(1, ratings.asked.size)
+        }
+
+    @Test
+    fun `the server's own Rotten Tomatoes score is not shown twice`() =
+        runTest(dispatcher) {
+            val viewModel = loaded(movie().copy(criticRating = 90f))
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            assertEquals(
+                ExternalRatingsState.Shown(listOf(imdb)),
+                viewModel.state.value.externalRatings,
+            )
+        }
+
+    @Test
+    fun `Rotten Tomatoes switched off hides the service's score too`() =
+        runTest(dispatcher) {
+            switchedOff += "pref_detail_critic_rating"
+            val viewModel = loaded()
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            assertEquals(
+                ExternalRatingsState.Shown(listOf(imdb)),
+                viewModel.state.value.externalRatings,
+            )
+        }
+
+    @Test
+    fun `switched off later, a reload hides the row`() =
+        runTest(dispatcher) {
+            val viewModel = loaded()
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            assertIs<ExternalRatingsState.Shown>(viewModel.state.value.externalRatings)
+            ratings.on = false
+            viewModel.loadMovie(itemId)
+            advanceUntilIdle()
+            assertEquals(ExternalRatingsState.Hidden, viewModel.state.value.externalRatings)
+            assertEquals(1, ratings.asked.size)
+        }
+
+    @Test
+    fun `a show is looked up as a show, by its TVDB id when it has no other`() =
+        runTest(dispatcher) {
+            val viewModel = showViewModel()
+            viewModel.loadShow(itemId)
+            advanceUntilIdle()
+            assertNotNull(viewModel.state.value.show)
+            assertEquals(ExternalRatingsState.Pending, viewModel.state.value.externalRatings)
+            assertTrue(ratings.asked.isEmpty())
+
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            assertIs<ExternalRatingsState.Shown>(viewModel.state.value.externalRatings)
+            assertEquals(
+                listOf(RatingsLookup(ExternalIdType.TVDB, RatedKind.SHOW, "81189")),
+                ratings.asked.toList(),
+            )
+        }
+
+    @Test
+    fun `the downloads-only show page asks for nothing`() =
+        runTest(dispatcher) {
+            val viewModel = showViewModel()
+            viewModel.loadShow(itemId, downloadsOnly = true)
+            advanceUntilIdle()
+            assertNotNull(viewModel.state.value.show)
+            viewModel.loadRelated(itemId)
+            advanceUntilIdle()
+            assertEquals(ExternalRatingsState.Hidden, viewModel.state.value.externalRatings)
+            assertTrue(ratings.asked.isEmpty())
+        }
 
     private fun repository(movie: Movie): MediaRepository =
         fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
@@ -361,6 +402,8 @@ class ExternalRatingsLoadingTest {
                 ),
             downloadStore = noDownloads(),
             externalRatings = ratings,
+            defaultDispatcher = dispatcher,
+            ioDispatcher = dispatcher,
         )
     }
 
