@@ -330,7 +330,8 @@ Asked and answered on 2026-11-22; the answers are in ADR 0002. In short: everyth
    packages? *Recommended: (b).*
 3. **Q3, where the repository interface goes.** A new `application` module (features depend on it,
    not on `data`), or into `domain` (no new module, but `domain` then knows paging)? *Recommended:
-   `application`*, with `paging-common`, which is plain Kotlin.
+   `application`*, with `paging-common`, which is plain Kotlin. (Since #968 `application` has no
+   paging: it offers the plain page read `getItemsPage`, and the pagers are in `modes/film`.)
 4. **Q4, ids per kind.** One `ItemId` for all items, or `MovieId`, `EpisodeId`, …?
    *Recommended: one `ItemId`.*
 5. **Q5, device tests.** T2 and T7 change what is stored and how a server is switched. On the

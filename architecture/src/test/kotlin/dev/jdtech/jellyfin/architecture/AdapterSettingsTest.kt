@@ -7,7 +7,7 @@ import kotlin.test.assertTrue
 /**
  * R17 (#918, docs/architecture/5-hexagonal-ddd.md 5.1 point 3). The adapters and the download
  * engine do not read the UI's preferences: no production file of `data`, `server/jellyfin`,
- * `ratings/mdblist` (#331) or `downloads` names `AppPreferences`
+ * `ratings/mdblist` (#331), `device` (#965) or `downloads` names `AppPreferences`
  * (`dev.jdtech.jellyfin.settings.domain.AppPreferences`). What they read of the settings comes
  * through the ports of `application` (`CurrentServerId`, `NextUpMaxDays`, `ResumeThresholdsStore`,
  * `NetworkTimeouts`, `DownloadSettings`, `ExternalRatingsSettings`), which `core` implements
@@ -19,7 +19,7 @@ import kotlin.test.assertTrue
 class AdapterSettingsTest {
 
     @Test
-    fun `R17 no production file of data, server jellyfin, ratings mdblist or downloads names AppPreferences`() {
+    fun `R17 no production file of data, server jellyfin, ratings mdblist, device or downloads names AppPreferences`() {
         val files = ProjectTree.productionKotlinFiles
         MODULES.forEach { module ->
             assertTrue(
@@ -68,7 +68,7 @@ class AdapterSettingsTest {
     }
 
     private companion object {
-        val MODULES = listOf("data", "server/jellyfin", "ratings/mdblist", "downloads")
+        val MODULES = listOf("data", "server/jellyfin", "ratings/mdblist", "device", "downloads")
 
         val NAME = Regex("""\bAppPreferences\b""")
 

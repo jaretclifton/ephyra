@@ -1,6 +1,5 @@
 package dev.jdtech.jellyfin.repository
 
-import androidx.paging.PagingData
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.EpisodeField
 import dev.jdtech.jellyfin.models.Item
@@ -22,7 +21,6 @@ import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.UserId
-import kotlinx.coroutines.flow.Flow
 
 interface MediaRepository {
     /**
@@ -67,6 +65,10 @@ interface MediaRepository {
      * and [limit]) when [includeTotal] is set, so a pager gets its length from its first page
      * instead of a separate [getItemCount]. The server counts only when asked, so leave
      * [includeTotal] off for later pages.
+     *
+     * The plain page read (#968): the library grid's pager in `modes/film` is built over it (and
+     * over [getItems] for the grid without placeholders), with [getItemCount] for the letter index.
+     * `application` knows no paging library.
      */
     suspend fun getItemsPage(
         parentId: ItemId? = null,
@@ -89,15 +91,6 @@ interface MediaRepository {
             .filter { it.images.backdrop != null }
             .shuffled()
             .take(limit)
-
-    suspend fun getItemsPaging(
-        parentId: ItemId? = null,
-        includeTypes: List<ItemKind>? = null,
-        recursive: Boolean = false,
-        sortBy: SortBy = SortBy.defaultValue,
-        sortOrder: SortOrder = SortOrder.ASCENDING,
-        filters: Set<ItemFilter> = emptySet(),
-    ): Flow<PagingData<Item>>
 
     /**
      * CE: the number of items that [getItems] would return, without fetching them. With

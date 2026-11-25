@@ -41,7 +41,8 @@ app/phone, app/tv   (composition root, screens)
    │                                                                  ▲
    ├─► data  (Room: the stores and MediaRepositoryImpl) ──────────────┘
    ├─► server/jellyfin  (the server ports, the only module with the SDK) ───► application, domain
-   └─► ratings/mdblist  (the ratings ports: MDBList over HTTP, a file cache) ─► application, domain
+   ├─► ratings/mdblist  (the ratings ports: MDBList over HTTP, a file cache) ─► application, domain
+   └─► device  (the device ports: the codec probe, connectivity) ──────────────► application, domain
 ```
 
 - `domain` (pure Kotlin): the models without the `Findroid` prefix (`Item`, `Movie`, `ItemSource`,
@@ -60,6 +61,10 @@ app/phone, app/tv   (composition root, screens)
 - `ratings/mdblist` (#331): the external ratings of the movie and show pages from MDBList, behind
   the ports `RatingsProvider` and `RatingsCache` of `application`. When to ask (the cache's
   lifetimes, the back-offs, a rejected key) is `ExternalRatingsService` in `application`.
+- `device` (#965): the adapters that ask Android about the device: `DeviceCodecProbe` (the
+  decoders and the display, behind `DeviceCodecs` of `domain`, which the device profiles are built
+  from) and `NetworkConnectivityImpl` (behind `NetworkConnectivity` of `application`), bound in its
+  `DeviceModule`. They were in `data` and `core`; `data` is Room and nothing else since (R20).
 - `downloads`: the download engine and queue, out of `core`.
 - `player/local`: ExoPlayer and mpv behind `PlayerEngine`; playback logic in
   `player/local/.../domain/` (`PlaybackReporter`, `ResolvePlayback`, `PlaylistManager`, …).
@@ -75,7 +80,9 @@ ids opaque and renamed the repository and the models at once.
 `./gradlew :architecture:test` (part of `testDebugUnitTest`) runs them over the source tree. When
 one fails, fix the code. `architecture/baseline/` has one allowlist, not debt: `uuid-imports.txt`
 (files that may name `java.util.UUID`, for a random value the app makes itself; empty since #918).
-A line is added only with its reason, given in the PR.
+The others are exceptions with an issue each: `pure-kotlin-*.txt` (R19) and
+`room-adapter-imports.txt` (R20), both empty since #968. A line is added only with its reason,
+given in the PR.
 
 | Rule | Says |
 |---|---|
@@ -86,7 +93,7 @@ A line is added only with its reason, given in the PR.
 | R6 | The engine packages of `player/local` use neither each other nor are used by shared code |
 | R7 | Only the apps depend on `server/jellyfin` |
 | R8 | `testing` is only a test dependency |
-| R9 | Only the apps depend on `data`, and on `ratings/mdblist` |
+| R9 | Only the apps depend on `data`, on `ratings/mdblist` and on `device` |
 | R10 | No `java.util.UUID` outside the adapter (an allowlist), and no server or source id typed as `String` (no exceptions) |
 | R11 | No production type is named `Findroid*`, and none `Jellyfin*` outside the adapter |
 | R12 | Only `Ticks` declares tick constants and converts ticks by a literal |
@@ -94,9 +101,10 @@ A line is added only with its reason, given in the PR.
 | R14 | The play state rules are declared in `domain` alone; `data` and the sync compare no dates |
 | R15 | `downloads` depends on no adapter, not on `core` and not on an app, and nothing else names its engine's implementation |
 | R16 | The server in use is written as one `ActiveServer` value, in one place |
-| R17 | `data`, `server/jellyfin`, `ratings/mdblist` and `downloads` read no `AppPreferences`: their settings come through ports of `application` |
-| R18 | No adapter (`data`, `server/jellyfin`, `ratings/mdblist`) depends on a feature module |
-| R19 | `domain` and `application` import only Kotlin, kotlinx, the JDK and their own code, and declare no library but kotlinx (an allowlist: paging until #968) |
+| R17 | `data`, `server/jellyfin`, `ratings/mdblist`, `device` and `downloads` read no `AppPreferences`: their settings come through ports of `application` |
+| R18 | No adapter (`data`, `server/jellyfin`, `ratings/mdblist`, `device`) depends on a feature module |
+| R19 | `domain` and `application` import only Kotlin, kotlinx, the JDK and their own code, and declare no library but kotlinx (an allowlist, empty since #968 moved the library pagers to `modes/film`) |
+| R20 | `data` is Room and nothing else: of Android it imports only Room, SQLite and `android.content.Context` (an allowlist, empty since #968) |
 
 ## Not done
 

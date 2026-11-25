@@ -1,6 +1,6 @@
 # Architecture
 
-Status: built (ADR 0001 and ADR 0002); Jellyfin is the only server adapter. As of 2026-11-24 (`main` at `0412c8efc`).
+Status: built (ADR 0001 and ADR 0002); Jellyfin is the only server adapter. As of 2026-11-24 (`main` at `a10f3f006`, with the `device` module of #965).
 
 ## Start here
 
@@ -13,7 +13,7 @@ Status: built (ADR 0001 and ADR 0002); Jellyfin is the only server adapter. As o
 
 ## What it does
 
-The apps (`app/phone`, `app/tv`) are the composition root. Features call `MediaRepository` or a port. `domain` and `application` are pure Kotlin and hold the ports. Three adapter modules implement them: `server/jellyfin` (the only module with the Jellyfin SDK), `data` (Room) and `ratings/mdblist`. Only the apps depend on an adapter; Hilt wires the ports to them there. Gradle is the boundary and the rule tests hold what Gradle cannot say (ADR 0001, decision 6).
+The apps (`app/phone`, `app/tv`) are the composition root. Features call `MediaRepository` or a port. `domain` and `application` are pure Kotlin and hold the ports. Four adapter modules implement them: `server/jellyfin` (the only module with the Jellyfin SDK), `data` (Room and nothing else, R20), `ratings/mdblist` and `device` (what asks Android about the device). Only the apps depend on an adapter; Hilt wires the ports to them there. Gradle is the boundary and the rule tests hold what Gradle cannot say (ADR 0001, decision 6).
 
 ## Where the code is
 
@@ -27,6 +27,7 @@ The apps (`app/phone`, `app/tv`) are the composition root. Features call `MediaR
 | [`core/.../di/ServerModule.kt`](../../core/src/main/java/dev/jdtech/jellyfin/di/ServerModule.kt), [`core/.../core/server/`](../../core/src/main/java/dev/jdtech/jellyfin/core/server/) | `CurrentMediaServer` (picks the adapter by type), `ServerConnectors`, `UnsupportedMediaServer` |
 | [`data/.../database/`](../../data/src/main/java/dev/jdtech/jellyfin/database/) | `ServerDatabase`, `ServerDatabaseDao`, `RoomServerStore`, `RoomDownloadStore`, `RoomPendingUserDataStore`; the entities are in `data/.../models/` |
 | [`data/.../data/di/`](../../data/src/main/java/dev/jdtech/jellyfin/data/di/) | `DatabaseModule` (Room and the stores), `MediaRepositoryModule` |
+| [`device/`](../../device/src/main/java/dev/jdtech/jellyfin/) | The adapters over the device (#965): `DeviceCodecProbe` with `DeviceCodec` and `CodecHelpers` (`DeviceCodecs`, what the device profiles are built from), `NetworkConnectivityImpl` (`NetworkConnectivity`); bound in [`DeviceModule`](../../device/src/main/java/dev/jdtech/jellyfin/device/di/DeviceModule.kt) |
 | [`core/.../di/AppPreferencesPorts.kt`](../../core/src/main/java/dev/jdtech/jellyfin/di/AppPreferencesPorts.kt) | The settings ports of `application`, over `AppPreferences` |
 | [`testing/.../testing/`](../../testing/src/main/kotlin/dev/jdtech/jellyfin/testing/) | The fakes, `ContractLibrary`, the contract suites, `ProxyCalls.kt` |
 | [`server/jellyfin/.../contract/`](../../server/jellyfin/src/test/java/dev/jdtech/jellyfin/server/jellyfin/contract/) | The adapter against the suites (`JellyfinContractTests.kt`), `ContractServer`, `LiveServer`, `ContractRecordingsTest` |
@@ -79,7 +80,7 @@ A PR with a Room migration that no review bot read gets an independent review be
    - `views.c4`: the `modules` view includes every module but the tooling modules it names. A new tooling module is added to that `exclude` line and to the `tooling` view.
    - A new layer needs a value in `ArchitectureModel.Layer` and an `element` kind of the same name in `context.c4`.
    - `components.c4`, only when the module has parts worth showing: each `component` and `port` needs a `link` to its source file or folder in this repository, and an arrow from A to B is only accepted when a source of A names B. `check-docs.py` fails on a missing link and on an arrow the code does not back. `npm run check-model` in `devsite/` validates the LikeC4 files.
-7. For a new adapter, extend the rules that name modules by hand: a test in `DataDependencyTest` (R9, as for `ratings/mdblist`) and the `MODULES` list in `AdapterSettingsTest` (R17). R7 guards `server/jellyfin` alone.
+7. For a new adapter, extend the rules that name modules by hand: a test in `DataDependencyTest` (R9, as for `ratings/mdblist` and `device`), the `ADAPTER_MODULES` of `AdapterDependencyTest` (R18) and the `MODULES` list in `AdapterSettingsTest` (R17). R7 guards `server/jellyfin` alone. Nothing fails when one is forgotten: the new module is just not checked.
 8. By hand: the diagram and "What was built" in [`README.md`](../architecture/README.md), and `docs/areas.yaml` when the module is an area.
 
 ## Recipe 4: a rule, and the baseline files
@@ -91,7 +92,7 @@ A PR with a Room migration that no review bot read gets an independent review be
 5. Regenerate with the command of recipe 3, step 5. `rules.md` is built from the test names. Forgotten: `the rules page is up to date` fails.
 6. By hand: the table in [`README.md`](../architecture/README.md#the-rules), the range of rule numbers in `AGENTS.md`, and the `rules` of the areas the rule touches in `docs/areas.yaml`.
 
-A baseline is a file `architecture/baseline/<name>` read by `Baseline`: one entry per line, `#` for comments. `assertExactly` fails on a violation that is not listed and on a listed entry that no longer violates, so a cleanup deletes its line. There is one today, `architecture/baseline/uuid-imports.txt`, and it is an allowlist, not debt: files that may name `java.util.UUID` for a random value the app makes itself. It lists none since #918. A new rule starts at zero, without a baseline.
+A baseline is a file `architecture/baseline/<name>` read by `Baseline`: one entry per line, `#` for comments. `assertExactly` fails on a violation that is not listed and on a listed entry that no longer violates, so a cleanup deletes its line. `architecture/baseline/uuid-imports.txt` is an allowlist, not debt: files that may name `java.util.UUID` for a random value the app makes itself. It lists none since #918. The others hold exceptions with an issue each: `pure-kotlin-imports.txt` and `pure-kotlin-libraries.txt` (R19) and `room-adapter-imports.txt` (R20), all three empty since #968 took paging out of `application` and `data`. A new rule starts at zero, or with lines for what truly cannot move in its PR, each with its issue.
 
 ## Recipe 5: a rule fails on your change
 
@@ -99,13 +100,14 @@ Read the message: it names the file and what to use instead. Fix the code. Do no
 
 The ones you are most likely to trip:
 
-- **R5** (`DomainPurityTest`): a file in `domain` or `application` imports `android.`, `androidx.` (but paging), the SDK, `dev.jdtech.jellyfin.database.` or a type `data` declares. Keep the type in its adapter and give the port a type of `domain`.
-- **R19** (`PureKotlinTest`): a file in `domain` or `application` imports anything but `kotlin.`, `kotlinx.`, `java.`, `javax.crypto.` or `dev.jdtech.jellyfin.`, or their build file declares a library but `libs.kotlinx.*`. The same fix as R5; a contract that has to name a library type (an OkHttp client) goes in a small module of its own, as `http` does. The exceptions are in `architecture/baseline/pure-kotlin-*.txt` (paging, until #968).
+- **R5** (`DomainPurityTest`): a file in `domain` or `application` imports `android.`, `androidx.`, the SDK, `dev.jdtech.jellyfin.database.` or a type `data` declares. Keep the type in its adapter and give the port a type of `domain`.
+- **R19** (`PureKotlinTest`): a file in `domain` or `application` imports anything but `kotlin.`, `kotlinx.`, `java.`, `javax.crypto.` or `dev.jdtech.jellyfin.`, or their build file declares a library but `libs.kotlinx.*`. The same fix as R5; a contract that has to name a library type (an OkHttp client) goes in a small module of its own, as `http` does. Its allowlists are `architecture/baseline/pure-kotlin-*.txt`, empty since #968. A list a screen pages is a plain read in `application` (`MediaRepository.getItemsPage`: items from an index, the total on request) and a `PagingSource` in the feature (`IndexedItemsPagingSource` in `modes/film`).
+- **R20** (`RoomAdapterTest`): a file in `data` imports something of Android (`android.`, `androidx.`) but Room (`androidx.room3.`), SQLite (`androidx.sqlite.`) or `android.content.Context`. What asks the device (codecs, display, network) goes in `device`, behind a port of `domain` or `application`; anything else goes behind a port in the module that owns it. Its allowlist is `architecture/baseline/room-adapter-imports.txt`, empty since #968.
 - **R10** (`StringIdsTest`, `UuidBoundaryTest`): a parameter or property named `serverId`, `currentServerId`, `mediaSourceId` or `sourceId` typed as `String` (or a list or set of them), or `java.util.UUID` anywhere outside `server/jellyfin`. Use the id classes and `toServerId()`, `toMediaSourceId()`, `asString()`; a random value comes from `kotlin.uuid.Uuid`.
 - **R1, R2** (`SdkBoundaryTest`): a file outside `server/jellyfin` mentions the SDK's package or imports `JellyfinApi`. Add the operation to a port (recipe 1).
 - **R9, R4** (`DataDependencyTest`, `SdkBoundaryTest`): a feature takes `data` with `implementation`, or imports `ServerDatabaseDao`. Use a store port (recipe 2); for a test, `testImplementation`.
 
-Also common: R11 for a type named `Jellyfin…` outside the adapter (`NamesTest`), and R17 for `AppPreferences` in `data`, `server/jellyfin`, `ratings/mdblist` or `downloads` (`AdapterSettingsTest`).
+Also common: R11 for a type named `Jellyfin…` outside the adapter (`NamesTest`), and R17 for `AppPreferences` in `data`, `server/jellyfin`, `ratings/mdblist`, `device` or `downloads` (`AdapterSettingsTest`), and R18 for an adapter that takes a feature module (`AdapterDependencyTest`).
 
 ## How to test it
 

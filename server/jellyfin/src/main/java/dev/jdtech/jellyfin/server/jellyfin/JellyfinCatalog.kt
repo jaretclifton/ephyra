@@ -125,7 +125,7 @@ class JellyfinCatalog(private val api: JellyfinApi, private val pin: ActiveServe
                     startIndex = query.startIndex,
                     limit = query.limit,
                     // Cards read the primary image and the first backdrop. The server counts
-                    // only for the first page of a pager (see getItemsPagingIndexed).
+                    // only for the first page of a pager (see indexedItemsPager in modes/film).
                     imageTypeLimit = 1,
                     enableImageTypes = ROW_IMAGE_TYPES,
                     enableTotalRecordCount = includeTotal,
