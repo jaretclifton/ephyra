@@ -9,6 +9,7 @@ import android.os.Looper
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.lifecycle.Lifecycle
@@ -200,7 +201,36 @@ class SeasonWakeReloadTest {
         releaseSeason()
 
         assertEquals(listOf("season", "episode"), calls)
-        rule.onNodeWithText("Play").assertExists()
+        // The episode's load sorts its cast on Dispatchers.Default, which waitForIdle() doesn't
+        // wait for, so the panel's new state can come a moment after the call.
+        rule.waitUntil(timeoutMillis = 5_000) {
+            rule.onAllNodesWithText("Play").fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    @Test
+    fun `a second wake while the first is still loading gets one panel, after its own season`() {
+        setPage()
+        calls.clear()
+
+        serverEpisodes = serverEpisodes.mapIndexed { i, e ->
+            if (i == 0) e.copy(playbackPositionTicks = 0, played = true) else e
+        }
+        dataChanges.onChanged()
+        holdSeason = true
+        sleepAndWake()
+        // Another pause and resume before the first season load has answered: its own season
+        // load replaces the first one.
+        sleepAndWake()
+        assertEquals(listOf("season", "season"), calls)
+
+        // The first load's requests end, as a cancelled request does at once. The first wake must
+        // not go on to the panel now: the second season load is still on its way.
+        releaseFirst(heldPerLoad)
+        assertEquals(listOf("season", "season"), calls)
+
+        releaseSeason()
+        assertEquals(listOf("season", "season", "episode"), calls)
     }
 
     @Test
@@ -239,6 +269,19 @@ class SeasonWakeReloadTest {
      */
     private var holdSeason = false
     private val heldSeason = mutableListOf<Pair<ItemId, () -> Unit>>()
+
+    /**
+     * Held calls per season load: the season and its episodes (the series' seasons aren't held).
+     */
+    private val heldPerLoad = 2
+
+    /** Answers the first [count] held calls, in the order they were made. */
+    private fun releaseFirst(count: Int) {
+        val answers = heldSeason.take(count)
+        heldSeason.removeAll(answers)
+        rule.runOnIdle { answers.forEach { it.second() } }
+        rule.waitForIdle()
+    }
 
     /** Answers the held calls for season [only], or for every season. */
     private fun releaseSeason(only: ItemId? = null) {

@@ -112,6 +112,7 @@ import dev.jdtech.jellyfin.ui.components.ItemPoster
 import dev.jdtech.jellyfin.ui.components.ProgressBadge
 import dev.jdtech.jellyfin.utils.ReloadOnResume
 import java.util.Locale
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -211,11 +212,15 @@ fun SeasonScreen(
                 episodeViewModel.shouldReload(id)
         }
     val scope = rememberCoroutineScope()
+    // A later wake replaces a reload still running: its season load replaces the earlier one, and
+    // only the latest wake goes on to the panel, after its own season load.
+    var wakeReload by remember { mutableStateOf<Job?>(null) }
     ReloadOnResume(
         shouldReload = { staleSeasonId() != null || stalePanelId() != null },
         loadOnEntry = false,
     ) {
-        scope.launch {
+        wakeReload?.cancel()
+        wakeReload = scope.launch {
             staleSeasonId()?.let { id ->
                 loadSeason(id).join()
                 // Another season picked meanwhile: its own load replaced this one, and the panel
