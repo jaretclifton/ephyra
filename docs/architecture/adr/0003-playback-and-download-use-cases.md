@@ -644,14 +644,17 @@ the series goes with it.
 | Q6 | Cast's differences (no start position, no `PlaybackEvents`, two requests per item, the remembered audio dropped) | **Kept as they are in the moves; one issue each, fixed after PR 14** with a receiver to test on |
 | Q7 | The order: #967, #966 and #969 first, then the downloads, then the player | **Yes (overseer, 2026-11-25)** |
 
-The test for Q4. In the PR's branch, against `origin/main`, every changed file under `player/`
-must be a rename, and the only changed lines in the renamed files, and the only changed Kotlin
-lines anywhere, must be `package` and `import` lines:
+The test for Q4. In the PR's branch, against `origin/main`:
+- every changed file that touches `player/` must be a rename;
+- no build file under `player/` may change;
+- the only changed Kotlin lines anywhere must be `package` and `import` lines.
 
 ```bash
 git fetch origin
-# 1. Every change under player/ is a rename (status R) or a build file; nothing else.
-git diff -M --name-status origin/main...HEAD -- player/ | grep -v '^R' | grep -v 'build.gradle.kts$'
+# 1. Every change that touches player/ is a rename (status R). The renames are detected on the
+#    whole diff first, so a move from player/ to domain/ shows as R, not as a deletion. A changed
+#    build file under player/ is not a rename, so it prints too.
+git diff -M --name-status origin/main...HEAD | grep -v '^R' | grep 'player/'
 # 2. No changed Kotlin line other than package and import lines.
 git diff -M -U0 origin/main...HEAD -- '*.kt' | grep '^[+-]' | grep -v '^\(+++\|---\)' \
   | grep -v '^[+-]\(package\|import\) ' | grep -v '^[+-]$'
