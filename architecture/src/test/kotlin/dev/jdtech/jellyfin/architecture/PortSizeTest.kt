@@ -19,8 +19,8 @@ import kotlin.test.assertTrue
  * inherits from other interfaces is counted with what it inherits from them, so a union of roles
  * fails like the wide port it replaces. Interfaces are told apart by their fully qualified name, a
  * parent is looked up among the interfaces of all of `domain` and `application`, by its written
- * name, its enclosing declarations, the file's imports (aliases included), its package, and last
- * its simple name, as Kotlin binds it: a parent from anywhere else (a Kotlin or JDK interface, as
+ * name, its enclosing declarations, the file's imports (aliases included), its package, and last a
+ * wildcard import, as Kotlin binds it: a parent from anywhere else (a Kotlin or JDK interface, as
  * R19 leaves no other) is not counted. A parent that can still be more than one interface fails the
  * rule rather than be guessed. An interface inherited along two paths counts once.
  *
@@ -165,6 +165,21 @@ class PortSizeTest {
         val dir = ProjectTree.root.resolve("architecture/build/r21-scanner").apply { mkdirs() }
         val file = dir.resolve("Fixture.kt").apply { writeText(text) }
         val otherFile = dir.resolve("Other.kt").apply { writeText(other) }
+        val third =
+            """
+            package dev.jdtech.jellyfin.third
+
+            import dev.jdtech.jellyfin.other.*
+            import dev.jdtech.jellyfin.repository.Outer
+
+            // other.Small through the wildcard, though repository.Small has the same name.
+            interface ViaWildcard : Small
+
+            // Outer.Base through the import of Outer.
+            interface ViaQualifier : Outer.Base
+            """
+                .trimIndent()
+        val thirdFile = dir.resolve("Third.kt").apply { writeText(third) }
         assertEquals(
             mapOf(
                 "$P.Small" to 3,
@@ -185,8 +200,10 @@ class PortSizeTest {
                 "$P.External" to 0,
                 "dev.jdtech.jellyfin.other.Small" to 2,
                 "dev.jdtech.jellyfin.other.Wide" to 3,
+                "dev.jdtech.jellyfin.third.ViaWildcard" to 2,
+                "dev.jdtech.jellyfin.third.ViaQualifier" to 2,
             ),
-            sizesOf(mapOf("fixture" to file, "other" to otherFile)) { true },
+            sizesOf(mapOf("fixture" to file, "other" to otherFile, "third" to thirdFile)) { true },
         )
     }
 
@@ -208,15 +225,22 @@ class PortSizeTest {
             scopes: List<String>,
             pkg: String,
             imports: Map<String, String>,
+            wildcards: List<String>,
             known: Set<String>,
             child: String,
         ): String? {
             if ('.' in written) {
-                return (listOf(written) + scopes.map { "$it.$written" }).firstOrNull { it in known }
+                // `Outer.Base`: the leading name is bound like a simple one, the rest follows it.
+                val head = written.substringBefore('.')
+                val rest = written.substringAfter('.')
+                return (listOf(written) +
+                        scopes.map { "$it.$written" } +
+                        listOfNotNull(imports[head]?.let { "$it.$rest" }) +
+                        wildcards.map { "$it.$written" })
+                    .firstOrNull { it in known }
             }
-            scopes
-                .filter { it != pkg }
-                .map { "$it.$written" }
+            val nested = scopes.filter { it != pkg }.map { "$it.$written" }
+            nested
                 .firstOrNull { it in known }
                 ?.let {
                     return it
@@ -229,10 +253,17 @@ class PortSizeTest {
                 ?.let {
                     return it
                 }
-            val found = known.filter { it.substringAfterLast('.') == written }
+            // A wildcard import; anything else (Kotlin's default imports) is outside.
+            val found = wildcards.map { "$it.$written" }.filter { it in known }.distinct()
             assertTrue(found.size <= 1, "R21 cannot tell which $written $child extends: $found")
             return found.singleOrNull()
         }
+
+        private val WILDCARD = Regex("""^import\s+([\w.`]+)\.\*""", RegexOption.MULTILINE)
+
+        /** The packages (or declarations) a file imports with `.*`. */
+        fun wildcardsOf(text: String): List<String> =
+            WILDCARD.findAll(text).map { it.groupValues[1].replace("`", "") }.toList()
 
         /** The names a file can write a type by, to the type: its imports, aliases included. */
         fun importsOf(text: String): Map<String, String> =
@@ -273,7 +304,9 @@ class PortSizeTest {
             }
             val parents = byName.mapValues { (name, declarations) ->
                 val declaration = declarations.single()
-                val imports = importsOf(File(declaration.containingFile.path).readText())
+                val text = File(declaration.containingFile.path).readText()
+                val imports = importsOf(text)
+                val wildcards = wildcardsOf(text)
                 val pkg = declaration.packagee?.name.orEmpty()
                 // The declarations that enclose this one, innermost first, then its package.
                 val scopes =
@@ -284,7 +317,7 @@ class PortSizeTest {
                         .toList()
                 declaration.parents().mapNotNull { parent ->
                     val written = parent.name.substringBefore('<').trim()
-                    resolve(written, scopes, pkg, imports, own.keys, name)
+                    resolve(written, scopes, pkg, imports, wildcards, own.keys, name)
                 }
             }
 
