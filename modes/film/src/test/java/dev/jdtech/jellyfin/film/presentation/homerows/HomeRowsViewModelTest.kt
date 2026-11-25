@@ -12,11 +12,11 @@ import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.repository.ReloadPolicy
-import dev.jdtech.jellyfin.repository.ServerStore
+import dev.jdtech.jellyfin.repository.StoredServers
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.asServerId
-import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.fakeRole
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import kotlin.test.assertFalse
@@ -106,15 +106,13 @@ class HomeRowsViewModelTest {
             }
         }
 
-    private fun dao(server: Server): ServerStore =
-        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
-            _,
-            method,
-            args ->
-            when (method.kotlinName) {
-                "server" -> server.takeIf { it.id == args!![0].asServerId() }
-                else -> throw NotImplementedError("ServerStore.${method.kotlinName}")
-            }
+    private fun dao(server: Server): StoredServers = fakeRole { _, method, args ->
+        when (method.kotlinName) {
+            "server" -> server.takeIf { it.id == args!![0].asServerId() }
+            else ->
+                throw NotImplementedError(
+                    "${method.declaringClass.simpleName}.${method.kotlinName}"
+                )
         }
-            as ServerStore
+    }
 }

@@ -13,16 +13,18 @@ import dev.jdtech.jellyfin.models.ServerType
 import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.repository.ServerStore
+import dev.jdtech.jellyfin.repository.ServerAddresses
+import dev.jdtech.jellyfin.repository.StoredServers
+import dev.jdtech.jellyfin.repository.StoredUsers
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.data.FakeServerConnector
 import dev.jdtech.jellyfin.setup.data.SetupRepositoryImpl
 import dev.jdtech.jellyfin.setup.domain.FakeLocalNetworkAccess
 import dev.jdtech.jellyfin.setup.presentation.addresses.ServerAddressesAction
 import dev.jdtech.jellyfin.setup.presentation.addresses.ServerAddressesViewModel
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.asServerAddressId
 import dev.jdtech.jellyfin.testing.asServerId
-import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
@@ -71,7 +73,7 @@ class ServerAddressSelectTest {
         )
 
     private val database =
-        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
+        FakeRoles(StoredServers::class, ServerAddresses::class, StoredUsers::class) {
             _,
             method,
             args ->
@@ -102,7 +104,6 @@ class ServerAddressSelectTest {
                 else -> throw UnsupportedOperationException(method.kotlinName)
             }
         }
-            as ServerStore
 
     /** The app talks to server a at its LAN address. */
     private val active =
@@ -128,19 +129,22 @@ class ServerAddressSelectTest {
     /** Completed when a read has paused on [pauseAfterCurrentRead]. */
     private val pausedAtCurrentRead = CompletableDeferred<Unit>()
 
-    private val store =
-        object : ServerStore by database {
+    private val storedServers: StoredServers =
+        object : StoredServers by database.role() {
             override suspend fun setCurrentAddress(serverId: ServerId, addressId: ServerAddressId) {
-                database.setCurrentAddress(serverId, addressId)
+                database.role<StoredServers>().setCurrentAddress(serverId, addressId)
                 pauseAfterWrite?.let {
                     pauseAfterWrite = null
                     pausedAtWrite.complete(Unit)
                     it.await()
                 }
             }
+        }
 
+    private val serverAddresses: ServerAddresses =
+        object : ServerAddresses by database.role() {
             override suspend fun currentAddress(serverId: ServerId): ServerAddress? {
-                val current = database.currentAddress(serverId)
+                val current = database.role<ServerAddresses>().currentAddress(serverId)
                 pauseAfterCurrentRead?.let {
                     pauseAfterCurrentRead = null
                     pausedAtCurrentRead.complete(Unit)
@@ -163,7 +167,9 @@ class ServerAddressSelectTest {
         repository =
             SetupRepositoryImpl(
                 ServerConnectors(mapOf(ServerType.JELLYFIN to FakeServerConnector())),
-                store,
+                storedServers,
+                serverAddresses,
+                database.role(),
                 preferences,
                 active,
             )

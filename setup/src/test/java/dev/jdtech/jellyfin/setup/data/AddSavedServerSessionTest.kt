@@ -16,12 +16,14 @@ import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.repository.ServerStore
+import dev.jdtech.jellyfin.repository.ServerAddresses
+import dev.jdtech.jellyfin.repository.StoredServers
+import dev.jdtech.jellyfin.repository.StoredUsers
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.asServerAddressId
 import dev.jdtech.jellyfin.testing.asServerId
 import dev.jdtech.jellyfin.testing.asUserId
-import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -49,7 +51,7 @@ class AddSavedServerSessionTest {
     private var afterAddressInsert: (() -> Unit)? = null
 
     private val database =
-        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
+        FakeRoles(StoredServers::class, ServerAddresses::class, StoredUsers::class) {
             _,
             method,
             args ->
@@ -99,7 +101,6 @@ class AddSavedServerSessionTest {
                 else -> throw UnsupportedOperationException(method.kotlinName)
             }
         }
-            as ServerStore
 
     private val context: Context by lazy { RuntimeEnvironment.getApplication() }
 
@@ -115,7 +116,9 @@ class AddSavedServerSessionTest {
     private val repository by lazy {
         SetupRepositoryImpl(
             ServerConnectors(mapOf(connectorType to connector)),
-            database,
+            database.role(),
+            database.role(),
+            database.role(),
             AppPreferences(context.getSharedPreferences("test", Context.MODE_PRIVATE)),
             session.active,
         )

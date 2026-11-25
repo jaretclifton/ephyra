@@ -111,7 +111,7 @@ class DownloadQueueNetworkTest {
         return DownloadQueue(
             downloader = downloader,
             settings = TestDownloadSettings(maxConcurrentDownloads = 1),
-            downloadStore = RoomDownloadStore(database()),
+            downloadSources = RoomDownloadStore(database()),
             context = context,
             texts = TestDownloadTexts,
             connectivity = connectivity,

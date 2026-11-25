@@ -195,10 +195,17 @@ class TrickplayDownloadTest {
                         )
                 }
             }
+        val store = RoomDownloadStore(room.getServerDatabaseDao())
         val downloader =
             DownloaderImpl(
                 context,
-                RoomDownloadStore(room.getServerDatabaseDao()),
+                store,
+                store,
+                store,
+                store,
+                store,
+                store,
+                store,
                 Provider { server.role() },
                 Provider { server.role() },
                 Provider { server.role() },

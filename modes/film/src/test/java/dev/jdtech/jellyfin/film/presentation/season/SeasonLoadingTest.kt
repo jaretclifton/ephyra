@@ -10,7 +10,7 @@ import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.repository.DownloadStore
+import dev.jdtech.jellyfin.repository.DownloadSources
 import dev.jdtech.jellyfin.repository.ItemCatalog
 import dev.jdtech.jellyfin.repository.ItemExtras
 import dev.jdtech.jellyfin.repository.UserDataUpdates
@@ -158,7 +158,7 @@ class SeasonLoadingTest {
                 DownloadQueue(
                     downloader = unused(),
                     settings = AppPreferencesDownloadSettings(preferences),
-                    downloadStore = unused<DownloadStore>(),
+                    downloadSources = unused<DownloadSources>(),
                     context = ContextWrapper(null) as Context,
                     texts = CoreDownloadTexts,
                 ),

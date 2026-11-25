@@ -23,14 +23,16 @@ import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.repository.ServerStore
+import dev.jdtech.jellyfin.repository.ServerAddresses
+import dev.jdtech.jellyfin.repository.StoredServers
+import dev.jdtech.jellyfin.repository.StoredUsers
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.domain.AddressRejected
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.asServerAddressId
 import dev.jdtech.jellyfin.testing.asServerId
 import dev.jdtech.jellyfin.testing.asUserId
-import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.Collections
 import java.util.UUID
@@ -79,7 +81,7 @@ class SetupRepositoryConnectorTest {
     private var afterServerRead: (() -> Unit)? = null
 
     private val database =
-        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
+        FakeRoles(StoredServers::class, ServerAddresses::class, StoredUsers::class) {
             _,
             method,
             args ->
@@ -137,7 +139,6 @@ class SetupRepositoryConnectorTest {
                 else -> throw UnsupportedOperationException(method.kotlinName)
             }
         }
-            as ServerStore
 
     private val connector = FakeServerConnector()
 
@@ -159,7 +160,9 @@ class SetupRepositoryConnectorTest {
     private val repository by lazy {
         SetupRepositoryImpl(
             ServerConnectors(mapOf(ServerType.JELLYFIN to connector)),
-            database,
+            database.role(),
+            database.role(),
+            database.role(),
             preferences,
             session.active,
         )

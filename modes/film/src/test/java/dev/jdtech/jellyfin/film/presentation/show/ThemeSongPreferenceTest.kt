@@ -8,7 +8,7 @@ import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.di.AppPreferencesDownloadSettings
 import dev.jdtech.jellyfin.models.ServerCapabilities
-import dev.jdtech.jellyfin.repository.DownloadStore
+import dev.jdtech.jellyfin.repository.DownloadSources
 import dev.jdtech.jellyfin.repository.MediaRepositoryImpl
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.ContractLibrary
@@ -134,11 +134,11 @@ class ThemeSongPreferenceTest {
                 DownloadQueue(
                     downloader = unused(),
                     settings = AppPreferencesDownloadSettings(preferences),
-                    downloadStore = unused<DownloadStore>(),
+                    downloadSources = unused<DownloadSources>(),
                     context = ContextWrapper(null) as Context,
                     texts = CoreDownloadTexts,
                 ),
-            downloadStore = unused(),
+            downloadList = unused(),
         )
     }
 

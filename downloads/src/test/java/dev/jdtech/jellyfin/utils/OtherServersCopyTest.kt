@@ -87,9 +87,16 @@ class OtherServersCopyTest {
                 _ ->
                 server("${method.declaringClass.simpleName}.${method.kotlinName}")
             }
+        val store = RoomDownloadStore(database)
         DownloaderImpl(
             context,
-            RoomDownloadStore(database),
+            store,
+            store,
+            store,
+            store,
+            store,
+            store,
+            store,
             Provider { repository.role() },
             Provider { repository.role() },
             Provider { repository.role() },
