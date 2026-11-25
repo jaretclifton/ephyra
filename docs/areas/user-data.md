@@ -5,7 +5,7 @@ Status: works on phone and TV; no open bugs known. As of 2026-11-23 (`main` at `
 ## Start here
 
 - The rules (played, favourite, resume position, last played, who wins in a sync) are `PlayState`, `PlayStop` and `SyncMerge` in `domain/.../domain/userdata/` and nowhere else (rule R14). Times are parameters; nothing there reads a clock.
-- The writes are in `MediaRepositoryImpl` (`markAsPlayed`, `markAsUnplayed`, `markAsFavorite`, `postPlaybackProgress`, `postPlaybackStop`), through `reportUserData` and `writeAndReport` (`UserDataReport.kt`): write the row, mark it `toBeSynced`, ask the server, unmark when it answered.
+- The writes are in `MediaRepositoryImpl` (`markAsPlayed`, `markAsUnplayed`, `markAsFavorite` of the role `UserDataUpdates`; `postPlaybackProgress`, `postPlaybackStop` of the role `PlaybackReports`, #967), through `reportUserData` and `writeAndReport` (`UserDataReport.kt`): write the row, mark it `toBeSynced`, ask the server, unmark when it answered.
 - What is owed to the server is `PendingUserDataStore` (port in `application`, Room in `data`). `UserDataSync` and `SyncWorker` in `core` send it, through `UserDataSyncPort` (`JellyfinUserDataSync`). The current user's marks go through `UserDataPort` (`JellyfinUserData`).
 - Only downloads have a row; for any other item a write is the server call alone. State is per user: `AccountKey(serverId, userId)`.
 - Test fast: `./gradlew :domain:test :data:testDebugUnitTest`, and `./gradlew :core:testLibreDebugUnitTest --tests '*Sync*'`.
