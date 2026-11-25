@@ -28,7 +28,8 @@ import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.ItemCatalog
 import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.repository.ReloadPolicy
-import dev.jdtech.jellyfin.repository.ServerStore
+import dev.jdtech.jellyfin.repository.StoredServers
+import dev.jdtech.jellyfin.repository.StoredUsers
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.toView
 import java.util.concurrent.atomic.AtomicLong
@@ -63,7 +64,8 @@ internal constructor(
     private val catalog: ItemCatalog,
     private val account: CurrentAccount,
     private val appPreferences: AppPreferences,
-    private val serverStore: ServerStore,
+    private val storedServers: StoredServers,
+    private val storedUsers: StoredUsers,
     dataChanges: DataChangeEvents = DataChangeEvents(),
     private val homeCache: HomeCache? = null,
     /**
@@ -78,7 +80,8 @@ internal constructor(
         catalog: ItemCatalog,
         account: CurrentAccount,
         appPreferences: AppPreferences,
-        serverStore: ServerStore,
+        storedServers: StoredServers,
+        storedUsers: StoredUsers,
         dataChanges: DataChangeEvents = DataChangeEvents(),
         homeCache: HomeCache? = null,
     ) : this(
@@ -86,7 +89,8 @@ internal constructor(
         catalog,
         account,
         appPreferences,
-        serverStore,
+        storedServers,
+        storedUsers,
         dataChanges,
         homeCache,
         Dispatchers.Default,
@@ -108,7 +112,7 @@ internal constructor(
         private const val CLIENT_SWITCH_POLL_MS = 20L
     }
 
-    private val homeRowsStore = HomeRowsStore(appPreferences, serverStore)
+    private val homeRowsStore = HomeRowsStore(appPreferences, storedServers)
 
     private val reloadPolicy = ReloadPolicy(dataChanges)
     private var loadJob: Job? = null
@@ -168,7 +172,7 @@ internal constructor(
                     if (serverId == null) {
                         flowOf(null to null)
                     } else {
-                        serverStore.observeCurrentUser(serverId).map { user -> serverId to user }
+                        storedUsers.observeCurrentUser(serverId).map { user -> serverId to user }
                     }
                 }
                 .catch { e -> Timber.e(e, "Failed to follow the current user") }
@@ -280,7 +284,7 @@ internal constructor(
         try {
             server = appPreferences.currentServerId()?.let { serverId -> loadServerName(serverId) }
             if (server != null) {
-                val user = logFailure("user") { serverStore.currentUser(server.id) }
+                val user = logFailure("user") { storedUsers.currentUser(server.id) }
                 updateState { it.copy(user = user.getOrNull()) }
                 // CE (#810): a login or switch writes Room before it switches the client, so a
                 // load that a new current user started can be early: what it fetched would be the
@@ -358,7 +362,7 @@ internal constructor(
     private suspend fun refreshUserImage(serverId: ServerId) {
         logFailure("user image") {
             account.refreshCurrentUserImage()
-            serverStore.currentUser(serverId)?.let { user ->
+            storedUsers.currentUser(serverId)?.let { user ->
                 // CE (#810): a new picture of the same user. Another user is a switch, which
                 // onCurrentUser handles, rows and all.
                 updateState {
@@ -376,7 +380,7 @@ internal constructor(
         logFailure("server name") {
             val renamed = server.renamedTo(account.getServerInfo()) ?: return@logFailure
             // #988: only the name; the server on screen may be older than its row.
-            serverStore.renameServer(renamed.id, renamed.name)
+            storedServers.renameServer(renamed.id, renamed.name)
             updateState { if (it.server?.id == renamed.id) it.copy(server = renamed) else it }
         }
     }
@@ -445,7 +449,7 @@ internal constructor(
     }
 
     private suspend fun loadServerName(serverId: ServerId): Server? {
-        val server = serverStore.server(serverId)
+        val server = storedServers.server(serverId)
         if (server != null) {
             updateState { it.copy(server = server) }
         }

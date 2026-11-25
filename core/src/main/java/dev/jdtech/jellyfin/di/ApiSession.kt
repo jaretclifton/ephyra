@@ -9,7 +9,7 @@ import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.repository.ServerStore
+import dev.jdtech.jellyfin.repository.StoredServers
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -70,7 +70,7 @@ internal fun ApiSession.toActiveServer(): ActiveServer =
  */
 internal class SavedSessionRestorer(
     private val appPreferences: AppPreferences,
-    private val serverStore: ServerStore,
+    private val storedServers: StoredServers,
 ) {
     fun restore(active: ActiveServerHolder) {
         val serverId = appPreferences.currentServerId()
@@ -84,12 +84,12 @@ internal class SavedSessionRestorer(
                 // once, as every start used to.
                 else ->
                     runBlocking {
-                        serverStore.serverWithAddressAndUser(serverId).toApiSession(serverId)
+                        storedServers.serverWithAddressAndUser(serverId).toApiSession(serverId)
                     }
             }
         initial?.let { active.switchTo(it.toActiveServer()) }
 
-        mirrorApiSession(active, appPreferences, serverStore, initial)
+        mirrorApiSession(active, appPreferences, storedServers, initial)
     }
 }
 
@@ -137,7 +137,7 @@ internal fun AppPreferences.saveApiSession(session: ApiSession?) {
 internal fun mirrorApiSession(
     active: ActiveServerHolder,
     appPreferences: AppPreferences,
-    serverStore: ServerStore,
+    storedServers: StoredServers,
     initial: ApiSession?,
 ) {
     CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
@@ -148,7 +148,7 @@ internal fun mirrorApiSession(
                 if (serverId == null) {
                     flowOf(null)
                 } else {
-                    serverStore.observeServerWithAddressAndUser(serverId).map {
+                    storedServers.observeServerWithAddressAndUser(serverId).map {
                         it.toApiSession(serverId)
                     }
                 }

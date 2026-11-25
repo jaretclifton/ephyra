@@ -17,7 +17,7 @@ import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.DownloadSettings
-import dev.jdtech.jellyfin.repository.DownloadStore
+import dev.jdtech.jellyfin.repository.DownloadSources
 import dev.jdtech.jellyfin.repository.ServerAvailability
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.NetworkConnectivity
@@ -66,7 +66,7 @@ class DownloadQueue
 constructor(
     private val downloader: Downloader,
     private val settings: DownloadSettings,
-    private val downloadStore: DownloadStore,
+    private val downloadSources: DownloadSources,
     @ApplicationContext private val context: Context,
     // CE (#901): the texts of core's resources.
     private val texts: DownloadTexts,
@@ -223,7 +223,7 @@ constructor(
 
     private suspend fun claimSmartQueued(itemId: ItemId) {
         try {
-            downloadStore.clearSmartQueued(itemId)
+            downloadSources.clearSmartQueued(itemId)
         } catch (e: Exception) {
             Timber.e(e, "Failed to mark download ${itemId.asString()} as user-started")
         }
@@ -425,7 +425,7 @@ constructor(
     private suspend fun unfinishedDownloadIds(entry: Entry): List<Long> {
         val fromRows =
             try {
-                downloadStore
+                downloadSources
                     .sources(entry.id)
                     .filter { DownloadFiles.isPartial(it.path) }
                     .mapNotNull { it.downloadId }

@@ -24,7 +24,8 @@ import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.repository.CurrentAccount
-import dev.jdtech.jellyfin.repository.DownloadStore
+import dev.jdtech.jellyfin.repository.DownloadList
+import dev.jdtech.jellyfin.repository.DownloadSources
 import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
@@ -58,7 +59,8 @@ internal constructor(
     private val appPreferences: AppPreferences,
     private val downloadQueue: DownloadQueue,
     private val downloader: Downloader,
-    private val downloadStore: DownloadStore,
+    private val downloadList: DownloadList,
+    private val downloadSources: DownloadSources,
     /**
      * CE (#921): where the reads, the sorting and the storage walk run; the tests run them on their
      * own dispatcher, so no load outlives its test.
@@ -73,7 +75,8 @@ internal constructor(
         appPreferences: AppPreferences,
         downloadQueue: DownloadQueue,
         downloader: Downloader,
-        downloadStore: DownloadStore,
+        downloadList: DownloadList,
+        downloadSources: DownloadSources,
     ) : this(
         context,
         lists,
@@ -81,7 +84,8 @@ internal constructor(
         appPreferences,
         downloadQueue,
         downloader,
-        downloadStore,
+        downloadList,
+        downloadSources,
         Dispatchers.IO,
     )
 
@@ -257,11 +261,15 @@ internal constructor(
      */
     private suspend fun reconcileStuckDownloads() =
         withContext(ioDispatcher) {
-            for (src in downloadStore.activeDownloadSources()) {
+            for (src in downloadSources.activeDownloadSources()) {
                 val finalPath = DownloadFiles.finalPath(src.path)
                 val finalFile = File(finalPath)
                 if (finalFile.exists() && finalFile.length() > 0) {
-                    downloadStore.setSourceDownloaded(src.id, finalPath, System.currentTimeMillis())
+                    downloadSources.setSourceDownloaded(
+                        src.id,
+                        finalPath,
+                        System.currentTimeMillis(),
+                    )
                     File(src.path).takeIf { it.exists() }?.delete()
                 }
             }
@@ -305,7 +313,7 @@ internal constructor(
                     val userId = account.getUserId()
                     // CE (#718): this server's episodes; another server's of the same show stay.
                     val serverId = appPreferences.currentServerId() ?: continue
-                    downloadStore.episodesOfShow(AccountKey(serverId, userId), item.id).collect {
+                    downloadList.episodesOfShow(AccountKey(serverId, userId), item.id).collect {
                         deleteLocalCopy(it)
                     }
                 } else {
@@ -320,7 +328,7 @@ internal constructor(
     /** CE (#718): the stored episodes of [showId] that the current server downloaded. */
     private suspend fun storedEpisodes(showId: ItemId): List<ItemId> {
         val serverId = appPreferences.currentServerId() ?: return emptyList()
-        return downloadStore.episodeIdsOfShow(showId, serverId)
+        return downloadList.episodeIdsOfShow(showId, serverId)
     }
 
     private suspend fun deleteLocalCopy(item: Item) {
@@ -401,7 +409,7 @@ internal constructor(
             // One batched read for every movie and episode instead of a query per item
             // (and per pass).
             val sourcesByItem =
-                downloadStore.localSourcesOfItems(
+                downloadSources.localSourcesOfItems(
                     items.filter { it !is Show }.map { it.id } + episodesByShow.values.flatten()
                 )
 

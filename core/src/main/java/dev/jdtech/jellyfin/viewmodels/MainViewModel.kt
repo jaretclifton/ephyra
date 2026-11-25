@@ -8,7 +8,8 @@ import dev.jdtech.jellyfin.core.reachability.ServerReachability
 import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.profilelock.ProfileLock
-import dev.jdtech.jellyfin.repository.ServerStore
+import dev.jdtech.jellyfin.repository.StoredServers
+import dev.jdtech.jellyfin.repository.StoredUsers
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -31,7 +32,8 @@ class MainViewModel
 @Inject
 constructor(
     private val appPreferences: AppPreferences,
-    private val serverStore: ServerStore,
+    private val storedServers: StoredServers,
+    private val storedUsers: StoredUsers,
     private val profileLock: ProfileLock,
     private val serverReachability: ServerReachability,
 ) : ViewModel() {
@@ -73,7 +75,7 @@ constructor(
     private suspend fun hasDownloads(): Boolean =
         try {
             val serverId = appPreferences.currentServerId()
-            serverId != null && serverStore.hasStoredMoviesOrShows(serverId)
+            serverId != null && storedServers.hasStoredMoviesOrShows(serverId)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -113,7 +115,7 @@ constructor(
         viewModelScope.launch {
             val serverId = appPreferences.currentServerId()
             serverId?.let { id ->
-                serverStore.serverWithAddressAndUser(id)?.let { data ->
+                storedServers.serverWithAddressAndUser(id)?.let { data ->
                     _uiState.emit(UiState.Normal(data.server, data.user))
                 }
             }
@@ -132,7 +134,7 @@ constructor(
             val setupFlags =
                 appPreferences.observeCurrentServerId().flatMapLatest { serverId ->
                     if (serverId == null) {
-                        serverStore.observeServersCount().map { serverCount ->
+                        storedServers.observeServersCount().map { serverCount ->
                             SetupFlags(
                                 hasServers = serverCount > 0,
                                 hasCurrentServer = false,
@@ -141,9 +143,9 @@ constructor(
                         }
                     } else {
                         combine(
-                            serverStore.observeServersCount(),
-                            serverStore.observeServer(serverId),
-                            serverStore.observeCurrentUserId(serverId),
+                            storedServers.observeServersCount(),
+                            storedServers.observeServer(serverId),
+                            storedUsers.observeCurrentUserId(serverId),
                         ) { serverCount, server, currentUserId ->
                             SetupFlags(
                                 hasServers = serverCount > 0,
@@ -160,7 +162,7 @@ constructor(
                 combine(
                     appPreferences.observe(appPreferences.askUserOnStart),
                     appPreferences.observeCurrentServerId().flatMapLatest { serverId ->
-                        if (serverId == null) flowOf(0) else serverStore.observeUsersCount(serverId)
+                        if (serverId == null) flowOf(0) else storedUsers.observeUsersCount(serverId)
                     },
                 ) { enabled, usersCount ->
                     enabled && usersCount > 1
@@ -173,7 +175,7 @@ constructor(
                         flowOf(false)
                     } else {
                         combine(
-                            serverStore.observeCurrentUser(serverId),
+                            storedUsers.observeCurrentUser(serverId),
                             profileLock.unlockedUserIds,
                         ) { user, unlockedUserIds ->
                             ProfileLock.isLockedOnStart(user, unlockedUserIds)

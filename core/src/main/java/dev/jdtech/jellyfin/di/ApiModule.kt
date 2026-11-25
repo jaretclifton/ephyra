@@ -5,7 +5,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dev.jdtech.jellyfin.domain.ports.ActiveServerHolder
-import dev.jdtech.jellyfin.repository.ServerStore
+import dev.jdtech.jellyfin.repository.StoredServers
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Singleton
 
@@ -26,7 +26,9 @@ object ApiModule {
     @Provides
     fun provideActiveServerHolder(
         appPreferences: AppPreferences,
-        serverStore: ServerStore,
+        storedServers: StoredServers,
     ): ActiveServerHolder =
-        ActiveServerHolder().also { SavedSessionRestorer(appPreferences, serverStore).restore(it) }
+        ActiveServerHolder().also {
+            SavedSessionRestorer(appPreferences, storedServers).restore(it)
+        }
 }

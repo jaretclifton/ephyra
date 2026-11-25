@@ -11,7 +11,8 @@ import dev.jdtech.jellyfin.core.R
 import dev.jdtech.jellyfin.domain.ports.ActiveServerHolder
 import dev.jdtech.jellyfin.domain.ports.CurrentServerCapabilities
 import dev.jdtech.jellyfin.domain.ports.ServerSession
-import dev.jdtech.jellyfin.repository.ServerStore
+import dev.jdtech.jellyfin.repository.StoredServers
+import dev.jdtech.jellyfin.repository.StoredUsers
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -45,7 +46,8 @@ constructor(
     @ApplicationContext private val context: Context,
     private val serverSession: ServerSession,
     private val appPreferences: AppPreferences,
-    private val serverStore: ServerStore,
+    private val storedServers: StoredServers,
+    private val storedUsers: StoredUsers,
     private val capabilities: CurrentServerCapabilities,
     private val active: ActiveServerHolder,
 ) {
@@ -113,14 +115,14 @@ constructor(
 
     private suspend fun signOut(token: String) {
         val serverId = appPreferences.currentServerId() ?: return
-        val user = serverStore.currentUser(serverId) ?: return
+        val user = storedUsers.currentUser(serverId) ?: return
         // Switched to another user meanwhile.
         if (user.accessToken != token || serverSession.accessToken != token) return
-        val server = serverStore.server(serverId)
+        val server = storedServers.server(serverId)
 
         Timber.i("The server revoked the token of ${user.name}, signing out")
-        serverStore.clearCurrentUser(serverId)
-        serverStore.deleteUser(user.id)
+        storedUsers.clearCurrentUser(serverId)
+        storedUsers.deleteUser(user.id)
         // #899: the address stays; only while the token is still the one refused.
         active.onSameServer {
             if (it.accessToken == token) it.copy(accessToken = null, userId = null) else it
