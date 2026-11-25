@@ -32,7 +32,7 @@ class DownloadsModuleTest {
             wrong.isEmpty(),
             wrong.joinToString("\n") {
                 "$DOWNLOADS/build.gradle.kts depends on $it. The download module uses the ports of " +
-                    "application (DownloadStore, the repository's roles) and DownloadTexts, which core " +
+                    "application (the download store's and the repository's roles) and DownloadTexts, which core " +
                     "implements; a test may take data with testImplementation."
             },
         )

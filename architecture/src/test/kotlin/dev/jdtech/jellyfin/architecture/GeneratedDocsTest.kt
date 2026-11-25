@@ -171,7 +171,7 @@ object ArchitectureModel {
             "application" to
                 Module(
                     Layer.APPLICATION,
-                    "Pure Kotlin: the repository's roles (ItemCatalog, ItemLists, PlaybackMedia, …), the store ports (ServerStore, DownloadStore, PendingUserDataStore) and the event flows (DataChangeEvents, ReloadPolicy, …).",
+                    "Pure Kotlin: the repository's roles (ItemCatalog, ItemLists, PlaybackMedia, …), the store ports (the roles of the server and download stores, PendingUserDataStore) and the event flows (DataChangeEvents, ReloadPolicy, …).",
                 ),
             "domain" to
                 Module(

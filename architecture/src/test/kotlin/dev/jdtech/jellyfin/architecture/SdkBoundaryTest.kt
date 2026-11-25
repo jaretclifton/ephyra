@@ -135,14 +135,15 @@ class SdkBoundaryTest {
 
     /**
      * R4. Room's server DAO stays inside `data`. No exceptions since #899 emptied its baseline: the
-     * features use the store ports of `application` (`ServerStore`, `DownloadStore`,
-     * `PendingUserDataStore`), and `data`'s own Hilt modules build Room.
+     * features use the store ports of `application` (the roles of the server and download
+     * stores, #967, and `PendingUserDataStore`), and `data`'s own Hilt modules build Room.
      */
     @Test
     fun `R4 no production file outside data imports ServerDatabaseDao`() {
         assertNone(filesImporting(SERVER_DAO, allowed = ProjectTree::inDataModule)) {
             "$it imports $SERVER_DAO outside the data module. Use a store port of application " +
-                "(ServerStore, DownloadStore, PendingUserDataStore) instead."
+                "(StoredServers, StoredUsers, DownloadList, DownloadSources, …, PendingUserDataStore) " +
+                "instead."
         }
     }
 
