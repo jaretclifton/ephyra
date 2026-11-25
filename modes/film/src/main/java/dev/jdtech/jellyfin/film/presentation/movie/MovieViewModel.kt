@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.film.presentation.movie
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.jdtech.jellyfin.domain.ports.CurrentServerCapabilities
 import dev.jdtech.jellyfin.film.domain.VideoMetadataParser
 import dev.jdtech.jellyfin.film.presentation.ExternalRatingsLoader
 import dev.jdtech.jellyfin.film.presentation.RelatedItems
@@ -20,8 +21,10 @@ import dev.jdtech.jellyfin.models.PersonKind
 import dev.jdtech.jellyfin.models.mergeDuplicateRoles
 import dev.jdtech.jellyfin.ratings.ExternalRatings
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.ItemExtras
 import dev.jdtech.jellyfin.repository.ReloadPolicy
+import dev.jdtech.jellyfin.repository.UserDataUpdates
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -40,7 +43,10 @@ import timber.log.Timber
 @HiltViewModel
 class MovieViewModel
 internal constructor(
-    private val repository: MediaRepository,
+    private val catalog: ItemCatalog,
+    private val userData: UserDataUpdates,
+    private val extras: ItemExtras,
+    private val capabilities: CurrentServerCapabilities,
     private val appPreferences: AppPreferences,
     private val videoMetadataParser: VideoMetadataParser,
     dataChanges: DataChangeEvents = DataChangeEvents(),
@@ -53,13 +59,19 @@ internal constructor(
 ) : ViewModel() {
     @Inject
     constructor(
-        repository: MediaRepository,
+        catalog: ItemCatalog,
+        userData: UserDataUpdates,
+        extras: ItemExtras,
+        capabilities: CurrentServerCapabilities,
         appPreferences: AppPreferences,
         videoMetadataParser: VideoMetadataParser,
         dataChanges: DataChangeEvents = DataChangeEvents(),
         externalRatings: ExternalRatings = ExternalRatings.None,
     ) : this(
-        repository,
+        catalog,
+        userData,
+        extras,
+        capabilities,
         appPreferences,
         videoMetadataParser,
         dataChanges,
@@ -106,14 +118,14 @@ internal constructor(
             _state.emit(
                 _state.value.copy(
                     error = null,
-                    cappedDownloads = repository.capabilities.cappedDownloadTranscode,
+                    cappedDownloads = capabilities.get().cappedDownloadTranscode,
                 )
             )
             try {
                 // The preference doesn't depend on the movie, so it is read while it loads.
                 val (movie, displayCastAndCrew) =
                     coroutineScope {
-                        val movieAsync = async { repository.getMovie(movieId) }
+                        val movieAsync = async { catalog.getMovie(movieId) }
                         val castAsync = async {
                             appPreferences.getValue(appPreferences.displayCastAndCrew)
                         }
@@ -177,7 +189,7 @@ internal constructor(
                     collections = true,
                 )
                 .shownIn(sections)
-                .within(repository.capabilities)
+                .within(capabilities.get())
         if (relatedFor == movieId && relatedRequest == request) return
         relatedFor = movieId
         relatedRequest = request
@@ -186,7 +198,7 @@ internal constructor(
         _state.update { it.copy(related = it.related.keeping(request)) }
         relatedJob =
             viewModelScope.launchRelatedItems(
-                repository = repository,
+                extras = extras,
                 itemId = movieId,
                 request = request,
             ) { change ->
@@ -216,7 +228,7 @@ internal constructor(
     private fun setPlayed(played: Boolean) {
         viewModelScope.launch {
             try {
-                if (played) repository.markAsPlayed(movieId) else repository.markAsUnplayed(movieId)
+                if (played) userData.markAsPlayed(movieId) else userData.markAsUnplayed(movieId)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -235,8 +247,8 @@ internal constructor(
     private fun setFavorite(favorite: Boolean) {
         viewModelScope.launch {
             try {
-                if (favorite) repository.markAsFavorite(movieId)
-                else repository.unmarkAsFavorite(movieId)
+                if (favorite) userData.markAsFavorite(movieId)
+                else userData.unmarkAsFavorite(movieId)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

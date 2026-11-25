@@ -6,7 +6,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.film.presentation.ServerAwayReload
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.UserId
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.CurrentAccount
+import dev.jdtech.jellyfin.repository.ItemLists
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -17,7 +18,9 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @HiltViewModel
-class SearchViewModel @Inject constructor(private val repository: MediaRepository) : ViewModel() {
+class SearchViewModel
+@Inject
+constructor(private val lists: ItemLists, private val account: CurrentAccount) : ViewModel() {
     private val _state = MutableStateFlow(SearchState())
     val state = _state.asStateFlow()
 
@@ -39,7 +42,7 @@ class SearchViewModel @Inject constructor(private val repository: MediaRepositor
     private val serverAwayReload = ServerAwayReload()
 
     /** CE (#866): the user the client acts for now. */
-    private fun sessionUser(): UserId? = runCatching { repository.getUserId() }.getOrNull()
+    private fun sessionUser(): UserId? = runCatching { account.getUserId() }.getOrNull()
 
     /**
      * CE (#775): the server went away or came back. With the server away the search looks in the
@@ -73,7 +76,7 @@ class SearchViewModel @Inject constructor(private val repository: MediaRepositor
                 while (true) {
                     serverAwayReload.begin()
                     _state.emit(_state.value.copy(loading = true))
-                    val result = repository.getSearchItems(query, itemKinds)
+                    val result = lists.getSearchItems(query, itemKinds)
                     // CE (#866): the request runs as whoever the client acts for when it is sent,
                     // which after the debounce or the store retry can be another user than the one
                     // this search began for. Such results are no one's to show: the next search

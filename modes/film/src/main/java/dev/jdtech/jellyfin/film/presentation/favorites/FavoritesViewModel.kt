@@ -13,8 +13,9 @@ import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.repository.CurrentAccount
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.repository.ReloadPolicy
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -31,16 +32,18 @@ import kotlinx.coroutines.withContext
 @HiltViewModel
 class FavoritesViewModel
 internal constructor(
-    private val repository: MediaRepository,
+    private val lists: ItemLists,
+    private val account: CurrentAccount,
     dataChanges: DataChangeEvents,
     /** CE (#779): where the sections are sorted out; the tests run it on their own dispatcher. */
     private val sectionsDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
     @Inject
     constructor(
-        repository: MediaRepository,
+        lists: ItemLists,
+        account: CurrentAccount,
         dataChanges: DataChangeEvents = DataChangeEvents(),
-    ) : this(repository, dataChanges, Dispatchers.Default)
+    ) : this(lists, account, dataChanges, Dispatchers.Default)
 
     private val _state = MutableStateFlow(CollectionState())
     val state = _state.asStateFlow()
@@ -65,7 +68,7 @@ internal constructor(
     private var loadingFor: UserId? = null
 
     /** CE (#866): the user the client acts for now. */
-    private fun sessionUser(): UserId? = runCatching { repository.getUserId() }.getOrNull()
+    private fun sessionUser(): UserId? = runCatching { account.getUserId() }.getOrNull()
 
     /** CE (#866): whether the list on screen, or the load running, is for another user. */
     private fun switchedTo(user: UserId?): Boolean =
@@ -122,7 +125,7 @@ internal constructor(
         _state.emit(_state.value.copy(isLoading = !hasContent, error = null))
 
         try {
-            val result = repository.getFavoriteItems()
+            val result = lists.getFavoriteItems()
             val items = result.items
             ensureActive()
 

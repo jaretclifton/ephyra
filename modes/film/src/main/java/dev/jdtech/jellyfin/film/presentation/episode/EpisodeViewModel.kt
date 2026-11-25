@@ -3,6 +3,7 @@ package dev.jdtech.jellyfin.film.presentation.episode
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.jdtech.jellyfin.domain.ports.CurrentServerCapabilities
 import dev.jdtech.jellyfin.film.domain.VideoMetadataParser
 import dev.jdtech.jellyfin.film.presentation.detailSections
 import dev.jdtech.jellyfin.film.presentation.shownIn
@@ -12,8 +13,9 @@ import dev.jdtech.jellyfin.models.ItemPerson
 import dev.jdtech.jellyfin.models.PersonKind
 import dev.jdtech.jellyfin.models.mergeDuplicateRoles
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
 import dev.jdtech.jellyfin.repository.ReloadPolicy
+import dev.jdtech.jellyfin.repository.UserDataUpdates
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -32,7 +34,9 @@ import timber.log.Timber
 @HiltViewModel
 class EpisodeViewModel
 internal constructor(
-    private val repository: MediaRepository,
+    private val catalog: ItemCatalog,
+    private val userData: UserDataUpdates,
+    private val capabilities: CurrentServerCapabilities,
     private val appPreferences: AppPreferences,
     private val videoMetadataParser: VideoMetadataParser,
     dataChanges: DataChangeEvents = DataChangeEvents(),
@@ -41,11 +45,21 @@ internal constructor(
 ) : ViewModel() {
     @Inject
     constructor(
-        repository: MediaRepository,
+        catalog: ItemCatalog,
+        userData: UserDataUpdates,
+        capabilities: CurrentServerCapabilities,
         appPreferences: AppPreferences,
         videoMetadataParser: VideoMetadataParser,
         dataChanges: DataChangeEvents = DataChangeEvents(),
-    ) : this(repository, appPreferences, videoMetadataParser, dataChanges, Dispatchers.Default)
+    ) : this(
+        catalog,
+        userData,
+        capabilities,
+        appPreferences,
+        videoMetadataParser,
+        dataChanges,
+        Dispatchers.Default,
+    )
 
     private val _state = MutableStateFlow(EpisodeState())
     val state = _state.asStateFlow()
@@ -72,14 +86,14 @@ internal constructor(
             _state.emit(
                 _state.value.copy(
                     error = null,
-                    cappedDownloads = repository.capabilities.cappedDownloadTranscode,
+                    cappedDownloads = capabilities.get().cappedDownloadTranscode,
                 )
             )
             try {
                 // The preference doesn't depend on the episode, so it is read while it loads.
                 val (episode, displayCastAndCrew, useEpisodeImages) =
                     coroutineScope {
-                        val episodeAsync = async { repository.getEpisode(episodeId) }
+                        val episodeAsync = async { catalog.getEpisode(episodeId) }
                         val castAsync = async {
                             appPreferences.getValue(appPreferences.displayCastAndCrew)
                         }
@@ -118,8 +132,7 @@ internal constructor(
     private fun setPlayed(played: Boolean) {
         viewModelScope.launch {
             try {
-                if (played) repository.markAsPlayed(episodeId)
-                else repository.markAsUnplayed(episodeId)
+                if (played) userData.markAsPlayed(episodeId) else userData.markAsUnplayed(episodeId)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -138,8 +151,8 @@ internal constructor(
     private fun setFavorite(favorite: Boolean) {
         viewModelScope.launch {
             try {
-                if (favorite) repository.markAsFavorite(episodeId)
-                else repository.unmarkAsFavorite(episodeId)
+                if (favorite) userData.markAsFavorite(episodeId)
+                else userData.unmarkAsFavorite(episodeId)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

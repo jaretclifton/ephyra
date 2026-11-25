@@ -5,8 +5,9 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.film.presentation.ServerAwayReload
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.repository.CurrentAccount
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.repository.ReloadPolicy
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -22,7 +23,8 @@ import timber.log.Timber
 class MediaViewModel
 @Inject
 constructor(
-    private val repository: MediaRepository,
+    private val lists: ItemLists,
+    private val account: CurrentAccount,
     dataChanges: DataChangeEvents = DataChangeEvents(),
 ) : ViewModel() {
     private val reloadPolicy = ReloadPolicy(dataChanges)
@@ -34,7 +36,7 @@ constructor(
      * CE (#810): the user the client acts for now. The tab stays on its stack across a user switch,
      * and [ReloadPolicy] knows nothing of who the list is for.
      */
-    private fun sessionUser(): UserId? = runCatching { repository.getUserId() }.getOrNull()
+    private fun sessionUser(): UserId? = runCatching { account.getUserId() }.getOrNull()
 
     /** CE (#810): whether the list on screen, or the load running, is for another user. */
     private fun userChanged(user: UserId?): Boolean {
@@ -86,7 +88,7 @@ constructor(
             val token = reloadPolicy.begin()
             if (!quiet) _state.emit(_state.value.copy(isLoading = true, error = null))
             try {
-                val result = repository.getLibraries()
+                val result = lists.getLibraries()
                 ensureActive()
                 librariesLoadedAtNanos = System.nanoTime()
                 reloadPolicy.complete(token)

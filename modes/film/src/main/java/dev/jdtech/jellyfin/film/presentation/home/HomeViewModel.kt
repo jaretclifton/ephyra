@@ -23,8 +23,10 @@ import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.repository.CurrentAccount
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.repository.ReloadPolicy
 import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -57,7 +59,9 @@ import timber.log.Timber
 @HiltViewModel
 class HomeViewModel
 internal constructor(
-    private val repository: MediaRepository,
+    private val lists: ItemLists,
+    private val catalog: ItemCatalog,
+    private val account: CurrentAccount,
     private val appPreferences: AppPreferences,
     private val serverStore: ServerStore,
     dataChanges: DataChangeEvents = DataChangeEvents(),
@@ -70,12 +74,23 @@ internal constructor(
 ) : ViewModel() {
     @Inject
     constructor(
-        repository: MediaRepository,
+        lists: ItemLists,
+        catalog: ItemCatalog,
+        account: CurrentAccount,
         appPreferences: AppPreferences,
         serverStore: ServerStore,
         dataChanges: DataChangeEvents = DataChangeEvents(),
         homeCache: HomeCache? = null,
-    ) : this(repository, appPreferences, serverStore, dataChanges, homeCache, Dispatchers.Default)
+    ) : this(
+        lists,
+        catalog,
+        account,
+        appPreferences,
+        serverStore,
+        dataChanges,
+        homeCache,
+        Dispatchers.Default,
+    )
 
     private val _state = MutableStateFlow(HomeState())
     val state = _state.asStateFlow()
@@ -251,7 +266,7 @@ internal constructor(
      */
     private suspend fun clientActsFor(userId: UserId): Boolean =
         withTimeoutOrNull(CLIENT_SWITCH_WAIT_MS) {
-            while (runCatching { repository.getUserId() }.getOrNull() != userId) {
+            while (runCatching { account.getUserId() }.getOrNull() != userId) {
                 delay(CLIENT_SWITCH_POLL_MS)
             }
             true
@@ -342,7 +357,7 @@ internal constructor(
     /** The avatar's image tag changes on the server; Room holds it, so read the user again. */
     private suspend fun refreshUserImage(serverId: ServerId) {
         logFailure("user image") {
-            repository.refreshCurrentUserImage()
+            account.refreshCurrentUserImage()
             serverStore.currentUser(serverId)?.let { user ->
                 // CE (#810): a new picture of the same user. Another user is a switch, which
                 // onCurrentUser handles, rows and all.
@@ -359,7 +374,7 @@ internal constructor(
      */
     private suspend fun refreshServerName(server: Server) {
         logFailure("server name") {
-            val renamed = server.renamedTo(repository.getServerInfo()) ?: return@logFailure
+            val renamed = server.renamedTo(account.getServerInfo()) ?: return@logFailure
             // #988: only the name; the server on screen may be older than its row.
             serverStore.renameServer(renamed.id, renamed.name)
             updateState { if (it.server?.id == renamed.id) it.copy(server = renamed) else it }
@@ -444,7 +459,7 @@ internal constructor(
             return false
         }
 
-        val items = repository.getSuggestions()
+        val items = lists.getSuggestions()
 
         val section =
             if (items.isEmpty()) {
@@ -464,7 +479,7 @@ internal constructor(
             return false
         }
 
-        val resumeItems = repository.getResumeItems()
+        val resumeItems = lists.getResumeItems()
 
         val section =
             if (resumeItems.isEmpty()) {
@@ -486,7 +501,7 @@ internal constructor(
             return false
         }
 
-        val nextUpItems = repository.getNextUp()
+        val nextUpItems = catalog.getNextUp()
 
         val section =
             if (nextUpItems.isEmpty()) {
@@ -514,7 +529,7 @@ internal constructor(
         val key = _state.value.server?.id to _state.value.user?.id
         val known = cachedLibraries?.takeIf { it.first == key }?.second
         coroutineScope {
-            val fresh = async { logFailure("libraries") { repository.homeLibraries() } }
+            val fresh = async { logFailure("libraries") { lists.homeLibraries() } }
             val libraries = known ?: fresh.await().getOrThrow()
             cachedLibraries = key to libraries
             loadLatest(libraries, stored, legacy)
@@ -573,7 +588,7 @@ internal constructor(
                     async {
                         val result =
                             logFailure("library ${view.id.asString()}") {
-                                repository.getLatestMedia(view.id, view.type.latestItemTypes)
+                                lists.getLatestMedia(view.id, view.type.latestItemTypes)
                             }
                         synchronized(results) {
                             results[i] = result
@@ -590,7 +605,7 @@ internal constructor(
     }
 
     /** The backdrop of a season, for the hero of an episode. Null when no server is set. */
-    fun seasonBackdropUrl(seasonId: ItemId): String? = repository.seasonBackdropUrl(seasonId)
+    fun seasonBackdropUrl(seasonId: ItemId): String? = catalog.seasonBackdropUrl(seasonId)
 
     fun onAction(action: HomeAction) {
         when (action) {

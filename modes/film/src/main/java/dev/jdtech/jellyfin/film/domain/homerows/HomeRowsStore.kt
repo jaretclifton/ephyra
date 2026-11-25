@@ -5,7 +5,7 @@ import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.settings.domain.models.Preference
@@ -50,4 +50,4 @@ constructor(private val appPreferences: AppPreferences, private val serverStore:
 }
 
 /** The libraries that can have a Latest row on Home. */
-suspend fun MediaRepository.homeLibraries(): List<Library> = getUserViews()
+suspend fun ItemLists.homeLibraries(): List<Library> = getUserViews()

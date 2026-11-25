@@ -8,8 +8,8 @@ import dev.jdtech.jellyfin.models.AccountKey
 import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSourceType
+import dev.jdtech.jellyfin.repository.CurrentAccount
 import dev.jdtech.jellyfin.repository.DownloadStore
-import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
 import java.io.File
@@ -25,7 +25,7 @@ import kotlinx.coroutines.withContext
 class DownloadedShowViewModel
 @Inject
 constructor(
-    private val repository: MediaRepository,
+    private val account: CurrentAccount,
     private val downloadQueue: DownloadQueue,
     private val downloader: Downloader,
     private val downloadStore: DownloadStore,
@@ -38,7 +38,7 @@ constructor(
         viewModelScope.launch {
             val (episodes, sizes) =
                 withContext(Dispatchers.IO) {
-                    val userId = repository.getUserId()
+                    val userId = account.getUserId()
                     // Episodes with only a `.download` source are still in progress.
                     // CE (#718): the ones the current server downloaded.
                     val episodes =

@@ -4,7 +4,7 @@ import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.ServerCapabilities
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemExtras
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -71,7 +71,7 @@ fun RelatedItems.keeping(request: RelatedItemsRequest) =
  * logged and leaves its row empty, since none of these rows is worth an error on the page.
  */
 fun CoroutineScope.launchRelatedItems(
-    repository: MediaRepository,
+    extras: ItemExtras,
     itemId: ItemId,
     request: RelatedItemsRequest,
     update: ((RelatedItems) -> RelatedItems) -> Unit,
@@ -79,22 +79,22 @@ fun CoroutineScope.launchRelatedItems(
     if (request.localTrailers || request.specialFeatures) {
         launch {
             optional("extras") {
-                    repository.getExtras(itemId, request.localTrailers, request.specialFeatures)
+                    extras.getExtras(itemId, request.localTrailers, request.specialFeatures)
                 }
                 ?.takeIf { it.isNotEmpty() }
-                ?.let { extras -> update { it.copy(extras = extras) } }
+                ?.let { found -> update { it.copy(extras = found) } }
         }
     }
     if (request.collections) {
         launch {
-            optional("collections") { repository.getItemCollections(itemId) }
+            optional("collections") { extras.getItemCollections(itemId) }
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { collections -> update { it.copy(collections = collections) } }
         }
     }
     if (request.similar) {
         launch {
-            optional("similar items") { repository.getSimilarItems(itemId) }
+            optional("similar items") { extras.getSimilarItems(itemId) }
                 ?.filter { it.id != itemId }
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { similar -> update { it.copy(similar = similar) } }

@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadProgress
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadStatus
+import dev.jdtech.jellyfin.domain.ports.CurrentServerCapabilities
 import dev.jdtech.jellyfin.film.presentation.DownloadPrompt
 import dev.jdtech.jellyfin.film.presentation.EpisodeDownloadPrompts
 import dev.jdtech.jellyfin.film.presentation.downloads.downloadDeletionScope
@@ -17,8 +18,9 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.isDownloaded
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
 import dev.jdtech.jellyfin.repository.ReloadPolicy
+import dev.jdtech.jellyfin.repository.UserDataUpdates
 import dev.jdtech.jellyfin.repository.serverOrStoredList
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.TimberFallbackLog
@@ -45,7 +47,9 @@ internal val seasonEpisodeFields = setOf(EpisodeField.OVERVIEW, EpisodeField.CAN
 class SeasonViewModel
 @Inject
 constructor(
-    private val repository: MediaRepository,
+    private val catalog: ItemCatalog,
+    private val userData: UserDataUpdates,
+    private val capabilities: CurrentServerCapabilities,
     private val downloader: Downloader,
     private val downloadQueue: DownloadQueue,
     dataChanges: DataChangeEvents = DataChangeEvents(),
@@ -147,7 +151,7 @@ constructor(
                 previous.copy(
                     error = null,
                     isLoading = true,
-                    cappedDownloads = repository.capabilities.cappedDownloadTranscode,
+                    cappedDownloads = capabilities.get().cappedDownloadTranscode,
                 )
             )
             // Another season of the same series (TV season chips) shares the series id.
@@ -164,7 +168,7 @@ constructor(
                 // try/catch (see HomeViewModel.loadData).
                 coroutineScope {
                     val seasonAsync = async {
-                        repository.getSeason(seasonId).also { season ->
+                        catalog.getSeason(seasonId).also { season ->
                             if (showSeasonEarly) _state.update { it.copy(season = season) }
                         }
                     }
@@ -173,7 +177,7 @@ constructor(
                     // error: the page lists the downloaded episodes, as the Downloads tab does.
                     val episodesAsync = async {
                         val stored =
-                            repository.getEpisodes(
+                            catalog.getEpisodes(
                                 seriesId = resolvedSeriesId,
                                 seasonId = seasonId,
                                 offline = true,
@@ -182,7 +186,7 @@ constructor(
                             if (downloadsOnly) stored
                             else
                                 serverOrStoredList(stored, log = TimberFallbackLog) {
-                                    repository.getEpisodes(
+                                    catalog.getEpisodes(
                                         seriesId = resolvedSeriesId,
                                         seasonId = seasonId,
                                         fields = seasonEpisodeFields,
@@ -195,11 +199,11 @@ constructor(
                         if (!includeSeriesSeasons) {
                             emptyList()
                         } else {
-                            val stored = repository.getSeasons(resolvedSeriesId, offline = true)
+                            val stored = catalog.getSeasons(resolvedSeriesId, offline = true)
                             if (downloadsOnly) stored
                             else
                                 serverOrStoredList(stored, log = TimberFallbackLog) {
-                                    repository.getSeasons(resolvedSeriesId)
+                                    catalog.getSeasons(resolvedSeriesId)
                                 }
                         }
                     }
@@ -235,8 +239,7 @@ constructor(
     private fun setPlayed(played: Boolean) {
         viewModelScope.launch {
             try {
-                if (played) repository.markAsPlayed(seasonId)
-                else repository.markAsUnplayed(seasonId)
+                if (played) userData.markAsPlayed(seasonId) else userData.markAsUnplayed(seasonId)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -252,7 +255,7 @@ constructor(
                 _state.value.season?.takeIf { it.id == seasonId }?.seriesId ?: return@launch
             try {
                 val episodes =
-                    repository.getEpisodes(
+                    catalog.getEpisodes(
                         seriesId = seriesId,
                         seasonId = seasonId,
                         fields = seasonEpisodeFields,
@@ -277,8 +280,8 @@ constructor(
     private fun setFavorite(favorite: Boolean) {
         viewModelScope.launch {
             try {
-                if (favorite) repository.markAsFavorite(seasonId)
-                else repository.unmarkAsFavorite(seasonId)
+                if (favorite) userData.markAsFavorite(seasonId)
+                else userData.unmarkAsFavorite(seasonId)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
