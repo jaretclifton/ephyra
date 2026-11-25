@@ -142,7 +142,7 @@ python3 .claude/skills/start-work/scripts/check-docs.py
 
 ## Decisions and history
 
-- [ADR 0001](../architecture/adr/0001-ports-and-adapters.md): ports and adapters, one adapter module per server type, Gradle as the boundary and Konsist as the ratchet, capabilities as data. [ADR 0002](../architecture/adr/0002-hexagonal-ddd.md): `application`, the three stores, `AccountKey`, opaque ids, `MediaRepository`.
+- [ADR 0001](../architecture/adr/0001-ports-and-adapters.md): ports and adapters, one adapter module per server type, Gradle as the boundary and Konsist as the ratchet, capabilities as data. [ADR 0002](../architecture/adr/0002-hexagonal-ddd.md): `application`, the three stores, `AccountKey`, opaque ids, `MediaRepository`. [ADR 0003](../architecture/adr/0003-playback-and-download-use-cases.md) (proposed, [#970](https://github.com/midasvo/ephyra/issues/970)): use cases for playback and downloads, what a use case looks like here (a rule in `domain` or a service in `application`, with its scope, dispatcher and clock injected), the download state machine, and the order of the PRs.
 - [#733](https://github.com/midasvo/ephyra/issues/733): the tracking issue. [#735](https://github.com/midasvo/ephyra/issues/735): the `architecture` module. [#771](https://github.com/midasvo/ephyra/issues/771): `testing` and the contract suites.
 - [#758](https://github.com/midasvo/ephyra/issues/758): the adapter as its own module (R7). [#770](https://github.com/midasvo/ephyra/issues/770): servers have a type; adapters in maps by `ServerType`.
 - [#896](https://github.com/midasvo/ephyra/issues/896): `application` (R5, R9). [#899](https://github.com/midasvo/ephyra/issues/899): the store ports, `data`'s own Hilt modules, R4 without exceptions, `ActiveServer` (R16).
