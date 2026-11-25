@@ -19,10 +19,10 @@ import kotlin.test.assertTrue
  * inherits from other interfaces is counted with what it inherits from them, so a union of roles
  * fails like the wide port it replaces. Interfaces are told apart by their fully qualified name, a
  * parent is looked up among the interfaces of all of `domain` and `application`, by its written
- * name, the file's imports (aliases included), its package, and last its simple name: a parent from
- * anywhere else (a Kotlin or JDK interface, as R19 leaves no other) is not counted. A parent that
- * can still be more than one interface fails the rule rather than be guessed. An interface
- * inherited along two paths counts once.
+ * name, its enclosing declarations, the file's imports (aliases included), its package, and last
+ * its simple name, as Kotlin binds it: a parent from anywhere else (a Kotlin or JDK interface, as
+ * R19 leaves no other) is not counted. A parent that can still be more than one interface fails the
+ * rule rather than be guessed. An interface inherited along two paths counts once.
  *
  * The ports still over the limit are in `architecture/baseline/wide-ports.txt`, each with its
  * issue, and the check is exact: a port that is split fails until its line is deleted.
@@ -116,6 +116,30 @@ class PortSizeTest {
 
             interface ViaImport : Wide
 
+            interface Base {
+                fun only()
+            }
+
+            interface Outer {
+                interface Base {
+                    fun a()
+
+                    fun b()
+                }
+
+                // Kotlin binds the enclosing Outer.Base, not the package's Base.
+                interface Child : Base
+            }
+
+            interface Closeable {
+                fun x()
+
+                fun y()
+            }
+
+            // java.io.Closeable is outside: not counted, and not this package's Closeable.
+            interface External : java.io.Closeable
+
             class NotAPort {
                 fun a() = Unit
             }
@@ -153,6 +177,12 @@ class PortSizeTest {
                 "$P.Diamond" to 5,
                 "$P.ViaAlias" to 4,
                 "$P.ViaImport" to 3,
+                "$P.Base" to 1,
+                "$P.Outer" to 0,
+                "$P.Outer.Base" to 2,
+                "$P.Outer.Child" to 2,
+                "$P.Closeable" to 2,
+                "$P.External" to 0,
                 "dev.jdtech.jellyfin.other.Small" to 2,
                 "dev.jdtech.jellyfin.other.Wide" to 3,
             ),
@@ -165,6 +195,44 @@ class PortSizeTest {
 
         private val IMPORT =
             Regex("""^import\s+([\w.`]+)(?:\s+as\s+(\w+))?""", RegexOption.MULTILINE)
+
+        /**
+         * The interface of [known] that [written], a parent named in [child], is, as Kotlin binds
+         * it: a qualified name as written (or relative to [scopes]); a simple name in the enclosing
+         * declarations, then an explicit import (aliases included), then the package, and last, for
+         * a wildcard import, the one interface of that simple name. A name that points outside
+         * [known] (a Kotlin or JDK interface) is null: it is not counted.
+         */
+        fun resolve(
+            written: String,
+            scopes: List<String>,
+            pkg: String,
+            imports: Map<String, String>,
+            known: Set<String>,
+            child: String,
+        ): String? {
+            if ('.' in written) {
+                return (listOf(written) + scopes.map { "$it.$written" }).firstOrNull { it in known }
+            }
+            scopes
+                .filter { it != pkg }
+                .map { "$it.$written" }
+                .firstOrNull { it in known }
+                ?.let {
+                    return it
+                }
+            imports[written]?.let {
+                return it.takeIf { it in known }
+            }
+            "$pkg.$written"
+                .takeIf { it in known }
+                ?.let {
+                    return it
+                }
+            val found = known.filter { it.substringAfterLast('.') == written }
+            assertTrue(found.size <= 1, "R21 cannot tell which $written $child extends: $found")
+            return found.singleOrNull()
+        }
 
         /** The names a file can write a type by, to the type: its imports, aliases included. */
         fun importsOf(text: String): Map<String, String> =
@@ -207,22 +275,16 @@ class PortSizeTest {
                 val declaration = declarations.single()
                 val imports = importsOf(File(declaration.containingFile.path).readText())
                 val pkg = declaration.packagee?.name.orEmpty()
+                // The declarations that enclose this one, innermost first, then its package.
+                val scopes =
+                    generateSequence(name.substringBeforeLast('.', "")) { scope ->
+                            scope.substringBeforeLast('.', "").takeIf { scope != pkg }
+                        }
+                        .filter { it.length >= pkg.length }
+                        .toList()
                 declaration.parents().mapNotNull { parent ->
                     val written = parent.name.substringBefore('<').trim()
-                    val simple = written.substringAfterLast('.')
-                    val found =
-                        listOfNotNull(
-                                written.takeIf { it in own },
-                                imports[written]?.takeIf { it in own },
-                            )
-                            .ifEmpty { own.keys.filter { it == "$pkg.$simple" } }
-                            .ifEmpty { own.keys.filter { it.substringAfterLast('.') == simple } }
-                            .distinct()
-                    assertTrue(
-                        found.size <= 1,
-                        "R21 cannot tell which $written $name extends: $found",
-                    )
-                    found.singleOrNull()
+                    resolve(written, scopes, pkg, imports, own.keys, name)
                 }
             }
 
