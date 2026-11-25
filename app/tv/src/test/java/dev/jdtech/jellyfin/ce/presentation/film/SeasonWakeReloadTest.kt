@@ -140,10 +140,24 @@ class SeasonWakeReloadTest {
                 }
             }
         }
-        // The panel loads once focus has rested on the card. Wait for it to be on the page, not
-        // only asked for: a wake reloads the panel only when there is one.
-        rule.waitUntil(timeoutMillis = 5_000) { episodeViewModel.state.value.episode != null }
-        rule.waitForIdle()
+        // The panel loads once focus has rested on the card.
+        rule.waitUntil(timeoutMillis = 5_000) { "episode" in calls }
+        // A wake reloads the panel only when there is one, so it must be on the page, not only
+        // asked for.
+        idleUntil { episodeViewModel.state.value.episode != null }
+    }
+
+    /**
+     * Lets the main thread run until [condition] holds. The fake server answers on the main
+     * thread's message queue and the page goes on in coroutines, so one waitForIdle() is not always
+     * enough (seen in CI).
+     */
+    private fun idleUntil(condition: () -> Boolean) {
+        repeat(IDLE_ROUNDS) {
+            rule.waitForIdle()
+            if (condition()) return
+        }
+        throw AssertionError("Still not there after $IDLE_ROUNDS rounds of waitForIdle()")
     }
 
     /** The TV goes to standby (or the screensaver starts) and comes back. */
@@ -201,12 +215,9 @@ class SeasonWakeReloadTest {
         assertEquals(listOf("season"), calls)
         releaseSeason()
 
+        idleUntil { calls.size >= 2 }
         assertEquals(listOf("season", "episode"), calls)
-        // The episode's load sorts its cast on Dispatchers.Default, which waitForIdle() doesn't
-        // wait for, so the panel's new state can come a moment after the call.
-        rule.waitUntil(timeoutMillis = 5_000) {
-            rule.onAllNodesWithText("Play").fetchSemanticsNodes().isNotEmpty()
-        }
+        idleUntil { rule.onAllNodesWithText("Play").fetchSemanticsNodes().isNotEmpty() }
     }
 
     @Test
@@ -231,6 +242,7 @@ class SeasonWakeReloadTest {
         assertEquals(listOf("season", "season"), calls)
 
         releaseSeason()
+        idleUntil { calls.size >= 3 }
         assertEquals(listOf("season", "season", "episode"), calls)
     }
 
@@ -369,6 +381,8 @@ class SeasonWakeReloadTest {
         }
             as T
 }
+
+private const val IDLE_ROUNDS = 50
 
 /** A TV app in the foreground, moved by hand. */
 private class TestLifecycleOwner : LifecycleOwner {
