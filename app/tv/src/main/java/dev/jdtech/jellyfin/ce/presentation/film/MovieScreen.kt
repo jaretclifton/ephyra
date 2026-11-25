@@ -59,10 +59,13 @@ import coil3.compose.AsyncImage
 import dev.jdtech.jellyfin.ce.ui.PersonCard
 import dev.jdtech.jellyfin.ce.ui.components.TvLoadError
 import dev.jdtech.jellyfin.ce.ui.components.TvOverviewText
+import dev.jdtech.jellyfin.ce.ui.focus.HandOffFocusWhenGone
 import dev.jdtech.jellyfin.ce.ui.focus.NoBringIntoView
 import dev.jdtech.jellyfin.ce.ui.focus.RestoreFocus
 import dev.jdtech.jellyfin.ce.ui.focus.ephyraButtonBorder
 import dev.jdtech.jellyfin.ce.ui.focus.focusPosition
+import dev.jdtech.jellyfin.ce.ui.focus.handsOffFocus
+import dev.jdtech.jellyfin.ce.ui.focus.rememberFocusHandOff
 import dev.jdtech.jellyfin.ce.ui.focus.rememberFocusPosition
 import dev.jdtech.jellyfin.core.R as CoreR
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
@@ -380,12 +383,19 @@ private fun MovieScreenContent(
                                             )
                                     )
                                 }
+                                // CE (#660): a reload on wake can end the progress under Restart.
+                                val restartFocus = rememberFocusHandOff()
+                                HandOffFocusWhenGone(restartFocus, shown = inProgress) {
+                                    focusPosition.save(ROW_BUTTONS, 0)
+                                    focusPosition.requestFocus()
+                                }
                                 if (inProgress) {
                                     Button(
                                         border = ephyraButtonBorder(),
                                         onClick = { play(true) },
                                         modifier =
-                                            Modifier.focusPosition(focusPosition, ROW_BUTTONS, 1),
+                                            Modifier.focusPosition(focusPosition, ROW_BUTTONS, 1)
+                                                .handsOffFocus(restartFocus),
                                     ) {
                                         Icon(
                                             painter =
