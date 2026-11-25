@@ -39,7 +39,8 @@ import dev.jdtech.jellyfin.player.cast.models.CastPlayerState
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.player.core.domain.models.Track
 import dev.jdtech.jellyfin.player.local.domain.PlaylistManager
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.PlaybackReports
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
@@ -82,7 +83,8 @@ class CastPlayerControllerImpl
 constructor(
     @param:ApplicationContext private val context: Context,
     private val mediaServer: MediaServer,
-    private val repository: MediaRepository,
+    private val catalog: ItemCatalog,
+    private val playbackReports: PlaybackReports,
     private val sessionManager: CastSessionManager,
     private val playlistManagers: Provider<PlaylistManager>,
     private val appPreferences: AppPreferences,
@@ -502,7 +504,7 @@ constructor(
         scope.launch {
             try {
                 // The receiver's position is not read here, so the start sends none, as before.
-                repository.postPlaybackStart(
+                playbackReports.postPlaybackStart(
                     itemId = itemId,
                     positionTicks = null,
                     transcoded = transcoded,
@@ -517,7 +519,7 @@ constructor(
         val transcoded = isTranscoded(report.itemId)
         scope.launch {
             try {
-                repository.postPlaybackProgress(
+                playbackReports.postPlaybackProgress(
                     itemId = report.itemId,
                     positionTicks = Ticks.fromMilliseconds(report.positionMs),
                     isPaused = report.isPaused,
@@ -532,7 +534,7 @@ constructor(
     private fun sendStop(report: CastReport.Stop) {
         scope.launch {
             try {
-                repository.postPlaybackStop(
+                playbackReports.postPlaybackStop(
                     itemId = report.itemId,
                     positionTicks = Ticks.fromMilliseconds(report.positionMs),
                     playedPercentage = report.playedPercentage,
@@ -589,7 +591,7 @@ constructor(
         restoreJob = scope.launch {
             try {
                 val kind =
-                    when (repository.getItem(itemId)) {
+                    when (catalog.getItem(itemId)) {
                         is Movie -> ItemKind.MOVIE
                         is Episode -> ItemKind.EPISODE
                         else -> return@launch
@@ -603,7 +605,7 @@ constructor(
                 // The receiver's stream plays, so its play session and version are the ones the
                 // reports name, whatever the phone's own player recorded for this item before.
                 // When they cannot be read, the reports name none rather than the phone's.
-                repository.setPlaySession(
+                playbackReports.setPlaySession(
                     itemId,
                     playback?.playSessionId,
                     transcodes = playback?.transcoded == true,
@@ -685,7 +687,7 @@ constructor(
 
         val source = receiverSource(item, audioStreamIndex) ?: return null
         val isTranscoded = source.transcoded
-        repository.setPlaySession(item.itemId, source.playSessionId, isTranscoded, source.id)
+        playbackReports.setPlaySession(item.itemId, source.playSessionId, isTranscoded, source.id)
 
         val isEpisode = item.seriesName != null
         val mediaMetadata =

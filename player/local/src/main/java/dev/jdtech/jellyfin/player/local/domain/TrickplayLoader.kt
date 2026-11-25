@@ -7,7 +7,7 @@ import android.util.LruCache
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.player.core.domain.models.TrickplayTileLoader
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.PlaybackMedia
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -38,7 +38,7 @@ import timber.log.Timber
  * for [TrickplaySheetFailures.RETRY_AFTER_MS], by [nowMs].
  */
 class TrickplayLoader(
-    private val repository: MediaRepository,
+    private val media: PlaybackMedia,
     private val itemId: ItemId,
     private val mediaSourceId: MediaSourceId?,
     private val width: Int,
@@ -157,7 +157,7 @@ class TrickplayLoader(
             loaderScope.async(start = CoroutineStart.LAZY) {
                 try {
                     val sheet =
-                        repository
+                        media
                             .getTrickplayData(itemId, width, sheetIndex, mediaSourceId)
                             ?.let(::decodeSheet)
                     if (sheet == null) {

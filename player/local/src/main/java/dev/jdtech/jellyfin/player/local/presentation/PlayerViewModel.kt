@@ -90,8 +90,10 @@ import dev.jdtech.jellyfin.player.local.domain.trackPreferenceKey
 import dev.jdtech.jellyfin.player.local.engine.EnginePlayer
 import dev.jdtech.jellyfin.player.local.engine.PlayerEngine
 import dev.jdtech.jellyfin.player.local.engine.PlayerEngineConfig
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.CurrentAccount
 import dev.jdtech.jellyfin.repository.PlaybackEvents
+import dev.jdtech.jellyfin.repository.PlaybackMedia
+import dev.jdtech.jellyfin.repository.SeriesTrackPreferences
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.settings.domain.QualityNetwork
 import dev.jdtech.jellyfin.settings.presentation.enums.AppVariant
@@ -132,7 +134,9 @@ class PlayerViewModel
 constructor(
     private val application: Application,
     private val playlistManager: PlaylistManager,
-    private val repository: MediaRepository,
+    private val media: PlaybackMedia,
+    private val savedTrackPreferences: SeriesTrackPreferences,
+    private val account: CurrentAccount,
     private val appPreferences: AppPreferences,
     private val savedStateHandle: SavedStateHandle,
     private val playbackEvents: PlaybackEvents,
@@ -388,7 +392,7 @@ constructor(
         val server =
             if (autoPlayNextFollowsServer(pref)) {
                 try {
-                    repository.autoPlayNextEpisode()
+                    account.autoPlayNextEpisode()
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
@@ -1841,7 +1845,7 @@ constructor(
             seriesId to
                 viewModelScope.async(Dispatchers.IO) {
                     try {
-                        repository.saveSeriesTrackPreference(preference)
+                        savedTrackPreferences.saveSeriesTrackPreference(preference)
                     } catch (e: Exception) {
                         Timber.e(e)
                     }
@@ -1979,14 +1983,14 @@ constructor(
      */
     private fun signedInUserId(): UserId? =
         try {
-            repository.getUserId()
+            account.getUserId()
         } catch (_: IllegalStateException) {
             null
         }
 
     private suspend fun readSeriesTrackPreferences(seriesId: ItemId): List<SeriesTrackPreference> =
         try {
-            repository.getSeriesTrackPreferences(seriesId)
+            savedTrackPreferences.getSeriesTrackPreferences(seriesId)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -2237,7 +2241,7 @@ constructor(
         val segments =
             try {
                 // Debuggable builds can fake segments for testing (#271).
-                DebugSegments.read(application) ?: repository.getSegments(itemId)
+                DebugSegments.read(application) ?: media.getSegments(itemId)
             } catch (e: Exception) {
                 Timber.e(e)
                 emptyList()
@@ -2267,7 +2271,7 @@ constructor(
         // hundreds of bitmaps, which is a lot of memory and network while the player is starting.
         val loader =
             TrickplayLoader(
-                repository = repository,
+                media = media,
                 itemId = item.itemId,
                 // CE (#860): the tiles of the version that plays, whose layout trickplayInfo is.
                 mediaSourceId = item.mediaSourceId,
@@ -2306,7 +2310,7 @@ constructor(
             )
         val loader =
             TrickplayRegionLoader(
-                repository = repository,
+                media = media,
                 itemId = item.itemId,
                 mediaSourceId = item.mediaSourceId,
                 tiles = tiles,
@@ -2446,7 +2450,7 @@ constructor(
         val itemId = state.currentItemId ?: return null
         val chapter = state.currentChapters.getOrNull(chapterIndex) ?: return null
         val tag = chapter.imageTag ?: return null
-        return repository.chapterImageUrl(itemId, chapterIndex, tag)
+        return media.chapterImageUrl(itemId, chapterIndex, tag)
     }
 
     /**

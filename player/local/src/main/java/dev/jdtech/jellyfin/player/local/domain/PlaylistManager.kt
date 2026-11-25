@@ -19,7 +19,8 @@ import dev.jdtech.jellyfin.player.core.domain.models.PlayerChapter
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.player.core.domain.models.ServerAudioTrack
 import dev.jdtech.jellyfin.player.core.domain.models.TrickplayInfo
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.SeriesTrackPreferences
 import javax.inject.Inject
 import kotlin.random.Random
 import kotlinx.coroutines.CancellationException
@@ -32,7 +33,8 @@ import timber.log.Timber
 class PlaylistManager
 @Inject
 internal constructor(
-    private val repository: MediaRepository,
+    private val catalog: ItemCatalog,
+    private val trackPreferences: SeriesTrackPreferences,
     private val resolvePlayback: ResolvePlayback,
 ) {
     private var startItem: Item? = null
@@ -75,7 +77,7 @@ internal constructor(
     private val requestedAudio = HashMap<ItemId, Int>()
 
     private suspend fun fetchEpisodes(seriesId: ItemId, seasonId: ItemId): List<Episode> =
-        repository
+        catalog
             .getEpisodes(
                 seriesId = seriesId,
                 seasonId = seasonId,
@@ -89,7 +91,7 @@ internal constructor(
      */
     private suspend fun fullEpisode(partial: Episode): Episode =
         try {
-            repository.getEpisode(partial.id)
+            catalog.getEpisode(partial.id)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -125,7 +127,7 @@ internal constructor(
                 ItemKind.MOVIE -> {
                     val (movie, sources) =
                         coroutineScope {
-                            val movie = async { repository.getMovie(itemId) }
+                            val movie = async { catalog.getMovie(itemId) }
                             val sources = async {
                                 resolvePlayback.sources(
                                     itemId,
@@ -147,7 +149,7 @@ internal constructor(
                         // a time with them. Specials are left out, unless the series has nothing
                         // else.
                         val all =
-                            repository.getEpisodes(seriesId = itemId, seasonId = null).filter {
+                            catalog.getEpisodes(seriesId = itemId, seasonId = null).filter {
                                 !it.missing
                             }
                         val episodes =
@@ -165,7 +167,7 @@ internal constructor(
                         items = listOf(episode) + episodes.drop(1)
                         episode
                     } else {
-                        val nextUpEpisode = repository.getNextUp(itemId).firstOrNull()
+                        val nextUpEpisode = catalog.getNextUp(itemId).firstOrNull()
 
                         if (nextUpEpisode != null) {
                             // CE (#594): next-up answers without trickplay and chapters (Home's
@@ -189,7 +191,7 @@ internal constructor(
                             queueLoader = { fetchEpisodes(itemId, seasonId) }
                             episode
                         } else {
-                            val seasons = repository.getSeasons(itemId)
+                            val seasons = catalog.getSeasons(itemId)
                             if (seasons.isEmpty()) {
                                 return null
                             }
@@ -205,7 +207,7 @@ internal constructor(
                     }
                 }
                 ItemKind.SEASON -> {
-                    val season = repository.getSeason(itemId)
+                    val season = catalog.getSeason(itemId)
                     // CE (#638): shuffle a single season too, not only a whole series.
                     val inOrder = fetchEpisodes(season.seriesId, season.id)
                     val episodes = if (shuffle) inOrder.shuffled(random) else inOrder
@@ -222,7 +224,7 @@ internal constructor(
                 ItemKind.EPISODE -> {
                     val (episode, sources) =
                         coroutineScope {
-                            val episode = async { repository.getEpisode(itemId) }
+                            val episode = async { catalog.getEpisode(itemId) }
                             val sources = async {
                                 resolvePlayback.sources(
                                     itemId,
@@ -382,7 +384,7 @@ internal constructor(
         val seriesId = queuedEpisodes.lastOrNull()?.seriesId ?: return
 
         try {
-            val seasons = repository.getSeasons(seriesId).sortedBy { it.indexNumber }
+            val seasons = catalog.getSeasons(seriesId).sortedBy { it.indexNumber }
             // The highest queued season, not the last episode's: the server can end a season's
             // list with a special that airs after it, and that episode belongs to season 0.
             val queuedSeasonIds = queuedEpisodes.map { it.seasonId }
@@ -396,7 +398,7 @@ internal constructor(
                 seasons
                     .filter { it.indexNumber > seasonNumber }
                     .firstNotNullOfOrNull { season ->
-                        repository
+                        catalog
                             .getEpisodes(
                                 seriesId = seriesId,
                                 seasonId = season.id,
@@ -648,7 +650,7 @@ internal constructor(
         if (this !is Episode) return null
         val preference =
             try {
-                repository.getSeriesTrackPreferences(seriesId).firstOrNull {
+                trackPreferences.getSeriesTrackPreferences(seriesId).firstOrNull {
                     it.trackType == C.TRACK_TYPE_AUDIO && !it.disabled
                 }
             } catch (e: CancellationException) {

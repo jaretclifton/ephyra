@@ -8,7 +8,7 @@ import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.downloadState
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.PlaybackMedia
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.settings.domain.QualityNetwork
 import dev.jdtech.jellyfin.settings.presentation.enums.AppVariant
@@ -23,7 +23,7 @@ import javax.inject.Inject
 class ResolvePlayback
 @Inject
 constructor(
-    private val repository: MediaRepository,
+    private val media: PlaybackMedia,
     private val appPreferences: AppPreferences,
     private val connectivity: NetworkConnectivity,
     private val appVariant: AppVariant,
@@ -86,7 +86,7 @@ constructor(
         audioStreamIndex: Int? = null,
         maxBitrate: Int = maxBitrateSetting(),
     ): List<ItemSource> =
-        repository.getPlaybackSources(
+        media.getPlaybackSources(
             itemId = itemId,
             target = localTarget(),
             mediaSourceId = mediaSourceId,
