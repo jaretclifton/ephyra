@@ -4,15 +4,15 @@ import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
 import dev.jdtech.jellyfin.film.presentation.collection.CollectionState
 import dev.jdtech.jellyfin.models.CollectionSection
 import dev.jdtech.jellyfin.models.Item
-import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
+import dev.jdtech.jellyfin.repository.CurrentAccount
 import dev.jdtech.jellyfin.repository.DataChangeEvents
+import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.repository.ItemsResult
-import dev.jdtech.jellyfin.repository.MediaRepository
-import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -61,7 +61,13 @@ class FavoritesViewModelUserSwitchTest {
     @Test
     fun `the screen shows the new user's favourites after a switch, never the previous user's`() =
         runTest(dispatcher) {
-            val viewModel = FavoritesViewModel(repository(), DataChangeEvents(), dispatcher)
+            val viewModel =
+                FavoritesViewModel(
+                    repository.role(),
+                    repository.role(),
+                    DataChangeEvents(),
+                    dispatcher,
+                )
             viewModel.loadItems()
             advanceUntilIdle()
             assertEquals(aliceFavorites, items(viewModel.state.value))
@@ -87,7 +93,13 @@ class FavoritesViewModelUserSwitchTest {
     @Test
     fun `a load while no one is signed in does not hide the next switch`() =
         runTest(dispatcher) {
-            val viewModel = FavoritesViewModel(repository(), DataChangeEvents(), dispatcher)
+            val viewModel =
+                FavoritesViewModel(
+                    repository.role(),
+                    repository.role(),
+                    DataChangeEvents(),
+                    dispatcher,
+                )
             viewModel.loadItems()
             advanceUntilIdle()
 
@@ -134,22 +146,20 @@ class FavoritesViewModelUserSwitchTest {
 
     private fun items(state: CollectionState): List<Item> = state.sections.flatMap { it.items }
 
-    private fun repository(): MediaRepository =
-        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
-            _,
-            method,
-            _ ->
+    private val repository: FakeRoles =
+        FakeRoles(ItemLists::class, CurrentAccount::class) { _, method, _ ->
             when (method.kotlinName) {
-                "getCapabilities" -> ServerCapabilities.ALL
                 "getUserId" -> sessionUser ?: throw IllegalStateException("No user")
                 "getFavoriteItems" ->
                     if (sessionUser == null || favoritesFail)
                         throw IllegalStateException("No answer")
                     else ItemsResult(if (sessionUser == bob) bobFavorites else aliceFavorites)
-                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
+                else ->
+                    throw NotImplementedError(
+                        "${method.declaringClass.simpleName}.${method.kotlinName}"
+                    )
             }
         }
-            as MediaRepository
 
     private fun movie(name: String) =
         dummyMovie.copy(id = UUID.randomUUID().toString().toItemId(), name = name)

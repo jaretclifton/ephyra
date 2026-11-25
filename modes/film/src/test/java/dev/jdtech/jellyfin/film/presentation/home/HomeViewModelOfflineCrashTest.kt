@@ -1,9 +1,12 @@
 package dev.jdtech.jellyfin.film.presentation.home
 
 import android.content.SharedPreferences
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.CurrentAccount
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.IOException
@@ -65,7 +68,9 @@ class HomeViewModelOfflineCrashTest {
 
             val viewModel =
                 HomeViewModel(
-                    repository = offlineRepository(),
+                    lists = offlineRepository.role(),
+                    catalog = offlineRepository.role(),
+                    account = offlineRepository.role(),
                     appPreferences = AppPreferences(defaultsOnlySharedPreferences()),
                     serverStore = unusedDao(),
                     loadDispatcher = dispatcher,
@@ -100,11 +105,9 @@ class HomeViewModelOfflineCrashTest {
      * the Jellyfin SDK fails. [HomeViewModel] only calls a handful of these (getSuggestions /
      * getResumeItems / getNextUp / getUserViews); the rest are never reached.
      */
-    private fun offlineRepository(): MediaRepository =
-        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
-            proxy,
-            method,
-            args ->
+    private val offlineRepository: FakeRoles =
+        FakeRoles(ItemLists::class, ItemCatalog::class, CurrentAccount::class) { proxy, method, args
+            ->
             when {
                 method.declaringClass == Any::class.java ->
                     when (method.kotlinName) {
@@ -116,7 +119,6 @@ class HomeViewModelOfflineCrashTest {
                 else -> throw IOException("Simulated offline: ${method.kotlinName}")
             }
         }
-            as MediaRepository
 
     /**
      * Not used by `loadData()` when there is no current server (see

@@ -22,8 +22,11 @@ import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.DownloadStore
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.ItemExtras
+import dev.jdtech.jellyfin.repository.UserDataUpdates
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.CoreDownloadTexts
@@ -146,9 +149,13 @@ class CastAndCrewPreferenceTest {
         }
 
     private fun TestScope.loadMovie(preferences: AppPreferences): MovieState {
+        val repository = repository()
         val viewModel =
             MovieViewModel(
-                repository(),
+                repository.role(),
+                repository.role(),
+                repository.role(),
+                { ServerCapabilities.ALL },
                 preferences,
                 VideoMetadataParser,
                 defaultDispatcher = dispatcher,
@@ -162,14 +169,16 @@ class CastAndCrewPreferenceTest {
         val repository = repository()
         val viewModel =
             ShowViewModel(
-                repository = repository,
+                catalog = repository.role(),
+                userData = repository.role(),
+                extras = repository.role(),
+                capabilities = { ServerCapabilities.ALL },
                 appPreferences = preferences,
                 downloader = unused(),
                 downloadQueue =
                     DownloadQueue(
                         downloader = unused(),
                         settings = AppPreferencesDownloadSettings(preferences),
-                        repositoryProvider = { repository },
                         downloadStore = unused<DownloadStore>(),
                         context = ContextWrapper(null) as Context,
                         texts = CoreDownloadTexts,
@@ -184,9 +193,12 @@ class CastAndCrewPreferenceTest {
     }
 
     private fun TestScope.loadEpisode(preferences: AppPreferences): EpisodeState {
+        val repository = repository()
         val viewModel =
             EpisodeViewModel(
-                repository(),
+                repository.role(),
+                repository.role(),
+                { ServerCapabilities.ALL },
                 preferences,
                 VideoMetadataParser,
                 defaultDispatcher = dispatcher,
@@ -205,13 +217,9 @@ class CastAndCrewPreferenceTest {
             image = ItemPersonImage(uri = null, blurHash = null),
         )
 
-    private fun repository(): MediaRepository =
-        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
-            _,
-            method,
-            _ ->
+    private fun repository(): FakeRoles =
+        FakeRoles(ItemCatalog::class, UserDataUpdates::class, ItemExtras::class) { _, method, _ ->
             // #769: Jellyfin can do everything.
-            if (method.kotlinName == "getCapabilities") return@fakeProxy ServerCapabilities.ALL
             when (method.kotlinName) {
                 "getMovie" -> movie()
                 "getShow" -> show()
@@ -219,10 +227,12 @@ class CastAndCrewPreferenceTest {
                 "getNextUp",
                 "getSeasons",
                 "getEpisodes" -> emptyList<Any>()
-                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
+                else ->
+                    throw NotImplementedError(
+                        "${method.declaringClass.simpleName}.${method.kotlinName}"
+                    )
             }
         }
-            as MediaRepository
 
     private fun movie() =
         Movie(

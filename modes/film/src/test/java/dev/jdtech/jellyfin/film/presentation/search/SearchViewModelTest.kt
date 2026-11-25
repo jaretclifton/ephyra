@@ -1,8 +1,10 @@
 package dev.jdtech.jellyfin.film.presentation.search
 
 import dev.jdtech.jellyfin.models.Item
+import dev.jdtech.jellyfin.repository.CurrentAccount
+import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.repository.ItemsResult
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import kotlin.test.assertEquals
@@ -26,7 +28,7 @@ import org.junit.jupiter.api.Test
 class SearchViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val requests = mutableListOf<String>()
-    private val viewModel by lazy { SearchViewModel(repository()) }
+    private val viewModel by lazy { SearchViewModel(repository.role(), repository.role()) }
 
     @BeforeEach
     fun setUp() {
@@ -91,20 +93,19 @@ class SearchViewModelTest {
         advanceUntilIdle()
     }
 
-    private fun repository(): MediaRepository =
-        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
-            _,
-            method,
-            args ->
+    private val repository: FakeRoles =
+        FakeRoles(ItemLists::class, CurrentAccount::class) { _, method, args ->
             when (method.kotlinName) {
                 "getSearchItems" -> {
                     requests += args!![0] as String
                     ItemsResult(listOf(item()))
                 }
-                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
+                else ->
+                    throw NotImplementedError(
+                        "${method.declaringClass.simpleName}.${method.kotlinName}"
+                    )
             }
         }
-            as MediaRepository
 
     private fun item(): Item =
         fakeProxy(Item::class.java.classLoader, arrayOf(Item::class.java)) { _, method, _ ->

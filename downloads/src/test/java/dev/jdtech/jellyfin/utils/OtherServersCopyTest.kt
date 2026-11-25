@@ -25,8 +25,10 @@ import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.models.toMovie
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.repository.MediaRepository
-import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.repository.CurrentAccount
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.PlaybackMedia
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
 import dev.jdtech.jellyfin.utils.download.TestCurrentServerId
@@ -79,17 +81,18 @@ class OtherServersCopyTest {
 
     private val downloader: DownloaderImpl by lazy {
         val repository =
-            fakeProxy(
-                MediaRepository::class.java.classLoader,
-                arrayOf(MediaRepository::class.java),
-            ) { _, method, _ ->
-                server("MediaRepository.${method.kotlinName}")
+            FakeRoles(ItemCatalog::class, PlaybackMedia::class, CurrentAccount::class) {
+                _,
+                method,
+                _ ->
+                server("${method.declaringClass.simpleName}.${method.kotlinName}")
             }
-                as MediaRepository
         DownloaderImpl(
             context,
             RoomDownloadStore(database),
-            Provider { repository },
+            Provider { repository.role() },
+            Provider { repository.role() },
+            Provider { repository.role() },
             TestDownloadSettings(),
             currentServer,
             Provider { error("No WorkManager in this test") },
@@ -285,8 +288,8 @@ class OtherServersCopyTest {
             val movie = database.getMovie(movieId).toMovie(database, userB)
             server = { name ->
                 when (name) {
-                    "MediaRepository.getMediaSources" -> listOf(serverSource(Long.MAX_VALUE / 4))
-                    "MediaRepository.getServerSegments" -> emptyList<Any>()
+                    "PlaybackMedia.getMediaSources" -> listOf(serverSource(Long.MAX_VALUE / 4))
+                    "PlaybackMedia.getServerSegments" -> emptyList<Any>()
                     else -> throw IllegalStateException(name)
                 }
             }
@@ -312,7 +315,7 @@ class OtherServersCopyTest {
         // The source comes, then the server stops answering.
         server = { name ->
             when (name) {
-                "MediaRepository.getMediaSources" -> listOf(serverSource(1L))
+                "PlaybackMedia.getMediaSources" -> listOf(serverSource(1L))
                 else -> throw IllegalStateException(name)
             }
         }

@@ -12,9 +12,12 @@ import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.ItemTrickplayInfo
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.CurrentAccount
+import dev.jdtech.jellyfin.repository.ItemCatalog
 import dev.jdtech.jellyfin.repository.MediaRepositoryImpl
+import dev.jdtech.jellyfin.repository.PlaybackMedia
 import dev.jdtech.jellyfin.testing.FakeResumeThresholdsStore
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
@@ -173,10 +176,10 @@ class TrickplayDownloadTest {
         val tiles = info.tileWidth * info.tileHeight
         val sheetsOnServer = (info.thumbnailCount + tiles - 1) / tiles
         val server =
-            fakeProxy(
-                MediaRepository::class.java.classLoader,
-                arrayOf(MediaRepository::class.java),
-            ) { _, method, args ->
+            FakeRoles(ItemCatalog::class, PlaybackMedia::class, CurrentAccount::class) {
+                _,
+                method,
+                args ->
                 when (method.kotlinName) {
                     "getTrickplayData" -> {
                         val index = args[2] as Int
@@ -186,15 +189,19 @@ class TrickplayDownloadTest {
                         if (index in failing || index >= sheetsOnServer) null
                         else sheet(index).toByteArray()
                     }
-                    else -> throw IllegalStateException("MediaRepository.${method.kotlinName}")
+                    else ->
+                        throw IllegalStateException(
+                            "${method.declaringClass.simpleName}.${method.kotlinName}"
+                        )
                 }
             }
-                as MediaRepository
         val downloader =
             DownloaderImpl(
                 context,
                 RoomDownloadStore(room.getServerDatabaseDao()),
-                Provider { server },
+                Provider { server.role() },
+                Provider { server.role() },
+                Provider { server.role() },
                 TestDownloadSettings(),
                 TestCurrentServerId(),
                 Provider { error("No WorkManager in this test") },

@@ -9,10 +9,12 @@ import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.PlaybackMedia
+import dev.jdtech.jellyfin.repository.SeriesTrackPreferences
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.asItemId
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
-import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import kotlin.coroutines.Continuation
@@ -162,7 +164,7 @@ class QueueRebuildTest {
 
     @Suppress("UNCHECKED_CAST")
     private fun fakeRepository() =
-        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
+        FakeRoles(ItemCatalog::class, SeriesTrackPreferences::class, PlaybackMedia::class) {
             _,
             method,
             args ->
@@ -186,7 +188,6 @@ class QueueRebuildTest {
                 answer
             }
         }
-            as MediaRepository
 
     private fun episode(number: Int) =
         Episode(

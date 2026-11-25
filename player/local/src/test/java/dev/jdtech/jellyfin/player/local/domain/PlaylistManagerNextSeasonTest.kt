@@ -9,9 +9,11 @@ import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.PlaybackMedia
+import dev.jdtech.jellyfin.repository.SeriesTrackPreferences
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
-import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -137,7 +139,7 @@ class PlaylistManagerNextSeasonTest {
     }
 
     private fun fakeRepository(show: Map<Season, List<Episode>>) =
-        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
+        FakeRoles(ItemCatalog::class, SeriesTrackPreferences::class, PlaybackMedia::class) {
             _,
             method,
             args ->
@@ -149,7 +151,6 @@ class PlaylistManagerNextSeasonTest {
                 else -> error("Unexpected call to ${method.kotlinName}")
             }
         }
-            as MediaRepository
 
     private fun season(number: Int) =
         Season(

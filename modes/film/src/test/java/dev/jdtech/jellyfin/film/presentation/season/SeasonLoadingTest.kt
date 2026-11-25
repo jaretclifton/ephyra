@@ -11,8 +11,11 @@ import dev.jdtech.jellyfin.models.Season
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.DownloadStore
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.ItemExtras
+import dev.jdtech.jellyfin.repository.UserDataUpdates
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.CoreDownloadTexts
@@ -147,13 +150,14 @@ class SeasonLoadingTest {
         val repository = repository()
         val preferences = appPreferences()
         return SeasonViewModel(
-            repository = repository,
+            catalog = repository.role(),
+            userData = repository.role(),
+            capabilities = { ServerCapabilities.ALL },
             downloader = unused(),
             downloadQueue =
                 DownloadQueue(
                     downloader = unused(),
                     settings = AppPreferencesDownloadSettings(preferences),
-                    repositoryProvider = { repository },
                     downloadStore = unused<DownloadStore>(),
                     context = ContextWrapper(null) as Context,
                     texts = CoreDownloadTexts,
@@ -161,13 +165,10 @@ class SeasonLoadingTest {
         )
     }
 
-    private fun repository(): MediaRepository =
-        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
-            _,
-            method,
-            args ->
+    private fun repository(): FakeRoles =
+        FakeRoles(ItemCatalog::class, UserDataUpdates::class, ItemExtras::class) { _, method, args
+            ->
             // #769: Jellyfin can do everything.
-            if (method.kotlinName == "getCapabilities") return@fakeProxy ServerCapabilities.ALL
             when (method.kotlinName) {
                 "getSeason" -> season()
                 "getEpisodes" -> {
@@ -175,10 +176,12 @@ class SeasonLoadingTest {
                     if (!offline && episodesFail) throw IllegalStateException("No connection")
                     if (offline) storedEpisodes else emptyList<Any>()
                 }
-                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
+                else ->
+                    throw NotImplementedError(
+                        "${method.declaringClass.simpleName}.${method.kotlinName}"
+                    )
             }
         }
-            as MediaRepository
 
     private fun season() =
         Season(

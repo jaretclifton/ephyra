@@ -33,8 +33,9 @@ import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toServerAddressId
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
+import dev.jdtech.jellyfin.repository.CurrentAccount
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -182,13 +183,11 @@ class SyncWorkerRunTest {
     /** Off, as it is by default: its check after the sync does nothing. */
     private fun smartDownloads(): SmartDownloads {
         val downloader = unused<Downloader>()
-        val repository = Provider { unused<MediaRepository>() }
         val connectivity = unused<NetworkConnectivity>()
         return SmartDownloads(
             DownloadQueue(
                 downloader,
                 AppPreferencesDownloadSettings(preferences),
-                repository,
                 RoomDownloadStore(database),
                 context,
                 CoreDownloadTexts,
@@ -197,7 +196,8 @@ class SyncWorkerRunTest {
             AppPreferencesDownloadSettings(preferences),
             AppPreferencesCurrentServerId(preferences),
             RoomDownloadStore(database),
-            repository,
+            Provider { unused<ItemCatalog>() },
+            Provider { unused<CurrentAccount>() },
             connectivity,
             PlaybackEvents(),
         )

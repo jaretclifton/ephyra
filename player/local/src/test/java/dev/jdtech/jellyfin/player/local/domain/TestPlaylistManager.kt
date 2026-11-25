@@ -1,27 +1,45 @@
 package dev.jdtech.jellyfin.player.local.domain
 
 import android.content.SharedPreferences
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.PlaybackMedia
+import dev.jdtech.jellyfin.repository.SeriesTrackPreferences
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.settings.domain.QualityNetwork
 import dev.jdtech.jellyfin.settings.presentation.enums.AppVariant
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.NetworkConnectivity
 
-/** A [PlaylistManager] over [repository] that resolves playback with [preferences] (#766). */
-internal fun playlistManager(
-    repository: MediaRepository,
-    preferences: AppPreferences = testPreferences(),
-) = PlaylistManager(repository, resolvePlayback(repository, preferences))
+/** The roles of the repository a [PlaylistManager] takes, with those of its [ResolvePlayback]. */
+internal val PLAYLIST_ROLES =
+    arrayOf(ItemCatalog::class, SeriesTrackPreferences::class, PlaybackMedia::class)
 
-/** A [ResolvePlayback] over [repository] and [preferences], on [network], in [appVariant]. */
+/**
+ * A [PlaylistManager] over [repository], a fake of [PLAYLIST_ROLES], that resolves playback with
+ * [preferences] (#766).
+ */
+internal fun playlistManager(
+    repository: FakeRoles,
+    preferences: AppPreferences = testPreferences(),
+) = playlistManager(repository.role(), repository.role(), repository.role(), preferences)
+
+/** A [PlaylistManager] over the roles it takes (#967). */
+internal fun playlistManager(
+    catalog: ItemCatalog,
+    trackPreferences: SeriesTrackPreferences,
+    media: PlaybackMedia,
+    preferences: AppPreferences = testPreferences(),
+) = PlaylistManager(catalog, trackPreferences, resolvePlayback(media, preferences))
+
+/** A [ResolvePlayback] over [media] and [preferences], on [network], in [appVariant]. */
 internal fun resolvePlayback(
-    repository: MediaRepository,
+    media: PlaybackMedia,
     preferences: AppPreferences = testPreferences(),
     network: QualityNetwork = QualityNetwork.WIFI,
     appVariant: AppVariant = AppVariant.PHONE,
-) = ResolvePlayback(repository, preferences, connectivity(network), appVariant)
+) = ResolvePlayback(media, preferences, connectivity(network), appVariant)
 
 /** Connectivity that is online on [network], metered on mobile data. */
 internal fun connectivity(network: QualityNetwork): NetworkConnectivity =

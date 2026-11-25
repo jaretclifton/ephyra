@@ -5,8 +5,8 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
-import dev.jdtech.jellyfin.repository.MediaRepository
-import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.repository.PlaybackMedia
+import dev.jdtech.jellyfin.testing.fakeRole
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.ByteArrayOutputStream
 import java.io.IOException
@@ -62,16 +62,12 @@ class TrickplayLoaderTest {
             }
 
         private val unused =
-            fakeProxy(
-                MediaRepository::class.java.classLoader,
-                arrayOf(MediaRepository::class.java),
-            ) { _, method, _ ->
+            fakeRole<PlaybackMedia> { _, method, _ ->
                 error("Unexpected call to ${method.kotlinName}")
             }
-                as MediaRepository
 
-        val repository: MediaRepository =
-            object : MediaRepository by unused {
+        val repository: PlaybackMedia =
+            object : PlaybackMedia by unused {
                 override suspend fun getTrickplayData(
                     itemId: ItemId,
                     width: Int,
@@ -116,7 +112,7 @@ class TrickplayLoaderTest {
         },
     ) =
         TrickplayLoader(
-            repository = fake.repository,
+            media = fake.repository,
             itemId = itemId,
             mediaSourceId = version,
             width = width,
@@ -330,7 +326,7 @@ class TrickplayLoaderTest {
         runBlocking {
             val loader =
                 TrickplayRegionLoader(
-                    repository = fake.repository,
+                    media = fake.repository,
                     itemId = itemId,
                     mediaSourceId = version,
                     tiles = TrickplayTiles(320, 180, 10, 10, 100, 10_000),

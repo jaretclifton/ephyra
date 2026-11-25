@@ -15,8 +15,11 @@ import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.DownloadStore
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.ItemExtras
+import dev.jdtech.jellyfin.repository.UserDataUpdates
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -211,14 +214,16 @@ class ShowLoadingTest {
         val repository = repository()
         val preferences = appPreferences()
         return ShowViewModel(
-            repository = repository,
+            catalog = repository.role(),
+            userData = repository.role(),
+            extras = repository.role(),
+            capabilities = { ServerCapabilities.ALL },
             appPreferences = preferences,
             downloader = unused(),
             downloadQueue =
                 DownloadQueue(
                     downloader = unused(),
                     settings = AppPreferencesDownloadSettings(preferences),
-                    repositoryProvider = { repository },
                     downloadStore = unused<DownloadStore>(),
                     context = ContextWrapper(null) as Context,
                     texts = CoreDownloadTexts,
@@ -229,13 +234,10 @@ class ShowLoadingTest {
         )
     }
 
-    private fun repository(): MediaRepository =
-        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
-            _,
-            method,
-            args ->
+    private fun repository(): FakeRoles =
+        FakeRoles(ItemCatalog::class, UserDataUpdates::class, ItemExtras::class) { _, method, args
+            ->
             // #769: Jellyfin can do everything.
-            if (method.kotlinName == "getCapabilities") return@fakeProxy ServerCapabilities.ALL
             synchronized(calls) { calls.add(method.kotlinName) }
             when (method.kotlinName) {
                 "getShow" -> show()
@@ -252,10 +254,12 @@ class ShowLoadingTest {
                         List(2) { episode(season2, season2CanDownload) }
                 }
                 "markAsFavorite" -> Unit
-                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
+                else ->
+                    throw NotImplementedError(
+                        "${method.declaringClass.simpleName}.${method.kotlinName}"
+                    )
             }
         }
-            as MediaRepository
 
     private fun downloadStore(counts: List<SeasonEpisodeCounts>): DownloadStore =
         fakeProxy(DownloadStore::class.java.classLoader, arrayOf(DownloadStore::class.java)) {

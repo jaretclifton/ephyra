@@ -1,13 +1,13 @@
 package dev.jdtech.jellyfin.film.presentation.search
 
 import dev.jdtech.jellyfin.core.presentation.dummy.dummyMovie
-import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
+import dev.jdtech.jellyfin.repository.CurrentAccount
+import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.repository.ItemsResult
-import dev.jdtech.jellyfin.repository.MediaRepository
-import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -60,7 +60,7 @@ class SearchViewModelUserSwitchTest {
     @Test
     fun `the search shows the new user's results after a switch, never the previous user's`() =
         runTest(dispatcher) {
-            val viewModel = SearchViewModel(repository())
+            val viewModel = SearchViewModel(repository.role(), repository.role())
             viewModel.onAction(SearchAction.Search("movie"))
             advanceUntilIdle()
             assertEquals(aliceResults, viewModel.state.value.items)
@@ -88,7 +88,7 @@ class SearchViewModelUserSwitchTest {
     fun `a failed first search is the previous user's, so a switch hides its error`() =
         runTest(dispatcher) {
             searchFails = true
-            val viewModel = SearchViewModel(repository())
+            val viewModel = SearchViewModel(repository.role(), repository.role())
             viewModel.onAction(SearchAction.Search("movie"))
             advanceUntilIdle()
             assertNotNull(viewModel.state.value.error)
@@ -104,7 +104,7 @@ class SearchViewModelUserSwitchTest {
     @Test
     fun `results asked for after a switch are not labelled as the previous user's`() =
         runTest(dispatcher) {
-            val viewModel = SearchViewModel(repository())
+            val viewModel = SearchViewModel(repository.role(), repository.role())
             viewModel.onAction(SearchAction.Search("movie"))
             // The switch comes during the debounce: the request goes out as Bob.
             advanceTimeBy(SearchViewModel.SEARCH_DEBOUNCE_MS - 1)
@@ -121,7 +121,7 @@ class SearchViewModelUserSwitchTest {
     @Test
     fun `the same user's results stay while a new search runs`() =
         runTest(dispatcher) {
-            val viewModel = SearchViewModel(repository())
+            val viewModel = SearchViewModel(repository.role(), repository.role())
             viewModel.onAction(SearchAction.Search("movie"))
             advanceUntilIdle()
 
@@ -147,19 +147,17 @@ class SearchViewModelUserSwitchTest {
         assertEquals(unknown, unknown.shownTo(bob))
     }
 
-    private fun repository(): MediaRepository =
-        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
-            _,
-            method,
-            _ ->
+    private val repository: FakeRoles =
+        FakeRoles(ItemLists::class, CurrentAccount::class) { _, method, _ ->
             when (method.kotlinName) {
-                "getCapabilities" -> ServerCapabilities.ALL
                 "getUserId" -> sessionUser
                 "getSearchItems" ->
                     if (searchFails) throw IllegalStateException("No connection")
                     else ItemsResult(if (sessionUser == bob) bobResults else aliceResults)
-                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
+                else ->
+                    throw NotImplementedError(
+                        "${method.declaringClass.simpleName}.${method.kotlinName}"
+                    )
             }
         }
-            as MediaRepository
 }

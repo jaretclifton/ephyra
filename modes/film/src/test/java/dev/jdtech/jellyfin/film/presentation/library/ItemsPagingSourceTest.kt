@@ -10,7 +10,8 @@ import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemLists
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -24,7 +25,7 @@ import org.junit.jupiter.api.Test
 class ItemsPagingSourceTest {
     private val library = "11111111-1111-1111-1111-111111111111".toItemId()
 
-    /** What the source asked [MediaRepository.getItems] for, one list of arguments per request. */
+    /** What the source asked [ItemLists.getItems] for, one list of arguments per request. */
     private val requests = mutableListOf<List<Any?>>()
     private var failure: Exception? = null
 
@@ -34,12 +35,9 @@ class ItemsPagingSourceTest {
         }
             as Item
 
-    /** A library of [size] items behind [MediaRepository.getItems]. */
-    private fun repository(size: Int): MediaRepository =
-        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
-            _,
-            method,
-            args ->
+    /** A library of [size] items behind [ItemLists.getItems]. */
+    private fun repository(size: Int): FakeRoles =
+        FakeRoles(ItemLists::class) { _, method, args ->
             when (method.kotlinName) {
                 "getItems" -> {
                     val a = args!!
@@ -50,14 +48,16 @@ class ItemsPagingSourceTest {
                     val end = (start + a[7] as Int).coerceAtMost(size)
                     List((end - start).coerceAtLeast(0)) { item() }
                 }
-                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
+                else ->
+                    throw NotImplementedError(
+                        "${method.declaringClass.simpleName}.${method.kotlinName}"
+                    )
             }
         }
-            as MediaRepository
 
     private fun source(size: Int) =
         ItemsPagingSource(
-            repository(size),
+            repository(size).role(),
             library,
             listOf(ItemKind.MOVIE),
             true,

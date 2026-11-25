@@ -147,7 +147,7 @@ class StoredItemFallbackTest {
         }
             as ServerDatabaseDao
 
-    private val repository: MediaRepository by lazy {
+    private val repository: MediaRepositoryImpl by lazy {
         val context = RuntimeEnvironment.getApplication()
         // Every request to the server fails, as with the server unreachable.
         MediaRepositoryImpl(

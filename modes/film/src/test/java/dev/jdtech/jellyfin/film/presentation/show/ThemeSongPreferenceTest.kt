@@ -124,14 +124,16 @@ class ThemeSongPreferenceTest {
                 resumeThresholds = FakeResumeThresholdsStore(),
             )
         return ShowViewModel(
-            repository = repository,
+            catalog = repository,
+            userData = repository,
+            extras = repository,
+            capabilities = { server.capabilities },
             appPreferences = preferences,
             downloader = unused(),
             downloadQueue =
                 DownloadQueue(
                     downloader = unused(),
                     settings = AppPreferencesDownloadSettings(preferences),
-                    repositoryProvider = { repository },
                     downloadStore = unused<DownloadStore>(),
                     context = ContextWrapper(null) as Context,
                     texts = CoreDownloadTexts,

@@ -10,7 +10,10 @@ import dev.jdtech.jellyfin.models.ItemSourceEntity
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.CurrentAccount
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.PlaybackMedia
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.download.MediaDownloadEngine
@@ -155,20 +158,24 @@ class OrphanSweepTest {
 
     private fun downloader(database: ServerDatabaseDao): DownloaderImpl {
         val repository =
-            fakeProxy(
-                MediaRepository::class.java.classLoader,
-                arrayOf(MediaRepository::class.java),
-            ) { _, method, _ ->
+            FakeRoles(ItemCatalog::class, PlaybackMedia::class, CurrentAccount::class) {
+                _,
+                method,
+                _ ->
                 when (method.kotlinName) {
                     "getUserId" -> UUID.randomUUID().toString().toItemId()
-                    else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
+                    else ->
+                        throw NotImplementedError(
+                            "${method.declaringClass.simpleName}.${method.kotlinName}"
+                        )
                 }
             }
-                as MediaRepository
         return DownloaderImpl(
             context,
             RoomDownloadStore(database),
-            Provider { repository },
+            Provider { repository.role() },
+            Provider { repository.role() },
+            Provider { repository.role() },
             TestDownloadSettings(),
             TestCurrentServerId(),
             Provider { error("No WorkManager in this test") },

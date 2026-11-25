@@ -8,11 +8,9 @@ import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
+import dev.jdtech.jellyfin.repository.PlaybackReports
 import dev.jdtech.jellyfin.repository.ReloadPolicy
-import dev.jdtech.jellyfin.testing.fakeProxy
-import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.IOException
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -71,17 +69,9 @@ class PlaybackReporterTest {
             calls += "${scope.testScheduler.currentTime}: $call"
         }
 
-        private val unused =
-            fakeProxy(
-                MediaRepository::class.java.classLoader,
-                arrayOf(MediaRepository::class.java),
-            ) { _, method, _ ->
-                error("Unexpected call to ${method.kotlinName}")
-            }
-                as MediaRepository
-
-        val repository: MediaRepository =
-            object : MediaRepository by unused {
+        /** #967: the reporter takes the reports alone, so the fake is the whole role. */
+        val repository: PlaybackReports =
+            object : PlaybackReports {
                 override fun setPlaySession(
                     itemId: ItemId,
                     playSessionId: String?,

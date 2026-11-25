@@ -7,9 +7,12 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.Library
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.CurrentAccount
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.asItemId
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -49,7 +52,9 @@ class HomeViewModelPartialFailureTest {
 
     private val viewModel by lazy {
         HomeViewModel(
-            repository = repository(),
+            lists = repository.role(),
+            catalog = repository.role(),
+            account = repository.role(),
             appPreferences = AppPreferences(sharedPreferences()),
             serverStore = unusedDao(),
             loadDispatcher = dispatcher,
@@ -173,11 +178,8 @@ class HomeViewModelPartialFailureTest {
             images = ItemImages(),
         )
 
-    private fun repository(): MediaRepository =
-        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
-            _,
-            method,
-            args ->
+    private val repository: FakeRoles =
+        FakeRoles(ItemLists::class, ItemCatalog::class, CurrentAccount::class) { _, method, args ->
             if (method.kotlinName in failing) throw IllegalStateException(method.kotlinName)
             when (method.kotlinName) {
                 "getSuggestions",
@@ -188,10 +190,12 @@ class HomeViewModelPartialFailureTest {
                     if (args!![0].asItemId() in failingLibraries) throw IOException("library")
                     listOf(item())
                 }
-                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
+                else ->
+                    throw NotImplementedError(
+                        "${method.declaringClass.simpleName}.${method.kotlinName}"
+                    )
             }
         }
-            as MediaRepository
 
     private fun item(): Item =
         fakeProxy(Item::class.java.classLoader, arrayOf(Item::class.java)) { proxy, method, args ->

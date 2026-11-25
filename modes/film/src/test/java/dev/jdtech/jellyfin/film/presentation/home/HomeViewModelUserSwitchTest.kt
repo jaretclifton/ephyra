@@ -8,11 +8,14 @@ import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
+import dev.jdtech.jellyfin.repository.CurrentAccount
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.io.IOException
@@ -123,7 +126,9 @@ class HomeViewModelUserSwitchTest {
         Dispatchers.setMain(dispatcher)
         viewModel =
             HomeViewModel(
-                repository = repository(),
+                lists = repository.role(),
+                catalog = repository.role(),
+                account = repository.role(),
                 appPreferences = AppPreferences(sharedPreferences()),
                 serverStore = database(),
                 dataChanges = dataChanges,
@@ -376,11 +381,8 @@ class HomeViewModelUserSwitchTest {
         }
     }
 
-    private fun repository(): MediaRepository =
-        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
-            _,
-            method,
-            args ->
+    private val repository: FakeRoles =
+        FakeRoles(ItemLists::class, ItemCatalog::class, CurrentAccount::class) { _, method, args ->
             when (method.kotlinName) {
                 "getResumeItems",
                 "getNextUp" ->
@@ -391,10 +393,12 @@ class HomeViewModelUserSwitchTest {
                 "refreshCurrentUserImage" -> Unit
                 "getUserId" -> sessionUser?.id ?: throw IllegalStateException("signed out")
                 "getServerInfo" -> throw IOException("not needed here")
-                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
+                else ->
+                    throw NotImplementedError(
+                        "${method.declaringClass.simpleName}.${method.kotlinName}"
+                    )
             }
         }
-            as MediaRepository
 
     private fun database(): ServerStore =
         fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {

@@ -18,9 +18,9 @@ import dev.jdtech.jellyfin.player.cast.models.CastPlayerState
 import dev.jdtech.jellyfin.player.cast.models.Device
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.player.core.domain.models.Track
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.PlaybackMedia
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.fakeRole
 import java.time.Duration
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
@@ -79,30 +79,25 @@ class CastViewModelSegmentTest {
         return CastViewModel(
             sessionManager = FakeSession(),
             playerController = controller,
-            repository = repository(),
+            media = media(),
             appPreferences = AppPreferences(prefs),
             context = RuntimeEnvironment.getApplication(),
         )
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun repository(): MediaRepository =
-        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
-            _,
-            method,
-            args ->
-            when {
-                method.name.startsWith("getSegments") ->
-                    if (holdSegments) {
-                        heldLoads += args!!.last() as Continuation<Any?>
-                        COROUTINE_SUSPENDED
-                    } else {
-                        segments
-                    }
-                else -> null
-            }
+    private fun media(): PlaybackMedia = fakeRole { _, method, args ->
+        when {
+            method.name.startsWith("getSegments") ->
+                if (holdSegments) {
+                    heldLoads += args!!.last() as Continuation<Any?>
+                    COROUTINE_SUSPENDED
+                } else {
+                    segments
+                }
+            else -> null
         }
-            as MediaRepository
+    }
 
     private fun releaseSegments() {
         holdSegments = false

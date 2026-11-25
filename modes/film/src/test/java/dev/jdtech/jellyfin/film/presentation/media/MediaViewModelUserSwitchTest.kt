@@ -3,13 +3,13 @@ package dev.jdtech.jellyfin.film.presentation.media
 import dev.jdtech.jellyfin.models.CollectionType
 import dev.jdtech.jellyfin.models.ItemImages
 import dev.jdtech.jellyfin.models.Library
-import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toUserId
+import dev.jdtech.jellyfin.repository.CurrentAccount
+import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.repository.ItemsResult
-import dev.jdtech.jellyfin.repository.MediaRepository
-import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -54,7 +54,7 @@ class MediaViewModelUserSwitchTest {
     @Test
     fun `the tab shows the new user's libraries after a switch`() =
         runTest(dispatcher) {
-            val viewModel = MediaViewModel(repository())
+            val viewModel = MediaViewModel(repository.role(), repository.role())
             viewModel.loadData()
             advanceUntilIdle()
             assertEquals(aliceLibraries, viewModel.state.value.libraries)
@@ -92,20 +92,18 @@ class MediaViewModelUserSwitchTest {
         assertEquals(unknown, unknown.shownTo(bob))
     }
 
-    private fun repository(): MediaRepository =
-        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
-            _,
-            method,
-            _ ->
+    private val repository: FakeRoles =
+        FakeRoles(ItemLists::class, CurrentAccount::class) { _, method, _ ->
             when (method.kotlinName) {
-                "getCapabilities" -> ServerCapabilities.ALL
                 "getUserId" -> sessionUser
                 "getLibraries" ->
                     ItemsResult(if (sessionUser == bob) bobLibraries else aliceLibraries)
-                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
+                else ->
+                    throw NotImplementedError(
+                        "${method.declaringClass.simpleName}.${method.kotlinName}"
+                    )
             }
         }
-            as MediaRepository
 
     private fun library(name: String) =
         Library(

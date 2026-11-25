@@ -11,15 +11,16 @@ import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSource
 import dev.jdtech.jellyfin.models.ItemSourceType
-import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.models.toUserId
+import dev.jdtech.jellyfin.repository.CurrentAccount
 import dev.jdtech.jellyfin.repository.DownloadStore
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.CoreDownloadTexts
@@ -160,19 +161,18 @@ class DownloadsViewModelUserSwitchTest {
     private fun items(state: DownloadsState): List<Item> = state.sections.flatMap { it.items }
 
     private fun viewModel(): DownloadsViewModel {
-        val repository = repository()
         val preferences = appPreferences()
         val downloadStore = downloadStore()
         val context = ContextWrapper(null) as Context
         return DownloadsViewModel(
             context = context,
-            repository = repository,
+            lists = repository.role(),
+            account = repository.role(),
             appPreferences = preferences,
             downloadQueue =
                 DownloadQueue(
                     downloader = unused(),
                     settings = AppPreferencesDownloadSettings(preferences),
-                    repositoryProvider = { repository },
                     downloadStore = downloadStore,
                     context = context,
                     texts = CoreDownloadTexts,
@@ -183,13 +183,9 @@ class DownloadsViewModelUserSwitchTest {
         )
     }
 
-    private fun repository(): MediaRepository =
-        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
-            _,
-            method,
-            _ ->
+    private val repository: FakeRoles =
+        FakeRoles(ItemLists::class, CurrentAccount::class) { _, method, _ ->
             when (method.kotlinName) {
-                "getCapabilities" -> ServerCapabilities.ALL
                 "getUserId" -> sessionUser ?: throw IllegalStateException("No user")
                 // Room's copy of the downloads, with the user data of the user the client acts for.
                 "getDownloads" ->
@@ -200,10 +196,12 @@ class DownloadsViewModelUserSwitchTest {
                     } else {
                         listOf(aliceMovie)
                     }
-                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
+                else ->
+                    throw NotImplementedError(
+                        "${method.declaringClass.simpleName}.${method.kotlinName}"
+                    )
             }
         }
-            as MediaRepository
 
     private fun downloadStore(): DownloadStore =
         fakeProxy(DownloadStore::class.java.classLoader, arrayOf(DownloadStore::class.java)) {

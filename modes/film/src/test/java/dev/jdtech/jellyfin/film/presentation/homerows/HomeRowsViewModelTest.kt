@@ -10,10 +10,11 @@ import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.repository.ReloadPolicy
 import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.asServerId
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -63,7 +64,7 @@ class HomeRowsViewModelTest {
                     )
                 ),
             )
-        viewModel = HomeRowsViewModel(repository(), store, events)
+        viewModel = HomeRowsViewModel(repository.role(), store, events)
     }
 
     @AfterEach
@@ -94,17 +95,16 @@ class HomeRowsViewModelTest {
         assertTrue(home.shouldReload())
     }
 
-    private fun repository(): MediaRepository =
-        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
-            _,
-            method,
-            _ ->
+    private val repository: FakeRoles =
+        FakeRoles(ItemLists::class) { _, method, _ ->
             when (method.kotlinName) {
                 "getUserViews" -> listOf(movies)
-                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
+                else ->
+                    throw NotImplementedError(
+                        "${method.declaringClass.simpleName}.${method.kotlinName}"
+                    )
             }
         }
-            as MediaRepository
 
     private fun dao(server: Server): ServerStore =
         fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
