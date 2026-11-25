@@ -65,11 +65,13 @@ class SeasonWakeReloadTest {
     private val season2 =
         dummySeason.copy(id = UUID(6, 2).toString().toItemId(), name = "Season 2", indexNumber = 2)
 
-    // Episode 1 is 4 minutes into its 12; episode 2 not started.
+    // Episode 1 is 4 minutes into its 12; episode 2 not started. No sources: the episode's load
+    // reads a source's video metadata on Dispatchers.Default, which waitForIdle() doesn't wait for.
     private var serverEpisodes: List<Episode> =
         (1..2).map {
             dummyEpisode.copy(
                 id = UUID(6, 10L + it).toString().toItemId(),
+                sources = emptyList(),
                 name = "Episode $it",
                 indexNumber = it,
                 seasonId = season.id,
@@ -357,7 +359,7 @@ class SeasonWakeReloadTest {
             ) { _, method, args ->
                 when (method.kotlinName) {
                     // Cast and crew off: the episode's load would sort its cast on
-                    // Dispatchers.Default, which waitForIdle() doesn't wait for.
+                    // Dispatchers.Default too. With neither, it stays on the main thread.
                     "getBoolean" ->
                         if (args!![0] == "pref_display_cast_and_crew") false else args[1]
                     "getString",
