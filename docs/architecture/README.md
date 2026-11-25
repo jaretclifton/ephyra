@@ -52,7 +52,7 @@ app/phone, app/tv   (composition root, screens)
   models with rules: `PlayState` (marks, stops, the sync's merge) and `DownloadState`. `Ticks` for
   the unit conversions.
 - `application` (pure Kotlin): the repository's roles (#967: `CurrentAccount`, `ItemCatalog`, `ItemLists`, `ItemExtras`, `UserDataUpdates`, `SeriesTrackPreferences`, `PlaybackMedia`, `PlaybackReports`), the event flows, and the store ports
-  `ServerStore` (keyed by `ServerId` and `UserId`), `DownloadStore` (source rows by `ServerId`, user queries by `AccountKey(serverId, userId)`) and `PendingUserDataStore` (by `AccountKey`),
+  of the server store (`StoredServers`, `ServerAddresses`, `StoredUsers`, `UserLocks`, keyed by `ServerId` and `UserId`), of the download store (`DownloadList`, `DownloadedItemRows`, `DownloadSources`, `DownloadMediaStreams`, `DownloadSegmentsAndTrickplay`, `DownloadUserData`, `QueuedDownloads`: source rows by `ServerId`, user queries by `AccountKey(serverId, userId)`) and `PendingUserDataStore` (by `AccountKey`),
   and the settings the adapters read (#918), which `core` implements over `AppPreferences`.
 - `data`: Room, the three `Room*Store` and `MediaRepositoryImpl`, which composes the server in use
   with Room (stored fallback, local sources, write then report) and implements every role; Hilt binds
@@ -83,7 +83,7 @@ one fails, fix the code. `architecture/baseline/` has one allowlist, not debt: `
 (files that may name `java.util.UUID`, for a random value the app makes itself; empty since #918).
 The others are exceptions with an issue each: `pure-kotlin-*.txt` (R19) and
 `room-adapter-imports.txt` (R20), both empty since #968, and `wide-ports.txt` (R21: `CatalogPort`,
-`DownloadStore` and `ServerStore`, which the second PR of #967 splits). A line is added only with its reason,
+which the third PR of #967 splits). A line is added only with its reason,
 given in the PR.
 
 | Rule | Says |

@@ -4,10 +4,10 @@ Status: built, on phone and TV; Jellyfin is the only server type with an adapter
 
 ## Start here
 
-- Setup is `setup/`: `SetupRepositoryImpl` (servers, addresses, users in Room through `ServerStore`) and the ViewModels in `setup/.../presentation/`.
+- Setup is `setup/`: `SetupRepositoryImpl` (servers, addresses, users in Room through the roles of the server store, `StoredServers`, `ServerAddresses`, `StoredUsers`, `UserLocks`, #967) and the ViewModels in `setup/.../presentation/`.
 - It talks to a server through the `ServerConnector` port; Jellyfin's is `JellyfinServerConnector` in `server/jellyfin`.
 - The server in use is one `ActiveServer` on `ActiveServerHolder`, switched whole (rule R16); `CurrentMediaServer` in `core` picks the adapter.
-- Ports: `ServerConnector` (before a session), `MediaServer` and its `ServerSession` (after: the session keeper and reachability), `ServerStore` (servers, addresses and users in Room), `ActiveServerHolder`.
+- Ports: `ServerConnector` (before a session), `MediaServer` and its `ServerSession` (after: the session keeper and reachability), the roles of the server store (`StoredServers`, `ServerAddresses`, `StoredUsers`, `UserLocks`: servers, addresses, users and their locks in Room), `ActiveServerHolder`.
 - Test fast: `./gradlew :setup:testDebugUnitTest :core:testLibreDebugUnitTest`. On a device: users `tester`, `second`, `nopass`; `forward.py` for a second address.
 - A setup flow PR that no review bot read gets an independent review before it merges.
 
@@ -29,7 +29,7 @@ Setup finds a server (discovery on the local network, or an address typed in), c
 | [`core/.../di/ApiSession.kt`](../../core/src/main/java/dev/jdtech/jellyfin/di/ApiSession.kt) | `SavedSessionRestorer`: the session at start, and its copy in preferences; the other `switchTo` caller |
 | [`core/.../core/session/ServerSessionKeeper.kt`](../../core/src/main/java/dev/jdtech/jellyfin/core/session/ServerSessionKeeper.kt) | The WebSocket that keeps the server's session; sign-out after a revoked token ([#334](https://github.com/midasvo/ephyra/issues/334)) |
 | [`core/.../core/reachability/`](../../core/src/main/java/dev/jdtech/jellyfin/core/reachability/) | `ServerReachability`, `ServerReachabilityMonitor`, `ServerReachabilityTracker` (the pure rules) |
-| [`application/.../repository/ServerStore.kt`](../../application/src/main/kotlin/dev/jdtech/jellyfin/repository/ServerStore.kt) | Store port of servers, addresses and users; Room in [`data/.../database/RoomServerStore.kt`](../../data/src/main/java/dev/jdtech/jellyfin/database/RoomServerStore.kt) |
+| [`application/.../repository/StoredServers.kt`](../../application/src/main/kotlin/dev/jdtech/jellyfin/repository/StoredServers.kt) | One of the roles of the server store (#967: `StoredServers`, `ServerAddresses`, `StoredUsers`, `UserLocks`); Room in [`data/.../database/RoomServerStore.kt`](../../data/src/main/java/dev/jdtech/jellyfin/database/RoomServerStore.kt) |
 | [`core/.../viewmodels/MainViewModel.kt`](../../core/src/main/java/dev/jdtech/jellyfin/viewmodels/MainViewModel.kt) | Whether there are servers and a user at start, the unreachable banner |
 | [`app/phone/.../presentation/setup/`](../../app/phone/src/main/java/dev/jdtech/jellyfin/presentation/setup/) | Phone screens: welcome, add server, addresses, login, servers, users, permission |
 | [`app/tv/.../presentation/setup/`](../../app/tv/src/main/java/dev/jdtech/jellyfin/presentation/setup/) | TV screens (no addresses screen) |
@@ -39,7 +39,7 @@ Setup finds a server (discovery on the local network, or an address typed in), c
 
 - **R16**: the server in use is written as one `ActiveServer`. Only `ActiveServer.kt` keeps a mutable one; only `ApiSession.kt` and `SetupRepositoryImpl.kt` call `.switchTo(`; no `copy(type = …)` on an `ActiveServer` outside the holder; nothing calls the SDK client's `update(…)`.
 - **R1, R2, R3**: the SDK is only in `server/jellyfin`. Setup talks to a server through `ServerConnector`; failures are `ServerException`.
-- **R4, R9**: Room through `ServerStore`; `setup` and `core` do not depend on `data` (their tests may).
+- **R4, R9**: Room through the roles of the server store; `setup` and `core` do not depend on `data` (their tests may).
 - **R10**: `ServerId`, `UserId` and `ServerAddressId` ([#929](https://github.com/midasvo/ephyra/pull/929)), in `domain/.../models/Ids.kt`; never a `String` or `java.util.UUID` id outside the adapter. Do not add a line to `architecture/baseline/` to get past the rule.
 - **R11**: no `Jellyfin*` type outside the adapter.
 - What a server can do is `ServerCapabilities` (Quick Connect, public users, the login disclaimer), never a version check.
@@ -90,7 +90,7 @@ Then walk the flow on an emulator: add the server, log in, switch user, switch s
 - [#763](https://github.com/midasvo/ephyra/issues/763): session keeper and reachability go through `ServerSession`.
 - [#770](https://github.com/midasvo/ephyra/issues/770): servers have a type; the `MediaServer` and connector are chosen by it.
 - [#819](https://github.com/midasvo/ephyra/issues/819): adding a server does not count as traffic of the server in use.
-- [#899](https://github.com/midasvo/ephyra/issues/899): `ServerStore` ([#913](https://github.com/midasvo/ephyra/pull/913)) and the switch as one `ActiveServer` ([#915](https://github.com/midasvo/ephyra/pull/915)), rule R16.
+- [#899](https://github.com/midasvo/ephyra/issues/899): the server store (split by role in #967; [#913](https://github.com/midasvo/ephyra/pull/913)) and the switch as one `ActiveServer` ([#915](https://github.com/midasvo/ephyra/pull/915)), rule R16.
 - [#281](https://github.com/midasvo/ephyra/issues/281): `ServerReachability` and the unreachable banner.
 - [#334](https://github.com/midasvo/ephyra/issues/334): sessions closed with the app; a revoked token signs out.
 - [#250](https://github.com/midasvo/ephyra/issues/250): the session at start from a copy in preferences, not Room.
@@ -103,7 +103,7 @@ Then walk the flow on an emulator: add the server, log in, switch user, switch s
 
 - **The current server id is a preference, not only `ActiveServer`.** `AddServerViewModel` and `ServersViewModel` write `AppPreferences.setCurrentServerId`; `SetupRepositoryImpl` switches the holder. Several ViewModels read the preference, and `MediaRepositoryImpl` reads it through the `CurrentServerId` port. A change to the switch must keep both in step ([#918](https://github.com/midasvo/ephyra/issues/918), [#926](https://github.com/midasvo/ephyra/pull/926)).
 - **What runs and what is saved must name the same address.** The copy of the session in preferences (`pref_session_base_url`) follows Room's `currentServerAddressId`, not `ActiveServer`, and a start reads that copy. Re-adding a saved server by another address pointed `ActiveServer` there and left Room's current address as it was, so a restart went back to the old address ([#984](https://github.com/midasvo/ephyra/issues/984)). Now `saveServerInDatabase` makes that address current in Room in the same step, and every write of `baseUrl` (`setCurrentServer`, `setCurrentAddress`) comes from Room's current address. This happens at Connect, before anyone signs in, on purpose: the running session moves there at Connect, so the saved address does too (R16), and backing out of the login screen or picking the server's LAN entry in discovery leaves that address current until the user picks another one on the Addresses screen or Home's server sheet. `setCurrentAddress` and `saveServerInDatabase` share one lock, so two of them never leave Room and the session on different addresses. Check it on a device with `run-as … sqlite3 databases/servers` and the preferences file, then force-stop and start.
-- **A server row changes one column at a time.** `ServerStore` has no whole-row update: the name, the current address and the current user each have their own write (`renameServer`, `setCurrentAddress`, `setCurrentUser`, `clearCurrentUser`). Writing back a `Server` read a moment before undid a write in between, such as a sign-out clearing the current user ([#988](https://github.com/midasvo/ephyra/issues/988)). A new column gets its own `UPDATE` query too.
+- **A server row changes one column at a time.** `StoredServers` has no whole-row update: the name, the current address and the current user each have their own write (`renameServer`, `setCurrentAddress`, `setCurrentUser`, `clearCurrentUser`). Writing back a `Server` read a moment before undid a write in between, such as a sign-out clearing the current user ([#988](https://github.com/midasvo/ephyra/issues/988)). A new column gets its own `UPDATE` query too.
 - **A tap on the Addresses screen makes the address current** (of any server; the app moves only for the server in use). Upstream's Compose screen (#1012 upstream) had left the tap empty; Home's server sheet could always switch the address of the server in use. The server lists show `ServerWithAddresses.currentAddress`, not the first address.
 - **Checking another server's address must run unwatched**, or its silence shows the unreachable banner for the server in use ([#819](https://github.com/midasvo/ephyra/issues/819), `addAddress`).
 - **Deleting the active user is allowed**: the guard in `SetupRepositoryImpl.deleteUser` is commented out (setup-02 in [`docs/open-decisions.md`](../open-decisions.md)). It now clears the current user and the token.

@@ -87,7 +87,7 @@ areas:
       - downloads/src/main/java/dev/jdtech/jellyfin/utils/DownloaderImpl.kt
       - downloads/src/main/java/dev/jdtech/jellyfin/utils/download/MediaDownloadEngine.kt
       - domain/src/main/kotlin/dev/jdtech/jellyfin/models/DownloadState.kt
-      - application/src/main/kotlin/dev/jdtech/jellyfin/repository/DownloadStore.kt
+      - application/src/main/kotlin/dev/jdtech/jellyfin/repository/DownloadSources.kt
       - application/src/main/kotlin/dev/jdtech/jellyfin/repository/StoredFallback.kt
       - modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/downloads/
       - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/DownloadsScreen.kt

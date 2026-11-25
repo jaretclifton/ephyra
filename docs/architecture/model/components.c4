@@ -58,14 +58,14 @@ model {
       description 'A role of the repository (#967): the tracks picked by hand per series. repository/SeriesTrackPreferences.kt'
       link https://github.com/midasvo/ephyra/blob/main/application/src/main/kotlin/dev/jdtech/jellyfin/repository/SeriesTrackPreferences.kt 'Source'
     }
-    serverStore = port 'ServerStore' {
-      description 'Servers, addresses and users in Room. repository/ServerStore.kt'
-      link https://github.com/midasvo/ephyra/blob/main/application/src/main/kotlin/dev/jdtech/jellyfin/repository/ServerStore.kt 'Source'
+    storedUsers = port 'StoredUsers' {
+      description 'A role of the server store (#967): the saved users and the current one, in Room. repository/StoredUsers.kt'
+      link https://github.com/midasvo/ephyra/blob/main/application/src/main/kotlin/dev/jdtech/jellyfin/repository/StoredUsers.kt 'Source'
       link https://midasvo.nl/ephyra/dev/areas/setup-and-servers/ 'Guide: setup and servers'
     }
-    downloadStore = port 'DownloadStore' {
-      description 'Downloads in Room, per account. repository/DownloadStore.kt'
-      link https://github.com/midasvo/ephyra/blob/main/application/src/main/kotlin/dev/jdtech/jellyfin/repository/DownloadStore.kt 'Source'
+    downloadedItemRows = port 'DownloadedItemRows' {
+      description 'A role of the download store (#967): the item rows a download writes, in Room. repository/DownloadedItemRows.kt'
+      link https://github.com/midasvo/ephyra/blob/main/application/src/main/kotlin/dev/jdtech/jellyfin/repository/DownloadedItemRows.kt 'Source'
       link https://midasvo.nl/ephyra/dev/areas/downloads/ 'Guide: downloads'
     }
     pendingUserDataStore = port 'PendingUserDataStore' {
@@ -178,7 +178,7 @@ model {
     smartDownloads -> downloader 'deletes watched episodes'
   }
 
-  ephyra.downloads.downloaderImpl -> ephyra.application.downloadStore 'writes the item rows'
+  ephyra.downloads.downloaderImpl -> ephyra.application.downloadedItemRows 'writes the item rows'
   ephyra.downloads.downloaderImpl -> ephyra.application.playbackMedia 'sources, segments, trickplay'
   ephyra.downloads.downloaderImpl -> ephyra.application.downloadSettings 'mobile data, roaming'
   ephyra.downloads.downloadQueue -> ephyra.application.downloadSettings 'how many at once, where'
@@ -225,11 +225,11 @@ model {
       link https://github.com/midasvo/ephyra/blob/main/data/src/main/java/dev/jdtech/jellyfin/repository/MediaRepositoryImpl.kt 'Source'
     }
     roomServerStore = component 'RoomServerStore' {
-      description 'ServerStore over Room. database/RoomServerStore.kt'
+      description 'The roles of the server store over Room. database/RoomServerStore.kt'
       link https://github.com/midasvo/ephyra/blob/main/data/src/main/java/dev/jdtech/jellyfin/database/RoomServerStore.kt 'Source'
     }
     roomDownloadStore = component 'RoomDownloadStore' {
-      description 'DownloadStore over Room. database/RoomDownloadStore.kt'
+      description 'The roles of the download store over Room. database/RoomDownloadStore.kt'
       link https://github.com/midasvo/ephyra/blob/main/data/src/main/java/dev/jdtech/jellyfin/database/RoomDownloadStore.kt 'Source'
     }
     roomPendingUserDataStore = component 'RoomPendingUserDataStore' {
@@ -245,8 +245,8 @@ model {
   ephyra.data.mediaRepositoryImpl -> ephyra.application.seriesTrackPreferences 'implements'
   ephyra.data.mediaRepositoryImpl -> ephyra.domain.mediaServer 'calls the server in use'
   ephyra.data.mediaRepositoryImpl -> ephyra.domain.playState 'user data rules'
-  ephyra.data.roomServerStore -> ephyra.application.serverStore 'implements'
-  ephyra.data.roomDownloadStore -> ephyra.application.downloadStore 'implements'
+  ephyra.data.roomServerStore -> ephyra.application.storedUsers 'implements'
+  ephyra.data.roomDownloadStore -> ephyra.application.downloadedItemRows 'implements'
   ephyra.data.roomPendingUserDataStore -> ephyra.application.pendingUserDataStore 'implements'
 
   extend ephyra.core {
@@ -285,7 +285,7 @@ model {
 
   ephyra.core.currentMediaServer -> ephyra.domain.mediaServer 'implements'
   ephyra.core.currentMediaServer -> ephyra.domain.activeServer 'reads the server in use'
-  ephyra.core.serverSessionKeeper -> ephyra.application.serverStore 'signs out a revoked user'
+  ephyra.core.serverSessionKeeper -> ephyra.application.storedUsers 'signs out a revoked user'
   ephyra.core.userDataSync -> ephyra.application.pendingUserDataStore 'anything waiting?'
   ephyra.core.syncWorker -> ephyra.application.pendingUserDataStore 'sends and clears the rows'
   ephyra.core.syncWorker -> ephyra.domain.playState 'merges with the server'
@@ -316,6 +316,6 @@ model {
   }
 
   ephyra.setup.setupRepositoryImpl -> ephyra.domain.serverConnector 'finds a server, signs in'
-  ephyra.setup.setupRepositoryImpl -> ephyra.application.serverStore 'saves servers and users'
+  ephyra.setup.setupRepositoryImpl -> ephyra.application.storedUsers 'saves servers and users'
   ephyra.setup.setupRepositoryImpl -> ephyra.domain.activeServer 'switches the server in use'
 }

@@ -46,7 +46,7 @@ views {
     title 'Components: downloads'
     description 'Level 3. The download queue and engine (#901). Rule R15: downloads uses no adapter and not core; what it needs comes through the ports in application. Guide: areas/downloads.'
     include ephyra.downloads, ephyra.downloads.*
-    include ephyra.application.downloadStore, ephyra.application.downloadSettings, ephyra.application.itemCatalog, ephyra.application.playbackMedia
+    include ephyra.application.downloadedItemRows, ephyra.application.downloadSettings, ephyra.application.itemCatalog, ephyra.application.playbackMedia
     include ephyra.core.downloaderViewModel
   }
 
@@ -55,7 +55,7 @@ views {
     description 'Level 3. The server in use, its session and reachability, the sync of user data written without the server, and the download state for the item screens.'
     include ephyra.core, ephyra.core.*
     include ephyra.domain.mediaServer, ephyra.domain.activeServer
-    include ephyra.application.serverStore, ephyra.application.pendingUserDataStore
+    include ephyra.application.storedUsers, ephyra.application.pendingUserDataStore
     include ephyra.downloads.downloadQueue
   }
 
@@ -63,7 +63,7 @@ views {
     title 'Components: setup'
     description 'Level 3. Finding a server and signing in, through the ServerConnector port; the server in use is switched whole (rule R16). Guide: areas/setup-and-servers.'
     include ephyra.setup, ephyra.setup.*
-    include ephyra.domain.serverConnector, ephyra.domain.activeServer, ephyra.application.serverStore
+    include ephyra.domain.serverConnector, ephyra.domain.activeServer, ephyra.application.storedUsers
     include ephyra.serverJellyfin.jellyfinServerConnector
   }
 
@@ -93,7 +93,7 @@ views {
     title 'Components: data'
     description 'Room and the repository over the server in use; only the apps depend on data (rule R9).'
     include ephyra.data, ephyra.data.*
-    include ephyra.application.itemCatalog, ephyra.application.itemLists, ephyra.application.playbackMedia, ephyra.application.playbackReports, ephyra.application.seriesTrackPreferences, ephyra.application.serverStore, ephyra.application.downloadStore, ephyra.application.pendingUserDataStore
+    include ephyra.application.itemCatalog, ephyra.application.itemLists, ephyra.application.playbackMedia, ephyra.application.playbackReports, ephyra.application.seriesTrackPreferences, ephyra.application.storedUsers, ephyra.application.downloadedItemRows, ephyra.application.pendingUserDataStore
     include ephyra.domain.mediaServer, ephyra.domain.playState
   }
 }

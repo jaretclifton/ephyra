@@ -4,9 +4,9 @@ Status: built and in use on phones; the TV app has no downloads. No known bug is
 
 ## Start here
 
-- The queue is `DownloadQueue` (`downloads/.../core/presentation/downloader/`); the bytes are `MediaDownloadEngine` (`downloads/.../utils/download/`); the rows are `DownloaderImpl` through the `DownloadStore` port.
+- The queue is `DownloadQueue` (`downloads/.../core/presentation/downloader/`); the bytes are `MediaDownloadEngine` (`downloads/.../utils/download/`); the rows are `DownloaderImpl` through the roles of the download store (#967: `DownloadList`, `DownloadedItemRows`, `DownloadSources`, `DownloadMediaStreams`, `DownloadSegmentsAndTrickplay`, `DownloadUserData`, `QueuedDownloads`).
 - Finished or not is `DownloadState` in `domain`: only it names the `.download` suffix (rule R13).
-- `downloads` may not use `core`, `data` or an adapter (rule R15): what it needs from them comes through a port in `application` (`DownloadStore`, `DownloadSettings`, `CurrentServerId`).
+- `downloads` may not use `core`, `data` or an adapter (rule R15): what it needs from them comes through a port in `application` (the roles of the download store, `DownloadSettings`, `CurrentServerId`).
 - Test fast: `./gradlew :downloads:testDebugUnitTest`. On a device: user `tester` (may download) and `nodownload`, Plain Movie or Short Movie, `iptables` to cut the server.
 - A download that failed for want of the server goes on by itself when the server is back (`ServerAvailability`, [#912](https://github.com/midasvo/ephyra/issues/912)); one the server refused stays failed.
 
@@ -27,7 +27,7 @@ A download keeps an item (a movie or an episode) on the device so it plays witho
 | [`downloads/.../work/`](../../downloads/src/main/java/dev/jdtech/jellyfin/work/) | `OrphanSweepWorker`, `ImagesDownloaderWorker` |
 | [`downloads/.../di/`](../../downloads/src/main/java/dev/jdtech/jellyfin/di/) | The module's Hilt bindings |
 | [`domain/.../models/DownloadState.kt`](../../domain/src/main/kotlin/dev/jdtech/jellyfin/models/DownloadState.kt) | `DownloadState` and `DownloadFiles`: the only place that knows the `.download` suffix |
-| [`application/.../repository/DownloadStore.kt`](../../application/src/main/kotlin/dev/jdtech/jellyfin/repository/DownloadStore.kt) | The store port for download rows; Room implementation in [`data/.../database/RoomDownloadStore.kt`](../../data/src/main/java/dev/jdtech/jellyfin/database/RoomDownloadStore.kt) |
+| [`application/.../repository/DownloadSources.kt`](../../application/src/main/kotlin/dev/jdtech/jellyfin/repository/DownloadSources.kt) | One of the roles of the download store (#967: `DownloadList`, `DownloadedItemRows`, `DownloadSources`, `DownloadMediaStreams`, `DownloadSegmentsAndTrickplay`, `DownloadUserData`, `QueuedDownloads`); the row types are in `StoredDownloads.kt`; Room implementation in [`data/.../database/RoomDownloadStore.kt`](../../data/src/main/java/dev/jdtech/jellyfin/database/RoomDownloadStore.kt) |
 | [`application/.../repository/DownloadSettings.kt`](../../application/src/main/kotlin/dev/jdtech/jellyfin/repository/DownloadSettings.kt), [`CurrentServerId.kt`](../../application/src/main/kotlin/dev/jdtech/jellyfin/repository/CurrentServerId.kt) | The settings the engine reads, as ports; implemented over `AppPreferences` in [`core/.../di/AppPreferencesPorts.kt`](../../core/src/main/java/dev/jdtech/jellyfin/di/AppPreferencesPorts.kt) ([#926](https://github.com/midasvo/ephyra/pull/926)) |
 | [`application/.../repository/ServerAvailability.kt`](../../application/src/main/kotlin/dev/jdtech/jellyfin/repository/ServerAvailability.kt) | The port that says the server was found to answer again; `ServerReachability` in `core` implements it, `DownloadQueue` collects it ([#912](https://github.com/midasvo/ephyra/issues/912)) |
 | [`application/.../repository/StoredFallback.kt`](../../application/src/main/kotlin/dev/jdtech/jellyfin/repository/StoredFallback.kt) | The Room copy when the server fails or is slow (3 s) |
@@ -38,7 +38,7 @@ A download keeps an item (a movie or an episode) on the device so it plays witho
 | [`app/phone/.../presentation/film/components/DownloadQualityDialog.kt`](../../app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/components/DownloadQualityDialog.kt) | The quality asked for each download; also `DownloadRow`, `DownloaderCard`, `DownloadProgressButton`, `ItemButtonsBar` there |
 | [`core/.../core/reachability/`](../../core/src/main/java/dev/jdtech/jellyfin/core/reachability/) | `ServerReachability`: whether the server answers. Not reachable from `downloads` (R15) |
 
-How the screens use it: a ViewModel that downloads gets the `Downloader` interface injected. `DownloaderViewModel` turns the queue's entries into `DownloaderState`. The storage location is `AppPreferences.downloadStorageIndex`, so a download never asks for one; it does ask for a quality (`DownloadQualityDialog`). `ItemButtonsBar` takes `canDownload` and `isDownloaded` overrides, so a season or a show passes a value computed over its episodes instead of `item.isDownloaded()` (which reads `DownloadState`). The Downloads screens never ask the server: they read the `DownloadStore` and `ItemLists.getDownloads` (`MediaRepositoryImpl` reads the movies and shows from Room). Screens that need the server show the unreachable banner. Without the server, `MediaRepositoryImpl.getPlaybackSources` picks a finished download before it asks the server, and user data written meanwhile is marked `toBeSynced` (`PendingUserDataStore`) and sent later by `UserDataSync` and `SyncWorker`.
+How the screens use it: a ViewModel that downloads gets the `Downloader` interface injected. `DownloaderViewModel` turns the queue's entries into `DownloaderState`. The storage location is `AppPreferences.downloadStorageIndex`, so a download never asks for one; it does ask for a quality (`DownloadQualityDialog`). `ItemButtonsBar` takes `canDownload` and `isDownloaded` overrides, so a season or a show passes a value computed over its episodes instead of `item.isDownloaded()` (which reads `DownloadState`). The Downloads screens never ask the server: they read `DownloadList`, `DownloadSources` and `ItemLists.getDownloads` (`MediaRepositoryImpl` reads the movies and shows from Room). Screens that need the server show the unreachable banner. Without the server, `MediaRepositoryImpl.getPlaybackSources` picks a finished download before it asks the server, and user data written meanwhile is marked `toBeSynced` (`PendingUserDataStore`) and sent later by `UserDataSync` and `SyncWorker`.
 
 Strings: the English CE strings of the module are in `downloads/src/main/res/values/strings.xml`, their translations in `values-<lang>/strings_ce.xml`.
 
@@ -46,7 +46,7 @@ Strings: the English CE strings of the module are in `downloads/src/main/res/val
 
 - **R13**: only `DownloadState.kt` names the `.download` suffix, also inside SQL. Ask `ItemSource.downloadState` or `DownloadFiles`.
 - **R15**: `downloads` does not depend on `data`, `server/jellyfin`, `core` or an app outside its tests; no file outside `downloads` names `DownloaderImpl`, `MediaDownloadEngine`, `ResumeValidatorStore`, `SharedPreferencesResumeValidatorStore`, `DownloadHttpClient` or `ImagesDownloaderWorker`. Others use `Downloader`, `DownloadQueue`, `SmartDownloads`.
-- **R9, R4**: only the apps depend on `data`; only `data` imports `ServerDatabaseDao`. Room access goes through `DownloadStore`.
+- **R9, R4**: only the apps depend on `data`; only `data` imports `ServerDatabaseDao`. Room access goes through the roles of the download store.
 - **R10**: ids are value classes (`ItemId`, `MediaSourceId`, `MediaStreamId`, … in `domain/.../models/Ids.kt`); no `java.util.UUID` and no `String` id outside the adapter. Don't add a line to `architecture/baseline/` to get past it.
 - **R1, R2**: no SDK and no `JellyfinApi` here; the engine gets its URLs through the repository's roles (`PlaybackMedia`, `ItemCatalog`, `CurrentAccount`, #967).
 - Project rules (`CLAUDE.md`): the `libre` flavour stays free of Google code; every CE string in 36 languages (`translate-strings` skill); a Room migration gets an independent review when no bot reviewed the PR.
@@ -100,7 +100,7 @@ Then on an emulator: start a download, cut the server off with `iptables` (see a
 - [#848](https://github.com/midasvo/ephyra/issues/848): a failed finalize is not shown as completed.
 - [#850](https://github.com/midasvo/ephyra/issues/850): `If-Range` on resume.
 - [#897](https://github.com/midasvo/ephyra/issues/897): `DownloadState` instead of the suffix in every file (R13).
-- [#899](https://github.com/midasvo/ephyra/issues/899) / [#911](https://github.com/midasvo/ephyra/pull/911): the rows behind `DownloadStore`.
+- [#899](https://github.com/midasvo/ephyra/issues/899) / [#911](https://github.com/midasvo/ephyra/pull/911): the rows behind the download store (split by role in #967).
 - [#912](https://github.com/midasvo/ephyra/issues/912): a failed entry flagged `retryWhenServerReturns` goes back to Pending on `ServerAvailability.serverConfirmed` (a probe that reached the server, or a request answered while it counted as unreachable).
 - [#901](https://github.com/midasvo/ephyra/issues/901) / [#914](https://github.com/midasvo/ephyra/pull/914): `downloads` as its own module (R15).
 - [#918](https://github.com/midasvo/ephyra/issues/918) / [#926](https://github.com/midasvo/ephyra/pull/926): the engine reads its settings through `DownloadSettings` (part 2; part 1 and rule R17 still open).
