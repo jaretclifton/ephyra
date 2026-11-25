@@ -17,10 +17,12 @@ import kotlin.test.assertTrue
  * What is counted is what the interface declares itself: its functions and properties, with or
  * without a default body, and not those of a companion object or a nested type. A port that
  * inherits from other interfaces is counted with what it inherits from them, so a union of roles
- * fails like the wide port it replaces. Interfaces are told apart by their fully qualified name,
- * and a parent is looked up among the interfaces of all of `domain` and `application`: a parent
- * from anywhere else (a Kotlin or JDK interface, as R19 leaves no other) is not counted. A parent
- * whose simple name matches more than one interface there fails the rule rather than be guessed.
+ * fails like the wide port it replaces. Interfaces are told apart by their fully qualified name, a
+ * parent is looked up among the interfaces of all of `domain` and `application`, by its written
+ * name, the file's imports (aliases included), its package, and last its simple name: a parent from
+ * anywhere else (a Kotlin or JDK interface, as R19 leaves no other) is not counted. A parent that
+ * can still be more than one interface fails the rule rather than be guessed. An interface
+ * inherited along two paths counts once.
  *
  * The ports still over the limit are in `architecture/baseline/wide-ports.txt`, each with its
  * issue, and the check is exact: a port that is split fails until its line is deleted.
@@ -62,6 +64,9 @@ class PortSizeTest {
             """
             package dev.jdtech.jellyfin.repository
 
+            import dev.jdtech.jellyfin.repository.Small as Aliased
+            import dev.jdtech.jellyfin.other.Wide
+
             interface Small {
                 val name: String
 
@@ -94,17 +99,48 @@ class PortSizeTest {
                 }
             }
 
+            interface Left : Small {
+                fun left()
+            }
+
+            interface Right : Small {
+                fun right()
+            }
+
+            // Small's three members count once, though both sides inherit them.
+            interface Diamond : Left, Right
+
+            interface ViaAlias : Aliased {
+                fun own()
+            }
+
+            interface ViaImport : Wide
+
             class NotAPort {
                 fun a() = Unit
             }
             """
                 .trimIndent()
-        // Under build/, which no rule reads.
-        val file =
-            ProjectTree.root.resolve("architecture/build/r21-scanner/Fixture.kt").apply {
-                parentFile.mkdirs()
-                writeText(text)
+        val other =
+            """
+            package dev.jdtech.jellyfin.other
+
+            // The same simple name in another package is another port.
+            interface Small {
+                fun a()
+
+                fun b()
             }
+
+            interface Wide : Small {
+                fun c()
+            }
+            """
+                .trimIndent()
+        // Under build/, which no rule reads.
+        val dir = ProjectTree.root.resolve("architecture/build/r21-scanner").apply { mkdirs() }
+        val file = dir.resolve("Fixture.kt").apply { writeText(text) }
+        val otherFile = dir.resolve("Other.kt").apply { writeText(other) }
         assertEquals(
             mapOf(
                 "$P.Small" to 3,
@@ -112,13 +148,30 @@ class PortSizeTest {
                 "$P.Single" to 1,
                 "$P.Union" to 5,
                 "$P.Union.Nested" to 2,
+                "$P.Left" to 4,
+                "$P.Right" to 4,
+                "$P.Diamond" to 5,
+                "$P.ViaAlias" to 4,
+                "$P.ViaImport" to 3,
+                "dev.jdtech.jellyfin.other.Small" to 2,
+                "dev.jdtech.jellyfin.other.Wide" to 3,
             ),
-            sizesOf(mapOf("fixture" to file)) { true },
+            sizesOf(mapOf("fixture" to file, "other" to otherFile)) { true },
         )
     }
 
     private companion object {
         const val MAX_MEMBERS = 15
+
+        private val IMPORT =
+            Regex("""^import\s+([\w.`]+)(?:\s+as\s+(\w+))?""", RegexOption.MULTILINE)
+
+        /** The names a file can write a type by, to the type: its imports, aliases included. */
+        fun importsOf(text: String): Map<String, String> =
+            IMPORT.findAll(text).associate { match ->
+                val name = match.groupValues[1].replace("`", "")
+                (match.groupValues[2].ifEmpty { name.substringAfterLast('.') }) to name
+            }
 
         val PORT_FOLDERS =
             listOf("domain/src/main/kotlin/dev/jdtech/jellyfin/domain/ports/", "application/src/")
@@ -151,20 +204,35 @@ class PortSizeTest {
                     declaration.properties(includeNested = false).size
             }
             val parents = byName.mapValues { (name, declarations) ->
-                declarations.single().parents().mapNotNull { parent ->
-                    val simple = parent.name.substringBefore('<').substringAfterLast('.')
-                    val found = own.keys.filter { it.substringAfterLast('.') == simple }
+                val declaration = declarations.single()
+                val imports = importsOf(File(declaration.containingFile.path).readText())
+                val pkg = declaration.packagee?.name.orEmpty()
+                declaration.parents().mapNotNull { parent ->
+                    val written = parent.name.substringBefore('<').trim()
+                    val simple = written.substringAfterLast('.')
+                    val found =
+                        listOfNotNull(
+                                written.takeIf { it in own },
+                                imports[written]?.takeIf { it in own },
+                            )
+                            .ifEmpty { own.keys.filter { it == "$pkg.$simple" } }
+                            .ifEmpty { own.keys.filter { it.substringAfterLast('.') == simple } }
+                            .distinct()
                     assertTrue(
                         found.size <= 1,
-                        "R21 cannot tell which $simple $name extends: $found",
+                        "R21 cannot tell which $written $name extends: $found",
                     )
                     found.singleOrNull()
                 }
             }
 
-            fun total(name: String, seen: Set<String> = emptySet()): Int =
-                own.getValue(name) +
-                    parents.getValue(name).filter { it !in seen }.sumOf { total(it, seen + name) }
+            /** [name] and every interface it inherits from, each once (a diamond counts once). */
+            fun lineage(name: String, seen: MutableSet<String> = mutableSetOf()): Set<String> {
+                if (seen.add(name)) parents.getValue(name).forEach { lineage(it, seen) }
+                return seen
+            }
+
+            fun total(name: String): Int = lineage(name).sumOf { own.getValue(it) }
 
             return interfaces
                 .filter { reported(paths[File(it.containingFile.path).canonicalPath] ?: "") }
