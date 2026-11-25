@@ -104,7 +104,7 @@ Then on an emulator: start a download, cut the server off with `iptables` (see a
 - [#912](https://github.com/midasvo/ephyra/issues/912): a failed entry flagged `retryWhenServerReturns` goes back to Pending on `ServerAvailability.serverConfirmed` (a probe that reached the server, or a request answered while it counted as unreachable).
 - [#901](https://github.com/midasvo/ephyra/issues/901) / [#914](https://github.com/midasvo/ephyra/pull/914): `downloads` as its own module (R15).
 - [#918](https://github.com/midasvo/ephyra/issues/918) / [#926](https://github.com/midasvo/ephyra/pull/926): the engine reads its settings through `DownloadSettings` (part 2; part 1 and rule R17 still open).
-- ADRs: [`docs/architecture/adr/0002-hexagonal-ddd.md`](../architecture/adr/0002-hexagonal-ddd.md); T5, T7 and T9 in [`docs/architecture/5-hexagonal-ddd.md`](../architecture/5-hexagonal-ddd.md).
+- ADRs: [`docs/architecture/adr/0002-hexagonal-ddd.md`](../architecture/adr/0002-hexagonal-ddd.md); T5, T7 and T9 in [`docs/architecture/5-hexagonal-ddd.md`](../architecture/5-hexagonal-ddd.md). Proposed: [`docs/architecture/adr/0003-playback-and-download-use-cases.md`](../architecture/adr/0003-playback-and-download-use-cases.md) ([#970](https://github.com/midasvo/ephyra/issues/970)), the life of one download as a state machine in `domain` and the queue as a service in `application`, without a Room schema change.
 
 ## Pitfalls
 
