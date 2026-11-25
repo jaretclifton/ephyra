@@ -7,8 +7,9 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -112,7 +113,7 @@ class LibraryLoadOnceTest {
         assertEquals(listOf<ItemId?>(movies, shows), requested)
     }
 
-    private fun viewModel() = LibraryViewModel(repository(), appPreferences())
+    private fun viewModel() = LibraryViewModel(repository.role(), appPreferences())
 
     /** The ViewModel set up for [library]: every new pager in its state is a load of [library]. */
     private fun LibraryViewModel.setUpFor(library: ItemId, type: CollectionType) {
@@ -133,21 +134,20 @@ class LibraryLoadOnceTest {
         return this
     }
 
-    private fun repository(): MediaRepository =
-        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
-            _,
-            method,
-            args ->
+    private val repository: FakeRoles =
+        FakeRoles(ItemLists::class) { _, method, args ->
             when (method.kotlinName) {
                 // The grid without placeholders (setup without `indexed`), an empty library.
                 "getItems" -> {
                     requested.add(args!![0].asItemIdOrNull())
                     emptyList<Any>()
                 }
-                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
+                else ->
+                    throw NotImplementedError(
+                        "${method.declaringClass.simpleName}.${method.kotlinName}"
+                    )
             }
         }
-            as MediaRepository
 
     private fun appPreferences(): AppPreferences {
         lateinit var editor: SharedPreferences.Editor

@@ -59,7 +59,7 @@ class StoredItemsByServerTest {
     private val database: ServerDatabaseDao = room.getServerDatabaseDao()
     private var currentServerId: ServerId? = null
 
-    private val repository: MediaRepository by lazy {
+    private val repository: MediaRepositoryImpl by lazy {
         MediaRepositoryImpl(
             context,
             UnansweredServer(userId),

@@ -37,16 +37,16 @@ views {
 
   view playerLocal of ephyra.playerLocal {
     title 'Components: player/local'
-    description 'Level 3. The player behind PlayerEngine (ADR 0001, decision 4) and its use cases, which reach the server and the downloads through MediaRepository.'
+    description 'Level 3. The player behind PlayerEngine (ADR 0001, decision 4) and its use cases, which reach the server and the downloads through the roles of the repository (#967).'
     include ephyra.playerLocal, ephyra.playerLocal.*
-    include ephyra.application.mediaRepository, ephyra.domain.downloadState
+    include ephyra.application.itemCatalog, ephyra.application.playbackMedia, ephyra.application.playbackReports, ephyra.application.seriesTrackPreferences, ephyra.domain.downloadState
   }
 
   view downloads of ephyra.downloads {
     title 'Components: downloads'
     description 'Level 3. The download queue and engine (#901). Rule R15: downloads uses no adapter and not core; what it needs comes through the ports in application. Guide: areas/downloads.'
     include ephyra.downloads, ephyra.downloads.*
-    include ephyra.application.downloadStore, ephyra.application.downloadSettings, ephyra.application.mediaRepository
+    include ephyra.application.downloadStore, ephyra.application.downloadSettings, ephyra.application.itemCatalog, ephyra.application.playbackMedia
     include ephyra.core.downloaderViewModel
   }
 
@@ -93,7 +93,7 @@ views {
     title 'Components: data'
     description 'Room and the repository over the server in use; only the apps depend on data (rule R9).'
     include ephyra.data, ephyra.data.*
-    include ephyra.application.mediaRepository, ephyra.application.serverStore, ephyra.application.downloadStore, ephyra.application.pendingUserDataStore
+    include ephyra.application.itemCatalog, ephyra.application.itemLists, ephyra.application.playbackMedia, ephyra.application.playbackReports, ephyra.application.seriesTrackPreferences, ephyra.application.serverStore, ephyra.application.downloadStore, ephyra.application.pendingUserDataStore
     include ephyra.domain.mediaServer, ephyra.domain.playState
   }
 }

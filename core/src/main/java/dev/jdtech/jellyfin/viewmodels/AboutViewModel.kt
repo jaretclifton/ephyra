@@ -12,7 +12,7 @@ import dev.jdtech.jellyfin.core.AppVariant
 import dev.jdtech.jellyfin.domain.ports.DeviceCodecs
 import dev.jdtech.jellyfin.domain.ports.DeviceReportSource
 import dev.jdtech.jellyfin.player.ProbedCodecs
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.CurrentAccount
 import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
@@ -52,7 +52,7 @@ constructor(
     private val appPreferences: AppPreferences,
     private val serverStore: ServerStore,
     // A Provider, so the repository is only made when the info loads.
-    private val repository: Provider<MediaRepository>,
+    private val account: Provider<CurrentAccount>,
     val appVariant: AppVariant,
 ) : ViewModel() {
 
@@ -96,7 +96,7 @@ constructor(
             }
             val version =
                 try {
-                    repository.get().getServerInfo().version
+                    account.get().getServerInfo().version
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {

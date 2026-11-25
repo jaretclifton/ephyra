@@ -6,11 +6,11 @@ import dev.jdtech.jellyfin.models.PlaybackTarget
 import dev.jdtech.jellyfin.models.PlayerEngineId
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.PlaybackMedia
 import dev.jdtech.jellyfin.settings.domain.QualityNetwork
 import dev.jdtech.jellyfin.settings.presentation.enums.AppVariant
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
-import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.fakeRole
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -187,11 +187,8 @@ class ResolvePlaybackTest {
         network: QualityNetwork = QualityNetwork.WIFI,
         appVariant: AppVariant = AppVariant.PHONE,
     ): ResolvePlayback {
-        val repository =
-            fakeProxy(
-                MediaRepository::class.java.classLoader,
-                arrayOf(MediaRepository::class.java),
-            ) { _, method, args ->
+        val media =
+            fakeRole<PlaybackMedia> { _, method, args ->
                 when (method.kotlinName) {
                     "getPlaybackSources" -> {
                         assertEquals(itemId, args[0].asItemIdOrNull())
@@ -202,8 +199,7 @@ class ResolvePlaybackTest {
                     else -> error("Unexpected call to ${method.kotlinName}")
                 }
             }
-                as MediaRepository
-        return resolvePlayback(repository, testPreferences(values.toMap()), network, appVariant)
+        return resolvePlayback(media, testPreferences(values.toMap()), network, appVariant)
     }
 
     private fun source(id: String, type: ItemSourceType, path: String) =

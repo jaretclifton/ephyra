@@ -27,7 +27,7 @@ import dev.jdtech.jellyfin.player.core.domain.models.Track
 import dev.jdtech.jellyfin.player.local.R as PlayerLocalR
 import dev.jdtech.jellyfin.player.local.domain.DebugSegments
 import dev.jdtech.jellyfin.player.local.domain.segmentTrackerFrom
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.PlaybackMedia
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -119,7 +119,7 @@ class CastViewModel
 constructor(
     private val sessionManager: CastSessionManager,
     private val playerController: CastPlayerController,
-    private val repository: MediaRepository,
+    private val media: PlaybackMedia,
     private val appPreferences: AppPreferences,
     @param:ApplicationContext private val context: Context,
 ) : ViewModel() {
@@ -289,7 +289,7 @@ constructor(
             val loaded =
                 try {
                     // Debuggable builds can fake segments for testing (#271, #681).
-                    DebugSegments.read(context) ?: repository.getSegments(item.itemId)
+                    DebugSegments.read(context) ?: media.getSegments(item.itemId)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
@@ -353,7 +353,7 @@ constructor(
     private fun List<PlayerChapter>.withImages(itemId: ItemId): List<PlayerChapter> {
         return mapIndexed { index, chapter ->
             val tag = chapter.imageTag ?: return@mapIndexed chapter
-            val url = repository.chapterImageUrl(itemId, index, tag) ?: return@mapIndexed chapter
+            val url = media.chapterImageUrl(itemId, index, tag) ?: return@mapIndexed chapter
             chapter.copy(imageUri = url)
         }
     }

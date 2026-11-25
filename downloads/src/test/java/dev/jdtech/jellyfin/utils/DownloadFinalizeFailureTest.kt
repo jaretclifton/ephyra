@@ -20,7 +20,10 @@ import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.CurrentAccount
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.PlaybackMedia
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.download.DownloadStatus
@@ -345,20 +348,24 @@ class DownloadFinalizeFailureTest {
 
     private fun downloader(): DownloaderImpl {
         val repository =
-            fakeProxy(
-                MediaRepository::class.java.classLoader,
-                arrayOf(MediaRepository::class.java),
-            ) { _, method, _ ->
+            FakeRoles(ItemCatalog::class, PlaybackMedia::class, CurrentAccount::class) {
+                _,
+                method,
+                _ ->
                 when (method.kotlinName) {
                     "getUserId" -> USER_ID
-                    else -> throw IllegalStateException("MediaRepository.${method.kotlinName}")
+                    else ->
+                        throw IllegalStateException(
+                            "${method.declaringClass.simpleName}.${method.kotlinName}"
+                        )
                 }
             }
-                as MediaRepository
         return DownloaderImpl(
             context,
             RoomDownloadStore(database()),
-            Provider { repository },
+            Provider { repository.role() },
+            Provider { repository.role() },
+            Provider { repository.role() },
             TestDownloadSettings(),
             TestCurrentServerId(),
             Provider { error("No WorkManager in this test") },

@@ -61,7 +61,7 @@ flowchart TD
 |---|---|---|---|---|
 | `app/phone` | Apps (composition root) | The phone app: screens, navigation and layouts; with app/tv the composition root. | `application`, `baselineprofile`, `core`, `data`, `device`, `domain`, `downloads`, `http`, `modes/film`, `player/cast`, `player/core`, `player/local`, `ratings/mdblist`, `server/jellyfin`, `settings`, `setup` |  |
 | `app/tv` | Apps (composition root) | The Android TV app: its own screens in its ce package, next to upstream's (TV ADR 0001). | `application`, `core`, `data`, `device`, `domain`, `downloads`, `http`, `modes/film`, `player/core`, `player/local`, `ratings/mdblist`, `server/jellyfin`, `settings`, `setup` | `testing` |
-| `application` | Application | Pure Kotlin: MediaRepository, the store ports (ServerStore, DownloadStore, PendingUserDataStore) and the event flows (DataChangeEvents, ReloadPolicy, …). | `domain` |  |
+| `application` | Application | Pure Kotlin: the repository's roles (ItemCatalog, ItemLists, PlaybackMedia, …), the store ports (ServerStore, DownloadStore, PendingUserDataStore) and the event flows (DataChangeEvents, ReloadPolicy, …). | `domain` |  |
 | `architecture` | Tests and tooling | The Konsist rules over the source tree, their allowlists in architecture/baseline/, and the generated architecture docs. |  |  |
 | `baselineprofile` | Tests and tooling | Macrobenchmark: the baseline profile and startup benchmark of app/phone. | `app/phone` |  |
 | `baselineprofile-tv` | Tests and tooling | Macrobenchmark: the baseline profile and startup benchmark of app/tv. | `app/tv` |  |

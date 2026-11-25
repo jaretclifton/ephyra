@@ -36,7 +36,7 @@ Paths are under `player/local/src/main/java/dev/jdtech/jellyfin/player/local/` u
 | [http/.../MediaHttpClient.kt](../../http/src/main/kotlin/dev/jdtech/jellyfin/http/MediaHttpClient.kt) | The API's own OkHttp client, provided by `server/jellyfin`. ExoPlayer streams media over it (`MediaSourceFactory` derives its client with `newBuilder()`, so media shares the API's connection pool, #296); mpv uses it only for subtitle files, and libmpv fetches the media itself, with its own TLS. A module of its own so `domain` names no library (#964) |
 | [JellyfinPlayback.kt](../../server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/JellyfinPlayback.kt) | `trickplayTile` and `trickplayVersion` (the `mediaSourceId` of a tile request) |
 | [PlaybackInfoMappers.kt](../../server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/mappers/PlaybackInfoMappers.kt) | `toItemTrickplayInfo`, `preferredTrickplayInfo`: the width the player gets |
-| [MediaRepository.kt](../../application/src/main/kotlin/dev/jdtech/jellyfin/repository/MediaRepository.kt) | `getTrickplayData(itemId, width, sheetIndex, mediaSourceId)` |
+| [PlaybackMedia.kt](../../application/src/main/kotlin/dev/jdtech/jellyfin/repository/PlaybackMedia.kt) | `getTrickplayData(itemId, width, sheetIndex, mediaSourceId)` |
 | [player/core/.../models/](../../player/core/src/main/java/dev/jdtech/jellyfin/player/core/domain/models/) | `PlayerItem`, `Trickplay`, `TrickplayInfo` |
 
 ## Rules

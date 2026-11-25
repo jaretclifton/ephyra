@@ -8,14 +8,21 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.domain.ports.MediaServer
+import dev.jdtech.jellyfin.repository.CurrentAccount
 import dev.jdtech.jellyfin.repository.CurrentServerId
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.ItemExtras
+import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.repository.KnownServerState
-import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.MediaRepositoryImpl
 import dev.jdtech.jellyfin.repository.NextUpMaxDays
+import dev.jdtech.jellyfin.repository.PlaybackMedia
+import dev.jdtech.jellyfin.repository.PlaybackReports
 import dev.jdtech.jellyfin.repository.ResumeThresholdsStore
+import dev.jdtech.jellyfin.repository.SeriesTrackPreferences
 import dev.jdtech.jellyfin.repository.StoredLibraryNames
 import dev.jdtech.jellyfin.repository.UserDataSyncRequester
+import dev.jdtech.jellyfin.repository.UserDataUpdates
 import javax.inject.Singleton
 
 /**
@@ -59,8 +66,24 @@ object MediaRepositoryModule {
         )
     }
 
-    /** CE (#281): one repository; downloaded items fall back to Room when the server is away. */
+    // #967: one repository, bound as each of its roles. Each binding hands out the one instance
+    // above, which holds the play sessions and the stored lists. CE (#281): downloaded items fall
+    // back to Room when the server is away.
+
+    @Provides fun provideCurrentAccount(impl: MediaRepositoryImpl): CurrentAccount = impl
+
+    @Provides fun provideItemCatalog(impl: MediaRepositoryImpl): ItemCatalog = impl
+
+    @Provides fun provideItemLists(impl: MediaRepositoryImpl): ItemLists = impl
+
+    @Provides fun provideItemExtras(impl: MediaRepositoryImpl): ItemExtras = impl
+
+    @Provides fun provideUserDataUpdates(impl: MediaRepositoryImpl): UserDataUpdates = impl
+
     @Provides
-    fun provideMediaRepository(mediaRepositoryImpl: MediaRepositoryImpl): MediaRepository =
-        mediaRepositoryImpl
+    fun provideSeriesTrackPreferences(impl: MediaRepositoryImpl): SeriesTrackPreferences = impl
+
+    @Provides fun providePlaybackMedia(impl: MediaRepositoryImpl): PlaybackMedia = impl
+
+    @Provides fun providePlaybackReports(impl: MediaRepositoryImpl): PlaybackReports = impl
 }

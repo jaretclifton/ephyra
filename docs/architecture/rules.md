@@ -27,3 +27,4 @@ The Konsist rules in `architecture/`, read from the names of their tests. Run th
 | R18 | no adapter module depends on a feature module | [AdapterDependencyTest.kt](../../architecture/src/test/kotlin/dev/jdtech/jellyfin/architecture/AdapterDependencyTest.kt) |
 | R19 | domain and application import only Kotlin, kotlinx, the JDK and their own code<br>domain and application declare no library but kotlinx | [PureKotlinTest.kt](../../architecture/src/test/kotlin/dev/jdtech/jellyfin/architecture/PureKotlinTest.kt) |
 | R20 | data imports nothing of Android but Room, SQLite and Context | [RoomAdapterTest.kt](../../architecture/src/test/kotlin/dev/jdtech/jellyfin/architecture/RoomAdapterTest.kt) |
+| R21 | no port declares more than fifteen functions and properties | [PortSizeTest.kt](../../architecture/src/test/kotlin/dev/jdtech/jellyfin/architecture/PortSizeTest.kt) |

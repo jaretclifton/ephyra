@@ -10,7 +10,7 @@ import android.util.LruCache
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.MediaSourceId
 import dev.jdtech.jellyfin.player.core.domain.models.TrickplayTileLoader
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.PlaybackMedia
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -32,7 +32,7 @@ const val TV_TRICKPLAY_WIDTH_DP = 240
  * own), and a sheet that fails is not asked for again for [TrickplaySheetFailures.RETRY_AFTER_MS].
  */
 class TrickplayRegionLoader(
-    private val repository: MediaRepository,
+    private val media: PlaybackMedia,
     private val itemId: ItemId,
     private val mediaSourceId: MediaSourceId?,
     private val tiles: TrickplayTiles,
@@ -131,7 +131,7 @@ class TrickplayRegionLoader(
             withContext(Dispatchers.IO) {
                 try {
                     val bytes =
-                        repository.getTrickplayData(itemId, tiles.width, sheetIndex, mediaSourceId)
+                        media.getTrickplayData(itemId, tiles.width, sheetIndex, mediaSourceId)
                             ?: return@withContext null
                     newDecoder(bytes)
                 } catch (e: CancellationException) {

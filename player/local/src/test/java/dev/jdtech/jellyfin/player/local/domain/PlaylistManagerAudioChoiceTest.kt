@@ -12,9 +12,11 @@ import dev.jdtech.jellyfin.models.SeriesTrackPreference
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.PlaybackMedia
+import dev.jdtech.jellyfin.repository.SeriesTrackPreferences
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.asItemIdOrNull
-import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -301,7 +303,7 @@ class PlaylistManagerAudioChoiceTest {
     }
 
     /** A [PlaylistManager] over [repository] with [language] as the preferred audio language. */
-    private fun preferring(language: String, repository: MediaRepository) =
+    private fun preferring(language: String, repository: FakeRoles) =
         playlistManager(repository, testPreferences(mapOf("pref_audio_language" to language)))
 
     private fun repository(
@@ -310,7 +312,7 @@ class PlaylistManagerAudioChoiceTest {
         failWithAudio: Boolean = false,
         downloaded: Boolean = false,
     ) =
-        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
+        FakeRoles(ItemCatalog::class, SeriesTrackPreferences::class, PlaybackMedia::class) {
             _,
             method,
             args ->
@@ -334,7 +336,6 @@ class PlaylistManagerAudioChoiceTest {
                 else -> error("Unexpected call to ${method.kotlinName}")
             }
         }
-            as MediaRepository
 
     private fun dutch() =
         SeriesTrackPreference(

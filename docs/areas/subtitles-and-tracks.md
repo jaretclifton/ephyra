@@ -8,7 +8,7 @@ Status: works on both engines, phone and TV, as of 2026-11-23 (`main` at `b24b19
 - Which tracks start: `domain/SeriesTrackPreference.kt` and `domain/TrackPicks.kt`. Subtitle files: `domain/SubtitleFiles.kt`, then `engine/exo/` or `engine/mpv/MpvSubtitleFiles.kt`.
 - Styles: `AppPreferences` → `core/.../SubtitleStyle.kt` (ExoPlayer) or `engine/mpv/MpvSubtitleOptions.kt` (mpv).
 - What the server sends: the device profile in `server/jellyfin/.../JellyfinDeviceProfiles.kt`.
-- Ports: `MediaRepository` (`getSeriesTrackPreferences`, `saveSeriesTrackPreference`), `PlaybackPort` (the `audioStreamIndex` of a `PlaybackRequest`, for a transcode), `EnginePlayer` (`setSubtitleDelayMs`).
+- Ports: `SeriesTrackPreferences` (`getSeriesTrackPreferences`, `saveSeriesTrackPreference`), `PlaybackPort` (the `audioStreamIndex` of a `PlaybackRequest`, for a transcode), `EnginePlayer` (`setSubtitleDelayMs`).
 - Test fast: `./gradlew :player:local:testDebugUnitTest --tests '*Subtitle*' --tests '*Track*'`. On a device: Tracks Movie, Image Subs Movie, Tracks Show on the test server.
 - Before the PR: `docs/mpv-checklist.md` on both backends, and `docs/track-test-series.md` for the series choice.
 - Seen before: transcodes drop embedded tracks (#597, #613), a delay after a seek (#650), the ASS override on mpv (#833).
@@ -43,7 +43,7 @@ Both engines are a media3 `Player` to the rest of the app: `MPVPlayer` extends `
 | [player/core/.../models/](../../player/core/src/main/java/dev/jdtech/jellyfin/player/core/domain/models/) | `ExternalSubtitle`, `SubtitleSyncCue`, `ServerAudioTrack`, `Track` (Cast) |
 | [JellyfinDeviceProfiles.kt](../../server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/JellyfinDeviceProfiles.kt) | Subtitle profiles per engine: embed, external, burn-in; mpv's profile under a cap |
 | [JellyfinPlayback.kt](../../server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/JellyfinPlayback.kt) | Sends `audioStreamIndex` to the server |
-| [MediaRepository.kt](../../application/src/main/kotlin/dev/jdtech/jellyfin/repository/MediaRepository.kt) | `getSeriesTrackPreferences`, `saveSeriesTrackPreference`; model in [domain](../../domain/src/main/kotlin/dev/jdtech/jellyfin/models/SeriesTrackPreference.kt), Room in [data](../../data/src/main/java/dev/jdtech/jellyfin/models/SeriesTrackPreferenceDto.kt) |
+| [SeriesTrackPreferences.kt](../../application/src/main/kotlin/dev/jdtech/jellyfin/repository/SeriesTrackPreferences.kt) | `getSeriesTrackPreferences`, `saveSeriesTrackPreference`; model in [domain](../../domain/src/main/kotlin/dev/jdtech/jellyfin/models/SeriesTrackPreference.kt), Room in [data](../../data/src/main/java/dev/jdtech/jellyfin/models/SeriesTrackPreferenceDto.kt) |
 | [AppPreferences.kt](../../settings/src/main/java/dev/jdtech/jellyfin/settings/domain/AppPreferences.kt) | `preferredAudioLanguage`, `preferredSubtitleLanguage`, `subtitle*`, `subtitleOverrideEmbeddedStyles` |
 | [SubtitleStyle.kt](../../core/src/main/java/dev/jdtech/jellyfin/utils/SubtitleStyle.kt) | Settings to ExoPlayer's `CaptionStyleCompat` |
 | [settings/.../subtitle/](../../settings/src/main/java/dev/jdtech/jellyfin/settings/presentation/subtitle/) | `SubtitleStyleViewModel` and its State/Action/Event |
@@ -54,7 +54,7 @@ Both engines are a media3 `Player` to the rest of the app: `MPVPlayer` extends `
 
 - **R6** (engine boundary): `engine/exo` and `engine/mpv` do not use each other, and no other production file uses either; only `engine.di` binds both. An engine feature goes behind `EnginePlayer` (as `setSubtitleDelayMs` does).
 - **R1, R2, R3**: no Jellyfin SDK outside `server/jellyfin`. Subtitle delivery, stream types and codecs in the player are our own enums (`dev.jdtech.jellyfin.models.SubtitleDeliveryMethod`, `MediaStreamType`). Device profile changes go in the adapter.
-- **R4**: the player reads and writes the series choice through `MediaRepository`, never `ServerDatabaseDao`.
+- **R4**: the player reads and writes the series choice through `SeriesTrackPreferences`, never `ServerDatabaseDao`.
 - **R10**: ids are value classes (`ItemId`, `UserId`, `MediaSourceId`, `MediaStreamId` in `domain/.../models/Ids.kt`); no `java.util.UUID` and no `String` id in a signature outside the adapter. A random name that is not an id (mpv's subtitle folder, the media session) is not a reason for `java.util.UUID` either: `kotlin.uuid.Uuid.random()` gives the same text ([#930](https://github.com/midasvo/ephyra/pull/930)).
 - **R12**: tick conversions only through `Ticks`.
 - Player PRs: run [docs/mpv-checklist.md](../mpv-checklist.md) on both backends. `PlayerInvariantsTest` pins that mpv adds external subtitles off the main thread (#617).

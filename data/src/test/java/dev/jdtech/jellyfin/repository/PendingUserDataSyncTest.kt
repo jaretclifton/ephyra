@@ -49,7 +49,7 @@ class PendingUserDataSyncTest {
 
     private var syncRequests = 0
 
-    private val repository: MediaRepository by lazy {
+    private val repository: MediaRepositoryImpl by lazy {
         MediaRepositoryImpl(
             context,
             UnansweredServer(userId),

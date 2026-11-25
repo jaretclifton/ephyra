@@ -12,7 +12,10 @@ import dev.jdtech.jellyfin.models.MediaStreamId
 import dev.jdtech.jellyfin.models.MediaStreamType
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.CurrentAccount
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.PlaybackMedia
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.asMediaSourceId
 import dev.jdtech.jellyfin.testing.asMediaStreamId
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -395,21 +398,25 @@ class SubtitleFinalizeTest {
 
     private fun downloader(timeoutMs: Long = 5_000): DownloaderImpl {
         val repository =
-            fakeProxy(
-                MediaRepository::class.java.classLoader,
-                arrayOf(MediaRepository::class.java),
-            ) { _, method, _ ->
+            FakeRoles(ItemCatalog::class, PlaybackMedia::class, CurrentAccount::class) {
+                _,
+                method,
+                _ ->
                 when (method.kotlinName) {
                     "getUserId" -> UUID.randomUUID().toString().toItemId()
                     // The server is not there: a failed subtitle cannot be started again.
-                    else -> throw IllegalStateException("MediaRepository.${method.kotlinName}")
+                    else ->
+                        throw IllegalStateException(
+                            "${method.declaringClass.simpleName}.${method.kotlinName}"
+                        )
                 }
             }
-                as MediaRepository
         return DownloaderImpl(
             context,
             RoomDownloadStore(database()),
-            Provider { repository },
+            Provider { repository.role() },
+            Provider { repository.role() },
+            Provider { repository.role() },
             TestDownloadSettings(),
             TestCurrentServerId(),
             Provider { error("No WorkManager in this test") },

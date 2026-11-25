@@ -5,9 +5,12 @@ import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.ServerId
 import dev.jdtech.jellyfin.models.ServerInfo
 import dev.jdtech.jellyfin.models.toServerId
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.CurrentAccount
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.repository.ServerStore
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.asServerId
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -84,7 +87,9 @@ class HomeViewModelServerNameTest {
     private fun TestScope.load(): HomeState {
         val viewModel =
             HomeViewModel(
-                repository = repository(),
+                lists = repository.role(),
+                catalog = repository.role(),
+                account = repository.role(),
                 appPreferences = AppPreferences(sharedPreferences()),
                 serverStore = database(),
                 loadDispatcher = dispatcher,
@@ -98,11 +103,8 @@ class HomeViewModelServerNameTest {
 
     private fun info(id: String, name: String) = ServerInfo(id.toServerId(), name, null, null)
 
-    private fun repository(): MediaRepository =
-        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
-            _,
-            method,
-            _ ->
+    private val repository: FakeRoles =
+        FakeRoles(ItemLists::class, ItemCatalog::class, CurrentAccount::class) { _, method, _ ->
             when (method.kotlinName) {
                 "getServerInfo" -> systemInfo()
                 "refreshCurrentUserImage" -> Unit
@@ -110,10 +112,12 @@ class HomeViewModelServerNameTest {
                 "getResumeItems",
                 "getNextUp",
                 "getUserViews" -> emptyList<Any>()
-                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
+                else ->
+                    throw NotImplementedError(
+                        "${method.declaringClass.simpleName}.${method.kotlinName}"
+                    )
             }
         }
-            as MediaRepository
 
     private fun database(): ServerStore =
         fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {

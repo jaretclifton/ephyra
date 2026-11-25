@@ -38,9 +38,25 @@ model {
   }
 
   extend ephyra.application {
-    mediaRepository = port 'MediaRepository' {
-      description 'What the features call: the server in use composed with Room. repository/MediaRepository.kt'
-      link https://github.com/midasvo/ephyra/blob/main/application/src/main/kotlin/dev/jdtech/jellyfin/repository/MediaRepository.kt 'Source'
+    itemCatalog = port 'ItemCatalog' {
+      description 'A role of the repository (#967): one item, the seasons and episodes of a show, people. repository/ItemCatalog.kt'
+      link https://github.com/midasvo/ephyra/blob/main/application/src/main/kotlin/dev/jdtech/jellyfin/repository/ItemCatalog.kt 'Source'
+    }
+    itemLists = port 'ItemLists' {
+      description 'A role of the repository (#967): libraries, library items, favourites, search, the rows of Home. repository/ItemLists.kt'
+      link https://github.com/midasvo/ephyra/blob/main/application/src/main/kotlin/dev/jdtech/jellyfin/repository/ItemLists.kt 'Source'
+    }
+    playbackMedia = port 'PlaybackMedia' {
+      description 'A role of the repository (#967): sources, segments, trickplay, chapter images. repository/PlaybackMedia.kt'
+      link https://github.com/midasvo/ephyra/blob/main/application/src/main/kotlin/dev/jdtech/jellyfin/repository/PlaybackMedia.kt 'Source'
+    }
+    playbackReports = port 'PlaybackReports' {
+      description 'A role of the repository (#967): the play session, start, progress and stop. repository/PlaybackReports.kt'
+      link https://github.com/midasvo/ephyra/blob/main/application/src/main/kotlin/dev/jdtech/jellyfin/repository/PlaybackReports.kt 'Source'
+    }
+    seriesTrackPreferences = port 'SeriesTrackPreferences' {
+      description 'A role of the repository (#967): the tracks picked by hand per series. repository/SeriesTrackPreferences.kt'
+      link https://github.com/midasvo/ephyra/blob/main/application/src/main/kotlin/dev/jdtech/jellyfin/repository/SeriesTrackPreferences.kt 'Source'
     }
     serverStore = port 'ServerStore' {
       description 'Servers, addresses and users in Room. repository/ServerStore.kt'
@@ -114,10 +130,11 @@ model {
     mpvEngine -> playerEngine 'implements'
   }
 
-  ephyra.playerLocal.playerViewModel -> ephyra.application.mediaRepository 'series track choices'
-  ephyra.playerLocal.resolvePlayback -> ephyra.application.mediaRepository 'getPlaybackSources'
-  ephyra.playerLocal.playlistManager -> ephyra.application.mediaRepository 'episodes'
-  ephyra.playerLocal.playbackReporter -> ephyra.application.mediaRepository 'reports, user data'
+  ephyra.playerLocal.playerViewModel -> ephyra.application.seriesTrackPreferences 'series track choices'
+  ephyra.playerLocal.playerViewModel -> ephyra.application.playbackMedia 'segments, trickplay, chapters'
+  ephyra.playerLocal.resolvePlayback -> ephyra.application.playbackMedia 'getPlaybackSources'
+  ephyra.playerLocal.playlistManager -> ephyra.application.itemCatalog 'episodes'
+  ephyra.playerLocal.playbackReporter -> ephyra.application.playbackReports 'reports, user data'
   ephyra.playerLocal.resolvePlayback -> ephyra.domain.downloadState 'a finished download first'
 
   extend ephyra.downloads {
@@ -162,10 +179,10 @@ model {
   }
 
   ephyra.downloads.downloaderImpl -> ephyra.application.downloadStore 'writes the item rows'
-  ephyra.downloads.downloaderImpl -> ephyra.application.mediaRepository 'sources, segments, trickplay'
+  ephyra.downloads.downloaderImpl -> ephyra.application.playbackMedia 'sources, segments, trickplay'
   ephyra.downloads.downloaderImpl -> ephyra.application.downloadSettings 'mobile data, roaming'
   ephyra.downloads.downloadQueue -> ephyra.application.downloadSettings 'how many at once, where'
-  ephyra.downloads.smartDownloads -> ephyra.application.mediaRepository 'next episodes'
+  ephyra.downloads.smartDownloads -> ephyra.application.itemCatalog 'next episodes'
 
   extend ephyra.serverJellyfin {
     jellyfinMediaServer = component 'JellyfinMediaServer' {
@@ -221,7 +238,11 @@ model {
     }
   }
 
-  ephyra.data.mediaRepositoryImpl -> ephyra.application.mediaRepository 'implements'
+  ephyra.data.mediaRepositoryImpl -> ephyra.application.itemCatalog 'implements'
+  ephyra.data.mediaRepositoryImpl -> ephyra.application.itemLists 'implements'
+  ephyra.data.mediaRepositoryImpl -> ephyra.application.playbackMedia 'implements'
+  ephyra.data.mediaRepositoryImpl -> ephyra.application.playbackReports 'implements'
+  ephyra.data.mediaRepositoryImpl -> ephyra.application.seriesTrackPreferences 'implements'
   ephyra.data.mediaRepositoryImpl -> ephyra.domain.mediaServer 'calls the server in use'
   ephyra.data.mediaRepositoryImpl -> ephyra.domain.playState 'user data rules'
   ephyra.data.roomServerStore -> ephyra.application.serverStore 'implements'

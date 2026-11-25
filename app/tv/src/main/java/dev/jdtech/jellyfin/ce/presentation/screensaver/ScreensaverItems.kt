@@ -4,7 +4,7 @@ import dev.jdtech.jellyfin.models.Item
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemLists
 import kotlinx.coroutines.CancellationException
 import timber.log.Timber
 
@@ -18,10 +18,10 @@ private const val SCREENSAVER_LIMIT = 100
  * server pick from the whole library (sorting by name and shuffling would only ever show the start
  * of the alphabet). "Recently added" keeps the newest first. Empty when loading fails.
  */
-internal suspend fun loadScreensaverItems(repository: MediaRepository, source: String): List<Item> =
+internal suspend fun loadScreensaverItems(lists: ItemLists, source: String): List<Item> =
     try {
         if (source == SCREENSAVER_SOURCE_RECENTLY_ADDED) {
-            repository
+            lists
                 .getItems(
                     includeTypes = screensaverKinds,
                     recursive = true,
@@ -31,7 +31,7 @@ internal suspend fun loadScreensaverItems(repository: MediaRepository, source: S
                 )
                 .filter { it.images.backdrop != null }
         } else {
-            repository.getRandomItemsWithBackdrop(screensaverKinds, SCREENSAVER_LIMIT)
+            lists.getRandomItemsWithBackdrop(screensaverKinds, SCREENSAVER_LIMIT)
         }
     } catch (e: CancellationException) {
         throw e

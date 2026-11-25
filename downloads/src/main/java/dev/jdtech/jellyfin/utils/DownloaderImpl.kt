@@ -26,11 +26,13 @@ import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.looksLikeJellyfinId
 import dev.jdtech.jellyfin.models.toItemId
+import dev.jdtech.jellyfin.repository.CurrentAccount
 import dev.jdtech.jellyfin.repository.CurrentServerId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.DownloadSettings
 import dev.jdtech.jellyfin.repository.DownloadStore
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.PlaybackMedia
 import dev.jdtech.jellyfin.repository.StoredMediaStream
 import dev.jdtech.jellyfin.repository.StoredPendingDownload
 import dev.jdtech.jellyfin.repository.StoredSource
@@ -160,7 +162,9 @@ internal fun trickplaySheetCount(info: ItemTrickplayInfo): Int {
 class DownloaderImpl(
     private val context: Context,
     private val store: DownloadStore,
-    private val mediaRepositoryProvider: Provider<MediaRepository>,
+    private val catalogProvider: Provider<ItemCatalog>,
+    private val mediaProvider: Provider<PlaybackMedia>,
+    private val accountProvider: Provider<CurrentAccount>,
     private val settings: DownloadSettings,
     private val currentServerId: CurrentServerId,
     // A Provider, so building this @Singleton (during Application.onCreate's field injection) does
@@ -188,9 +192,16 @@ class DownloaderImpl(
 
     // Resolved per use, never captured: which repository is active (online vs offline) can
     // change at runtime without this @Singleton being recreated. Capturing a fixed instance
-    // here goes stale after an offline -> online switch.
-    private val mediaRepository: MediaRepository
-        get() = mediaRepositoryProvider.get()
+    // here goes stale after an offline -> online switch. #967: the roles of the repository it
+    // uses.
+    private val catalog: ItemCatalog
+        get() = catalogProvider.get()
+
+    private val media: PlaybackMedia
+        get() = mediaProvider.get()
+
+    private val account: CurrentAccount
+        get() = accountProvider.get()
 
     /**
      * Monotonically-increasing download id counter. Seeded at System.currentTimeMillis() so that
@@ -243,7 +254,7 @@ class DownloaderImpl(
                 // disk was written at the row's quality, and mixing URL kinds would
                 // append mismatched bytes.
                 val sources =
-                    mediaRepository.getMediaSources(
+                    media.getMediaSources(
                         item.id,
                         true,
                         transcodeDolbyVision,
@@ -284,15 +295,15 @@ class DownloaderImpl(
         var mintedDownloadId: Long? = null
         try {
             val source =
-                mediaRepository
-                    .getMediaSources(item.id, true, transcodeDolbyVision, maxBitrate)
-                    .first { it.id == sourceId }
-            val segments = mediaRepository.getServerSegments(item.id)
+                media.getMediaSources(item.id, true, transcodeDolbyVision, maxBitrate).first {
+                    it.id == sourceId
+                }
+            val segments = media.getServerSegments(item.id)
             // CE (#718): what the rows below need from the server, asked before another server's
             // copy gives way, so a server that stops answering here leaves that copy alone.
             val showAndSeason =
                 (item as? Episode)?.let {
-                    mediaRepository.getShow(it.seriesId) to mediaRepository.getSeason(it.seasonId)
+                    catalog.getShow(it.seriesId) to catalog.getSeason(it.seasonId)
                 }
             val trickplayInfo =
                 if (item is Playable) {
@@ -392,7 +403,7 @@ class DownloaderImpl(
             )
             // Progress from an earlier download of this item that has not reached the server yet
             // is newer than what the server sent with the item: keep it.
-            val userId = mediaRepository.getUserId()
+            val userId = account.getUserId()
             store.storeUserDataOfDownload(userId, item)
 
             val resolvedStorageIndex = dirs.indexOf(storageLocation)
@@ -424,8 +435,7 @@ class DownloaderImpl(
                 // CE (#718): a download that failed before another server's copy gave way has
                 // nothing of its own in Room; deleting by the item's id would take that copy.
                 if (!isStoredForAnotherServer(item, serverId)) {
-                    val source =
-                        mediaRepository.getMediaSources(item.id).first { it.id == sourceId }
+                    val source = media.getMediaSources(item.id).first { it.id == sourceId }
                     deleteItem(item, source)
                 }
             } catch (e: Exception) {
@@ -444,7 +454,7 @@ class DownloaderImpl(
     ): Pair<Long, UiText?> {
         val sources =
             try {
-                mediaRepository.getMediaSources(
+                media.getMediaSources(
                     item.id,
                     includePath = true,
                     transcodeDolbyVision = settings.downloadTranscodeDolbyVision,
@@ -798,7 +808,7 @@ class DownloaderImpl(
         if (failedRows.isEmpty()) return
         val serverSource =
             try {
-                mediaRepository
+                media
                     .getMediaSources(item.id, true, settings.downloadTranscodeDolbyVision)
                     .firstOrNull { it.id == dbSourceDto.id }
             } catch (e: Exception) {
@@ -880,7 +890,7 @@ class DownloaderImpl(
     ) {
         val sheets = mutableMapOf<Int, ByteArray>()
         for (index in 0 until trickplaySheetCount(trickplayInfo)) {
-            mediaRepository.getTrickplayData(itemId, trickplayInfo.width, index, sourceId)?.let {
+            media.getTrickplayData(itemId, trickplayInfo.width, index, sourceId)?.let {
                 sheets[index] = it
             }
         }
@@ -936,8 +946,8 @@ class DownloaderImpl(
                 val resolved: Item? =
                     try {
                         when (row.itemKind) {
-                            "MOVIE" -> mediaRepository.getMovie(row.itemId)
-                            else -> mediaRepository.getEpisode(row.itemId)
+                            "MOVIE" -> catalog.getMovie(row.itemId)
+                            else -> catalog.getEpisode(row.itemId)
                         }
                     } catch (e: Exception) {
                         // Transient (offline, server down) or permanent (item deleted) —
@@ -973,7 +983,7 @@ class DownloaderImpl(
 
     override suspend fun getActiveDownloads(): List<Downloader.ActiveDownload> =
         withContext(Dispatchers.IO) {
-            val userId = mediaRepository.getUserId()
+            val userId = account.getUserId()
             val sources = store.activeDownloadSources()
             val result = mutableListOf<Downloader.ActiveDownload>()
             for (source in sources) {
@@ -1028,7 +1038,7 @@ class DownloaderImpl(
 
     override suspend fun sweepOrphans() =
         withContext(Dispatchers.IO) {
-            val userId = mediaRepository.getUserId()
+            val userId = account.getUserId()
 
             // CE (#573): first, so the rows below have the subtitles' final names. Either name is
             // safe: the sweep keeps a file a row names with or without `.download`.
@@ -1344,7 +1354,7 @@ class DownloaderImpl(
         if (failed.isEmpty()) return
         val serverSource =
             try {
-                mediaRepository
+                media
                     .getMediaSources(
                         source.itemId,
                         true,

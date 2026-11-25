@@ -47,7 +47,7 @@ class PlaylistManagerNextUpTest {
 
     @Test
     fun `the show's next-up episode starts with its trickplay and chapters`() {
-        val manager = playlistManager(repository())
+        val manager = repository().let { playlistManager(it, it, it) }
 
         val item = runBlocking { manager.getInitialItem(seriesId, ItemKind.SERIES) }
 
@@ -62,7 +62,7 @@ class PlaylistManagerNextUpTest {
     @Test
     fun `the next-up episode still plays when the full episode cannot be fetched`() {
         server.failWith(ServerException.HttpStatus(500), only = setOf("episode"))
-        val manager = playlistManager(repository())
+        val manager = repository().let { playlistManager(it, it, it) }
 
         val item = runBlocking { manager.getInitialItem(seriesId, ItemKind.SERIES) }
 

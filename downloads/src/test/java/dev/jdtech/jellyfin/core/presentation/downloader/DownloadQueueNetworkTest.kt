@@ -19,7 +19,6 @@ import dev.jdtech.jellyfin.utils.download.DownloadStatus
 import dev.jdtech.jellyfin.utils.download.TestDownloadSettings
 import dev.jdtech.jellyfin.utils.download.TestDownloadTexts
 import java.util.UUID
-import javax.inject.Provider
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -112,7 +111,6 @@ class DownloadQueueNetworkTest {
         return DownloadQueue(
             downloader = downloader,
             settings = TestDownloadSettings(maxConcurrentDownloads = 1),
-            repositoryProvider = Provider { error("No repository in this test") },
             downloadStore = RoomDownloadStore(database()),
             context = context,
             texts = TestDownloadTexts,

@@ -50,7 +50,7 @@ split. Use this table to say in the ledger where an upstream change would land:
 |---|---|
 | `data/.../models/Findroid*.kt` | `domain/.../models/`, renamed (below); the mapping from SDK types is in `server/jellyfin/.../mappers/` |
 | `data/.../models/Findroid*Dto.kt` | `data/.../models/*Entity.kt` (Room) |
-| `data/.../repository/JellyfinRepository.kt` | `application/.../repository/MediaRepository.kt` |
+| `data/.../repository/JellyfinRepository.kt` | split by role (#967): `application/.../repository/ItemCatalog.kt`, `ItemLists.kt`, `PlaybackMedia.kt`, `PlaybackReports.kt`, … (the method keeps its name; find the role with `git grep "fun <name>(" application/`) |
 | `data/.../repository/JellyfinRepositoryImpl.kt` | split: `data/.../repository/MediaRepositoryImpl.kt` (Room, stored fallback) over the ports, the SDK calls in `server/jellyfin` (`JellyfinCatalog`, `JellyfinPlayback`, `JellyfinUserData`, …) |
 | `data/.../repository/JellyfinRepositoryOfflineImpl.kt` | gone (#281, no offline mode) |
 | `data/.../api/JellyfinApi.kt` | `server/jellyfin/.../api/JellyfinApi.kt` |

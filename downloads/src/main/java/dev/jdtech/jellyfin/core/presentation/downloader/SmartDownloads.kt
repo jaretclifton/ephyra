@@ -6,10 +6,11 @@ import dev.jdtech.jellyfin.models.EpisodeField
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.asString
+import dev.jdtech.jellyfin.repository.CurrentAccount
 import dev.jdtech.jellyfin.repository.CurrentServerId
 import dev.jdtech.jellyfin.repository.DownloadSettings
 import dev.jdtech.jellyfin.repository.DownloadStore
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.repository.StoredSource
 import dev.jdtech.jellyfin.utils.Downloader
@@ -43,7 +44,8 @@ constructor(
     private val settings: DownloadSettings,
     private val currentServerId: CurrentServerId,
     private val downloadStore: DownloadStore,
-    private val repositoryProvider: Provider<MediaRepository>,
+    private val catalog: Provider<ItemCatalog>,
+    private val account: Provider<CurrentAccount>,
     private val networkConnectivity: NetworkConnectivity,
     private val playbackEvents: PlaybackEvents,
 ) {
@@ -73,7 +75,7 @@ constructor(
 
     private suspend fun onPlaybackStopped(itemId: ItemId) {
         if (!isActive()) return
-        val episode = repositoryProvider.get().getItem(itemId) as? Episode ?: return
+        val episode = catalog.get().getItem(itemId) as? Episode ?: return
         check(episode.seriesId, finishedRecently = episode.played)
     }
 
@@ -118,16 +120,12 @@ constructor(
             settings.smartDownloadsSince = since
         }
 
-        val repository = repositoryProvider.get()
-        val userId = repository.getUserId()
+        val catalog = this.catalog.get()
+        val userId = account.get().getUserId()
         val episodes =
-            repository.getSeasons(seriesId).flatMap { season ->
+            catalog.getSeasons(seriesId).flatMap { season ->
                 // Without CanDownload every episode reads as not downloadable.
-                repository.getEpisodes(
-                    seriesId,
-                    season.id,
-                    fields = setOf(EpisodeField.CAN_DOWNLOAD),
-                )
+                catalog.getEpisodes(seriesId, season.id, fields = setOf(EpisodeField.CAN_DOWNLOAD))
             }
 
         // The server decides what counts as watched, so wait until our own progress has reached

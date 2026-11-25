@@ -11,15 +11,15 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemLists
 import kotlinx.coroutines.flow.Flow
 import timber.log.Timber
 
 /**
- * The library grid without placeholders, page by page over [MediaRepository.getItems]. #968: was
+ * The library grid without placeholders, page by page over [ItemLists.getItems]. #968: was
  * `MediaRepository.getItemsPaging` in `data`; the pager lives with the screen that shows it.
  */
-internal fun MediaRepository.itemsPager(
+internal fun ItemLists.itemsPager(
     parentId: ItemId? = null,
     includeTypes: List<ItemKind>? = null,
     recursive: Boolean = false,
@@ -50,7 +50,7 @@ internal fun MediaRepository.itemsPager(
         .flow
 
 internal class ItemsPagingSource(
-    private val mediaRepository: MediaRepository,
+    private val lists: ItemLists,
     private val parentId: ItemId?,
     private val includeTypes: List<ItemKind>?,
     private val recursive: Boolean,
@@ -65,7 +65,7 @@ internal class ItemsPagingSource(
 
         return try {
             val items =
-                mediaRepository.getItems(
+                lists.getItems(
                     parentId = parentId,
                     includeTypes = includeTypes,
                     recursive = recursive,

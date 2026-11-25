@@ -21,7 +21,6 @@ import dev.jdtech.jellyfin.utils.download.TestDownloadTexts
 import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
-import javax.inject.Provider
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.fail
@@ -147,7 +146,6 @@ class DownloadQueueFinalizeTest {
         return DownloadQueue(
             downloader = downloader,
             settings = TestDownloadSettings(maxConcurrentDownloads = 1),
-            repositoryProvider = Provider { error("No repository in this test") },
             downloadStore = RoomDownloadStore(database()),
             context = context,
             texts = TestDownloadTexts,

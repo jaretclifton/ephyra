@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.jdtech.jellyfin.core.presentation.downloader.DownloadQueue
+import dev.jdtech.jellyfin.domain.ports.CurrentServerCapabilities
 import dev.jdtech.jellyfin.film.presentation.DownloadPrompt
 import dev.jdtech.jellyfin.film.presentation.EpisodeDownloadPrompts
 import dev.jdtech.jellyfin.film.presentation.ExternalRatingsLoader
@@ -29,8 +30,10 @@ import dev.jdtech.jellyfin.models.mergeDuplicateRoles
 import dev.jdtech.jellyfin.ratings.ExternalRatings
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.DownloadStore
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.ItemExtras
 import dev.jdtech.jellyfin.repository.ReloadPolicy
+import dev.jdtech.jellyfin.repository.UserDataUpdates
 import dev.jdtech.jellyfin.repository.serverOrStored
 import dev.jdtech.jellyfin.repository.serverOrStoredList
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
@@ -62,7 +65,10 @@ internal val showEpisodeFields = setOf(EpisodeField.CAN_DOWNLOAD)
 @HiltViewModel
 class ShowViewModel
 internal constructor(
-    private val repository: MediaRepository,
+    private val catalog: ItemCatalog,
+    private val userData: UserDataUpdates,
+    private val extras: ItemExtras,
+    private val capabilities: CurrentServerCapabilities,
     private val appPreferences: AppPreferences,
     private val downloader: Downloader,
     private val downloadQueue: DownloadQueue,
@@ -79,7 +85,10 @@ internal constructor(
 ) : ViewModel() {
     @Inject
     constructor(
-        repository: MediaRepository,
+        catalog: ItemCatalog,
+        userData: UserDataUpdates,
+        extras: ItemExtras,
+        capabilities: CurrentServerCapabilities,
         appPreferences: AppPreferences,
         downloader: Downloader,
         downloadQueue: DownloadQueue,
@@ -87,7 +96,10 @@ internal constructor(
         dataChanges: DataChangeEvents = DataChangeEvents(),
         externalRatings: ExternalRatings = ExternalRatings.None,
     ) : this(
-        repository,
+        catalog,
+        userData,
+        extras,
+        capabilities,
         appPreferences,
         downloader,
         downloadQueue,
@@ -152,7 +164,7 @@ internal constructor(
             _state.emit(
                 _state.value.copy(
                     error = null,
-                    cappedDownloads = repository.capabilities.cappedDownloadTranscode,
+                    cappedDownloads = capabilities.get().cappedDownloadTranscode,
                 )
             )
             try {
@@ -160,11 +172,11 @@ internal constructor(
                 // child goes straight to viewModelScope and crashes the app, past this
                 // try/catch (see HomeViewModel.loadData).
                 coroutineScope {
-                    val showAsync = async { repository.getShow(showId) }
+                    val showAsync = async { catalog.getShow(showId) }
                     // CE (#281): the seasons with downloads, from Room. When there are any, an
                     // unreachable server is no error: the page shows what Room has, as the
                     // Downloads tab does.
-                    val storedSeasonsAsync = async { repository.getSeasons(showId, offline = true) }
+                    val storedSeasonsAsync = async { catalog.getSeasons(showId, offline = true) }
                     val nextUpAsync = async {
                         if (downloadsOnly) null
                         else
@@ -185,7 +197,7 @@ internal constructor(
                                 storedSeasonsAsync.await(),
                                 log = TimberFallbackLog,
                             ) {
-                                repository.getSeasons(showId)
+                                catalog.getSeasons(showId)
                             }
                     }
                     // The download counts are extras: when they fail, the page still shows.
@@ -284,7 +296,7 @@ internal constructor(
      * request for the whole series.
      */
     private suspend fun getServerEpisodeTotals(showId: ItemId): Map<ItemId, SeasonEpisodeTotals> =
-        repository
+        catalog
             .getEpisodes(seriesId = showId, seasonId = null, fields = showEpisodeFields)
             .groupBy { it.seasonId }
             .mapValues { (_, episodes) ->
@@ -326,7 +338,7 @@ internal constructor(
                     collections = false,
                 )
                 .shownIn(sections)
-                .within(repository.capabilities)
+                .within(capabilities.get())
         if (relatedFor == showId && relatedRequest == request) return
         relatedFor = showId
         relatedRequest = request
@@ -335,7 +347,7 @@ internal constructor(
         _state.update { it.copy(related = it.related.keeping(request)) }
         relatedJob =
             viewModelScope.launchRelatedItems(
-                repository = repository,
+                extras = extras,
                 itemId = showId,
                 request = request,
             ) { change ->
@@ -350,9 +362,9 @@ internal constructor(
     fun loadThemeSong(showId: ItemId) {
         if (!appPreferences.getValue(appPreferences.tvThemeMusic)) return
         // #769: a server without theme songs is not asked for one.
-        if (!repository.capabilities.themeSongs) return
+        if (!capabilities.get().themeSongs) return
         viewModelScope.launch {
-            val url = repository.getThemeSongUrl(showId)
+            val url = extras.getThemeSongUrl(showId)
             _state.emit(_state.value.copy(themeSongUrl = url))
         }
     }
@@ -393,7 +405,7 @@ internal constructor(
     fun downloadSeasons(seasonIds: Set<ItemId>) {
         viewModelScope.launch(ioDispatcher) {
             val episodes = seasonIds.flatMap { seasonId ->
-                repository.getEpisodes(
+                catalog.getEpisodes(
                     seriesId = showId,
                     seasonId = seasonId,
                     fields = showEpisodeFields,
@@ -417,7 +429,7 @@ internal constructor(
         viewModelScope.launch(ioDispatcher) {
             for (season in _state.value.seasons) {
                 val episodes =
-                    repository.getEpisodes(seriesId = showId, seasonId = season.id, offline = true)
+                    catalog.getEpisodes(seriesId = showId, seasonId = season.id, offline = true)
                 for (episode in episodes) {
                     val localSource =
                         episode.sources.firstOrNull { it.type == ItemSourceType.LOCAL }
@@ -431,7 +443,7 @@ internal constructor(
     }
 
     private suspend fun getNextUp(showId: ItemId): Episode? {
-        val nextUpItems = repository.getNextUp(showId)
+        val nextUpItems = catalog.getNextUp(showId)
         return nextUpItems.getOrNull(0)
     }
 
@@ -458,7 +470,7 @@ internal constructor(
     private fun setPlayed(played: Boolean) {
         viewModelScope.launch {
             try {
-                if (played) repository.markAsPlayed(showId) else repository.markAsUnplayed(showId)
+                if (played) userData.markAsPlayed(showId) else userData.markAsUnplayed(showId)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -473,9 +485,7 @@ internal constructor(
             try {
                 coroutineScope {
                     val nextUpAsync = async { if (downloadsOnly) null else getNextUp(showId) }
-                    val seasonsAsync = async {
-                        repository.getSeasons(showId, offline = downloadsOnly)
-                    }
+                    val seasonsAsync = async { catalog.getSeasons(showId, offline = downloadsOnly) }
                     val nextUp = nextUpAsync.await()
                     val seasons = seasonsAsync.await()
                     _state.update { state -> state.copy(nextUp = nextUp, seasons = seasons) }
@@ -492,8 +502,7 @@ internal constructor(
     private fun setFavorite(favorite: Boolean) {
         viewModelScope.launch {
             try {
-                if (favorite) repository.markAsFavorite(showId)
-                else repository.unmarkAsFavorite(showId)
+                if (favorite) userData.markAsFavorite(showId) else userData.unmarkAsFavorite(showId)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

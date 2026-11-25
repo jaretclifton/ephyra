@@ -6,14 +6,14 @@ import dev.jdtech.jellyfin.film.presentation.favorites.FavoritesViewModel
 import dev.jdtech.jellyfin.film.presentation.media.MediaViewModel
 import dev.jdtech.jellyfin.film.presentation.search.SearchAction
 import dev.jdtech.jellyfin.film.presentation.search.SearchViewModel
-import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.toUserId
+import dev.jdtech.jellyfin.repository.CurrentAccount
 import dev.jdtech.jellyfin.repository.DataChangeEvents
+import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.repository.ItemsResult
-import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.StoredLibraries
-import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import kotlin.coroutines.Continuation
@@ -115,7 +115,7 @@ class ServerAwayReloadTest {
     @Test
     fun `media loads the libraries again when the server goes and comes back`() =
         runTest(dispatcher) {
-            val viewModel = MediaViewModel(repository())
+            val viewModel = MediaViewModel(repository.role(), repository.role())
             fromStore = false
             viewModel.onServerAwayChanged(false)
             viewModel.loadData()
@@ -144,7 +144,7 @@ class ServerAwayReloadTest {
     @Test
     fun `media loads once for a change and a resume together`() =
         runTest(dispatcher) {
-            val viewModel = MediaViewModel(repository())
+            val viewModel = MediaViewModel(repository.role(), repository.role())
             fromStore = false
             viewModel.onServerAwayChanged(false)
             viewModel.loadData()
@@ -297,7 +297,7 @@ class ServerAwayReloadTest {
     @Test
     fun `an older media load answering after a newer one changes nothing`() =
         runTest(dispatcher) {
-            val viewModel = MediaViewModel(repository())
+            val viewModel = MediaViewModel(repository.role(), repository.role())
             fromStore = false
             viewModel.onServerAwayChanged(false)
             holdNext = true
@@ -324,7 +324,7 @@ class ServerAwayReloadTest {
     @Test
     fun `results of a search made while away are downloads only`() =
         runTest(dispatcher) {
-            val viewModel = SearchViewModel(repository())
+            val viewModel = SearchViewModel(repository.role(), repository.role())
             fromStore = false
             viewModel.onServerAwayChanged(false)
             viewModel.onAction(SearchAction.Search("bluey"))
@@ -341,7 +341,7 @@ class ServerAwayReloadTest {
     @Test
     fun `an open search asks again when the server goes and comes back`() =
         runTest(dispatcher) {
-            val viewModel = SearchViewModel(repository())
+            val viewModel = SearchViewModel(repository.role(), repository.role())
             fromStore = false
             viewModel.onServerAwayChanged(false)
             viewModel.onAction(SearchAction.Search("bluey"))
@@ -365,7 +365,7 @@ class ServerAwayReloadTest {
     @Test
     fun `a closed or empty search asks nothing`() =
         runTest(dispatcher) {
-            val viewModel = SearchViewModel(repository())
+            val viewModel = SearchViewModel(repository.role(), repository.role())
             fromStore = false
             viewModel.onServerAwayChanged(false)
             viewModel.onAction(SearchAction.Search("bluey"))
@@ -417,7 +417,7 @@ class ServerAwayReloadTest {
     @Test
     fun `search results from Room are downloads only before the outage is flagged`() =
         runTest(dispatcher) {
-            val viewModel = SearchViewModel(repository())
+            val viewModel = SearchViewModel(repository.role(), repository.role())
             viewModel.onServerAwayChanged(false)
             fromStore = true
             viewModel.onAction(SearchAction.Search("bluey"))
@@ -502,7 +502,7 @@ class ServerAwayReloadTest {
     @Test
     fun `a media load in the delay hands the try on too`() =
         runTest(dispatcher) {
-            val viewModel = MediaViewModel(repository())
+            val viewModel = MediaViewModel(repository.role(), repository.role())
             viewModel.onServerAwayChanged(false)
             fromStore = true
             viewModel.loadData()
@@ -521,7 +521,7 @@ class ServerAwayReloadTest {
     @Test
     fun `a newer search in the delay hands the try on`() =
         runTest(dispatcher) {
-            val viewModel = SearchViewModel(repository())
+            val viewModel = SearchViewModel(repository.role(), repository.role())
             viewModel.onServerAwayChanged(false)
             fromStore = true
             viewModel.onAction(SearchAction.Search("blue"))
@@ -538,7 +538,7 @@ class ServerAwayReloadTest {
     @Test
     fun `the outage flagged in the meantime takes the place of the one more try`() =
         runTest(dispatcher) {
-            val viewModel = MediaViewModel(repository())
+            val viewModel = MediaViewModel(repository.role(), repository.role())
             viewModel.onServerAwayChanged(false)
             fromStore = true
             viewModel.loadData()
@@ -556,8 +556,8 @@ class ServerAwayReloadTest {
     @Test
     fun `media and search ask once more too`() =
         runTest(dispatcher) {
-            val media = MediaViewModel(repository())
-            val search = SearchViewModel(repository())
+            val media = MediaViewModel(repository.role(), repository.role())
+            val search = SearchViewModel(repository.role(), repository.role())
             media.onServerAwayChanged(false)
             search.onServerAwayChanged(false)
             fromStore = true
@@ -630,17 +630,13 @@ class ServerAwayReloadTest {
         }
 
     private fun favorites(dataChanges: DataChangeEvents = DataChangeEvents()) =
-        FavoritesViewModel(repository(), dataChanges, dispatcher)
+        FavoritesViewModel(repository.role(), repository.role(), dataChanges, dispatcher)
 
-    private fun repository(): MediaRepository =
-        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
-            _,
-            method,
-            args ->
+    private val repository: FakeRoles =
+        FakeRoles(ItemLists::class, CurrentAccount::class) { _, method, args ->
             // #769: Jellyfin can do everything.
-            if (method.kotlinName == "getCapabilities") return@fakeProxy ServerCapabilities.ALL
             // #810: Media asks whom the client acts for; always the same user here.
-            if (method.kotlinName == "getUserId") return@fakeProxy USER_ID
+            if (method.kotlinName == "getUserId") return@FakeRoles USER_ID
             if (fail) throw java.net.ConnectException("Failed to connect")
             if (holdNext) {
                 // A slow answer: the test resumes it later.
@@ -648,7 +644,7 @@ class ServerAwayReloadTest {
                 calls += method.kotlinName
                 @Suppress("UNCHECKED_CAST")
                 held += args!!.last() as Continuation<Any?>
-                return@fakeProxy COROUTINE_SUSPENDED
+                return@FakeRoles COROUTINE_SUSPENDED
             }
             when (method.kotlinName) {
                 "getLibraries" -> {
@@ -663,10 +659,12 @@ class ServerAwayReloadTest {
                     calls += args!![0] as String
                     ItemsResult(emptyList<Any>(), fromStore)
                 }
-                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
+                else ->
+                    throw NotImplementedError(
+                        "${method.declaringClass.simpleName}.${method.kotlinName}"
+                    )
             }
         }
-            as MediaRepository
 
     private companion object {
         val USER_ID: UserId = java.util.UUID.randomUUID().toString().toUserId()

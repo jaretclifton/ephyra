@@ -89,13 +89,6 @@ class ServerCapabilitiesGateTest {
     }
 
     @Test
-    fun `without device rename the server is not asked`() = runBlocking {
-        repository(ServerCapabilities.ALL.copy(deviceRename = false)).updateDeviceName("Phone")
-
-        assertEquals(emptyList(), paths())
-    }
-
-    @Test
     fun `Jellyfin is asked for its resume thresholds with the start report`() = runBlocking {
         repository(ServerCapabilities.ALL)
             .postPlaybackStart(itemId, positionTicks = 0L, transcoded = false)

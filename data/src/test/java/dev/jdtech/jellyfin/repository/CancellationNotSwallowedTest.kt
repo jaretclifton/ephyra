@@ -7,10 +7,8 @@ import androidx.sqlite.driver.AndroidSQLiteDriver
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.models.ServerException
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.testing.FakeResumeThresholdsStore
-import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -42,7 +40,7 @@ class CancellationNotSwallowedTest {
 
     private val server = UnansweredServer(userId)
 
-    private val repository: MediaRepository by lazy {
+    private val repository: MediaRepositoryImpl by lazy {
         MediaRepositoryImpl(
             context,
             server,
@@ -75,22 +73,6 @@ class CancellationNotSwallowedTest {
         runBlocking<Unit> {
             failing()
             assertNull(repository.getThemeSongUrl(itemId))
-        }
-
-    @Test
-    fun `a cancelled stream url request is cancelled`() =
-        runBlocking<Unit> {
-            cancelled()
-            assertFailsWith<CancellationException> {
-                repository.getStreamUrl(itemId, "source".toMediaSourceId())
-            }
-        }
-
-    @Test
-    fun `a failed stream url request gives an empty url`() =
-        runBlocking<Unit> {
-            failing()
-            assertEquals("", repository.getStreamUrl(itemId, "source".toMediaSourceId()))
         }
 
     @Test

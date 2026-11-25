@@ -12,7 +12,7 @@ import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.UiText
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemLists
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,8 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @HiltViewModel
-class CollectionViewModel @Inject constructor(private val repository: MediaRepository) :
-    ViewModel() {
+class CollectionViewModel @Inject constructor(private val lists: ItemLists) : ViewModel() {
     private val _state = MutableStateFlow(CollectionState())
     val state = _state.asStateFlow()
 
@@ -31,7 +30,7 @@ class CollectionViewModel @Inject constructor(private val repository: MediaRepos
             _state.emit(_state.value.copy(isLoading = true, error = null))
 
             try {
-                val items = repository.getItems(parentId = parentId, sortBy = SortBy.RELEASE_DATE)
+                val items = lists.getItems(parentId = parentId, sortBy = SortBy.RELEASE_DATE)
 
                 val sections = mutableListOf<CollectionSection>()
 

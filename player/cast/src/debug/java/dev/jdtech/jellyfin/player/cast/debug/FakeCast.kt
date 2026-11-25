@@ -22,7 +22,7 @@ import dev.jdtech.jellyfin.player.cast.models.Device
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
 import dev.jdtech.jellyfin.player.core.domain.models.Track
 import dev.jdtech.jellyfin.player.local.domain.PlaylistManager
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
 import javax.inject.Provider
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
@@ -57,7 +57,7 @@ object FakeCastModule {
     @Singleton
     fun provideCastStandIn(
         playlistManagers: Provider<PlaylistManager>,
-        repository: MediaRepository,
+        catalog: ItemCatalog,
     ): CastStandIn {
         if (scenario() == null) {
             return object : CastStandIn {
@@ -67,7 +67,7 @@ object FakeCastModule {
         }
         Timber.w("Cast is a stand-in (debug.ephyra.cast): nothing is sent to a receiver")
         val session = FakeCastSessionManager()
-        val controller = FakeCastPlayerController(session, playlistManagers, repository)
+        val controller = FakeCastPlayerController(session, playlistManagers, catalog)
         return object : CastStandIn {
             override val sessionManager: CastSessionManager = session
             override val playerController: CastPlayerController = controller
@@ -178,7 +178,7 @@ internal class FakeCastSessionManager : CastSessionManager {
 internal class FakeCastPlayerController(
     private val session: FakeCastSessionManager,
     private val playlistManagers: Provider<PlaylistManager>,
-    private val repository: MediaRepository,
+    private val catalog: ItemCatalog,
 ) : CastPlayerController {
     private val scope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
     private var playJob: Job? = null
@@ -279,8 +279,7 @@ internal class FakeCastPlayerController(
             }
             val duration =
                 try {
-                    repository.getItem(loaded.itemId)?.runtimeTicks?.let(Ticks::toMilliseconds)
-                        ?: 0L
+                    catalog.getItem(loaded.itemId)?.runtimeTicks?.let(Ticks::toMilliseconds) ?: 0L
                 } catch (_: Exception) {
                     0L
                 }

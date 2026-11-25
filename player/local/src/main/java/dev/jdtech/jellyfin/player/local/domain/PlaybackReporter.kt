@@ -6,8 +6,8 @@ import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.player.core.domain.models.PlayerItem
-import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.PlaybackEvents
+import dev.jdtech.jellyfin.repository.PlaybackReports
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -60,7 +60,7 @@ class ItemTransition internal constructor(val stopJob: Job?, internal val seq: L
  * thread only. The repository calls of the start and stop run on [ioDispatcher].
  */
 class PlaybackReporter(
-    private val repository: MediaRepository,
+    private val reports: PlaybackReports,
     private val playbackEvents: PlaybackEvents,
     private val reportScope: CoroutineScope,
     private val ioDispatcher: CoroutineDispatcher,
@@ -107,7 +107,7 @@ class PlaybackReporter(
      * so this is where its play session becomes the one the reports name (#728).
      */
     fun onStreamQueued(item: PlayerItem) {
-        repository.setPlaySession(
+        reports.setPlaySession(
             item.itemId,
             item.playSessionId,
             item.isTranscoded,
@@ -257,7 +257,7 @@ class PlaybackReporter(
         val start =
             reportScope.launch(ioDispatcher) {
                 try {
-                    repository.postPlaybackStart(item.itemId, positionTicks, item.isTranscoded)
+                    reports.postPlaybackStart(item.itemId, positionTicks, item.isTranscoded)
                 } catch (e: Exception) {
                     Timber.e(e)
                 }
@@ -274,7 +274,7 @@ class PlaybackReporter(
 
     /**
      * Tell the server (and the local database) that [snapshot]'s item stopped playing. The only
-     * caller of [MediaRepository.postPlaybackStop]. Before the duration is known the stop is only
+     * caller of [PlaybackReports.postPlaybackStop]. Before the duration is known the stop is only
      * sent if the start was, and it leaves the local database alone ([playbackStopReport]).
      *
      * Runs in [reportScope] because it must outlive the ViewModel's scope: the player is released
@@ -318,11 +318,7 @@ class PlaybackReporter(
                                 if (finished) ", as finished" else ""
                         )
                     }
-                    repository.postPlaybackStop(
-                        itemId,
-                        report.positionTicks,
-                        report.playedPercentage,
-                    )
+                    reports.postPlaybackStop(itemId, report.positionTicks, report.playedPercentage)
                 } catch (e: Exception) {
                     Timber.e(e)
                 } finally {
@@ -398,7 +394,7 @@ class PlaybackReporter(
                 }
                 val isPaused = !player.isPlaying()
                 try {
-                    repository.postPlaybackProgress(
+                    reports.postPlaybackProgress(
                         itemId,
                         Ticks.fromMilliseconds(player.currentPositionMs()),
                         isPaused,

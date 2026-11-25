@@ -7,7 +7,7 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Show
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.async
@@ -17,8 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 @HiltViewModel
-class PersonViewModel @Inject internal constructor(private val repository: MediaRepository) :
-    ViewModel() {
+class PersonViewModel @Inject internal constructor(private val catalog: ItemCatalog) : ViewModel() {
     private val _state = MutableStateFlow(PersonState())
     val state = _state.asStateFlow()
 
@@ -30,9 +29,9 @@ class PersonViewModel @Inject internal constructor(private val repository: Media
                 // at once (#252). coroutineScope { } is required: without it a failure inside an
                 // async { } child crashes the app past this try/catch (see HomeViewModel).
                 coroutineScope {
-                    val personAsync = async { repository.getPerson(personId) }
+                    val personAsync = async { catalog.getPerson(personId) }
                     val itemsAsync = async {
-                        repository.getPersonItems(
+                        catalog.getPersonItems(
                             personIds = listOf(personId),
                             includeTypes = listOf(ItemKind.MOVIE, ItemKind.SERIES),
                             recursive = true,

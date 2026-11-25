@@ -18,7 +18,6 @@ import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.DownloadSettings
 import dev.jdtech.jellyfin.repository.DownloadStore
-import dev.jdtech.jellyfin.repository.MediaRepository
 import dev.jdtech.jellyfin.repository.ServerAvailability
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.NetworkConnectivity
@@ -28,7 +27,6 @@ import dev.jdtech.jellyfin.utils.download.estimateCappedDownloadSize
 import dev.jdtech.jellyfin.utils.download.isPermanentHttpFailure
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
-import javax.inject.Provider
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -68,7 +66,6 @@ class DownloadQueue
 constructor(
     private val downloader: Downloader,
     private val settings: DownloadSettings,
-    private val repositoryProvider: Provider<MediaRepository>,
     private val downloadStore: DownloadStore,
     @ApplicationContext private val context: Context,
     // CE (#901): the texts of core's resources.
@@ -78,11 +75,6 @@ constructor(
     // CE (#912): a download that failed for want of the server goes on when the server is back.
     private val serverAvailability: ServerAvailability = ServerAvailability.NONE,
 ) {
-    // Resolved per use, never captured: the active repository can change at runtime without
-    // this @Singleton being recreated (offline <-> online switch).
-    private val repository: MediaRepository
-        get() = repositoryProvider.get()
-
     sealed interface EntryState {
         data object Pending : EntryState
 

@@ -57,6 +57,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
+/**
+ * The server in use composed with Room: every role of the repository in one class (#967), because
+ * the roles share its state (the play sessions, the stored lists, the resume settings). Hilt binds
+ * each role to the one instance (`MediaRepositoryModule`); nothing outside `data` names this class.
+ */
 class MediaRepositoryImpl(
     private val context: Context,
     private val server: MediaServer,
@@ -68,8 +73,16 @@ class MediaRepositoryImpl(
     private val syncRequester: UserDataSyncRequester = UserDataSyncRequester.NONE,
     private val knownServerState: KnownServerState = KnownServerState.NONE,
     private val storedLibraryNames: StoredLibraryNames = StoredLibraryNames.ENGLISH,
-) : MediaRepository {
-    override val capabilities: ServerCapabilities
+) :
+    CurrentAccount,
+    ItemCatalog,
+    ItemLists,
+    ItemExtras,
+    UserDataUpdates,
+    SeriesTrackPreferences,
+    PlaybackMedia,
+    PlaybackReports {
+    private val capabilities: ServerCapabilities
         get() = server.capabilities
 
     private val catalog: CatalogPort
@@ -569,18 +582,6 @@ class MediaRepositoryImpl(
             )
         }
 
-    override suspend fun getStreamUrl(itemId: ItemId, mediaSourceId: MediaSourceId): String =
-        withContext(Dispatchers.IO) {
-            try {
-                server.playback.streamUrl(itemId, mediaSourceId)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Timber.e(e)
-                ""
-            }
-        }
-
     override suspend fun getSegments(itemId: ItemId): List<Segment> =
         withContext(Dispatchers.IO) {
             val databaseSegments = database.getSegments(itemId).map { it.toSegment() }
@@ -674,11 +675,6 @@ class MediaRepositoryImpl(
 
     override suspend fun getItemCollections(itemId: ItemId): List<Item> =
         withContext(Dispatchers.IO) { catalog.collectionsOf(itemId).withLocalSources() }
-
-    override suspend fun postCapabilities() {
-        Timber.d("Sending capabilities")
-        server.playback.announceCapabilities()
-    }
 
     override fun setPlaySession(
         itemId: ItemId,
@@ -856,18 +852,10 @@ class MediaRepositoryImpl(
         )
     }
 
-    override fun getBaseUrl() = server.session.baseUrl.orEmpty()
-
     override fun chapterImageUrl(itemId: ItemId, chapterIndex: Int, tag: String) =
         server.playback.chapterImageUrl(itemId, chapterIndex, tag)
 
     override fun seasonBackdropUrl(seasonId: ItemId) = server.playback.seasonBackdropUrl(seasonId)
-
-    override suspend fun updateDeviceName(name: String) {
-        // #769: nothing in the app renames the device yet; a server that cannot is not asked.
-        if (!capabilities.deviceRename) return
-        server.session.updateDeviceName(name)
-    }
 
     override suspend fun refreshCurrentUserImage() {
         // The row of the user the server answered for, which is the one whose token went out: a

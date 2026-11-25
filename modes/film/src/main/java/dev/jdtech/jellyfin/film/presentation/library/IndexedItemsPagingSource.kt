@@ -11,8 +11,8 @@ import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemKind
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
+import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.repository.ItemsPage
-import dev.jdtech.jellyfin.repository.MediaRepository
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -22,9 +22,9 @@ import kotlinx.coroutines.flow.Flow
  * instead of every page before it.
  *
  * #968: the pager lives with the screen that shows it; `application` offers only the plain page
- * read, [MediaRepository.getItemsPage].
+ * read, [ItemLists.getItemsPage].
  */
-internal fun MediaRepository.indexedItemsPager(
+internal fun ItemLists.indexedItemsPager(
     parentId: ItemId? = null,
     includeTypes: List<ItemKind>? = null,
     recursive: Boolean = false,

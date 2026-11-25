@@ -23,8 +23,9 @@ import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.UserId
+import dev.jdtech.jellyfin.repository.CurrentAccount
 import dev.jdtech.jellyfin.repository.DownloadStore
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
 import java.io.File
@@ -52,7 +53,8 @@ internal val downloadDeletionScope = CoroutineScope(SupervisorJob() + Dispatcher
 class DownloadsViewModel
 internal constructor(
     private val context: Context,
-    private val repository: MediaRepository,
+    private val lists: ItemLists,
+    private val account: CurrentAccount,
     private val appPreferences: AppPreferences,
     private val downloadQueue: DownloadQueue,
     private val downloader: Downloader,
@@ -66,14 +68,16 @@ internal constructor(
     @Inject
     constructor(
         @ApplicationContext context: Context,
-        repository: MediaRepository,
+        lists: ItemLists,
+        account: CurrentAccount,
         appPreferences: AppPreferences,
         downloadQueue: DownloadQueue,
         downloader: Downloader,
         downloadStore: DownloadStore,
     ) : this(
         context,
-        repository,
+        lists,
+        account,
         appPreferences,
         downloadQueue,
         downloader,
@@ -111,7 +115,7 @@ internal constructor(
     private var loadingFor: UserId? = null
 
     /** CE (#866): the user the client acts for now. */
-    private fun sessionUser(): UserId? = runCatching { repository.getUserId() }.getOrNull()
+    private fun sessionUser(): UserId? = runCatching { account.getUserId() }.getOrNull()
 
     /** The screen's first ON_RESUME comes right after [init]'s load, so it doesn't load again. */
     private var skipNextResume = true
@@ -298,7 +302,7 @@ internal constructor(
         downloadDeletionScope.launch {
             for (item in items) {
                 if (item is Show) {
-                    val userId = repository.getUserId()
+                    val userId = account.getUserId()
                     // CE (#718): this server's episodes; another server's of the same show stay.
                     val serverId = appPreferences.currentServerId() ?: continue
                     downloadStore.episodesOfShow(AccountKey(serverId, userId), item.id).collect {
@@ -391,7 +395,7 @@ internal constructor(
 
     private suspend fun readLibrary(): LoadedLibrary =
         withContext(ioDispatcher) {
-            val items = repository.getDownloads()
+            val items = lists.getDownloads()
             val shows = items.filterIsInstance<Show>()
             val episodesByShow = shows.associate { it.id to storedEpisodes(it.id) }
             // One batched read for every movie and episode instead of a query per item

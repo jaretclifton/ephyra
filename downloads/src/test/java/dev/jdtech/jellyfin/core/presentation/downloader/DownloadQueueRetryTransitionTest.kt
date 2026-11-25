@@ -20,7 +20,6 @@ import dev.jdtech.jellyfin.utils.download.TestDownloadTexts
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
-import javax.inject.Provider
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -317,7 +316,6 @@ class DownloadQueueRetryTransitionTest {
         return DownloadQueue(
             downloader = downloader,
             settings = TestDownloadSettings(maxConcurrentDownloads = maxConcurrent),
-            repositoryProvider = Provider { error("No repository in this test") },
             downloadStore = RoomDownloadStore(database()),
             context = context,
             texts = TestDownloadTexts,
