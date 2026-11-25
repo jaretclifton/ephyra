@@ -15,9 +15,18 @@ import dev.jdtech.jellyfin.database.RoomServerStore
 import dev.jdtech.jellyfin.database.ServerDatabase
 import dev.jdtech.jellyfin.database.ServerDatabaseDao
 import dev.jdtech.jellyfin.profilelock.ProfileLock
-import dev.jdtech.jellyfin.repository.DownloadStore
+import dev.jdtech.jellyfin.repository.DownloadList
+import dev.jdtech.jellyfin.repository.DownloadMediaStreams
+import dev.jdtech.jellyfin.repository.DownloadSegmentsAndTrickplay
+import dev.jdtech.jellyfin.repository.DownloadSources
+import dev.jdtech.jellyfin.repository.DownloadUserData
+import dev.jdtech.jellyfin.repository.DownloadedItemRows
 import dev.jdtech.jellyfin.repository.PendingUserDataStore
-import dev.jdtech.jellyfin.repository.ServerStore
+import dev.jdtech.jellyfin.repository.QueuedDownloads
+import dev.jdtech.jellyfin.repository.ServerAddresses
+import dev.jdtech.jellyfin.repository.StoredServers
+import dev.jdtech.jellyfin.repository.StoredUsers
+import dev.jdtech.jellyfin.repository.UserLocks
 import javax.inject.Singleton
 
 /**
@@ -45,19 +54,51 @@ object DatabaseModule {
     fun providePendingUserDataStore(database: ServerDatabaseDao): PendingUserDataStore =
         RoomPendingUserDataStore(database)
 
-    /** #899: the saved servers, addresses and users. */
+    /**
+     * #899: the saved servers, addresses and users. #967: one store, bound as each of its roles.
+     */
     @Singleton
     @Provides
-    fun provideServerStore(database: ServerDatabaseDao): ServerStore = RoomServerStore(database)
+    fun provideRoomServerStore(database: ServerDatabaseDao): RoomServerStore =
+        RoomServerStore(database)
+
+    @Provides fun provideStoredServers(store: RoomServerStore): StoredServers = store
+
+    @Provides fun provideServerAddresses(store: RoomServerStore): ServerAddresses = store
+
+    @Provides fun provideStoredUsers(store: RoomServerStore): StoredUsers = store
+
+    @Provides fun provideUserLocks(store: RoomServerStore): UserLocks = store
 
     // CE (#299): one per process, so an unlocked profile stays unlocked across screens.
     @Singleton
     @Provides
-    fun provideProfileLock(store: ServerStore): ProfileLock = ProfileLock(store)
+    fun provideProfileLock(storedUsers: StoredUsers, userLocks: UserLocks): ProfileLock =
+        ProfileLock(storedUsers, userLocks)
 
     // #899: the download rows, for the downloader, the queue, Smart Downloads and the screens.
+    // #967:
+    // one store, bound as each of its roles.
     @Singleton
     @Provides
-    fun provideDownloadStore(database: ServerDatabaseDao): DownloadStore =
+    fun provideRoomDownloadStore(database: ServerDatabaseDao): RoomDownloadStore =
         RoomDownloadStore(database)
+
+    @Provides fun provideDownloadList(store: RoomDownloadStore): DownloadList = store
+
+    @Provides fun provideDownloadedItemRows(store: RoomDownloadStore): DownloadedItemRows = store
+
+    @Provides fun provideDownloadSources(store: RoomDownloadStore): DownloadSources = store
+
+    @Provides
+    fun provideDownloadMediaStreams(store: RoomDownloadStore): DownloadMediaStreams = store
+
+    @Provides
+    fun provideDownloadSegmentsAndTrickplay(
+        store: RoomDownloadStore
+    ): DownloadSegmentsAndTrickplay = store
+
+    @Provides fun provideDownloadUserData(store: RoomDownloadStore): DownloadUserData = store
+
+    @Provides fun provideQueuedDownloads(store: RoomDownloadStore): QueuedDownloads = store
 }
