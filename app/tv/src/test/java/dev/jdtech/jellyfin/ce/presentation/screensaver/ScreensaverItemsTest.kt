@@ -8,8 +8,8 @@ import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.SortBy
 import dev.jdtech.jellyfin.models.SortOrder
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.repository.MediaRepository
-import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.repository.ItemLists
+import dev.jdtech.jellyfin.testing.fakeRole
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -78,22 +78,17 @@ class ScreensaverItemsTest {
         }
     }
 
-    /** A repository whose item calls are recorded and answered by [answer]. */
-    private fun repository(answer: () -> List<Item>): MediaRepository =
-        fakeProxy(MediaRepository::class.java.classLoader, arrayOf(MediaRepository::class.java)) {
-            _,
-            method,
-            args ->
-            when (method.kotlinName) {
-                "getItems",
-                "getRandomItemsWithBackdrop" -> {
-                    calls += method.kotlinName to (args ?: emptyArray())
-                    answer()
-                }
-                else -> throw NotImplementedError("MediaRepository.${method.kotlinName}")
+    /** The lists of the repository, whose item calls are recorded and answered by [answer]. */
+    private fun repository(answer: () -> List<Item>): ItemLists = fakeRole { _, method, args ->
+        when (method.kotlinName) {
+            "getItems",
+            "getRandomItemsWithBackdrop" -> {
+                calls += method.kotlinName to (args ?: emptyArray())
+                answer()
             }
+            else -> throw NotImplementedError("ItemLists.${method.kotlinName}")
         }
-            as MediaRepository
+    }
 
     private fun movie(name: String, backdrop: String?) =
         Movie(

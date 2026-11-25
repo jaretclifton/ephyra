@@ -10,7 +10,7 @@ import dev.jdtech.jellyfin.di.DownloadHttpClient
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
 import java.io.File
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +25,7 @@ class ImagesDownloaderWorker
 constructor(
     @Assisted private val appContext: Context,
     @Assisted private val params: WorkerParameters,
-    private val repository: MediaRepository,
+    private val catalog: ItemCatalog,
     @DownloadHttpClient private val client: OkHttpClient,
 ) : CoroutineWorker(appContext, params) {
     override suspend fun doWork(): Result {
@@ -35,7 +35,7 @@ constructor(
 
     private suspend fun downloadImages(itemId: ItemId): Result =
         withContext(Dispatchers.IO) {
-            val item = repository.getItem(itemId) ?: return@withContext Result.success()
+            val item = catalog.getItem(itemId) ?: return@withContext Result.success()
 
             val basePath = "images/${item.id.asString()}"
             val baseDir = File(appContext.filesDir, basePath)

@@ -17,7 +17,7 @@ import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 
 @EntryPoint
@@ -25,7 +25,7 @@ import dev.jdtech.jellyfin.settings.domain.AppPreferences
 interface ScreensaverEntryPoint {
     fun serverSession(): ServerSession
 
-    fun repository(): MediaRepository
+    fun itemLists(): ItemLists
 
     fun appPreferences(): AppPreferences
 }
@@ -72,7 +72,7 @@ class ScreensaverService : DreamService(), LifecycleOwner, SavedStateRegistryOwn
                     FindroidTheme {
                         ScreensaverScreen(
                             serverSession = entryPoint.serverSession(),
-                            repository = entryPoint.repository(),
+                            lists = entryPoint.itemLists(),
                             appPreferences = entryPoint.appPreferences(),
                         )
                     }

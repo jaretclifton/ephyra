@@ -15,7 +15,8 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dev.jdtech.jellyfin.domain.ports.ServerSession
 import dev.jdtech.jellyfin.models.asString
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import java.util.concurrent.TimeUnit
@@ -88,7 +89,8 @@ constructor(
     @Assisted workerParams: WorkerParameters,
     private val appPreferences: AppPreferences,
     private val serverSession: ServerSession,
-    private val repositoryProvider: Provider<MediaRepository>,
+    private val lists: Provider<ItemLists>,
+    private val catalog: Provider<ItemCatalog>,
     private val publisher: WatchNextPublisher,
     private val store: WatchNextStore,
 ) : CoroutineWorker(context, workerParams) {
@@ -113,10 +115,9 @@ constructor(
 
         val candidates =
             try {
-                val repository = repositoryProvider.get()
                 watchNextCandidates(
-                    resume = repository.getResumeItems(),
-                    nextUp = repository.getNextUp(),
+                    resume = lists.get().getResumeItems(),
+                    nextUp = catalog.get().getNextUp(),
                     hideSpoilers = appPreferences.getValue(appPreferences.hideSpoilers),
                 )
             } catch (e: Exception) {

@@ -6,11 +6,13 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import dev.jdtech.jellyfin.repository.CurrentAccount
 import dev.jdtech.jellyfin.repository.CurrentServerId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.DownloadSettings
 import dev.jdtech.jellyfin.repository.DownloadStore
-import dev.jdtech.jellyfin.repository.MediaRepository
+import dev.jdtech.jellyfin.repository.ItemCatalog
+import dev.jdtech.jellyfin.repository.PlaybackMedia
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.DownloaderImpl
 import dev.jdtech.jellyfin.utils.download.DownloadTexts
@@ -26,7 +28,9 @@ object DownloaderModule {
     fun provideDownloader(
         application: Application,
         downloadStore: DownloadStore,
-        mediaRepositoryProvider: Provider<MediaRepository>,
+        catalog: Provider<ItemCatalog>,
+        media: Provider<PlaybackMedia>,
+        account: Provider<CurrentAccount>,
         settings: DownloadSettings,
         currentServerId: CurrentServerId,
         workManagerProvider: Provider<WorkManager>,
@@ -37,7 +41,9 @@ object DownloaderModule {
         return DownloaderImpl(
             application,
             downloadStore,
-            mediaRepositoryProvider,
+            catalog,
+            media,
+            account,
             settings,
             currentServerId,
             workManagerProvider,
