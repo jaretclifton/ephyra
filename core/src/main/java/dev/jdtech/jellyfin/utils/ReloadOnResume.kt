@@ -1,4 +1,4 @@
-package dev.jdtech.jellyfin.presentation.utils
+package dev.jdtech.jellyfin.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -6,7 +6,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import dev.jdtech.jellyfin.utils.ObserveAsEvents
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
