@@ -12,7 +12,7 @@ model {
       link https://github.com/midasvo/ephyra/tree/main/app/tv 'Source'
     }
     application = application 'application' {
-      description 'Pure Kotlin: MediaRepository, the store ports (ServerStore, DownloadStore, PendingUserDataStore) and the event flows (DataChangeEvents, ReloadPolicy, …).'
+      description 'Pure Kotlin: the repository\'s roles (ItemCatalog, ItemLists, PlaybackMedia, …), the store ports (ServerStore, DownloadStore, PendingUserDataStore) and the event flows (DataChangeEvents, ReloadPolicy, …).'
       link https://github.com/midasvo/ephyra/tree/main/application 'Source'
     }
     architecture = tooling 'architecture' {

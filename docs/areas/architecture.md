@@ -13,7 +13,7 @@ Status: built (ADR 0001 and ADR 0002); Jellyfin is the only server adapter. As o
 
 ## What it does
 
-The apps (`app/phone`, `app/tv`) are the composition root. Features call `MediaRepository` or a port. `domain` and `application` are pure Kotlin and hold the ports. Four adapter modules implement them: `server/jellyfin` (the only module with the Jellyfin SDK), `data` (Room and nothing else, R20), `ratings/mdblist` and `device` (what asks Android about the device). Only the apps depend on an adapter; Hilt wires the ports to them there. Gradle is the boundary and the rule tests hold what Gradle cannot say (ADR 0001, decision 6).
+The apps (`app/phone`, `app/tv`) are the composition root. Features take the roles of the repository they use (`ItemCatalog`, `ItemLists`, `PlaybackMedia`, …, #967) or a port. `domain` and `application` are pure Kotlin and hold the ports. Four adapter modules implement them: `server/jellyfin` (the only module with the Jellyfin SDK), `data` (Room and nothing else, R20), `ratings/mdblist` and `device` (what asks Android about the device). Only the apps depend on an adapter; Hilt wires the ports to them there. Gradle is the boundary and the rule tests hold what Gradle cannot say (ADR 0001, decision 6).
 
 ## Where the code is
 
@@ -21,15 +21,15 @@ The apps (`app/phone`, `app/tv`) are the composition root. Features call `MediaR
 |---|---|
 | [`domain/.../domain/ports/`](../../domain/src/main/kotlin/dev/jdtech/jellyfin/domain/ports/) | The server ports, `ActiveServer`, `DeviceCodecs` |
 | [`http/.../http/`](../../http/src/main/kotlin/dev/jdtech/jellyfin/http/) | `MediaHttpClient`, the API's OkHttp client that ExoPlayer streams media over (mpv: subtitle files only), provided by `server/jellyfin` (#964). Its own module because it names a library type, which no port may |
-| [`application/.../repository/`](../../application/src/main/kotlin/dev/jdtech/jellyfin/repository/) | `MediaRepository`, the store ports, the settings ports (`DownloadSettings`, `CurrentServerId`, `NetworkTimeouts`, …) |
+| [`application/.../repository/`](../../application/src/main/kotlin/dev/jdtech/jellyfin/repository/) | The roles of the repository (`CurrentAccount`, `ItemCatalog`, `ItemLists`, `ItemExtras`, `UserDataUpdates`, `SeriesTrackPreferences`, `PlaybackMedia`, `PlaybackReports`), the store ports, the settings ports (`DownloadSettings`, `CurrentServerId`, `NetworkTimeouts`, …) |
 | [`server/jellyfin/.../server/jellyfin/`](../../server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/) | `JellyfinMediaServer`, `JellyfinCatalog`, `JellyfinUserData`, `JellyfinPlayback`, `JellyfinServerConnector`; `mappers/`; `SdkIds.kt`, `SdkEnums.kt`, `SdkErrors.kt`, `JellyfinCalls.kt` |
 | [`server/jellyfin/.../di/JellyfinServerModule.kt`](../../server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/di/JellyfinServerModule.kt) | What the adapter provides; the maps keyed by `ServerTypeKey` |
 | [`core/.../di/ServerModule.kt`](../../core/src/main/java/dev/jdtech/jellyfin/di/ServerModule.kt), [`core/.../core/server/`](../../core/src/main/java/dev/jdtech/jellyfin/core/server/) | `CurrentMediaServer` (picks the adapter by type), `ServerConnectors`, `UnsupportedMediaServer` |
 | [`data/.../database/`](../../data/src/main/java/dev/jdtech/jellyfin/database/) | `ServerDatabase`, `ServerDatabaseDao`, `RoomServerStore`, `RoomDownloadStore`, `RoomPendingUserDataStore`; the entities are in `data/.../models/` |
-| [`data/.../data/di/`](../../data/src/main/java/dev/jdtech/jellyfin/data/di/) | `DatabaseModule` (Room and the stores), `MediaRepositoryModule` |
+| [`data/.../data/di/`](../../data/src/main/java/dev/jdtech/jellyfin/data/di/) | `DatabaseModule` (Room and the stores), `MediaRepositoryModule` (the repository, bound as each of its roles) |
 | [`device/`](../../device/src/main/java/dev/jdtech/jellyfin/) | The adapters over the device (#965): `DeviceCodecProbe` with `DeviceCodec` and `CodecHelpers` (`DeviceCodecs`, what the device profiles are built from), `NetworkConnectivityImpl` (`NetworkConnectivity`); bound in [`DeviceModule`](../../device/src/main/java/dev/jdtech/jellyfin/device/di/DeviceModule.kt) |
 | [`core/.../di/AppPreferencesPorts.kt`](../../core/src/main/java/dev/jdtech/jellyfin/di/AppPreferencesPorts.kt) | The settings ports of `application`, over `AppPreferences` |
-| [`testing/.../testing/`](../../testing/src/main/kotlin/dev/jdtech/jellyfin/testing/) | The fakes, `ContractLibrary`, the contract suites, `ProxyCalls.kt` |
+| [`testing/.../testing/`](../../testing/src/main/kotlin/dev/jdtech/jellyfin/testing/) | The fakes, `ContractLibrary`, the contract suites, `ProxyCalls.kt`, `FakeRoles.kt` (a Proxy fake of the roles a test needs) |
 | [`server/jellyfin/.../contract/`](../../server/jellyfin/src/test/java/dev/jdtech/jellyfin/server/jellyfin/contract/) | The adapter against the suites (`JellyfinContractTests.kt`), `ContractServer`, `LiveServer`, `ContractRecordingsTest` |
 | [`architecture/.../architecture/`](../../architecture/src/test/kotlin/dev/jdtech/jellyfin/architecture/) | The rule tests, `ProjectTree`, `BuildFileDependencies`, `Baseline`, and `GeneratedDocsTest.kt` with `ArchitectureModel` |
 | [`docs/architecture/model/`](../architecture/model/) | The LikeC4 model: `modules.generated.c4` is generated, the other `.c4` files are written by hand |
@@ -44,7 +44,7 @@ An operation on an existing server port (say `CatalogPort`):
 4. Add tests to the port's contract suite in `testing` (`CatalogContract`, `UserDataContract`, `PlaybackContract`, `ServerConnectorContract`): what it returns for `ContractLibrary`, and its line in the suite's failure tests (a failing, an unreachable and a stalling server). `./gradlew :testing:test` runs them on the fake.
 5. Record the adapter's answers. `ContractServer` replays `server/jellyfin/src/test/resources/contract/` and fails a test on a request without a recording. With the Docker test server running (`test-server` skill): `EPHYRA_TEST_SERVER=http://localhost:8096 ./gradlew :server:jellyfin:testDebugUnitTest --tests '*Contract*' -Dcontract.record=true`, as the user `contract` (see [setup-and-servers](setup-and-servers.md), "How to test it"). What the test server does not hold is a `ContractLibrary.Part`, with a recording written by hand (`"handwritten": true`). `ContractRecordingsTest` fails when a recording holds an id, a token or an address of the machine.
 6. If not every server can do it, add a field to `ServerCapabilities` and gate the call on it: no version checks (ADR 0001, decision 9). `FakeMediaServerContractTest.kt` runs the suites with every feature and with none (`NONE` there lists every field).
-7. Call it from `MediaRepositoryImpl` (and declare it on `MediaRepository`), or inject the port. A ViewModel never names an adapter class.
+7. Call it from `MediaRepositoryImpl` (and declare it on the role it belongs to, recipe 6), or inject the port. A ViewModel never names an adapter class.
 
 A new port:
 
@@ -101,13 +101,23 @@ Read the message: it names the file and what to use instead. Fix the code. Do no
 The ones you are most likely to trip:
 
 - **R5** (`DomainPurityTest`): a file in `domain` or `application` imports `android.`, `androidx.`, the SDK, `dev.jdtech.jellyfin.database.` or a type `data` declares. Keep the type in its adapter and give the port a type of `domain`.
-- **R19** (`PureKotlinTest`): a file in `domain` or `application` imports anything but `kotlin.`, `kotlinx.`, `java.`, `javax.crypto.` or `dev.jdtech.jellyfin.`, or their build file declares a library but `libs.kotlinx.*`. The same fix as R5; a contract that has to name a library type (an OkHttp client) goes in a small module of its own, as `http` does. Its allowlists are `architecture/baseline/pure-kotlin-*.txt`, empty since #968. A list a screen pages is a plain read in `application` (`MediaRepository.getItemsPage`: items from an index, the total on request) and a `PagingSource` in the feature (`IndexedItemsPagingSource` in `modes/film`).
+- **R19** (`PureKotlinTest`): a file in `domain` or `application` imports anything but `kotlin.`, `kotlinx.`, `java.`, `javax.crypto.` or `dev.jdtech.jellyfin.`, or their build file declares a library but `libs.kotlinx.*`. The same fix as R5; a contract that has to name a library type (an OkHttp client) goes in a small module of its own, as `http` does. Its allowlists are `architecture/baseline/pure-kotlin-*.txt`, empty since #968. A list a screen pages is a plain read in `application` (`ItemLists.getItemsPage`: items from an index, the total on request) and a `PagingSource` in the feature (`IndexedItemsPagingSource` in `modes/film`).
 - **R20** (`RoomAdapterTest`): a file in `data` imports something of Android (`android.`, `androidx.`) but Room (`androidx.room3.`), SQLite (`androidx.sqlite.`) or `android.content.Context`. What asks the device (codecs, display, network) goes in `device`, behind a port of `domain` or `application`; anything else goes behind a port in the module that owns it. Its allowlist is `architecture/baseline/room-adapter-imports.txt`, empty since #968.
 - **R10** (`StringIdsTest`, `UuidBoundaryTest`): a parameter or property named `serverId`, `currentServerId`, `mediaSourceId` or `sourceId` typed as `String` (or a list or set of them), or `java.util.UUID` anywhere outside `server/jellyfin`. Use the id classes and `toServerId()`, `toMediaSourceId()`, `asString()`; a random value comes from `kotlin.uuid.Uuid`.
 - **R1, R2** (`SdkBoundaryTest`): a file outside `server/jellyfin` mentions the SDK's package or imports `JellyfinApi`. Add the operation to a port (recipe 1).
 - **R9, R4** (`DataDependencyTest`, `SdkBoundaryTest`): a feature takes `data` with `implementation`, or imports `ServerDatabaseDao`. Use a store port (recipe 2); for a test, `testImplementation`.
 
+- **R21** (`PortSizeTest`): a port declares more than fifteen functions and properties, its inherited ones included. Split it by role (recipe 6). `architecture/baseline/wide-ports.txt` lists the ports still over, each with its issue.
+
 Also common: R11 for a type named `Jellyfin…` outside the adapter (`NamesTest`), and R17 for `AppPreferences` in `data`, `server/jellyfin`, `ratings/mdblist`, `device` or `downloads` (`AdapterSettingsTest`), and R18 for an adapter that takes a feature module (`AdapterDependencyTest`).
+
+## Recipe 6: an operation of the repository, and its roles
+
+`MediaRepository` was split by role in #967; the name is gone, and `MediaRepositoryImpl` in `data` implements every role.
+
+1. Find the role the operation belongs to, by who calls it: `CurrentAccount` (the server and user in use), `ItemCatalog` (one item, a show's seasons and episodes, next up, people), `ItemLists` (libraries, library items, favourites, search, Home's rows, downloads), `ItemExtras` (what a detail page shows besides the item), `UserDataUpdates` (favourite and played), `SeriesTrackPreferences`, `PlaybackMedia` (sources, segments, trickplay, chapter images), `PlaybackReports` (the play session and the reports). What the server can do is `CurrentServerCapabilities` in `domain`, not a role.
+2. Declare it there, implement it in `MediaRepositoryImpl`. A role that would pass fifteen members fails R21: split it instead, and add the new role to `MediaRepositoryImpl`'s supertypes and a `@Provides` to `MediaRepositoryModule` (each role is bound to the one `@Singleton` instance; a second instance would lose the play sessions and the stored lists).
+3. A caller takes only the roles it uses, in its constructor. A test builds a fake of those roles with `FakeRoles` (several) or `fakeRole` (one) from `testing`, or implements a small role directly (`PlaybackReporterTest`).
 
 ## How to test it
 
@@ -142,7 +152,7 @@ python3 .claude/skills/start-work/scripts/check-docs.py
 
 ## Decisions and history
 
-- [ADR 0001](../architecture/adr/0001-ports-and-adapters.md): ports and adapters, one adapter module per server type, Gradle as the boundary and Konsist as the ratchet, capabilities as data. [ADR 0002](../architecture/adr/0002-hexagonal-ddd.md): `application`, the three stores, `AccountKey`, opaque ids, `MediaRepository`.
+- [ADR 0001](../architecture/adr/0001-ports-and-adapters.md): ports and adapters, one adapter module per server type, Gradle as the boundary and Konsist as the ratchet, capabilities as data. [ADR 0002](../architecture/adr/0002-hexagonal-ddd.md): `application`, the three stores, `AccountKey`, opaque ids, `MediaRepository` (split into roles by #967).
 - [#733](https://github.com/midasvo/ephyra/issues/733): the tracking issue. [#735](https://github.com/midasvo/ephyra/issues/735): the `architecture` module. [#771](https://github.com/midasvo/ephyra/issues/771): `testing` and the contract suites.
 - [#758](https://github.com/midasvo/ephyra/issues/758): the adapter as its own module (R7). [#770](https://github.com/midasvo/ephyra/issues/770): servers have a type; adapters in maps by `ServerType`.
 - [#896](https://github.com/midasvo/ephyra/issues/896): `application` (R5, R9). [#899](https://github.com/midasvo/ephyra/issues/899): the store ports, `data`'s own Hilt modules, R4 without exceptions, `ActiveServer` (R16).

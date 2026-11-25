@@ -180,7 +180,7 @@ areas:
       - modes/film/src/main/java/dev/jdtech/jellyfin/film/presentation/show/ShowViewModel.kt
       - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/HomeScreen.kt
       - app/phone/src/main/java/dev/jdtech/jellyfin/presentation/film/components/ItemButtonsBar.kt
-      - application/src/main/kotlin/dev/jdtech/jellyfin/repository/MediaRepository.kt
+      - application/src/main/kotlin/dev/jdtech/jellyfin/repository/ItemCatalog.kt
       - domain/src/main/kotlin/dev/jdtech/jellyfin/domain/ports/CatalogPort.kt
       - server/jellyfin/src/main/java/dev/jdtech/jellyfin/server/jellyfin/JellyfinCatalog.kt
     rules: [R1, R2, R4, R10]
@@ -272,7 +272,7 @@ areas:
   - id: architecture
     title: Architecture
     summary: "Ports and adapters: the modules, the ports and stores, the Konsist rules, and how to add a port, a store, a module or a rule."
-    keywords: [architecture, ports and adapters, hexagonal, ddd, port, new port, store, new store, adapter, module, new module, rule, konsist, baseline, dependency, boundary, contract test, MediaServer, MediaRepository, ServerStore, FakeMediaServer, device adapter, DeviceCodecs, DeviceCodecProbe, NetworkConnectivity]
+    keywords: [architecture, ports and adapters, hexagonal, ddd, port, new port, store, new store, adapter, module, new module, rule, konsist, baseline, dependency, boundary, contract test, MediaServer, MediaRepository, ItemCatalog, ItemLists, PlaybackMedia, role, wide port, PortSizeTest, ServerStore, FakeMediaServer, device adapter, DeviceCodecs, DeviceCodecProbe, NetworkConnectivity]
     paths:
       - domain/src/main/kotlin/dev/jdtech/jellyfin/domain/ports/
       - application/src/main/kotlin/dev/jdtech/jellyfin/repository/

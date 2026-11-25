@@ -50,11 +50,12 @@ app/phone, app/tv   (composition root, screens)
   `ServerConnector`, `UserDataSyncPort`), `ActiveServer`, `ServerCapabilities`, and the two domain
   models with rules: `PlayState` (marks, stops, the sync's merge) and `DownloadState`. `Ticks` for
   the unit conversions.
-- `application` (pure Kotlin): `MediaRepository`, the event flows, and the store ports
+- `application` (pure Kotlin): the repository's roles (#967: `CurrentAccount`, `ItemCatalog`, `ItemLists`, `ItemExtras`, `UserDataUpdates`, `SeriesTrackPreferences`, `PlaybackMedia`, `PlaybackReports`), the event flows, and the store ports
   `ServerStore` (keyed by `ServerId` and `UserId`), `DownloadStore` (source rows by `ServerId`, user queries by `AccountKey(serverId, userId)`) and `PendingUserDataStore` (by `AccountKey`),
   and the settings the adapters read (#918), which `core` implements over `AppPreferences`.
 - `data`: Room, the three `Room*Store` and `MediaRepositoryImpl`, which composes the server in use
-  with Room (stored fallback, local sources, write then report).
+  with Room (stored fallback, local sources, write then report) and implements every role; Hilt binds
+  each role to its one instance (`MediaRepositoryModule`).
 - `server/jellyfin`: the SDK, `JellyfinApi`, the mappers, the port implementations, the device
   profiles. `CurrentMediaServer` in `core` picks the adapter by the active server's type.
 - `ratings/mdblist` (#331): the external ratings of the movie and show pages from MDBList, behind
@@ -80,7 +81,8 @@ ids opaque and renamed the repository and the models at once.
 one fails, fix the code. `architecture/baseline/` has one allowlist, not debt: `uuid-imports.txt`
 (files that may name `java.util.UUID`, for a random value the app makes itself; empty since #918).
 The others are exceptions with an issue each: `pure-kotlin-*.txt` (R19) and
-`room-adapter-imports.txt` (R20), both empty since #968. A line is added only with its reason,
+`room-adapter-imports.txt` (R20), both empty since #968, and `wide-ports.txt` (R21: `CatalogPort`,
+`DownloadStore` and `ServerStore`, which the second PR of #967 splits). A line is added only with its reason,
 given in the PR.
 
 | Rule | Says |
@@ -104,6 +106,7 @@ given in the PR.
 | R18 | No adapter (`data`, `server/jellyfin`, `ratings/mdblist`, `device`) depends on a feature module |
 | R19 | `domain` and `application` import only Kotlin, kotlinx, the JDK and their own code, and declare no library but kotlinx (an allowlist, empty since #968 moved the library pagers to `modes/film`) |
 | R20 | `data` is Room and nothing else: of Android it imports only Room, SQLite and `android.content.Context` (an allowlist, empty since #968) |
+| R21 | No port (an interface in `domain/.../ports/` or in `application`) declares more than fifteen functions and properties, inherited ones included (#967: a wide port is split into roles) |
 
 ## Not done
 
