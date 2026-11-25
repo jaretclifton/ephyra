@@ -1,0 +1,8 @@
+# R21 (#967): the ports that declare more than fifteen functions and properties (PortSizeTest).
+# One interface name per line. Exact: a line that no longer applies fails until it is deleted. A
+# new line needs its issue and reason here, given in the PR that adds it.
+
+# #967, PR 2: split by role with the other wide ports.
+CatalogPort
+DownloadStore
+ServerStore
