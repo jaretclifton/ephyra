@@ -140,8 +140,9 @@ class SeasonWakeReloadTest {
                 }
             }
         }
-        // The panel loads once focus has rested on the card.
-        rule.waitUntil(timeoutMillis = 5_000) { "episode" in calls }
+        // The panel loads once focus has rested on the card. Wait for it to be on the page, not
+        // only asked for: a wake reloads the panel only when there is one.
+        rule.waitUntil(timeoutMillis = 5_000) { episodeViewModel.state.value.episode != null }
         rule.waitForIdle()
     }
 
@@ -343,7 +344,10 @@ class SeasonWakeReloadTest {
                 arrayOf(SharedPreferences::class.java),
             ) { _, method, args ->
                 when (method.kotlinName) {
-                    "getBoolean",
+                    // Cast and crew off: the episode's load would sort its cast on
+                    // Dispatchers.Default, which waitForIdle() doesn't wait for.
+                    "getBoolean" ->
+                        if (args!![0] == "pref_display_cast_and_crew") false else args[1]
                     "getString",
                     "getInt",
                     "getLong",
