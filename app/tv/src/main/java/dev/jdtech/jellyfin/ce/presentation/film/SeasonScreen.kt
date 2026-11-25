@@ -216,7 +216,13 @@ fun SeasonScreen(
         loadOnEntry = false,
     ) {
         scope.launch {
-            staleSeasonId()?.let { loadSeason(it).join() }
+            staleSeasonId()?.let { id ->
+                loadSeason(id).join()
+                // Another season picked meanwhile: its own load replaced this one, and the panel
+                // follows focus there. The cards of this season are still on screen until then,
+                // so a panel loaded now would be one of them.
+                if (currentSeasonId != id.asString()) return@launch
+            }
             stalePanelId()?.let { episodeViewModel.loadEpisode(it) }
         }
     }

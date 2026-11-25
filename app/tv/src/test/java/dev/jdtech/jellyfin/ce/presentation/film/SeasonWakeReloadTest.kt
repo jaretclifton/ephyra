@@ -7,8 +7,10 @@ import android.content.SharedPreferences
 import android.os.Handler
 import android.os.Looper
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
@@ -21,6 +23,7 @@ import dev.jdtech.jellyfin.film.domain.VideoMetadataParser
 import dev.jdtech.jellyfin.film.presentation.episode.EpisodeViewModel
 import dev.jdtech.jellyfin.film.presentation.season.SeasonViewModel
 import dev.jdtech.jellyfin.models.Episode
+import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.Ticks
 import dev.jdtech.jellyfin.models.toItemId
@@ -31,6 +34,8 @@ import dev.jdtech.jellyfin.repository.ItemCatalog
 import dev.jdtech.jellyfin.repository.UserDataUpdates
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.FakeRoles
+import dev.jdtech.jellyfin.testing.asItemId
+import dev.jdtech.jellyfin.testing.asItemIdOrNull
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import dev.jdtech.jellyfin.utils.CoreDownloadTexts
@@ -54,7 +59,10 @@ import org.robolectric.annotation.Config
 class SeasonWakeReloadTest {
     @get:Rule val rule = createComposeRule()
 
-    private val season = dummySeason.copy(id = UUID(6, 1).toString().toItemId())
+    private val season =
+        dummySeason.copy(id = UUID(6, 1).toString().toItemId(), name = "Season 1", indexNumber = 1)
+    private val season2 =
+        dummySeason.copy(id = UUID(6, 2).toString().toItemId(), name = "Season 2", indexNumber = 2)
 
     // Episode 1 is 4 minutes into its 12; episode 2 not started.
     private var serverEpisodes: List<Episode> =
@@ -71,7 +79,20 @@ class SeasonWakeReloadTest {
             )
         }
 
-    /** The server's calls, in order: "season" for a season load, "episode" for the panel. */
+    // Season 2 has one episode, not started.
+    private val season2Episodes: List<Episode> =
+        listOf(
+            serverEpisodes[1].copy(
+                id = UUID(6, 21).toString().toItemId(),
+                name = "Episode 2.1",
+                seasonId = season2.id,
+            )
+        )
+
+    /**
+     * The server's calls, in order: "season" for a load of season 1, "episode" for the panel with
+     * its episode 1; "season 2" and "episode 2.1" for season 2.
+     */
     private val calls = mutableListOf<String>()
 
     private val dataChanges = DataChangeEvents()
@@ -144,8 +165,9 @@ class SeasonWakeReloadTest {
         setPage()
 
         assertEquals(listOf("season", "episode"), calls)
-        rule.onNodeWithText("Resume")
-        rule.onNodeWithText("8 mins left")
+        rule.onNodeWithText("Resume").assertExists()
+        // Part of the episode's info line ("S1 E1 · … · 8 mins left · Ends at …").
+        rule.onNodeWithText("8 mins left", substring = true).assertExists()
     }
 
     @Test
@@ -178,7 +200,37 @@ class SeasonWakeReloadTest {
         releaseSeason()
 
         assertEquals(listOf("season", "episode"), calls)
-        rule.onNodeWithText("Play")
+        rule.onNodeWithText("Play").assertExists()
+    }
+
+    @Test
+    fun `a season picked during the wake's reload gets no panel from the season it left`() {
+        setPage()
+        calls.clear()
+
+        serverEpisodes = serverEpisodes.mapIndexed { i, e ->
+            if (i == 0) e.copy(playbackPositionTicks = 0, played = true) else e
+        }
+        dataChanges.onChanged()
+        holdSeason = true
+        sleepAndWake()
+        assertEquals(listOf("season"), calls)
+
+        // Season 2, picked before season 1 has answered: its load replaces the wake's.
+        // The chip's click, as OK on it does (a test key press doesn't reach a tv-material chip).
+        rule.onNodeWithText("Season 2").performSemanticsAction(SemanticsActions.OnClick)
+        rule.waitForIdle()
+        // Season 1's request ends first, as a cancelled request does at once, while season 2's is
+        // still on its way and season 1's cards are still on screen.
+        releaseSeason(season.id)
+        assertEquals(listOf("season", "season 2"), calls)
+        releaseSeason()
+        // The panel follows focus to season 2's episode once it has rested there.
+        rule.waitUntil(timeoutMillis = 5_000) { "episode 2.1" in calls }
+
+        // Not season 1's episode 1, whose card was still on screen: with a played mark the card
+        // didn't have yet, it would have loaded season 1 again over season 2.
+        assertEquals(listOf("season", "season 2", "episode 2.1"), calls)
     }
 
     /**
@@ -186,13 +238,15 @@ class SeasonWakeReloadTest {
      * slower than it is to answer for the panel's episode.
      */
     private var holdSeason = false
-    private val heldSeason = mutableListOf<() -> Unit>()
+    private val heldSeason = mutableListOf<Pair<ItemId, () -> Unit>>()
 
-    private fun releaseSeason() {
-        while (heldSeason.isNotEmpty()) {
-            val answers = heldSeason.toList()
-            heldSeason.clear()
-            rule.runOnIdle { answers.forEach { it() } }
+    /** Answers the held calls for season [only], or for every season. */
+    private fun releaseSeason(only: ItemId? = null) {
+        while (true) {
+            val answers = heldSeason.filter { only == null || it.first == only }
+            if (answers.isEmpty()) break
+            heldSeason.removeAll(answers)
+            rule.runOnIdle { answers.forEach { it.second() } }
             rule.waitForIdle()
         }
     }
@@ -201,15 +255,25 @@ class SeasonWakeReloadTest {
     private fun repository(): FakeRoles =
         FakeRoles(ItemCatalog::class, UserDataUpdates::class) { _, method, args ->
             when (method.kotlinName) {
-                "getSeason" -> later(args, season, holdSeason).also { calls += "season" }
-                "getSeasons" -> later(args, listOf(season), holdSeason)
+                "getSeason" -> {
+                    val id = args!![0].asItemId()
+                    calls += if (id == season2.id) "season 2" else "season"
+                    later(args, if (id == season2.id) season2 else season, id.takeIf { holdSeason })
+                }
+                "getSeasons" -> later(args, listOf(season, season2), heldFor = null)
                 "getEpisodes" -> {
                     val offline = args!![args.size - 2] as Boolean
-                    if (offline) emptyList<Episode>() else later(args, serverEpisodes, holdSeason)
+                    val seasonId = args[1].asItemIdOrNull()
+                    val episodes = if (seasonId == season2.id) season2Episodes else serverEpisodes
+                    if (offline) emptyList<Episode>()
+                    else later(args, episodes, seasonId.takeIf { holdSeason })
                 }
-                // Only the first episode is ever in the panel: it is the one to resume.
-                "getEpisode" ->
-                    later(args, serverEpisodes.first(), false).also { calls += "episode" }
+                "getEpisode" -> {
+                    val id = args!![0].asItemId()
+                    val episode = (serverEpisodes + season2Episodes).first { it.id == id }
+                    calls += if (episode in season2Episodes) "episode 2.1" else "episode"
+                    later(args, episode, heldFor = null)
+                }
                 else ->
                     throw NotImplementedError(
                         "${method.declaringClass.simpleName}.${method.kotlinName}"
@@ -219,12 +283,13 @@ class SeasonWakeReloadTest {
 
     /**
      * Suspends the call (its last argument is the continuation) and answers it on a later turn of
-     * the main thread, or, [held], when [releaseSeason] says so.
+     * the main thread, or, when [heldFor] names a season, once [releaseSeason] releases it.
      */
-    private fun later(args: Array<Any?>?, answer: Any?, held: Boolean): Any {
+    private fun later(args: Array<Any?>?, answer: Any?, heldFor: ItemId?): Any {
         @Suppress("UNCHECKED_CAST") val continuation = args!!.last() as Continuation<Any?>
         val resume = { continuation.resume(answer) }
-        if (held) heldSeason += resume else Handler(Looper.getMainLooper()).post(resume)
+        if (heldFor != null) heldSeason += heldFor to resume
+        else Handler(Looper.getMainLooper()).post(resume)
         return COROUTINE_SUSPENDED
     }
 

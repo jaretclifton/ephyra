@@ -76,7 +76,7 @@ class WakeReloadFocusTest {
         movie = partlyWatchedMovie.copy(playbackPositionTicks = 10 * Ticks.PER_MINUTE)
         rule.waitForIdle()
 
-        rule.onNodeWithText("2 mins left")
+        rule.onNodeWithText("2 mins left").assertExists()
         rule.onNodeWithText("Resume").assertIsFocused()
     }
 
