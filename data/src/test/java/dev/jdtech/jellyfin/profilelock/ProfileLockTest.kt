@@ -5,9 +5,10 @@ import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.repository.ServerStore
+import dev.jdtech.jellyfin.repository.StoredUsers
+import dev.jdtech.jellyfin.repository.UserLocks
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.asUserId
-import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -33,7 +34,7 @@ class ProfileLockTest {
             serverId = "s".toServerId(),
         )
     private val users = mutableMapOf(alice.id to alice, bob.id to bob)
-    private val lock = ProfileLock(fakeStore(users))
+    private val lock = ProfileLock(fakeStore(users).role(), fakeStore(users).role())
 
     @Test
     fun `set, verify and clear a PIN`() = runBlocking {
@@ -81,7 +82,7 @@ class ProfileLockTest {
     @Test
     fun `a new process starts locked`() = runBlocking {
         lock.setPin(alice.id, "1234")
-        val restarted = ProfileLock(fakeStore(users))
+        val restarted = ProfileLock(fakeStore(users).role(), fakeStore(users).role())
 
         assertTrue(restarted.needsPinToSwitch(alice.id))
         assertTrue(ProfileLock.isLockedOnStart(users[alice.id], restarted.unlockedUserIds.value))
@@ -163,18 +164,15 @@ class ProfileLockTest {
         lock.setPattern(alice.id, listOf(0, 3, 6, 7))
         assertFalse(lock.needsPinToSwitch(alice.id))
 
-        val restarted = ProfileLock(fakeStore(users))
+        val restarted = ProfileLock(fakeStore(users).role(), fakeStore(users).role())
         assertTrue(restarted.needsPinToSwitch(alice.id))
         assertTrue(ProfileLock.isLockedOnStart(users[alice.id], restarted.unlockedUserIds.value))
     }
 
     companion object {
         /** Just the user calls [ProfileLock] makes of its store, on an in-memory table. */
-        fun fakeStore(users: MutableMap<UserId, User>): ServerStore =
-            fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
-                _,
-                method,
-                args ->
+        fun fakeStore(users: MutableMap<UserId, User>): FakeRoles =
+            FakeRoles(StoredUsers::class, UserLocks::class) { _, method, args ->
                 when (method.kotlinName) {
                     "user" -> users[args[0].asUserId()]
                     "setUserPin" -> {
@@ -210,6 +208,5 @@ class ProfileLockTest {
                     else -> throw UnsupportedOperationException(method.kotlinName)
                 }
             }
-                as ServerStore
     }
 }

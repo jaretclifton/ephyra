@@ -9,7 +9,7 @@ import dev.jdtech.jellyfin.models.Episode
 import dev.jdtech.jellyfin.models.ItemId
 import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.repository.CurrentAccount
-import dev.jdtech.jellyfin.repository.DownloadStore
+import dev.jdtech.jellyfin.repository.DownloadList
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.utils.Downloader
 import java.io.File
@@ -28,7 +28,7 @@ constructor(
     private val account: CurrentAccount,
     private val downloadQueue: DownloadQueue,
     private val downloader: Downloader,
-    private val downloadStore: DownloadStore,
+    private val downloadList: DownloadList,
     private val appPreferences: AppPreferences,
 ) : ViewModel() {
     private val _state = MutableStateFlow(DownloadedShowState())
@@ -43,7 +43,7 @@ constructor(
                     // CE (#718): the ones the current server downloaded.
                     val episodes =
                         (appPreferences.currentServerId()?.let {
-                                downloadStore.downloadedEpisodesOfShow(
+                                downloadList.downloadedEpisodesOfShow(
                                     AccountKey(it, userId),
                                     showId,
                                 )

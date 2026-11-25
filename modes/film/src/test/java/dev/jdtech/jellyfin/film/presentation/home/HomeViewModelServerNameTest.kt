@@ -8,7 +8,8 @@ import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.repository.CurrentAccount
 import dev.jdtech.jellyfin.repository.ItemCatalog
 import dev.jdtech.jellyfin.repository.ItemLists
-import dev.jdtech.jellyfin.repository.ServerStore
+import dev.jdtech.jellyfin.repository.StoredServers
+import dev.jdtech.jellyfin.repository.StoredUsers
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.asServerId
@@ -91,7 +92,8 @@ class HomeViewModelServerNameTest {
                 catalog = repository.role(),
                 account = repository.role(),
                 appPreferences = AppPreferences(sharedPreferences()),
-                serverStore = database(),
+                storedServers = database.role(),
+                storedUsers = database.role(),
                 loadDispatcher = dispatcher,
             )
         val load = viewModel.loadData()
@@ -119,20 +121,19 @@ class HomeViewModelServerNameTest {
             }
         }
 
-    private fun database(): ServerStore =
-        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
-            _,
-            method,
-            args ->
+    private val database: FakeRoles =
+        FakeRoles(StoredServers::class, StoredUsers::class) { _, method, args ->
             when (method.kotlinName) {
                 "server" -> stored
                 "currentUser" -> null
                 "renameServer" ->
                     renamed.add(args!![0].asServerId() to args[1] as String).let { Unit }
-                else -> throw NotImplementedError("ServerStore.${method.kotlinName}")
+                else ->
+                    throw NotImplementedError(
+                        "${method.declaringClass.simpleName}.${method.kotlinName}"
+                    )
             }
         }
-            as ServerStore
 
     private fun sharedPreferences(): SharedPreferences =
         fakeProxy(

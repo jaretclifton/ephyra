@@ -29,10 +29,16 @@ import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.CurrentAccount
 import dev.jdtech.jellyfin.repository.CurrentServerId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
+import dev.jdtech.jellyfin.repository.DownloadList
+import dev.jdtech.jellyfin.repository.DownloadMediaStreams
+import dev.jdtech.jellyfin.repository.DownloadSegmentsAndTrickplay
 import dev.jdtech.jellyfin.repository.DownloadSettings
-import dev.jdtech.jellyfin.repository.DownloadStore
+import dev.jdtech.jellyfin.repository.DownloadSources
+import dev.jdtech.jellyfin.repository.DownloadUserData
+import dev.jdtech.jellyfin.repository.DownloadedItemRows
 import dev.jdtech.jellyfin.repository.ItemCatalog
 import dev.jdtech.jellyfin.repository.PlaybackMedia
+import dev.jdtech.jellyfin.repository.QueuedDownloads
 import dev.jdtech.jellyfin.repository.StoredMediaStream
 import dev.jdtech.jellyfin.repository.StoredPendingDownload
 import dev.jdtech.jellyfin.repository.StoredSource
@@ -161,7 +167,13 @@ internal fun trickplaySheetCount(info: ItemTrickplayInfo): Int {
 
 class DownloaderImpl(
     private val context: Context,
-    private val store: DownloadStore,
+    private val downloadList: DownloadList,
+    private val itemRows: DownloadedItemRows,
+    private val downloadSources: DownloadSources,
+    private val downloadStreams: DownloadMediaStreams,
+    private val segmentsAndTrickplay: DownloadSegmentsAndTrickplay,
+    private val downloadUserData: DownloadUserData,
+    private val queuedDownloads: QueuedDownloads,
     private val catalogProvider: Provider<ItemCatalog>,
     private val mediaProvider: Provider<PlaybackMedia>,
     private val accountProvider: Provider<CurrentAccount>,
@@ -277,7 +289,7 @@ class DownloaderImpl(
                     )
                 )
                 // Resume external streams: restart any still-in-progress subtitle transfers.
-                val resolvedSource = store.itemSource(existingSource)
+                val resolvedSource = downloadSources.itemSource(existingSource)
                 resumeExternalMediaStreams(item, resolvedSource, source, allowMetered, allowRoaming)
                 Pair(existingDownloadId, null)
             } catch (e: Exception) {
@@ -378,11 +390,11 @@ class DownloaderImpl(
 
             when (item) {
                 is Movie -> {
-                    store.insertMovie(item, serverId)
+                    itemRows.insertMovie(item, serverId)
                 }
                 is Episode -> {
                     val (show, season) = showAndSeason!!
-                    store.insertEpisode(item, show, season, serverId)
+                    itemRows.insertEpisode(item, show, season, serverId)
 
                     startImagesDownloader(show)
                     startImagesDownloader(season)
@@ -391,9 +403,9 @@ class DownloaderImpl(
 
             // Before the source row: once that exists, a restart resumes the download and never
             // gets here again (#693).
-            store.replaceSegments(item.id, segments)
+            segmentsAndTrickplay.replaceSegments(item.id, segments)
 
-            store.insertSource(
+            downloadSources.insertSource(
                 itemId = item.id,
                 source = source,
                 path = destFile.absolutePath,
@@ -404,7 +416,7 @@ class DownloaderImpl(
             // Progress from an earlier download of this item that has not reached the server yet
             // is newer than what the server sent with the item: keep it.
             val userId = account.getUserId()
-            store.storeUserDataOfDownload(userId, item)
+            downloadUserData.storeUserDataOfDownload(userId, item)
 
             val resolvedStorageIndex = dirs.indexOf(storageLocation)
             downloadExternalMediaStreams(
@@ -483,7 +495,9 @@ class DownloaderImpl(
         // First, and even when the row is already gone: a resume started while the queue entry
         // was being removed (#426) must not keep writing.
         engine.cancel(downloadId)
-        val source = store.sourceByDownloadId(downloadId)?.let { store.itemSource(it) } ?: return
+        val source =
+            downloadSources.sourceByDownloadId(downloadId)?.let { downloadSources.itemSource(it) }
+                ?: return
         deleteItem(item, source)
     }
 
@@ -493,7 +507,7 @@ class DownloaderImpl(
      */
     private suspend fun partialSourceOfServer(item: Item, serverId: ServerId?) =
         serverId
-            ?.let { store.sourcesOfServer(item.id, it) }
+            ?.let { downloadSources.sourcesOfServer(item.id, it) }
             .orEmpty()
             .firstOrNull { source ->
                 DownloadFiles.isPartial(source.path) && source.downloadId != null
@@ -515,10 +529,10 @@ class DownloaderImpl(
     internal suspend fun releaseOtherServersCopy(item: Item, serverId: ServerId?) {
         if (!isStoredForAnotherServer(item, serverId)) return
         Timber.i("Replacing the copy of ${item.id.asString()} stored for another server")
-        val sources = store.sources(item.id)
+        val sources = downloadSources.sources(item.id)
         for (source in sources) {
             source.downloadId?.let { engine.cancel(it) }
-            deleteItemRows(item, store.itemSource(source))
+            deleteItemRows(item, downloadSources.itemSource(source))
         }
         if (sources.isEmpty()) deleteItemRows(item, source = null)
         dataChanges.onChanged()
@@ -531,9 +545,13 @@ class DownloaderImpl(
         val storedFor =
             when (item) {
                 is Movie ->
-                    store.storedServerOfMovie(item.id)?.let { it.serverId?.asString().orEmpty() }
+                    downloadList.storedServerOfMovie(item.id)?.let {
+                        it.serverId?.asString().orEmpty()
+                    }
                 is Episode ->
-                    store.storedServerOfEpisode(item.id)?.let { it.serverId?.asString().orEmpty() }
+                    downloadList.storedServerOfEpisode(item.id)?.let {
+                        it.serverId?.asString().orEmpty()
+                    }
                 else -> null
             }
         return storedFor != null && storedFor != serverId.asString()
@@ -542,19 +560,19 @@ class DownloaderImpl(
     private suspend fun deleteItemRows(item: Item, source: ItemSource?) {
         when (item) {
             is Movie -> {
-                store.deleteMovie(item.id)
+                itemRows.deleteMovie(item.id)
             }
             is Episode -> {
-                store.deleteEpisode(item.id)
-                val remainingEpisodes = store.episodeIdsOfSeason(item.seasonId)
+                itemRows.deleteEpisode(item.id)
+                val remainingEpisodes = itemRows.episodeIdsOfSeason(item.seasonId)
                 if (remainingEpisodes.isEmpty()) {
-                    store.deleteSeasonAndUserData(item.seasonId)
+                    itemRows.deleteSeasonAndUserData(item.seasonId)
                     File(context.filesDir, "trickplay/${item.seasonId.asString()}")
                         .deleteRecursively()
                     File(context.filesDir, "images/${item.seasonId.asString()}").deleteRecursively()
-                    val remainingSeasons = store.seasonIdsOfShow(item.seriesId)
+                    val remainingSeasons = itemRows.seasonIdsOfShow(item.seriesId)
                     if (remainingSeasons.isEmpty()) {
-                        store.deleteShowAndUserData(item.seriesId)
+                        itemRows.deleteShowAndUserData(item.seriesId)
                         File(context.filesDir, "trickplay/${item.seriesId.asString()}")
                             .deleteRecursively()
                         File(context.filesDir, "images/${item.seriesId.asString()}")
@@ -565,25 +583,25 @@ class DownloaderImpl(
         }
 
         if (source != null) {
-            store.deleteSource(source.id)
+            downloadSources.deleteSource(source.id)
             val sourceFile = File(source.path)
             sourceFile.delete()
             pruneEmptyParents(sourceFile)
 
-            val mediaStreams = store.mediaStreamsOfSource(source.id)
+            val mediaStreams = downloadStreams.mediaStreamsOfSource(source.id)
             for (mediaStream in mediaStreams) {
                 // Cancel any still-running engine task for this external stream before
                 // removing the DB row, otherwise we leak in-flight downloads.
                 mediaStream.downloadId?.let { engine.cancel(it) }
                 File(mediaStream.path).delete()
             }
-            store.deleteMediaStreamsOfSource(source.id)
+            downloadStreams.deleteMediaStreamsOfSource(source.id)
         }
 
         // Progress watched offline that has not reached the server yet outlives the download:
         // the sync sends it and then removes the row (#281).
-        store.deleteSyncedUserData(item.id)
-        store.deleteSegments(item.id)
+        downloadUserData.deleteSyncedUserData(item.id)
+        segmentsAndTrickplay.deleteSegments(item.id)
 
         File(context.filesDir, "trickplay/${item.id.asString()}").deleteRecursively()
         File(context.filesDir, "images/${item.id.asString()}").deleteRecursively()
@@ -707,7 +725,7 @@ class DownloaderImpl(
                             ),
                         )
                         .absolutePath
-                store.insertMediaStream(id, source.id, mediaStream, streamPath)
+                downloadStreams.insertMediaStream(id, source.id, mediaStream, streamPath)
                 val downloadId = idCounter.incrementAndGet()
                 engine.start(
                     MediaDownloadEngine.Request(
@@ -718,14 +736,14 @@ class DownloaderImpl(
                         allowRoaming = allowRoaming,
                     )
                 )
-                store.setMediaStreamDownloadId(id, downloadId)
+                downloadStreams.setMediaStreamDownloadId(id, downloadId)
             } catch (e: Exception) {
                 // One bad external stream (malformed URL, engine rejects request)
                 // shouldn't kill the whole download. Drop the orphan DB row and
                 // keep going with the remaining streams.
                 Timber.e(e, "Failed to start external stream ${mediaStream.title} for ${item.name}")
                 try {
-                    store.deleteMediaStream(id)
+                    downloadStreams.deleteMediaStream(id)
                 } catch (_: Exception) {
                     // swallow — nothing more we can do
                 }
@@ -753,7 +771,7 @@ class DownloaderImpl(
     ) {
         val rows =
             try {
-                store.mediaStreamsOfSource(dbSource.id)
+                downloadStreams.mediaStreamsOfSource(dbSource.id)
             } catch (e: Exception) {
                 Timber.w(e, "Failed to load media streams for resume of ${item.name}")
                 return
@@ -789,7 +807,7 @@ class DownloaderImpl(
             } ?: return
         val rows =
             try {
-                    store.mediaStreamsOfSource(dbSourceDto.id)
+                    downloadStreams.mediaStreamsOfSource(dbSourceDto.id)
                 } catch (e: Exception) {
                     Timber.w(e, "Failed to load media streams for retry check on ${item.name}")
                     return
@@ -858,7 +876,7 @@ class DownloaderImpl(
                 engine.cancel(downloadId)
                 File(row.path).delete()
                 try {
-                    store.deleteMediaStream(row.id)
+                    downloadStreams.deleteMediaStream(row.id)
                 } catch (_: Exception) {}
                 continue
             }
@@ -904,7 +922,7 @@ class DownloaderImpl(
         sheets: Map<Int, ByteArray>,
     ) {
         val basePath = "trickplay/${itemId.asString()}/${sourceId.asString()}"
-        store.insertTrickplayInfo(sourceId, trickplayInfo)
+        segmentsAndTrickplay.insertTrickplayInfo(sourceId, trickplayInfo)
         File(context.filesDir, basePath).mkdirs()
         for ((index, bytes) in sheets) {
             File(context.filesDir, "$basePath/$index").writeBytes(bytes)
@@ -919,7 +937,7 @@ class DownloaderImpl(
                     is Episode -> "EPISODE"
                     else -> return@withContext
                 }
-            store.insertPendingDownload(
+            queuedDownloads.insertPendingDownload(
                 StoredPendingDownload(
                     itemId = item.id,
                     itemKind = kind,
@@ -931,16 +949,16 @@ class DownloaderImpl(
         }
 
     override suspend fun removePendingDownload(itemId: ItemId) =
-        withContext(Dispatchers.IO) { store.deletePendingDownload(itemId) }
+        withContext(Dispatchers.IO) { queuedDownloads.deletePendingDownload(itemId) }
 
     override suspend fun getPendingDownloads(): List<Downloader.PendingDownload> =
         withContext(Dispatchers.IO) {
-            val pending = store.pendingDownloads()
+            val pending = queuedDownloads.pendingDownloads()
             val result = mutableListOf<Downloader.PendingDownload>()
             val cutoff = System.currentTimeMillis() - PENDING_DOWNLOAD_MAX_AGE_MS
             for (row in pending) {
                 if (row.itemKind != "MOVIE" && row.itemKind != "EPISODE") {
-                    store.deletePendingDownload(row.itemId)
+                    queuedDownloads.deletePendingDownload(row.itemId)
                     continue
                 }
                 val resolved: Item? =
@@ -973,7 +991,7 @@ class DownloaderImpl(
                         Timber.i(
                             "Dropping stale pending download ${row.itemId.asString()} (>30 days unresolvable)"
                         )
-                        store.deletePendingDownload(row.itemId)
+                        queuedDownloads.deletePendingDownload(row.itemId)
                     }
                 // else: keep the row; it will be retried on the next restoreAll().
                 }
@@ -984,7 +1002,7 @@ class DownloaderImpl(
     override suspend fun getActiveDownloads(): List<Downloader.ActiveDownload> =
         withContext(Dispatchers.IO) {
             val userId = account.getUserId()
-            val sources = store.activeDownloadSources()
+            val sources = downloadSources.activeDownloadSources()
             val result = mutableListOf<Downloader.ActiveDownload>()
             for (source in sources) {
                 val downloadId = source.downloadId ?: continue
@@ -1002,10 +1020,10 @@ class DownloaderImpl(
                 }
                 val item: Item? =
                     try {
-                        store.movie(source.itemId, userId)
+                        downloadList.movie(source.itemId, userId)
                     } catch (_: Exception) {
                         try {
-                            store.episode(source.itemId, userId)
+                            downloadList.episode(source.itemId, userId)
                         } catch (_: Exception) {
                             null
                         }
@@ -1068,12 +1086,12 @@ class DownloaderImpl(
             val knownPaths = mutableSetOf<String>()
             suspend fun remember(source: StoredSource) {
                 knownPaths.add(source.path)
-                for (stream in store.mediaStreamsOfSource(source.id)) {
+                for (stream in downloadStreams.mediaStreamsOfSource(source.id)) {
                     knownPaths.add(stream.path)
                 }
             }
 
-            for (source in store.completedDownloadSources()) {
+            for (source in downloadSources.completedDownloadSources()) {
                 remember(source)
                 if (!isUnderMountedRoot(source.path, mountedRoots)) continue
                 if (File(source.path).exists()) continue
@@ -1081,7 +1099,7 @@ class DownloaderImpl(
                 cleanupOrphanSource(source.itemId, userId)
             }
 
-            for (source in store.activeDownloadSources()) {
+            for (source in downloadSources.activeDownloadSources()) {
                 remember(source)
                 if (!isUnderMountedRoot(source.path, mountedRoots)) continue
                 val engineAlive = source.downloadId != null && source.downloadId in liveTaskIds
@@ -1104,7 +1122,7 @@ class DownloaderImpl(
 
             // CE (#379): read before anything below is deleted, so a database that cannot be read
             // deletes nothing.
-            val knownItemIds = store.allItemIds().toSet()
+            val knownItemIds = downloadList.allItemIds().toSet()
             val knownFinalPaths = knownPaths.map { DownloadFiles.finalPath(it) }.toSet()
             val now = System.currentTimeMillis()
             var deletedFiles = 0
@@ -1191,11 +1209,11 @@ class DownloaderImpl(
 
     override suspend fun finalizeDownload(downloadId: Long): Boolean =
         withContext(Dispatchers.IO) {
-            val source = store.sourceByDownloadId(downloadId)
+            val source = downloadSources.sourceByDownloadId(downloadId)
             if (source != null) {
                 return@withContext finalizeSource(source)
             }
-            val mediaStream = store.mediaStreamByDownloadId(downloadId)
+            val mediaStream = downloadStreams.mediaStreamByDownloadId(downloadId)
             if (mediaStream != null) {
                 return@withContext finalizeMediaStream(mediaStream)
             }
@@ -1213,7 +1231,7 @@ class DownloaderImpl(
         // If the rename already happened on disk (earlier finalize, manual recovery),
         // just sync the DB and exit.
         if (finalFile.exists() && finalFile.length() > 0 && !downloadFile.exists()) {
-            store.setSourceDownloaded(source.id, finalPath, System.currentTimeMillis())
+            downloadSources.setSourceDownloaded(source.id, finalPath, System.currentTimeMillis())
             finalizeMediaStreamsOf(source)
             return true
         }
@@ -1229,7 +1247,7 @@ class DownloaderImpl(
             return false
         }
         try {
-            store.setSourceDownloaded(source.id, finalPath, System.currentTimeMillis())
+            downloadSources.setSourceDownloaded(source.id, finalPath, System.currentTimeMillis())
         } catch (e: Exception) {
             // The row still says `.download`: the file goes back under that name, so the row and
             // the disk agree for the retry, the removal and the storage sweep.
@@ -1285,7 +1303,7 @@ class DownloaderImpl(
     }
 
     private suspend fun unfinishedMediaStreams(sourceId: MediaSourceId): List<StoredMediaStream> =
-        store.mediaStreamsOfSource(sourceId).filter { DownloadFiles.isPartial(it.path) }
+        downloadStreams.mediaStreamsOfSource(sourceId).filter { DownloadFiles.isPartial(it.path) }
 
     /**
      * Waits, at most [mediaStreamFinalizeTimeoutMs], for the subtitles of [source] that were not
@@ -1376,7 +1394,7 @@ class DownloaderImpl(
 
     override suspend fun finalizeFinishedMediaStreams() =
         withContext(Dispatchers.IO) {
-            for (source in store.completedDownloadSources()) {
+            for (source in downloadSources.completedDownloadSources()) {
                 if (mediaStreamFinalizeJobs[source.id]?.isActive == true) continue
                 for (row in unfinishedMediaStreams(source.id)) {
                     val status = row.downloadId?.let { engine.snapshot(it)?.status }
@@ -1406,7 +1424,7 @@ class DownloaderImpl(
         val finalFile = File(finalPath)
 
         if (finalFile.exists() && finalFile.length() > 0 && !downloadFile.exists()) {
-            store.setMediaStreamPath(mediaStream.id, finalPath)
+            downloadStreams.setMediaStreamPath(mediaStream.id, finalPath)
             return true
         }
 
@@ -1418,10 +1436,10 @@ class DownloaderImpl(
 
         if (!renameDownloadFile(mediaStream.path, finalPath)) {
             Timber.e("Failed to rename media stream download. path=${mediaStream.path}")
-            if (!taskGone) store.deleteMediaStream(mediaStream.id)
+            if (!taskGone) downloadStreams.deleteMediaStream(mediaStream.id)
             return false
         }
-        store.setMediaStreamPath(mediaStream.id, finalPath)
+        downloadStreams.setMediaStreamPath(mediaStream.id, finalPath)
         // Drop the terminal task from the engine registry after successful finalize.
         mediaStream.downloadId?.let { engine.cancel(it) }
         return true
@@ -1456,24 +1474,24 @@ class DownloaderImpl(
     private suspend fun cleanupOrphanSource(itemId: ItemId, userId: UserId) {
         val item: Item? =
             try {
-                store.movieOrNull(itemId, userId)
+                downloadList.movieOrNull(itemId, userId)
             } catch (_: Exception) {
                 null
             }
                 ?: try {
-                    store.episodeOrNull(itemId, userId)
+                    downloadList.episodeOrNull(itemId, userId)
                 } catch (_: Exception) {
                     null
                 }
         if (item == null) {
             // Item record is already gone — drop lingering source rows directly.
-            for (source in store.sources(itemId)) {
-                store.deleteMediaStreamsOfSource(source.id)
-                store.deleteSource(source.id)
+            for (source in downloadSources.sources(itemId)) {
+                downloadStreams.deleteMediaStreamsOfSource(source.id)
+                downloadSources.deleteSource(source.id)
             }
             return
         }
-        for (source in store.sources(itemId).map { store.itemSource(it) }) {
+        for (source in downloadSources.sources(itemId).map { downloadSources.itemSource(it) }) {
             try {
                 deleteItem(item, source)
             } catch (e: Exception) {

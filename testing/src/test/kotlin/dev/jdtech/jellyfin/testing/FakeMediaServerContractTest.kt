@@ -122,6 +122,5 @@ private val NONE =
         serverResumeThresholds = false,
         autoPlayNextSetting = false,
         sessionSocket = false,
-        deviceRename = false,
         cappedDownloadTranscode = false,
     )

@@ -33,7 +33,13 @@ import dev.jdtech.jellyfin.models.toSeasonEntity
 import dev.jdtech.jellyfin.models.toSegmentEntity
 import dev.jdtech.jellyfin.models.toShowEntity
 import dev.jdtech.jellyfin.models.toUserDataEntity
-import dev.jdtech.jellyfin.repository.DownloadStore
+import dev.jdtech.jellyfin.repository.DownloadList
+import dev.jdtech.jellyfin.repository.DownloadMediaStreams
+import dev.jdtech.jellyfin.repository.DownloadSegmentsAndTrickplay
+import dev.jdtech.jellyfin.repository.DownloadSources
+import dev.jdtech.jellyfin.repository.DownloadUserData
+import dev.jdtech.jellyfin.repository.DownloadedItemRows
+import dev.jdtech.jellyfin.repository.QueuedDownloads
 import dev.jdtech.jellyfin.repository.StoredMediaStream
 import dev.jdtech.jellyfin.repository.StoredPendingDownload
 import dev.jdtech.jellyfin.repository.StoredServer
@@ -42,10 +48,19 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
 /**
- * [DownloadStore] on Room (#899). Each method makes the queries its callers made on [database]
- * before, in the same order: the queries, their transactions and the rows are unchanged.
+ * The roles of the download store on Room (#899; split by role in #967: [DownloadList],
+ * [DownloadedItemRows], [DownloadSources], [DownloadMediaStreams], [DownloadSegmentsAndTrickplay],
+ * [DownloadUserData], [QueuedDownloads]). Each method makes the queries its callers made on
+ * [database] before, in the same order: the queries, their transactions and the rows are unchanged.
  */
-class RoomDownloadStore(private val database: ServerDatabaseDao) : DownloadStore {
+class RoomDownloadStore(private val database: ServerDatabaseDao) :
+    DownloadList,
+    DownloadedItemRows,
+    DownloadSources,
+    DownloadMediaStreams,
+    DownloadSegmentsAndTrickplay,
+    DownloadUserData,
+    QueuedDownloads {
 
     override suspend fun sources(itemId: ItemId): List<StoredSource> =
         database.getSources(itemId).map { it.toStoredSource() }

@@ -196,6 +196,8 @@ class SyncWorkerRunTest {
             AppPreferencesDownloadSettings(preferences),
             AppPreferencesCurrentServerId(preferences),
             RoomDownloadStore(database),
+            RoomDownloadStore(database),
+            RoomDownloadStore(database),
             Provider { unused<ItemCatalog>() },
             Provider { unused<CurrentAccount>() },
             connectivity,

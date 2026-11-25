@@ -69,6 +69,7 @@ class ServerSessionKeeperTest {
             session,
             preferences,
             RoomServerStore(database),
+            RoomServerStore(database),
             { capabilities },
             session.active,
         )

@@ -9,9 +9,9 @@ import dev.jdtech.jellyfin.models.Server
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
-import dev.jdtech.jellyfin.repository.ServerStore
+import dev.jdtech.jellyfin.repository.StoredServers
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
-import dev.jdtech.jellyfin.testing.fakeProxy
+import dev.jdtech.jellyfin.testing.fakeRole
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -200,17 +200,15 @@ class HomeRowsTest {
         assertEquals(LegacyHomeSwitches(false, true, true, false), old)
     }
 
-    private fun dao(servers: Map<String, Server>): ServerStore =
-        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
-            _,
-            method,
-            args ->
-            when (method.kotlinName) {
-                "server" -> servers[args!![0]]
-                else -> throw NotImplementedError("ServerStore.${method.kotlinName}")
-            }
+    private fun dao(servers: Map<String, Server>): StoredServers = fakeRole { _, method, args ->
+        when (method.kotlinName) {
+            "server" -> servers[args!![0]]
+            else ->
+                throw NotImplementedError(
+                    "${method.declaringClass.simpleName}.${method.kotlinName}"
+                )
         }
-            as ServerStore
+    }
 }
 
 /** Just enough SharedPreferences for AppPreferences. */

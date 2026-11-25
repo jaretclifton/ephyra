@@ -17,7 +17,8 @@ import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.models.toMediaSourceId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.repository.CurrentAccount
-import dev.jdtech.jellyfin.repository.DownloadStore
+import dev.jdtech.jellyfin.repository.DownloadList
+import dev.jdtech.jellyfin.repository.DownloadSources
 import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.FakeRoles
@@ -173,12 +174,13 @@ class DownloadsViewModelUserSwitchTest {
                 DownloadQueue(
                     downloader = unused(),
                     settings = AppPreferencesDownloadSettings(preferences),
-                    downloadStore = downloadStore,
+                    downloadSources = downloadStore.role(),
                     context = context,
                     texts = CoreDownloadTexts,
                 ),
             downloader = unused(),
-            downloadStore = downloadStore,
+            downloadList = downloadStore.role(),
+            downloadSources = downloadStore.role(),
             ioDispatcher = dispatcher,
         )
     }
@@ -203,11 +205,8 @@ class DownloadsViewModelUserSwitchTest {
             }
         }
 
-    private fun downloadStore(): DownloadStore =
-        fakeProxy(DownloadStore::class.java.classLoader, arrayOf(DownloadStore::class.java)) {
-            _,
-            method,
-            args ->
+    private fun downloadStore(): FakeRoles =
+        FakeRoles(DownloadList::class, DownloadSources::class) { _, method, args ->
             when (method.kotlinName) {
                 "activeDownloadSources" -> emptyList<Any>()
                 // A finished download of every item asked for.
@@ -225,10 +224,12 @@ class DownloadsViewModelUserSwitchTest {
                                 )
                             )
                     }
-                else -> throw NotImplementedError("DownloadStore.${method.kotlinName}")
+                else ->
+                    throw NotImplementedError(
+                        "${method.declaringClass.simpleName}.${method.kotlinName}"
+                    )
             }
         }
-            as DownloadStore
 
     private fun appPreferences(): AppPreferences {
         val preferences =

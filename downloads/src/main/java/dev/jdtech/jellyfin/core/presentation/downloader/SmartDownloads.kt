@@ -8,8 +8,10 @@ import dev.jdtech.jellyfin.models.ItemSourceType
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.repository.CurrentAccount
 import dev.jdtech.jellyfin.repository.CurrentServerId
+import dev.jdtech.jellyfin.repository.DownloadList
 import dev.jdtech.jellyfin.repository.DownloadSettings
-import dev.jdtech.jellyfin.repository.DownloadStore
+import dev.jdtech.jellyfin.repository.DownloadSources
+import dev.jdtech.jellyfin.repository.DownloadUserData
 import dev.jdtech.jellyfin.repository.ItemCatalog
 import dev.jdtech.jellyfin.repository.PlaybackEvents
 import dev.jdtech.jellyfin.repository.StoredSource
@@ -43,7 +45,9 @@ constructor(
     private val downloader: Downloader,
     private val settings: DownloadSettings,
     private val currentServerId: CurrentServerId,
-    private val downloadStore: DownloadStore,
+    private val downloadList: DownloadList,
+    private val downloadSources: DownloadSources,
+    private val downloadUserData: DownloadUserData,
     private val catalog: Provider<ItemCatalog>,
     private val account: Provider<CurrentAccount>,
     private val networkConnectivity: NetworkConnectivity,
@@ -84,7 +88,7 @@ constructor(
         if (!isActive()) return
         // CE (#718): the current server's series; another server's downloads are not its to manage.
         val serverId = currentServerId.get() ?: return
-        for (seriesId in downloadStore.seriesIdsWithCompletedDownloads(serverId)) {
+        for (seriesId in downloadList.seriesIdsWithCompletedDownloads(serverId)) {
             check(seriesId, finishedRecently = false)
         }
     }
@@ -130,7 +134,7 @@ constructor(
 
         // The server decides what counts as watched, so wait until our own progress has reached
         // it. The sync that pushes it runs a check afterwards.
-        if (episodes.any { downloadStore.hasUserDataToBeSynced(userId, it.id) }) {
+        if (episodes.any { downloadUserData.hasUserDataToBeSynced(userId, it.id) }) {
             Timber.d(
                 "Smart Downloads: unsynced progress for series ${seriesId.asString()}, waiting"
             )
@@ -141,7 +145,7 @@ constructor(
         val serverId = currentServerId.get() ?: return
         val sourcesByEpisode = episodes.associate { episode ->
             episode.id to
-                downloadStore.sourcesOfServer(episode.id, serverId).filter {
+                downloadSources.sourcesOfServer(episode.id, serverId).filter {
                     it.type == ItemSourceType.LOCAL
                 }
         }
@@ -184,7 +188,7 @@ constructor(
             if (playbackEvents.playingItemId.value == episode.id) continue
             val source = completed[episode.id]?.firstOrNull() ?: continue
             Timber.i("Smart Downloads: removing watched ${episode.describe()}")
-            downloader.deleteItem(episode, downloadStore.itemSource(source))
+            downloader.deleteItem(episode, downloadSources.itemSource(source))
         }
 
         if (plan.toQueue.isEmpty()) return

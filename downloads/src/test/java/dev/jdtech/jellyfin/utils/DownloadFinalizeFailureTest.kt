@@ -360,9 +360,16 @@ class DownloadFinalizeFailureTest {
                         )
                 }
             }
+        val store = RoomDownloadStore(database())
         return DownloaderImpl(
             context,
-            RoomDownloadStore(database()),
+            store,
+            store,
+            store,
+            store,
+            store,
+            store,
+            store,
             Provider { repository.role() },
             Provider { repository.role() },
             Provider { repository.role() },

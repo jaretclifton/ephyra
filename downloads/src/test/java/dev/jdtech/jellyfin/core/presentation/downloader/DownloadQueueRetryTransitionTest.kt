@@ -316,7 +316,7 @@ class DownloadQueueRetryTransitionTest {
         return DownloadQueue(
             downloader = downloader,
             settings = TestDownloadSettings(maxConcurrentDownloads = maxConcurrent),
-            downloadStore = RoomDownloadStore(database()),
+            downloadSources = RoomDownloadStore(database()),
             context = context,
             texts = TestDownloadTexts,
         )

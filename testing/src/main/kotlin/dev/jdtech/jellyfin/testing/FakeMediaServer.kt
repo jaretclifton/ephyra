@@ -505,9 +505,6 @@ class FakeMediaServer(
                     }
             }
 
-        override suspend fun streamUrl(itemId: ItemId, mediaSourceId: MediaSourceId): String =
-            call("streamUrl") { streamUrlOf(itemId, mediaSourceId) }
-
         override suspend fun segments(itemId: ItemId): List<Segment> =
             call("segments") {
                 stored(itemId) ?: notFound()
@@ -578,10 +575,6 @@ class FakeMediaServer(
             }
         }
 
-        override suspend fun announceCapabilities() {
-            call("announceCapabilities") {}
-        }
-
         override suspend fun resumeThresholds(): ResumeThresholds? =
             call("resumeThresholds") {
                 if (capabilities.serverResumeThresholds) ResumeThresholds.DEFAULT else null
@@ -624,10 +617,6 @@ class FakeMediaServer(
 
         override fun userImageUrl(userId: UserId, tag: String): String? = baseUrl?.let {
             "$it/Users/${userId.asString()}/Images/Primary?tag=$tag"
-        }
-
-        override suspend fun updateDeviceName(name: String) {
-            call("updateDeviceName") {}
         }
 
         override suspend fun autoPlayNextEpisode(): Boolean? =

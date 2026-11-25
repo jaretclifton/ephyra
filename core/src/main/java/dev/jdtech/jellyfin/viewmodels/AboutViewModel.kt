@@ -13,7 +13,7 @@ import dev.jdtech.jellyfin.domain.ports.DeviceCodecs
 import dev.jdtech.jellyfin.domain.ports.DeviceReportSource
 import dev.jdtech.jellyfin.player.ProbedCodecs
 import dev.jdtech.jellyfin.repository.CurrentAccount
-import dev.jdtech.jellyfin.repository.ServerStore
+import dev.jdtech.jellyfin.repository.StoredServers
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import javax.inject.Inject
 import javax.inject.Provider
@@ -50,7 +50,7 @@ constructor(
     private val codecs: DeviceCodecs,
     private val deviceReport: DeviceReportSource,
     private val appPreferences: AppPreferences,
-    private val serverStore: ServerStore,
+    private val storedServers: StoredServers,
     // A Provider, so the repository is only made when the info loads.
     private val account: Provider<CurrentAccount>,
     val appVariant: AppVariant,
@@ -82,7 +82,7 @@ constructor(
             _state.update { it.copy(info = info, codecs = codecs.probedCodecsSnapshot()) }
 
             val serverId = appPreferences.currentServerId() ?: return@launch
-            val data = serverStore.serverWithAddressAndUser(serverId) ?: return@launch
+            val data = storedServers.serverWithAddressAndUser(serverId) ?: return@launch
             _state.update {
                 it.copy(
                     server =

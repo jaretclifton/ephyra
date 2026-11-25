@@ -10,7 +10,8 @@ import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.repository.CurrentAccount
 import dev.jdtech.jellyfin.repository.ItemCatalog
 import dev.jdtech.jellyfin.repository.ItemLists
-import dev.jdtech.jellyfin.repository.ServerStore
+import dev.jdtech.jellyfin.repository.StoredServers
+import dev.jdtech.jellyfin.repository.StoredUsers
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.asItemId
@@ -56,7 +57,8 @@ class HomeViewModelPartialFailureTest {
             catalog = repository.role(),
             account = repository.role(),
             appPreferences = AppPreferences(sharedPreferences()),
-            serverStore = unusedDao(),
+            storedServers = unusedDao.role(),
+            storedUsers = unusedDao.role(),
             loadDispatcher = dispatcher,
         )
     }
@@ -208,14 +210,12 @@ class HomeViewModelPartialFailureTest {
         }
             as Item
 
-    private fun unusedDao(): ServerStore =
-        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
-            _,
-            method,
-            _ ->
-            throw NotImplementedError("ServerStore.${method.kotlinName} not expected in this test")
+    private val unusedDao: FakeRoles =
+        FakeRoles(StoredServers::class, StoredUsers::class) { _, method, _ ->
+            throw NotImplementedError(
+                "${method.declaringClass.simpleName}.${method.kotlinName} not expected in this test"
+            )
         }
-            as ServerStore
 
     private fun sharedPreferences(): SharedPreferences =
         fakeProxy(

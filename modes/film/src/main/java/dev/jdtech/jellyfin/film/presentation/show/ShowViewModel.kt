@@ -29,7 +29,7 @@ import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.mergeDuplicateRoles
 import dev.jdtech.jellyfin.ratings.ExternalRatings
 import dev.jdtech.jellyfin.repository.DataChangeEvents
-import dev.jdtech.jellyfin.repository.DownloadStore
+import dev.jdtech.jellyfin.repository.DownloadList
 import dev.jdtech.jellyfin.repository.ItemCatalog
 import dev.jdtech.jellyfin.repository.ItemExtras
 import dev.jdtech.jellyfin.repository.ReloadPolicy
@@ -72,7 +72,7 @@ internal constructor(
     private val appPreferences: AppPreferences,
     private val downloader: Downloader,
     private val downloadQueue: DownloadQueue,
-    private val downloadStore: DownloadStore,
+    private val downloadList: DownloadList,
     dataChanges: DataChangeEvents = DataChangeEvents(),
     externalRatings: ExternalRatings = ExternalRatings.None,
     /**
@@ -92,7 +92,7 @@ internal constructor(
         appPreferences: AppPreferences,
         downloader: Downloader,
         downloadQueue: DownloadQueue,
-        downloadStore: DownloadStore,
+        downloadList: DownloadList,
         dataChanges: DataChangeEvents = DataChangeEvents(),
         externalRatings: ExternalRatings = ExternalRatings.None,
     ) : this(
@@ -103,7 +103,7 @@ internal constructor(
         appPreferences,
         downloader,
         downloadQueue,
-        downloadStore,
+        downloadList,
         dataChanges,
         externalRatings,
         Dispatchers.Default,
@@ -286,7 +286,7 @@ internal constructor(
     private suspend fun getLocalEpisodeCounts(showId: ItemId): Map<ItemId, SeasonEpisodeCounts> =
         withContext(ioDispatcher) {
             val serverId = appPreferences.currentServerId() ?: return@withContext emptyMap()
-            downloadStore.seasonEpisodeCounts(showId, serverId).associateBy { it.seasonId }
+            downloadList.seasonEpisodeCounts(showId, serverId).associateBy { it.seasonId }
         }
 
     private data class SeasonEpisodeTotals(val total: Int = 0, val canDownload: Boolean = false)

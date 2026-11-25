@@ -21,7 +21,8 @@ import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.toItemId
 import dev.jdtech.jellyfin.ratings.ExternalRatings
 import dev.jdtech.jellyfin.ratings.RatingsKeyStatus
-import dev.jdtech.jellyfin.repository.DownloadStore
+import dev.jdtech.jellyfin.repository.DownloadList
+import dev.jdtech.jellyfin.repository.DownloadSources
 import dev.jdtech.jellyfin.repository.ItemCatalog
 import dev.jdtech.jellyfin.repository.ItemExtras
 import dev.jdtech.jellyfin.repository.UserDataUpdates
@@ -403,28 +404,28 @@ class ExternalRatingsLoadingTest {
                 DownloadQueue(
                     downloader = unused(),
                     settings = AppPreferencesDownloadSettings(preferences),
-                    downloadStore = unused<DownloadStore>(),
+                    downloadSources = unused<DownloadSources>(),
                     context = ContextWrapper(null) as Context,
                     texts = CoreDownloadTexts,
                 ),
-            downloadStore = noDownloads(),
+            downloadList = noDownloads(),
             externalRatings = ratings,
             defaultDispatcher = dispatcher,
             ioDispatcher = dispatcher,
         )
     }
 
-    private fun noDownloads(): DownloadStore =
-        fakeProxy(DownloadStore::class.java.classLoader, arrayOf(DownloadStore::class.java)) {
+    private fun noDownloads(): DownloadList =
+        fakeProxy(DownloadList::class.java.classLoader, arrayOf(DownloadList::class.java)) {
             _,
             method,
             _ ->
             when (method.kotlinName) {
                 "seasonEpisodeCounts" -> emptyList<Any>()
-                else -> throw NotImplementedError("DownloadStore.${method.kotlinName}")
+                else -> throw NotImplementedError("DownloadList.${method.kotlinName}")
             }
         }
-            as DownloadStore
+            as DownloadList
 
     private fun movie(externalIds: ExternalIds = ExternalIds(tmdb = "603", imdb = "tt0133093")) =
         Movie(

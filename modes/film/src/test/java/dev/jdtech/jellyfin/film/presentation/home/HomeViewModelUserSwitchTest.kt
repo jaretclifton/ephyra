@@ -13,7 +13,8 @@ import dev.jdtech.jellyfin.repository.DataChangeEvents
 import dev.jdtech.jellyfin.repository.ItemCatalog
 import dev.jdtech.jellyfin.repository.ItemLists
 import dev.jdtech.jellyfin.repository.PlaybackEvents
-import dev.jdtech.jellyfin.repository.ServerStore
+import dev.jdtech.jellyfin.repository.StoredServers
+import dev.jdtech.jellyfin.repository.StoredUsers
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.fakeProxy
@@ -130,7 +131,8 @@ class HomeViewModelUserSwitchTest {
                 catalog = repository.role(),
                 account = repository.role(),
                 appPreferences = AppPreferences(sharedPreferences()),
-                serverStore = database(),
+                storedServers = database.role(),
+                storedUsers = database.role(),
                 dataChanges = dataChanges,
                 loadDispatcher = dispatcher,
             )
@@ -400,19 +402,18 @@ class HomeViewModelUserSwitchTest {
             }
         }
 
-    private fun database(): ServerStore =
-        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
-            _,
-            method,
-            _ ->
+    private val database: FakeRoles =
+        FakeRoles(StoredServers::class, StoredUsers::class) { _, method, _ ->
             when (method.kotlinName) {
                 "server" -> server.copy()
                 "currentUser" -> server.currentUserId?.let { users[it] }
                 "observeCurrentUser" -> currentUser
-                else -> throw NotImplementedError("ServerStore.${method.kotlinName}")
+                else ->
+                    throw NotImplementedError(
+                        "${method.declaringClass.simpleName}.${method.kotlinName}"
+                    )
             }
         }
-            as ServerStore
 
     private fun sharedPreferences(): SharedPreferences =
         fakeProxy(

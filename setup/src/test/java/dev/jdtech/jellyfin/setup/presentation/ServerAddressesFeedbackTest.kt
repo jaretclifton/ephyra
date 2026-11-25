@@ -13,7 +13,9 @@ import dev.jdtech.jellyfin.models.ServerWithAddresses
 import dev.jdtech.jellyfin.models.UiText
 import dev.jdtech.jellyfin.models.asString
 import dev.jdtech.jellyfin.models.toServerId
-import dev.jdtech.jellyfin.repository.ServerStore
+import dev.jdtech.jellyfin.repository.ServerAddresses
+import dev.jdtech.jellyfin.repository.StoredServers
+import dev.jdtech.jellyfin.repository.StoredUsers
 import dev.jdtech.jellyfin.settings.domain.AppPreferences
 import dev.jdtech.jellyfin.setup.R as SetupR
 import dev.jdtech.jellyfin.setup.data.FakeServerConnector
@@ -21,8 +23,8 @@ import dev.jdtech.jellyfin.setup.data.SetupRepositoryImpl
 import dev.jdtech.jellyfin.setup.domain.FakeLocalNetworkAccess
 import dev.jdtech.jellyfin.setup.presentation.addresses.ServerAddressesAction
 import dev.jdtech.jellyfin.setup.presentation.addresses.ServerAddressesViewModel
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.asServerAddressId
-import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.Collections
 import kotlin.test.assertEquals
@@ -67,7 +69,7 @@ class ServerAddressesFeedbackTest {
 
     // The repository calls only these; suspend functions that do not suspend can return directly.
     private val database =
-        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
+        FakeRoles(StoredServers::class, ServerAddresses::class, StoredUsers::class) {
             _,
             method,
             args ->
@@ -92,7 +94,6 @@ class ServerAddressesFeedbackTest {
                 else -> throw UnsupportedOperationException(method.kotlinName)
             }
         }
-            as ServerStore
 
     /** The address the saved server answers at; nothing answers anywhere else. */
     private val stubAddress = "http://127.0.0.1:8096"
@@ -115,7 +116,9 @@ class ServerAddressesFeedbackTest {
         val repository =
             SetupRepositoryImpl(
                 ServerConnectors(mapOf(ServerType.JELLYFIN to connector)),
-                database,
+                database.role(),
+                database.role(),
+                database.role(),
                 AppPreferences(application.getSharedPreferences("test", Context.MODE_PRIVATE)),
                 ActiveServerHolder(),
             )

@@ -7,7 +7,8 @@ import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.profilelock.ProfileLock
-import dev.jdtech.jellyfin.repository.ServerStore
+import dev.jdtech.jellyfin.repository.StoredUsers
+import dev.jdtech.jellyfin.repository.UserLocks
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.presentation.pin.PinError
 import dev.jdtech.jellyfin.setup.presentation.pin.PinStep
@@ -18,6 +19,7 @@ import dev.jdtech.jellyfin.setup.presentation.pin.ProfilePinSettingsViewModel
 import dev.jdtech.jellyfin.setup.presentation.users.UsersAction
 import dev.jdtech.jellyfin.setup.presentation.users.UsersEvent
 import dev.jdtech.jellyfin.setup.presentation.users.UsersViewModel
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.asUserId
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
@@ -66,7 +68,7 @@ class ProfilePinSwitchTest {
             currentServerAddressId = null,
             currentUserId = kid.id,
         )
-    private val lock = ProfileLock(fakeStore(), Dispatchers.Unconfined)
+    private val lock = ProfileLock(fakeStore().role(), fakeStore().role(), Dispatchers.Unconfined)
     private val repository = fakeRepository()
 
     @BeforeEach
@@ -158,7 +160,7 @@ class ProfilePinSwitchTest {
     @Test
     fun `the start lock opens with the right PIN and cancelling leaves the profile`() = runTest {
         server = server.copy(currentUserId = adult.id)
-        val restarted = ProfileLock(fakeStore(), Dispatchers.Unconfined)
+        val restarted = ProfileLock(fakeStore().role(), fakeStore().role(), Dispatchers.Unconfined)
         assertTrue(ProfileLock.isLockedOnStart(users[adult.id], restarted.unlockedUserIds.value))
 
         val gate = ProfilePinGateViewModel(repository, restarted)
@@ -169,7 +171,10 @@ class ProfilePinSwitchTest {
         gate.onAction(ProfilePinGateAction.OnPinSubmit("2468"))
         assertFalse(ProfileLock.isLockedOnStart(users[adult.id], restarted.unlockedUserIds.value))
 
-        ProfilePinGateViewModel(repository, ProfileLock(fakeStore(), Dispatchers.Unconfined))
+        ProfilePinGateViewModel(
+                repository,
+                ProfileLock(fakeStore().role(), fakeStore().role(), Dispatchers.Unconfined),
+            )
             .onAction(ProfilePinGateAction.OnCancel)
         assertNull(server.currentUserId)
     }
@@ -325,7 +330,7 @@ class ProfilePinSwitchTest {
     fun `the start lock of a pattern profile shows the grid`() = runTest {
         lock.setPattern(adult.id, square)
         server = server.copy(currentUserId = adult.id)
-        val restarted = ProfileLock(fakeStore(), Dispatchers.Unconfined)
+        val restarted = ProfileLock(fakeStore().role(), fakeStore().role(), Dispatchers.Unconfined)
 
         val gate = ProfilePinGateViewModel(repository, restarted)
         assertEquals(ProfileLockType.PATTERN, gate.state.value.prompt?.lockType)
@@ -337,11 +342,8 @@ class ProfilePinSwitchTest {
         assertFalse(ProfileLock.isLockedOnStart(users[adult.id], restarted.unlockedUserIds.value))
     }
 
-    private fun fakeStore(): ServerStore =
-        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
-            _,
-            method,
-            args ->
+    private fun fakeStore(): FakeRoles =
+        FakeRoles(StoredUsers::class, UserLocks::class) { _, method, args ->
             when (method.kotlinName) {
                 "user" -> users[args[0].asUserId()]
                 "setUserPin" -> {
@@ -377,7 +379,6 @@ class ProfilePinSwitchTest {
                 else -> throw UnsupportedOperationException(method.kotlinName)
             }
         }
-            as ServerStore
 
     private fun fakeRepository(): SetupRepository =
         fakeProxy(SetupRepository::class.java.classLoader, arrayOf(SetupRepository::class.java)) {

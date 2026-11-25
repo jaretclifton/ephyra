@@ -60,9 +60,6 @@ interface PlaybackPort {
      */
     suspend fun sources(request: PlaybackRequest): List<ItemSource>
 
-    /** The URL of the original file of [mediaSourceId]. */
-    suspend fun streamUrl(itemId: ItemId, mediaSourceId: MediaSourceId): String
-
     suspend fun segments(itemId: ItemId): List<Segment>
 
     /**
@@ -87,9 +84,6 @@ interface PlaybackPort {
     suspend fun reportProgress(report: PlaybackReport)
 
     suspend fun reportStopped(report: PlaybackReport)
-
-    /** Tells the server what this client plays and which remote commands it takes. */
-    suspend fun announceCapabilities()
 
     /** Null when the server has none. */
     suspend fun resumeThresholds(): ResumeThresholds?

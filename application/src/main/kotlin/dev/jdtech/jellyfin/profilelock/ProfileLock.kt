@@ -5,7 +5,8 @@ import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.UserId
 import dev.jdtech.jellyfin.models.hasPin
 import dev.jdtech.jellyfin.models.profileLockType
-import dev.jdtech.jellyfin.repository.ServerStore
+import dev.jdtech.jellyfin.repository.StoredUsers
+import dev.jdtech.jellyfin.repository.UserLocks
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +27,8 @@ import kotlinx.coroutines.withContext
  * One instance per process: `data`'s `DatabaseModule` provides it as a singleton.
  */
 class ProfileLock(
-    private val store: ServerStore,
+    private val storedUsers: StoredUsers,
+    private val userLocks: UserLocks,
     /** Where the deliberately slow hashing runs. */
     private val hashDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
@@ -41,7 +43,7 @@ class ProfileLock(
 
     @Volatile private var lastUnlockedUserId: UserId? = null
 
-    suspend fun hasPin(userId: UserId): Boolean = store.user(userId)?.hasPin == true
+    suspend fun hasPin(userId: UserId): Boolean = storedUsers.user(userId)?.hasPin == true
 
     /**
      * Sets or replaces the PIN. The profile counts as unlocked (before the row changes, so the
@@ -52,7 +54,7 @@ class ProfileLock(
         val salt = ProfilePinHasher.newSalt()
         val hash = withContext(hashDispatcher) { ProfilePinHasher.hash(pin, salt) }
         unlock(userId)
-        store.setUserPin(userId, hash, salt)
+        userLocks.setUserPin(userId, hash, salt)
     }
 
     /**
@@ -67,21 +69,22 @@ class ProfileLock(
                 ProfilePinHasher.hash(ProfilePattern.serialize(dots), salt)
             }
         unlock(userId)
-        store.setUserPattern(userId, hash, salt)
+        userLocks.setUserPattern(userId, hash, salt)
     }
 
     /** Removes the profile's lock, PIN or pattern. */
     suspend fun clearPin(userId: UserId) {
-        store.setUserPin(userId, null, null)
+        userLocks.setUserPin(userId, null, null)
     }
 
     /** CE (#330): the type of the profile's lock, or null when it has none. */
-    suspend fun lockType(userId: UserId): ProfileLockType? = store.user(userId)?.profileLockType
+    suspend fun lockType(userId: UserId): ProfileLockType? =
+        storedUsers.user(userId)?.profileLockType
 
     /** Changed from inside the profile, so it stays open when the start lock is turned on. */
     suspend fun setPinOnStart(userId: UserId, pinOnStart: Boolean) {
         unlock(userId)
-        store.setUserPinOnStart(userId, pinOnStart)
+        userLocks.setUserPinOnStart(userId, pinOnStart)
     }
 
     /**
@@ -99,7 +102,7 @@ class ProfileLock(
      * other type (digits for a pattern lock) never does.
      */
     suspend fun verify(userId: UserId, entry: ProfileLockEntry): Boolean {
-        val user = store.user(userId) ?: return false
+        val user = storedUsers.user(userId) ?: return false
         val hash = user.pinHash ?: return true
         val salt = user.pinSalt ?: return false
         if (user.profileLockType != entry.type) return false

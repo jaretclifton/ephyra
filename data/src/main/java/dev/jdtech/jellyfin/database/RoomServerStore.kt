@@ -16,12 +16,19 @@ import dev.jdtech.jellyfin.models.toServerWithAddressAndUser
 import dev.jdtech.jellyfin.models.toServerWithAddresses
 import dev.jdtech.jellyfin.models.toUser
 import dev.jdtech.jellyfin.models.toUserEntity
-import dev.jdtech.jellyfin.repository.ServerStore
+import dev.jdtech.jellyfin.repository.ServerAddresses
+import dev.jdtech.jellyfin.repository.StoredServers
+import dev.jdtech.jellyfin.repository.StoredUsers
+import dev.jdtech.jellyfin.repository.UserLocks
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-/** #899: [ServerStore] over the Room tables; each method is the DAO call its callers made. */
-class RoomServerStore(private val database: ServerDatabaseDao) : ServerStore {
+/**
+ * #899: the server store over the Room tables; each method is the DAO call its callers made. #967:
+ * its roles are [StoredServers], [ServerAddresses], [StoredUsers] and [UserLocks].
+ */
+class RoomServerStore(private val database: ServerDatabaseDao) :
+    StoredServers, ServerAddresses, StoredUsers, UserLocks {
     override suspend fun server(id: ServerId): Server? = database.getServer(id)?.toServer()
 
     override fun observeServer(id: ServerId): Flow<Server?> =

@@ -6,12 +6,14 @@ import dev.jdtech.jellyfin.models.User
 import dev.jdtech.jellyfin.models.toServerId
 import dev.jdtech.jellyfin.models.toUserId
 import dev.jdtech.jellyfin.profilelock.ProfileLock
-import dev.jdtech.jellyfin.repository.ServerStore
+import dev.jdtech.jellyfin.repository.StoredUsers
+import dev.jdtech.jellyfin.repository.UserLocks
 import dev.jdtech.jellyfin.setup.domain.FakeLocalNetworkAccess
 import dev.jdtech.jellyfin.setup.domain.ServerLocalNetworkBlock
 import dev.jdtech.jellyfin.setup.domain.SetupRepository
 import dev.jdtech.jellyfin.setup.presentation.login.LoginViewModel
 import dev.jdtech.jellyfin.setup.presentation.users.UsersViewModel
+import dev.jdtech.jellyfin.testing.FakeRoles
 import dev.jdtech.jellyfin.testing.fakeProxy
 import dev.jdtech.jellyfin.testing.kotlinName
 import java.util.UUID
@@ -120,7 +122,7 @@ class LoginCapabilitiesTest {
     private fun usersViewModel(capabilities: ServerCapabilities) =
         UsersViewModel(
             fakeRepository(capabilities),
-            ProfileLock(unusedStore(), Dispatchers.Unconfined),
+            ProfileLock(unusedStore().role(), unusedStore().role(), Dispatchers.Unconfined),
         )
 
     private fun fakeRepository(capabilities: ServerCapabilities): SetupRepository =
@@ -143,12 +145,8 @@ class LoginCapabilitiesTest {
         }
             as SetupRepository
 
-    private fun unusedStore(): ServerStore =
-        fakeProxy(ServerStore::class.java.classLoader, arrayOf(ServerStore::class.java)) {
-            _,
-            method,
-            _ ->
+    private fun unusedStore(): FakeRoles =
+        FakeRoles(StoredUsers::class, UserLocks::class) { _, method, _ ->
             throw UnsupportedOperationException(method.kotlinName)
         }
-            as ServerStore
 }

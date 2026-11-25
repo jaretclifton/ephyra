@@ -6,7 +6,7 @@ Status: built (ADR 0001 and ADR 0002); Jellyfin is the only server adapter. As o
 
 - This guide is the "how do I make this change" part. What was built and why is [`docs/architecture/README.md`](../architecture/README.md); the rules are [`rules.md`](../architecture/rules.md), the modules [`modules.md`](../architecture/modules.md). Both are generated: never edit them by hand.
 - Server ports are in `domain/.../domain/ports/` (`MediaServer` with `CatalogPort`, `UserDataPort`, `PlaybackPort`, `ServerSession`; `ServerConnector`; `UserDataSyncPort`). The Jellyfin adapter is `server/jellyfin`, bound in `JellyfinServerModule`.
-- Store ports are in `application/.../repository/` (`ServerStore`, `DownloadStore`, `PendingUserDataStore`), implemented over Room in `data/.../database/` and bound in `DatabaseModule`.
+- Store ports are in `application/.../repository/` (`PendingUserDataStore`, and since #967 the roles of the server store, `StoredServers`, `ServerAddresses`, `StoredUsers`, `UserLocks`, and of the download store, `DownloadList`, `DownloadedItemRows`, `DownloadSources`, `DownloadMediaStreams`, `DownloadSegmentsAndTrickplay`, `DownloadUserData`, `QueuedDownloads`), implemented over Room in `data/.../database/` and bound in `DatabaseModule`.
 - The rules are tests in `architecture/` (`./gradlew :architecture:test`). When one fails, fix the code. Never add a line to `architecture/baseline/` to get past it.
 - The fakes and the contract suites are in `testing/` (`FakeMediaServer`, `FakeServerConnector`, `CatalogContract`, …). The fake and the Jellyfin adapter pass the same suites.
 - Test fast: `./gradlew :domain:test :application:test :architecture:test` (seconds, no Android), then `./gradlew :testing:test`.

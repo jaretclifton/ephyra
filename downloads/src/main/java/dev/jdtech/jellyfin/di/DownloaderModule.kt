@@ -9,10 +9,16 @@ import dagger.hilt.components.SingletonComponent
 import dev.jdtech.jellyfin.repository.CurrentAccount
 import dev.jdtech.jellyfin.repository.CurrentServerId
 import dev.jdtech.jellyfin.repository.DataChangeEvents
+import dev.jdtech.jellyfin.repository.DownloadList
+import dev.jdtech.jellyfin.repository.DownloadMediaStreams
+import dev.jdtech.jellyfin.repository.DownloadSegmentsAndTrickplay
 import dev.jdtech.jellyfin.repository.DownloadSettings
-import dev.jdtech.jellyfin.repository.DownloadStore
+import dev.jdtech.jellyfin.repository.DownloadSources
+import dev.jdtech.jellyfin.repository.DownloadUserData
+import dev.jdtech.jellyfin.repository.DownloadedItemRows
 import dev.jdtech.jellyfin.repository.ItemCatalog
 import dev.jdtech.jellyfin.repository.PlaybackMedia
+import dev.jdtech.jellyfin.repository.QueuedDownloads
 import dev.jdtech.jellyfin.utils.Downloader
 import dev.jdtech.jellyfin.utils.DownloaderImpl
 import dev.jdtech.jellyfin.utils.download.DownloadTexts
@@ -27,7 +33,13 @@ object DownloaderModule {
     @Provides
     fun provideDownloader(
         application: Application,
-        downloadStore: DownloadStore,
+        downloadList: DownloadList,
+        itemRows: DownloadedItemRows,
+        downloadSources: DownloadSources,
+        downloadStreams: DownloadMediaStreams,
+        segmentsAndTrickplay: DownloadSegmentsAndTrickplay,
+        downloadUserData: DownloadUserData,
+        queuedDownloads: QueuedDownloads,
         catalog: Provider<ItemCatalog>,
         media: Provider<PlaybackMedia>,
         account: Provider<CurrentAccount>,
@@ -40,7 +52,13 @@ object DownloaderModule {
     ): Downloader {
         return DownloaderImpl(
             application,
-            downloadStore,
+            downloadList,
+            itemRows,
+            downloadSources,
+            downloadStreams,
+            segmentsAndTrickplay,
+            downloadUserData,
+            queuedDownloads,
             catalog,
             media,
             account,

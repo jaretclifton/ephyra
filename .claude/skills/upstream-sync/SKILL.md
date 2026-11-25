@@ -54,7 +54,7 @@ split. Use this table to say in the ledger where an upstream change would land:
 | `data/.../repository/JellyfinRepositoryImpl.kt` | split: `data/.../repository/MediaRepositoryImpl.kt` (Room, stored fallback) over the ports, the SDK calls in `server/jellyfin` (`JellyfinCatalog`, `JellyfinPlayback`, `JellyfinUserData`, …) |
 | `data/.../repository/JellyfinRepositoryOfflineImpl.kt` | gone (#281, no offline mode) |
 | `data/.../api/JellyfinApi.kt` | `server/jellyfin/.../api/JellyfinApi.kt` |
-| `data/.../database/` | `data/.../database/`, used only through the store ports in `application` (`ServerStore`, `DownloadStore`, `PendingUserDataStore`) |
+| `data/.../database/` | `data/.../database/`, used only through the store ports in `application` (the roles of the server and download stores, #967, and `PendingUserDataStore`) |
 | `core/.../di/` | split: `core/.../di/`, `data/.../data/di/` (Room, the stores, the repository), `downloads/.../di/`, `server/jellyfin/.../di/` |
 | `core/.../utils/Downloader.kt`, `DownloaderImpl.kt`, `work/ImagesDownloaderWorker.kt` | `downloads` (with `DownloadQueue`); `DownloaderViewModel` stayed in `core` |
 | `setup/.../data/SetupRepositoryImpl.kt` | same path, but its SDK calls are behind `ServerConnector` (`server/jellyfin/.../JellyfinServerConnector.kt`) |

@@ -15,7 +15,8 @@ import dev.jdtech.jellyfin.models.Movie
 import dev.jdtech.jellyfin.models.ServerCapabilities
 import dev.jdtech.jellyfin.models.Show
 import dev.jdtech.jellyfin.models.toItemId
-import dev.jdtech.jellyfin.repository.DownloadStore
+import dev.jdtech.jellyfin.repository.DownloadList
+import dev.jdtech.jellyfin.repository.DownloadSources
 import dev.jdtech.jellyfin.repository.ItemCatalog
 import dev.jdtech.jellyfin.repository.ItemExtras
 import dev.jdtech.jellyfin.repository.UserDataUpdates
@@ -379,11 +380,11 @@ class RelatedItemsLoadingTest {
                 DownloadQueue(
                     downloader = unused(),
                     settings = AppPreferencesDownloadSettings(preferences),
-                    downloadStore = unused<DownloadStore>(),
+                    downloadSources = unused<DownloadSources>(),
                     context = ContextWrapper(null) as Context,
                     texts = CoreDownloadTexts,
                 ),
-            downloadStore = noDownloads(),
+            downloadList = noDownloads(),
             defaultDispatcher = dispatcher,
             ioDispatcher = dispatcher,
         )
@@ -417,17 +418,17 @@ class RelatedItemsLoadingTest {
             }
         }
 
-    private fun noDownloads(): DownloadStore =
-        fakeProxy(DownloadStore::class.java.classLoader, arrayOf(DownloadStore::class.java)) {
+    private fun noDownloads(): DownloadList =
+        fakeProxy(DownloadList::class.java.classLoader, arrayOf(DownloadList::class.java)) {
             _,
             method,
             _ ->
             when (method.kotlinName) {
                 "seasonEpisodeCounts" -> emptyList<Any>()
-                else -> throw NotImplementedError("DownloadStore.${method.kotlinName}")
+                else -> throw NotImplementedError("DownloadList.${method.kotlinName}")
             }
         }
-            as DownloadStore
+            as DownloadList
 
     private fun movie(id: ItemId, name: String, localTrailers: Int = 0, specialFeatures: Int? = 0) =
         Movie(
