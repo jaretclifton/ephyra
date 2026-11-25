@@ -654,7 +654,8 @@ git fetch origin
 # 1. Every change that touches player/ is a rename (status R). The renames are detected on the
 #    whole diff first, so a move from player/ to domain/ shows as R, not as a deletion. A changed
 #    build file under player/ is not a rename, so it prints too.
-git diff -M --name-status origin/main...HEAD | grep -v '^R' | grep 'player/'
+#    The path is matched after the tab, so docs/player/… does not count.
+git diff -M --name-status origin/main...HEAD | grep -v '^R' | grep -P '\tplayer/'
 # 2. No changed Kotlin line other than package and import lines.
 git diff -M -U0 origin/main...HEAD -- '*.kt' | grep '^[+-]' | grep -v '^\(+++\|---\)' \
   | grep -v '^[+-]\(package\|import\) ' | grep -v '^[+-]$'
