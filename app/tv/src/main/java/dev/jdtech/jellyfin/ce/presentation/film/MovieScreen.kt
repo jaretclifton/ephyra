@@ -24,7 +24,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -83,6 +82,7 @@ import dev.jdtech.jellyfin.presentation.theme.FindroidTheme
 import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.ui.components.Direction
 import dev.jdtech.jellyfin.utils.AfterFirstFrame
+import dev.jdtech.jellyfin.utils.ReloadOnResume
 import dev.jdtech.jellyfin.utils.format
 import kotlinx.coroutines.launch
 
@@ -104,8 +104,11 @@ fun MovieScreen(
 
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    LaunchedEffect(movieId) {
-        if (viewModel.shouldReload(movieId)) viewModel.loadMovie(movieId = movieId)
+    // On entry, on each return to the page and (CE #660) when the TV wakes from standby or the
+    // screensaver with the page still open, so progress made on another device shows. Each time
+    // only when the page is out of date (ReloadPolicy).
+    ReloadOnResume(shouldReload = { viewModel.shouldReload(movieId) }) {
+        viewModel.loadMovie(movieId = movieId)
     }
 
     // CE (#332): the rows below the page only once the movie is on screen.

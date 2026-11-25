@@ -28,6 +28,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -106,9 +107,11 @@ import dev.jdtech.jellyfin.presentation.theme.spacings
 import dev.jdtech.jellyfin.ui.components.Direction
 import dev.jdtech.jellyfin.ui.components.ItemPoster
 import dev.jdtech.jellyfin.ui.components.ProgressBadge
+import dev.jdtech.jellyfin.utils.ReloadOnResume
 import java.util.Locale
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 /**
  * CE replacement of the upstream TV season page (ADR 0001, #130).
@@ -151,18 +154,19 @@ fun SeasonScreen(
                 if (currentSeasonId == null) currentSeasonId = episode?.seasonId?.asString()
             }
     }
+    // Every season chip is of the same series, so [seriesId] holds for all of them.
+    fun loadSeason(id: ItemId) =
+        seasonViewModel.loadSeason(
+            id,
+            includeSeriesSeasons = true,
+            // Read from the flow, not the composable state: this runs outside composition.
+            seriesId = seriesId ?: episodeViewModel.state.value.episode?.seriesId,
+        )
     // Runs again on each return to the screen, so watch progress is up to date.
     LaunchedEffect(currentSeasonId) {
         currentSeasonId?.let {
             if (!seasonViewModel.shouldReload(it.toItemId())) return@let
-            // Every season chip is of the same series, so [seriesId] holds for all of them.
-            seasonViewModel.loadSeason(
-                it.toItemId(),
-                includeSeriesSeasons = true,
-                // Read from the flow, not the composable state: this effect runs outside
-                // composition.
-                seriesId = seriesId ?: episodeViewModel.state.value.episode?.seriesId,
-            )
+            loadSeason(it.toItemId())
         }
     }
 
@@ -187,6 +191,31 @@ fun SeasonScreen(
                     seasonViewModel.loadSeason(card.seasonId)
                 }
             }
+    }
+
+    // CE (#660): the TV woke from standby or the screensaver with the page still open. The effects
+    // above load on entry and on each return to the page, which composes it again; a wake composes
+    // nothing, so this reloads what is out of date. The season first and the details panel after
+    // it: with the card already up to date, a played mark that the panel brings doesn't make the
+    // effect above load the season a second time. Read from the flows: this runs outside
+    // composition.
+    fun staleSeasonId(): ItemId? =
+        currentSeasonId?.toItemId()?.takeIf { seasonViewModel.shouldReload(it) }
+    // A panel still waiting for focus to rest is loaded by the effect above.
+    fun stalePanelId(): ItemId? =
+        episodeViewModel.state.value.episode?.id?.takeIf { id ->
+            id == selection.selected(seasonViewModel.state.value.episodes)?.id &&
+                episodeViewModel.shouldReload(id)
+        }
+    val scope = rememberCoroutineScope()
+    ReloadOnResume(
+        shouldReload = { staleSeasonId() != null || stalePanelId() != null },
+        loadOnEntry = false,
+    ) {
+        scope.launch {
+            staleSeasonId()?.let { loadSeason(it).join() }
+            stalePanelId()?.let { episodeViewModel.loadEpisode(it) }
+        }
     }
 
     // #405: opened from an episode, the season is only known once that episode has loaded, so
