@@ -56,9 +56,6 @@ interface ServerSession {
     /** The URL of a user's profile picture, or null when no server is set. */
     fun userImageUrl(userId: UserId, tag: String): String?
 
-    /** #757: the name the server shows for this device. */
-    suspend fun updateDeviceName(name: String)
-
     /** #757: the current user's next episode autoplay setting, null when the server gave none. */
     suspend fun autoPlayNextEpisode(): Boolean?
 

@@ -74,8 +74,6 @@ internal class UnansweredServer(
 
             override fun userImageUrl(userId: UserId, tag: String): String? = null
 
-            override suspend fun updateDeviceName(name: String) = fail()
-
             override suspend fun autoPlayNextEpisode(): Boolean? = fail()
 
             override suspend fun currentUserImage(): UserImage = fail()
@@ -167,9 +165,6 @@ internal class UnansweredServer(
         object : PlaybackPort {
             override suspend fun sources(request: PlaybackRequest): List<ItemSource> = fail()
 
-            override suspend fun streamUrl(itemId: ItemId, mediaSourceId: MediaSourceId): String =
-                fail()
-
             override suspend fun segments(itemId: ItemId): List<Segment> = fail()
 
             override suspend fun trickplayTile(
@@ -189,8 +184,6 @@ internal class UnansweredServer(
             override suspend fun reportProgress(report: PlaybackReport) = fail()
 
             override suspend fun reportStopped(report: PlaybackReport) = fail()
-
-            override suspend fun announceCapabilities() = fail()
 
             override suspend fun resumeThresholds(): ResumeThresholds? = fail()
         }

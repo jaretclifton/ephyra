@@ -137,9 +137,6 @@ internal class UnsupportedMediaServer(private val storedType: String) : MediaSer
         object : PlaybackPort {
             override suspend fun sources(request: PlaybackRequest): List<ItemSource> = unsupported()
 
-            override suspend fun streamUrl(itemId: ItemId, mediaSourceId: MediaSourceId): String =
-                unsupported()
-
             override suspend fun segments(itemId: ItemId): List<Segment> = unsupported()
 
             override suspend fun trickplayTile(
@@ -159,8 +156,6 @@ internal class UnsupportedMediaServer(private val storedType: String) : MediaSer
             override suspend fun reportProgress(report: PlaybackReport) = unsupported()
 
             override suspend fun reportStopped(report: PlaybackReport) = unsupported()
-
-            override suspend fun announceCapabilities() = unsupported()
 
             override suspend fun resumeThresholds(): ResumeThresholds? = unsupported()
         }

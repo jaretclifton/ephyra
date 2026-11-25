@@ -18,8 +18,6 @@ import dev.jdtech.jellyfin.server.jellyfin.mappers.toItemSource
 import dev.jdtech.jellyfin.server.jellyfin.mappers.toSegment
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
-import org.jellyfin.sdk.model.api.GeneralCommandType
-import org.jellyfin.sdk.model.api.MediaType
 import org.jellyfin.sdk.model.api.PlayMethod
 import org.jellyfin.sdk.model.api.PlaybackInfoDto
 import org.jellyfin.sdk.model.api.PlaybackOrder
@@ -143,14 +141,6 @@ class JellyfinPlayback(
         }
     }
 
-    override suspend fun streamUrl(itemId: ItemId, mediaSourceId: MediaSourceId): String = call {
-        api.videoApi.getVideoStreamUrl(
-            itemId.toUuid(),
-            static = true,
-            mediaSourceId = mediaSourceId.asString(),
-        )
-    }
-
     override suspend fun segments(itemId: ItemId): List<Segment> = call {
         api.mediaSegmentApi.getItemSegments(itemId.toUuid()).content.items.map { it.toSegment() }
     }
@@ -229,31 +219,6 @@ class JellyfinPlayback(
                     playSessionId = report.playSessionId,
                     mediaSourceId = report.mediaSourceId?.asString(),
                 )
-            )
-        }
-    }
-
-    override suspend fun announceCapabilities() {
-        call {
-            api.sessionApi.postCapabilities(
-                playableMediaTypes = listOf(MediaType.VIDEO),
-                supportedCommands =
-                    listOf(
-                        GeneralCommandType.VOLUME_UP,
-                        GeneralCommandType.VOLUME_DOWN,
-                        GeneralCommandType.TOGGLE_MUTE,
-                        GeneralCommandType.SET_AUDIO_STREAM_INDEX,
-                        GeneralCommandType.SET_SUBTITLE_STREAM_INDEX,
-                        GeneralCommandType.MUTE,
-                        GeneralCommandType.UNMUTE,
-                        GeneralCommandType.SET_VOLUME,
-                        GeneralCommandType.DISPLAY_MESSAGE,
-                        GeneralCommandType.PLAY,
-                        GeneralCommandType.PLAY_STATE,
-                        GeneralCommandType.PLAY_NEXT,
-                        GeneralCommandType.PLAY_MEDIA_SOURCE,
-                    ),
-                supportsMediaControl = true,
             )
         }
     }

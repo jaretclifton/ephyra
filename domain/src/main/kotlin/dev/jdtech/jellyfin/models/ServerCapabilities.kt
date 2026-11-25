@@ -30,8 +30,6 @@ data class ServerCapabilities(
     val autoPlayNextSetting: Boolean,
     /** The socket that keeps the app's session listed on the server. */
     val sessionSocket: Boolean,
-    /** Renaming this device on the server. */
-    val deviceRename: Boolean,
     /** A download transcoded by the server down to a chosen bitrate. */
     val cappedDownloadTranscode: Boolean,
 ) {
@@ -51,7 +49,6 @@ data class ServerCapabilities(
                 serverResumeThresholds = true,
                 autoPlayNextSetting = true,
                 sessionSocket = true,
-                deviceRename = true,
                 cappedDownloadTranscode = true,
             )
 
@@ -70,7 +67,6 @@ data class ServerCapabilities(
                 serverResumeThresholds = false,
                 autoPlayNextSetting = false,
                 sessionSocket = false,
-                deviceRename = false,
                 cappedDownloadTranscode = false,
             )
     }

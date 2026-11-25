@@ -124,14 +124,6 @@ abstract class PlaybackContract : MediaServerContract() {
     }
 
     @Test
-    fun `the stream URL names the server`() = runTest {
-        val movie = library.movieWithResume
-        val url = server().playback.streamUrl(movie.id, movie.sources.single().id)
-
-        assertTrue(url.startsWith("http"), url)
-    }
-
-    @Test
     fun `start, progress and stop are accepted in order`() = runTest {
         val playback = server().playback
         val id = library.favoriteMovie.id

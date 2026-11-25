@@ -43,9 +43,6 @@ object NoServerSession : ServerSession {
 
     override fun userImageUrl(userId: UserId, tag: String): String? = null
 
-    /** There is no server to tell or to ask. */
-    override suspend fun updateDeviceName(name: String) = throw ServerException.Unreachable()
-
     override suspend fun autoPlayNextEpisode(): Boolean? = throw ServerException.Unreachable()
 
     override suspend fun currentUserImage(): UserImage = throw ServerException.Unreachable()
